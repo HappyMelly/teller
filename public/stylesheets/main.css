@@ -1,0 +1,9 @@
+body {
+    background-image: url(../images/melly.png);
+    background-repeat: no-repeat;
+    background-position: left 41px;
+}
+
+.navbar-inverse .brand {
+	color: #EE929F;
+	}
