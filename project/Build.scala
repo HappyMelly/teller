@@ -10,7 +10,11 @@ object ApplicationBuild extends Build {
   val appDependencies = Seq(
     // Add your project dependencies here,
     jdbc,
-    anorm
+    anorm,
+    "mysql" % "mysql-connector-java" % "5.1.21",
+    // update selenium to avoid browser test to hang
+    "org.seleniumhq.selenium" % "selenium-java" % "2.32.0"
+
   )
 
 
