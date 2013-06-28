@@ -1,0 +1,6 @@
+
+# Activity stream entries
+activity.signedup = {0} signed up
+activity.created = {0} added {1}
+activity.updated = {0} updated {1}
+activity.deleted = {0} removed {1}

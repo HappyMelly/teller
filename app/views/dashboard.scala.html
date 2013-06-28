@@ -1,0 +1,22 @@
+@(user: securesocial.core.Identity, activityStream: List[Activity])
+@import templates.Formatters._
+
+@main("Home", Some(user)) {
+
+  <div class="offset7 span5">
+
+    <h4>Latest activity</h4>
+
+    <table class="activity table">
+      @for(activity <- activityStream) {
+        <tr>
+          <td>
+            <i class="icon-activity-@activity.predicate"></i>
+            @Messages("activity." + activity.predicate, activity.subject)
+            <br><small>@activity.created.format</small>
+          </td>
+        </tr>
+        }
+    </table>
+  </div>
+}

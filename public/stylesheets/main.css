@@ -7,3 +7,21 @@ body {
 .navbar-inverse .brand {
 	color: #EE929F;
 	}
+
+.activity td {
+    text-indent: -19px;
+    padding-left: 19px;
+}
+
+.icon-activity-signedup {
+    background-position: -168px 0;
+}
+.icon-activity-created {
+    background-position: -96px 0;
+}
+.icon-activity-updated {
+    background-position: -96px -72px;
+}
+.icon-activity-deleted {
+    background-position: -48px -96px;
+}

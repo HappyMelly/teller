@@ -1,9 +1,9 @@
 package services
 
 import play.api.Application
-import securesocial.core.{UserId, Identity, UserServicePlugin}
+import securesocial.core.{ UserId, Identity, UserServicePlugin }
 import securesocial.core.providers.Token
-import models.{LoginIdentities, LoginIdentity}
+import models.{ LoginIdentities, LoginIdentity }
 
 /**
  * Used by SecureSocial to look up and save authentication data.

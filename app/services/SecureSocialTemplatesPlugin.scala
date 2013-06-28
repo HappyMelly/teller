@@ -4,8 +4,8 @@ import play.api.Application
 import securesocial.controllers.TemplatesPlugin
 import play.api.templates.Html
 import play.api.data.Form
-import play.api.mvc.{RequestHeader, Request}
-import securesocial.core.{SecuredRequest, Identity}
+import play.api.mvc.{ RequestHeader, Request }
+import securesocial.core.{ SecuredRequest, Identity }
 import securesocial.controllers.PasswordChange.ChangeInfo
 import securesocial.controllers.Registration.RegistrationInfo
 
@@ -16,14 +16,13 @@ import securesocial.controllers.Registration.RegistrationInfo
 class SecureSocialTemplatesPlugin(application: Application) extends TemplatesPlugin {
 
   override def getLoginPage[A](implicit request: Request[A], form: Form[(String, String)],
-                               msg: Option[String] = None): Html = {
+    msg: Option[String] = None): Html = {
     views.html.secure.login(form, msg)
   }
 
   def getNotAuthorizedPage[A](implicit request: Request[A]) = {
     views.html.secure.notAuthorized()
   }
-
 
   def getSignUpPage[A](implicit request: Request[A], form: Form[RegistrationInfo], token: String) = ???
 

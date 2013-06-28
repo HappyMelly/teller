@@ -21,9 +21,11 @@
       <a class="brand" href="/">Happy Melly</a>
       <div class="nav-collapse collapse">
         <ul class="nav">
+        @if(maybeUser.isDefined) {
           <li class="active"><a href="#">Organizations</a></li>
           <li class="active"><a href="#">People</a></li>
           <li class="active"><a href="#">Brands</a></li>
+        }
         </ul>
         @maybeUser.map{ user =>
         <ul class="nav pull-right">
