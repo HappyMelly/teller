@@ -1,0 +1,5 @@
+9994:securesocial.core.DefaultAuthenticatorStore
+9995:securesocial.core.DefaultIdGenerator
+9997:services.SecureSocialTemplatesPlugin
+9998:services.LoginIdentityService
+10000:securesocial.core.providers.TwitterProvider
