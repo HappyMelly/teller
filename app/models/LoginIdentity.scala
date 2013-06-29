@@ -49,21 +49,21 @@ object LoginIdentities extends Table[LoginIdentity]("login_identity") {
 
   def uid = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-  def userId = column[String]("userId")
+  def userId = column[String]("user_id")
 
-  def providerId = column[String]("providerId")
+  def providerId = column[String]("provider_id")
 
   def email = column[Option[String]]("email")
 
-  def firstName = column[String]("firstName")
+  def firstName = column[String]("first_name")
 
-  def lastName = column[String]("lastName")
+  def lastName = column[String]("last_name")
 
-  def fullName = column[String]("fullName")
+  def fullName = column[String]("full_name")
 
-  def authMethod = column[AuthenticationMethod]("authMethod")
+  def authMethod = column[AuthenticationMethod]("auth_method")
 
-  def avatarUrl = column[Option[String]]("avatarUrl")
+  def avatarUrl = column[Option[String]]("avatar_url")
 
   // oAuth 1
   def token = column[Option[String]]("token")
@@ -71,13 +71,13 @@ object LoginIdentities extends Table[LoginIdentity]("login_identity") {
   def secret = column[Option[String]]("secret")
 
   // oAuth 2
-  def accessToken = column[Option[String]]("accessToken")
+  def accessToken = column[Option[String]]("access_token")
 
-  def tokenType = column[Option[String]]("tokenType")
+  def tokenType = column[Option[String]]("token_type")
 
-  def expiresIn = column[Option[Int]]("expiresIn")
+  def expiresIn = column[Option[Int]]("expires_in")
 
-  def refreshToken = column[Option[String]]("refreshToken")
+  def refreshToken = column[Option[String]]("refresh_token")
 
   def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~ secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken <>(
     u => LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15)),
