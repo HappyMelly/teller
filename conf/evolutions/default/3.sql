@@ -11,7 +11,8 @@ create table ORGANISATION (
   COUNTRY_CODE VARCHAR(254) NOT NULL,
   VAT_NUMBER VARCHAR(254),
   REGISTRATION_NUMBER VARCHAR(254),
-  LEGAL_ENTITY BOOLEAN NOT NULL DEFAULT 0);
+  LEGAL_ENTITY BOOLEAN NOT NULL DEFAULT 0,
+  ACTIVE BOOLEAN NOT NULL DEFAULT 1);
 
 -- Test data from http://en.wikipedia.org/wiki/List_of_largest_companies_by_revenue
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (1, 'Exxon Mobil Corporation', 'Irving', 'Texas', 'US');
@@ -34,6 +35,8 @@ insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (17, 'G
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (18, 'Gazprom', 'Moscow', null, 'RU');
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (19, 'Apple', 'Cupertino', 'California', 'US');
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (20, 'General Motors', 'Detroit', 'Michigan', 'US');
+
+insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE, ACTIVE) values (21, 'Enron', 'Houston', 'Texas', 'US', 0);
 
 # --- !Downs
 

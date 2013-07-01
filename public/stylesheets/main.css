@@ -32,10 +32,15 @@ h1 {
     background-position: -48px -96px;
 }
 
-/* Datatables */
-table.dataTable tr.odd td.sorting_1 {
-    background-color: #FBEBEE;
+.inactive {
+    color: #bbb;
 }
-table.dataTable tr.even td.sorting_1 {
+.inactive img {
+    -webkit-filter: grayscale();
+    opacity: 0.5;
+}
+
+/* Datatables */
+table.dataTable th.sorting_asc, table.dataTable th.sorting_desc {
     background-color: #FBF2F3;
 }
