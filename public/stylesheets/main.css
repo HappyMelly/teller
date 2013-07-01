@@ -13,6 +13,12 @@ body {
     padding-left: 19px;
 }
 
+h1 {
+    margin-bottom: 1em;
+}
+
+/* Activity stream */
+
 .icon-activity-signedup {
     background-position: -168px 0;
 }
@@ -24,4 +30,17 @@ body {
 }
 .icon-activity-deleted {
     background-position: -48px -96px;
+}
+
+.inactive {
+    color: #bbb;
+}
+.inactive img {
+    -webkit-filter: grayscale();
+    opacity: 0.5;
+}
+
+/* Datatables */
+table.dataTable th.sorting_asc, table.dataTable th.sorting_desc {
+    background-color: #FBF2F3;
 }
