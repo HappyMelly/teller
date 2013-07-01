@@ -1,0 +1,27 @@
+@(user: securesocial.core.Identity, brands: List[BrandView])
+
+@main("Brands", Some(user)) {
+
+  <h1>Brands</h1>
+  @if(!brands.isEmpty) {
+
+    <table id="brands" class="datatables table table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Co-ordinator</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for(brand <- brands) {
+        <tr>
+          <td>@brand.name</td>
+          <td>@brand.coordinator.lastName, @brand.coordinator.firstName</td>
+        </tr>
+      }
+    </tbody>
+    </table>
+  } else {
+    <p>There are no brands.</p>
+  }
+}

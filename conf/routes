@@ -5,6 +5,8 @@ GET /organisations   controllers.Organisations.index
 
 GET /people   controllers.People.index
 
+GET /brands   controllers.Brands.index
+
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
