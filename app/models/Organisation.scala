@@ -11,7 +11,7 @@ import scala.slick.lifted.Query
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
 case class Organisation(id: Option[Long], name: String, street1: Option[String], street2: Option[String],
-  city: Option[String], province: Option[String], postCode: Option[String], countryCode: Option[String],
+  city: Option[String], province: Option[String], postCode: Option[String], countryCode: String,
   vatNumber: Option[String], registrationNumber: Option[String], legalEntity: Boolean = false)
 
 object Organisation {
@@ -33,7 +33,7 @@ object Organisations extends Table[Organisation]("ORGANISATION") {
   def postCode = column[Option[String]]("POST_CODE")
 
   // TODO Change to a list of country codes (i.e. a foreign key)
-  def countryCode = column[Option[String]]("COUNTRY_CODE")
+  def countryCode = column[String]("COUNTRY_CODE")
   def vatNumber = column[Option[String]]("VAT_NUMBER")
   def registrationNumber = column[Option[String]]("REGISTRATION_NUMBER")
   def legalEntity = column[Boolean]("LEGAL_ENTITY")

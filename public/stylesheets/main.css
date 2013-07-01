@@ -13,6 +13,12 @@ body {
     padding-left: 19px;
 }
 
+h1 {
+    margin-bottom: 1em;
+}
+
+/* Activity stream */
+
 .icon-activity-signedup {
     background-position: -168px 0;
 }
@@ -24,4 +30,12 @@ body {
 }
 .icon-activity-deleted {
     background-position: -48px -96px;
+}
+
+/* Datatables */
+table.dataTable tr.odd td.sorting_1 {
+    background-color: #FBEBEE;
+}
+table.dataTable tr.even td.sorting_1 {
+    background-color: #FBF2F3;
 }

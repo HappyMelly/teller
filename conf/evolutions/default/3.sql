@@ -13,6 +13,7 @@ create table ORGANISATION (
   REGISTRATION_NUMBER VARCHAR(254),
   LEGAL_ENTITY BOOLEAN NOT NULL DEFAULT 0);
 
+-- Test data from http://en.wikipedia.org/wiki/List_of_largest_companies_by_revenue
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (1, 'Exxon Mobil Corporation', 'Irving', 'Texas', 'US');
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (2, 'Royal Dutch Shell', 'The Hague', null, 'NL');
 insert into ORGANISATION (ID, NAME, CITY, PROVINCE, COUNTRY_CODE) values (3, 'Walmart', 'Bentonville', 'Arkansas', 'US');
