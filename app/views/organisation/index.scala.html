@@ -2,7 +2,7 @@
 
 @main("Organizations", Some(user)) {
 
-  <h1>Organisations</h1>
+  <h1>Organizations</h1>
   @if(!organisations.isEmpty) {
 
     <table class="datatables table table-bordered">
@@ -16,12 +16,11 @@
     </thead>
     <tbody>
       @for(organisation <- organisations) {
-        <tr @if(!organisation.active) { class="inactive" })>
+        <tr @if(!organisation.active) { class="inactive" title="deactivated" })>
           <td>@organisation.name</td>
           <td>@organisation.city</td>
           <td>@organisation.province</td>
           <td>
-
             <img width="16" src="/assets/images/flags/16/@(organisation.countryCode.toLowerCase).png" align="absmiddle">
             @Messages("country." + organisation.countryCode)
           </td>
