@@ -15,11 +15,11 @@ import play.api.Play.current
 case class LoginIdentity(uid: Option[Long], id: UserId, firstName: String, lastName: String, fullName: String,
   email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info],
-  passwordInfo: Option[PasswordInfo] = None) extends Identity {}
+  passwordInfo: Option[PasswordInfo] = None, twitterHandle: String) extends Identity {}
 
 object LoginIdentity {
-  def apply(i: Identity): LoginIdentity = LoginIdentity(None, i.id, i.firstName, i.lastName, i.fullName, i.email,
-    i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo)
+  def apply(i: Identity): (String) ⇒ LoginIdentity = LoginIdentity(None, i.id, i.firstName, i.lastName, i.fullName, i.email,
+    i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo, _)
 }
 
 /**
@@ -58,6 +58,7 @@ object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENTITY") {
   def tokenType = column[Option[String]]("TOKEN_TYPE")
   def expiresIn = column[Option[Int]]("EXPIRES_IN")
   def refreshToken = column[Option[String]]("REFRESH_TOKEN")
+  def twitterHandle = column[String]("TWITTER_HANDLE")
 
   // oAuth 1
   def token = column[Option[String]]("TOKEN")
@@ -65,9 +66,9 @@ object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENTITY") {
   // oAuth 2
   def accessToken = column[Option[String]]("ACCESS_TOKEN")
 
-  def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~ secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken <> (
-    u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15)),
-    (u: LoginIdentity) ⇒ Some((u.uid, u.id.id, u.id.providerId, u.firstName, u.lastName, u.fullName, u.email, u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret), u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn), u.oAuth2Info.flatMap(_.refreshToken))))
+  def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~ secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ twitterHandle <> (
+    u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16),
+    (u: LoginIdentity) ⇒ Some((u.uid, u.id.id, u.id.providerId, u.firstName, u.lastName, u.fullName, u.email, u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret), u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn), u.oAuth2Info.flatMap(_.refreshToken), u.twitterHandle)))
 
   def autoInc = * returning uid
 
@@ -90,8 +91,6 @@ object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENTITY") {
 
       q.firstOption
   }
-
-  def save(i: Identity): LoginIdentity = this.save(LoginIdentity(i))
 
   def save(user: LoginIdentity) = DB.withSession {
     implicit session ⇒
