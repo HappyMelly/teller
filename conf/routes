@@ -3,6 +3,8 @@ GET /about   controllers.Dashboard.about
 
 GET /organisations   controllers.Organisations.index
 
+GET /people   controllers.People.index
+
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
