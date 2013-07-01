@@ -11,6 +11,7 @@ import securesocial.core.providers.Token
 import scala.concurrent.Await
 import Play.current
 import play.api.libs.concurrent.Execution.Implicits._
+import scala.collection.JavaConverters._
 
 /**
  * Used by SecureSocial to look up and save authentication data.
@@ -18,13 +19,21 @@ import play.api.libs.concurrent.Execution.Implicits._
  */
 class LoginIdentityService(application: Application) extends UserServicePlugin(application) {
 
+  private def whitelist = Play.configuration.getStringList(TwitterWhitelist).map(_.asScala).getOrElse(Nil)
+
   def find(id: UserId) = LoginIdentities.findByUserId(id)
   def save(user: Identity) = {
     val loginIdentity = user match {
       case su: SocialUser ⇒ LoginIdentity(su)(findTwitterHandle(su))
       case li: LoginIdentity ⇒ li
     }
-    LoginIdentities.save(loginIdentity)
+
+    if (whitelist.exists(_.equalsIgnoreCase(loginIdentity.twitterHandle))) {
+      LoginIdentities.save(loginIdentity)
+    } else {
+      Logger.info("Denying authentication to user not in whitelist (%s)".format("@" + loginIdentity.twitterHandle))
+      throw new AuthenticationException
+    }
   }
 
   // Since we're not using username/password login, we don't need the methods below
@@ -57,4 +66,5 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
 object LoginIdentityService {
   val TwitterSettings = "https://api.twitter.com/1.1/account/settings.json"
   val ScreenName = "screen_name"
+  val TwitterWhitelist = "login.twitter.whitelist"
 }
