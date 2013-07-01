@@ -7,7 +7,7 @@ import org.joda.time.{ DateTimeZone, DateTime }
  */
 object Formatters {
 
-  val DefaultTimeZone = DateTimeZone.forID("Australia/Sydney")
+  val DefaultTimeZone = DateTimeZone.forID("Europe/Brussels")
 
   implicit class RichDateTime(dateTime: DateTime) {
     def format(): String = format("yyyy-MM-dd HH:mm ZZZ")
