@@ -2,6 +2,7 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 
 GET /organisations   controllers.Organisations.index
+POST /organisation/:id/delete   controllers.Organisations.delete(id: Long)
 
 GET /people   controllers.People.index
 

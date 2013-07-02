@@ -1,8 +1,15 @@
-@(user: securesocial.core.Identity, organisations: List[Organisation])
+@(user: securesocial.core.Identity, organisations: List[Organisation])(implicit flash: Flash)
 
 @main("Organizations", Some(user)) {
 
-  <h1>Organizations</h1>
+  @flash.get("success").map { message =>
+  <div class="alert alert-success">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    @message
+  </div>
+  }
+
+<h1>Organizations</h1>
   @if(!organisations.isEmpty) {
 
     <table class="datatables table table-bordered">
@@ -12,6 +19,7 @@
         <th>City</th>
         <th>Province/State</th>
         <th>Country</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -24,6 +32,9 @@
             <img width="16" src="/assets/images/flags/16/@(organisation.countryCode.toLowerCase).png" align="absmiddle">
             @Messages("country." + organisation.countryCode)
           </td>
+          <td>
+            <form class="delete" method="post" action="@routes.Organisations.delete(organisation.id.getOrElse(0))"><button class="btn btn-link" type="submit"><i class="icon-trash"></i> Delete</button></form>
+          </td>
         </tr>
       }
     </tbody>
@@ -31,4 +42,12 @@
   } else {
     <p>There are no organisations.</p>
   }
+
+  <script type="text/javascript">
+    $(function() {
+      $('form.delete').submit(function() {
+        return confirm('Delete this organisation? You cannot undo this action.');
+      });
+    });
+  </script>
 }

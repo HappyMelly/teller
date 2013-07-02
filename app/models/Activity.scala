@@ -26,8 +26,8 @@ object Activity {
   object Predicate extends Enumeration {
     val SignedUp = "signedup"
     val Created = "created"
-    val Updated = "update"
-    val Deleted = "delete"
+    val Updated = "updated"
+    val Deleted = "deleted"
   }
 
   /**
@@ -43,6 +43,15 @@ object Activity {
   def insert(subject: String, predicate: String) {
     withSession { implicit session ⇒
       Activities.forInsert.insert(Activity(None, subject, predicate, None))
+    }
+  }
+
+  /**
+   * Inserts a new activity stream entry.
+   */
+  def insert(subject: String, predicate: String, activityObject: String) {
+    withSession { implicit session ⇒
+      Activities.forInsert.insert(Activity(None, subject, predicate, Some(activityObject)))
     }
   }
 }
