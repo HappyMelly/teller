@@ -19,7 +19,7 @@ object Organisations extends Controller with SecureSocial {
     "city" -> optional(text),
     "province" -> optional(text),
     "postCode" -> optional(text),
-    "country" -> nonEmptyText(2, 2),
+    "country" -> nonEmptyText,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
     "legalEntity" -> default(boolean, false),
