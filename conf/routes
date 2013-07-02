@@ -1,7 +1,7 @@
 GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 
-GET  /organisations             controllers.Organisations.index
+GET /organisations      controllers.Organisations.index
 POST /organisations             controllers.Organisations.create
 GET  /organisations/new         controllers.Organisations.add
 GET  /organisations/:id/edit    controllers.Organisations.edit(id: Long)

@@ -41,6 +41,18 @@ object Organisations extends Controller with SecureSocial {
   }
 
   /**
+   * Details page.
+   */
+  def details(id: Long) = SecuredAction { implicit request ⇒
+    models.Organisation.find(id).map { organisation ⇒
+      val members = Organisation.members(organisation)
+      Ok(views.html.organisation.details(request.user, organisation, members))
+    } getOrElse {
+      Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
+    }
+  }
+
+  /**
    * Edit page.
    * @param id The id of the organisation to edit.
    */
@@ -90,6 +102,9 @@ object Organisations extends Controller with SecureSocial {
     } getOrElse {
       Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
     }
+  }
+
+}
   }
 
 }
