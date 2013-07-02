@@ -13,6 +13,10 @@ success.update = {0} ‘{1}’ updated!
 # Controller messages
 error.organisation.notFound = Organization not found
 
+
+# Controller messages
+error.organisation.notFound = Organization not found
+
 # Activity stream entries
 activity.signedup = {0} signed up
 activity.created = {0} added {1}
