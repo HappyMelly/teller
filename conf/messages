@@ -23,6 +23,10 @@ activity.created = {0} added {1}
 activity.updated = {0} updated {1}
 activity.deleted = {0} deleted {1}
 
+# Organisations
+organisation.created = Organisation â{0}â has been created
+organisation.errors = Please correct the form below
+
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org
 country.AF = Afghanistan

@@ -1,0 +1,27 @@
+@(user: securesocial.core.Identity, id: Option[Long], orgForm: Form[Organisation])(implicit flash: Flash)
+
+@import helper.twitterBootstrap._
+@import views.Countries
+
+@defining(orgForm.value.map(org => "Organization %s".format(org.name)).getOrElse("New Organization")) { orgName =>
+    @main("Organizations", Some(user)) {
+
+        <h1>@orgName</h1>
+
+        @orgForm.errorsAsJson
+
+        @helper.form(action = id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()),
+            'class -> "form-inline") {
+            @helper.inputText(orgForm("name"), '_label -> "Name")
+            @helper.inputText(orgForm("street1"), '_label -> "Address line 1")
+            @helper.inputText(orgForm("street2"), '_label -> "Address line 2")
+            @helper.inputText(orgForm("city"), '_label -> "City")
+            @helper.inputText(orgForm("province"), '_label -> "Province or state")
+            @helper.select(orgForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+            @helper.inputText(orgForm("vatNumber"), '_label -> "VAT number")
+            @helper.inputText(orgForm("registrationNumber"), '_label -> "Registration number")
+            @helper.checkbox(orgForm("legalEntity"), '_text -> "Legal entity", '_label -> "Legal entity" )
+            <button class="btn btn-primary" type="submit">Save</button>
+        }
+    }
+}
