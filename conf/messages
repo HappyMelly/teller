@@ -3,19 +3,13 @@ models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
 
+# Controller messages
+error.organisation.notFound = Organization not found
+
 # Flash messages
 success.delete = {0} ‘{1}’ deleted!
 success.insert = {0} ‘{1}’ added!
 success.update = {0} ‘{1}’ updated!
-
-
-
-# Controller messages
-error.organisation.notFound = Organization not found
-
-
-# Controller messages
-error.organisation.notFound = Organization not found
 
 # Activity stream entries
 activity.signedup = {0} signed up
@@ -24,7 +18,6 @@ activity.updated = {0} updated {1}
 activity.deleted = {0} deleted {1}
 
 # Organisations
-organisation.created = Organisation â{0}â has been created
 organisation.errors = Please correct the form below
 
 # ISO 8166-2 Country codes

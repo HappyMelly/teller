@@ -52,12 +52,12 @@ object Organisations extends Controller with SecureSocial {
   def create = SecuredAction { implicit request ⇒
     organisationForm.bindFromRequest.fold(
       formWithErrors ⇒
-        BadRequest(views.html.organisation.form(request.user, None, formWithErrors))
-          .flashing("error" -> Messages("organisation.errors")),
+        BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
       organisation ⇒ {
         val org = organisation.save
-        Logger.info(org.toString)
-        Redirect(routes.Organisations.index()).flashing("success" -> Messages("organisation.created", org.name))
+        Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
+        val message = Messages("success.insert", Messages("models.Organisation"), organisation.name)
+        Redirect(routes.Organisations.index()).flashing("success" -> message)
       })
   }
 

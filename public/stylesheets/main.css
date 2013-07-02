@@ -36,13 +36,13 @@ td .btn-link {
     background-position: -168px 0;
 }
 .icon-activity-created {
-    background-position: -96px 0;
+    background-position: 0px -96px;
 }
 .icon-activity-updated {
     background-position: -96px -72px;
 }
 .icon-activity-deleted {
-    background-position: -48px -96px;
+    background-position: -24px -96px;
 }
 
 .inactive, .inactive a {
