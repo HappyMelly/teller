@@ -1,0 +1,39 @@
+# --- !Ups
+
+update ORGANISATION set VAT_NUMBER = 'NL1234.56.789B01';
+update ORGANISATION set REGISTRATION_NUMBER = '12345678 0000';
+
+create table ORGANISATION_MEMBERSHIPS (
+  ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  PERSON_ID BIGINT NOT NULL,
+  ORGANISATION_ID BIGINT NOT NULL);
+
+alter table ORGANISATION_MEMBERSHIPS add constraint ORGANISATION_FK foreign key(ORGANISATION_ID) references PERSON(ID) on update NO ACTION on delete NO ACTION;
+
+alter table ORGANISATION_MEMBERSHIPS add constraint PERSON_FK foreign key(PERSON_ID) references PERSON(ID) on update NO ACTION on delete NO ACTION;
+
+insert into ORGANISATION_MEMBERSHIPS values (1, 1, 1);
+insert into ORGANISATION_MEMBERSHIPS values (2, 2, 2);
+insert into ORGANISATION_MEMBERSHIPS values (3, 3, 3);
+
+insert into ORGANISATION_MEMBERSHIPS values (5, 5, 5);
+
+insert into ORGANISATION_MEMBERSHIPS values (7, 7, 7);
+insert into ORGANISATION_MEMBERSHIPS values (8, 8, 8);
+insert into ORGANISATION_MEMBERSHIPS values (9, 9, 9);
+insert into ORGANISATION_MEMBERSHIPS values (10, 10, 10);
+insert into ORGANISATION_MEMBERSHIPS values (11, 11, 11);
+insert into ORGANISATION_MEMBERSHIPS values (12, 12, 12);
+insert into ORGANISATION_MEMBERSHIPS values (13, 13, 13);
+insert into ORGANISATION_MEMBERSHIPS values (14, 14, 14);
+insert into ORGANISATION_MEMBERSHIPS values (15, 15, 15);
+insert into ORGANISATION_MEMBERSHIPS values (16, 16, 16);
+insert into ORGANISATION_MEMBERSHIPS values (17, 17, 17);
+insert into ORGANISATION_MEMBERSHIPS values (18, 18, 18);
+insert into ORGANISATION_MEMBERSHIPS values (19, 19, 19);
+insert into ORGANISATION_MEMBERSHIPS values (20, 20, 20);
+insert into ORGANISATION_MEMBERSHIPS values (21, 21, 21);
+
+# --- !Downs
+
+drop table ORGANISATION_MEMBERSHIPS;

@@ -1,7 +1,8 @@
-@(user: securesocial.core.Identity, brands: List[BrandView])
+@(user: securesocial.core.Identity, brands: List[BrandView])(implicit flash: Flash)
 
 @main("Brands", Some(user)) {
 
+  <div class="span8">
   <h1>Brands</h1>
   @if(!brands.isEmpty) {
 
@@ -24,4 +25,5 @@
   } else {
     <p>There are no brands.</p>
   }
+  </div>
 }

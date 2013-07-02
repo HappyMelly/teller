@@ -1,0 +1,26 @@
+@(people: List[Person])
+
+@if(!people.isEmpty) {
+
+  <table id="people" class="datatables table table-bordered">
+  <thead>
+    <tr>
+      <th>First Name</th>
+      <th class="sorting_asc">Last Name</th>
+      <th>Country</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for(person <- people) {
+      <tr @if(!person.active) { class="inactive" title="deactivated" })>
+        <td>@person.firstName</td>
+        <td>@person.lastName</td>
+        <td>
+          <img width="16" src="/assets/images/flags/16/@(person.countryCode.toLowerCase).png" align="absmiddle">
+          @Messages("country." + person.countryCode)
+        </td>
+      </tr>
+    }
+  </tbody>
+  </table>
+}

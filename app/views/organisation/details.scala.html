@@ -1,0 +1,66 @@
+@(user: securesocial.core.Identity, organisation: Organisation, members: List[Person])(implicit flash: Flash)
+
+@main(organisation.name + " - Organization", Some(user)) {
+
+  <div class="span8">
+  <h1>
+    <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
+    @organisation.name
+  </h1>
+  <p>
+    @if(!organisation.active) {
+      <span class="label label-warning">This organization has been deactivated</span>
+    }
+  </p>
+  </div>
+
+  <div class="span4">
+    <h3>Address</h3>
+    <address>
+      <strong>@organisation.name</strong><br>
+      @organisation.street1.map { addressLine =>
+        @addressLine<br>
+      }
+      @organisation.street2.map { addressLine =>
+        @addressLine<br>
+      }
+      @organisation.postCode.map { addressLine =>
+        @addressLine<br>
+      }
+      @organisation.city.map { addressLine =>
+        @addressLine<br>
+      }
+      @organisation.province.map { addressLine =>
+        @addressLine<br>
+      }
+      @Messages("country." + organisation.countryCode)
+    </address>
+  </div>
+
+  <div class="span4">
+    <h3>Company details</h3>
+
+    @organisation.vatNumber.map { number =>
+      <p><strong>VAT number</strong>
+      <br>@number</p>
+    }
+
+    @organisation.registrationNumber.map { number =>
+      <p><strong>Company registration</strong>
+      <br>@number</p>
+    }
+
+    <p><strong>Happy Melly legal entity</strong>
+    <br>@if(organisation.legalEntity) { Yes } else { No }</p>
+  </div>
+
+  <div class="span8">
+    <h3>People</h3>
+    @if(members.isEmpty) {
+      <p>@organisation.name has no members.</p>
+    } else {
+      @views.html.person.table(members)
+    }
+  </div>
+
+}

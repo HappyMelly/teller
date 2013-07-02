@@ -1,4 +1,4 @@
-@(loginForm: Form[(String,String)], errorMsg: Option[String] = None)(implicit request: RequestHeader)
+@(loginForm: Form[(String,String)], errorMsg: Option[String] = None)(implicit request: RequestHeader, flash: Flash)
 
 @import helper._
 @import securesocial.core.Registry
@@ -17,19 +17,6 @@
             @Messages(msg)
         </div>
     }
-
-    @request.flash.get("success").map { msg =>
-        <div class="alert alert-info">
-            @msg
-        </div>
-    }
-
-    @request.flash.get("error").map { msg =>
-        <div class="alert alert-error">
-            @msg
-        </div>
-    }
-
 
     @defining( Registry.providers.all.values.filter( _.id != UsernamePassword) ) { externalProviders =>
 

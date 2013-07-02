@@ -17,10 +17,12 @@ class SecureSocialTemplatesPlugin(application: Application) extends TemplatesPlu
 
   override def getLoginPage[A](implicit request: Request[A], form: Form[(String, String)],
     msg: Option[String] = None): Html = {
+    implicit val flash = request.flash
     views.html.secure.login(form, msg)
   }
 
   def getNotAuthorizedPage[A](implicit request: Request[A]) = {
+    implicit val flash = request.flash
     views.html.secure.notAuthorized()
   }
 

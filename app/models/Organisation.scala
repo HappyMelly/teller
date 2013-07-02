@@ -30,6 +30,14 @@ object Organisation {
   def findAll: List[Organisation] = withSession { implicit session ⇒
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }
+
+  def members(organisation: Organisation): List[Person] = withSession { implicit session ⇒
+    val query = for {
+      membership ← OrganisationMemberships if membership.organisationId === organisation.id
+      person ← membership.person
+    } yield person
+    query.sortBy(_.lastName.toLowerCase).list
+  }
 }
 
 object Organisations extends Table[Organisation]("ORGANISATION") {
@@ -54,4 +62,15 @@ object Organisations extends Table[Organisation]("ORGANISATION") {
     (Organisation.apply _, Organisation.unapply _)
 
   def forInsert = * returning id
+}
+
+object OrganisationMemberships extends Table[(Option[Long], Long, Long)]("ORGANISATION_MEMBERSHIPS") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def personId = column[Long]("PERSON_ID")
+  def organisationId = column[Long]("ORGANISATION_ID")
+
+  def person = foreignKey("PERSON_FK", personId, People)(_.id)
+  def organisation = foreignKey("ORGANISATION_FK", organisationId, People)(_.id)
+
+  def * = id.? ~ personId ~ organisationId
 }
