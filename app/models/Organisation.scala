@@ -32,6 +32,16 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
 object Organisation {
 
   /**
+   * Activates the organisation, if the parameter is true, or deactivates it.
+   */
+  def activate(id: Long, active: Boolean): Unit = withSession { implicit session ⇒
+    val query = for {
+      organisation ← Organisations if organisation.id === id
+    } yield organisation.active
+    query.update(active)
+  }
+
+  /**
    * Deletes an organisation.
    */
   def delete(id: Long) {

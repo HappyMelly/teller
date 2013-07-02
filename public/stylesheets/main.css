@@ -32,17 +32,20 @@ td .btn-link {
 
 /* Activity stream */
 
-.icon-activity-signedup {
+.icon-activity-signup {
     background-position: -168px 0;
 }
-.icon-activity-created {
+.icon-activity-create {
     background-position: 0px -96px;
 }
-.icon-activity-updated {
+.icon-activity-update {
     background-position: -96px -72px;
 }
-.icon-activity-deleted {
+.icon-activity-delete {
     background-position: -24px -96px;
+}
+.icon-activity-activate, .icon-activity-deactivate {
+    background-position: -384px 0px;
 }
 
 .inactive, .inactive a {

@@ -24,10 +24,12 @@ case class Activity(id: Option[Long], subject: String, predicate: String, activi
 object Activity {
 
   object Predicate extends Enumeration {
-    val SignedUp = "signedup"
-    val Created = "created"
-    val Updated = "updated"
-    val Deleted = "deleted"
+    val SignedUp = "signup"
+    val Created = "create"
+    val Updated = "update"
+    val Deleted = "delete"
+    val Activated = "activate"
+    val Deactivated = "deactivate"
   }
 
   /**

@@ -3,22 +3,27 @@ models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
 
-# Controller messages
-error.organisation.notFound = Organization not found
-
 # Flash messages
 success.delete = {0} ‘{1}’ deleted!
 success.insert = {0} ‘{1}’ added!
 success.update = {0} ‘{1}’ updated!
 
-# Activity stream entries
-activity.signedup = {0} signed up
-activity.created = {0} added {1}
-activity.updated = {0} updated {1}
-activity.deleted = {0} deleted {1}
+# Controller messages
+error.organisation.notFound = Organization not found
 
-# Organisations
+success.activate.false = {0} ‘{1}’ deactivated
+success.activate.true = {0} ‘{1}’ activated
+
+organisation.created = Organisation ‘{0}’ added
 organisation.errors = Please correct the form below
+
+# Activity stream entries
+activity.signup = {0} signed up
+activity.create = {0} added {1}
+activity.update = {0} updated {1}
+activity.delete = {0} removed {1}
+activity.activate = {0} activated {1}
+activity.deactivate = {0} deactivated {1}
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org

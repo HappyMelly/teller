@@ -1,6 +1,9 @@
 package controllers
 
 import play.api._
+import play.api.i18n.Messages
+import play.api.data._
+import play.api.data.Forms._
 import play.api.mvc._
 import models.{ Organisation, Activity }
 import securesocial.core.SecureSocial
@@ -26,11 +29,24 @@ object Organisations extends Controller with SecureSocial {
     "active" -> ignored(true))(Organisation.apply)(Organisation.unapply))
 
   /**
-   * List page.
+   * Form target for toggling whether an organisation is active.
    */
-  def index = SecuredAction { implicit request ⇒
-    val organisations = models.Organisation.findAll
-    Ok(views.html.organisation.index(request.user, organisations))
+  def activation(id: Long) = SecuredAction { implicit request ⇒
+
+    models.Organisation.find(id).map { organisation ⇒
+      Form("active" -> boolean).bindFromRequest.fold(
+        form ⇒ {
+          BadRequest("invalid form data")
+        },
+        active ⇒ {
+          models.Organisation.activate(id, active)
+          Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+          val message = Messages("success.activate." + active.toString, Messages("models.Organisation"), organisation.name)
+          Redirect(routes.Organisations.details(id)).flashing("success" -> message)
+        })
+    } getOrElse {
+      Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
+    }
   }
 
   /**
@@ -39,24 +55,6 @@ object Organisations extends Controller with SecureSocial {
   def add = SecuredAction { implicit request ⇒
     Ok(views.html.organisation.form(request.user, None, organisationForm))
   }
-
-  /**
-   * Details page.
-   */
-  def details(id: Long) = SecuredAction { implicit request ⇒
-    models.Organisation.find(id).map { organisation ⇒
-      val members = Organisation.members(organisation)
-      Ok(views.html.organisation.details(request.user, organisation, members))
-    } getOrElse {
-      Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
-    }
-  }
-
-  /**
-   * Edit page.
-   * @param id The id of the organisation to edit.
-   */
-  def edit(id: Long) = TODO
 
   /**
    * Create form submits to this action.
@@ -72,13 +70,6 @@ object Organisations extends Controller with SecureSocial {
         Redirect(routes.Organisations.index()).flashing("success" -> message)
       })
   }
-
-  /**
-   * Edit form submits to this action.
-   * @param id
-   * @return
-   */
-  def update(id: Long) = TODO
 
   /**
    * Deletes an organisation.
@@ -104,7 +95,25 @@ object Organisations extends Controller with SecureSocial {
     }
   }
 
-}
+  /**
+   * Edit page.
+   * @param id The id of the organisation to edit.
+   */
+  def edit(id: Long) = TODO
+
+  /**
+   * List page.
+   */
+  def index = SecuredAction { implicit request ⇒
+    val organisations = models.Organisation.findAll
+    Ok(views.html.organisation.index(request.user, organisations))
   }
+
+  /**
+   * Edit form submits to this action.
+   * @param id
+   * @return
+   */
+  def update(id: Long) = TODO
 
 }
