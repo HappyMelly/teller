@@ -17,6 +17,19 @@ h1 {
     margin-bottom: 1em;
 }
 
+td form {
+    padding: 0;
+    margin: 0;
+}
+
+td .btn {
+    padding: 0;
+}
+
+td .btn-link {
+    border-width: 0;
+}
+
 /* Activity stream */
 
 .icon-activity-signedup {

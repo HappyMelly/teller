@@ -12,7 +12,7 @@
         <tr>
           <td>
             <i class="icon-activity-@activity.predicate"></i>
-            @Messages("activity." + activity.predicate, activity.subject)
+            @Messages("activity." + activity.predicate, activity.subject, activity.activityObject.getOrElse(""))
             <br><small>@activity.created.format</small>
           </td>
         </tr>

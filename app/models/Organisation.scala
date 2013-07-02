@@ -14,6 +14,19 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
 
 object Organisation {
 
+  /**
+   * Deletes an organisation.
+   */
+  def delete(id: Long) {
+    withSession { implicit session ⇒
+      Organisations.where(_.id === id).delete
+    }
+  }
+
+  def find(id: Long): Option[Organisation] = withSession { implicit session ⇒
+    Query(Organisations).filter(_.id === id).list.headOption
+  }
+
   def findAll: List[Organisation] = withSession { implicit session ⇒
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }

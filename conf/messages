@@ -1,9 +1,19 @@
+# Models
+models.Brand = Brand
+models.Organisation = Organization
+models.Person = Person
+
+# Flash messages
+success.delete = {0} â€˜{1}â€™ deleted!
+success.insert = {0} â€˜{1}â€™ added!
+success.update = {0} â€˜{1}â€™ updated!
+
 
 # Activity stream entries
 activity.signedup = {0} signed up
 activity.created = {0} added {1}
 activity.updated = {0} updated {1}
-activity.deleted = {0} removed {1}
+activity.deleted = {0} deleted {1}
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org
@@ -68,10 +78,10 @@ country.CK = Cook Islands
 country.CR = Costa Rica
 country.HR = Croatia
 country.CU = Cuba
-country.CW = Curaçao
+country.CW = CuraÃ§ao
 country.CY = Cyprus
 country.CZ = Czech Republic
-country.CI = Côte d?Ivoire
+country.CI = CÃ´te d?Ivoire
 country.DK = Denmark
 country.DG = Diego Garcia
 country.DJ = Djibouti
@@ -208,8 +218,8 @@ country.QA = Qatar
 country.RO = Romania
 country.RU = Russia
 country.RW = Rwanda
-country.RE = Réunion
-country.BL = Saint Barthélemy
+country.RE = RÃ©union
+country.BL = Saint BarthÃ©lemy
 country.SH = Saint Helena
 country.KN = Saint Kitts and Nevis
 country.LC = Saint Lucia
@@ -242,7 +252,7 @@ country.SZ = Swaziland
 country.SE = Sweden
 country.CH = Switzerland
 country.SY = Syria
-country.ST = São Tomé and Príncipe
+country.ST = SÃ£o TomÃ© and PrÃ­ncipe
 country.TW = Taiwan
 country.TJ = Tajikistan
 country.TZ = Tanzania
@@ -280,4 +290,4 @@ country.EH = Western Sahara
 country.YE = Yemen
 country.ZM = Zambia
 country.ZW = Zimbabwe
-country.AX = Åland Islands]
+country.AX = Ã…land Islands]
