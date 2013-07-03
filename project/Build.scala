@@ -17,7 +17,6 @@ object ApplicationBuild extends Build {
     "mysql" % "mysql-connector-java" % "5.1.21",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
-    "org.slf4j" % "slf4j-nop" % "1.6.4",
     "securesocial" %% "securesocial" % "master-SNAPSHOT"
   )
 
