@@ -67,8 +67,5 @@ object Activities extends Table[Activity]("ACTIVITY") {
   def created = column[DateTime]("CREATED")
   def * = id.? ~ subject ~ predicate ~ activityObject ~ created <> (Activity.apply _, Activity.unapply _)
 
-  //  def forInsert = subject ~ predicate ~ activityObject ~ created <> (
-  //    t ⇒ Activity(None, t._1, t._2, t._3, t._4),
-  //    (a: Activity) ⇒ Some((a.subject, a.predicate, a.activityObject, a.created)))
   def forInsert = * returning id
 }

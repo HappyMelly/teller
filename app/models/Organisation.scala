@@ -1,17 +1,20 @@
 package models
 
+import com.github.tototoshi.slick.JodaSupport._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import scala.slick.lifted.Query
 import play.api.db.slick.DB
+import org.joda.time.DateTime
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
 case class Organisation(id: Option[Long], name: String, street1: Option[String], street2: Option[String],
   city: Option[String], province: Option[String], postCode: Option[String], countryCode: String,
-  vatNumber: Option[String], registrationNumber: Option[String], legalEntity: Boolean = false, active: Boolean = true) {
+  vatNumber: Option[String], registrationNumber: Option[String], legalEntity: Boolean = false, active: Boolean = true,
+  created: DateTime = DateTime.now(), createdBy: String) {
 
   /**
    * Inserts or updates this organisation into the database.
@@ -84,8 +87,11 @@ object Organisations extends Table[Organisation]("ORGANISATION") {
   def legalEntity = column[Boolean]("LEGAL_ENTITY")
   def active = column[Boolean]("ACTIVE")
 
-  def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~ legalEntity ~ active <>
-    (Organisation.apply _, Organisation.unapply _)
+  def created = column[DateTime]("CREATED")
+  def createdBy = column[String]("CREATED_BY")
+
+  def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
+    legalEntity ~ active ~ created ~ createdBy <> (Organisation.apply _, Organisation.unapply _)
 
   def forInsert = * returning id
 }
