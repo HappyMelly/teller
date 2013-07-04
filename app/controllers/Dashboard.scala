@@ -14,6 +14,13 @@ object Dashboard extends Controller with SecureSocial {
   }
 
   /**
+   * API documentation page.
+   */
+  def api = SecuredAction { implicit request ⇒
+    Ok(views.html.api(request.user))
+  }
+
+  /**
    * Dashboard page - logged-in home page.
    */
   def index = SecuredAction { implicit request ⇒
