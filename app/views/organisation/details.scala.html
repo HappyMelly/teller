@@ -1,15 +1,20 @@
 @(user: securesocial.core.Identity, organisation: Organisation, members: List[Person])(implicit flash: Flash)
+@import templates.Formatters._
 
 @main(organisation.name + " - Organization", Some(user)) {
 
   <div class="span8">
-  <h1>
-    <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
-    @organisation.name
-    @if(!organisation.active) {
-      <span class="label label-warning">deactivated</span>
-    }
-  </h1>
+    <header>
+
+    <h1>
+      <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
+      @organisation.name
+      @if(!organisation.active) {
+        <span class="label label-warning">deactivated</span>
+      }
+    </h1>
+    <p><small>Added by @organisation.createdBy on @organisation.created.format</small></p>
+    </header>
   </div>
 
   <div class="span2">

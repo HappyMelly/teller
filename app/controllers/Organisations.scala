@@ -6,15 +6,19 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
 import models.{ Organisation, Activity }
-import securesocial.core.SecureSocial
+import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
 import play.api.data.Forms._
 import models.Organisation
 import play.api.i18n.Messages
+import org.joda.time.DateTime
 
 object Organisations extends Controller with SecureSocial {
 
-  val organisationForm = Form(mapping(
+  /**
+   * HTML form mapping for creating and editing.
+   */
+  def organisationForm(request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "name" -> nonEmptyText,
     "street1" -> optional(text),
@@ -26,7 +30,9 @@ object Organisations extends Controller with SecureSocial {
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
     "legalEntity" -> default(boolean, false),
-    "active" -> ignored(true))(Organisation.apply)(Organisation.unapply))
+    "active" -> ignored(true),
+    "created" -> ignored(DateTime.now()),
+    "createdBy" -> ignored(request.user.fullName))(Organisation.apply)(Organisation.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -53,14 +59,14 @@ object Organisations extends Controller with SecureSocial {
    * Create page.
    */
   def add = SecuredAction { implicit request ⇒
-    Ok(views.html.organisation.form(request.user, None, organisationForm))
+    Ok(views.html.organisation.form(request.user, None, organisationForm(request)))
   }
 
   /**
    * Create form submits to this action.
    */
   def create = SecuredAction { implicit request ⇒
-    organisationForm.bindFromRequest.fold(
+    organisationForm(request).bindFromRequest.fold(
       formWithErrors ⇒
         BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
       organisation ⇒ {
@@ -73,6 +79,7 @@ object Organisations extends Controller with SecureSocial {
 
   /**
    * Deletes an organisation.
+   * @param id Organisation ID
    */
   def delete(id: Long) = SecuredAction { request ⇒
     Organisation.find(id).map { organisation ⇒
@@ -85,6 +92,7 @@ object Organisations extends Controller with SecureSocial {
 
   /**
    * Details page.
+   * @param id Organisation ID
    */
   def details(id: Long) = SecuredAction { implicit request ⇒
     models.Organisation.find(id).map { organisation ⇒
@@ -97,7 +105,7 @@ object Organisations extends Controller with SecureSocial {
 
   /**
    * Edit page.
-   * @param id The id of the organisation to edit.
+   * @param id Organisation ID
    */
   def edit(id: Long) = TODO
 
@@ -111,8 +119,7 @@ object Organisations extends Controller with SecureSocial {
 
   /**
    * Edit form submits to this action.
-   * @param id
-   * @return
+   * @param id Organisation ID
    */
   def update(id: Long) = TODO
 
