@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity)(implicit flash: Flash)
+@(user: LoginIdentity)(implicit flash: Flash)
 
 @main("API", Some(user)) {
 
@@ -6,14 +6,27 @@
 
   <p>This page documents the JSON-based REST API, for programmatic access to data.</p>
 
+  <h2>Authentication</h2>
+  <p>All API requests require authentication using a user-specific token. Yours is <code>@user.apiToken</code>.</p>
+  <p>You need to pass this token on all requests by adding the <code>api_token</code> query string parameter.</p>
+
+  <table class="table-bordered table">
+   <tr>
+    <th>Example</th>
+    <td>
+      <a href="/api/v1/licensees/mgt30?api_token=@user.apiToken">GET /api/v1/licensees/mgt30?api_token=@user.apiToken</a>
+    </td>
+   </tr>
+  </table>
+
   <h2>Licensees</h2>
 
   <p>The <em>licensees</em> resource is a list of licensees for a particular brand, optionally filtered by date.</p>
 
-  <table class="table">
+  <table class="table table-bordered">
     <tr>
       <th>Request</th>
-      <td><code>GET /licensees/{brand}</code></td>
+      <td><code>GET /api/v1/licensees/{brand}</code></td>
     </tr>
     <tr>
       <th>Request path parameters</th>
@@ -36,8 +49,8 @@
     <tr>
       <th>Examples</th>
       <td>
-        <a href="/licensees/mgt30">/licensees/mgt30</a>
-        <br><a href="/licensees/mgt30?date=2013-01-01">/licensees/mgt30?date=2013-01-01</a>
+        <a href="/api/v1/licensees/mgt30?api_token=@user.apiToken">GET /api/v1/licensees/mgt30</a>
+        <br><a href="/api/v1/licensees/mgt30?date=2013-01-01&api_token=@user.apiToken">GET /api/v1/licensees/mgt30?date=2013-01-01</a>
       </td>
     </tr>
   </table>

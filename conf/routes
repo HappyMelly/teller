@@ -15,7 +15,7 @@ GET /people   controllers.People.index
 
 GET /brands   controllers.Brands.index
 
-GET /licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
+GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 

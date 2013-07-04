@@ -10,7 +10,7 @@ import scala.util.{ Failure, Success, Try }
 /**
  * Content license API.
  */
-object Licenses extends Controller {
+object Licenses extends Controller with ApiAuthentication {
 
   implicit def licenseeWrites = new Writes[Person] {
     def writes(licensee: Person): JsValue = {
@@ -24,7 +24,7 @@ object Licenses extends Controller {
   /**
    * Returns a list of licensees for the given brand on the given date.
    */
-  def licensees(brandCode: String, dateString: Option[String]) = Action {
+  def licensees(brandCode: String, dateString: Option[String]) = TokenSecuredAction { implicit request ⇒
     if (models.Brand.exists(brandCode)) {
       val date = Try(dateString.map(d ⇒ new LocalDate(d)).getOrElse(LocalDate.now()))
       date match {
