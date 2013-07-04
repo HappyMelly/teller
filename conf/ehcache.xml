@@ -1,0 +1,18 @@
+<ehcache updateCheck="false">
+
+    <!-- This configuration makes the cache persistent, so that SecureSocial remembers logins between redeploys. -->
+    <defaultCache
+            maxElementsInMemory="10000"
+            eternal="false"
+            timeToIdleSeconds="120"
+            timeToLiveSeconds="120"
+            overflowToDisk="false"
+            maxElementsOnDisk="10000000"
+            diskPersistent="true"
+            diskExpiryThreadIntervalSeconds="120"
+            memoryStoreEvictionPolicy="LRU"
+            >
+
+            </defaultCache>
+
+</ehcache>
