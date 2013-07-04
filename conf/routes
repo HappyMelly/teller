@@ -1,5 +1,6 @@
 GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
+GET /api     controllers.Dashboard.api
 
 GET /organisations      controllers.Organisations.index
 POST /organisations             controllers.Organisations.create
@@ -13,6 +14,8 @@ POST /organisation/:id/activation   controllers.Organisations.activation(id: Lon
 GET /people   controllers.People.index
 
 GET /brands   controllers.Brands.index
+
+GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 

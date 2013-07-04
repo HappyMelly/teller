@@ -7,11 +7,18 @@ import play.api.Play.current
 /**
  * A person, such as the owner or employee of an organisation.
  */
-case class Brand(id: Option[Long], name: String, coordinatorId: Long)
+case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long)
 
 case class BrandView(name: String, coordinator: Person)
 
 object Brand {
+
+  /**
+   * Returns true if and only if there is a brand with the given code.
+   */
+  def exists(code: String): Boolean = withSession { implicit session ⇒
+    Query(Query(Brands).filter(_.code === code).exists).first
+  }
 
   def findAll: List[BrandView] = withSession { implicit session ⇒
     val query = for {
@@ -28,10 +35,11 @@ object Brand {
 object Brands extends Table[Brand]("BRAND") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def code = column[String]("CODE")
   def name = column[String]("NAME")
   def coordinatorId = column[Long]("COORDINATOR_ID")
 
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
-  def * = id.? ~ name ~ coordinatorId <> (Brand.apply _, Brand.unapply _)
+  def * = id.? ~ code ~ name ~ coordinatorId <> (Brand.apply _, Brand.unapply _)
 }

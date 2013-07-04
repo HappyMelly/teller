@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity)(implicit flash: Flash)
+@(user: LoginIdentity)(implicit flash: Flash)
 
 @main("About", Some(user)) {
 
@@ -7,6 +7,8 @@
   <p>This application was built for Happy Melly by <a href="http://lunatech.com/">Lunatech</a>.</p>
 
   <p>Happy Melly logo by Happy Melly.</p>
+
+  <p>Your API authentication token is <code>@user.apiToken</code></p>
 
 
   <h2>Colofon</h2>

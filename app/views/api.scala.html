@@ -1,0 +1,58 @@
+@(user: LoginIdentity)(implicit flash: Flash)
+
+@main("API", Some(user)) {
+
+  <h1>API</h1>
+
+  <p>This page documents the JSON-based REST API, for programmatic access to data.</p>
+
+  <h2>Authentication</h2>
+  <p>All API requests require authentication using a user-specific token. Yours is <code>@user.apiToken</code>.</p>
+  <p>You need to pass this token on all requests by adding the <code>api_token</code> query string parameter.</p>
+
+  <table class="table-bordered table">
+   <tr>
+    <th>Example</th>
+    <td>
+      <a href="/api/v1/licensees/mgt30?api_token=@user.apiToken">GET /api/v1/licensees/mgt30?api_token=@user.apiToken</a>
+    </td>
+   </tr>
+  </table>
+
+  <h2>Licensees</h2>
+
+  <p>The <em>licensees</em> resource is a list of licensees for a particular brand, optionally filtered by date.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/licensees/{brand}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <code>brand</code> a brand code to return licensees for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td><code>date</code> a date to filter licensees for licenses active on that date, in YYYY-MM-DD format, default today</td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>A JSON array of licensee objects, with properties <code>country</code> (ISO 8166-2 country code), <code>first_name</code> and <code>last_name</code></td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/licensees/mgt30?api_token=@user.apiToken">GET /api/v1/licensees/mgt30</a>
+        <br><a href="/api/v1/licensees/mgt30?date=2013-01-01&api_token=@user.apiToken">GET /api/v1/licensees/mgt30?date=2013-01-01</a>
+      </td>
+    </tr>
+  </table>
+
+}
