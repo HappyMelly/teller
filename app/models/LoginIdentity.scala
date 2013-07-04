@@ -117,7 +117,7 @@ object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENTITY") {
             if u.uid is existingUser.uid
           } yield u
 
-          val updatedUser = user.copy(uid = existingUser.uid)
+          val updatedUser = user.copy(uid = existingUser.uid, apiToken = existingUser.apiToken)
           userRow.update(updatedUser)
           updatedUser
         }
