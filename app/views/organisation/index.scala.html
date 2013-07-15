@@ -1,6 +1,7 @@
 @(user: securesocial.core.Identity, organisations: List[Organisation])(implicit flash: Flash)
 
 @main("Organizations", Some(user)) {
+
   <div class="span7">
   <h1>Organizations</h1>
   </div>
@@ -8,6 +9,7 @@
       <a class="btn btn-success" href="@routes.Organisations.add()">
       <i class="icon-plus icon-white"></i>Add Organization</a>
   </div>
+
   <div class="span10">
   @if(!organisations.isEmpty) {
 

@@ -17,7 +17,7 @@ object Licenses extends Controller with ApiAuthentication {
       Json.obj(
         "first_name" -> licensee.firstName,
         "last_name" -> licensee.lastName,
-        "country" -> licensee.countryCode)
+        "country" -> licensee.address.countryCode)
     }
   }
 

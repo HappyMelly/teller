@@ -1,0 +1,51 @@
+@(user: securesocial.core.Identity, id: Option[Long], personForm: Form[Person])(implicit flash: Flash)
+
+@import views.Countries
+@import views.ViewHelpers._
+
+@main("Organizations", Some(user)) {
+
+  @defining(personForm.value.map(person => "Pesron %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
+    <h1>@personName</h1>
+
+    @if(personForm.hasErrors) {
+      <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Please fix the validation errors.
+      </div>
+    }
+
+    @helper.form(action = routes.People.create) {
+      @helper.inputText(personForm("firstName"), '_label -> "First name")
+      @helper.inputText(personForm("lastName"), '_label -> "Last name")
+      @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
+      @helper.inputText(personForm("address.street1"), '_label -> "Address line 1")
+      @helper.inputText(personForm("address.street2"), '_label -> "Address line 2")
+      @helper.inputText(personForm("address.city"), '_label -> "City")
+      @helper.inputText(personForm("address.province"), '_label -> "Province or state")
+      @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5")
+      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5")
+      @helper.inputText(personForm("twitterHandle"), '_label -> "Twitter user name", 'placeholder -> "Happy_Melly")
+      @helper.inputText(personForm("facebookUrl"), '_label -> "Facebook profile", 'class -> "input-xxlarge", 'placeholder -> "http://www.facebook.com/my.profile")
+      @helper.inputText(personForm("linkedInUrl"), '_label -> "LinkedIn profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
+      @helper.inputText(personForm("googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")
+
+      <div class="control-group" id="boardMember_field">
+        <label for="boardMember" class="checkbox">
+          <input type="checkbox" id="boardMember" name="boardMember" value="true">
+          Board member
+        </label>
+      </div>
+
+      <div class="control-group" id="stakeholder_field">
+        <label for="stakeholder" class="checkbox">
+          <input type="checkbox" id="stakeholder" name="stakeholder" value="true">
+          Stakeholder
+        </label>
+      </div>
+
+      <button class="btn btn-primary" type="submit">Save</button>
+    }
+  }
+}

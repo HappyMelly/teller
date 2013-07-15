@@ -16,8 +16,8 @@
         <td>@person.firstName</td>
         <td>@person.lastName</td>
         <td>
-          <img width="16" src="/assets/images/flags/16/@(person.countryCode.toLowerCase).png" align="absmiddle">
-          @Messages("country." + person.countryCode)
+          <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">
+          @Messages("country." + person.address.countryCode)
         </td>
       </tr>
     }

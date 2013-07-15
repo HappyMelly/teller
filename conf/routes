@@ -11,7 +11,9 @@ POST /organisation/:id         controllers.Organisations.update(id: Long)
 POST /organisation/:id/delete   controllers.Organisations.delete(id: Long)
 POST /organisation/:id/activation   controllers.Organisations.activation(id: Long)
 
-GET /people   controllers.People.index
+GET  /people       controllers.People.index
+POST /people       controllers.People.create
+GET  /people/new   controllers.People.add
 
 GET /brands   controllers.Brands.index
 
