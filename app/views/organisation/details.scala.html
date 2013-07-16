@@ -12,20 +12,23 @@
       @if(!organisation.active) {
         <span class="label label-warning">deactivated</span>
       }
+      <a class="btn-small btn"href="@routes.Organisations.edit(organisation.id.get)"><i class="icon-pencil"></i> Edit</a>
     </h1>
     <p><small>Added by @organisation.createdBy on @organisation.created.format</small></p>
     </header>
   </div>
 
-  <div class="span2">
+  <div class="span2 actions">
     <form method="post" action="@routes.Organisations.activation(organisation.id.getOrElse(0))">
       <input name="active" value="@(!organisation.active)" type="hidden">
       @if(organisation.active) {
-        <button class="btn btn-warning" type="submit"><i class="icon-off icon-white"></i> Deactivate</button>
+        <button class="btn btn-block btn-warning" type="submit"><i class="icon-off icon-white"></i> Deactivate</button>
       } else {
-        <button class="btn btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
+        <button class="btn btn-block btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
       }
     </form>
+      <div class="clearfix"></div>
+    <form class="delete" method="post" action="@routes.Organisations.delete(organisation.id.getOrElse(0))"><button class="btn btn-danger btn-block" type="submit"><i class="icon-white icon-trash"></i> Delete</button></form>
   </div>
 
   <div class="span4">
@@ -77,4 +80,11 @@
     }
   </div>
 
+  <script type="text/javascript">
+    $(function() {
+      $('form.delete').submit(function() {
+      return confirm('Delete this organisation? You cannot undo this action.');
+      });
+    });
+  </script>
 }

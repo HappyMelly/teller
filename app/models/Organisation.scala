@@ -7,6 +7,8 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import play.api.db.slick.DB
 import org.joda.time.DateTime
+import play.api.Logger
+import scala.slick.jdbc.ResultSetMutator
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
@@ -21,8 +23,13 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
    * @return The Organisation as it is saved (with the id added if this was an insert)
    */
   def save: Organisation = DB.withSession { implicit session ⇒
-    if (id.isDefined) { // Update
-      Query(Organisations).filter(_.id === id).update(this)
+    if (id.isDefined) {
+      val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
+      val q = filter.map { org ⇒ org.forUpdate }
+      val t = Organisation.unapply(this).get
+      //We need the first 12 out of 14 tuple fields
+      val updateTuple = (t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12)
+      q.update(updateTuple)
       this
     } else { // Insert
       val id = Organisations.forInsert.insert(this)
@@ -94,6 +101,9 @@ object Organisations extends Table[Organisation]("ORGANISATION") {
     legalEntity ~ active ~ created ~ createdBy <> (Organisation.apply _, Organisation.unapply _)
 
   def forInsert = * returning id
+
+  def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
+    legalEntity ~ active
 }
 
 object OrganisationMemberships extends Table[(Option[Long], Long, Long)]("ORGANISATION_MEMBERSHIPS") {

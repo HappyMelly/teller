@@ -30,6 +30,10 @@ td .btn-link {
     border-width: 0;
 }
 
+.actions form {
+    margin-bottom: 1em;
+}
+
 /* Activity stream */
 
 .icon-activity-signup {
