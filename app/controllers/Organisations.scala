@@ -34,25 +34,21 @@ object Organisations extends Controller with SecureSocial {
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredAction {
-    implicit request ⇒
-
-      Organisation.find(id).map {
-        organisation ⇒
-          Form("active" -> boolean).bindFromRequest.fold(
-            form ⇒ {
-              BadRequest("invalid form data")
-            },
-            active ⇒ {
-              Organisation.activate(id, active)
-              Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
-              val message = Messages("success.activate." + active.toString, Messages("models.Organisation"), organisation.name)
-              Redirect(routes.Organisations.details(id)).flashing("success" -> message)
-            })
-      } getOrElse {
-        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
-      }
-  }
+  def activation(id: Long) = SecuredAction { implicit request ⇒
+    Organisation.find(id).map { organisation ⇒
+      Form("active" -> boolean).bindFromRequest.fold(
+        form ⇒ {
+          BadRequest("invalid form data")
+        },
+        active ⇒ {
+          Organisation.activate(id, active)
+          Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+          val message = Messages("success.activate." + active.toString, Messages("models.Organisation"), organisation.name)
+          Redirect(routes.Organisations.details(id)).flashing("success" -> message)
+        })
+    } getOrElse {
+      Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
+    }
 
   /**
    * Create page.
@@ -105,7 +101,7 @@ object Organisations extends Controller with SecureSocial {
           Ok(views.html.organisation.details(request.user, organisation, members))
       } getOrElse {
         //TODO return 404
-        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.organisation.notFound"))
+        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
       }
   }
 

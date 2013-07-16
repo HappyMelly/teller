@@ -35,6 +35,17 @@ case class Person(
   def fullName: String = firstName + " " + lastName
 
   /**
+   * Returns a list of the organisations this person is a member of.
+   */
+  def membership: List[Organisation] = withSession { implicit session ⇒
+    val query = for {
+      membership ← OrganisationMemberships if membership.personId === this.id
+      organisation ← membership.organisation
+    } yield organisation
+    query.sortBy(_.name.toLowerCase).list
+  }
+
+  /**
    * Inserts or updates this person into the database.
    * @return The Person as it is saved (with the ID added if this was an insert)
    */
@@ -51,9 +62,14 @@ case class Person(
 
 object Person {
 
+  def find(id: Long): Option[Person] = withSession { implicit session ⇒
+    Query(People).filter(_.id === id).list.headOption
+  }
+
   def findAll: List[Person] = withSession { implicit session ⇒
     Query(People).sortBy(_.lastName.toLowerCase).list
   }
+
 }
 
 object People extends Table[Person]("PERSON") {

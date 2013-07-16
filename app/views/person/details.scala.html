@@ -1,0 +1,95 @@
+@(user: securesocial.core.Identity, person: Person, organisations: List[Organisation])(implicit flash: Flash)
+@import templates.Formatters._
+
+@main(person.fullName + " - Person", Some(user)) {
+
+  <div class="span8">
+    <header>
+
+    <h1>
+      <img width="32" src="/assets/images/flags/32/@(person.address.countryCode.toLowerCase).png" align="baseline">
+      @person.fullName
+    </h1>
+    <p><small>Added by @person.createdBy on @person.created.format</small></p>
+    </header>
+  </div>
+
+  <div class="span4">
+    @* TODO Extract adress.scala.html template for use here and by organisation/details.scala.html *@
+    <h3>Addresses</h3>
+    <address>
+      <strong>@person.fullName</strong><br>
+      @person.address.street1.map { addressLine =>
+        @addressLine<br>
+      }
+      @person.address.street2.map { addressLine =>
+        @addressLine<br>
+      }
+      @person.address.postCode.map { addressLine =>
+        @addressLine<br>
+      }
+      @person.address.city.map { addressLine =>
+        @addressLine<br>
+      }
+      @person.address.province.map { addressLine =>
+        @addressLine<br>
+      }
+      @Messages("country." + person.address.countryCode)
+    </address>
+
+    <p><strong>E-mail address</strong>
+    <br><a href="mailto:@person.emailAddress">@person.emailAddress</a></p>
+  </div>
+
+  <div class="span4">
+    <h3>Personal details</h3>
+
+    @person.twitterHandle.map { handle =>
+      <p><strong>Twitter</strong>
+      <br><a href="http://twitter.com/@handle">@@@handle</a></p>
+    }
+
+    @if(person.facebookUrl.isDefined || person.linkedInUrl.isDefined || person.googlePlusUrl.isDefined) {
+      <p><strong>Social networks</strong>
+
+      @person.facebookUrl.map { url =>
+        <br><a href="@url">Facebook</a>
+      }
+
+      @person.linkedInUrl.map { url =>
+        <br><a href="@url">LinkedIn</a>
+      }
+
+      @person.googlePlusUrl.map { url =>
+        <br><a href="@url">Google+</a>
+      }
+      </p>
+    }
+
+    <p><strong>Happy Melly Roles</strong>
+    @if(person.boardMember) { <br>Board member }
+    @if(person.stakeholder) { <br>Stakeholder }
+    </p>
+  </div>
+
+  <div class="span8">
+    @person.bio.map { text =>
+      <h3>Bio</h3>
+      <p>@text.markdown</p>
+    }
+
+    @person.interests.map { text =>
+      <h3>Interests</h3>
+      <p>@text.markdown</p>
+    }
+  </div>
+
+  <div class="span8">
+    <h3>Organizations</h3>
+    @if(organisations.isEmpty) {
+      <p>@person.fullName has no organizations.</p>
+    } else {
+      @views.html.organisation.table(organisations)
+    }
+  </div>
+}

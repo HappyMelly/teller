@@ -26,7 +26,20 @@
       @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
       @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5")
       @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5")
-      @helper.inputText(personForm("twitterHandle"), '_label -> "Twitter user name", 'placeholder -> "Happy_Melly")
+
+      <div class="control-group @if(personForm("twitterHandle").hasErrors) {error}" id="twitterHandle">
+        <label for="twitterHandle">Twitter user name</label>
+        <div class="input-prepend">
+          <span class="add-on">@@</span>
+          <input type="text" id="twitterHandle" name="twitterHandle" value="@personForm("twitterHandle").value.getOrElse("")" placeholder="MyTwitter">
+        </div>
+        <span class="help-inline">
+          @if(personForm("twitterHandle").hasErrors) {
+            @personForm("twitterHandle").errors.map(error => Messages(error.message)).mkString(", ")
+          }
+        </span>
+      </div>
+
       @helper.inputText(personForm("facebookUrl"), '_label -> "Facebook profile", 'class -> "input-xxlarge", 'placeholder -> "http://www.facebook.com/my.profile")
       @helper.inputText(personForm("linkedInUrl"), '_label -> "LinkedIn profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
       @helper.inputText(personForm("googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")

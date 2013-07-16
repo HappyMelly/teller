@@ -55,7 +55,7 @@ td .btn-link {
 .inactive, .inactive a {
     color: #bbb;
 }
-.inactive img {
+.inactive img, .inactive [class^="icon-"], .inactive [class*=" icon-"] {
     -webkit-filter: grayscale();
     opacity: 0.5;
 }
