@@ -27,7 +27,8 @@
 
             <div class="control-group  " id="legalEntity_field">
               <label for="legalEntity" class="checkbox">
-                <input type="checkbox" id="legalEntity" name="legalEntity" value="true">
+                <input type="checkbox" id="legalEntity" name="legalEntity" value="true"
+                  @if(orgForm("legalEntity").value.exists(_ == "true")){checked} >
                 Legal entity
               </label>
             </div>
