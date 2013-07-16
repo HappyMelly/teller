@@ -7,7 +7,6 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import org.joda.time.DateTime
-import play.api.Logger
 
 object Organisations extends Controller with SecureSocial {
 
@@ -28,7 +27,9 @@ object Organisations extends Controller with SecureSocial {
     "legalEntity" -> default(boolean, false),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName))(Organisation.apply)(Organisation.unapply))
+    "createdBy" -> ignored(request.user.fullName),
+    "updated" -> ignored(DateTime.now()),
+    "updatedBy" -> ignored(request.user.fullName))(Organisation.apply)(Organisation.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.

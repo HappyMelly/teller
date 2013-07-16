@@ -9,12 +9,12 @@
     <h1>
       <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
       @organisation.name
-      @if(!organisation.active) {
-        <span class="label label-warning">deactivated</span>
-      }
       <a class="btn-small btn"href="@routes.Organisations.edit(organisation.id.get)"><i class="icon-pencil"></i> Edit</a>
     </h1>
-    <p><small>Added by @organisation.createdBy on @organisation.created.format</small></p>
+    <p><small>Added by @organisation.createdBy on @organisation.created.format <br> Updated by @organisation.updatedBy on @organisation.updated.format</small></p>
+    <p>@if(!organisation.active) {
+        <span class="label label-warning">This organisation is deactivated</span>
+    }</p>
     </header>
   </div>
 
