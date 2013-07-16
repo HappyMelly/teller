@@ -49,6 +49,7 @@ object Organisations extends Controller with SecureSocial {
     } getOrElse {
       Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
     }
+  }
 
   /**
    * Create page.

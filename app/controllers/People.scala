@@ -1,6 +1,6 @@
 package controllers
 
-import models.{ Activity, Address, Person }
+import models.{ Organisation, Activity, Address, Person }
 import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data.Form
@@ -43,6 +43,28 @@ object People extends Controller with SecureSocial {
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName)) (Person.apply)(Person.unapply))
+
+  /**
+   * Form target for toggling whether an organisation is active.
+   */
+  def activation(id: Long) = SecuredAction {
+    implicit request ⇒
+
+      Person.find(id).map { person ⇒
+        Form("active" -> boolean).bindFromRequest.fold(
+          form ⇒ {
+            BadRequest("invalid form data")
+          },
+          active ⇒ {
+            Person.activate(id, active)
+            Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
+            val message = Messages("success.activate." + active.toString, Messages("models.Person"), person.fullName)
+            Redirect(routes.People.details(id)).flashing("success" -> message)
+          })
+      } getOrElse {
+        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
+      }
+  }
 
   /**
    * Create page.
