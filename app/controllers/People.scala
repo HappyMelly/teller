@@ -5,8 +5,10 @@ import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
-import securesocial.core.{ SecuredRequest, SecureSocial }
+import play.api.data.validation.Constraints
 import play.api.i18n.Messages
+import securesocial.core.{ SecureSocial, SecuredRequest }
+import scala.Predef._
 
 object People extends Controller with SecureSocial {
 
@@ -32,7 +34,7 @@ object People extends Controller with SecureSocial {
     "address" -> addressMapping,
     "bio" -> optional(text),
     "interests" -> optional(text),
-    "twitterHandle" -> optional(text),
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(text),
     "linkedInUrl" -> optional(text),
     "googlePlusUrl" -> optional(text),
@@ -62,6 +64,18 @@ object People extends Controller with SecureSocial {
         val message = Messages("success.insert", Messages("models.Person"), updatedPerson.fullName)
         Redirect(routes.People.index()).flashing("success" -> message)
       })
+  }
+
+  /**
+   * Details page.
+   * @param id Person ID
+   */
+  def details(id: Long) = SecuredAction { implicit request ⇒
+    models.Person.find(id).map { person ⇒
+      Ok(views.html.person.details(request.user, person, person.membership))
+    } getOrElse {
+      Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))
+    }
   }
 
   def index = SecuredAction { implicit request ⇒

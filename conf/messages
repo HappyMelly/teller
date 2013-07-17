@@ -8,8 +8,10 @@ success.delete = {0} ‘{1}’ deleted!
 success.insert = {0} ‘{1}’ added!
 success.update = {0} ‘{1}’ updated!
 
-# Controller messages
-error.organisation.notFound = Organization not found
+# Controller error messages
+error.notFound = {0} not found
+
+# Controller info messages
 success.activate.false = {0} ‘{1}’ deactivated
 success.activate.true = {0} ‘{1}’ activated
 organisation.created = Organisation ‘{0}’ added
@@ -25,6 +27,7 @@ activity.deactivate = {0} deactivated {1}
 
 # Play form validation error overrides
 error.email=Valid e-mail address required
+error.twitter = Valid Twitter user name required
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org

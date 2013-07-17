@@ -115,7 +115,7 @@ object OrganisationMemberships extends Table[(Option[Long], Long, Long)]("ORGANI
   def organisationId = column[Long]("ORGANISATION_ID")
 
   def person = foreignKey("PERSON_FK", personId, People)(_.id)
-  def organisation = foreignKey("ORGANISATION_FK", organisationId, People)(_.id)
+  def organisation = foreignKey("ORGANISATION_FK", organisationId, Organisations)(_.id)
 
   def * = id.? ~ personId ~ organisationId
 }

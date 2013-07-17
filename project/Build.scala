@@ -17,7 +17,8 @@ object ApplicationBuild extends Build {
     "mysql" % "mysql-connector-java" % "5.1.21",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
-    "securesocial" %% "securesocial" % "master-SNAPSHOT"
+    "securesocial" %% "securesocial" % "master-SNAPSHOT",
+    "org.pegdown" % "pegdown" % "1.2.1"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(
