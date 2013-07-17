@@ -1,8 +1,6 @@
 # --- !Ups
 
 alter table PERSON add column EMAIL_ADDRESS VARCHAR(254) NOT NULL;
-update PERSON set EMAIL_ADDRESS = concat(lower(FIRST_NAME), '.', lower(LAST_NAME), '@happymelly.com') where EMAIL_ADDRESS is null;
-
 alter table PERSON add column STREET_1 VARCHAR(254);
 alter table PERSON add column STREET_2 VARCHAR(254);
 alter table PERSON add column CITY VARCHAR(254);
