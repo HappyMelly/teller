@@ -62,6 +62,16 @@ case class Person(
 
 object Person {
 
+  /**
+   * Activates the organisation, if the parameter is true, or deactivates it.
+   */
+  def activate(id: Long, active: Boolean): Unit = withSession { implicit session ⇒
+    val query = for {
+      person ← People if person.id === id
+    } yield person.active
+    query.update(active)
+  }
+
   def find(id: Long): Option[Person] = withSession { implicit session ⇒
     Query(People).filter(_.id === id).list.headOption
   }
