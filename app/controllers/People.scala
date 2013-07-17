@@ -89,6 +89,18 @@ object People extends Controller with SecureSocial {
   }
 
   /**
+   * Deletes an person.
+   */
+  def delete(id: Long) = SecuredAction { request ⇒
+    Person.find(id).map { person ⇒
+      Person.delete(id)
+      Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
+      val message = Messages("success.delete", Messages("models.Person"), person.fullName)
+      Redirect(routes.People.index).flashing("success" -> message)
+    }.getOrElse(NotFound)
+  }
+
+  /**
    * Details page.
    * @param id Person ID
    */

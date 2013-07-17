@@ -13,10 +13,11 @@ POST /organisation/:id/activation   controllers.Organisations.activation(id: Lon
 
 GET  /people       controllers.People.index
 
-POST /person/new   controllers.People.create
-GET  /person/new   controllers.People.add
-GET  /person/:id   controllers.People.details(id: Long)
+GET  /person/new              controllers.People.add
+POST /person/new              controllers.People.create
+GET  /person/:id              controllers.People.details(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
+POST /person/:id/delete       controllers.People.delete(id: Long)
 
 GET /brands   controllers.Brands.index
 
