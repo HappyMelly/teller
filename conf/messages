@@ -25,6 +25,11 @@ activity.delete = {0} removed {1}
 activity.activate = {0} activated {1}
 activity.deactivate = {0} deactivated {1}
 
+# Form constraint descriptions and errors
+constraint.brand.code = Capital letters and numbers
+constraint.brand.code.error = Capital letters and numbers only
+constraint.brand.code.exists = A brand with code {0} already exists
+
 # Play form validation error overrides
 error.email=Valid e-mail address required
 error.twitter = Valid Twitter user name required

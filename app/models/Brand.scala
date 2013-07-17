@@ -60,4 +60,6 @@ object Brands extends Table[Brand]("BRAND") {
     created ~ createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
 
   def autoInc = * returning id
+
+  def uniqueCode = index("IDX_CODE", code, unique = true)
 }
