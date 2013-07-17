@@ -3,11 +3,20 @@ package models
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
+import org.joda.time.DateTime
+import com.github.tototoshi.slick.JodaSupport._
 
 /**
  * A person, such as the owner or employee of an organisation.
  */
-case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long)
+case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
+  created: DateTime, createdBy: String, updated: DateTime, udpatedBy: String) {
+
+  def insert = withSession { implicit session ⇒
+    val id = Brands.autoInc.insert(this)
+    this.copy(id = Some(id))
+  }
+}
 
 case class BrandView(name: String, coordinator: Person)
 
@@ -39,7 +48,16 @@ object Brands extends Table[Brand]("BRAND") {
   def name = column[String]("NAME")
   def coordinatorId = column[Long]("COORDINATOR_ID")
 
+  def created = column[DateTime]("CREATED")
+  def createdBy = column[String]("CREATED_BY")
+
+  def updated = column[DateTime]("UPDATED")
+  def updatedBy = column[String]("UPDATED_BY")
+
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
-  def * = id.? ~ code ~ name ~ coordinatorId <> (Brand.apply _, Brand.unapply _)
+  def * = id.? ~ code ~ name ~ coordinatorId ~
+    created ~ createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
+
+  def autoInc = * returning id
 }

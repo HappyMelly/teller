@@ -19,7 +19,9 @@ GET  /person/:id              controllers.People.details(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
 
-GET /brands   controllers.Brands.index
+GET  /brands      controllers.Brands.index
+POST /brand/add   controllers.Brands.create
+GET  /brand/add   controllers.Brands.add
 
 GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 

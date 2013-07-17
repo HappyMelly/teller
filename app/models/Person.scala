@@ -86,6 +86,9 @@ object Person {
     Query(People).sortBy(_.lastName.toLowerCase).list
   }
 
+  def findAllActive: List[Person] = withSession { implicit session ⇒
+    Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase).list
+  }
 }
 
 object People extends Table[Person]("PERSON") {
