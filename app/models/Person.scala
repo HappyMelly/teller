@@ -72,6 +72,12 @@ object Person {
     query.update(active)
   }
 
+  def delete(id: Long) {
+    withSession { implicit session ⇒
+      People.where(_.id === id).delete
+    }
+  }
+
   def find(id: Long): Option[Person] = withSession { implicit session ⇒
     Query(People).filter(_.id === id).list.headOption
   }
