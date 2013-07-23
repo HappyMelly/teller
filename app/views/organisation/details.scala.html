@@ -84,11 +84,5 @@
     }
   </div>
 
-  <script type="text/javascript">
-    $(function() {
-      $('form.delete').submit(function() {
-      return confirm('Delete this organisation? You cannot undo this action.');
-      });
-    });
-  </script>
+	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

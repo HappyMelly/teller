@@ -10,11 +10,13 @@
     <i class="icon-plus icon-white"></i>Add Person</a>
   </div>
 
-  <div class="span8">
+  <div class="span10">
     @if(people.isEmpty) {
       <p>There are no people</p>
     } else {
       @table(people)
     }
   </div>
+
+	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
 }
