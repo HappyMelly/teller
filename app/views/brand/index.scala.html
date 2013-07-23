@@ -2,10 +2,16 @@
 
 @main("Brands", Some(user)) {
 
-  <div class="span8">
+  <div class="span7">
   <h1>Brands</h1>
+  </div>
+  <div class="span3">
+      <a class="btn btn-success" href="@routes.Brands.add()">
+          <i class="icon-plus icon-white"></i>Add Brand</a>
+  </div>
   @if(!brands.isEmpty) {
 
+  <div class="span10">
     <table id="brands" class="datatables table table-bordered">
     <thead>
       <tr>
