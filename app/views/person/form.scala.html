@@ -15,7 +15,7 @@
       </div>
     }
 
-    @helper.form(action = routes.People.create) {
+		@helper.form(action = id.map(id => routes.People.update(id)).getOrElse(routes.People.create())) {
       @helper.inputText(personForm("firstName"), '_label -> "First name")
       @helper.inputText(personForm("lastName"), '_label -> "Last name")
       @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")

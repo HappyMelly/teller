@@ -42,7 +42,7 @@ object People extends Controller with SecureSocial {
     "stakeholder" -> default(boolean, true),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName)) (Person.apply)(Person.unapply))
+    "createdBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -156,6 +156,32 @@ object People extends Controller with SecureSocial {
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))
     }
+  }
+
+  /**
+   * Edit page.
+   * @param id Person ID
+   */
+  def edit(id: Long) = SecuredAction { implicit request ⇒
+    Person.find(id).map { person ⇒
+      Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
+    }.getOrElse(NotFound)
+  }
+
+  /**
+   * Edit form submits to this action.
+   * @param id Person ID
+   */
+  def update(id: Long) = SecuredAction { implicit request ⇒
+    personForm(request).bindFromRequest.fold(
+      formWithErrors ⇒
+        BadRequest(views.html.person.form(request.user, None, formWithErrors)),
+      person ⇒ {
+        person.copy(id = Some(id)).save
+        Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
+        val message = Messages("success.update", Messages("models.Person"), person.fullName)
+        Redirect(routes.People.details(id)).flashing("success" -> message)
+      })
   }
 
   def index = SecuredAction { implicit request ⇒
