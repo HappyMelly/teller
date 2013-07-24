@@ -2,6 +2,8 @@ package views
 
 object Countries {
 
+  val UnknownRegion = "ZZ"
+
   val all =
     List(("AF", "Afghanistan"),
       ("AL", "Albania"),

@@ -12,6 +12,7 @@
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         Please fix the validation errors.
+				@personForm.errors
       </div>
     }
 
@@ -46,14 +47,16 @@
 
       <div class="control-group" id="boardMember_field">
         <label for="boardMember" class="checkbox">
-          <input type="checkbox" id="boardMember" name="boardMember" value="true">
+          <input type="checkbox" id="boardMember" name="boardMember" value="true"
+					@if(personForm("boardMember").value.exists(_ == "true")){checked}>
           Board member
         </label>
       </div>
 
       <div class="control-group" id="stakeholder_field">
         <label for="stakeholder" class="checkbox">
-          <input type="checkbox" id="stakeholder" name="stakeholder" value="true">
+          <input type="checkbox" id="stakeholder" name="stakeholder" value="true"
+					@if(personForm("stakeholder").value.exists(_ == "true")){checked}>
           Stakeholder
         </label>
       </div>

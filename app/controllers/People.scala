@@ -16,6 +16,7 @@ object People extends Controller with SecureSocial {
    * HTML form mapping for a person’s address.
    */
   val addressMapping = mapping(
+    "id" -> ignored(Option.empty[Long]),
     "street1" -> optional(text),
     "street2" -> optional(text),
     "city" -> optional(text),
@@ -39,10 +40,12 @@ object People extends Controller with SecureSocial {
     "linkedInUrl" -> optional(text),
     "googlePlusUrl" -> optional(text),
     "boardMember" -> default(boolean, false),
-    "stakeholder" -> default(boolean, true),
+    "stakeholder" -> default(boolean, false),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
+    "createdBy" -> ignored(request.user.fullName),
+    "updated" -> ignored(DateTime.now()),
+    "updatedBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -108,7 +111,7 @@ object People extends Controller with SecureSocial {
       formWithErrors ⇒
         BadRequest(views.html.person.form(request.user, None, formWithErrors)),
       person ⇒ {
-        val updatedPerson = person.save
+        val updatedPerson = person.insert
         Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
         val message = Messages("success.insert", Messages("models.Person"), updatedPerson.fullName)
         Redirect(routes.People.index()).flashing("success" -> message)
@@ -177,7 +180,7 @@ object People extends Controller with SecureSocial {
       formWithErrors ⇒
         BadRequest(views.html.person.form(request.user, None, formWithErrors)),
       person ⇒ {
-        person.copy(id = Some(id)).save
+        person.copy(id = Some(id)).update
         Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
         val message = Messages("success.update", Messages("models.Person"), person.fullName)
         Redirect(routes.People.details(id)).flashing("success" -> message)
