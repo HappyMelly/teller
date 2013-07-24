@@ -17,6 +17,7 @@
       <tr>
         <th>Name</th>
         <th>Co-ordinator</th>
+        <th/>
       </tr>
     </thead>
     <tbody>
@@ -24,6 +25,10 @@
         <tr>
           <td>@brand.name</td>
           <td>@brand.coordinator.lastName, @brand.coordinator.firstName</td>
+          <td><form action="@routes.Brands.delete(brand.id)" method="POST">
+              <button type="submit" class="btn btn-link" @if(brand.licenses.nonEmpty) { disabled="disabled" title="You cannot delete this brand because it has members" }><i class="icon icon-trash"></i> Delete</button>
+
+          </form></td>
         </tr>
       }
     </tbody>

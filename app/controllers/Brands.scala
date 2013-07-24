@@ -27,6 +27,7 @@ object Brands extends Controller with SecureSocial {
     Ok(views.html.brand.index(request.user, brands))
   }
 
+  /** Show all brands **/
   def add = SecuredAction { implicit request ⇒
     Ok(views.html.brand.form(request.user, None, brandsForm))
   }
@@ -44,6 +45,16 @@ object Brands extends Controller with SecureSocial {
         val message = Messages("success.insert", Messages("models.Brand"), savedBrand.name)
         Redirect(routes.Brands.index()).flashing("success" -> message)
       })
+  }
+
+  /** Delete a brand **/
+  def delete(id: Long) = SecuredAction { implicit request ⇒
+    Brand.find(id).map { brand ⇒
+      brand.delete
+      Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
+      val message = Messages("success.delete", Messages("models.Brand"), brand.name)
+      Redirect(routes.Brands.index()).flashing("success" -> message)
+    }.getOrElse(NotFound)
   }
 
 }

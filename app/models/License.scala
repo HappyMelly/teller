@@ -38,6 +38,7 @@ object Licenses extends Table[License]("LICENSE") {
   def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
 
   def * = id.? ~ licenseeId ~ brandId ~ start ~ end <> (License.apply _, License.unapply _)
+  def forJoin = id.? ~ licenseeId.? ~ brandId.? ~ start.? ~ end.?
 
   def forInsert = * returning id
 }

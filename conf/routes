@@ -22,6 +22,7 @@ POST /person/:id/delete       controllers.People.delete(id: Long)
 GET  /brands      controllers.Brands.index
 POST /brand/new   controllers.Brands.create
 GET  /brand/new   controllers.Brands.add
+POST /brand/:id/delete   controllers.Brands.delete(id: Long)
 
 GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 
