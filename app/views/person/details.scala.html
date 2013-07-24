@@ -109,7 +109,9 @@
     @if(organisations.isEmpty) {
       <p>@person.fullName has no organizations.</p>
     } else {
-      @views.html.organisation.table(organisations)
+      @views.html.organisation.table(organisations) { organisation =>
+				<a href="@routes.People.deleteMembership(person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
+			}
     }
   </div>
 

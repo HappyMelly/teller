@@ -6,15 +6,17 @@
   <h1>Organizations</h1>
   </div>
   <div class="span3">
-      <a class="btn btn-success" href="@routes.Organisations.add()">
-      <i class="icon-plus icon-white"></i>Add Organization</a>
+    <a class="btn btn-success" href="@routes.Organisations.add()">
+    <i class="icon-plus icon-white"></i>Add Organization</a>
   </div>
 
   <div class="span10">
     @if(organisations.isEmpty) {
       <p>There are no organisations</p>
     } else {
-      @table(organisations)
+      @table(organisations) { organisation =>
+				<a href="@routes.Organisations.edit(organisation.id.get)"><i class="icon-pencil"></i> Edit</a>
+			}
     }
   </div>
 

@@ -1,4 +1,4 @@
-@(organisations: List[Organisation])
+@(organisations: List[Organisation])(actions: (Organisation) => Html)
 
 @if(!organisations.isEmpty) {
 
@@ -23,7 +23,7 @@
       @Messages("country." + organisation.countryCode)
     </td>
     <td>
-      <a href="@routes.Organisations.edit(organisation.id.get)"><i class="icon-pencil"></i> Edit</a>
+      @actions(organisation)
     </td>
     </tr>
     }

@@ -19,6 +19,8 @@ GET  /person/:id              controllers.People.details(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
 
+GET  /person/:id/membership/:organisationId/delete   controllers.People.deleteMembership(id: Long, organisationId: Long)
+
 GET  /brands      controllers.Brands.index
 POST /brand/new   controllers.Brands.create
 GET  /brand/new   controllers.Brands.add

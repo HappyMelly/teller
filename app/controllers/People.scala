@@ -101,6 +101,21 @@ object People extends Controller with SecureSocial {
   }
 
   /**
+   * Deletes an person’s organisation membership.
+   */
+  def deleteMembership(id: Long, organisationId: Long) = SecuredAction { request ⇒
+    Person.find(id).map { person ⇒
+      Organisation.find(organisationId).map { organisation ⇒
+        person.deleteMembership(organisationId)
+        val activityObject = Messages("activity.relationship", person.fullName, organisation.name)
+        Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val message = Messages("success.deleteRelationship", person.fullName, organisation.name)
+        Redirect(routes.People.index).flashing("success" -> message)
+      }
+    }.flatten.getOrElse(NotFound)
+  }
+
+  /**
    * Details page.
    * @param id Person ID
    */

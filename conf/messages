@@ -14,6 +14,7 @@ error.notFound = {0} not found
 # Controller info messages
 success.activate.false = {0} ‘{1}’ deactivated
 success.activate.true = {0} ‘{1}’ activated
+success.deleteRelationship = {0} removed from {1}
 organisation.created = Organisation ‘{0}’ added
 organisation.errors = Please correct the form below
 
@@ -24,6 +25,7 @@ activity.update = {0} updated {1}
 activity.delete = {0} removed {1}
 activity.activate = {0} activated {1}
 activity.deactivate = {0} deactivated {1}
+activity.relationship = {0} from {1}
 
 # Form constraint descriptions and errors
 constraint.brand.code = Capital letters and numbers

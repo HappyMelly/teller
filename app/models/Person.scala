@@ -35,6 +35,15 @@ case class Person(
   def fullName: String = firstName + " " + lastName
 
   /**
+   * Removes this person’s membership in the given organisation.
+   */
+  def deleteMembership(organisationId: Long): Unit = {
+    withSession { implicit session ⇒
+      OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
+    }
+  }
+
+  /**
    * Returns a list of the organisations this person is a member of.
    */
   def membership: List[Organisation] = withSession { implicit session ⇒
@@ -72,7 +81,7 @@ object Person {
     query.update(active)
   }
 
-  def delete(id: Long) {
+  def delete(id: Long): Unit = {
     withSession { implicit session ⇒
       People.where(_.id === id).delete
     }
