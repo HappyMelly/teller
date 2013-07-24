@@ -35,6 +35,15 @@ case class Person(
   def fullName: String = firstName + " " + lastName
 
   /**
+   * Associates this person with given organisation.
+   */
+  def addMembership(organisationId: Long): Unit = {
+    withSession { implicit session ⇒
+      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
+    }
+  }
+
+  /**
    * Removes this person’s membership in the given organisation.
    */
   def deleteMembership(organisationId: Long): Unit = {

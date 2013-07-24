@@ -118,4 +118,5 @@ object OrganisationMemberships extends Table[(Option[Long], Long, Long)]("ORGANI
   def organisation = foreignKey("ORGANISATION_FK", organisationId, Organisations)(_.id)
 
   def * = id.? ~ personId ~ organisationId
+  def forInsert = personId ~ organisationId returning id
 }
