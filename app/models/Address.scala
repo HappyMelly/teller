@@ -12,9 +12,13 @@ case class Address(
   city: Option[String] = None,
   province: Option[String] = None,
   postCode: Option[String] = None,
-  countryCode: String = Countries.UnknownRegion)
+  countryCode: String)
 
 object Address {
+
+  def find(id: Long): Address = withSession { implicit session ⇒
+    Query(Addresses).filter(_.id === id).first
+  }
 
   def insert(address: Address): Address = withSession { implicit session ⇒
     val id = Addresses.forInsert.insert(address)
