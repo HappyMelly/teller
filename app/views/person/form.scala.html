@@ -12,7 +12,6 @@
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         Please fix the validation errors.
-				@personForm.errors
       </div>
     }
 
@@ -25,8 +24,8 @@
       @helper.inputText(personForm("address.city"), '_label -> "City")
       @helper.inputText(personForm("address.province"), '_label -> "Province or state")
       @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
-      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5")
-      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5")
+      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
+      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
 
       <div class="control-group @if(personForm("twitterHandle").hasErrors) {error}" id="twitterHandle">
         <label for="twitterHandle">Twitter user name</label>
