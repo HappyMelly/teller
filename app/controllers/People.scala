@@ -1,6 +1,6 @@
 package controllers
 
-import models.{ Organisation, Activity, Address, Person }
+import models.{ Activity, Address, Organisation, Person }
 import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data.Form
@@ -178,7 +178,7 @@ object People extends Controller with SecureSocial {
   def update(id: Long) = SecuredAction { implicit request ⇒
     personForm(request).bindFromRequest.fold(
       formWithErrors ⇒
-        BadRequest(views.html.person.form(request.user, None, formWithErrors)),
+        BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
       person ⇒ {
         person.copy(id = Some(id)).update
         Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)

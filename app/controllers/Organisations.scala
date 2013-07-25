@@ -136,7 +136,7 @@ object Organisations extends Controller with SecureSocial {
     implicit request ⇒
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
+          BadRequest(views.html.organisation.form(request.user, Some(id), formWithErrors)),
         organisation ⇒ {
           organisation.copy(id = Some(id)).save
           Activity.insert(request.user.fullName, Activity.Predicate.Updated, organisation.name)

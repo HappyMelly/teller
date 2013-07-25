@@ -80,7 +80,6 @@ case class Person(
    * Updates this person in the database and returns the saved person.
    */
   def update: Person = DB.withSession { implicit session ⇒
-
     session.withTransaction {
 
       val addressId = People.filter(_.id === this.id).map(_.addressId).first
@@ -92,9 +91,8 @@ case class Person(
 
       val p = Person.unapply(this).get
       // We need to skip the 15th and 16th fields (created, createdBy)
-      val personUpdateTuple = (p._1, p._2, p._3, p._4, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._17, p._18)
+      val personUpdateTuple = (p._2, p._3, p._4, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._17, p._18)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
-      Logger.debug("sql = " + updateQuery.updateStatement)
       updateQuery.update(personUpdateTuple)
       this
     }
@@ -191,6 +189,6 @@ object People extends Table[Person]("PERSON") {
   def forInsert = firstName ~ lastName ~ emailAddress ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
     linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ active ~ created ~ createdBy ~ updated ~ updatedBy returning id
 
-  def forUpdate = id.? ~ firstName ~ lastName ~ emailAddress ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
-    linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ updated ~ updatedBy
+  def forUpdate = firstName ~ lastName ~ emailAddress ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl ~ boardMember ~ stakeholder ~ updated ~ updatedBy
 }
