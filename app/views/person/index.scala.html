@@ -14,7 +14,9 @@
     @if(people.isEmpty) {
       <p>There are no people</p>
     } else {
-      @table(people)
+      @table(people) { person =>
+				@* TODO Person edit *@
+			}
     }
   </div>
 

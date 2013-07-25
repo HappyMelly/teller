@@ -76,24 +76,28 @@ object People extends Controller with SecureSocial {
   /**
    * Deletes an person’s organisation membership.
    */
-  def addMembership(id: Long) = SecuredAction { implicit request ⇒
-    Person.find(id).map { person ⇒
+  def addMembership = SecuredAction { implicit request ⇒
 
-      val organisationForm = Form(longNumber.withPrefix("organisationId"))
+    val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
 
-      organisationForm.bindFromRequest.fold(
-        errors ⇒ BadRequest("organisationId missing"),
-        organisationId ⇒ {
+    membershipForm.bindFromRequest.fold(
+      errors ⇒ BadRequest("organisationId missing"),
+      {
+        case (page, personId, organisationId) ⇒ {
+          Person.find(personId).map { person ⇒
+            Organisation.find(organisationId).map { organisation ⇒
+              person.addMembership(organisationId)
+              val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
+              Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val message = Messages("success.addRelationship", person.fullName, organisation.name)
 
-          Organisation.find(organisationId).map { organisation ⇒
-            person.addMembership(organisationId)
-            val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
-            Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-            val message = Messages("success.addRelationship", person.fullName, organisation.name)
-            Redirect(routes.People.details(id)).flashing("success" -> message)
+              // Redirect to the page we came from - either the person or organisation details page.
+              val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+              Redirect(action).flashing("success" -> message)
+            }.getOrElse(NotFound)
           }.getOrElse(NotFound)
-        })
-    }.getOrElse(NotFound)
+        }
+      })
   }
 
   /**
@@ -126,14 +130,17 @@ object People extends Controller with SecureSocial {
   /**
    * Deletes an person’s organisation membership.
    */
-  def deleteMembership(id: Long, organisationId: Long) = SecuredAction { request ⇒
-    Person.find(id).map { person ⇒
+  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredAction { request ⇒
+    Person.find(personId).map { person ⇒
       Organisation.find(organisationId).map { organisation ⇒
         person.deleteMembership(organisationId)
         val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
         Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
         val message = Messages("success.deleteRelationship", person.fullName, organisation.name)
-        Redirect(routes.People.details(id)).flashing("success" -> message)
+
+        // Redirect to the page we came from - either the person or organisation details page.
+        val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+        Redirect(action).flashing("success" -> message)
       }
     }.flatten.getOrElse(NotFound)
   }
@@ -144,7 +151,7 @@ object People extends Controller with SecureSocial {
    */
   def details(id: Long) = SecuredAction { implicit request ⇒
     models.Person.find(id).map { person ⇒
-      val otherOrganisations = Organisation.findAll.filterNot(organisation ⇒ person.membership.contains(organisation))
+      val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
       Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations))
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))

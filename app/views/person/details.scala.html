@@ -110,11 +110,13 @@
       <p>@person.fullName has no organizations.</p>
     } else {
       @views.html.organisation.table(organisations) { organisation =>
-				<a href="@routes.People.deleteMembership(person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
+				<a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
 			}
     }
-		<form class="form-inline" method="POST" action="@routes.People.addMembership(person.id.get)">
+		<form class="form-inline" method="POST" action="@routes.People.addMembership">
 			<p>
+				<input type="hidden" name="page" value="person">
+				<input type="hidden" name="personId" value="@person.id.get">
 				<select name="organisationId">
 					@for(organisation <- otherOrganisations) {
 						<option value="@organisation.id">@organisation.name</option>

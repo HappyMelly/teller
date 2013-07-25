@@ -1,4 +1,4 @@
-@(people: List[Person])
+@(people: List[Person])(actions: (Person) => Html)
 
 @if(!people.isEmpty) {
 
@@ -8,6 +8,7 @@
       <th>First Name</th>
       <th class="sorting_asc">Last Name</th>
       <th>Country</th>
+      <th></th>
     </tr>
   </thead>
   <tbody>
@@ -19,6 +20,7 @@
           <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">
           @Messages("country." + person.address.countryCode)
         </td>
+				<td>@actions(person)</td>
       </tr>
     }
   </tbody>

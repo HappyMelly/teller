@@ -18,6 +18,14 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
   vatNumber: Option[String], registrationNumber: Option[String], legalEntity: Boolean = false, active: Boolean = true,
   created: DateTime = DateTime.now(), createdBy: String, updated: DateTime, updatedBy: String) {
 
+  def members: List[Person] = withSession { implicit session ⇒
+    val query = for {
+      membership ← OrganisationMemberships if membership.organisationId === this.id
+      person ← membership.person
+    } yield person
+    query.sortBy(_.lastName.toLowerCase).list
+  }
+
   /**
    * Inserts or updates this organisation into the database.
    * @return The Organisation as it is saved (with the id added if this was an insert)
@@ -68,12 +76,8 @@ object Organisation {
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }
 
-  def members(organisation: Organisation): List[Person] = withSession { implicit session ⇒
-    val query = for {
-      membership ← OrganisationMemberships if membership.organisationId === organisation.id
-      person ← membership.person
-    } yield person
-    query.sortBy(_.lastName.toLowerCase).list
+  def findActive: List[Organisation] = withSession { implicit session ⇒
+    Query(Organisations).filter(_.active === true).sortBy(_.name.toLowerCase).list
   }
 }
 
