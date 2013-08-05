@@ -6,7 +6,7 @@ import models.{ LoginIdentity }
 import play.api.libs.ws.WS
 import LoginIdentityService._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
-import securesocial.core.UserId
+import securesocial.core.IdentityId
 import securesocial.core.providers.Token
 import scala.concurrent.Await
 import Play.current
@@ -16,13 +16,12 @@ import models.database.LoginIdentities
 
 /**
  * Used by SecureSocial to look up and save authentication data.
- * @param application
  */
 class LoginIdentityService(application: Application) extends UserServicePlugin(application) {
 
   private def whitelist = Play.configuration.getStringList(TwitterWhitelist).map(_.asScala).getOrElse(Nil)
 
-  def find(id: UserId) = LoginIdentity.findByUserId(id)
+  def find(id: IdentityId) = LoginIdentity.findByUserId(id)
   def save(user: Identity) = {
     val loginIdentity = user match {
       case su: SocialUser ⇒ LoginIdentity(su)(findTwitterHandle(su))

@@ -10,7 +10,7 @@ import play.api.Play.current
  * A person, such as the owner or employee of an organisation.
  */
 case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
-  created: DateTime, createdBy: String, updated: DateTime, udpatedBy: String) {
+  created: DateTime, createdBy: String, updated: DateTime, updatedBy: String) {
 
   def insert = withSession { implicit session ⇒
     val id = Brands.forInsert.insert(this)
@@ -47,6 +47,7 @@ object Brand {
     } yield (brand, coordinator, license.id.?)
 
     // Transform results to BrandView
+    // TODO Preserve query order, currently lost by the groupBy
     query.sortBy(_._1.name).list.groupBy {
       case (brand, coordinator, _) ⇒ brand -> coordinator
     }.mapValues(_.flatMap(_._3)).map {
@@ -56,7 +57,7 @@ object Brand {
   }
 
   def delete(id: Long) = withSession { implicit session ⇒
-    Brands.where(_.id === id).delete
+    Brands.where(_.id === id).mutate(_.delete)
   }
 
 }

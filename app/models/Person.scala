@@ -112,7 +112,7 @@ object Person {
 
   def delete(id: Long): Unit = {
     withSession { implicit session ⇒
-      People.where(_.id === id).delete
+      People.where(_.id === id).mutate(_.delete)
     }
   }
 

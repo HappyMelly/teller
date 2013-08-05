@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, person: Person, organisations: List[Organisation], otherOrganisations: List[Organisation])(implicit flash: Flash)
+@(user: securesocial.core.Identity, person: Person, organisations: List[Organisation], otherOrganisations: List[Organisation], licenses: List[LicenseView])(implicit flash: Flash)
 @import templates.Formatters._
 
 @main(person.fullName + " - Person", Some(user)) {
@@ -9,7 +9,7 @@
     <h1>
       <img width="32" src="/assets/images/flags/32/@(person.address.countryCode.toLowerCase).png" align="baseline">
       @person.fullName
-			<a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+      <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
     </h1>
     <p><small>Added by @person.createdBy on @person.created.format</small></p>
     @if(!person.active) {
@@ -27,12 +27,12 @@
         <button class="btn btn-block btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
       }
     </form>
-		<div class="clearfix"></div>
-		<form class="delete" method="post" action="@routes.People.delete(person.id.getOrElse(0))">
-			<button class="btn btn-danger btn-block" type="submit" @if(!organisations.isEmpty) { disabled="disabled" title="You cannot delete this person because there are organisation memberships" }>
-				<i class="icon-white icon-trash"></i> Delete
-			</button>
-		</form>
+    <div class="clearfix"></div>
+    <form class="delete" method="post" action="@routes.People.delete(person.id.getOrElse(0))">
+      <button class="btn btn-danger btn-block" type="submit" @if(!organisations.isEmpty) { disabled="disabled" title="You cannot delete this person because there are organisation memberships" }>
+        <i class="icon-white icon-trash"></i> Delete
+      </button>
+    </form>
   </div>
 
   <div class="span4">
@@ -111,22 +111,33 @@
       <p>@person.fullName has no organizations.</p>
     } else {
       @views.html.organisation.table(organisations) { organisation =>
-				<a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
-			}
+        <a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
+      }
     }
-		<form class="form-inline" method="POST" action="@routes.People.addMembership">
-			<p>
-				<input type="hidden" name="page" value="person">
-				<input type="hidden" name="personId" value="@person.id.get">
-				<select name="organisationId">
-					@for(organisation <- otherOrganisations) {
-						<option value="@organisation.id">@organisation.name</option>
-					}
-				</select>
-				<button class="btn"><i class="icon-plus"></i>Add Membership</button>
-			</p>
-		</form>
+    <form class="form-inline" method="POST" action="@routes.People.addMembership">
+      <p>
+        <input type="hidden" name="page" value="person">
+        <input type="hidden" name="personId" value="@person.id.get">
+        <select name="organisationId">
+          @for(organisation <- otherOrganisations) {
+            <option value="@organisation.id">@organisation.name</option>
+          }
+        </select>
+        <button class="btn"><i class="icon-plus"></i>Add Membership</button>
+      </p>
+    </form>
   </div>
 
-	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+  <div class="span10">
+    <h3>Content licenses</h3>
+    @if(licenses.isEmpty) {
+      <p>@person.fullName has no licenses.</p>
+    } else {
+      @views.html.license.table(licenses)
+    }
+    <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn"><i class="icon-plus"></i>Add Content License</a>
+    </p>
+  </div>
+
+  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }
