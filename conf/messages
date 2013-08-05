@@ -2,6 +2,7 @@
 models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
+models.License = License
 
 # {0} Brand name
 models.License = {0} content license
