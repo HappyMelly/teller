@@ -1,6 +1,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
+
 import models.JodaMoney._
 import models.License
 import org.joda.time.LocalDate
