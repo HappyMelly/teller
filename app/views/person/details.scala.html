@@ -9,6 +9,7 @@
     <h1>
       <img width="32" src="/assets/images/flags/32/@(person.address.countryCode.toLowerCase).png" align="baseline">
       @person.fullName
+			<a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
     </h1>
     <p><small>Added by @person.createdBy on @person.created.format</small></p>
     @if(!person.active) {

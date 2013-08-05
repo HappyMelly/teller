@@ -16,6 +16,8 @@ GET  /people       controllers.People.index
 GET  /person/new              controllers.People.add
 POST /person/new              controllers.People.create
 GET  /person/:id              controllers.People.details(id: Long)
+POST /person/:id              controllers.People.update(id: Long)
+GET  /person/:id/edit         controllers.People.edit(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
 

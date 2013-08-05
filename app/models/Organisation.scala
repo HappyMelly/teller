@@ -35,7 +35,7 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
       val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
       val q = filter.map { org ⇒ org.forUpdate }
       val t = Organisation.unapply(this).get
-      //We need to skop the 14th and 15th field
+      //We need to skip the 14th and 15th field
       val updateTuple = (t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._15, t._16)
       q.update(updateTuple)
       this
@@ -100,7 +100,6 @@ object Organisations extends Table[Organisation]("ORGANISATION") {
 
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
-
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 

@@ -1,6 +1,6 @@
 package controllers
 
-import models.{ Organisation, Activity, Address, Person }
+import models.{ Activity, Address, Organisation, Person }
 import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data.Form
@@ -16,6 +16,7 @@ object People extends Controller with SecureSocial {
    * HTML form mapping for a person’s address.
    */
   val addressMapping = mapping(
+    "id" -> ignored(Option.empty[Long]),
     "street1" -> optional(text),
     "street2" -> optional(text),
     "city" -> optional(text),
@@ -39,10 +40,12 @@ object People extends Controller with SecureSocial {
     "linkedInUrl" -> optional(text),
     "googlePlusUrl" -> optional(text),
     "boardMember" -> default(boolean, false),
-    "stakeholder" -> default(boolean, true),
+    "stakeholder" -> default(boolean, false),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName)) (Person.apply)(Person.unapply))
+    "createdBy" -> ignored(request.user.fullName),
+    "updated" -> ignored(DateTime.now()),
+    "updatedBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -108,7 +111,7 @@ object People extends Controller with SecureSocial {
       formWithErrors ⇒
         BadRequest(views.html.person.form(request.user, None, formWithErrors)),
       person ⇒ {
-        val updatedPerson = person.save
+        val updatedPerson = person.insert
         Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
         val message = Messages("success.insert", Messages("models.Person"), updatedPerson.fullName)
         Redirect(routes.People.index()).flashing("success" -> message)
@@ -156,6 +159,32 @@ object People extends Controller with SecureSocial {
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))
     }
+  }
+
+  /**
+   * Edit page.
+   * @param id Person ID
+   */
+  def edit(id: Long) = SecuredAction { implicit request ⇒
+    Person.find(id).map { person ⇒
+      Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
+    }.getOrElse(NotFound)
+  }
+
+  /**
+   * Edit form submits to this action.
+   * @param id Person ID
+   */
+  def update(id: Long) = SecuredAction { implicit request ⇒
+    personForm(request).bindFromRequest.fold(
+      formWithErrors ⇒
+        BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
+      person ⇒ {
+        person.copy(id = Some(id)).update
+        Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
+        val message = Messages("success.update", Messages("models.Person"), person.fullName)
+        Redirect(routes.People.details(id)).flashing("success" -> message)
+      })
   }
 
   def index = SecuredAction { implicit request ⇒

@@ -7,9 +7,7 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import org.joda.time.DateTime
 import play.api.db.slick.DB
-
-case class Address(street1: Option[String], street2: Option[String], city: Option[String], province: Option[String],
-  postCode: Option[String], countryCode: String)
+import play.api.Logger
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -30,7 +28,9 @@ case class Person(
   stakeholder: Boolean = true,
   active: Boolean = true,
   created: DateTime = DateTime.now(),
-  createdBy: String) {
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
 
   def fullName: String = firstName + " " + lastName
 
@@ -64,16 +64,37 @@ case class Person(
   }
 
   /**
-   * Inserts or updates this person into the database.
-   * @return The Person as it is saved (with the ID added if this was an insert)
+   * Inserts this person into the database and returns the saved Person, with the ID added.
    */
-  def save: Person = DB.withSession { implicit session ⇒
-    if (id.isDefined) { // Update
-      Query(People).filter(_.id === id).update(this)
+  def insert: Person = DB.withSession { implicit session ⇒
+    val newAddress = Address.insert(this.address)
+    val addressId = newAddress.id.getOrElse(0L)
+
+    val p = Person.unapply(this).get
+    val insertTuple = (p._2, p._3, p._4, addressId, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18)
+    val newId = People.forInsert.insert(insertTuple)
+    this.copy(id = Some(newId))
+  }
+
+  /**
+   * Updates this person in the database and returns the saved person.
+   */
+  def update: Person = DB.withSession { implicit session ⇒
+    session.withTransaction {
+
+      val addressId = People.filter(_.id === this.id).map(_.addressId).first
+
+      val addressQuery = for {
+        address ← Addresses if address.id === addressId
+      } yield address
+      addressQuery.update(address.copy(id = Some(addressId)))
+
+      val p = Person.unapply(this).get
+      // We need to skip the 15th and 16th fields (created, createdBy)
+      val personUpdateTuple = (p._2, p._3, p._4, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._17, p._18)
+      val updateQuery = People.filter(_.id === id).map(_.forUpdate)
+      updateQuery.update(personUpdateTuple)
       this
-    } else { // Insert
-      val id = People.forInsert.insert(this)
-      this.copy(id = Some(id))
     }
   }
 }
@@ -97,11 +118,27 @@ object Person {
   }
 
   def find(id: Long): Option[Person] = withSession { implicit session ⇒
-    Query(People).filter(_.id === id).list.headOption
+    val query = for {
+      person ← People if person.id === id
+      address ← person.address
+    } yield (person, address)
+
+    query.list.headOption.map {
+      case (person, address) ⇒
+        person.copy(address = address)
+    }
   }
 
   def findAll: List[Person] = withSession { implicit session ⇒
-    Query(People).sortBy(_.lastName.toLowerCase).list
+    val query = for {
+      person ← People
+      address ← person.address
+    } yield (person, address)
+
+    query.sortBy(_._1.lastName.toLowerCase).list.map {
+      case (person, address) ⇒
+        person.copy(address = address)
+    }
   }
 
   def findActive: List[Person] = withSession { implicit session ⇒
@@ -120,12 +157,7 @@ object People extends Table[Person]("PERSON") {
   def lastName = column[String]("LAST_NAME")
   def emailAddress = column[String]("EMAIL_ADDRESS")
 
-  def street1 = column[Option[String]]("STREET_1")
-  def street2 = column[Option[String]]("STREET_2")
-  def city = column[Option[String]]("CITY")
-  def province = column[Option[String]]("PROVINCE")
-  def postCode = column[Option[String]]("POST_CODE")
-  def countryCode = column[String]("COUNTRY_CODE")
+  def addressId = column[Long]("ADDRESS_ID")
 
   def bio = column[Option[String]]("BIO", O.DBType("TEXT"))
   def interests = column[Option[String]]("INTERESTS", O.DBType("TEXT"))
@@ -136,19 +168,27 @@ object People extends Table[Person]("PERSON") {
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
   def boardMember = column[Boolean]("BOARD_MEMBER")
   def stakeholder = column[Boolean]("STAKEHOLDER")
-
   def active = column[Boolean]("ACTIVE")
+
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
+  def updated = column[DateTime]("UPDATED")
+  def updatedBy = column[String]("UPDATED_BY")
 
-  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ bio ~ interests ~
-    twitterHandle ~ facebookUrl ~ linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ active ~ created ~ createdBy <> (
-      { p ⇒ Person(p._1, p._2, p._3, p._4, Address(p._5, p._6, p._7, p._8, p._9, p._10), p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18, p._19, p._20, p._21) },
+  def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
+
+  // Note that this projection does not include the address, which must be joined in queries.
+  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
+    linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
+      { p ⇒ Person(p._1, p._2, p._3, p._4, Address.find(p._5), p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18) },
       { (p: Person) ⇒
-        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.address.street1, p.address.street2, p.address.city,
-          p.address.province, p.address.postCode, p.address.countryCode, p.bio, p.interests, p.twitterHandle, p.facebookUrl, p.linkedInUrl,
-          p.googlePlusUrl, p.boardMember, p.stakeholder, p.active, p.created, p.createdBy))
+        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.address.id.get, p.bio, p.interests, p.twitterHandle, p.facebookUrl,
+          p.linkedInUrl, p.googlePlusUrl, p.boardMember, p.stakeholder, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
       })
 
-  def forInsert = * returning id
+  def forInsert = firstName ~ lastName ~ emailAddress ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
+    linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ active ~ created ~ createdBy ~ updated ~ updatedBy returning id
+
+  def forUpdate = firstName ~ lastName ~ emailAddress ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl ~ boardMember ~ stakeholder ~ updated ~ updatedBy
 }

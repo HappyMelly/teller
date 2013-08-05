@@ -15,7 +15,7 @@
       </div>
     }
 
-    @helper.form(action = routes.People.create) {
+		@helper.form(action = id.map(id => routes.People.update(id)).getOrElse(routes.People.create())) {
       @helper.inputText(personForm("firstName"), '_label -> "First name")
       @helper.inputText(personForm("lastName"), '_label -> "Last name")
       @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
@@ -24,8 +24,8 @@
       @helper.inputText(personForm("address.city"), '_label -> "City")
       @helper.inputText(personForm("address.province"), '_label -> "Province or state")
       @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
-      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5")
-      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5")
+      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
+      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
 
       <div class="control-group @if(personForm("twitterHandle").hasErrors) {error}" id="twitterHandle">
         <label for="twitterHandle">Twitter user name</label>
@@ -46,14 +46,16 @@
 
       <div class="control-group" id="boardMember_field">
         <label for="boardMember" class="checkbox">
-          <input type="checkbox" id="boardMember" name="boardMember" value="true">
+          <input type="checkbox" id="boardMember" name="boardMember" value="true"
+					@if(personForm("boardMember").value.exists(_ == "true")){checked}>
           Board member
         </label>
       </div>
 
       <div class="control-group" id="stakeholder_field">
         <label for="stakeholder" class="checkbox">
-          <input type="checkbox" id="stakeholder" name="stakeholder" value="true">
+          <input type="checkbox" id="stakeholder" name="stakeholder" value="true"
+					@if(personForm("stakeholder").value.exists(_ == "true")){checked}>
           Stakeholder
         </label>
       </div>

@@ -21,6 +21,8 @@
           @Messages("country." + person.address.countryCode)
         </td>
 				<td>@actions(person)</td>
+					<a href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+				</td>
       </tr>
     }
   </tbody>
