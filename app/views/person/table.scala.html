@@ -20,9 +20,7 @@
           <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">
           @Messages("country." + person.address.countryCode)
         </td>
-				<td>@actions(person)</td>
-					<a href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
-				</td>
+        <td>@actions(person)</td>
       </tr>
     }
   </tbody>
