@@ -1,7 +1,7 @@
 @(user: securesocial.core.Identity, id: Option[Long], form: Form[Brand])(implicit flash: Flash)
 
 @import views.ViewHelpers._
-@import models.People
+@import models.Person
 
 @defining(form.value.map(org => "Brand %s".format(org.name)).getOrElse("Add brand")) { orgName =>
     @main("Organizations", Some(user)) {
