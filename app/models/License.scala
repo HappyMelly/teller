@@ -21,8 +21,7 @@ case class License(
   end: LocalDate,
   confirmed: Boolean,
   fee: Money,
-  feePaid: Option[Money]) {
-}
+  feePaid: Option[Money])
 
 case class LicenseView(brand: Brand, license: License) {
   def active: Boolean = new Interval(license.start.toDateMidnight, license.end.toDateMidnight).containsNow
