@@ -7,17 +7,18 @@
   <thead>
     <tr>
       <th class="sorting_asc">Brand</th>
-      <th title="Version">Ver</th>
+      <th title="Version">V</th>
       <th>Signed</th>
       <th>Start</th>
       <th>End</th>
       <th>Fee</th>
       <th>Paid</th>
+      <th></th>
     </tr>
   </thead>
   <tbody>
     @for(license <- licenses) {
-      <tr @if(!license.active) { class="inactive" }>
+      <tr @if(!license.active) { class="inactive" title="Not currently valid (see start and end dates)" }>
         <td>@license.brand.name</td>
         <td>@license.license.version</td>
         <td>@license.license.signed.format</td>
@@ -25,6 +26,7 @@
         <td>@license.license.end.format</td>
         <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmountMajor</td>
         <td>@license.license.feePaid.map(money => Html(money.getCurrencyUnit.getCode + "&nbsp;" + money.getAmount))</td>
+        <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))"><i class="icon-pencil"></i> Edit</a></td>
       </tr>
     }
   </tbody>

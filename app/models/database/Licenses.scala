@@ -10,7 +10,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `License` database table mapping.
  */
-private[models] object Licenses extends Table[License]("LICENSE") {
+object Licenses extends Table[License]("LICENSE") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def licenseeId = column[Long]("LICENSEE_ID")

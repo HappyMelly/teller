@@ -5,7 +5,7 @@ models.Person = Person
 models.License = License
 
 # {0} Brand name
-models.License = {0} content license
+models.License.named = {0} content license
 
 # Flash messages
 # {0} Entity type, e.g. Person
@@ -14,6 +14,7 @@ success.delete = {0} ‘{1}’ deleted!
 success.insert = {0} ‘{1}’ added!
 success.insert.license = {0} added!
 success.update = {0} ‘{1}’ updated!
+success.update.license = {0} updated!
 
 # Controller error messages
 # {0} Object name

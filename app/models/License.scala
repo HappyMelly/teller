@@ -1,7 +1,7 @@
 package models
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.database.Licenses
+import models.database.{ Addresses, People, Brands, Licenses }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ Interval, LocalDate }
 import play.api.db.slick.Config.driver.simple._
@@ -27,6 +27,8 @@ case class LicenseView(brand: Brand, license: License) {
   def active: Boolean = new Interval(license.start.toDateMidnight, license.end.toDateMidnight).containsNow
 }
 
+case class LicenseLicenseeBrandView(license: License, brand: Brand, licensee: Person)
+
 object License {
 
   /**
@@ -37,9 +39,41 @@ object License {
       Money.of(CurrencyUnit.EUR, 0f), Some(Money.of(CurrencyUnit.EUR, 0f)))
   }
 
+  /**
+   * Finds a license by ID.
+   */
+  def find(id: Long): Option[License] = withSession { implicit session ⇒
+    Query(Licenses).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Finds a license by ID, joined with brand and licensee.
+   */
+  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] = withSession { implicit session ⇒
+    val query = for {
+      license ← Licenses if license.id === id
+      brand ← license.brand
+      licensee ← license.licensee
+    } yield (license, brand, licensee)
+
+    query.mapResult {
+      case (license, brand, licensee) ⇒
+        LicenseLicenseeBrandView(license, brand, licensee)
+    }.firstOption
+  }
+
   def insert(license: License) = withSession { implicit session ⇒
     val id = Licenses.forInsert.insert(license)
     license.copy(id = Some(id))
+  }
+
+  /** Finds a licensee by license ID **/
+  def licensee(licenseId: Long): Option[Person] = withSession { implicit session ⇒
+    val query = for {
+      license ← Licenses if license.id === licenseId
+      licensee ← license.licensee
+    } yield licensee
+    query.firstOption
   }
 
   /**
@@ -66,6 +100,15 @@ object License {
 
     query.sortBy(_._2.name.toLowerCase).list.map {
       case (license, brand) ⇒ LicenseView(brand, license)
+    }
+  }
+
+  /**
+   * Updates this license in the database.
+   */
+  def update(license: License): Unit = withSession { implicit session ⇒
+    license.id.map { id ⇒
+      Query(Licenses).filter(_.id === id).update(license)
     }
   }
 

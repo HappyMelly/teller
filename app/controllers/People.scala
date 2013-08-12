@@ -160,7 +160,7 @@ object People extends Controller with SecureSocial {
       val licenses = License.licenses(id)
       Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses))
     } getOrElse {
-      Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))
+      Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
     }
   }
 
