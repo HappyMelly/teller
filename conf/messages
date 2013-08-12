@@ -4,31 +4,6 @@ models.Organisation = Organization
 models.Person = Person
 models.License = License
 
-# {0} Brand name
-models.License.named = {0} content license
-
-# Flash messages
-# {0} Entity type, e.g. Person
-# {1} Object name, e.g. Jurgen Appelo
-success.delete = {0} ‘{1}’ deleted!
-success.insert = {0} ‘{1}’ added!
-success.insert.license = {0} added!
-success.update = {0} ‘{1}’ updated!
-success.update.license = {0} updated!
-
-# Controller error messages
-# {0} Object name
-error.notFound = {0} not found
-error.date.range = Start date after end date
-
-# Controller info messages
-success.activate.false = {0} ‘{1}’ deactivated
-success.activate.true = {0} ‘{1}’ activated
-success.addRelationship = {0} added to {1}
-success.deleteRelationship = {0} removed from {1}
-organisation.created = Organisation ‘{0}’ added
-organisation.errors = Please correct the form below
-
 # Activity stream entries
 activity.signup = {0} signed up
 activity.create = {0} added {1}
@@ -39,16 +14,21 @@ activity.deactivate = {0} deactivated {1}
 activity.relationship.create = {0} to {1}
 activity.relationship.delete = {0} from {1}
 
-# Form constraint descriptions and errors
-constraint.brand.code = Capital letters and numbers
-constraint.brand.code.error = Capital letters and numbers only
-constraint.brand.code.exists = A brand with code {0} already exists
+# Controller error messages
+# {0} Object name
+error.notFound = {0} not found
+error.date.range = Start date after end date
 
 # Play form validation error overrides
 error.date = Invalid date
 error.email = Invalid e-mail address
 error.required = Required value missing
 error.twitter = Invalid Twitter user name
+
+# Form constraint descriptions and errors
+constraint.brand.code = Capital letters and numbers
+constraint.brand.code.error = Capital letters and numbers only
+constraint.brand.code.exists = A brand with code {0} already exists
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org

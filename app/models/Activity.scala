@@ -6,6 +6,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import scala.slick.lifted.Query
+import play.api.i18n.Messages
 
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
@@ -30,6 +31,32 @@ object Activity {
     val Deleted = "delete"
     val Activated = "activate"
     val Deactivated = "deactivate"
+  }
+
+  /**
+   * Returns a message describing an activity, used for user-interface info messages.
+   */
+  private def message(predicate: String, activityObject: String): String = {
+    Messages("activity." + predicate, "", activityObject).trim.capitalize
+  }
+
+  def createMessage(activityObject: String): String = message(Predicate.Created, activityObject)
+  def deleteMessage(activityObject: String): String = message(Predicate.Deleted, activityObject)
+  def updateMessage(activityObject: String): String = message(Predicate.Updated, activityObject)
+
+  /**
+   * Returns a message describing an ‘activated’ or ‘deactivated’ activity.
+   */
+  def activateMessage(activated: Boolean, activityObject: String): String = {
+    message(if (activated) Predicate.Activated else Predicate.Deactivated, activityObject)
+  }
+
+  def createRelationshipMessage(activityObject1: String, activityObject2: String): String = {
+    createMessage(Messages("activity.relationship.create", activityObject1, activityObject2))
+  }
+
+  def deleteRelationshipMessage(activityObject1: String, activityObject2: String): String = {
+    deleteMessage(Messages("activity.relationship.delete", activityObject1, activityObject2))
   }
 
   /**

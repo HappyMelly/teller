@@ -63,8 +63,7 @@ object People extends Controller with SecureSocial {
           active ⇒ {
             Person.activate(id, active)
             Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
-            val message = Messages("success.activate." + active.toString, Messages("models.Person"), person.fullName)
-            Redirect(routes.People.details(id)).flashing("success" -> message)
+            Redirect(routes.People.details(id)).flashing("success" -> Activity.activateMessage(active, person.fullName))
           })
       } getOrElse {
         Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
@@ -94,11 +93,10 @@ object People extends Controller with SecureSocial {
               person.addMembership(organisationId)
               val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
               Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-              val message = Messages("success.addRelationship", person.fullName, organisation.name)
 
               // Redirect to the page we came from - either the person or organisation details page.
               val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-              Redirect(action).flashing("success" -> message)
+              Redirect(action).flashing("success" -> Activity.createRelationshipMessage(person.fullName, organisation.name))
             }.getOrElse(NotFound)
           }.getOrElse(NotFound)
         }
@@ -115,8 +113,7 @@ object People extends Controller with SecureSocial {
       person ⇒ {
         val updatedPerson = person.insert
         Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
-        val message = Messages("success.insert", Messages("models.Person"), updatedPerson.fullName)
-        Redirect(routes.People.index()).flashing("success" -> message)
+        Redirect(routes.People.index()).flashing("success" -> Activity.createMessage(updatedPerson.fullName))
       })
   }
 
@@ -127,8 +124,7 @@ object People extends Controller with SecureSocial {
     Person.find(id).map { person ⇒
       Person.delete(id)
       Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
-      val message = Messages("success.delete", Messages("models.Person"), person.fullName)
-      Redirect(routes.People.index).flashing("success" -> message)
+      Redirect(routes.People.index).flashing("success" -> Activity.deleteMessage(person.fullName))
     }.getOrElse(NotFound)
   }
 
@@ -141,11 +137,10 @@ object People extends Controller with SecureSocial {
         person.deleteMembership(organisationId)
         val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
         Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-        val message = Messages("success.deleteRelationship", person.fullName, organisation.name)
 
         // Redirect to the page we came from - either the person or organisation details page.
         val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-        Redirect(action).flashing("success" -> message)
+        Redirect(action).flashing("success" -> Activity.deleteRelationshipMessage(person.fullName, organisation.name))
       }
     }.flatten.getOrElse(NotFound)
   }
@@ -185,8 +180,7 @@ object People extends Controller with SecureSocial {
       person ⇒ {
         person.copy(id = Some(id)).update
         Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
-        val message = Messages("success.update", Messages("models.Person"), person.fullName)
-        Redirect(routes.People.details(id)).flashing("success" -> message)
+        Redirect(routes.People.details(id)).flashing("success" -> Activity.updateMessage(person.fullName))
       })
   }
 

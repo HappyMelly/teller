@@ -42,8 +42,7 @@ object Brands extends Controller with SecureSocial {
 
         val savedBrand = brand.insert
         Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
-        val message = Messages("success.insert", Messages("models.Brand"), savedBrand.name)
-        Redirect(routes.Brands.index()).flashing("success" -> message)
+        Redirect(routes.Brands.index()).flashing("success" -> Activity.createMessage(savedBrand.name))
       })
   }
 
@@ -52,8 +51,7 @@ object Brands extends Controller with SecureSocial {
     Brand.find(id).map { brand ⇒
       brand.delete
       Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
-      val message = Messages("success.delete", Messages("models.Brand"), brand.name)
-      Redirect(routes.Brands.index()).flashing("success" -> message)
+      Redirect(routes.Brands.index()).flashing("success" -> Activity.deleteMessage(brand.name))
     }.getOrElse(NotFound)
   }
 

@@ -43,8 +43,7 @@ object Organisations extends Controller with SecureSocial {
         active ⇒ {
           Organisation.activate(id, active)
           Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
-          val message = Messages("success.activate." + active.toString, Messages("models.Organisation"), organisation.name)
-          Redirect(routes.Organisations.details(id)).flashing("success" -> message)
+          Redirect(routes.Organisations.details(id)).flashing("success" -> Activity.activateMessage(active, organisation.name))
         })
     } getOrElse {
       Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
@@ -70,8 +69,7 @@ object Organisations extends Controller with SecureSocial {
         organisation ⇒ {
           val org = organisation.save
           Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
-          val message = Messages("success.insert", Messages("models.Organisation"), organisation.name)
-          Redirect(routes.Organisations.index()).flashing("success" -> message)
+          Redirect(routes.Organisations.index()).flashing("success" -> Activity.createMessage(organisation.name))
         })
   }
 
@@ -85,8 +83,7 @@ object Organisations extends Controller with SecureSocial {
         organisation ⇒
           Organisation.delete(id)
           Activity.insert(request.user.fullName, Activity.Predicate.Deleted, organisation.name)
-          val message = Messages("success.delete", Messages("models.Organisation"), organisation.name)
-          Redirect(routes.Organisations.index).flashing("success" -> message)
+          Redirect(routes.Organisations.index).flashing("success" -> Activity.deleteMessage(organisation.name))
       }.getOrElse(NotFound)
   }
 
@@ -140,8 +137,7 @@ object Organisations extends Controller with SecureSocial {
         organisation ⇒ {
           organisation.copy(id = Some(id)).save
           Activity.insert(request.user.fullName, Activity.Predicate.Updated, organisation.name)
-          val message = Messages("success.update", Messages("models.Organisation"), organisation.name)
-          Redirect(routes.Organisations.details(id)).flashing("success" -> message)
+          Redirect(routes.Organisations.details(id)).flashing("success" -> Activity.updateMessage(organisation.name))
         })
   }
 

@@ -48,7 +48,7 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
   def add(personId: Long) = SecuredAction { implicit request ⇒
     Person.find(personId).map { person ⇒
       val form = licenseForm.fill(License.blank(personId))
-      Ok(views.html.license.form(request.user, form, person))
+      Ok(views.html.license.form(request.user, None, form, person))
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
     }
@@ -65,9 +65,9 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
           val newLicense = License.insert(license.copy(licenseeId = personId))
           val brand = Brand.find(newLicense.brandId).get
 
-          val activityObject = Messages("models.License.named", brand.name)
+          val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
           Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          val message = Messages("success.insert.license", activityObject)
+          val message = Activity.createRelationshipMessage(brand.name, person.fullName)
           Redirect(routes.People.details(personId)).flashing("success" -> message)
         })
     } getOrElse {
@@ -85,9 +85,9 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
         editedLicense ⇒ {
           License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
 
-          val activityObject = Messages("models.License.named", view.brand.name)
+          val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
           Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-          val message = Messages("success.update.license", activityObject)
+          val message = Activity.createRelationshipMessage(view.brand.name, view.licensee.fullName)
           Redirect(routes.People.details(view.licensee.id.get)).flashing("success" -> message)
         })
     } getOrElse {
