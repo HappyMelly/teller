@@ -75,6 +75,18 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
   }
 
   /**
+   * Deletes a license.
+   */
+  def delete(id: Long) = SecuredAction { request ⇒
+    License.findWithBrandAndLicensee(id).map { view ⇒
+      License.delete(id)
+      val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
+      val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+      Redirect(routes.People.details(view.licensee.id.getOrElse(0))).flashing("success" -> activity.toString)
+    }.getOrElse(NotFound)
+  }
+
+  /**
    * POST handler for updating an existing content license.
    */
   def update(id: Long) = SecuredAction { implicit request ⇒

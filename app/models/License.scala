@@ -31,6 +31,10 @@ case class LicenseLicenseeBrandView(license: License, brand: Brand, licensee: Pe
 
 object License {
 
+  def delete(id: Long): Unit = withSession { implicit session ⇒
+    Licenses.filter(_.id === id).mutate(_.delete)
+  }
+
   /**
    * Returns a blanks license with default values, for the given licensee, for editing.
    */
