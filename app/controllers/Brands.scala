@@ -1,12 +1,12 @@
 package controllers
 
-import play.api.mvc._
-import securesocial.core.{ SecuredRequest, SecureSocial }
 import models.{ Activity, Brand }
+import org.joda.time._
+import play.api.mvc._
 import play.api.data.Form
 import play.api.data.validation.Constraints._
 import play.api.data.Forms._
-import org.joda.time._
+import securesocial.core.{ SecuredRequest, SecureSocial }
 
 object Brands extends Controller with SecureSocial {
 
@@ -48,7 +48,7 @@ object Brands extends Controller with SecureSocial {
   /** Delete a brand **/
   def delete(id: Long) = SecuredAction { implicit request ⇒
     Brand.find(id).map { brand ⇒
-      brand.delete
+      brand.delete()
       val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
       Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
     }.getOrElse(NotFound)

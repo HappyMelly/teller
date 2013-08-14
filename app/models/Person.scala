@@ -33,6 +33,8 @@ case class Person(
 
   def fullName: String = firstName + " " + lastName
 
+  def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
+
   /**
    * Associates this person with given organisation.
    */

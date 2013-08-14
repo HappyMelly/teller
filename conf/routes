@@ -38,7 +38,7 @@ POST /brand/:id          controllers.Brands.update(id: Long)
 GET  /brand/:id/edit     controllers.Brands.edit(id: Long)
 POST /brand/:id/delete   controllers.Brands.delete(id: Long)
 
-
+POST /user    controllers.UserAccounts.update
 
 GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 

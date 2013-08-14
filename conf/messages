@@ -4,6 +4,8 @@ models.Organisation = Organization
 models.Person = Person
 models.License = License
 
+object.UserAccount = {0} user account
+
 # Activity stream entries
 activity.signup = {0} signed up
 activity.create = {0} added {1}
@@ -17,6 +19,7 @@ activity.relationship.delete = {0} from {1}
 # Controller error messages
 # {0} Object name
 error.notFound = {0} not found
+error.authorisation = You do not have permission to perform this action
 error.date.range = Start date after end date
 
 # Play form validation error overrides
