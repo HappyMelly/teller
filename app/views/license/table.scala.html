@@ -1,0 +1,32 @@
+@(licenses: List[LicenseView])
+@import templates.Formatters._
+
+@if(!licenses.isEmpty) {
+
+  <table id="people" class="datatables table table-bordered">
+  <thead>
+    <tr>
+      <th class="sorting_asc">Brand</th>
+      <th title="Version">Ver</th>
+      <th>Signed</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Fee</th>
+      <th>Paid</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for(license <- licenses) {
+      <tr @if(!license.active) { class="inactive" }>
+        <td>@license.brand.name</td>
+        <td>@license.license.version</td>
+        <td>@license.license.signed.format</td>
+        <td>@license.license.start.format</td>
+        <td>@license.license.end.format</td>
+        <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmountMajor</td>
+        <td>@license.license.feePaid.map(money => Html(money.getCurrencyUnit.getCode + "&nbsp;" + money.getAmount))</td>
+      </tr>
+    }
+  </tbody>
+  </table>
+}

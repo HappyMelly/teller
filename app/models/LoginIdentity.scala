@@ -12,17 +12,17 @@ import securesocial.core._
 /**
  * Contains profile and authentication info for a SecureSocial Identity.
  */
-case class LoginIdentity(uid: Option[Long], id: UserId, firstName: String, lastName: String, fullName: String,
+case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String, fullName: String,
   email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info],
   passwordInfo: Option[PasswordInfo] = None, twitterHandle: String, apiToken: String) extends Identity {}
 
 object LoginIdentity {
 
-  def apply(i: Identity): (String) ⇒ LoginIdentity = LoginIdentity(None, i.id, i.firstName, i.lastName, i.fullName, i.email,
+  def apply(i: Identity): (String) ⇒ LoginIdentity = LoginIdentity(None, i.identityId, i.firstName, i.lastName, i.fullName, i.email,
     i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo, _, generateApiToken(i))
 
-  private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.id.id, Random.nextInt())) }
+  private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
 
   def findBytoken(token: String): Option[LoginIdentity] = DB.withSession {
     implicit session ⇒
@@ -39,11 +39,11 @@ object LoginIdentity {
       q.firstOption
   }
 
-  def findByUserId(userId: UserId): Option[LoginIdentity] = DB.withSession {
+  def findByUserId(identityId: IdentityId): Option[LoginIdentity] = DB.withSession {
     implicit session ⇒
       val q = for {
         identity ← LoginIdentities
-        if (identity.userId is userId.id) && (identity.providerId is userId.providerId)
+        if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
       } yield identity
 
       q.firstOption
@@ -51,7 +51,7 @@ object LoginIdentity {
 
   def save(user: LoginIdentity) = DB.withSession {
     implicit session ⇒
-      findByUserId(user.id) match {
+      findByUserId(user.identityId) match {
         case None ⇒ {
           Activity.insert(user.fullName, Activity.Predicate.SignedUp)
           val uid = LoginIdentities.forInsert.insert(user)

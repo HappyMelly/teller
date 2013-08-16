@@ -1,0 +1,45 @@
+@(user: securesocial.core.Identity, form: Form[License], person: Person)(implicit flash: Flash)
+
+@import views.ViewHelpers._
+@import models.Person
+
+@main("Add content license", Some(user)) {
+
+  <h1>Add content license for @person.fullName</h1>
+
+  @if(form.hasErrors) {
+    <div class="alert alert-error">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      Please fix the validation errors
+      @if(!form.globalErrors.isEmpty) {
+        <ul>
+        @for(error <- form.globalErrors) {
+          <li>@Messages(error.message)</li>
+        }
+        </ul>
+      }
+    </div>
+  }
+
+  @helper.form(action = routes.Licenses.create(person.id.getOrElse(0))) {
+    @helper.select(form("brandId"), Brand.findAll.map(b => (b.id.toString, b.name)), '_label -> "Brand")
+    @helper.inputText(form("version"), '_label -> "Version")
+
+    @helper.inputDate(form("signed"), '_label -> "Date signed", '_help -> "Required")
+    @helper.inputDate(form("start"), '_label -> "Start date", '_help -> "Required")
+    @helper.inputDate(form("end"), '_label -> "End date", '_help -> "Required")
+
+    <div class="control-group" id="confirmed_field">
+      <label for="confirmed" class="checkbox">
+        <input type="checkbox" id="confirmed" name="confirmed" value="true"
+        @if(form("confirmed").value.exists(_ == "true")){checked} >
+        Confirmed
+      </label>
+    </div>
+
+    @helper.inputMoney("fee", form("fee.currency"), form("fee.amount"), '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
+    @helper.inputMoney("feePaid", form("feePaid.currency"), form("feePaid.amount"), '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
+
+    <button class="btn btn-primary" type="submit">Save</button>
+  }
+}

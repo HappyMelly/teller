@@ -15,10 +15,11 @@ object ApplicationBuild extends Build {
     "com.typesafe.play" %% "play-slick" % "0.3.3",
     "com.typesafe.slick" %% "slick" % "1.0.1",
     "mysql" % "mysql-connector-java" % "5.1.21",
+    "org.joda" % "joda-money" % "0.9",
+    "org.pegdown" % "pegdown" % "1.2.1",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
-    "securesocial" %% "securesocial" % "master-SNAPSHOT",
-    "org.pegdown" % "pegdown" % "1.2.1"
+    "securesocial" %% "securesocial" % "master-SNAPSHOT"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(

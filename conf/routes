@@ -21,6 +21,10 @@ GET  /person/:id/edit         controllers.People.edit(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
 
+GET   /person/:id/licenses/new   controllers.Licenses.add(id: Long)
+POST  /person/:id/licenses/new   controllers.Licenses.create(id: Long)
+
+
 POST /person/membership/new                                controllers.People.addMembership
 GET  /person/:personId/membership/:organisationId/delete   controllers.People.deleteMembership(page: String, personId: Long, organisationId: Long)
 
@@ -28,6 +32,8 @@ GET  /brands      controllers.Brands.index
 POST /brand/new   controllers.Brands.create
 GET  /brand/new   controllers.Brands.add
 POST /brand/:id/delete   controllers.Brands.delete(id: Long)
+
+
 
 GET /api/v1/licensees/:brandCode   controllers.Licenses.licensees(brandCode: String, date: Option[String])
 

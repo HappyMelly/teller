@@ -1,14 +1,16 @@
 package controllers
 
-import models.{ Activity, Address, Organisation, Person }
+import models._
 import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.i18n.Messages
-import securesocial.core.{ SecureSocial, SecuredRequest }
+import securesocial.core.SecureSocial
 import scala.Predef._
+import scala.Some
+import securesocial.core.SecuredRequest
 
 object People extends Controller with SecureSocial {
 
@@ -48,7 +50,7 @@ object People extends Controller with SecureSocial {
     "updatedBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
 
   /**
-   * Form target for toggling whether an organisation is active.
+   * Form target for toggling whether a person is active.
    */
   def activation(id: Long) = SecuredAction {
     implicit request ⇒
@@ -65,7 +67,7 @@ object People extends Controller with SecureSocial {
             Redirect(routes.People.details(id)).flashing("success" -> message)
           })
       } getOrElse {
-        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
+        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
@@ -155,7 +157,8 @@ object People extends Controller with SecureSocial {
   def details(id: Long) = SecuredAction { implicit request ⇒
     models.Person.find(id).map { person ⇒
       val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
-      Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations))
+      val licenses = License.licenses(id)
+      Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses))
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.person.notFound"))
     }

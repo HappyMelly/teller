@@ -2,7 +2,7 @@ package models.database
 
 import models.LoginIdentity
 import play.api.db.slick.Config.driver.simple._
-import securesocial.core.{ UserId, OAuth2Info, OAuth1Info, AuthenticationMethod }
+import securesocial.core.{ IdentityId, OAuth2Info, OAuth1Info, AuthenticationMethod }
 
 /**
  * `LoginIdentity` database table mapping.
@@ -24,7 +24,7 @@ private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENT
   }
 
   implicit def tuple2UserId(tuple: (String, String)) = tuple match {
-    case (userId, providerId) ⇒ UserId(userId, providerId)
+    case (userId, providerId) ⇒ IdentityId(userId, providerId)
   }
 
   def uid = column[Long]("ID", O.PrimaryKey, O.AutoInc)
@@ -51,7 +51,7 @@ private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENT
 
   def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~ secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ twitterHandle ~ apiToken <> (
     u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17),
-    (u: LoginIdentity) ⇒ Some((u.uid, u.id.id, u.id.providerId, u.firstName, u.lastName, u.fullName, u.email, u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret), u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn), u.oAuth2Info.flatMap(_.refreshToken), u.twitterHandle, u.apiToken)))
+    (u: LoginIdentity) ⇒ Some((u.uid, u.identityId.userId, u.identityId.providerId, u.firstName, u.lastName, u.fullName, u.email, u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret), u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn), u.oAuth2Info.flatMap(_.refreshToken), u.twitterHandle, u.apiToken)))
 
   def forInsert = * returning uid
 
