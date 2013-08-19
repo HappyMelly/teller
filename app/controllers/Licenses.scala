@@ -48,7 +48,7 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
   def add(personId: Long) = SecuredAction { implicit request ⇒
     Person.find(personId).map { person ⇒
       val form = licenseForm.fill(License.blank(personId))
-      Ok(views.html.license.form(request.user, form, person))
+      Ok(views.html.license.form(request.user, None, form, person))
     } getOrElse {
       Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
     }
@@ -60,19 +60,50 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
   def create(personId: Long) = SecuredAction { implicit request ⇒
     Person.find(personId).map { person ⇒
       licenseForm.bindFromRequest.fold(
-        form ⇒ BadRequest(views.html.license.form(request.user, form, person)),
+        form ⇒ BadRequest(views.html.license.form(request.user, None, form, person)),
         license ⇒ {
           val newLicense = License.insert(license.copy(licenseeId = personId))
           val brand = Brand.find(newLicense.brandId).get
 
-          val activityObject = Messages("models.License", brand.name)
-          Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          val message = Messages("success.insert.license", activityObject)
-          Redirect(routes.People.details(personId)).flashing("success" -> message)
+          val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
         })
     } getOrElse {
       Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
     }
+  }
+
+  /**
+   * POST handler for updating an existing content license.
+   */
+  def update(id: Long) = SecuredAction { implicit request ⇒
+    License.findWithBrandAndLicensee(id).map { view ⇒
+      licenseForm.bindFromRequest.fold(
+        form ⇒ BadRequest(views.html.license.form(request.user, None, form, view.licensee)),
+        editedLicense ⇒ {
+          License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
+
+          val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+          Redirect(routes.People.details(view.licensee.id.get)).flashing("success" -> activity.toString)
+        })
+    } getOrElse {
+      Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
+    }
+  }
+
+  /**
+   * Edit page.
+   */
+  def edit(id: Long) = SecuredAction { implicit request ⇒
+    License.find(id).map { license ⇒
+      Person.find(license.licenseeId).map { licensee ⇒
+        Ok(views.html.license.form(request.user, license.id, licenseForm.fill(license), licensee))
+      }.getOrElse {
+        throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
+      }
+    }.getOrElse(NotFound)
   }
 
   /**

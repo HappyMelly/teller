@@ -5,6 +5,7 @@ import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
+import play.api.Logger
 
 /**
  * A person, such as the owner or employee of an organisation.

@@ -24,6 +24,8 @@ POST /person/:id/delete       controllers.People.delete(id: Long)
 GET   /person/:id/licenses/new   controllers.Licenses.add(id: Long)
 POST  /person/:id/licenses/new   controllers.Licenses.create(id: Long)
 
+GET  /license/:id/edit   controllers.Licenses.edit(id: Long)
+POST /license/:id        controllers.Licenses.update(id: Long)
 
 POST /person/membership/new                                controllers.People.addMembership
 GET  /person/:personId/membership/:organisationId/delete   controllers.People.deleteMembership(page: String, personId: Long, organisationId: Long)
