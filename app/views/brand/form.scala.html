@@ -15,7 +15,7 @@
           </div>
         }
 
-        @helper.form(action = id.map(id => routes.Brands.create).getOrElse(routes.Brands.create())) {
+        @helper.form(action = id.map(id => routes.Brands.update(id)).getOrElse(routes.Brands.create())) {
             @helper.inputText(form("code"), '_label -> "Code")
             @helper.inputText(form("name"), '_label -> "Name")
             @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findAllActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")

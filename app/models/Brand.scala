@@ -19,6 +19,13 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
   }
 
   def delete = Brand.delete(this.id.get)
+
+  def update = withSession { implicit session ⇒
+    val updateTuple = (code, name, coordinatorId, updated, updatedBy)
+    val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
+    updateQuery.update(updateTuple)
+    this
+  }
 }
 
 case class BrandView(id: Long, code: String, name: String, coordinator: Person, licenses: Seq[Long])

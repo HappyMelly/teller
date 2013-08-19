@@ -54,4 +54,23 @@ object Brands extends Controller with SecureSocial {
     }.getOrElse(NotFound)
   }
 
+  /** Edit page **/
+  def edit(id: Long) = SecuredAction { implicit request ⇒
+    Brand.find(id).map { brand ⇒
+      val filledForm: Form[Brand] = brandsForm.fill(brand)
+      Ok(views.html.brand.form(request.user, Some(id), filledForm))
+    }.getOrElse(NotFound)
+  }
+
+  /** Edit form submits to this action **/
+  def update(id: Long) = SecuredAction { implicit request ⇒
+    brandsForm.bindFromRequest.fold(
+      form ⇒ BadRequest(views.html.brand.form(request.user, Some(id), form)),
+      brand ⇒ {
+        brand.copy(id = Some(id)).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+        Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+      })
+  }
+
 }

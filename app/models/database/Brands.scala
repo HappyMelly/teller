@@ -28,5 +28,7 @@ private[models] object Brands extends Table[Brand]("BRAND") {
 
   def forInsert = * returning id
 
+  def forUpdate = code ~ name ~ coordinatorId ~ updated ~ updatedBy
+
   def uniqueCode = index("IDX_CODE", code, unique = true)
 }
