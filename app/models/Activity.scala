@@ -7,7 +7,6 @@ import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import scala.slick.lifted.Query
 import play.api.i18n.Messages
-import play.api.Logger
 
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
@@ -29,6 +28,7 @@ case class Activity(id: Option[Long], subject: String, predicate: String, activi
 object Activity {
 
   object Predicate extends Enumeration {
+    type Predicate = Value
     val SignedUp = Value("signup")
     val Created = Value("create")
     val Updated = Value("update")
@@ -37,6 +37,8 @@ object Activity {
     val Deactivated = Value("deactivate")
   }
 
+  import Predicate.Predicate
+
   /**
    * Returns all activity stream entries in reverse chronological order.
    */
@@ -44,18 +46,18 @@ object Activity {
     Query(Activities).sortBy(_.created.desc).list
   }
 
-  def insert(subject: String, predicate: Predicate.Value): Activity = {
+  def insert(subject: String, predicate: Predicate): Activity = {
     insert(subject, predicate, None)
   }
 
-  def insert(subject: String, predicate: Predicate.Value, activityObject: String): Activity = {
+  def insert(subject: String, predicate: Predicate, activityObject: String): Activity = {
     insert(subject, predicate, Some(activityObject))
   }
 
   /**
    * Inserts a new activity stream entry.
    */
-  private def insert(subject: String, predicate: Predicate.Value, activityObject: Option[String]): Activity = {
+  private def insert(subject: String, predicate: Predicate, activityObject: Option[String]): Activity = {
     withSession { implicit session ⇒
       val activity = Activity(None, subject, predicate.toString, activityObject)
       val id = Activities.forInsert.insert(activity)

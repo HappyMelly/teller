@@ -118,7 +118,7 @@ object People extends Controller with SecureSocial {
   }
 
   /**
-   * Deletes an person.
+   * Deletes a person.
    */
   def delete(id: Long) = SecuredAction { request ⇒
     Person.find(id).map { person ⇒
