@@ -22,6 +22,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   private def whitelist = Play.configuration.getStringList(TwitterWhitelist).map(_.asScala).getOrElse(Nil)
 
   def find(id: IdentityId) = LoginIdentity.findByUserId(id)
+
   def save(user: Identity) = {
     val loginIdentity = user match {
       case su: SocialUser ⇒ LoginIdentity(su)(findTwitterHandle(su))

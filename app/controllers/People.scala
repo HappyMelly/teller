@@ -62,8 +62,8 @@ object People extends Controller with SecureSocial {
           },
           active ⇒ {
             Person.activate(id, active)
-            Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
-            Redirect(routes.People.details(id)).flashing("success" -> Activity.activateMessage(active, person.fullName))
+            val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
+            Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
         Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
@@ -92,11 +92,11 @@ object People extends Controller with SecureSocial {
             Organisation.find(organisationId).map { organisation ⇒
               person.addMembership(organisationId)
               val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
-              Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
 
               // Redirect to the page we came from - either the person or organisation details page.
               val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-              Redirect(action).flashing("success" -> Activity.createRelationshipMessage(person.fullName, organisation.name))
+              Redirect(action).flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
           }.getOrElse(NotFound)
         }
@@ -112,8 +112,8 @@ object People extends Controller with SecureSocial {
         BadRequest(views.html.person.form(request.user, None, formWithErrors)),
       person ⇒ {
         val updatedPerson = person.insert
-        Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
-        Redirect(routes.People.index()).flashing("success" -> Activity.createMessage(updatedPerson.fullName))
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
+        Redirect(routes.People.index()).flashing("success" -> activity.toString)
       })
   }
 
@@ -123,8 +123,8 @@ object People extends Controller with SecureSocial {
   def delete(id: Long) = SecuredAction { request ⇒
     Person.find(id).map { person ⇒
       Person.delete(id)
-      Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
-      Redirect(routes.People.index).flashing("success" -> Activity.deleteMessage(person.fullName))
+      val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
+      Redirect(routes.People.index).flashing("success" -> activity.toString)
     }.getOrElse(NotFound)
   }
 
@@ -136,11 +136,11 @@ object People extends Controller with SecureSocial {
       Organisation.find(organisationId).map { organisation ⇒
         person.deleteMembership(organisationId)
         val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
-        Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
         // Redirect to the page we came from - either the person or organisation details page.
         val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-        Redirect(action).flashing("success" -> Activity.deleteRelationshipMessage(person.fullName, organisation.name))
+        Redirect(action).flashing("success" -> activity.toString)
       }
     }.flatten.getOrElse(NotFound)
   }
@@ -179,8 +179,8 @@ object People extends Controller with SecureSocial {
         BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
       person ⇒ {
         person.copy(id = Some(id)).update
-        Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
-        Redirect(routes.People.details(id)).flashing("success" -> Activity.updateMessage(person.fullName))
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
+        Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
       })
   }
 

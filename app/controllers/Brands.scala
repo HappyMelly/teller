@@ -2,12 +2,11 @@ package controllers
 
 import play.api.mvc._
 import securesocial.core.{ SecuredRequest, SecureSocial }
-import models.{ Activity, Brand, Person }
+import models.{ Activity, Brand }
 import play.api.data.Form
 import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import org.joda.time._
-import play.api.i18n.Messages
 
 object Brands extends Controller with SecureSocial {
 
@@ -41,8 +40,8 @@ object Brands extends Controller with SecureSocial {
           boundForm.withError("code", "constraint.brand.code.exists", brand.code)))
 
         val savedBrand = brand.insert
-        Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
-        Redirect(routes.Brands.index()).flashing("success" -> Activity.createMessage(savedBrand.name))
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedBrand.name)
+        Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
       })
   }
 
@@ -50,8 +49,8 @@ object Brands extends Controller with SecureSocial {
   def delete(id: Long) = SecuredAction { implicit request ⇒
     Brand.find(id).map { brand ⇒
       brand.delete
-      Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
-      Redirect(routes.Brands.index()).flashing("success" -> Activity.deleteMessage(brand.name))
+      val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
+      Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
     }.getOrElse(NotFound)
   }
 
