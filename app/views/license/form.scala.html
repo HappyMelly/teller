@@ -6,42 +6,66 @@
 @main("Add content license", Some(user)) {
 
   @defining(id.isDefined) { editing =>
-    <h1>@(if(editing) "Edit" else "Add") content license for @person.fullName</h1>
 
-    @if(form.hasErrors) {
-    <div class="alert alert-error">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-      Please fix the validation errors
-      @if(!form.globalErrors.isEmpty) {
-      <ul>
-        @for(error <- form.globalErrors) {
-        <li>@Messages(error.message)</li>
-        }
-      </ul>
-      }
+    <div class="span8">
+      <header>
+        <h1>@(if(editing) "Edit" else "Add") content license</h1>
+      </header>
     </div>
-    }
 
-    @helper.form(action = if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0))) {
-      @helper.select(form("brandId"), Brand.findAll.map(b => (b.id.toString, b.name)), '_label -> "Brand")
-      @helper.inputText(form("version"), '_label -> "Version")
-
-      @helper.inputDate(form("signed"), '_label -> "Date signed", '_help -> "Required")
-      @helper.inputDate(form("start"), '_label -> "Start date", '_help -> "Required")
-      @helper.inputDate(form("end"), '_label -> "End date", '_help -> "Required")
-
-      <div class="control-group" id="confirmed_field">
-        <label for="confirmed" class="checkbox">
-          <input type="checkbox" id="confirmed" name="confirmed" value="true"
-          @if(form("confirmed").value.exists(_ == "true")){checked} >
-          Confirmed
-        </label>
+    @if(editing) {
+      <div class="span2 actions">
+        <form class="delete" method="post" action="@routes.Licenses.delete(id.get)">
+          <button class="btn btn-danger btn-block" type="submit"><i class="icon-white icon-trash"></i> Delete</button>
+        </form>
       </div>
 
-      @helper.inputMoney("fee", form("fee.currency"), form("fee.amount"), '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
-      @helper.inputMoney("feePaid", form("feePaid.currency"), form("feePaid.amount"), '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
-
-      <button class="btn btn-primary" type="submit">Save</button>
+      @* Inline the delete script, which is normally in details.js, because the delete button is on this edit page. *@
+      <script type="text/javascript">
+        $(document).ready( function() {
+          $('form.delete').submit(function() {
+            return confirm('Delete permanently? You cannot undo this action.');
+          });
+        });
+      </script>
     }
+
+    <div class="span4">
+      @if(form.hasErrors) {
+        <div class="alert alert-error">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          Please fix the validation errors.
+          @if(!form.globalErrors.isEmpty) {
+          <ul>
+            @for(error <- form.globalErrors) {
+            <li>@Messages(error.message)</li>
+            }
+          </ul>
+          }
+        </div>
+      }
+
+      @helper.form(action = if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0))) {
+        @helper.select(form("brandId"), Brand.findAll.map(b => (b.id.toString, b.name)), '_label -> "Brand")
+        @helper.inputText(form("version"), '_label -> "Version")
+
+        @helper.inputDate(form("signed"), '_label -> "Date signed", '_help -> "Required")
+        @helper.inputDate(form("start"), '_label -> "Start date", '_help -> "Required")
+        @helper.inputDate(form("end"), '_label -> "End date", '_help -> "Required")
+
+        <div class="control-group" id="confirmed_field">
+          <label for="confirmed" class="checkbox">
+            <input type="checkbox" id="confirmed" name="confirmed" value="true"
+            @if(form("confirmed").value.exists(_ == "true")){checked} >
+            Confirmed
+          </label>
+        </div>
+
+        @helper.inputMoney("fee", form("fee.currency"), form("fee.amount"), '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
+        @helper.inputMoney("feePaid", form("feePaid.currency"), form("feePaid.amount"), '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
+
+        <button class="btn btn-primary" type="submit">Save</button>
+      }
+    </div>
   }
 }
