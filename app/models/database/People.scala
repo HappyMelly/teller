@@ -44,8 +44,7 @@ private[models] object People extends Table[Person]("PERSON") {
           p.linkedInUrl, p.googlePlusUrl, p.boardMember, p.stakeholder, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
       })
 
-  def forInsert = firstName ~ lastName ~ emailAddress ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
-    linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ active ~ created ~ createdBy ~ updated ~ updatedBy returning id
+  def forInsert = * returning id
 
   def forUpdate = firstName ~ lastName ~ emailAddress ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
     googlePlusUrl ~ boardMember ~ stakeholder ~ updated ~ updatedBy

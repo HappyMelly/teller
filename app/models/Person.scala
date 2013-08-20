@@ -69,11 +69,7 @@ case class Person(
    */
   def insert: Person = DB.withSession { implicit session ⇒
     val newAddress = Address.insert(this.address)
-    val addressId = newAddress.id.getOrElse(0L)
-
-    val p = Person.unapply(this).get
-    val insertTuple = (p._2, p._3, p._4, addressId, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18)
-    val newId = People.forInsert.insert(insertTuple)
+    val newId = People.forInsert.insert(this.copy(address = newAddress))
     this.copy(id = Some(newId))
   }
 
@@ -90,9 +86,9 @@ case class Person(
       } yield address
       addressQuery.update(address.copy(id = Some(addressId)))
 
-      val p = Person.unapply(this).get
-      // We need to skip the 15th and 16th fields (created, createdBy)
-      val personUpdateTuple = (p._2, p._3, p._4, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._17, p._18)
+      // Skip the id, created, createdBy and active fields.
+      val personUpdateTuple = (firstName, lastName, emailAddress, bio, interests, twitterHandle, facebookUrl,
+        linkedInUrl, googlePlusUrl, boardMember, stakeholder, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
       this
