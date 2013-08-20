@@ -1,14 +1,18 @@
-@(user: securesocial.core.Identity, brands: List[BrandView])(implicit flash: Flash)
+@(user: securesocial.core.Identity, brands: List[BrandView])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @main("Brands", Some(user)) {
 
   <div class="span7">
   <h1>Brands</h1>
   </div>
-  <div class="span3">
-      <a class="btn btn-success" href="@routes.Brands.add()">
-          <i class="icon-plus icon-white"></i>Add Brand</a>
-  </div>
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="span3">
+      <a class="btn btn-success" href="@routes.Brands.add()"><i class="icon-plus icon-white"></i>Add Brand</a>
+    </div>
+  }
   @if(!brands.isEmpty) {
 
   <div class="span10">
@@ -17,7 +21,9 @@
       <tr>
         <th>Name</th>
         <th>Co-ordinator</th>
-        <th/>
+        @restrict(handler, List(as(Editor.toString))) {
+          <th></th>
+        }
       </tr>
     </thead>
     <tbody>
@@ -25,11 +31,12 @@
         <tr>
           <td>@brand.name</td>
           <td>@brand.coordinator.lastName, @brand.coordinator.firstName</td>
-          <td><a href="@routes.Brands.edit(brand.id)"><i class="icon-pencil"></i> Edit</a>
-              <form action="@routes.Brands.delete(brand.id)" method="POST">
-              <button type="submit" class="btn btn-link" @if(brand.licenses.nonEmpty) { disabled="disabled" title="You cannot delete this brand because it has members" }><i class="icon icon-trash"></i> Delete</button>
-
-          </form></td>
+          @restrict(handler, List(as(Editor.toString))) {
+            <td><a href="@routes.Brands.edit(brand.id)"><i class="icon-pencil"></i> Edit</a>
+                <form action="@routes.Brands.delete(brand.id)" method="POST">
+                <button type="submit" class="btn btn-link" @if(brand.licenses.nonEmpty) { disabled="disabled" title="You cannot delete this brand because it has members" }><i class="icon icon-trash"></i> Delete</button>
+            </form></td>
+          }
         </tr>
       }
     </tbody>

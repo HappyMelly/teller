@@ -22,6 +22,7 @@ object UserAccounts extends Controller with Security {
    */
   def update = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒
+
       userForm.bindFromRequest.fold(
         form ⇒ BadRequest("invalid form data"),
         user ⇒ {

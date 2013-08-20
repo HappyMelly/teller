@@ -1,21 +1,28 @@
-@(user: securesocial.core.Identity, people: List[Person])(implicit flash: Flash)
+@(user: securesocial.core.Identity, people: List[Person])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @main("People", Some(user)) {
 
   <div class="span5">
     <h1>People</h1>
   </div>
-  <div class="span3">
-    <a class="btn btn-success" href="@routes.People.add()">
-    <i class="icon-plus icon-white"></i>Add Person</a>
-  </div>
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="span3">
+      <a class="btn btn-success" href="@routes.People.add()">
+      <i class="icon-plus icon-white"></i>Add Person</a>
+    </div>
+  }
 
   <div class="span10">
     @if(people.isEmpty) {
       <p>There are no people</p>
     } else {
       @table(people) { person =>
-        <a href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+        @restrict(handler, List(as(Editor.toString))) {
+          <a href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+        }
       }
     }
   </div>

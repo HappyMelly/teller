@@ -7,8 +7,11 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import org.joda.time.DateTime
+import models.UserRole.Role._
+import securesocial.core.SecuredRequest
+import scala.Some
 
-object Organisations extends Controller with SecureSocial {
+object Organisations extends Controller with Security {
 
   /**
    * HTML form mapping for creating and editing.
@@ -34,35 +37,39 @@ object Organisations extends Controller with SecureSocial {
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredAction { implicit request ⇒
-    Organisation.find(id).map { organisation ⇒
-      Form("active" -> boolean).bindFromRequest.fold(
-        form ⇒ {
-          BadRequest("invalid form data")
-        },
-        active ⇒ {
-          Organisation.activate(id, active)
-          val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
-          Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
-        })
-    } getOrElse {
-      Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
-    }
+  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Organisation.find(id).map { organisation ⇒
+        Form("active" -> boolean).bindFromRequest.fold(
+          form ⇒ {
+            BadRequest("invalid form data")
+          },
+          active ⇒ {
+            Organisation.activate(id, active)
+            val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+            Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
+          })
+      } getOrElse {
+        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
+      }
   }
 
   /**
    * Create page.
    */
-  def add = SecuredAction {
-    implicit request ⇒
+  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
       Ok(views.html.organisation.form(request.user, None, organisationForm))
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredAction {
-    implicit request ⇒
+  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
@@ -77,8 +84,9 @@ object Organisations extends Controller with SecureSocial {
    * Deletes an organisation.
    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredAction {
-    request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
       Organisation.find(id).map {
         organisation ⇒
           Organisation.delete(id)
@@ -91,8 +99,9 @@ object Organisations extends Controller with SecureSocial {
    * Details page.
    * @param id Organisation ID
    */
-  def details(id: Long) = SecuredAction {
-    implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+
       Organisation.find(id).map {
         organisation ⇒
           val members = organisation.members
@@ -108,8 +117,9 @@ object Organisations extends Controller with SecureSocial {
    * Edit page.
    * @param id Organisation ID
    */
-  def edit(id: Long) = SecuredAction {
-    implicit request ⇒
+  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
       Organisation.find(id).map {
         organisation ⇒
           Ok(views.html.organisation.form(request.user, Some(id), organisationForm.fill(organisation)))
@@ -119,8 +129,9 @@ object Organisations extends Controller with SecureSocial {
   /**
    * List page.
    */
-  def index = SecuredAction {
-    implicit request ⇒
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+
       val organisations = Organisation.findAll
       Ok(views.html.organisation.index(request.user, organisations))
   }
@@ -129,8 +140,9 @@ object Organisations extends Controller with SecureSocial {
    * Edit form submits to this action.
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredAction {
-    implicit request ⇒
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(request.user, Some(id), formWithErrors)),
