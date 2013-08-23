@@ -7,12 +7,11 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.i18n.Messages
-import securesocial.core.SecureSocial
-import scala.Predef._
+import models.UserRole.Role._
 import scala.Some
 import securesocial.core.SecuredRequest
 
-object People extends Controller with SecureSocial {
+object People extends Controller with Security {
 
   /**
    * HTML form mapping for a person’s address.
@@ -149,14 +148,16 @@ object People extends Controller with SecureSocial {
    * Details page.
    * @param id Person ID
    */
-  def details(id: Long) = SecuredAction { implicit request ⇒
-    models.Person.find(id).map { person ⇒
-      val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
-      val licenses = License.licenses(id)
-      Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses))
-    } getOrElse {
-      Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
-    }
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      models.Person.find(id).map { person ⇒
+        val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
+        val licenses = License.licenses(id)
+        val accountRole = UserAccount.findRole(id)
+        Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses, accountRole))
+      } getOrElse {
+        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+      }
   }
 
   /**

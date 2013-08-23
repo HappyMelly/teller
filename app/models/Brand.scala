@@ -5,7 +5,6 @@ import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
-import play.api.Logger
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -13,12 +12,12 @@ import play.api.Logger
 case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
   created: DateTime, createdBy: String, updated: DateTime, updatedBy: String) {
 
-  def insert = withSession { implicit session ⇒
+  def insert: Brand = withSession { implicit session ⇒
     val id = Brands.forInsert.insert(this)
     this.copy(id = Some(id))
   }
 
-  def delete = Brand.delete(this.id.get)
+  def delete(): Unit = Brand.delete(this.id.get)
 
   def update = withSession { implicit session ⇒
     val updateTuple = (code, name, coordinatorId, updated, updatedBy)
@@ -64,8 +63,8 @@ object Brand {
     }.toList
   }
 
-  def delete(id: Long) = withSession { implicit session ⇒
-    Brands.where(_.id === id).mutate(_.delete)
+  def delete(id: Long): Unit = withSession { implicit session ⇒
+    Brands.where(_.id === id).mutate(_.delete())
   }
 
 }

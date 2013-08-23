@@ -43,7 +43,7 @@ object Activity {
    * Returns all activity stream entries in reverse chronological order.
    */
   def findAll: List[Activity] = withSession { implicit session ⇒
-    Query(Activities).sortBy(_.created.desc).list
+    Query(Activities).take(50).sortBy(_.created.desc).list
   }
 
   def insert(subject: String, predicate: Predicate): Activity = {

@@ -11,6 +11,7 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     jdbc,
+    "be.objectify" %% "deadbolt-scala" % "2.1-RC2",
     "com.github.tototoshi" %% "slick-joda-mapper" % "0.3.0",
     "com.typesafe.play" %% "play-slick" % "0.3.3",
     "com.typesafe.slick" %% "slick" % "1.0.1",
@@ -23,7 +24,9 @@ object ApplicationBuild extends Build {
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(
-    resolvers += Resolver.url("sbt-plugin-snapshots", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots/"))(Resolver.ivyStylePatterns)
+    resolvers += Resolver.url("sbt-plugin-snapshots", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots/"))(Resolver.ivyStylePatterns),
+    resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns),
+    resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.com/releases/"))(Resolver.ivyStylePatterns)
   ).settings(
     /* Scalariform: override default settings - no spaces within pattern binders is the only option in IntelliJ IDEA,
       preserve spaces before arguments is needed for infix function syntax (unconfirmed).*/

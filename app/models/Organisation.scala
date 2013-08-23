@@ -11,10 +11,23 @@ import scala.slick.lifted.Query
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
-case class Organisation(id: Option[Long], name: String, street1: Option[String], street2: Option[String],
-  city: Option[String], province: Option[String], postCode: Option[String], countryCode: String,
-  vatNumber: Option[String], registrationNumber: Option[String], legalEntity: Boolean = false, active: Boolean = true,
-  created: DateTime = DateTime.now(), createdBy: String, updated: DateTime, updatedBy: String) {
+case class Organisation(
+  id: Option[Long],
+  name: String,
+  street1: Option[String],
+  street2: Option[String],
+  city: Option[String],
+  province: Option[String],
+  postCode: Option[String],
+  countryCode: String,
+  vatNumber: Option[String],
+  registrationNumber: Option[String],
+  legalEntity: Boolean = false,
+  active: Boolean = true,
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
 
   def members: List[Person] = withSession { implicit session ⇒
     val query = for {
@@ -32,9 +45,10 @@ case class Organisation(id: Option[Long], name: String, street1: Option[String],
     if (id.isDefined) {
       val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
       val q = filter.map { org ⇒ org.forUpdate }
-      val t = Organisation.unapply(this).get
-      //We need to skip the 14th and 15th field
-      val updateTuple = (t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._15, t._16)
+
+      // Skip the created, createdBy and active fields.
+      val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
+        legalEntity, updated, updatedBy)
       q.update(updateTuple)
       this
     } else { // Insert

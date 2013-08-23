@@ -36,5 +36,5 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def forInsert = * returning id
 
   def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    legalEntity ~ active ~ updated ~ updatedBy
+    legalEntity ~ updated ~ updatedBy
 }

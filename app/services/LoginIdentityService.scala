@@ -1,25 +1,20 @@
 package services
 
-import play.api.{ Logger, Play, Application }
+import play.api.{ Logger, Application }
 import securesocial.core._
-import models.{ LoginIdentity }
+import models.{ UserAccount, LoginIdentity }
 import play.api.libs.ws.WS
 import LoginIdentityService._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
 import securesocial.core.IdentityId
 import securesocial.core.providers.Token
 import scala.concurrent.Await
-import Play.current
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.collection.JavaConverters._
-import models.database.LoginIdentities
 
 /**
  * Used by SecureSocial to look up and save authentication data.
  */
 class LoginIdentityService(application: Application) extends UserServicePlugin(application) {
-
-  private def whitelist = Play.configuration.getStringList(TwitterWhitelist).map(_.asScala).getOrElse(Nil)
 
   def find(id: IdentityId) = LoginIdentity.findByUserId(id)
 
@@ -29,10 +24,15 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       case li: LoginIdentity ⇒ li
     }
 
-    if (whitelist.exists(_.equalsIgnoreCase(loginIdentity.twitterHandle))) {
-      LoginIdentity.save(loginIdentity)
-    } else {
-      Logger.info("Denying authentication to user not in whitelist (%s)".format("@" + loginIdentity.twitterHandle))
+    UserAccount.findRoleByTwitterHandle(loginIdentity.twitterHandle).map { userRole ⇒
+      if (userRole.viewer) {
+        LoginIdentity.save(loginIdentity)
+      } else {
+        Logger.info(s"Denying authentication to Twitter user (@${loginIdentity.twitterHandle}}) without Viewer role")
+        throw new AuthenticationException
+      }
+    }.getOrElse {
+      Logger.info(s"Denying authentication to Twitter user (@${loginIdentity.twitterHandle}}) with no user account")
       throw new AuthenticationException
     }
   }
@@ -67,5 +67,4 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
 object LoginIdentityService {
   val TwitterSettings = "https://api.twitter.com/1.1/account/settings.json"
   val ScreenName = "screen_name"
-  val TwitterWhitelist = "login.twitter.whitelist"
 }

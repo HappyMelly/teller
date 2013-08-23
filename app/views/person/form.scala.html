@@ -5,7 +5,7 @@
 
 @main("Organizations", Some(user)) {
 
-  @defining(personForm.value.map(person => "Pesron %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
+  @defining(personForm.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
     <h1>@personName</h1>
 
     @if(personForm.hasErrors) {
