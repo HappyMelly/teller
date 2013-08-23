@@ -27,22 +27,24 @@ object UserAccounts extends Controller with Security {
         user ⇒ {
           val (personId, role) = user
           Person.find(personId).map { person ⇒
-            Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
-            val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
-            val activity = role.map { newRole ⇒
-              if (UserAccount.findRole(personId).isDefined) {
-                UserAccount.updateRole(personId, newRole)
-                Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-              } else {
-                UserAccount.insert(UserAccount(None, personId, newRole))
-                Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            person.twitterHandle.map { twitterHandle ⇒
+              Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
+              val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
+              val activity = role.map { newRole ⇒
+                if (UserAccount.findRole(personId).isDefined) {
+                  UserAccount.updateRole(personId, newRole)
+                  Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+                } else {
+                  UserAccount.insert(UserAccount(None, personId, twitterHandle, newRole))
+                  Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+                }
+              }.getOrElse {
+                // Remove the account
+                UserAccount.delete(personId)
+                Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
               }
-            }.getOrElse {
-              // Remove the account
-              UserAccount.delete(personId)
-              Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-            }
-            Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
+              Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
+            }.getOrElse(BadRequest("invalid form data - no Twitter handle"))
           }.getOrElse(BadRequest("invalid form data - person not found"))
         })
   }

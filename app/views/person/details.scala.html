@@ -105,19 +105,23 @@
   @restrict(handler, List(as("admin"))) {
     <div class="span3">
       <h3>User role</h3>
-      <form method="post" action="@routes.UserAccounts.update">
-        <input type="hidden" name="personId" value="@person.id">
-        <div class="control-group" id="role_field">
-          <label class="radio">
-            <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
-          </label>
-          @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
-          @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
-          @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
-        </div>
+      @if(person.twitterHandle.isEmpty) {
+        <p>None (cannot log in) - add a Twitter handle to assign roles</p>
+      } else {
+        <form method="post" action="@routes.UserAccounts.update">
+          <input type="hidden" name="personId" value="@person.id">
+          <div class="control-group" id="role_field">
+            <label class="radio">
+              <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
+            </label>
+            @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
+            @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
+            @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
+          </div>
 
-        <button class="btn" type="submit">Update Role</button>
-      </form>
+          <button class="btn" type="submit">Update Role</button>
+        </form>
+      }
     </div>
   }
 

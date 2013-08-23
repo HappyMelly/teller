@@ -6,12 +6,11 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import play.libs.Scala
-import play.api.Logger
 
 /**
  * A log-in user account.
  */
-case class UserAccount(id: Option[Long], personId: Long, role: String) extends Subject {
+case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, role: String) extends Subject {
 
   /**
    * Returns a string list of role names.
@@ -36,8 +35,7 @@ object UserAccount {
    */
   def findByTwitterHandle(twitterHandle: String): Option[UserAccount] = withSession { implicit session ⇒
     val query = for {
-      account ← UserAccounts
-      person ← account.person if person.twitterHandle === twitterHandle
+      account ← UserAccounts if account.twitterHandle.toLowerCase === twitterHandle.toLowerCase
     } yield account
     query.firstOption
   }
