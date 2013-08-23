@@ -21,11 +21,13 @@ case class License(
   end: LocalDate,
   confirmed: Boolean,
   fee: Money,
-  feePaid: Option[Money])
-
-case class LicenseView(brand: Brand, license: License) {
-  def active: Boolean = new Interval(license.start.toDateMidnight, license.end.toDateMidnight).containsNow
+  feePaid: Option[Money]) {
+  def active: Boolean = new Interval(start.toDateMidnight, end.toDateMidnight).containsNow
 }
+
+case class LicenseView(brand: Brand, license: License)
+
+case class LicenseLicenseeView(license: License, licensee: Person)
 
 case class LicenseLicenseeBrandView(license: License, brand: Brand, licensee: Person)
 
@@ -64,6 +66,24 @@ object License {
       case (license, brand, licensee) ⇒
         LicenseLicenseeBrandView(license, brand, licensee)
     }.firstOption
+  }
+
+  /**
+   * Returns the start date for a current license for the given licensee and brand.
+   * If there are multiple current licenses, the earliest start date is returned.
+   *
+   * Start dates for previous licenses that join up with current licenses are not found. For example, if there is a
+   * license for 1 January to 31 December every year, this function returns 1 January of this year, not the first year.
+   */
+  def licensedSince(licenseeId: Long, brandCode: String): Option[LocalDate] = withSession { implicit session ⇒
+    val today = LocalDate.now()
+    val query = for {
+      license ← Licenses if license.start <= today && license.end >= today
+      brand ← license.brand if brand.code === brandCode
+      licensee ← license.licensee if licensee.id === licenseeId
+    } yield license.start
+
+    Query(query.min).first
   }
 
   def insert(license: License) = withSession { implicit session ⇒

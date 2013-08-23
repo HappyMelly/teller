@@ -39,17 +39,17 @@ object Brands extends Controller with Security {
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-    val boundForm: Form[Brand] = brandsForm.bindFromRequest
-    boundForm.fold(
-      formWithErrors ⇒ BadRequest(views.html.brand.form(request.user, None, formWithErrors)),
-      brand ⇒ {
-        if (Brand.exists(brand.code)) BadRequest(views.html.brand.form(request.user, None,
-          boundForm.withError("code", "constraint.brand.code.exists", brand.code)))
+      val boundForm: Form[Brand] = brandsForm.bindFromRequest
+      boundForm.fold(
+        formWithErrors ⇒ BadRequest(views.html.brand.form(request.user, None, formWithErrors)),
+        brand ⇒ {
+          if (Brand.exists(brand.code)) BadRequest(views.html.brand.form(request.user, None,
+            boundForm.withError("code", "constraint.brand.code.exists", brand.code)))
 
-        val savedBrand = brand.insert
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedBrand.name)
-        Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
-      })
+          val savedBrand = brand.insert
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedBrand.name)
+          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+        })
   }
 
   /** Delete a brand **/
