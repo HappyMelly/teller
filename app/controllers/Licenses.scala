@@ -8,13 +8,16 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
-import scala.util.{ Failure, Success, Try }
-import securesocial.core.SecureSocial
+import scala.util.Try
+import models.UserRole.Role._
+import scala.util.Failure
+import scala.Some
+import scala.util.Success
 
 /**
  * Content license pages and API.
  */
-object Licenses extends Controller with ApiAuthentication with SecureSocial {
+object Licenses extends Controller with ApiAuthentication with Security {
 
   /**
    * HTML form mapping for creating and editing.
@@ -45,77 +48,87 @@ object Licenses extends Controller with ApiAuthentication with SecureSocial {
   /**
    * Page for adding a new content license.
    */
-  def add(personId: Long) = SecuredAction { implicit request ⇒
-    Person.find(personId).map { person ⇒
-      val form = licenseForm.fill(License.blank(personId))
-      Ok(views.html.license.form(request.user, None, form, person))
-    } getOrElse {
-      Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
-    }
+  def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Person.find(personId).map { person ⇒
+        val form = licenseForm.fill(License.blank(personId))
+        Ok(views.html.license.form(request.user, None, form, person))
+      } getOrElse {
+        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+      }
   }
 
   /**
    * POST handler for adding a new content license.
    */
-  def create(personId: Long) = SecuredAction { implicit request ⇒
-    Person.find(personId).map { person ⇒
-      licenseForm.bindFromRequest.fold(
-        form ⇒ BadRequest(views.html.license.form(request.user, None, form, person)),
-        license ⇒ {
-          val newLicense = License.insert(license.copy(licenseeId = personId))
-          val brand = Brand.find(newLicense.brandId).get
+  def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
 
-          val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
-        })
-    } getOrElse {
-      Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
-    }
+      Person.find(personId).map { person ⇒
+        licenseForm.bindFromRequest.fold(
+          form ⇒ BadRequest(views.html.license.form(request.user, None, form, person)),
+          license ⇒ {
+            val newLicense = License.insert(license.copy(licenseeId = personId))
+            val brand = Brand.find(newLicense.brandId).get
+
+            val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+          })
+      } getOrElse {
+        Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+      }
   }
 
   /**
    * Deletes a license.
    */
-  def delete(id: Long) = SecuredAction { request ⇒
-    License.findWithBrandAndLicensee(id).map { view ⇒
-      License.delete(id)
-      val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-      val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-      Redirect(routes.People.details(view.licensee.id.getOrElse(0))).flashing("success" -> activity.toString)
-    }.getOrElse(NotFound)
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      License.findWithBrandAndLicensee(id).map { view ⇒
+        License.delete(id)
+        val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        Redirect(routes.People.details(view.licensee.id.getOrElse(0))).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
   }
 
   /**
    * POST handler for updating an existing content license.
    */
-  def update(id: Long) = SecuredAction { implicit request ⇒
-    License.findWithBrandAndLicensee(id).map { view ⇒
-      licenseForm.bindFromRequest.fold(
-        form ⇒ BadRequest(views.html.license.form(request.user, None, form, view.licensee)),
-        editedLicense ⇒ {
-          License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
 
-          val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-          Redirect(routes.People.details(view.licensee.id.get)).flashing("success" -> activity.toString)
-        })
-    } getOrElse {
-      Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
-    }
+      License.findWithBrandAndLicensee(id).map { view ⇒
+        licenseForm.bindFromRequest.fold(
+          form ⇒ BadRequest(views.html.license.form(request.user, None, form, view.licensee)),
+          editedLicense ⇒ {
+            License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
+
+            val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+            Redirect(routes.People.details(view.licensee.id.get)).flashing("success" -> activity.toString)
+          })
+      } getOrElse {
+        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
+      }
   }
 
   /**
    * Edit page.
    */
-  def edit(id: Long) = SecuredAction { implicit request ⇒
-    License.find(id).map { license ⇒
-      Person.find(license.licenseeId).map { licensee ⇒
-        Ok(views.html.license.form(request.user, license.id, licenseForm.fill(license), licensee))
-      }.getOrElse {
-        throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
-      }
-    }.getOrElse(NotFound)
+  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      License.find(id).map { license ⇒
+        Person.find(license.licenseeId).map { licensee ⇒
+          Ok(views.html.license.form(request.user, license.id, licenseForm.fill(license), licensee))
+        }.getOrElse {
+          throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
+        }
+      }.getOrElse(NotFound)
   }
 
   /**

@@ -51,8 +51,8 @@ object People extends Controller with Security {
   /**
    * Form target for toggling whether a person is active.
    */
-  def activation(id: Long) = SecuredAction {
-    implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
 
       Person.find(id).map { person ⇒
         Form("active" -> boolean).bindFromRequest.fold(
@@ -72,76 +72,84 @@ object People extends Controller with Security {
   /**
    * Create page.
    */
-  def add = SecuredAction { implicit request ⇒
-    Ok(views.html.person.form(request.user, None, personForm(request)))
+  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.person.form(request.user, None, personForm(request)))
   }
 
   /**
    * Deletes an person’s organisation membership.
    */
-  def addMembership = SecuredAction { implicit request ⇒
+  def addMembership = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
 
-    val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
+      val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
 
-    membershipForm.bindFromRequest.fold(
-      errors ⇒ BadRequest("organisationId missing"),
-      {
-        case (page, personId, organisationId) ⇒ {
-          Person.find(personId).map { person ⇒
-            Organisation.find(organisationId).map { organisation ⇒
-              person.addMembership(organisationId)
-              val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+      membershipForm.bindFromRequest.fold(
+        errors ⇒ BadRequest("organisationId missing"),
+        {
+          case (page, personId, organisationId) ⇒ {
+            Person.find(personId).map { person ⇒
+              Organisation.find(organisationId).map { organisation ⇒
+                person.addMembership(organisationId)
+                val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
 
-              // Redirect to the page we came from - either the person or organisation details page.
-              val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-              Redirect(action).flashing("success" -> activity.toString)
+                // Redirect to the page we came from - either the person or organisation details page.
+                val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+                Redirect(action).flashing("success" -> activity.toString)
+              }.getOrElse(NotFound)
             }.getOrElse(NotFound)
-          }.getOrElse(NotFound)
-        }
-      })
+          }
+        })
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredAction { implicit request ⇒
-    personForm(request).bindFromRequest.fold(
-      formWithErrors ⇒
-        BadRequest(views.html.person.form(request.user, None, formWithErrors)),
-      person ⇒ {
-        val updatedPerson = person.insert
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
-        Redirect(routes.People.index()).flashing("success" -> activity.toString)
-      })
+  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      personForm(request).bindFromRequest.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.person.form(request.user, None, formWithErrors)),
+        person ⇒ {
+          val updatedPerson = person.insert
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
+          Redirect(routes.People.index()).flashing("success" -> activity.toString)
+        })
   }
 
   /**
    * Deletes a person.
    */
-  def delete(id: Long) = SecuredAction { request ⇒
-    Person.find(id).map { person ⇒
-      Person.delete(id)
-      val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
-      Redirect(routes.People.index).flashing("success" -> activity.toString)
-    }.getOrElse(NotFound)
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Person.find(id).map { person ⇒
+        Person.delete(id)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
+        Redirect(routes.People.index).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
   }
 
   /**
    * Deletes an person’s organisation membership.
    */
-  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredAction { request ⇒
-    Person.find(personId).map { person ⇒
-      Organisation.find(organisationId).map { organisation ⇒
-        person.deleteMembership(organisationId)
-        val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
 
-        // Redirect to the page we came from - either the person or organisation details page.
-        val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
-        Redirect(action).flashing("success" -> activity.toString)
-      }
-    }.flatten.getOrElse(NotFound)
+      Person.find(personId).map { person ⇒
+        Organisation.find(organisationId).map { organisation ⇒
+          person.deleteMembership(organisationId)
+          val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+          // Redirect to the page we came from - either the person or organisation details page.
+          val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+          Redirect(action).flashing("success" -> activity.toString)
+        }
+      }.flatten.getOrElse(NotFound)
   }
 
   /**
@@ -150,6 +158,7 @@ object People extends Controller with Security {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
+
       models.Person.find(id).map { person ⇒
         val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
         val licenses = License.licenses(id)
@@ -164,30 +173,35 @@ object People extends Controller with Security {
    * Edit page.
    * @param id Person ID
    */
-  def edit(id: Long) = SecuredAction { implicit request ⇒
-    Person.find(id).map { person ⇒
-      Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
-    }.getOrElse(NotFound)
+  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Person.find(id).map { person ⇒
+        Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
+      }.getOrElse(NotFound)
   }
 
   /**
    * Edit form submits to this action.
    * @param id Person ID
    */
-  def update(id: Long) = SecuredAction { implicit request ⇒
-    personForm(request).bindFromRequest.fold(
-      formWithErrors ⇒
-        BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
-      person ⇒ {
-        person.copy(id = Some(id)).update
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
-        Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
-      })
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      personForm(request).bindFromRequest.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
+        person ⇒ {
+          person.copy(id = Some(id)).update
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
+          Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+        })
   }
 
-  def index = SecuredAction { implicit request ⇒
-    val people = models.Person.findAll
-    Ok(views.html.person.index(request.user, people))
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      val people = models.Person.findAll
+      Ok(views.html.person.index(request.user, people))
   }
 
 }

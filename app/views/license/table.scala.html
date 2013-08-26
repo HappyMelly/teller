@@ -1,5 +1,8 @@
-@(licenses: List[LicenseView])
+@(licenses: List[LicenseView])(implicit request: Request[Any], handler: AuthorisationHandler)
+@import models.UserRole.Role._
 @import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @if(!licenses.isEmpty) {
 
@@ -13,7 +16,9 @@
       <th>End</th>
       <th>Fee</th>
       <th>Paid</th>
-      <th></th>
+      @restrict(handler, List(as(Editor.toString))) {
+        <th></th>
+      }
     </tr>
   </thead>
   <tbody>
@@ -26,7 +31,9 @@
         <td>@license.license.end.format</td>
         <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmountMajor</td>
         <td>@license.license.feePaid.map(money => Html(money.getCurrencyUnit.getCode + "&nbsp;" + money.getAmount))</td>
-        <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))"><i class="icon-pencil"></i> Edit</a></td>
+        @restrict(handler, List(as(Editor.toString))) {
+          <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))"><i class="icon-pencil"></i> Edit</a></td>
+        }
       </tr>
     }
   </tbody>

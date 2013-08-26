@@ -1,4 +1,7 @@
 @(organisations: List[Organisation])(actions: (Organisation) => Html)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @if(!organisations.isEmpty) {
 
@@ -22,9 +25,7 @@
       <img width="16" src="/assets/images/flags/16/@(organisation.countryCode.toLowerCase).png" align="absmiddle">
       @Messages("country." + organisation.countryCode)
     </td>
-    <td>
-      @actions(organisation)
-    </td>
+    <td>@actions(organisation)</td>
     </tr>
     }
     </tbody>
