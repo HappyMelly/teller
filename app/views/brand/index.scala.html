@@ -29,13 +29,10 @@
     <tbody>
       @for(brand <- brands) {
         <tr>
-          <td>@brand.name</td>
-          <td>@brand.coordinator.lastName, @brand.coordinator.firstName</td>
+          <td><a href="@routes.Brands.details(brand.brand.code)">@brand.brand.name</a></td>
+          <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
           @restrict(handler, List(as(Editor.toString))) {
-            <td><a href="@routes.Brands.edit(brand.id)"><i class="icon-pencil"></i> Edit</a>
-                <form action="@routes.Brands.delete(brand.id)" method="POST">
-                <button type="submit" class="btn btn-link" @if(brand.licenses.nonEmpty) { disabled="disabled" title="You cannot delete this brand because it has members" }><i class="icon icon-trash"></i> Delete</button>
-            </form></td>
+            <td><a href="@routes.Brands.edit(brand.brand.code)"><i class="icon-pencil"></i> Edit</a></td>
           }
         </tr>
       }

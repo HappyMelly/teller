@@ -27,11 +27,7 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
   }
 }
 
-case class BrandView(id: Long, code: String, name: String, coordinator: Person, licenses: Seq[Long])
-
-case object BrandView {
-  def apply(brand: Brand, coordinator: Person, licenses: Seq[Long]) = new BrandView(brand.id.get, brand.code, brand.name, coordinator, licenses)
-}
+case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
 
 object Brand {
 
@@ -40,6 +36,20 @@ object Brand {
    */
   def exists(code: String): Boolean = withSession { implicit session ⇒
     Query(Query(Brands).filter(_.code === code).exists).first
+  }
+
+  def find(code: String): Option[BrandView] = withSession { implicit session ⇒
+    val query = for {
+      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
+      coordinator ← brand.coordinator
+    } yield (brand, coordinator, license.id.?)
+
+    query.list.groupBy { case (brand, coordinator, _) ⇒ brand -> coordinator }
+      .mapValues(_.flatMap(_._3)).map {
+        case ((brand, coordinator), licenses) ⇒
+          BrandView(brand, coordinator, licenses)
+      }.toList.headOption
+
   }
 
   /** Finds a brand by ID **/

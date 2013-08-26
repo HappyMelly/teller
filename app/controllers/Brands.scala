@@ -1,6 +1,6 @@
 package controllers
 
-import models.{ Activity, Brand }
+import models.{ BrandView, Activity, Brand }
 import org.joda.time._
 import play.api.mvc._
 import play.api.data.Form
@@ -53,37 +53,48 @@ object Brands extends Controller with Security {
   }
 
   /** Delete a brand **/
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-
-      Brand.find(id).map { brand ⇒
-        brand.delete()
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
-        Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+      Brand.find(code).map {
+        case BrandView(brand, _, _) ⇒
+          brand.delete()
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
+          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
-  /** Edit page **/
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def details(code: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
+      Brand.find(code).map {
+        case BrandView(brand, coordinator, licenseIds) ⇒
+          Ok(views.html.brand.details(request.user, brand, coordinator, licenseIds))
+      }.getOrElse(NotFound)
 
-      Brand.find(id).map { brand ⇒
-        val filledForm: Form[Brand] = brandsForm.fill(brand)
-        Ok(views.html.brand.form(request.user, Some(id), filledForm))
+  }
+
+  /** Edit page **/
+  def edit(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(code).map { brandView ⇒
+        val filledForm: Form[Brand] = brandsForm.fill(brandView.brand)
+        Ok(views.html.brand.form(request.user, Some(code), filledForm))
       }.getOrElse(NotFound)
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      brandsForm.bindFromRequest.fold(
-        form ⇒ BadRequest(views.html.brand.form(request.user, Some(id), form)),
-        brand ⇒ {
-          brand.copy(id = Some(id)).update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
-          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
-        })
+      Brand.find(code).map { originalBrandView ⇒
+        brandsForm.bindFromRequest.fold(
+          form ⇒ BadRequest(views.html.brand.form(request.user, Some(code), form)),
+          brand ⇒ {
+            brand.copy(id = originalBrandView.brand.id).update
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+            Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+          })
+      }.getOrElse(NotFound)
+
   }
 
 }

@@ -31,12 +31,13 @@ POST /license/:id/delete   controllers.Licenses.delete(id: Long)
 POST /person/membership/new                                controllers.People.addMembership
 GET  /person/:personId/membership/:organisationId/delete   controllers.People.deleteMembership(page: String, personId: Long, organisationId: Long)
 
-GET  /brands             controllers.Brands.index
-GET  /brand/new          controllers.Brands.add
-POST /brand/new          controllers.Brands.create
-POST /brand/:id          controllers.Brands.update(id: Long)
-GET  /brand/:id/edit     controllers.Brands.edit(id: Long)
-POST /brand/:id/delete   controllers.Brands.delete(id: Long)
+GET  /brands               controllers.Brands.index
+GET  /brand/new            controllers.Brands.add
+POST /brand/new            controllers.Brands.create
+GET  /brand/:code          controllers.Brands.details(code)
+POST /brand/:code          controllers.Brands.update(code)
+GET  /brand/:code/edit     controllers.Brands.edit(code)
+POST /brand/:code/delete   controllers.Brands.delete(code)
 
 POST /user    controllers.UserAccounts.update
 

@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, id: Option[Long], form: Form[Brand])(implicit flash: Flash)
+@(user: securesocial.core.Identity, code: Option[String], form: Form[Brand])(implicit flash: Flash)
 
 @import views.ViewHelpers._
 @import models.Person
@@ -15,7 +15,7 @@
           </div>
         }
 
-        @helper.form(action = id.map(id => routes.Brands.update(id)).getOrElse(routes.Brands.create())) {
+        @helper.form(action = code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())) {
             @helper.inputText(form("code"), '_label -> "Code")
             @helper.inputText(form("name"), '_label -> "Name")
             @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findAllActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")

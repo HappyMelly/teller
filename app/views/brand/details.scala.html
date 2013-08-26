@@ -1,0 +1,41 @@
+@(user: securesocial.core.Identity, brand: Brand, coordinator: Person, licenseIds: Seq[Long])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@import models.UserRole.Role._
+@import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main(brand.code + " - Brand", Some(user)) {
+
+  <div class="span8">
+    <header>
+
+    <h1>
+      @brand.name
+      @restrict(handler, List(as(Editor.toString))) {
+        <a class="btn-small btn"href="@routes.Brands.edit(brand.code)"><i class="icon-pencil"></i> Edit</a>
+      }
+    </h1>
+    <p><small>Added by @brand.createdBy on @brand.created.format <br> Updated by @brand.updatedBy on @brand.updated.format</small></p>
+    </header>
+  </div>
+
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="span2 actions">
+      <form class="delete" method="post" action="@routes.Brands.delete(brand.code)">
+        <button class="btn btn-danger btn-block" type="submit" @if(!licenseIds.isEmpty) { disabled="disabled" title="You cannot delete this brand because it has licenses" }>
+          <i class="icon-white icon-trash"></i> Delete
+        </button>
+      </form>
+    </div>
+  }
+
+  <div class="span4">
+    <h3>Brand details</h3>
+
+    <p><strong>Brand code</strong>
+    <br>@brand.code</p>
+      <p><strong>Brand coordinator</strong>
+    <br><a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a></p>
+
+	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+}
