@@ -74,10 +74,8 @@ object Organisation {
   /**
    * Deletes an organisation.
    */
-  def delete(id: Long) {
-    withSession { implicit session ⇒
-      Organisations.where(_.id === id).delete
-    }
+  def delete(id: Long): Unit = withSession { implicit session ⇒
+    Organisations.where(_.id === id).mutate(_.delete())
   }
 
   def find(id: Long): Option[Organisation] = withSession { implicit session ⇒
@@ -86,6 +84,10 @@ object Organisation {
 
   def findAll: List[Organisation] = withSession { implicit session ⇒
     Query(Organisations).sortBy(_.name.toLowerCase).list
+  }
+
+  def findLegalEntities: List[Organisation] = withSession { implicit session ⇒
+    Query(Organisations).filter(_.legalEntity === true).sortBy(_.name.toLowerCase).list
   }
 
   def findActive: List[Organisation] = withSession { implicit session ⇒

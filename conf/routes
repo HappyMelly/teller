@@ -43,6 +43,8 @@ POST /user    controllers.UserAccounts.update
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
 
+GET /api/v1/organizations   controllers.OrganisationsApi.organisations()
+
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
