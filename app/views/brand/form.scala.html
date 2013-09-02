@@ -18,7 +18,7 @@
         @helper.form(action = code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())) {
             @helper.inputText(form("code"), '_label -> "Code")
             @helper.inputText(form("name"), '_label -> "Name")
-            @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findAllActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")
+            @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")
 
             <button class="btn btn-primary" type="submit">Save</button>
         }

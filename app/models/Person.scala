@@ -1,6 +1,6 @@
 package models
 
-import models.database.{ OrganisationMemberships, People, Addresses }
+import models.database.{ People, OrganisationMemberships, Addresses }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -110,40 +110,35 @@ object Person {
 
   def delete(id: Long): Unit = {
     withSession { implicit session ⇒
-      People.where(_.id === id).mutate(_.delete)
+      People.where(_.id === id).delete
     }
   }
 
   def find(id: Long): Option[Person] = withSession { implicit session ⇒
     val query = for {
       person ← People if person.id === id
-      address ← person.address
-    } yield (person, address)
+    } yield person
 
-    query.list.headOption.map {
-      case (person, address) ⇒
-        person.copy(address = address)
-    }
+    query.firstOption
   }
 
-  def findAll: List[Person] = withSession { implicit session ⇒
-    val query = for {
-      person ← People
-      address ← person.address
-    } yield (person, address)
+  /** Finds all active people, filtered by stakeholder and/or board member status **/
+  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = withSession { implicit session ⇒
+    val baseQuery = Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase)
+    val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
+    val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
 
-    query.sortBy(_._1.lastName.toLowerCase).list.map {
-      case (person, address) ⇒
-        person.copy(address = address)
-    }
+    boardMembersFilteredQuery.list
+  }
+
+  /** Retrieves a list of all people from the database **/
+  def findAll: List[Person] = withSession { implicit session ⇒
+    Query(People).sortBy(_.lastName.toLowerCase).list
   }
 
   def findActive: List[Person] = withSession { implicit session ⇒
     Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase).list
   }
 
-  def findAllActive: List[Person] = withSession { implicit session ⇒
-    Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase).list
-  }
 }
 
