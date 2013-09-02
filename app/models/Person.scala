@@ -54,6 +54,15 @@ case class Person(
   }
 
   /**
+   * Returns a user for a different person to this one who has the same Twitter handle, if there is one.
+   * This is used to check for duplicate Twitter handles when creating accounts.
+   */
+  def findUserWithSameTwitter: Option[UserAccount] = {
+    val userSameTwitter = this.twitterHandle.map(handle ⇒ UserAccount.findByTwitterHandle(handle)).flatten
+    if (userSameTwitter.map(_.personId) == this.id) None else userSameTwitter
+  }
+
+  /**
    * Returns a list of the organisations this person is a member of.
    */
   def membership: List[Organisation] = withSession { implicit session ⇒

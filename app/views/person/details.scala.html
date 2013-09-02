@@ -1,5 +1,5 @@
 @(user: securesocial.core.Identity, person: Person, organisations: List[Organisation], otherOrganisations: List[Organisation],
-  licenses: List[LicenseView], accountRole: Option[models.UserRole.Role.Role])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+  licenses: List[LicenseView], accountRole: Option[models.UserRole.Role.Role], twitterUser: Option[UserAccount])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
@@ -110,22 +110,32 @@
   @restrict(handler, List(as("admin"))) {
     <div class="span3">
       <h3>User role</h3>
-      @if(person.twitterHandle.isEmpty) {
-        <p>None (cannot log in) - add a Twitter handle to assign roles</p>
-      } else {
-        <form method="post" action="@routes.UserAccounts.update">
-          <input type="hidden" name="personId" value="@person.id">
-          <div class="control-group" id="role_field">
-            <label class="radio">
-              <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
-            </label>
-            @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
-            @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
-            @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
-          </div>
+      @twitterUser.map { otherUser =>
+        <p>None (cannot log in)</p>
+        <div class="alert alert-error">
+          <p>
+            You cannot add a role because <a href="@routes.People.details(otherUser.personId)">another user</a>
+            has the same Twitter handle.
+          </p>
+        </div>
+      }.getOrElse {
+        @if(person.twitterHandle.isEmpty) {
+          <p>None (cannot log in) - add a Twitter handle to assign roles</p>
+        } else {
+          <form method="post" action="@routes.UserAccounts.update">
+            <input type="hidden" name="personId" value="@person.id">
+            <div class="control-group" id="role_field">
+              <label class="radio">
+                <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
+              </label>
+              @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
+              @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
+              @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
+            </div>
 
-          <button class="btn" type="submit">Update Role</button>
-        </form>
+            <button class="btn" type="submit">Update Role</button>
+          </form>
+        }
       }
     </div>
   }

@@ -163,7 +163,8 @@ object People extends Controller with Security {
         val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ person.membership.contains(organisation))
         val licenses = License.licenses(id)
         val accountRole = UserAccount.findRole(id)
-        Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses, accountRole))
+
+        Ok(views.html.person.details(request.user, person, person.membership, otherOrganisations, licenses, accountRole, person.findUserWithSameTwitter))
       } getOrElse {
         Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
