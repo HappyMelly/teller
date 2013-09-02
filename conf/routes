@@ -47,7 +47,8 @@ GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.lice
 GET /api/v1/people    controllers.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean])
 GET /api/v1/person/:id    controllers.PeopleApi.person(id: Long)
 
-GET /api/v1/organizations   controllers.OrganisationsApi.organisations()
+GET /api/v1/organizations      controllers.OrganisationsApi.organisations
+GET /api/v1/organization/:id   controllers.OrganisationsApi.organisation(id: Long)
 
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
