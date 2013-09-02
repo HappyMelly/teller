@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc.Controller
 import play.api.libs.json._
-import models.{ Address, Person, Organisation }
+import models.{ Address, Organisation }
 
 /**
  * Organisations API.
