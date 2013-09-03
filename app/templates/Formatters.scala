@@ -4,6 +4,8 @@ import org.joda.time.{ LocalDate, DateTimeZone, DateTime }
 import play.api.templates.Html
 import org.pegdown.PegDownProcessor
 import org.joda.money.Money
+import org.jsoup.Jsoup
+import org.jsoup.safety.Whitelist
 
 /**
  * Custom formatters for use in templates.
@@ -28,7 +30,9 @@ object Formatters {
      * Interpret the string as Markdown and convert to HTML.
      */
     def markdown: Html = {
-      Html(new PegDownProcessor().markdownToHtml(string))
+      val html = new PegDownProcessor().markdownToHtml(string)
+      val cleanHtml = Jsoup.clean(html, Whitelist.basic())
+      Html(cleanHtml)
     }
   }
 }

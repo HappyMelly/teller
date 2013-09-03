@@ -18,6 +18,7 @@ object ApplicationBuild extends Build {
     "mysql" % "mysql-connector-java" % "5.1.21",
     "org.joda" % "joda-money" % "0.9",
     "org.pegdown" % "pegdown" % "1.2.1",
+    "org.jsoup" % "jsoup" % "1.7.2",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
     "securesocial" %% "securesocial" % "master-SNAPSHOT"
