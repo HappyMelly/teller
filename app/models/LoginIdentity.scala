@@ -1,6 +1,6 @@
 package models
 
-import models.database.LoginIdentities
+import models.database.{ People, UserAccounts, LoginIdentities }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.Crypto
@@ -15,7 +15,16 @@ import securesocial.core._
 case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String, fullName: String,
   email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info],
-  passwordInfo: Option[PasswordInfo] = None, twitterHandle: String, apiToken: String) extends Identity {}
+  passwordInfo: Option[PasswordInfo] = None, twitterHandle: String, apiToken: String) extends Identity {
+
+  def person = DB.withSession { implicit session ⇒
+    (for {
+      account ← UserAccounts if account.twitterHandle === twitterHandle
+      person ← People if person.id === account.personId
+
+    } yield person).first
+  }
+}
 
 object LoginIdentity {
 

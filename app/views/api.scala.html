@@ -220,5 +220,36 @@
       </tr>
   </table>
 
+  <h2 id="people">People</h2>
+  <table class="table table-bordered">
+    <tr>
+      <th>Description</th>
+      <td>Details for a single person</td>
+    </tr>
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/person/{id}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td><code>id</code> unique identifier for the person, e.g. <code>42</code></td>
+    </tr>
+    <tr>
+      <th>Query string parameters</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the specified person is not found</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Example</th>
+      <td>
+        <a href="/api/v1/person/@user.person.id.get?api_token=@user.apiToken">GET /api/v1/person/@user.person.id.get</a>
+      </td>
+    </tr>
+  </table>
 
 }
