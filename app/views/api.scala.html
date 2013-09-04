@@ -1,5 +1,6 @@
 @(user: LoginIdentity)(implicit flash: Flash)
 
+@import org.joda.time.DateTime
 @main("API", Some(user)) {
 
   <h1>API</h1>
@@ -220,7 +221,7 @@
       </tr>
   </table>
 
-  <h2 id="people">People</h2>
+  <h2 id="people">Person details</h2>
   <table class="table table-bordered">
     <tr>
       <th>Description</th>
@@ -237,6 +238,43 @@
     <tr>
       <th>Query string parameters</th>
       <td>none</td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON person object, with properties:</p>
+        <ul>
+          <li><code>first_name</code></li>
+          <li><code>last_name</code></li>
+          <li><code>email_address</code></li>
+          <li><code>address</code> address object:
+            <ul>
+              <li><code>street1</code></li>
+              <li><code>street2</code></li>
+              <li><code>city</code></li>
+              <li><code>post_code</code></li>
+              <li><code>province</code></li>
+              <li><code>country</code> - ISO 8166-2 country code</li>
+            </ul>
+          </li>
+          <li><code>stakeholder</code></li>
+          <li><code>board_member</code></li>
+          <li><code>bio</code> Markdown format</li>
+          <li><code>twitter_handle</code> - Twitter user name, without the leading <code>@@</code></li>
+          <li><code>facebook_url</code></li>
+          <li><code>linkedin_url</code></li>
+          <li><code>google_plus_url</code></li>
+          <li><code>active</code></li>
+          <li><code>created</code> - date time in ISO8601 format (yyyy-MM-ddTHH:mm:ss.SSSZZ), for example <code>@DateTime.now().toString()</code></li>
+          <li><code>createdBy</code></li>
+          <li><code>updated</code> - date time in ISO8601 format (yyyy-MM-ddTHH:mm:ss.SSSZZ), for example <code>@DateTime.now().toString()</code></li>
+          <li><code>updatedBy</code></li>
+        </ul>
+      </td>
     </tr>
     <tr>
       <th>Errors (HTTP status)</th>
