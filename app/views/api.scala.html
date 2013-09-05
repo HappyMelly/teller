@@ -277,51 +277,51 @@
 
   <h3 id="people">People</h3>
   <table class="table table-bordered">
-      <tr>
-          <th>Description</th>
-          <td>A list of Happy Melly People, optionally filtered by their stakeholder and/or board member status</td>
-      </tr>
-      <tr>
-          <th>Request</th>
-          <td><code>GET /api/v1/people</code></td>
-      </tr>
-      <tr>
-          <th>Request path parameters</th>
-          <td>none</td>
-      </tr>
-      <tr>
-          <th>Request query string parameters</th>
-          <td><p><code>stakeholders_only</code> boolean, set to <code>true</code> to only include people that are HM stakeholders, default <code>false</code></p>
-              <p><code>board_members_only</code> boolean, set to <code>true</code> to only include people that are HM board members, default <code>false</code></p>
-              <p>Both parameters can be combined to get a list of people that only contains stakeholder who are also board members.</p>
-          </td>
-      </tr>
-      <tr>
-          <th>Response content type</th>
-          <td><code>application/json; charset=utf-8</code></td>
-      </tr>
-      <tr>
-          <th>Response body</th>
-          <td>
-              <p>A JSON array of organization objects, with properties:</p>
-              <ul>
-                  <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
-                  <li><code>name</code></li>
-                  <li><code>city</code></li>
-                  <li><code>country</code> - ISO 8166-2 country code</li>
-              </ul>
-          </td>
-      </tr>
-      <tr>
-          <th>Errors (HTTP status)</th>
-          <td>none</td>
-      </tr>
-      <tr>
-          <th>Examples</th>
-          <td><a href="/api/v1/people?api_token=@user.apiToken">GET /api/v1/people</a><br>
-          <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true">GET /api/v1/people?stakeholders_only=true</a><br>
-          <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true&board_members_only=true">GET /api/v1/people?stakeholders_only=true&board_members_only=true</a></td>
-      </tr>
+    <tr>
+      <th>Description</th>
+      <td>A list of Happy Melly People, optionally filtered by their stakeholder and/or board member status</td>
+    </tr>
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/people</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Request query string parameters</th>
+      <td><p><code>stakeholders_only</code> boolean, set to <code>true</code> to only include people that are HM stakeholders, default <code>false</code></p>
+        <p><code>board_members_only</code> boolean, set to <code>true</code> to only include people that are HM board members, default <code>false</code></p>
+        <p>Both parameters can be combined to get a list of people that only contains stakeholder who are also board members.</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of organization objects, with properties:</p>
+        <ul>
+          <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+          <li><code>name</code></li>
+          <li><code>city</code></li>
+          <li><code>country</code> - ISO 8166-2 country code</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td><a href="/api/v1/people?api_token=@user.apiToken">GET /api/v1/people</a><br>
+      <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true">GET /api/v1/people?stakeholders_only=true</a><br>
+      <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true&board_members_only=true">GET /api/v1/people?stakeholders_only=true&board_members_only=true</a></td>
+    </tr>
   </table>
 
   
