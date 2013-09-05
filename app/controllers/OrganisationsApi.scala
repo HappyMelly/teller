@@ -49,7 +49,7 @@ object OrganisationsApi extends Controller with ApiAuthentication {
   /**
    * Organisation list API.
    */
-  def organisations = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Organisation.findLegalEntities))
+  def organisations(legalEntitiesOnly: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
+    Ok(Json.toJson(Organisation.find(legalEntitiesOnly.getOrElse(false))))
   }
 }

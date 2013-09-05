@@ -86,8 +86,9 @@ object Organisation {
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }
 
-  def findLegalEntities: List[Organisation] = withSession { implicit session ⇒
-    Query(Organisations).filter(_.legalEntity === true).sortBy(_.name.toLowerCase).list
+  def find(legalEntitiesOnly: Boolean): List[Organisation] = withSession { implicit session ⇒
+    val query = if (legalEntitiesOnly) Query(Organisations).filter(_.legalEntity === true) else Query(Organisations)
+    query.sortBy(_.name.toLowerCase).list
   }
 
   def findActive: List[Organisation] = withSession { implicit session ⇒
