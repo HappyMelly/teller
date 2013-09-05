@@ -2,14 +2,14 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
-GET  /organisations              controllers.Organisations.index
-POST /organisations             controllers.Organisations.create
-GET  /organisation/new         controllers.Organisations.add
-GET  /organisation/:id/edit     controllers.Organisations.edit(id: Long)
-GET  /organisation/:id           controllers.Organisations.details(id: Long)
-POST /organisation/:id         controllers.Organisations.update(id: Long)
-POST /organisation/:id/delete   controllers.Organisations.delete(id: Long)
-POST /organisation/:id/activation   controllers.Organisations.activation(id: Long)
+GET  /organizations                 controllers.Organisations.index
+POST /organizations                 controllers.Organisations.create
+GET  /organization/new              controllers.Organisations.add
+GET  /organization/:id/edit         controllers.Organisations.edit(id: Long)
+GET  /organization/:id              controllers.Organisations.details(id: Long)
+POST /organization/:id              controllers.Organisations.update(id: Long)
+POST /organization/:id/delete       controllers.Organisations.delete(id: Long)
+POST /organization/:id/activation   controllers.Organisations.activation(id: Long)
 
 GET  /people       controllers.People.index
 
