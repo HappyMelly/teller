@@ -34,9 +34,9 @@ object LicensesApi extends Controller with ApiAuthentication {
         "email_address" -> view.licensee.emailAddress,
         "twitter_handle" -> view.licensee.twitterHandle,
         "facebook_url" -> view.licensee.facebookUrl,
-        "linked_in_url" -> view.licensee.linkedInUrl,
+        "linkedin_url" -> view.licensee.linkedInUrl,
         "google_plus_url" -> view.licensee.googlePlusUrl,
-        "bio_markdown" -> view.licensee.bio,
+        "bio" -> view.licensee.bio,
         "interests" -> view.licensee.interests,
         "valid" -> view.since.isDefined,
         "licensed_since" -> view.since)
