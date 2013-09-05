@@ -21,6 +21,7 @@
       @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
       @helper.inputText(personForm("address.street1"), '_label -> "Address line 1")
       @helper.inputText(personForm("address.street2"), '_label -> "Address line 2")
+      @helper.inputText(personForm("address.postCode"), '_label -> "Post code")
       @helper.inputText(personForm("address.city"), '_label -> "City")
       @helper.inputText(personForm("address.province"), '_label -> "Province or state")
       @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")

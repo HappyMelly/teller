@@ -19,6 +19,7 @@
             @helper.inputText(orgForm("name"), '_label -> "Name")
             @helper.inputText(orgForm("street1"), '_label -> "Address line 1")
             @helper.inputText(orgForm("street2"), '_label -> "Address line 2")
+            @helper.inputText(orgForm("postCode"), '_label -> "Post code")
             @helper.inputText(orgForm("city"), '_label -> "City")
             @helper.inputText(orgForm("province"), '_label -> "Province or state")
             @helper.select(orgForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
