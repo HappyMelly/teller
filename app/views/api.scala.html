@@ -235,8 +235,7 @@
         <p>A JSON object, with organization properties:</p>
         <ul>
           <li><code>name</code></li>
-          <li><code>address</code> - address object with properties:</li>
-          <li>
+          <li><code>address</code> - address object with properties:
             <ul>
               <li><code>street1</code></li>
               <li><code>street1</code></li>
@@ -249,8 +248,7 @@
           <li><code>vat_number</code></li>
           <li><code>registration_number</code></li>
           <li><code>legal_entity</code></li>
-          <li><code>members</code> - array of objects with properties:</li>
-          <li>
+          <li><code>members</code> - array of objects with properties:
             <ul>
               <li><code>first_name</code></li>
               <li><code>last_name</code></li>
@@ -379,6 +377,14 @@
           <li><code>createdBy</code></li>
           <li><code>updated</code> - ISO8601 date time, e.g. <code>@DateTime.now().toString()</code></li>
           <li><code>updatedBy</code></li>
+          <li><code>organizations</code> - JSON array of organization objects, with the same structure as the <a href="#organizations">organizations resource</a></li>
+          <li><code>licenses</code> - JSON array of license objects, with properties:
+            <ul>
+              <li><code>brand</code> - a brand code</li>
+              <li><code>start</code> - date in `YYYY-MM-DD` format</li>
+              <li><code>end</code> - date in `YYYY-MM-DD` format</li>
+            </ul>
+          </li>
         </ul>
       </td>
     </tr>

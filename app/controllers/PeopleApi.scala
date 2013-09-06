@@ -7,7 +7,7 @@ import models.LicenseView
 
 object PeopleApi extends Controller with ApiAuthentication {
 
-  implicit val personSummaryWrites = new Writes[Person] {
+  implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
       Json.obj(
         "href" -> routes.PeopleApi.person(person.id.get).url,
@@ -17,14 +17,7 @@ object PeopleApi extends Controller with ApiAuthentication {
     }
   }
 
-  implicit val organisationSummaryWrites = new Writes[Organisation] {
-    def writes(organisation: Organisation) = {
-      Json.obj(
-        "name" -> organisation.name,
-        "city" -> organisation.city,
-        "country" -> organisation.countryCode)
-    }
-  }
+  import OrganisationsApi.organisationWrites
 
   implicit val licenseSummaryWrites = new Writes[LicenseView] {
     def writes(license: LicenseView) = {
@@ -45,7 +38,7 @@ object PeopleApi extends Controller with ApiAuthentication {
       "country" -> address.countryCode)
   }
 
-  val personDetailWrites = new Writes[Person] {
+  val personDetailsWrites = new Writes[Person] {
     def writes(person: Person) = {
       Json.obj(
         "first_name" -> person.firstName,
@@ -68,7 +61,9 @@ object PeopleApi extends Controller with ApiAuthentication {
         "created" -> person.created.toString(),
         "createdBy" -> person.createdBy,
         "updated" -> person.updated.toString(),
-        "updatedBy" -> person.updatedBy)
+        "updatedBy" -> person.updatedBy,
+        "organizations" -> person.memberships,
+        "licenses" -> person.licenses)
     }
   }
 
@@ -79,7 +74,7 @@ object PeopleApi extends Controller with ApiAuthentication {
 
   def person(id: Long) = TokenSecuredAction { implicit request ⇒
     val person = Person.find(id)
-    person.map(person ⇒ Ok(Json.toJson(person)(personDetailWrites))).getOrElse(NotFound)
+    person.map(person ⇒ Ok(Json.toJson(person)(personDetailsWrites))).getOrElse(NotFound)
   }
 
 }

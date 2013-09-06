@@ -1,6 +1,6 @@
 package models
 
-import models.database.{ People, OrganisationMemberships, Addresses }
+import models.database.{ Licenses, People, OrganisationMemberships, Addresses }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -60,6 +60,21 @@ case class Person(
   def findUserWithSameTwitter: Option[UserAccount] = {
     val userSameTwitter = this.twitterHandle.map(handle ⇒ UserAccount.findByTwitterHandle(handle)).flatten
     if (userSameTwitter.map(_.personId) == this.id) None else userSameTwitter
+  }
+
+  /**
+   * Returns a list of this person’s content licenses.
+   */
+  def licenses: List[LicenseView] = withSession { implicit session ⇒
+
+    val query = for {
+      license ← Licenses if license.licenseeId === this.id
+      brand ← license.brand
+    } yield (license, brand)
+
+    query.sortBy(_._2.name.toLowerCase).list.map {
+      case (license, brand) ⇒ LicenseView(brand, license)
+    }
   }
 
   /**

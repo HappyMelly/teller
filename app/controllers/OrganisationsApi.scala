@@ -19,7 +19,7 @@ object OrganisationsApi extends Controller with ApiAuthentication {
     }
   }
 
-  import PeopleApi.personSummaryWrites
+  import PeopleApi.personWrites
 
   val organisationDetailsWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {
