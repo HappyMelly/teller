@@ -65,7 +65,7 @@ case class Person(
   /**
    * Returns a list of the organisations this person is a member of.
    */
-  def membership: List[Organisation] = withSession { implicit session ⇒
+  def memberships: List[Organisation] = withSession { implicit session ⇒
     val query = for {
       membership ← OrganisationMemberships if membership.personId === this.id
       organisation ← membership.organisation

@@ -41,7 +41,7 @@ object PeopleApi extends Controller with ApiAuthentication {
       "street2" -> address.street2,
       "city" -> address.city,
       "post_code" -> address.postCode,
-      "province" -> address.postCode,
+      "province" -> address.province,
       "country" -> address.countryCode)
   }
 
@@ -60,6 +60,10 @@ object PeopleApi extends Controller with ApiAuthentication {
         "facebook_url" -> person.facebookUrl,
         "linkedin_url" -> person.linkedInUrl,
         "google_plus_url" -> person.googlePlusUrl,
+        "organizations" -> Json.toJson(person.memberships),
+        "licenses" -> Json.toJson(person.id.map { personId ⇒
+          License.licenses(personId)
+        }),
         "active" -> person.active,
         "created" -> person.created.toString(),
         "createdBy" -> person.createdBy,
