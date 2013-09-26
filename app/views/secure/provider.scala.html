@@ -1,4 +1,4 @@
-@(providerId: String, loginForm: Option[Form[(String, String)]] = None)(implicit request: RequestHeader)
+@(providerId: String, loginForm: Option[Form[(String, String)]] = None)(implicit request: RequestHeader, token: play.filters.csrf.CSRF.Token)
 
 @import securesocial.core.Registry
 @import securesocial.core.IdentityProvider
@@ -17,7 +17,7 @@
     }
 
     @if( provider.authMethod == UserPassword ) {
-        <form action = "@securesocial.core.providers.utils.RoutesHelper.authenticateByPost("userpass").absoluteURL(IdentityProvider.sslEnabled)"
+        <form action = "@CSRF(securesocial.core.providers.utils.RoutesHelper.authenticateByPost("userpass")).absoluteURL(IdentityProvider.sslEnabled)"
         class="form-horizontal" autocomplete="off" method="POST">
             <fieldset>
 

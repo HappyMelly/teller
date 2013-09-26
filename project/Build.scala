@@ -11,6 +11,7 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     jdbc,
+    filters,
     "be.objectify" %% "deadbolt-scala" % "2.1-RC2",
     "com.github.tototoshi" %% "slick-joda-mapper" % "0.3.0",
     "com.typesafe.play" %% "play-slick" % "0.3.3",

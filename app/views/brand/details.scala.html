@@ -1,4 +1,6 @@
-@(user: securesocial.core.Identity, brand: Brand, coordinator: Person, licenseIds: Seq[Long])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity, brand: Brand, coordinator: Person, licenseIds: Seq[Long])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
 @import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
@@ -21,7 +23,7 @@
 
   @restrict(handler, List(as(Editor.toString))) {
     <div class="span2 actions">
-      <form class="delete" method="post" action="@routes.Brands.delete(brand.code)">
+      <form class="delete" method="post" action="@CSRF(routes.Brands.delete(brand.code))">
         <button class="btn btn-danger btn-block" type="submit" @if(!licenseIds.isEmpty) { disabled="disabled" title="You cannot delete this brand because it has licenses" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>

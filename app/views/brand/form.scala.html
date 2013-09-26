@@ -1,5 +1,6 @@
-@(user: securesocial.core.Identity, code: Option[String], form: Form[Brand])(implicit flash: Flash)
+@(user: securesocial.core.Identity, code: Option[String], form: Form[Brand])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
+@import helper.CSRF
 @import views.ViewHelpers._
 @import models.Person
 
@@ -15,7 +16,7 @@
           </div>
         }
 
-        @helper.form(action = code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())) {
+        @helper.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create()))) {
             @helper.inputText(form("code"), '_label -> "Code")
             @helper.inputText(form("name"), '_label -> "Name")
             @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")

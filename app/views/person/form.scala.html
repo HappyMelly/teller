@@ -1,5 +1,6 @@
-@(user: securesocial.core.Identity, id: Option[Long], personForm: Form[Person])(implicit flash: Flash)
+@(user: securesocial.core.Identity, id: Option[Long], personForm: Form[Person])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
+@import helper.CSRF
 @import views.Countries
 @import views.ViewHelpers._
 
@@ -15,7 +16,7 @@
       </div>
     }
 
-		@helper.form(action = id.map(id => routes.People.update(id)).getOrElse(routes.People.create())) {
+		@helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
       @helper.inputText(personForm("firstName"), '_label -> "First name")
       @helper.inputText(personForm("lastName"), '_label -> "Last name")
       @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")

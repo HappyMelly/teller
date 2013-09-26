@@ -1,4 +1,6 @@
-@(user: securesocial.core.Identity, organisation: Organisation, members: List[Person], otherPeople: List[Person])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity, organisation: Organisation, members: List[Person], otherPeople: List[Person])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
 @import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
@@ -25,7 +27,7 @@
 
   @restrict(handler, List(as(Editor.toString))) {
     <div class="span2 actions">
-      <form method="post" action="@routes.Organisations.activation(organisation.id.getOrElse(0))">
+      <form method="post" action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
         <input name="active" value="@(!organisation.active)" type="hidden">
         @if(organisation.active) {
           <button class="btn btn-block btn-warning" type="submit"><i class="icon-off icon-white"></i> Deactivate</button>
@@ -34,7 +36,7 @@
         }
       </form>
         <div class="clearfix"></div>
-      <form class="delete" method="post" action="@routes.Organisations.delete(organisation.id.getOrElse(0))">
+      <form class="delete" method="post" action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
         <button class="btn btn-danger btn-block" type="submit" @if(!members.isEmpty) { disabled="disabled" title="You cannot delete this organisation because it has members" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
@@ -94,7 +96,7 @@
 			}
     }
     @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@routes.People.addMembership">
+      <form class="form-inline" method="POST" action="@CSRF(routes.People.addMembership)">
         <p>
           <input type="hidden" name="page" value="organisation">
           <input type="hidden" name="organisationId" value="@organisation.id.get">

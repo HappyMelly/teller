@@ -1,5 +1,6 @@
-@(user: securesocial.core.Identity, id: Option[Long], form: Form[License], person: Person)(implicit flash: Flash)
+@(user: securesocial.core.Identity, id: Option[Long], form: Form[License], person: Person)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
+@import helper.CSRF
 @import views.ViewHelpers._
 @import models.Person
 
@@ -15,7 +16,7 @@
 
     @if(editing) {
       <div class="span2 actions">
-        <form class="delete" method="post" action="@routes.Licenses.delete(id.get)">
+        <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
           <button class="btn btn-danger btn-block" type="submit"><i class="icon-white icon-trash"></i> Delete</button>
         </form>
       </div>
@@ -45,7 +46,7 @@
         </div>
       }
 
-      @helper.form(action = if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0))) {
+      @helper.form(action = CSRF(if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
         @helper.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
         @helper.inputText(form("version"), '_label -> "Version")
 
