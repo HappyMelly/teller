@@ -13,6 +13,12 @@ import securesocial.core.SecuredRequest
 
 object People extends Controller with Security {
 
+  // URL schemes and domains, in lower-case, for validation.
+  private val ValidURLSchemes = Set("http", "https")
+  private val FacebookDomain = "facebook.com"
+  private val LinkedInDomain = "linkedin.com"
+  private val GooglePlusDomain = "google.com"
+
   /**
    * HTML form mapping for a person’s address.
    */
@@ -26,6 +32,21 @@ object People extends Controller with Security {
     "country" -> nonEmptyText)(Address.apply)(Address.unapply)
 
   /**
+   * Validate whether the given URL has the given lower-case scheme and domain, to prevent script injection attacks.
+   */
+  private def validateDomain(url: String, domain: String): Boolean = {
+    try {
+      val uri = new java.net.URI(url)
+      val validScheme = ValidURLSchemes.contains(Option(uri.getScheme).getOrElse("").toLowerCase)
+      val host = Option(uri.getHost).getOrElse("").toLowerCase
+      val validDomain = host == domain || host.endsWith("." + domain)
+      validScheme && validDomain
+    } catch {
+      case _ ⇒ false
+    }
+  }
+
+  /**
    * HTML form mapping for creating and editing.
    */
   def personForm(request: SecuredRequest[_]) = Form(mapping(
@@ -37,9 +58,9 @@ object People extends Controller with Security {
     "bio" -> optional(text),
     "interests" -> optional(text),
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-    "facebookUrl" -> optional(text),
-    "linkedInUrl" -> optional(text),
-    "googlePlusUrl" -> optional(text),
+    "facebookUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, FacebookDomain))),
+    "linkedInUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, LinkedInDomain))),
+    "googlePlusUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, GooglePlusDomain))),
     "boardMember" -> default(boolean, false),
     "stakeholder" -> default(boolean, false),
     "active" -> ignored(true),
