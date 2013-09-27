@@ -29,19 +29,19 @@ from third-party apps and websites.
 2. Run the application
     * `cd teller`
     * `TWITTER_KEY=[your app consumer key] TWITTER_SECRET=[your app consumer secret] play run`
-3. Update database (it's required to give you an access by your twitter account)
+3. Open the application in a web browser and set up database
+    * open [http://localhost:9000](http://localhost:9000)
+4. Update database (it's required to give you an access by your twitter account)
     * `update PERSON set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";`
     * `insert into USER_ACCOUNT (PERSON_ID, TWITTER_HANDLE, ROLE) select ID, TWITTER_HANDLE, 'admin' from PERSON where lower(TWITTER_HANDLE) = '[your twitter id]';`
-4. Open the application in a web browser
-    * open [http://localhost:9000](http://localhost:9000)
+5. Time to log in, pal!
 
 ## I have an idea/I want report a bug
 Please, [open an issue](https://github.com/HappyMelly/teller/issues), provide as
 much related information as possible and stay tuned :).
 
 ## I want to help
-Check [notes for contributors](https://github.com/HappyMelly/teller/blog/master/CONTRIBUTING.md)
-and [documentation for developers](https://github.com/HappyMelly/teller/blog/master/DEVELOPING.md)
+Check [notes for contributors](https://github.com/HappyMelly/teller/blob/master/CONTRIBUTING.md)
 
 ## License
 Happy Melly Teller is licensed under [GNU General Public License v.3](http://www.gnu.org/copyleft/gpl.html)
