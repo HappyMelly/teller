@@ -65,6 +65,17 @@
       }
       @Messages("country." + organisation.countryCode)
     </address>
+
+    @organisation.webSite.map { url =>
+    <p><strong>Web site</strong>
+        <br><a href="@url">@url</a></p>
+    }
+
+    @organisation.blog.map { url =>
+    <p><strong>Blog</strong>
+        <br><a href="@url">@url</a></p>
+    }
+
   </div>
 
   <div class="span4">
@@ -82,6 +93,7 @@
 
     <p><strong>Happy Melly legal entity</strong>
     <br>@if(organisation.legalEntity) { Yes } else { No }</p>
+
   </div>
 
   <div class="span8">
