@@ -4,7 +4,7 @@
 @import views.Countries
 @import views.ViewHelpers._
 
-@main("Organizations", Some(user)) {
+@main("Person", Some(user)) {
 
   @defining(personForm.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
     <h1>@personName</h1>

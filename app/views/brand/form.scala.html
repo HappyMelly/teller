@@ -5,7 +5,7 @@
 @import models.Person
 
 @defining(form.value.map(org => "Brand %s".format(org.name)).getOrElse("Add brand")) { orgName =>
-    @main("Organizations", Some(user)) {
+    @main("Brand", Some(user)) {
 
         <h1>@orgName</h1>
 
