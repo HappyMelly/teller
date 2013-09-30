@@ -66,7 +66,7 @@ object People extends Controller with Security {
       val validDomain = host == domain || host.endsWith("." + domain)
       validScheme && validDomain
     } catch {
-      case _ ⇒ false
+      case _: Throwable ⇒ false
     }
   }
 
