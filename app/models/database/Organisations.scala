@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.Organisation
+import models.{ OrganisationCategory, Organisation }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -33,6 +33,10 @@ import play.api.db.slick.Config.driver.simple._
  * `Organisation` database table mapping.
  */
 private[models] object Organisations extends Table[Organisation]("ORGANISATION") {
+
+  implicit val organisationCategoryTypeMapper = MappedTypeMapper.base[OrganisationCategory.Value, String](
+    { category ⇒ category.toString },
+    { category ⇒ OrganisationCategory.withName(category) })
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def name = column[String]("NAME")
@@ -46,7 +50,7 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def countryCode = column[String]("COUNTRY_CODE")
   def vatNumber = column[Option[String]]("VAT_NUMBER")
   def registrationNumber = column[Option[String]]("REGISTRATION_NUMBER")
-  def legalEntity = column[Boolean]("LEGAL_ENTITY")
+  def category = column[Option[OrganisationCategory.Value]]("CATEGORY")
 
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
@@ -58,10 +62,10 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def updatedBy = column[String]("UPDATED_BY")
 
   def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    legalEntity ~ webSite ~ blog ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (Organisation.apply _, Organisation.unapply _)
+    category ~ webSite ~ blog ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (Organisation.apply _, Organisation.unapply _)
 
   def forInsert = * returning id
 
   def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    legalEntity ~ webSite ~ blog ~ updated ~ updatedBy
+    category ~ webSite ~ blog ~ updated ~ updatedBy
 }

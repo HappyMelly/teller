@@ -9,7 +9,7 @@
     <thead>
     <tr>
       <th>Name</th>
-      <th>Type</th>
+      <th>Category</th>
       <th>City</th>
       <th>Country</th>
       <th></th>
@@ -19,7 +19,11 @@
     @for(organisation <- organisations) {
     <tr @if(!organisation.active) { class="inactive" title="deactivated" })>
     <td><a href="@routes.Organisations.details(organisation.id.getOrElse(0))">@organisation.name</a></td>
-    <td>@if(organisation.legalEntity) { <span class="label label-info">Legal&nbsp;Entity</span> }</td>
+    <td>
+      @organisation.category.map { name =>
+        <span class="label @Messages(s"models.OrganisationCategory.$name.label")">@Messages(s"models.OrganisationCategory.$name")</span>
+      }
+    </td>
     <td>@organisation.city</td>
     <td>
       <img width="16" src="/assets/images/flags/16/@(organisation.countryCode.toLowerCase).png" align="absmiddle">
