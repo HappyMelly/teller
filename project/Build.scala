@@ -6,7 +6,7 @@ import scalariform.formatter.preferences._
 
 object ApplicationBuild extends Build {
 
-  val appName         = "melly-platform"
+  val appName         = "happymelly-teller"
   val appVersion      = "1.0-SNAPSHOT"
 
   val appDependencies = Seq(

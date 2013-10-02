@@ -103,10 +103,22 @@
       </p>
     }
 
-    <p><strong>Happy Melly Roles</strong>
-    @if(person.boardMember) { <br>Board member }
-    @if(person.stakeholder) { <br>Stakeholder }
-    </p>
+    @if(person.boardMember || person.stakeholder) {
+      <p><strong>Happy Melly Roles</strong>
+      @if(person.boardMember) { <br>Board member }
+      @if(person.stakeholder) { <br>Stakeholder }
+      </p>
+    }
+
+    @person.webSite.map { url =>
+      <p><strong>Web site</strong>
+      <br><a href="@url">@url</a></p>
+    }
+
+    @person.blog.map { url =>
+      <p><strong>Blog</strong>
+      <br><a href="@url">@url</a></p>
+    }
   </div>
 
   @restrict(handler, List(as("admin"))) {
