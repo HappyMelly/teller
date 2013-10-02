@@ -24,6 +24,7 @@
 
 package controllers
 
+import Forms._
 import models._
 import org.joda.time.DateTime
 import play.api.mvc._
@@ -32,16 +33,9 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.i18n.Messages
 import models.UserRole.Role._
-import scala.Some
 import securesocial.core.SecuredRequest
 
 object People extends Controller with Security {
-
-  // URL schemes and domains, in lower-case, for validation.
-  private val ValidURLSchemes = Set("http", "https")
-  private val FacebookDomain = "facebook.com"
-  private val LinkedInDomain = "linkedin.com"
-  private val GooglePlusDomain = "google.com"
 
   /**
    * HTML form mapping for a person’s address.
@@ -56,42 +50,42 @@ object People extends Controller with Security {
     "country" -> nonEmptyText)(Address.apply)(Address.unapply)
 
   /**
-   * Validate whether the given URL has the given lower-case scheme and domain, to prevent script injection attacks.
-   */
-  private def validateDomain(url: String, domain: String): Boolean = {
-    try {
-      val uri = new java.net.URI(url)
-      val validScheme = ValidURLSchemes.contains(Option(uri.getScheme).getOrElse("").toLowerCase)
-      val host = Option(uri.getHost).getOrElse("").toLowerCase
-      val validDomain = host == domain || host.endsWith("." + domain)
-      validScheme && validDomain
-    } catch {
-      case _: Throwable ⇒ false
-    }
-  }
-
-  /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(request: SecuredRequest[_]) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "firstName" -> nonEmptyText,
-    "lastName" -> nonEmptyText,
-    "emailAddress" -> email,
-    "address" -> addressMapping,
-    "bio" -> optional(text),
-    "interests" -> optional(text),
-    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-    "facebookUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, FacebookDomain))),
-    "linkedInUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, LinkedInDomain))),
-    "googlePlusUrl" -> optional(text.verifying(error = "error.url.profile", validateDomain(_, GooglePlusDomain))),
-    "boardMember" -> default(boolean, false),
-    "stakeholder" -> default(boolean, false),
-    "active" -> ignored(true),
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))(Person.apply)(Person.unapply))
+  def personForm(request: SecuredRequest[_]) = {
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "emailAddress" -> email,
+      "address" -> addressMapping,
+      "bio" -> optional(text),
+      "interests" -> optional(text),
+      "profile" -> tuple(
+        "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+        "facebookUrl" -> optional(facebookProfileUrl),
+        "linkedInUrl" -> optional(linkedInProfileUrl),
+        "googlePlusUrl" -> optional(googlePlusProfileUrl)),
+      "boardMember" -> default(boolean, false),
+      "stakeholder" -> default(boolean, false),
+      "webSite" -> optional(webUrl),
+      "blog" -> optional(webUrl),
+      "active" -> ignored(true),
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(request.user.fullName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(request.user.fullName))(
+        { (id, firstName, lastName, emailAddress, address, bio, interests, profiles, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
+          Person(id, firstName, lastName, emailAddress, address, bio, interests, profiles._1, profiles._2, profiles._3,
+            profiles._4, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy)
+        })(
+          { (p: Person) ⇒
+            Some(
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.address, p.bio, p.interests,
+                (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
+                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
+          }))
+  }
 
   /**
    * Form target for toggling whether a person is active.

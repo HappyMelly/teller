@@ -49,6 +49,8 @@ case class Person(
   googlePlusUrl: Option[String],
   boardMember: Boolean = false,
   stakeholder: Boolean = true,
+  webSite: Option[String],
+  blog: Option[String],
   active: Boolean = true,
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -136,7 +138,7 @@ case class Person(
 
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, emailAddress, bio, interests, twitterHandle, facebookUrl,
-        linkedInUrl, googlePlusUrl, boardMember, stakeholder, updated, updatedBy)
+        linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
       this
