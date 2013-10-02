@@ -36,6 +36,7 @@ private[models] object Activities extends Table[Activity]("ACTIVITY") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def subject = column[String]("SUBJECT")
+  // TODO Change type from String to custom mapped Activity.Predicate.Value type, like Organisations.category.
   def predicate = column[String]("PREDICATE")
   def activityObject = column[Option[String]]("OBJECT")
   def created = column[DateTime]("CREATED")

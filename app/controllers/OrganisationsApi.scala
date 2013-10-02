@@ -56,7 +56,7 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "address" -> Json.toJson(address),
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
-        "legal_entity" -> organisation.legalEntity,
+        "category" -> organisation.category.map(_.toString).orNull,
         "members" -> organisation.members)
     }
   }

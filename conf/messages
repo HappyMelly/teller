@@ -30,6 +30,12 @@ models.License = License
 
 object.UserAccount = {0} user account
 
+# Organisation category label names and Bootstrap label CSS classes.
+models.OrganisationCategory.brandentity = Brand Entity
+models.OrganisationCategory.brandentity.label = label-inverse
+models.OrganisationCategory.legalentity = Legal Entity
+models.OrganisationCategory.legalentity.label = label-info
+
 # Activity stream entries
 activity.signup = {0} signed up
 activity.create = {0} added {1}
