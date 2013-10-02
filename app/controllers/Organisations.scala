@@ -24,6 +24,7 @@
 
 package controllers
 
+import Forms._
 import models.{ Person, Activity, Organisation }
 import play.api.mvc._
 import securesocial.core.{ SecuredRequest, SecureSocial }
@@ -52,6 +53,8 @@ object Organisations extends Controller with Security {
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
     "legalEntity" -> default(boolean, false),
+    "webSite" -> optional(webUrl),
+    "blog" -> optional(webUrl),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
