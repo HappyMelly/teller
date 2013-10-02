@@ -47,18 +47,21 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def vatNumber = column[Option[String]]("VAT_NUMBER")
   def registrationNumber = column[Option[String]]("REGISTRATION_NUMBER")
   def legalEntity = column[Boolean]("LEGAL_ENTITY")
-  def active = column[Boolean]("ACTIVE")
 
+  def webSite = column[Option[String]]("WEB_SITE")
+  def blog = column[Option[String]]("BLOG")
+
+  def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
   def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    legalEntity ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (Organisation.apply _, Organisation.unapply _)
+    legalEntity ~ webSite ~ blog ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (Organisation.apply _, Organisation.unapply _)
 
   def forInsert = * returning id
 
   def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    legalEntity ~ updated ~ updatedBy
+    legalEntity ~ webSite ~ blog ~ updated ~ updatedBy
 }

@@ -52,6 +52,7 @@ error.email = Invalid e-mail address
 error.required = Required value missing
 error.twitter = Invalid Twitter user name
 error.url.profile = Invalid profile URL
+error.url.web = Invalid web site URL
 
 # Form constraint descriptions and errors
 constraint.brand.code = Capital letters and numbers

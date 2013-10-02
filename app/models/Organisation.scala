@@ -47,6 +47,8 @@ case class Organisation(
   vatNumber: Option[String],
   registrationNumber: Option[String],
   legalEntity: Boolean = false,
+  webSite: Option[String],
+  blog: Option[String],
   active: Boolean = true,
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -72,7 +74,7 @@ case class Organisation(
 
       // Skip the created, createdBy and active fields.
       val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
-        legalEntity, updated, updatedBy)
+        legalEntity, webSite, blog, updated, updatedBy)
       q.update(updateTuple)
       this
     } else { // Insert

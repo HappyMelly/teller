@@ -35,6 +35,9 @@
               </label>
             </div>
 
+            @helper.inputText(orgForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
+            @helper.inputText(orgForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
+
             <button class="btn btn-primary" type="submit">Save</button>
         }
     }
