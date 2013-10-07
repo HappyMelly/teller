@@ -33,10 +33,30 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import org.joda.time.DateTime
 import models.UserRole.Role._
+import models.OrganisationCategory
 import securesocial.core.SecuredRequest
 import scala.Some
+import play.api.data.format.Formatter
 
 object Organisations extends Controller with Security {
+
+  /**
+   * Formatter used to define a form mapping for the `OrganisationCategory` enumeration.
+   */
+  implicit def categoryFormat: Formatter[OrganisationCategory.Value] = new Formatter[OrganisationCategory.Value] {
+
+    def bind(key: String, data: Map[String, String]) = {
+      try {
+        data.get(key).map(OrganisationCategory.withName(_)).toRight(Seq.empty)
+      } catch {
+        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
+      }
+    }
+
+    def unbind(key: String, value: OrganisationCategory.Value) = Map(key -> value.toString)
+  }
+
+  val categoryMapping = of[OrganisationCategory.Value]
 
   /**
    * HTML form mapping for creating and editing.
@@ -52,7 +72,7 @@ object Organisations extends Controller with Security {
     "country" -> nonEmptyText,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
-    "legalEntity" -> default(boolean, false),
+    "category" -> optional(categoryMapping),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "active" -> ignored(true),

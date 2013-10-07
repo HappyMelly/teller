@@ -25,12 +25,21 @@
 package models
 
 import models.database.{ OrganisationMemberships, Organisations }
+import models.database.Organisations._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
+
+/**
+ * Categories classifications that an organisation has zero or one of.
+ */
+object OrganisationCategory extends Enumeration {
+  val LegalEntity = Value("legalentity")
+  val BrandEntity = Value("brandentity")
+}
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
@@ -46,7 +55,7 @@ case class Organisation(
   countryCode: String,
   vatNumber: Option[String],
   registrationNumber: Option[String],
-  legalEntity: Boolean = false,
+  category: Option[OrganisationCategory.Value],
   webSite: Option[String],
   blog: Option[String],
   active: Boolean = true,
@@ -74,7 +83,7 @@ case class Organisation(
 
       // Skip the created, createdBy and active fields.
       val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
-        legalEntity, webSite, blog, updated, updatedBy)
+        category, webSite, blog, updated, updatedBy)
       q.update(updateTuple)
       this
     } else { // Insert
@@ -116,7 +125,7 @@ object Organisation {
    * Returns a list of active organisations, optionally filtered to only include legal entities.
    */
   def find(legalEntitiesOnly: Boolean): List[Organisation] = withSession { implicit session ⇒
-    val query = if (legalEntitiesOnly) Query(Organisations).filter(_.legalEntity === true) else Query(Organisations)
+    val query = if (legalEntitiesOnly) Query(Organisations).filter(_.category === OrganisationCategory.LegalEntity) else Query(Organisations)
     query.filter(_.active).sortBy(_.name.toLowerCase).list
   }
 
