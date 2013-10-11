@@ -22,11 +22,11 @@ object ApplicationBuild extends Build {
     "org.jsoup" % "jsoup" % "1.7.2",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
-    "securesocial" %% "securesocial" % "master-SNAPSHOT"
+    "securesocial" %% "securesocial" % "2.1.1"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(
-    resolvers += Resolver.url("sbt-plugin-snapshots", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots/"))(Resolver.ivyStylePatterns),
+    resolvers += Resolver.url("sbt-plugin-releases", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.com/releases/"))(Resolver.ivyStylePatterns)
   ).settings(
