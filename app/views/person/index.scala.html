@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, people: List[Person])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity, people: List[PersonSummary])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -21,7 +21,7 @@
     } else {
       @table(people) { person =>
         @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+          <a href="@routes.People.edit(person.id)"><i class="icon-pencil"></i> Edit</a>
         }
       }
     }
