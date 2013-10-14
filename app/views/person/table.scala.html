@@ -1,4 +1,4 @@
-@(people: List[Person])(actions: (Person) => Html)
+@(people: List[PersonSummary])(actions: (PersonSummary) => Html)
 
 @if(!people.isEmpty) {
 
@@ -17,8 +17,8 @@
         <td><a href="@routes.People.details(person.id.getOrElse(0))">@person.firstName</a></td>
         <td><a href="@routes.People.details(person.id.getOrElse(0))">@person.lastName</a></td>
         <td>
-          <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">
-          @Messages("country." + person.address.countryCode)
+          <img width="16" src="/assets/images/flags/16/@(person.countryCode.toLowerCase).png" align="absmiddle">
+          @Messages("country." + person.countryCode)
         </td>
         <td>@actions(person)</td>
       </tr>

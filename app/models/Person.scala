@@ -144,7 +144,10 @@ case class Person(
       this
     }
   }
+
+  def asSummary: PersonSummary = PersonSummary(id, firstName, lastName, active, address.countryCode)
 }
+case class PersonSummary(id: Option[Long], firstName: String, lastName: String, active: Boolean, countryCode: String)
 
 object Person {
 
@@ -182,8 +185,14 @@ object Person {
   }
 
   /** Retrieves a list of all people from the database **/
-  def findAll: List[Person] = withSession { implicit session ⇒
-    Query(People).sortBy(_.lastName.toLowerCase).list
+  def findAll: List[PersonSummary] = withSession { implicit session ⇒
+    (for {
+      person ← People
+      address ← Addresses if person.addressId === address.id
+    } yield (person.id.?, person.firstName, person.lastName, person.active, address.countryCode))
+      .list
+      .map(PersonSummary.tupled)
+
   }
 
   def findActive: List[Person] = withSession { implicit session ⇒
