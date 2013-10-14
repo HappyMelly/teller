@@ -104,7 +104,7 @@
     } else {
     	@views.html.person.table(members.map(_.asSummary)) { person =>
         @restrict(handler, List(as(Editor.toString))) {
-		    	<a href="@routes.People.deleteMembership("organisation", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
+		    	<a href="@routes.People.deleteMembership("organisation", person.id, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
         }
 			}
     }

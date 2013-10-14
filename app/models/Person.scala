@@ -145,9 +145,9 @@ case class Person(
     }
   }
 
-  def asSummary: PersonSummary = PersonSummary(id, firstName, lastName, active, address.countryCode)
+  def asSummary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 }
-case class PersonSummary(id: Option[Long], firstName: String, lastName: String, active: Boolean, countryCode: String)
+case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)
 
 object Person {
 
@@ -189,10 +189,9 @@ object Person {
     (for {
       person ← People
       address ← Addresses if person.addressId === address.id
-    } yield (person.id.?, person.firstName, person.lastName, person.active, address.countryCode))
-      .list
-      .map(PersonSummary.tupled)
-
+    } yield (person.id, person.firstName, person.lastName, person.active, address.countryCode))
+      .sortBy(_._3.toLowerCase)
+      .mapResult(PersonSummary.tupled).list
   }
 
   def findActive: List[Person] = withSession { implicit session ⇒
