@@ -18,6 +18,7 @@ from third-party apps and websites.
 4. Create the database and user:
     * `create database happymelly;`
     * `grant all on happymelly.* TO 'melly'@'localhost' identified by 'shum' with grant option;`
+    * `use happymelly;`
 5. Create and setup Twitter application
     * Create a new application on [https://dev.twitter.com](https://dev.twitter.com)
     * Add callback URL `http://127.0.0.1:9000/authenticate/twitter`
@@ -29,9 +30,10 @@ from third-party apps and websites.
 2. Run the application
     * `cd teller`
     * `TWITTER_KEY=[your app consumer key] TWITTER_SECRET=[your app consumer secret] play run`
-3. Open the application in a web browser and set up database
+3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
-4. Update database (it's required to give you an access by your twitter account)
+    * on the _Database 'default' needs evolution!_ page, click _Apply this script now!_
+4. Update database (required to give you access by your Twitter account)
     * `update PERSON set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";`
     * `insert into USER_ACCOUNT (PERSON_ID, TWITTER_HANDLE, ROLE) select ID, TWITTER_HANDLE, 'admin' from PERSON where lower(TWITTER_HANDLE) = '[your twitter id]';`
 5. Time to log in, pal!
