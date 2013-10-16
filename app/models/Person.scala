@@ -55,11 +55,15 @@ case class Person(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) {
+  updatedBy: String) extends AccountHolder {
 
   def fullName: String = firstName + " " + lastName
 
+  def name = fullName
+
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
+
+  def account = ???
 
   /**
    * Associates this person with given organisation.

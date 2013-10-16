@@ -62,7 +62,7 @@ case class Organisation(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) {
+  updatedBy: String) extends AccountHolder {
 
   def members: List[Person] = withSession { implicit session ⇒
     val query = for {
@@ -71,6 +71,8 @@ case class Organisation(
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
   }
+
+  def account = ???
 
   /**
    * Inserts or updates this organisation into the database.

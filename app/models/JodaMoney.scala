@@ -31,6 +31,7 @@ import play.api.data.Forms._
 import scala.Some
 import scala.Predef._
 import scala.Some
+import scala.slick.lifted.MappedTypeMapper
 
 /**
  * Joda Money conversions
@@ -50,6 +51,13 @@ object JodaMoney {
   def apply(currency: String, amount: BigDecimal): Money = currency -> amount
 
   def unapply(money: Money): Option[(String, BigDecimal)] = Some(money.getCurrencyUnit.getCode, money.getAmount)
+
+  implicit val CurrencyMapper = MappedTypeMapper.base[CurrencyUnit, String](_.toString, CurrencyUnit.of)
+
+  /**
+   * Returns a CurrencyUnit for a currency code
+   */
+  implicit def string2CurrencyUnit(currencyCode: String) = CurrencyUnit.getInstance(currencyCode)
 
   /**
    * Returns a money value for a decimal amount in the given currency, rounded to the currency’s scale.
