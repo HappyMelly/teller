@@ -2,6 +2,7 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
+
 GET  /organizations                 controllers.Organisations.index
 POST /organizations                 controllers.Organisations.create
 GET  /organization/new              controllers.Organisations.add
@@ -44,6 +45,9 @@ POST /user    controllers.UserAccounts.update
 GET  /account/:id            controllers.Accounts.details(id: Long)
 POST /account/:id/activate   controllers.Accounts.activate(id: Long)
 POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
+
+GET /bookings   controllers.BookingEntries.index
+
 
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
