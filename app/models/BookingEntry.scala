@@ -116,5 +116,4 @@ object BookingEntry {
       case (None, None, Some(name)) ⇒ name
       case (None, None, None) ⇒ Levy.name
       case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
-    }
-}
+}}
