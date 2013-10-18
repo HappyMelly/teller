@@ -33,7 +33,7 @@ object Forms {
   /**
    * Web site URL form mapping.
    */
-  val webUrl = text verifying ("error.url.web", validateWebUrl(_))
+  val webUrl = text(maxLength = 1024) verifying ("error.url.web", validateWebUrl(_))
 
   // URL schemes and domains, in lower-case, for validation.
   private val FacebookDomain = "facebook.com"

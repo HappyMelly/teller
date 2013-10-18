@@ -25,7 +25,7 @@
 package models
 
 import org.joda.money.{ Money, CurrencyUnit }
-import models.database.Accounts
+import models.database.{ Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
@@ -85,7 +85,23 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
   }
 }
 
+/**
+ * Account summary for use in views.
+ *
+ * @param id Account ID
+ * @param name Account holder name
+ */
+case class AccountSummary(id: Long, name: String, currencyCode: String)
+
 object Account {
+  def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
+    (firstName, lastName, organisation) match {
+      case (Some(first), Some(last), None) ⇒ first + " " + last
+      case (None, None, Some(name)) ⇒ name
+      case (None, None, None) ⇒ Levy.name
+      case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
+    }
+
   def find(holder: AccountHolder): Account = withSession { implicit session ⇒
     val query = holder match {
       case o: Organisation ⇒ Query(Accounts).filter(_.organisationId === o.id)
@@ -98,10 +114,21 @@ object Account {
   def find(id: Long): Option[Account] = withSession { implicit session ⇒
     Query(Accounts).filter(_.id === id).firstOption()
   }
-}
 
-case class AccountSummary(person: Option[Person], organisation: Option[Organisation]) extends AccountHolder {
-  override def account: models.Account = ???
-  def name: String = ???
+  /**
+   * Returns a summary list of active accounts.
+   */
+  def findAllActive: List[AccountSummary] = withSession { implicit session ⇒
+    val query = for {
+      ((account, person), organisation) ← Accounts leftJoin
+        People on (_.personId === _.id) leftJoin
+        Organisations on (_._1.organisationId === _.id)
+      if account.active === true
+    } yield (account.id, account.currency, person.firstName.?, person.lastName.?, organisation.name.?)
 
+    query.mapResult{
+      case (id, currency, firstName, lastName, organisationName) ⇒
+        AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency.getCode)
+    }.list.sortBy(_.name.toLowerCase)
+  }
 }

@@ -66,7 +66,7 @@ object License {
    */
   def blank(personId: Long) = {
     License(None, 0, personId, "", LocalDate.now, LocalDate.now, LocalDate.now.plusYears(1), false,
-      Money.of(CurrencyUnit.EUR, 0f), Some(Money.of(CurrencyUnit.EUR, 0f)))
+      Money.zero(CurrencyUnit.EUR), Some(Money.zero(CurrencyUnit.EUR)))
   }
 
   /**

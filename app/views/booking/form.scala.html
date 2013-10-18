@@ -1,0 +1,143 @@
+@(user: securesocial.core.Identity, form: Form[BookingEntry], accounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import org.joda.money.CurrencyUnit
+@import scala.collection.JavaConverters._
+@import views.ViewHelpers._
+
+
+@* Returns an HTML select for organisation and person accounts. *@
+@selectAccount(field: Field) = {
+  <select name="@field.name" class="span3" id="@field.id">
+    <option value="">Choose an account</option>
+    @for(account <- accounts) {
+      <option value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currencyCode)</option>
+    }
+  </select>
+}
+
+@* Returns a comma-separated list of validation error messages, for one or more fields. *@
+@fieldErrors(fields: Field*) = {
+  @if(fields.exists(_.hasErrors)) {
+    @fields.map(_.errors.map(error => Messages(error.message, error.args: _*))).flatten.toSet.mkString(", ")
+  }
+}
+
+@main("Add booking entry", Some(user)) {
+
+<h1>Add booking entry</h1>
+
+  @validationErrors(form)
+
+  <form class="form-horizontal" method="post" action="@CSRF(routes.BookingEntries.create)">
+
+      @helper.inputText(form("summary"), '_label -> "Summary", 'class -> "input-xlarge", '_help -> "Required")
+
+      @defining(form("source").hasErrors || form("source.amount").hasErrors || form("sourcePercentage").hasErrors) { hasErrors =>
+        <div class="control-group @if(hasErrors) {error}">
+          <label for="source">Source amount</label>
+          <div class="input">
+          <select id="source" name="source.currency">
+            @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
+              <option value="@currency.getCurrencyCode" @if(form("source.currency").value == Some(currency.getCurrencyCode)) { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
+            }
+          </select>
+          <input class="input-small" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
+          <div class="input-append">
+            <input class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
+          </div>
+          <span class="help-inline">
+            @if(hasErrors) {
+              @fieldErrors(form("source"), form("source.amount"), form("sourcePercentage"))
+            } else {
+              Required
+            }
+          </span>
+          </div>
+          @* MOCK-UP FOR T92
+          <strong>USD 100.00</strong>
+          *@
+        </div>
+      }
+
+      <div class="controls-row control-group @if(form("fromId").hasErrors || form("toId").hasErrors) {error}">
+        <label for="fromId">Accounts</label>
+        @selectAccount(form("fromId"))
+        <div class="span2" style="text-align: center">
+          <!--<button class="btn btn-danger" type="button"><i class="icon-arrow-left icon-white"></i> Is Owed By</button>-->
+          <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
+          <input id="owes_value" type="hidden" name="owes" value="true">
+        </div>
+        @selectAccount(form("toId"))
+        <span class="help-inline">Required</span>
+      </div>
+
+      @if(form("fromId").hasErrors || form("toId").hasErrors) {
+        <div class="row control-group error">
+          <div class="span3 help-inline">@fieldErrors(form("fromId"))</div>
+          <div class="span2"></div>
+          <div class="span3 help-inline">@fieldErrors(form("toId"))</div>
+        </div>
+      }
+
+      @* MOCK-UP FOR T92
+      <div class="row">
+        <div class="span3" title="Exchange rate 0.756182 (USD to EUR) measured 02-09-2013">
+          <strong>EUR 75.62</strong> (credit)
+        </div>
+        <div class="span2">
+        </div>
+        <div class="span3" title="Exchange rate 2.38295 (USD to BRL) measured 02-09-2013">
+          <strong>BRL 238.30</strong> (debit)
+        </div>
+      </div>
+      *@
+
+    <div class="control-group @if(form("reference").hasErrors || form("referenceDate").hasErrors) {error}">
+      <label for="reference">Reference number</label>
+      <div class="input">
+        <input type="text" name="reference" id="reference" value="@form("reference").value"> on date
+        <input class="input-small" type="date" name="referenceDate" value="@form("referenceDate").value">
+        <span class="help-inline">
+          @if(form("reference").hasErrors || form("referenceDate").hasErrors) {
+            @fieldErrors(form("reference"), form("referenceDate"))
+          } else {
+            YYYY-MM-DD, Required
+          }</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      @helper.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+    </div>
+
+    <div class="control-group @if(form("description").hasErrors) {error}">
+      <label for="description">Booking description</label>
+      <div class="input">
+        <textarea id="description" name="description" class="input-xxlarge" rows="5">@form("description").value</textarea>
+        <span class="help-inline">@fieldErrors(form("description"))</span>
+      </div>
+    </div>
+
+    @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge")
+
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+
+@* JQuery script for the 'Owes To'/'Is Owed By' button, which updates the button appearance and a hidden input value. *@
+<script type="text/javascript">
+  $(document).ready( function() {
+    $('#owes_toggle').click(function() {
+      $(this).toggleClass('btn-inverse').toggleClass('btn-danger');
+      var owes = $(this).hasClass('btn-inverse');
+      if (owes) {
+        $(this).html('Owes To <i class="icon-arrow-right icon-white"></i>');
+      }
+      else {
+        $(this).html('<i class="icon-arrow-left icon-white"></i> Is Owed By');
+      }
+      $('#owes_value').val(owes)
+    })
+  });
+</script>
+}

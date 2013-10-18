@@ -24,11 +24,83 @@
 
 package controllers
 
-import play.api.mvc.Controller
+import models.JodaMoney._
 import models.UserRole.Role._
-import models.BookingEntry
+import models._
+import org.joda.money.{ CurrencyUnit, Money }
+import org.joda.time.LocalDate
+import play.api.mvc.Controller
+import play.api.data.Forms._
+import play.api.data.Form
+import play.api.data.validation.Constraints._
+import securesocial.core.SecuredRequest
+import controllers.Forms._
+import scala.Some
+import securesocial.core.SecuredRequest
+import scala.util.Random
 
 object BookingEntries extends Controller with Security {
+
+  def bookingEntryForm(implicit request: SecuredRequest[_]) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "ownerId" -> ignored(0L),
+    "bookingNumber" -> ignored(0),
+    "summary" -> nonEmptyText(maxLength = 50),
+    "source" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
+    "sourcePercentage" -> number,
+    "fromId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "fromAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
+    "toId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "toAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
+    "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "reference" -> optional(text(maxLength = 16)),
+    "referenceDate" -> jodaLocalDate.verifying("error.date.future", (d: LocalDate) ⇒ d.minusDays(1).isBefore(LocalDate.now)),
+    "description" -> optional(text(maxLength = 250)),
+    "url" -> optional(webUrl),
+    "owes" -> boolean)(fromForm)(toForm))
+
+  /**
+   * Creates a `BookingEntry` from form data.
+   */
+  def fromForm(id: Option[Long], ownerId: Long, bookingNumber: Int, summary: String, source: Money, sourcePercentage: Int,
+    fromId: Long, fromAmount: Money, toId: Long, toAmount: Money,
+    brandId: Long, reference: Option[String], referenceDate: LocalDate,
+    description: Option[String], url: Option[String], owes: Boolean) = {
+
+    BookingEntry(id, ownerId, LocalDate.now, bookingNumber, summary, if (owes) source else source.negated,
+      sourcePercentage, fromId, fromAmount, toId, toAmount, brandId, reference, referenceDate, description, url)
+  }
+
+  /**
+   * Creates a tuple of form data from a `BookingEntry`.
+   */
+  def toForm(e: BookingEntry) = Some((e.id, e.ownerId, e.bookingNumber, e.summary,
+    if (e.source.isNegative) e.source.multipliedBy(-1L) else e.source,
+    e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId, e.reference, e.referenceDate,
+    e.description, e.url, e.source.isPositiveOrZero))
+
+  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      val form = bookingEntryForm.fill(BookingEntry.blank)
+      Ok(views.html.booking.form(request.user, form, Account.findAllActive))
+  }
+
+  /**
+   * Creates a user from an ‘add form’ submission.
+   */
+  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      bookingEntryForm(request).bindFromRequest.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.booking.form(request.user, formWithErrors, Account.findAllActive)),
+        entry ⇒ {
+          val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+          val updatedEntry = entry.copy(ownerId = currentUser.personId, bookingNumber = Random.nextInt).insert
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, entry.toString)
+          Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
+        })
+  }
 
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒

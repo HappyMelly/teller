@@ -6,7 +6,16 @@
 
 @main("Booking entries", Some(user)) {
 
-  <h1>Booking entries</h1>
+  <div class="row">
+    <div class="span7">
+      <h1>Booking entries</h1>
+    </div>
+    @restrict(handler, List(as(Editor.toString))) {
+      <div class="span3">
+        <a class="btn btn-success" href="@routes.BookingEntries.add()"><i class="icon-plus icon-white"></i>Add Booking Entry</a>
+      </div>
+    }
+  </div>
 
   <p>This page provides an overview of financial booking entries, which record money owed between people and
     organisations in the Happy Melly network.</p>

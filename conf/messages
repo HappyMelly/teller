@@ -23,6 +23,7 @@
 #
 
 # Models
+models.BookingEntry.name = a booking entry for {0}
 models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
@@ -51,6 +52,9 @@ activity.relationship.delete = {0} from {1}
 error.notFound = {0} not found
 error.authorisation = You do not have permission to perform this action
 error.date.range = Start date after end date
+error.money.negativeOrZero = Amount greater than zero required
+error.real.precision = The amount has more than two decimal places
+error.date.future = Date is in the future
 
 # Play form validation error overrides
 error.date = Invalid date

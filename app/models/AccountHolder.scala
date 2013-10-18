@@ -44,7 +44,7 @@ trait AccountHolder {
 
 /** Special 'system' account **/
 object Levy extends AccountHolder {
-  def name = "HM Levy"
+  def name = "Happy Melly Levy"
   override def levy = true
 
   // Nothing to update

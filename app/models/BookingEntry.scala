@@ -25,12 +25,14 @@
 package models
 
 import models.JodaMoney._
-import models.database.{ Accounts, Organisations, BookingEntries, People }
+import models.database._
 import org.joda.time.LocalDate
-import org.joda.money.Money
+import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB._
+import scala.Some
+import play.api.i18n.Messages
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -39,7 +41,7 @@ case class BookingEntry(
   id: Option[Long],
   ownerId: Long,
   bookingDate: LocalDate,
-  bookingNumber: Option[Int],
+  bookingNumber: Int,
   summary: String,
 
   source: Money,
@@ -51,9 +53,17 @@ case class BookingEntry(
 
   brandId: Long,
   reference: Option[String],
-  referenceDate: Option[LocalDate],
+  referenceDate: LocalDate,
   description: Option[String],
-  url: Option[String])
+  url: Option[String]) {
+
+  def insert: BookingEntry = withSession { implicit session ⇒
+    val id = BookingEntries.forInsert.insert(this)
+    this.copy(id = Some(id))
+  }
+
+  override def toString = Messages("models.BookingEntry.name", source.toString)
+}
 
 /**
  * A view on a booking entry for the overview page.
@@ -74,6 +84,9 @@ case class BookingEntrySummary(
   summary: String)
 
 object BookingEntry {
+
+  def blank = BookingEntry(None, 0L, LocalDate.now, 0, "", Money.of(CurrencyUnit.EUR, 0f), 100,
+    0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now, None, None)
 
   /**
    * Returns a list of entries in reverse chronological order of booking date.
@@ -103,17 +116,11 @@ object BookingEntry {
         fromPersonFirstName, fromPersonLastName, fromOrganisation, fromAmount,
         toPersonFirstName, toPersonLastName, toOrganisation, toAmount,
         brandCode, summary) ⇒
-        val from = accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
-        val to = accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
+        val from = Account.accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
+        val to = Account.accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
         val owes = source.isPositiveOrZero
         BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
     }.list
   }
 
-  private def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
-    (firstName, lastName, organisation) match {
-      case (Some(first), Some(last), None) ⇒ first + " " + last
-      case (None, None, Some(name)) ⇒ name
-      case (None, None, None) ⇒ Levy.name
-      case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
-}}
+}
