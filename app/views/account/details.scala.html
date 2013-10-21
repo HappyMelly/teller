@@ -1,0 +1,64 @@
+@(user: securesocial.core.Identity, account: Account, currencyForm:Form[org.joda.money.CurrencyUnit])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import scala.collection.JavaConverters._
+@import org.joda.money.CurrencyUnit
+@import helper.CSRF
+
+
+@main("Account details", Some(user)) {
+  <div class="span8">
+    <header>
+      <h1>Account for @account.accountHolder.name </h1>
+      @if(!account.active) {
+        <p><span class="label label-warning">This account is inactive</span></p>
+      }
+    </header>
+  </div>
+
+  <div class="span2">
+    <h3>Balance
+      <span class="@if(account.balance.isNegative){text-error} "><br>
+    @account.balance</span></h3>
+  </div>
+
+  <div class="span4 actions">
+
+    @if(account.active) {
+      <h3>Deactivate account</h3>
+      @if(!account.balance.isZero) {
+        <p>To deactivate this account, please bring its balance to zero first.</p>
+      }
+    } else {
+      <h3>Activate account</h3>
+      <p>To activate this account, please select a currency.</p>
+    }
+
+    <form method="POST" action="@if(account.active){
+        @CSRF(routes.Accounts.deactivate(account.id.get))
+      } else {
+        @CSRF(routes.Accounts.activate(account.id.get))
+      }">
+
+      @if(account.active) { @* Deactivate *@
+        <button class="btn btn-warning" type="submit" @if(!account.balance.isZero){ disabled title="To deactivate this account, first bring the balance to zero." }>
+        <i class="icon-off icon-white"></i> Deactivate
+        </button>
+      } else {
+        <div class="control-group"> @* Activate *@
+          <label class="control-label" for="currency">Account currency</label>
+          <select name="currency" id="currency">
+          @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
+            <option value="@currency.getCode" @if(currency.getCode == "EUR") { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
+          }
+          </select>
+        </div>
+        <button class="btn btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
+
+      }
+    </form>
+
+  </div>
+
+
+
+}

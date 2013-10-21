@@ -25,8 +25,10 @@
 package models
 
 import org.joda.money.{ Money, CurrencyUnit }
-import models.JodaMoney._
-import java.util.NoSuchElementException
+import models.database.Accounts
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB.withSession
+import play.api.Play.current
 
 case class Account(id: Option[Long], organisationId: Option[Long], personId: Option[Long], currency: CurrencyUnit, active: Boolean) {
 
@@ -43,5 +45,46 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
   }
 
   def balance: Money = Money.of(currency, 0)
+
+  def canBeActivatedBy(user: UserAccount) = accountHolder match {
+    case organisation: Organisation ⇒ organisation.members.map(_.id.get).contains(user.personId)
+    case person: Person ⇒ person.id.get == user.personId
+    case Levy ⇒ user.getPermissions.contains(UserRole.Role.Admin)
+  }
+
+  /** Activates an account and sets the currency **/
+  def activate(currency: CurrencyUnit): Unit = {
+    if (active) throw new IllegalStateException("Cannot activate an already active account")
+    assert(balance.isZero, "Inactive account's balance should be zero")
+    updateStatus(active = true, currency)
+    copy(active = true, currency = currency)
+  }
+
+  def deactivate(): Unit = {
+    if (!active) throw new IllegalStateException("Cannot deactivate an already inactive account")
+    if (!balance.isZero) throw new IllegalStateException("Cannot deactivate with non-zero balance")
+    updateStatus(active = false, currency)
+    copy(active = false, currency = currency)
+  }
+
+  private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = withSession { implicit session ⇒
+    val updateQuery = for { a ← Accounts if a.id === this.id } yield (a.id, a.active, a.currency)
+    updateQuery.mutate(mutator ⇒ mutator.row = (mutator.row._1, active, currency))
+  }
+}
+
+object Account {
+  def find(holder: AccountHolder): Account = withSession { implicit session ⇒
+    val query = holder match {
+      case o: Organisation ⇒ Query(Accounts).filter(_.organisationId === o.id)
+      case p: Person ⇒ Query(Accounts).filter(_.personId === p.id)
+      case Levy ⇒ Query(Accounts).filter(_.organisationId isNull).filter(_.personId isNull)
+    }
+    query.first()
+  }
+
+  def find(id: Long): Option[Account] = withSession { implicit session ⇒
+    Query(Accounts).filter(_.id === id).firstOption()
+  }
 }
 

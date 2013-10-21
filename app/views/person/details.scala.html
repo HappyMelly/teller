@@ -167,6 +167,11 @@
   </div>
 
   <div class="span8">
+  <h3>Accounting details</h3>
+  <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
+      (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p></div>
+
+  <div class="span8">
     <h3>Organizations</h3>
     @if(organisations.isEmpty) {
       <p>@person.fullName has no organizations.</p>

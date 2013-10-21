@@ -63,8 +63,6 @@ case class Person(
 
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
 
-  def account = ???
-
   /**
    * Associates this person with given organisation.
    */

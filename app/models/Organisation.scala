@@ -72,8 +72,6 @@ case class Organisation(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  def account = ???
-
   /**
    * Inserts or updates this organisation into the database.
    * @return The Organisation as it is saved (with the id added if this was an insert)

@@ -29,7 +29,7 @@
     <div class="span2 actions">
       <form method="post" action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
         <input name="active" value="@(!organisation.active)" type="hidden">
-        @if(organisation.active) {
+        @if(organisation.account.active) {
           <button class="btn btn-block btn-warning" type="submit"><i class="icon-off icon-white"></i> Deactivate</button>
         } else {
           <button class="btn btn-block btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
@@ -79,12 +79,16 @@
   </div>
 
   <div class="span4">
-    <h3>Company details</h3>
+    <h3>Accounting details</h3>
 
     @organisation.category.map { name =>
       <p><span class="label @Messages(s"models.OrganisationCategory.$name.label")">@Messages(s"models.OrganisationCategory.$name")</span>
       </p>
     }
+
+    <p><strong>Financial account</strong><br>@if(organisation.account.active){Active}else{Inactive}
+      (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)</p>
+
 
     @organisation.vatNumber.map { number =>
       <p><strong>VAT number</strong>

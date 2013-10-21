@@ -26,12 +26,11 @@ package models
 
 trait AccountHolder {
   def name: String
-  def account: Account
+  def account: Account = Account.find(this)
   def levy: Boolean = false
 }
 
 object Levy extends AccountHolder {
   def name = "HM Levy"
-  def account = ???
   override def levy = true
 }

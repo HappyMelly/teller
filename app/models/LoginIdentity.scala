@@ -48,6 +48,10 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
 
     } yield person).first
   }
+
+  def account = DB.withSession { implicit session ⇒
+    (for { account ← UserAccounts if account.twitterHandle === twitterHandle } yield account).first
+  }
 }
 
 object LoginIdentity {

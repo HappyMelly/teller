@@ -29,11 +29,11 @@ import play.api.db.slick.Config.driver.simple._
 import models.JodaMoney.CurrencyMapper
 import org.joda.money.CurrencyUnit
 
-object Accounts extends Table[Account]("ACCOUNT") {
+private[models] object Accounts extends Table[Account]("ACCOUNT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def personId = column[Option[Long]]("ORGANISATION_ID")
-  def organisationId = column[Option[Long]]("PERSON_ID")
+  def personId = column[Option[Long]]("PERSON_ID")
+  def organisationId = column[Option[Long]]("ORGANISATION_ID")
   def currency = column[CurrencyUnit]("CURRENCY", O.DBType("CHAR(3)"), O.Default(CurrencyUnit.of("EUR")))
   def active = column[Boolean]("ACTIVE", O.Default(false))
 
