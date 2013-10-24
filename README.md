@@ -11,10 +11,10 @@ from third-party apps and websites.
 ### Pre-requisites
 
 1. Install Java JDK 1.7
-2. Download and install Play framework
+2. Download and install Play framework 2.1.3
     * [http://www.playframework.com/download](http://www.playframework.com/download)
-    * [http://www.playframework.com/documentation/2.1.2/Installing](http://www.playframework.com/documentation/2.1.2/Installing)
-3. Download/install and start MySQL
+    * [http://www.playframework.com/documentation/2.1.3/Installing](http://www.playframework.com/documentation/2.1.2/Installing)
+3. Download/install and start MySQL 5.6
 4. Create the database and user:
     * `create database happymelly;`
     * `grant all on happymelly.* TO 'melly'@'localhost' identified by 'shum' with grant option;`
