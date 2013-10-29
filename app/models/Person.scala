@@ -177,7 +177,7 @@ object Person {
 
   /** Finds all active people, filtered by stakeholder and/or board member status **/
   def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = withSession { implicit session ⇒
-    val baseQuery = Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase)
+    val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
     val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
     val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
 
@@ -190,12 +190,12 @@ object Person {
       person ← People
       address ← Addresses if person.addressId === address.id
     } yield (person.id, person.firstName, person.lastName, person.active, address.countryCode))
-      .sortBy(_._3.toLowerCase)
+      .sortBy(_._2.toLowerCase)
       .mapResult(PersonSummary.tupled).list
   }
 
   def findActive: List[Person] = withSession { implicit session ⇒
-    Query(People).filter(_.active === true).sortBy(_.lastName.toLowerCase).list
+    Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 
 }
