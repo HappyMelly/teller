@@ -121,7 +121,7 @@ object Organisations extends Controller with Security {
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
         organisation ⇒ {
-          val org = organisation.save
+          val org = organisation.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
@@ -194,7 +194,7 @@ object Organisations extends Controller with Security {
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(request.user, Some(id), formWithErrors)),
         organisation ⇒ {
-          organisation.copy(id = Some(id)).save
+          organisation.copy(id = Some(id)).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, organisation.name)
           Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
         })

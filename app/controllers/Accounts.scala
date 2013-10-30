@@ -39,19 +39,22 @@ object Accounts extends Controller with Security {
   def details(id: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒
-        Account.find(id).map(account ⇒ Ok(views.html.account.details(request.user, account, currencyForm))).getOrElse(NotFound)
+        Account.find(id).map{ account ⇒
+          Ok(views.html.account.details(request.user, account, currencyForm))
+        }.getOrElse(NotFound)
   }
 
   def activate(id: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map{ account ⇒
-          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].account)) {
+          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             currencyForm.bindFromRequest().fold (
               form ⇒ BadRequest(views.html.account.details(request.user, account, form)),
               currency ⇒ {
                 account.activate(currency)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Activated, "the account for " + account.accountHolder.name)
+                account.accountHolder.updated(request.user.fullName)
                 Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
               })
           } else {
@@ -65,9 +68,10 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map(account ⇒
-          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].account)) {
+          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             account.deactivate()
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deactivated, "the account for " + account.accountHolder.name)
+            account.accountHolder.updated(request.user.fullName)
             Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
           } else {
             Unauthorized("You are not allowed to deactivate this account")

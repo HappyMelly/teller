@@ -73,23 +73,24 @@ case class Organisation(
   }
 
   /**
-   * Inserts or updates this organisation into the database.
-   * @return The Organisation as it is saved (with the id added if this was an insert)
+   * Inserts this organisation into the database.
+   * @return The Organisation as it is saved (with the id added)
    */
-  def save: Organisation = DB.withSession { implicit session ⇒
-    if (id.isDefined) {
-      val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
-      val q = filter.map { org ⇒ org.forUpdate }
+  def insert: Organisation = DB.withSession { implicit session ⇒
+    val id = Organisations.forInsert.insert(this)
+    this.copy(id = Some(id))
+  }
 
-      // Skip the created, createdBy and active fields.
-      val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
-        category, webSite, blog, updated, updatedBy)
-      q.update(updateTuple)
-      this
-    } else { // Insert
-      val id = Organisations.forInsert.insert(this)
-      this.copy(id = Some(id))
-    }
+  def update = DB.withSession { implicit session ⇒
+    assert(id.isDefined, "Can only update Organisations that have an id")
+    val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
+    val q = filter.map { org ⇒ org.forUpdate }
+
+    // Skip the created, createdBy and active fields.
+    val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
+      category, webSite, blog, updated, updatedBy)
+    q.update(updateTuple)
+    this
   }
 
 }

@@ -24,13 +24,29 @@
 
 package models
 
+import org.joda.time.DateTime
+
+/** The 'owner' of an account **/
 trait AccountHolder {
   def name: String
   def account: Account = Account.find(this)
   def levy: Boolean = false
+
+  /** Updates the `updatedBy` and `updated` properties, if applicable **/
+  def updated(updatedBy: String): AccountHolder = {
+    this match {
+      case p: Person ⇒ p.copy(updated = DateTime.now(), updatedBy = updatedBy).update
+      case o: Organisation ⇒ o.copy(updated = DateTime.now(), updatedBy = updatedBy).update
+      case _ ⇒ this
+    }
+  }
 }
 
+/** Special 'system' account **/
 object Levy extends AccountHolder {
   def name = "HM Levy"
   override def levy = true
+
+  // Nothing to update
+  def update = Levy
 }

@@ -29,7 +29,7 @@
     <div class="span2 actions">
       <form method="post" action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
         <input name="active" value="@(!organisation.active)" type="hidden">
-        @if(organisation.account.active) {
+        @if(organisation.active) {
           <button class="btn btn-block btn-warning" type="submit"><i class="icon-off icon-white"></i> Deactivate</button>
         } else {
           <button class="btn btn-block btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>

@@ -30,6 +30,10 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 
+/**
+ * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
+ * the `Levy`. Accounts have a currency set upon activation and may only be deactivated when their balance is zero.
+ */
 case class Account(id: Option[Long], organisationId: Option[Long], personId: Option[Long], currency: CurrencyUnit, active: Boolean) {
 
   /** Resolves the holder for this account **/
@@ -46,13 +50,20 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
 
   def balance: Money = Money.of(currency, 0)
 
+  /**
+   * Checks if the given user has permission to (de)activate this account:
+   * - An account for a person may only be (de)activated by that person
+   * - An account for an organisation may only be (de)activated by members of that organisation
+   * - The Levy account may only be (de)activated by admins
+   */
+
   def canBeActivatedBy(user: UserAccount) = accountHolder match {
     case organisation: Organisation ⇒ organisation.members.map(_.id.get).contains(user.personId)
     case person: Person ⇒ person.id.get == user.personId
     case Levy ⇒ user.getPermissions.contains(UserRole.Role.Admin)
   }
 
-  /** Activates an account and sets the currency **/
+  /** Activates this account and sets the balance currency **/
   def activate(currency: CurrencyUnit): Unit = {
     if (active) throw new IllegalStateException("Cannot activate an already active account")
     assert(balance.isZero, "Inactive account's balance should be zero")
@@ -60,11 +71,12 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
     copy(active = true, currency = currency)
   }
 
+  /** Deactivates this account  **/
   def deactivate(): Unit = {
     if (!active) throw new IllegalStateException("Cannot deactivate an already inactive account")
     if (!balance.isZero) throw new IllegalStateException("Cannot deactivate with non-zero balance")
     updateStatus(active = false, currency)
-    copy(active = false, currency = currency)
+    copy(active = false)
   }
 
   private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = withSession { implicit session ⇒
