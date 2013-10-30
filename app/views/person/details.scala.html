@@ -25,7 +25,7 @@
         <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>
-    <p><small>Added by @person.createdBy on @person.created.format</small></p>
+    <p><small>Added by @person.createdBy on @person.created.format <br> Updated by @person.updatedBy on @person.updated.format</small></p>
     @if(!person.active) {
       <p><span class="label label-warning">This person is deactivated</span></p>
     }
