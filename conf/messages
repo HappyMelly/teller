@@ -28,7 +28,7 @@ models.Organisation = Organization
 models.Person = Person
 models.License = License
 
-object.UserAccount = {0} user account
+object.UserAccount = {0} role
 
 # Organisation category label names and Bootstrap label CSS classes.
 models.OrganisationCategory.brandentity = Brand Entity

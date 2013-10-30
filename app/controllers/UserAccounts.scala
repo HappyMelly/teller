@@ -31,6 +31,7 @@ import models._
 import models.UserRole.Role.Admin
 import play.api.Logger
 import play.api.i18n.Messages
+import org.joda.time.DateTime
 
 /**
  * User administration controller.
@@ -58,16 +59,15 @@ object UserAccounts extends Controller with Security {
               val activity = role.map { newRole ⇒
                 if (UserAccount.findRole(personId).isDefined) {
                   UserAccount.updateRole(personId, newRole)
-                  Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
                 } else {
                   UserAccount.insert(UserAccount(None, personId, twitterHandle, newRole))
-                  Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
                 }
               }.getOrElse {
                 // Remove the account
                 UserAccount.delete(personId)
-                Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
               }
+              Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+              person.copy(updated = DateTime.now, updatedBy = request.user.fullName).update
               Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
             }.getOrElse(BadRequest("invalid form data - no Twitter handle"))
           }.getOrElse(BadRequest("invalid form data - person not found"))
