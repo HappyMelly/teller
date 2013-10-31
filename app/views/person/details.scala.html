@@ -25,7 +25,7 @@
         <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>
-    <p><small>Added by @person.createdBy on @person.created.format</small></p>
+    <p><small>Added by @person.createdBy on @person.created.format <br> Updated by @person.updatedBy on @person.updated.format</small></p>
     @if(!person.active) {
       <p><span class="label label-warning">This person is deactivated</span></p>
     }
@@ -167,9 +167,12 @@
   </div>
 
   <div class="span8">
-  <h3>Accounting details</h3>
-  <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
-      (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p></div>
+    <h3>Accounting details</h3>
+    <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
+    @if(person.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+        (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p>
+    }
+  </div>
 
   <div class="span8">
     <h3>Organizations</h3>
