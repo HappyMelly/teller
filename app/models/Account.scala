@@ -100,3 +100,8 @@ object Account {
   }
 }
 
+case class AccountSummary(person: Option[Person], organisation: Option[Organisation]) extends AccountHolder {
+  override def account: models.Account = ???
+  def name: String = ???
+
+}
