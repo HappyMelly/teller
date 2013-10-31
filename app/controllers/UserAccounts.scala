@@ -56,17 +56,16 @@ object UserAccounts extends Controller with Security {
             person.twitterHandle.map { twitterHandle ⇒
               Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
               val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
-              val activity = role.map { newRole ⇒
+              if (role.isDefined) {
                 if (UserAccount.findRole(personId).isDefined) {
-                  UserAccount.updateRole(personId, newRole)
+                  UserAccount.updateRole(personId, role.get)
                 } else {
-                  UserAccount.insert(UserAccount(None, personId, twitterHandle, newRole))
+                  UserAccount.insert(UserAccount(None, personId, twitterHandle, role.get))
                 }
-              }.getOrElse {
-                // Remove the account
+              } else { // Remove the account
                 UserAccount.delete(personId)
               }
-              Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
               person.copy(updated = DateTime.now, updatedBy = request.user.fullName).update
               Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
             }.getOrElse(BadRequest("invalid form data - no Twitter handle"))
