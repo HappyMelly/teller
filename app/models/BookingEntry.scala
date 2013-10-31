@@ -105,7 +105,7 @@ object BookingEntry {
         brandCode, summary) ⇒
         val from = accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
         val to = accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
-        val owes = source.getAmount.signum >= 0
+        val owes = source.isPositiveOrZero
         BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
     }.list
   }
@@ -114,7 +114,7 @@ object BookingEntry {
     (firstName, lastName, organisation) match {
       case (Some(first), Some(last), None) ⇒ first + " " + last
       case (None, None, Some(name)) ⇒ name
-      case (None, None, None) ⇒ "Levy"
-      case _ ⇒ "(unknown)"
+      case (None, None, None) ⇒ Levy.name
+      case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
     }
 }
