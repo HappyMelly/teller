@@ -1,0 +1,98 @@
+@(user: securesocial.core.Identity, booking: BookingEntry)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@import scala.math.BigDecimal.RoundingMode
+
+@import helper.CSRF
+@import models.UserRole.Role._
+@import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main(booking.id.get + " - Booking", Some(user)) {
+
+  <div class="span8">
+    <header>
+      <h1>Booking @booking.bookingNumber.get</h1>
+      <p><small>Created by @booking.owner.fullName on @booking.created.format </small></p>
+    </header>
+  </div>
+
+  <div class="clearfix"></div>
+
+  <div class="row">
+    <h3>Booking details</h3>
+    <div class="span4">
+      <p><strong>Booking number</strong>
+        <br>@booking.bookingNumber.get</p>
+      <p><strong>Booking Owner</strong>
+        <br><a href="@routes.People.details(booking.owner.id.get)">@booking.owner.fullName</a></p>
+      <p><strong>Booking date</strong>
+        <br>@booking.bookingDate.format</p>
+      <p><strong>Booking number</strong>
+        <br>@booking.bookingNumber</p>
+      <p><strong>Summary</strong>
+        <br>@booking.summary</p>
+
+    </div>
+    <div class="span4">
+      <p><strong>Brand</strong>
+        <br><a href="@routes.Brands.details(booking.brand.code)">@booking.brand.code</a></p>
+      @booking.reference.map { reference =>
+        <p><strong>Reference</strong>
+          <br>@reference</p>
+      }
+      @booking.referenceDate.map { referenceDate =>
+        <p><strong>Reference date</strong>
+          <br>@referenceDate.format</p>
+      }
+      @booking.description.map { description =>
+        <p><strong>Description</strong>
+          <br>@description</p>
+      }
+      @booking.url.map { url =>
+        <p><strong>URL</strong>
+          <br><a href="@url">@url</a></p>
+      }
+    </div>
+  </div>
+
+  <br class="clearfix">
+
+  <div class="row">
+    <h3>Transaction details</h3>
+    <div class="span4">
+      <p><strong>Source amount</strong><br>
+      @booking.source.abs.format
+      </p>
+    </div>
+    <div class="span4">
+      <p><strong>Percentage</strong><br>
+        @booking.sourcePercentage
+        % (@booking.source.abs.dividedBy(booking.sourcePercentage / 100.0, java.math.RoundingMode.HALF_UP).format)
+      </p>
+    </div>
+  </div>
+
+  <br class="clearfix">
+
+  <div class="row">
+    <div class="span12">
+    <p><strong>Transaction</strong></p>
+    </div>
+    <div class="span3">
+      @booking.fromAmount.format <br>
+    @booking.from.accountHolder.name
+    </div>
+    <div class="span2">
+    @if(booking.owes) {
+      <span class="label label-inverse">owes <i class="icon-arrow-right icon-white"></i></span>
+    } else {
+      <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
+    }
+    </div>
+    <div class="span3">
+      @booking.toAmount.format <br>
+    @booking.to.accountHolder.name
+    </div>
+  </div>
+
+}

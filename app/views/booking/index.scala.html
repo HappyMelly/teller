@@ -38,7 +38,7 @@
           <tr>
             <td>
               <strong>@entry.summary</strong>
-              <br>@entry.bookingNumber
+              <br><a href="@routes.BookingEntries.details(entry.bookingNumber)">@entry.bookingNumber</a>
             </td>
             <td>@entry.bookingDate</td>
             <td>
@@ -55,7 +55,7 @@
               @entry.toAmount.format
               <br>@entry.to
             </td>
-            <td>@entry.source.format</td>
+            <td>@entry.source.abs.format</td>
             <td>@entry.sourcePercentage%</td>
             <td><a href="@routes.Brands.details(entry.brandCode)">@entry.brandCode</a></td>
           </tr>

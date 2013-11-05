@@ -109,4 +109,11 @@ object BookingEntries extends Controller with Security {
       Ok(views.html.booking.index(request.user, BookingEntry.findAll))
   }
 
+  def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map{ bookingEntry ⇒
+        Ok(views.html.booking.details(request.user, bookingEntry))
+      }.getOrElse(NotFound)
+  }
+
 }
