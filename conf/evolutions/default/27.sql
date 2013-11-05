@@ -2,7 +2,7 @@
 
 # --- !Ups
 
-alter table BOOKING_ENTRY add column CREATED date NOT NULL,
+alter table BOOKING_ENTRY add column CREATED date NOT NULL;
 
 # --- !Downs
 
