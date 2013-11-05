@@ -28,7 +28,7 @@ import com.github.tototoshi.slick.JodaSupport._
 
 import models.JodaMoney._
 import models.BookingEntry
-import org.joda.time.LocalDate
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 
 /**
@@ -60,23 +60,25 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def description = column[Option[String]]("DESCRIPTION")
   def url = column[Option[String]]("URL")
 
+  def created = column[DateTime]("CREATED")
+
   def owner = foreignKey("BOOKING_OWNER_FK", ownerId, People)(_.id)
   def from = foreignKey("BOOKING_FROM_FK", fromId, Accounts)(_.id)
   def to = foreignKey("BOOKING_TO_FK", toId, Accounts)(_.id)
   def brand = foreignKey("BOOKING_BRAND_FK", brandId, Brands)(_.id)
 
-  def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~ sourceCurrency ~ sourceAmount ~ sourcePercentage ~
-    fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
-    brandId ~ reference ~ referenceDate ~ description ~ url <> (
+  def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~
+    sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
+    brandId ~ reference ~ referenceDate ~ description ~ url ~ created <> (
       { (e) ⇒
         e match {
           case (id, ownerId, bookingDate, bookingNumber, summary,
             sourceCurrency, sourceAmount, sourcePercentage, fromId, fromCurrency, fromAmount, toId, toCurrency, toAmount,
-            brandId, reference, referenceDate, description, url) ⇒
+            brandId, reference, referenceDate, description, url, created) ⇒
 
             BookingEntry(id, ownerId, bookingDate, bookingNumber, summary,
               sourceCurrency -> sourceAmount, sourcePercentage, fromId, fromCurrency -> fromAmount, toId, toCurrency -> toAmount,
-              brandId, reference, referenceDate, description, url)
+              brandId, reference, referenceDate, description, url, created)
         }
       },
       { (e: BookingEntry) ⇒
@@ -84,7 +86,7 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
           e.source.getCurrencyUnit.getCode, e.source.getAmount, e.sourcePercentage,
           e.fromId, e.fromAmount.getCurrencyUnit.getCode, e.fromAmount.getAmount,
           e.toId, e.toAmount.getCurrencyUnit.getCode, e.toAmount.getAmount,
-          e.brandId, e.reference, e.referenceDate, e.description, e.url))
+          e.brandId, e.reference, e.referenceDate, e.description, e.url, e.created))
       })
 
   def forInsert = * returning id

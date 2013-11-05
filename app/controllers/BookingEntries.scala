@@ -96,7 +96,7 @@ object BookingEntries extends Controller with Security {
         entry ⇒ {
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           // TODO T93 Use unique booking number
-          val nextBookingNumber = Some(Random.nextInt)
+          val nextBookingNumber = Some(Random.nextInt.abs)
           val updatedEntry = entry.copy(ownerId = currentUser.personId, bookingNumber = nextBookingNumber).insert
           val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
@@ -107,6 +107,13 @@ object BookingEntries extends Controller with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Ok(views.html.booking.index(request.user, BookingEntry.findAll))
+  }
+
+  def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map{ bookingEntry ⇒
+        Ok(views.html.booking.details(request.user, bookingEntry))
+      }.getOrElse(NotFound)
   }
 
 }

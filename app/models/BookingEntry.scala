@@ -26,13 +26,12 @@ package models
 
 import models.JodaMoney._
 import models.database._
-import org.joda.time.LocalDate
+import org.joda.time.{ DateTime, LocalDate }
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB._
 import scala.Some
-import play.api.i18n.Messages
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -55,13 +54,24 @@ case class BookingEntry(
   reference: Option[String],
   referenceDate: LocalDate,
   description: Option[String],
-  url: Option[String]) {
+  url: Option[String],
+
+  created: DateTime = DateTime.now()) {
+
+  def from = Account.find(fromId).get
+
+  def to = Account.find(toId).get
+
+  def owner = Person.find(ownerId).get
+
+  def brand = Brand.find(brandId).get
+
+  def owes = source.isPositiveOrZero
 
   def insert: BookingEntry = withSession { implicit session ⇒
     val id = BookingEntries.forInsert.insert(this)
     this.copy(id = Some(id))
   }
-
 }
 
 /**
@@ -87,8 +97,16 @@ object BookingEntry {
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now, None, None)
 
+  def find(id: Long): Option[BookingEntry] = withSession { implicit session ⇒
+    Query(BookingEntries).filter(_.id === id).firstOption
+  }
+
+  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = withSession { implicit session ⇒
+    Query(BookingEntries).filter(_.bookingNumber === bookingNumber).firstOption
+  }
+
   /**
-   * Returns a list of entries in reverse chronological order of booking date.
+   * Returns a list of entries in reverse chronological order of date created.
    */
   def findAll: List[BookingEntrySummary] = withSession { implicit session ⇒
 
@@ -105,13 +123,13 @@ object BookingEntry {
         People on (_.personId === _.id) leftJoin
         Organisations on (_._1.organisationId === _.id)
       if toAccount.id === entry.toId
-    } yield (entry.bookingNumber, entry.bookingDate, entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
+    } yield (entry.created, entry.bookingNumber, entry.bookingDate, entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
       fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
       toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
       brand.code, entry.summary)
 
-    query.sortBy(_._2.desc).mapResult {
-      case (number, date, source, sourcePercentage,
+    query.sortBy(_._1.desc).mapResult {
+      case (created, number, date, source, sourcePercentage,
         fromPersonFirstName, fromPersonLastName, fromOrganisation, fromAmount,
         toPersonFirstName, toPersonLastName, toOrganisation, toAmount,
         brandCode, summary) ⇒

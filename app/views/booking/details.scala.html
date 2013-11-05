@@ -1,0 +1,93 @@
+@(user: securesocial.core.Identity, booking: BookingEntry)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@import scala.math.BigDecimal.RoundingMode
+
+@import helper.CSRF
+@import models.UserRole.Role._
+@import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main(booking.summary + " - Booking", Some(user)) {
+
+  <header>
+    <h1>Booking: @booking.summary</h1>
+    <p><small>Created by @booking.owner.fullName on @booking.created.format </small></p>
+  </header>
+
+  @booking.description.map { description =>
+    <h3>Description</h3>
+    <p>@description</p>
+  }
+
+  <h3>Booking details</h3>
+
+  <div class="row">
+    <div class="span4">
+      <p><strong>Booking number</strong>
+      <br>@booking.bookingNumber.get</p>
+
+      <p><strong>Booking Owner</strong>
+      <br><a href="@routes.People.details(booking.owner.id.get)">@booking.owner.fullName</a></p>
+
+      <p><strong>Booking date</strong>
+      <br>@booking.bookingDate.format</p>
+    </div>
+
+    <div class="span4">
+      <p><strong>Brand</strong>
+      <br><a href="@routes.Brands.details(booking.brand.code)">@booking.brand.code</a></p>
+
+      @booking.reference.map { reference =>
+        <p><strong>Reference</strong>
+        <br>@reference</p>
+      }
+
+      <p><strong>Reference date</strong>
+      <br>@booking.referenceDate.format</p>
+
+      @booking.url.map { url =>
+        <p><strong>URL</strong>
+        <br><a href="@url">@url</a></p>
+      }
+    </div>
+  </div>
+
+  <h3>Transaction details</h3>
+
+  <div class="row">
+    <div class="span4">
+      <p><strong>Source amount</strong>
+      <br>@booking.source.abs.format</p>
+    </div>
+    <div class="span4">
+      <p><strong>Percentage</strong>
+      <br>@booking.sourcePercentage%</p>
+    </div>
+  </div>
+
+  <p><strong>Transaction</strong></p>
+
+  <div class="row">
+    <div class="span3">
+      @booking.fromAmount.format
+    </div>
+    <div class="span1">
+      @if(booking.owes) {
+        <span class="label label-inverse">owes <i class="icon-arrow-right icon-white"></i></span>
+      } else {
+        <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
+      }
+    </div>
+    <div class="span2">
+      @booking.toAmount.format
+    </div>
+  </div>
+  <div class="row">
+    <div class="span4">
+      @booking.from.accountHolder.name
+    </div>
+    <div class="span4">
+      @booking.to.accountHolder.name
+    </div>
+  </div>
+}

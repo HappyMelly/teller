@@ -17,51 +17,56 @@
     }
   </div>
 
-  <p>This page provides an overview of financial booking entries, which record money owed between people and
-    organisations in the Happy Melly network.</p>
+  <p>An overview of financial booking entries - money owed between people and organisations in the Happy Melly network.</p>
+
+  <div class="alert">
+    <strong>Please note!</strong> From/to amounts are not yet calculated from the source amount and account currencies, and are therefore zero.
+  </div>
 
   @if(!entries.isEmpty) {
-    <div class="span16">
-      <table id="entries" class="datatables table table-bordered">
-      <thead>
-        <tr>
-          <th>Booking</th>
-          <th>Book date</th>
-          <th colspan="3">Amounts/Accounts</th>
-          <th>Source</th>
-          <th>%</th>
-          <th>Brand</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for(entry <- entries) {
+    <div class="row">
+      <div class="span16">
+        <table id="entries" class="datatables table table-bordered">
+        <thead>
           <tr>
-            <td>
-              <strong>@entry.summary</strong>
-              <br>@entry.bookingNumber
-            </td>
-            <td>@entry.bookingDate</td>
-            <td>
-              @entry.fromAmount.format
-              <br>@entry.from</td>
-            <td>
-              @if(entry.owes) {
-                <span class="label label-inverse">owes <i class="icon-arrow-right icon-white"></i></span>
-              } else {
-                <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
-              }
-            </td>
-            <td>
-              @entry.toAmount.format
-              <br>@entry.to
-            </td>
-            <td>@entry.source.format</td>
-            <td>@entry.sourcePercentage%</td>
-            <td><a href="@routes.Brands.details(entry.brandCode)">@entry.brandCode</a></td>
+            <th>Booking</th>
+            <th>Book date</th>
+            <th colspan="3">Amounts/Accounts</th>
+            <th>Source</th>
+            <th>%</th>
+            <th>Brand</th>
           </tr>
-        }
-      </tbody>
-      </table>
+        </thead>
+        <tbody>
+          @for(entry <- entries) {
+            <tr>
+              <td>
+                <strong>@entry.summary</strong>
+                <br><a href="@routes.BookingEntries.details(entry.bookingNumber)">@entry.bookingNumber</a>
+              </td>
+              <td>@entry.bookingDate</td>
+              <td>
+                @entry.fromAmount.format
+                <br>@entry.from</td>
+              <td>
+                @if(entry.owes) {
+                  <span class="label label-inverse">owes <i class="icon-arrow-right icon-white"></i></span>
+                } else {
+                  <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
+                }
+              </td>
+              <td>
+                @entry.toAmount.format
+                <br>@entry.to
+              </td>
+              <td>@entry.source.abs.format</td>
+              <td>@entry.sourcePercentage%</td>
+              <td><a href="@routes.Brands.details(entry.brandCode)">@entry.brandCode</a></td>
+            </tr>
+          }
+        </tbody>
+        </table>
+      </div>
     </div>
   } else {
     <p>There are no entries.</p>
