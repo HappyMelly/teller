@@ -64,7 +64,6 @@
         <label for="fromId">Accounts</label>
         @selectAccount(form("fromId"))
         <div class="span2" style="text-align: center">
-          <!--<button class="btn btn-danger" type="button"><i class="icon-arrow-left icon-white"></i> Is Owed By</button>-->
           <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
           <input id="owes_value" type="hidden" name="owes" value="true">
         </div>
@@ -96,13 +95,13 @@
     <div class="control-group @if(form("reference").hasErrors || form("referenceDate").hasErrors) {error}">
       <label for="reference">Reference number</label>
       <div class="input">
-        <input type="text" name="reference" id="reference" value="@form("reference").value"> on date
-        <input class="input-small" type="date" name="referenceDate" value="@form("referenceDate").value">
+        <input type="text" name="reference" id="reference" value="@form("reference").value"> on
+        <input class="input-medium" type="date" name="referenceDate" value="@form("referenceDate").value">
         <span class="help-inline">
           @if(form("reference").hasErrors || form("referenceDate").hasErrors) {
             @fieldErrors(form("reference"), form("referenceDate"))
           } else {
-            YYYY-MM-DD, Required
+            Date, Required
           }</span>
       </div>
     </div>
@@ -119,7 +118,7 @@
       </div>
     </div>
 
-    @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge")
+    @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge", '_help -> "")
 
     <button class="btn btn-primary" type="submit">Save</button>
   </form>

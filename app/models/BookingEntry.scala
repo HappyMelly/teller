@@ -41,7 +41,7 @@ case class BookingEntry(
   id: Option[Long],
   ownerId: Long,
   bookingDate: LocalDate,
-  bookingNumber: Int,
+  bookingNumber: Option[Int],
   summary: String,
 
   source: Money,
@@ -62,7 +62,6 @@ case class BookingEntry(
     this.copy(id = Some(id))
   }
 
-  override def toString = Messages("models.BookingEntry.name", source.toString)
 }
 
 /**
@@ -85,7 +84,7 @@ case class BookingEntrySummary(
 
 object BookingEntry {
 
-  def blank = BookingEntry(None, 0L, LocalDate.now, 0, "", Money.of(CurrencyUnit.EUR, 0f), 100,
+  def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now, None, None)
 
   /**

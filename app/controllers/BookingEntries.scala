@@ -24,6 +24,7 @@
 
 package controllers
 
+import controllers.Forms._
 import models.JodaMoney._
 import models.UserRole.Role._
 import models._
@@ -34,27 +35,25 @@ import play.api.data.Forms._
 import play.api.data.Form
 import play.api.data.validation.Constraints._
 import securesocial.core.SecuredRequest
-import controllers.Forms._
-import scala.Some
-import securesocial.core.SecuredRequest
 import scala.util.Random
+import play.api.i18n.Messages
 
 object BookingEntries extends Controller with Security {
 
   def bookingEntryForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "ownerId" -> ignored(0L),
-    "bookingNumber" -> ignored(0),
+    "bookingNumber" -> ignored(Option.empty[Int]),
     "summary" -> nonEmptyText(maxLength = 50),
     "source" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
-    "sourcePercentage" -> number,
+    "sourcePercentage" -> number(0, 100),
     "fromId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "fromAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
     "toId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "toAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
     "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "reference" -> optional(text(maxLength = 16)),
-    "referenceDate" -> jodaLocalDate.verifying("error.date.future", (d: LocalDate) ⇒ d.minusDays(1).isBefore(LocalDate.now)),
+    "referenceDate" -> jodaLocalDate.verifying("error.date.future", (d: LocalDate) ⇒ d.isBefore(LocalDate.now.plusDays(1))),
     "description" -> optional(text(maxLength = 250)),
     "url" -> optional(webUrl),
     "owes" -> boolean)(fromForm)(toForm))
@@ -62,7 +61,7 @@ object BookingEntries extends Controller with Security {
   /**
    * Creates a `BookingEntry` from form data.
    */
-  def fromForm(id: Option[Long], ownerId: Long, bookingNumber: Int, summary: String, source: Money, sourcePercentage: Int,
+  def fromForm(id: Option[Long], ownerId: Long, bookingNumber: Option[Int], summary: String, source: Money, sourcePercentage: Int,
     fromId: Long, fromAmount: Money, toId: Long, toAmount: Money,
     brandId: Long, reference: Option[String], referenceDate: LocalDate,
     description: Option[String], url: Option[String], owes: Boolean) = {
@@ -96,8 +95,11 @@ object BookingEntries extends Controller with Security {
           BadRequest(views.html.booking.form(request.user, formWithErrors, Account.findAllActive)),
         entry ⇒ {
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-          val updatedEntry = entry.copy(ownerId = currentUser.personId, bookingNumber = Random.nextInt).insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, entry.toString)
+          // TODO T93 Use unique booking number
+          val nextBookingNumber = Some(Random.nextInt)
+          val updatedEntry = entry.copy(ownerId = currentUser.personId, bookingNumber = nextBookingNumber).insert
+          val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
         })
   }
