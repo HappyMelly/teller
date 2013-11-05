@@ -27,7 +27,7 @@ package models.database
 import com.github.tototoshi.slick.JodaSupport._
 
 import models.JodaMoney._
-import models.{ BookingEntry, License }
+import models.BookingEntry
 import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
 
@@ -56,7 +56,7 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
 
   def brandId = column[Long]("BRAND_ID")
   def reference = column[Option[String]]("REFERENCE")
-  def referenceDate = column[Option[LocalDate]]("REFERENCE_DATE")
+  def referenceDate = column[LocalDate]("REFERENCE_DATE")
   def description = column[Option[String]]("DESCRIPTION")
   def url = column[Option[String]]("URL")
 
@@ -65,8 +65,8 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def to = foreignKey("BOOKING_TO_FK", toId, Accounts)(_.id)
   def brand = foreignKey("BOOKING_BRAND_FK", brandId, Brands)(_.id)
 
-  def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~
-    sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
+  def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~ sourceCurrency ~ sourceAmount ~ sourcePercentage ~
+    fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
     brandId ~ reference ~ referenceDate ~ description ~ url <> (
       { (e) ⇒
         e match {
@@ -87,4 +87,5 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
           e.brandId, e.reference, e.referenceDate, e.description, e.url))
       })
 
+  def forInsert = * returning id
 }
