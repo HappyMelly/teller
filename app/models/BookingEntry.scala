@@ -27,7 +27,7 @@ package models
 import models.JodaMoney._
 import models.database._
 import org.joda.time.{ DateTime, LocalDate }
-import org.joda.money.Money
+import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB._
@@ -106,7 +106,7 @@ object BookingEntry {
   }
 
   /**
-   * Returns a list of entries in reverse chronological order of booking date.
+   * Returns a list of entries in reverse chronological order of date created.
    */
   def findAll: List[BookingEntrySummary] = withSession { implicit session ⇒
 
@@ -123,13 +123,13 @@ object BookingEntry {
         People on (_.personId === _.id) leftJoin
         Organisations on (_._1.organisationId === _.id)
       if toAccount.id === entry.toId
-    } yield (entry.bookingNumber, entry.bookingDate, entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
+    } yield (entry.created, entry.bookingNumber, entry.bookingDate, entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
       fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
       toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
       brand.code, entry.summary)
 
-    query.sortBy(_._2.desc).mapResult {
-      case (number, date, source, sourcePercentage,
+    query.sortBy(_._1.desc).mapResult {
+      case (created, number, date, source, sourcePercentage,
         fromPersonFirstName, fromPersonLastName, fromOrganisation, fromAmount,
         toPersonFirstName, toPersonLastName, toOrganisation, toAmount,
         brandCode, summary) ⇒
@@ -140,4 +140,4 @@ object BookingEntry {
     }.list
   }
 
-    }
+}

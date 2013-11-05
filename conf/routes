@@ -47,9 +47,9 @@ POST /account/:id/activate   controllers.Accounts.activate(id: Long)
 POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 
 GET  /bookings                 controllers.BookingEntries.index
+GET  /booking/new              controllers.BookingEntries.add
+POST /booking/new              controllers.BookingEntries.create
 GET  /booking/:bookingNumber   controllers.BookingEntries.details(bookingNumber: Int)
-GET  /booking/new    controllers.BookingEntries.add
-POST /booking/new    controllers.BookingEntries.create
 
 
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
