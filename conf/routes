@@ -72,6 +72,9 @@ GET /api/v1/person/:id   controllers.PeopleApi.person(id: Long)
 GET /api/v1/organizations      controllers.OrganisationsApi.organisations(legal_entities_only: Option[Boolean])
 GET /api/v1/organization/:id   controllers.OrganisationsApi.organisation(id: Long)
 
+GET /api/v1/products       controllers.ProductsApi.products
+GET /api/v1/product/:id   controllers.ProductsApi.product(id: Long)
+
 GET /assets/*file   controllers.Assets.at(path="/public", file)
 
 ## SecureSocial

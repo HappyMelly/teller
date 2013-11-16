@@ -14,6 +14,8 @@
     <li><a href="#organization">Organization details</a></li>
     <li><a href="#people">People</a></li>
     <li><a href="#person">Person details</a></li>
+    <li><a href="#products">Products</a></li>
+    <li><a href="#product">Product details</a></li>
   </ul>
 
 
@@ -322,9 +324,9 @@
     </tr>
   </table>
 
-  
+
   <h3 id="person">Person details</h3>
-  
+
   <table class="table table-bordered">
     <tr>
       <th>Description</th>
@@ -400,6 +402,98 @@
         <a href="/api/v1/person/@user.person.id.get?api_token=@user.apiToken">GET /api/v1/person/@user.person.id.get</a>
       </td>
     </tr>
-  </table>
+    </table>
+
+    <h3 id="products">Products</h3>
+
+    <table class="table table-bordered">
+      <tr>
+        <th>Description</th>
+        <td>A list of Happy Melly products</td>
+      </tr>
+      <tr>
+        <th>Request</th>
+        <td><code>GET /api/v1/products</code></td>
+      </tr>
+      <tr>
+        <th>Request path parameters</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+      </tr>
+      <tr>
+        <th>Response body</th>
+        <td>
+          <p>A JSON array of product objects, with properties:</p>
+          <ul>
+            <li><code>href</code> - URL of the <a href="#product">product details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+            <li><code>title</code></li>
+            <li><code>category</code></li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Example</th>
+        <td><a href="/api/v1/products?api_token=@user.apiToken">GET /api/v1/products</a>
+      </tr>
+    </table>
+
+    <h3 id="product">Product details</h3>
+
+    <p>The <em>product details</em> resource provides more details about an entry in the <a href="#products">list</a>.</p>
+
+    <table class="table table-bordered">
+      <tr>
+        <th>Request</th>
+        <td><code>GET /api/v1/product/{productId}</code></td>
+      </tr>
+      <tr>
+        <th>Request path parameters</th>
+        <td><code>productId</code> unique identifier for the product, e.g. <code>42</code></td>
+      </tr>
+      <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+      </tr>
+      <tr>
+        <th>Response body</th>
+        <td>
+          <p>A JSON object, with product properties:</p>
+          <ul>
+            <li><code>title</code></li>
+            <li><code>subtitle</code></li>
+            <li><code>url</code></li>
+            <li><code>category</code></li>
+            <li><code>parent</code> - URL of the <a href="#product">parent product details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>Errors (HTTP status)</th>
+        <td>
+          <p><code>404 Not Found</code> if the specified product is not found</p>
+        </td>
+      </tr>
+      <tr>
+        <th>Examples</th>
+        <td>
+          <a href="/api/v1/product/1?api_token=@user.apiToken">GET /api/v1/product/1</a>
+        </td>
+      </tr>
+    </table>
 
 }
