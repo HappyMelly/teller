@@ -40,6 +40,14 @@ POST /brand/:code          controllers.Brands.update(code)
 GET  /brand/:code/edit     controllers.Brands.edit(code)
 POST /brand/:code/delete   controllers.Brands.delete(code)
 
+GET  /products             controllers.Products.index
+GET  /product/new          controllers.Products.add
+POST /product/new          controllers.Products.create
+GET  /product/:id          controllers.Products.details(id: Long)
+POST /product/:id          controllers.Products.update(id: Long)
+GET  /product/:id/edit     controllers.Products.edit(id: Long)
+POST /product/:id/delete   controllers.Products.delete(id: Long)
+
 POST /user    controllers.UserAccounts.update
 
 GET  /account/:id            controllers.Accounts.details(id: Long)
