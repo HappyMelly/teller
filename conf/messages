@@ -37,6 +37,15 @@ models.OrganisationCategory.brandentity.label = label-inverse
 models.OrganisationCategory.legalentity = Legal Entity
 models.OrganisationCategory.legalentity.label = label-info
 
+# Product category label names and Bootstrap label CSS classes.
+models.ProductCategory.book = Book
+models.ProductCategory.book.label = label-inverse
+models.ProductCategory.game = Game
+models.ProductCategory.game.label = label-info
+models.ProductCategory.software = Software
+models.ProductCategory.software.label = label-warning
+
+
 # Activity stream entries
 activity.signup = {0} signed up
 activity.create = {0} added {1}
