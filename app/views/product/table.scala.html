@@ -1,4 +1,4 @@
-@(products: List[Product])(actions: (Product) => Html)
+@(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -10,19 +10,23 @@
     <tr>
       <th>Title</th>
       <th>Category</th>
-      <th></th>
+      @if(!viewOnly) {
+        <th></th>
+      }
     </tr>
     </thead>
     <tbody>
     @for(product <- products) {
     <tr>
-    <td><a href="@routes.Products.details(product.id.getOrElse(0))">@product.title</a></td>
-    <td>
-      @product.category.map { name =>
-        <span class="label @Messages(s"models.ProductCategory.$name.label")">@Messages(s"models.ProductCategory.$name")</span>
+      <td><a href="@routes.Products.details(product.id.getOrElse(0))">@product.title</a></td>
+      <td>
+        @product.category.map { name =>
+          <span class="label @Messages(s"models.ProductCategory.$name.label")">@Messages(s"models.ProductCategory.$name")</span>
+        }
+      </td>
+      @if(!viewOnly) {
+        <td>@actions(product)</td>
       }
-    </td>
-    <td>@actions(product)</td>
     </tr>
     }
     </tbody>

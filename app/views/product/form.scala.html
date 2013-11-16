@@ -1,9 +1,12 @@
-@(user: securesocial.core.Identity, id: Option[Long], form: Form[Product])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  title: Option[String],
+  form: Form[Product])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@defining(form.value.map(product => "Product %s".format(product.title)).getOrElse("Add product")) { productName =>
+@defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>
     @main("Product", Some(user)) {
 
         <h1>@productName</h1>

@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.{ ProductView, Activity, Product, ProductCategory }
+import models.{ Activity, Product, ProductCategory, Brand }
 import play.api.mvc._
 import org.joda.time._
 import play.api.data._
@@ -35,6 +35,7 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import scala.Some
 import play.api.data.format.Formatter
+import play.api.i18n.Messages
 
 object Products extends Controller with Security {
 
@@ -79,7 +80,7 @@ object Products extends Controller with Security {
   /** Show all products **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.product.form(request.user, None, productForm))
+      Ok(views.html.product.form(request.user, None, None, productForm))
   }
 
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
@@ -87,15 +88,65 @@ object Products extends Controller with Security {
 
       val boundForm: Form[Product] = productForm.bindFromRequest
       boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.product.form(request.user, None, formWithErrors)),
+        formWithErrors ⇒ BadRequest(views.html.product.form(request.user, None, None, formWithErrors)),
         product ⇒ {
-          if (Product.exists(product.title)) BadRequest(views.html.product.form(request.user, None,
-            boundForm.withError("title", "constraint.product.title.exists", product.title)))
-
-          val savedProduct = product.insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedProduct.title)
-          Redirect(routes.Products.index()).flashing("success" -> activity.toString)
+          if (Product.exists(product.title))
+            BadRequest(views.html.product.form(request.user, None, None,
+              boundForm.withError("title", "constraint.product.title.exists", product.title)))
+          else {
+            val savedProduct = product.insert
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedProduct.title)
+            Redirect(routes.Products.index()).flashing("success" -> activity.toString)
+          }
         })
+  }
+
+  /**
+   * Assign the product to a brand
+   */
+  def addBrand = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
+
+      assignForm.bindFromRequest.fold(
+        errors ⇒ BadRequest("brandId missing"),
+        {
+          case (page, productId, brandId) ⇒ {
+            Product.find(productId).map { product ⇒
+              Brand.find(brandId).map { brand ⇒
+                product.addBrand(brandId)
+                val activityObject = Messages("activity.relationship.create", product.title, brand.name)
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+
+                // Redirect to the page we came from - either the product or brand details page.
+                val action = if (page == "product") routes.Products.details(productId)
+                else routes.Brands.details(Brand.find(brandId).get.code)
+                Redirect(action).flashing("success" -> activity.toString)
+              }.getOrElse(NotFound)
+            }.getOrElse(NotFound)
+          }
+        })
+  }
+
+  /**
+   * Unassign the product from the brand
+   */
+  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Product.find(productId).map { product ⇒
+        Brand.find(brandId).map { brand ⇒
+          product.deleteBrand(brandId)
+          val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+          // Redirect to the page we came from - either the product or brand details page.
+          val action = if (page == "product") routes.Products.details(productId)
+          else routes.Brands.details(Brand.find(brandId).get.code)
+          Redirect(action).flashing("success" -> activity.toString)
+        }
+      }.flatten.getOrElse(NotFound)
   }
 
   /** Delete a product **/
@@ -117,8 +168,8 @@ object Products extends Controller with Security {
         product ⇒
           val derivatives = Product.findDerivatives(id)
           val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
-          // Ok(views.html.product.details(request.user, product, parent, brandIds))
-          Ok(views.html.product.details(request.user, product, derivatives, parent))
+          val brands = Brand.findAll
+          Ok(views.html.product.details(request.user, product, derivatives, parent, brands))
       }.getOrElse(NotFound)
 
   }
@@ -129,7 +180,7 @@ object Products extends Controller with Security {
 
       Product.find(id).map {
         product ⇒
-          Ok(views.html.product.form(request.user, Some(id), productForm.fill(product)))
+          Ok(views.html.product.form(request.user, Some(id), Some(product.title), productForm.fill(product)))
       }.getOrElse(NotFound)
 
   }
@@ -138,13 +189,21 @@ object Products extends Controller with Security {
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      productForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.product.form(request.user, Some(id), formWithErrors)),
+      val boundForm: Form[Product] = productForm.bindFromRequest
+      val productTitle = Some(Product.find(id).get.title)
+      boundForm.fold(
+        formWithErrors ⇒ {
+          BadRequest (views.html.product.form(request.user, Some(id), productTitle, boundForm))
+        },
         product ⇒ {
-          product.copy(id = Some(id)).update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
-          Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
+          if (Product.exists(product.title, id))
+            BadRequest(views.html.product.form(request.user, Some(id), productTitle,
+              boundForm.withError("title", "constraint.product.title.exists", product.title)))
+          else {
+            product.copy(id = Some(id)).update
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+            Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
+          }
         })
 
   }

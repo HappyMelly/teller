@@ -54,6 +54,32 @@ case class Product(
   updated: DateTime,
   updatedBy: String) {
 
+  def brands: List[Brand] = withSession { implicit session ⇒
+    val query = for {
+      relation ← ProductBrandRelations if relation.productId === this.id
+      brand ← relation.brand
+    } yield brand
+    query.sortBy(_.name.toLowerCase).list
+  }
+
+  /**
+   * Assign this product with a brand
+   */
+  def addBrand(brandId: Long): Unit = {
+    withSession { implicit session ⇒
+      ProductBrandRelations.forInsert.insert(this.id.get, brandId)
+    }
+  }
+
+  /**
+   * Unassign this product with a brand
+   */
+  def deleteBrand(brandId: Long): Unit = {
+    withSession { implicit session ⇒
+      ProductBrandRelations.filter(relation ⇒ relation.productId === id && relation.brandId === brandId).mutate(_.delete)
+    }
+  }
+
   def insert: Product = withSession { implicit session ⇒
     val id = Products.forInsert.insert(this)
     this.copy(id = Some(id))
@@ -69,15 +95,16 @@ case class Product(
   }
 }
 
-case class ProductView(product: Product, parent: Product, brands: Seq[Long])
-
 object Product {
 
-  /**
-   * Returns true if and only if there is a product with the given code.
-   */
   def exists(title: String): Boolean = withSession { implicit session ⇒
     Query(Query(Products).filter(_.title === title).exists).first
+  }
+  /**
+   * Returns true if and only if there is a product with the given title.
+   */
+  def exists(title: String, id: Long): Boolean = withSession { implicit session ⇒
+    Query(Query(Products).filter(_.title === title).filter(_.id =!= id).exists).first
   }
 
   /** Finds a product by ID **/
