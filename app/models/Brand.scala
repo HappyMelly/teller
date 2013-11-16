@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ Licenses, Brands }
+import models.database.{ Licenses, Brands, ProductBrandRelations }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
@@ -35,6 +35,14 @@ import play.api.Play.current
  */
 case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
   created: DateTime, createdBy: String, updated: DateTime, updatedBy: String) {
+
+  def products: List[Product] = withSession { implicit session ⇒
+    val query = for {
+      relation ← ProductBrandRelations if relation.brandId === this.id
+      product ← relation.product
+    } yield product
+    query.sortBy(_.title.toLowerCase).list
+  }
 
   def insert: Brand = withSession { implicit session ⇒
     val id = Brands.forInsert.insert(this)

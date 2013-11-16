@@ -1,7 +1,8 @@
 @(user: securesocial.core.Identity,
   product: Product,
   derivatives: List[Product],
-  parent: Option[Product])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  parent: Option[Product],
+  brands: List[BrandView])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.UserRole.Role._
@@ -57,6 +58,44 @@
   </div>
   <div class="span4">
     <h3>Brands</h3>
+    @if(product.brands.isEmpty) {
+      <p>This product doesn't belong to any brand.</p>
+    } else {
+      <table class="datatables table table-bordered">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        @for(brand <- product.brands) {
+          <tr>
+            <td><a href="@routes.Brands.details(brand.code)">@brand.name</a></td>
+            <td>
+              @restrict(handler, List(as(Editor.toString))) {
+                <a href="@routes.Products.deleteBrand("product", product.id.get, brand.id.get)"><i class="icon-pencil"></i> Unassign brand</a>
+              }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+    @restrict(handler, List(as(Editor.toString))) {
+      <form class="form-inline" method="POST" action="@CSRF(routes.Products.addBrand)">
+        <p>
+          <input type="hidden" name="page" value="product">
+          <input type="hidden" name="productId" value="@product.id.get">
+          <select name="brandId">
+            @for(brandView <- brands) {
+              <option value="@brandView.brand.id.get">@brandView.brand.name</option>
+            }
+          </select>
+          <button class="btn"><i class="icon-plus"></i>Assign Brand</button>
+        </p>
+      </form>
+    }
   </div>
   <div class="span8">
     <h3>Derivative Products</h3>
