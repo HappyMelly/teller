@@ -106,6 +106,13 @@ case class Person(
   }
 
   /**
+   * Returns a list of this person's contributions.
+   */
+  def contributions: List[ContributionView] = withSession { implicit session ⇒
+    Contribution.contributions(this.id.get, true)
+  }
+
+  /**
    * Returns a list of the organisations this person is a member of.
    */
   def memberships: List[Organisation] = withSession { implicit session ⇒
@@ -149,6 +156,7 @@ case class Person(
 
   def asSummary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 }
+
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)
 
 object Person {
@@ -163,10 +171,8 @@ object Person {
     query.update(active)
   }
 
-  def delete(id: Long): Unit = {
-    withSession { implicit session ⇒
-      People.where(_.id === id).delete
-    }
+  def delete(id: Long): Unit = withSession { implicit session ⇒
+    People.where(_.id === id).mutate(_.delete())
   }
 
   def find(id: Long): Option[Person] = withSession { implicit session ⇒
