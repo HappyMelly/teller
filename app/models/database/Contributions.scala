@@ -30,14 +30,14 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Contributions` database table mapping.
  */
-private[models] object Contributions extends Table[Contribution]("CONTRIBUTORS") {
+private[models] object Contributions extends Table[Contribution]("CONTRIBUTIONS") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def contributorId = column[Long]("CONTRIBUTOR_ID")
   def productId = column[Long]("PRODUCT_ID")
   def isPerson = column[Boolean]("IS_PERSON")
   def role = column[String]("ROLE")
 
-  def product = foreignKey("CONTRIBUTOR_FK", productId, Products)(_.id)
+  def product = foreignKey("CONTRIBUTION_FK", productId, Products)(_.id)
 
   def * = id.? ~ contributorId ~ productId ~ isPerson ~
     role <> (Contribution.apply _, Contribution.unapply _)

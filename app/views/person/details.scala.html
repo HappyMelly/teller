@@ -221,7 +221,8 @@
               <td>@contribution.contribution.role</td>
               <td>
                 @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.Contributions.delete(contribution.contribution.id.get)"><i class="icon-pencil"></i> Remove contribution</a>
+                  <a href="@routes.Contributions.delete("person", contribution.contribution.id.get)">
+                  <i class="icon-pencil"></i> Remove contribution</a>
                 }
               </td>
             </tr>
@@ -230,10 +231,10 @@
       </table>
     }
     @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create)">
+      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("person"))">
         <p>
           <input type="hidden" name="page" value="person">
-          <input type="hidden" name="coxntributorId" value="@person.id.get">
+          <input type="hidden" name="contributorId" value="@person.id.get">
           <input type="hidden" name="isPerson" value="true">
           <select name="productId">
             @for(product <- products) {

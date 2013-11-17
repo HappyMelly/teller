@@ -47,24 +47,25 @@ object Contributions extends Controller with Security {
     "isPerson" -> text.transform(_.toBoolean, (b: Boolean) ⇒ b.toString),
     "role" -> nonEmptyText)(Contribution.apply)(Contribution.unapply))
 
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
+      val route = if (page == "organisation") routes.Organisations.details(contributorId)
+      else routes.People.details(contributorId)
       boundForm.bindFromRequest.fold(
-        formWithErrors ⇒ Redirect(routes.People.details(contributorId)).
-          flashing("error" -> "A role for a contribution cannot be empty"),
+        formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contribution cannot be empty"),
         contribution ⇒ {
           contribution.insert
           val activityObject = Messages("activity.contribution.create", contribution.product.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.People.details(contribution.contributorId)).flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> activity.toString)
         })
   }
 
   /** Delete a contribution **/
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(page: String, id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Contribution.find(id).map {
@@ -74,7 +75,10 @@ object Contributions extends Controller with Security {
             contribution.product.title)
           val activity = Activity.insert(request.user.fullName,
             Activity.Predicate.Deleted, activityObject)
-          Redirect(routes.People.details(contribution.contributorId)).flashing("success" -> activity.toString)
+          val route = if (page == "organisation") routes.Organisations.details(contribution.contributorId)
+          else if (page == "product") routes.Products.details(contribution.productId)
+          else routes.People.details(contribution.contributorId)
+          Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
