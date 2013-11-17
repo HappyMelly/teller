@@ -149,6 +149,54 @@ object Products extends Controller with Security {
       }.flatten.getOrElse(NotFound)
   }
 
+  /**
+   * Add contributor to the product
+   */
+  def addContributor = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
+
+      assignForm.bindFromRequest.fold(
+        errors ⇒ BadRequest("brandId missing"),
+        {
+          case (page, productId, brandId) ⇒ {
+            Product.find(productId).map { product ⇒
+              Brand.find(brandId).map { brand ⇒
+                product.addBrand(brandId)
+                val activityObject = Messages("activity.relationship.create", product.title, brand.name)
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+
+                // Redirect to the page we came from - either the product or brand details page.
+                val action = if (page == "product") routes.Products.details(productId)
+                else routes.Brands.details(Brand.find(brandId).get.code)
+                Redirect(action).flashing("success" -> activity.toString)
+              }.getOrElse(NotFound)
+            }.getOrElse(NotFound)
+          }
+        })
+  }
+
+  /**
+   * Unassign the product from the brand
+   */
+  def deleteContributor(page: String, productId: Long, contributorId: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Product.find(productId).map { product ⇒
+        Brand.find(contributorId).map { brand ⇒
+          // product.deleteBrand(contributorId)
+          val activityObject = Messages("activity.relationship.delete", product.title, brand.brand.name)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+          // Redirect to the page we came from - either the product or brand details page.
+          val action = if (page == "product") routes.Products.details(productId)
+          else routes.Brands.details(Brand.find(contributorId).get.brand.code)
+          Redirect(action).flashing("success" -> activity.toString)
+        }
+      }.flatten.getOrElse(NotFound)
+  }
+
   /** Delete a product **/
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
