@@ -55,6 +55,8 @@ activity.activate = {0} activated {1}
 activity.deactivate = {0} deactivated {1}
 activity.relationship.create = {0} to {1}
 activity.relationship.delete = {0} from {1}
+activity.contribution.create = new contribution to {0}
+activity.contribution.delete = a contribution from {0}
 
 # Controller error messages
 # {0} Object name

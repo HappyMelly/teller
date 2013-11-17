@@ -14,16 +14,16 @@ create table PRODUCT (
 );
 
 
-alter table PRODUCT add constraint PARENT_FK foreign key(PARENT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
+-- alter table PRODUCT add constraint PARENT_FK foreign key(PARENT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
 
 create table PRODUCT_BRAND_RELATIONS (
   ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   PRODUCT_ID BIGINT NOT NULL,
   BRAND_ID BIGINT NOT NULL);
 
-alter table PRODUCT_BRAND_RELATIONS add constraint PRODUCT_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
+alter table PRODUCT_BRAND_RELATIONS add constraint BRAND_PRODUCT_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
 
-alter table PRODUCT_BRAND_RELATIONS add constraint BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
+alter table PRODUCT_BRAND_RELATIONS add constraint PRODUCT_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
 

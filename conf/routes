@@ -50,6 +50,11 @@ POST /product/:id/delete   controllers.Products.delete(id: Long)
 
 POST /product/brand/new                         controllers.Products.addBrand
 GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+POST /product/contributor/new                               controllers.Products.addContributor
+GET  /product/:productId/contributor/:contributorId/delete  controllers.Products.deleteContributor(page: String, productId: Long, contributorId: String)
+
+POST /contribution/new                     controllers.Contributions.create
+GET  /contribution/:id/delete  controllers.Contributions.delete(id: Long)
 
 POST /user    controllers.UserAccounts.update
 
@@ -72,7 +77,7 @@ GET /api/v1/person/:id   controllers.PeopleApi.person(id: Long)
 GET /api/v1/organizations      controllers.OrganisationsApi.organisations(legal_entities_only: Option[Boolean])
 GET /api/v1/organization/:id   controllers.OrganisationsApi.organisation(id: Long)
 
-GET /api/v1/products       controllers.ProductsApi.products
+GET /api/v1/products      controllers.ProductsApi.products
 GET /api/v1/product/:id   controllers.ProductsApi.product(id: Long)
 
 GET /assets/*file   controllers.Assets.at(path="/public", file)
