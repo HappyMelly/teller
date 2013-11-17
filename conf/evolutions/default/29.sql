@@ -1,6 +1,6 @@
 # --- !Ups
 
-create table CONTRIBUTORS (
+create table CONTRIBUTIONS (
   ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   CONTRIBUTOR_ID BIGINT NOT NULL,
   PRODUCT_ID BIGINT NOT NULL,
@@ -8,9 +8,9 @@ create table CONTRIBUTORS (
   ROLE VARCHAR(254) NOT NULL
 );
 
-alter table CONTRIBUTORS add constraint CONTRIBUTOR_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
+alter table CONTRIBUTIONS add constraint CONTRIBUTION_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
 
-drop table CONTRIBUTORS;
+drop table CONTRIBUTIONS;
 

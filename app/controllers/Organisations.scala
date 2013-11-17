@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.{ Person, Activity, Organisation }
+import models.{ Person, Activity, Organisation, Contribution, Product }
 import play.api.mvc._
 import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
@@ -153,7 +153,12 @@ object Organisations extends Controller with Security {
         organisation ⇒
           val members = organisation.members
           val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-          Ok(views.html.organisation.details(request.user, organisation, members, otherPeople))
+          val contributions = Contribution.contributions(id, false)
+          val products = Product.findAll
+
+          Ok(views.html.organisation.details(request.user, organisation,
+            members, otherPeople,
+            contributions, products))
       } getOrElse {
         //TODO return 404
         Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))

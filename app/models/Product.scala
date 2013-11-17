@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ ProductBrandRelations, Products, Brands, Contributions }
+import models.database.{ ProductBrandRelations, Products, Brands }
 import models.database.People
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -64,15 +64,6 @@ case class Product(
     query.sortBy(_.name.toLowerCase).list
   }
 
-  def contributedPersons: List[(Person, String)] = withSession { implicit session ⇒
-    val query = for {
-      contributor ← Contributions if contributor.productId === this.id && contributor.isPerson === true
-      person ← People if person.id === contributor.contributorId
-    } yield (person, contributor.role)
-    Logger.debug(query.selectStatement)
-    query.list
-    // query.sortBy(_.name.toLowerCase).list
-  }
   /**
    * Assign this product with a brand
    */

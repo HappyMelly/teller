@@ -50,11 +50,9 @@ POST /product/:id/delete   controllers.Products.delete(id: Long)
 
 POST /product/brand/new                         controllers.Products.addBrand
 GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
-POST /product/contributor/new                               controllers.Products.addContributor
-GET  /product/:productId/contributor/:contributorId/delete  controllers.Products.deleteContributor(page: String, productId: Long, contributorId: String)
 
-POST /contribution/new                     controllers.Contributions.create
-GET  /contribution/:id/delete  controllers.Contributions.delete(id: Long)
+POST /contribution/new         controllers.Contributions.create(page: String)
+GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
 
 POST /user    controllers.UserAccounts.update
 

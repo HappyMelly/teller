@@ -1,4 +1,7 @@
-@(user: securesocial.core.Identity, organisation: Organisation, members: List[Person], otherPeople: List[Person])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, organisation: Organisation,
+  members: List[Person], otherPeople: List[Person],
+  contributions: List[ContributionView], products: List[Product]
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.UserRole.Role._
@@ -125,6 +128,51 @@
             }
           </select>
           <button class="btn"><i class="icon-plus"></i>Add Membership</button>
+        </p>
+      </form>
+    }
+  </div>
+
+  <div class="span8">
+    <h3>Contributions</h3>
+    @if(contributions.isEmpty) {
+      <p>@organisation.name has no contributions.</p>
+    } else {
+      <table  class="datatables table table-bordered">
+        <thead>
+          <th>Product</th>
+          <th>Role</th>
+          <th></th>
+        </thead>
+        <tbody>
+          @for(contribution <- contributions) {
+            <tr>
+              <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+              <td>@contribution.contribution.role</td>
+              <td>
+                @restrict(handler, List(as(Editor.toString))) {
+                  <a href="@routes.Contributions.delete("organisation", contribution.contribution.id.get)">
+                  <i class="icon-pencil"></i> Remove contribution</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @restrict(handler, List(as(Editor.toString))) {
+      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("organisation"))">
+        <p>
+          <input type="hidden" name="page" value="organisation">
+          <input type="hidden" name="contributorId" value="@organisation.id.get">
+          <input type="hidden" name="isPerson" value="false">
+          <select name="productId">
+            @for(product <- products) {
+              <option value="@product.id">@product.title</option>
+            }
+          </select>
+          <input name="role" placeholder="Role">
+          <button class="btn"><i class="icon-plus"></i>Add Contribution</button>
         </p>
       </form>
     }
