@@ -62,6 +62,8 @@ object PeopleApi extends Controller with ApiAuthentication {
       "country" -> address.countryCode)
   }
 
+  import ContributionsApi.contributionWrites
+
   val personDetailsWrites = new Writes[Person] {
     def writes(person: Person) = {
       Json.obj(
@@ -83,7 +85,8 @@ object PeopleApi extends Controller with ApiAuthentication {
         "updated" -> person.updated.toString(),
         "updatedBy" -> person.updatedBy,
         "organizations" -> person.memberships,
-        "licenses" -> person.licenses)
+        "licenses" -> person.licenses,
+        "contributions" -> person.contributions)
     }
   }
 

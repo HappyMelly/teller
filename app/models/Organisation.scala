@@ -73,6 +73,13 @@ case class Organisation(
   }
 
   /**
+   * Returns a list of this organisation's contributions.
+   */
+  def contributions: List[ContributionView] = withSession { implicit session ⇒
+    Contribution.contributions(this.id.get, false)
+  }
+
+  /**
    * Inserts this organisation into the database.
    * @return The Organisation as it is saved (with the id added)
    */

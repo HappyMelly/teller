@@ -74,18 +74,18 @@ object Contribution {
 
   def contributors(productId: Long): List[ContributorView] = withSession { implicit session ⇒
     val peopleQuery = for {
-      contributor ← Contributions if contributor.productId === productId && contributor.isPerson === true
-      person ← People if person.id === contributor.contributorId
-    } yield (contributor, person)
+      contribution ← Contributions if contribution.productId === productId && contribution.isPerson === true
+      person ← People if person.id === contribution.contributorId
+    } yield (contribution, person)
 
     val people = peopleQuery.list.map {
       case (contribution, person) ⇒ ContributorView(person.firstName + " " + person.lastName, person.id.get, contribution)
     }
 
     val orgQuery = for {
-      contributor ← Contributions if contributor.productId === productId && contributor.isPerson === false
-      organisation ← Organisations if organisation.id === contributor.contributorId
-    } yield (contributor, organisation)
+      contribution ← Contributions if contribution.productId === productId && contribution.isPerson === false
+      organisation ← Organisations if organisation.id === contribution.contributorId
+    } yield (contribution, organisation)
 
     val organisations = orgQuery.list.map {
       case (contribution, organisation) ⇒ ContributorView(organisation.name, organisation.id.get, contribution)
