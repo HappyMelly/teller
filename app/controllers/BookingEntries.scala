@@ -95,9 +95,7 @@ object BookingEntries extends Controller with Security {
           BadRequest(views.html.booking.form(request.user, formWithErrors, Account.findAllActive)),
         entry ⇒ {
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-          // TODO T93 Use unique booking number
-          val nextBookingNumber = Some(Random.nextInt.abs)
-          val updatedEntry = entry.copy(ownerId = currentUser.personId, bookingNumber = nextBookingNumber).insert
+          val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
           val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
