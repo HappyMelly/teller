@@ -69,8 +69,9 @@ case class BookingEntry(
   def owes = source.isPositiveOrZero
 
   def insert: BookingEntry = withSession { implicit session ⇒
-    val id = BookingEntries.forInsert.insert(this)
-    this.copy(id = Some(id))
+    val nextBookingNumber = Some(BookingEntry.nextBookingNumber)
+    val id = BookingEntries.forInsert.insert(this.copy(bookingNumber = nextBookingNumber))
+    this.copy(id = Some(id), bookingNumber = nextBookingNumber)
   }
 }
 
@@ -138,6 +139,10 @@ object BookingEntry {
         val owes = source.isPositiveOrZero
         BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
     }.list
+  }
+
+  private def nextBookingNumber: Int = withSession { implicit session ⇒
+    Query(BookingEntries.map(_.bookingNumber).max).first().map(_ + 1).getOrElse(1001)
   }
 
 }
