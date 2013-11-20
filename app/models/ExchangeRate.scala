@@ -30,9 +30,15 @@ import math.BigDecimal.int2bigDecimal
 import java.math.RoundingMode
 
 case class ExchangeRate(base: CurrencyUnit, counter: CurrencyUnit, rate: BigDecimal, timestamp: DateTime) {
+  if (rate.signum != 1) throw new IllegalArgumentException(s"Illegal rate: $rate")
   assert(!base.equals(counter) || (base.equals(counter) && rate.compare(1.bigDecimal) == 0))
 
-  private lazy val inverseRate = 1.bigDecimal.setScale(rate.scale).divide(rate.bigDecimal, RoundingMode.DOWN)
+  lazy val inverseRate = 1.bigDecimal.setScale(rate.scale).divide(rate.bigDecimal, RoundingMode.DOWN)
+
+  /**
+   * @see `convert`
+   */
+  def apply(amount: Money) = convert(amount)
 
   /**
    * Converts an amount from `base` or `counter` or vice versa, using `rate`.

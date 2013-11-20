@@ -27,7 +27,6 @@ import org.joda.money.{ Money, CurrencyUnit }
 import CurrencyUnit.{ EUR, USD, GBP }
 import org.joda.time.DateTime
 import org.specs2.mutable._
-//import java.math.BigDecimal
 import math.BigDecimal.int2bigDecimal
 
 class ExchangeRateSpec extends Specification {
@@ -49,6 +48,11 @@ class ExchangeRateSpec extends Specification {
     "correctly convert from counter to base" in {
       eurUsd convert Money.of(USD, 1.35) must be equalTo Money.of(EUR, 0.99)
       usdEur convert Money.of(EUR, 0.74) must be equalTo Money.of(USD, 0.99)
+    }
+
+    "accept only positive rates" in {
+      ExchangeRate(EUR, USD, -1, DateTime.now()) must throwAn[IllegalArgumentException]
+      ExchangeRate(EUR, USD, 0, DateTime.now()) must throwAn[IllegalArgumentException]
     }
 
     "accept only a rate of 1 when both currencies are the same" in {
