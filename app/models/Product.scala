@@ -24,13 +24,11 @@
 
 package models
 
-import models.database.{ ProductBrandRelations, Products, Brands }
-import models.database.People
+import models.database.{ ProductBrandAssociations, Products }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
-import play.Logger
 
 /**
  * Category classifications that a product has zero or one of.
@@ -56,30 +54,29 @@ case class Product(
   updated: DateTime,
   updatedBy: String) {
 
+  /**
+   * Get all brands associated with this product
+   */
   def brands: List[Brand] = withSession { implicit session ⇒
     val query = for {
-      relation ← ProductBrandRelations if relation.productId === this.id
+      relation ← ProductBrandAssociations if relation.productId === this.id
       brand ← relation.brand
     } yield brand
     query.sortBy(_.name.toLowerCase).list
   }
 
   /**
-   * Assign this product with a brand
+   * Assign this product to a brand
    */
-  def addBrand(brandId: Long): Unit = {
-    withSession { implicit session ⇒
-      ProductBrandRelations.forInsert.insert(this.id.get, brandId)
-    }
+  def addBrand(brandId: Long): Unit = withSession { implicit session ⇒
+    ProductBrandAssociations.forInsert.insert(this.id.get, brandId)
   }
 
   /**
-   * Unassign this product with a brand
+   * Unassign this product to a brand
    */
-  def deleteBrand(brandId: Long): Unit = {
-    withSession { implicit session ⇒
-      ProductBrandRelations.filter(relation ⇒ relation.productId === id && relation.brandId === brandId).mutate(_.delete)
-    }
+  def deleteBrand(brandId: Long): Unit = withSession { implicit session ⇒
+    ProductBrandAssociations.filter(relation ⇒ relation.productId === id && relation.brandId === brandId).mutate(_.delete)
   }
 
   def insert: Product = withSession { implicit session ⇒
@@ -89,7 +86,7 @@ case class Product(
 
   def delete(): Unit = Product.delete(this.id.get)
 
-  def update = withSession { implicit session ⇒
+  def update: Product = withSession { implicit session ⇒
     val updateTuple = (title, subtitle, url, category, parentId, updated, updatedBy)
     val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)

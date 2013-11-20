@@ -24,16 +24,12 @@
 
 package controllers
 
-import Forms._
 import models.{ Contribution, Activity }
 import play.api.mvc._
-import org.joda.time._
 import play.api.data._
-import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
-import scala.Some
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
 
@@ -52,8 +48,11 @@ object Contributions extends Controller with Security {
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
-      val route = if (page == "organisation") routes.Organisations.details(contributorId)
-      else routes.People.details(contributorId)
+      val route = if (page == "organisation") {
+        routes.Organisations.details(contributorId)
+      } else {
+        routes.People.details(contributorId)
+      }
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contribution cannot be empty"),
         contribution ⇒ {
@@ -71,13 +70,15 @@ object Contributions extends Controller with Security {
       Contribution.find(id).map {
         contribution ⇒
           Contribution.delete(id)
-          val activityObject = Messages("activity.contribution.delete",
-            contribution.product.title)
-          val activity = Activity.insert(request.user.fullName,
-            Activity.Predicate.Deleted, activityObject)
-          val route = if (page == "organisation") routes.Organisations.details(contribution.contributorId)
-          else if (page == "product") routes.Products.details(contribution.productId)
-          else routes.People.details(contribution.contributorId)
+          val activityObject = Messages("activity.contribution.delete", contribution.product.title)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val route = if (page == "organisation") {
+            routes.Organisations.details(contribution.contributorId)
+          } else if (page == "product") {
+            routes.Products.details(contribution.productId)
+          } else {
+            routes.People.details(contribution.contributorId)
+          }
           Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

@@ -27,9 +27,9 @@ package models.database
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `ProductBrand` database table mapping.
+ * Database table mapping for the association between Product and Brand
  */
-private[models] object ProductBrandRelations extends Table[(Option[Long], Long, Long)]("PRODUCT_BRAND_RELATIONS") {
+private[models] object ProductBrandAssociations extends Table[(Option[Long], Long, Long)]("PRODUCT_BRAND_ASSOCIATION") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def productId = column[Long]("PRODUCT_ID")
   def brandId = column[Long]("BRAND_ID")
