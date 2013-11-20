@@ -16,17 +16,17 @@ create table PRODUCT (
 
 -- alter table PRODUCT add constraint PARENT_FK foreign key(PARENT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
 
-create table PRODUCT_BRAND_RELATIONS (
+create table PRODUCT_BRAND_ASSOCIATION (
   ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   PRODUCT_ID BIGINT NOT NULL,
   BRAND_ID BIGINT NOT NULL);
 
-alter table PRODUCT_BRAND_RELATIONS add constraint BRAND_PRODUCT_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
+alter table PRODUCT_BRAND_ASSOCIATION add constraint BRAND_PRODUCT_FK foreign key(PRODUCT_ID) references PRODUCT(ID) on update NO ACTION on delete NO ACTION;
 
-alter table PRODUCT_BRAND_RELATIONS add constraint PRODUCT_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
+alter table PRODUCT_BRAND_ASSOCIATION add constraint PRODUCT_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
 
 drop table PRODUCT;
-drop table PRODUCT_BRAND_RELATIONS;
+drop table PRODUCT_BRAND_ASSOCIATION;
 
