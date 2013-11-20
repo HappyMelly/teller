@@ -28,8 +28,8 @@
 
   @restrict(handler, List(as(Editor.toString))) {
     <div class="span2 actions">
-      <form class="delete" method="post" action="@CSRF(routes.Products.delete(product.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!derivatives.isEmpty) { disabled="disabled" title="You cannot delete this product because it has derivative products" }>
+      <form class="delete" method="post" text="product" action="@CSRF(routes.Products.delete(product.id.getOrElse(0)))">
+        <button class="btn btn-danger btn-block" type="submit" @if(!derivatives.isEmpty && !contributors.isEmpty) { disabled="disabled" title="You cannot delete this product because it has contributors or derivative products" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>

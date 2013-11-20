@@ -45,7 +45,7 @@
         }
       </form>
       <div class="clearfix"></div>
-      <form class="delete" method="post" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
+      <form class="delete" method="post" text="person" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
         <button class="btn btn-danger btn-block" type="submit" @if(!organisations.isEmpty || !licenses.isEmpty) { disabled="disabled" title="You cannot delete this person because there are organization memberships or content licenses" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
@@ -204,7 +204,7 @@
   </div>
 
   <div class="span8">
-    <h3>Contributions</h3>
+    <h3>Product contributions</h3>
     @if(contributions.isEmpty) {
       <p>@person.fullName has no contributions.</p>
     } else {

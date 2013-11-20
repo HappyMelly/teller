@@ -65,11 +65,12 @@ object Products extends Controller with Security {
     "url" -> optional(text),
     "category" -> optional(categoryMapping),
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
-    "created" -> ignored(DateTime.now()),
+    "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(request.user.fullName),
-    "updated" -> ignored(DateTime.now()),
+    "updated" -> ignored(DateTime.now),
     "updatedBy" -> ignored(request.user.fullName))(Product.apply)(Product.unapply))
 
+  /** Show all products **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
@@ -77,12 +78,13 @@ object Products extends Controller with Security {
       Ok(views.html.product.index(request.user, products))
   }
 
-  /** Show all products **/
+  /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Ok(views.html.product.form(request.user, None, None, productForm))
   }
 
+  /** Add form submits to this action **/
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
@@ -161,6 +163,7 @@ object Products extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
+  /** Details page **/
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
@@ -171,8 +174,7 @@ object Products extends Controller with Security {
           val brands = Brand.findAll
           val contributors = Contribution.contributors(id)
 
-          Ok(views.html.product.details(request.user, product, derivatives, parent,
-            brands, contributors))
+          Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors))
       }.getOrElse(NotFound)
 
   }

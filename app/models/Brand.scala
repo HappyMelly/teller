@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ Licenses, Brands, ProductBrandRelations }
+import models.database.{ Licenses, Brands, ProductBrandAssociations }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
@@ -38,7 +38,7 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
 
   def products: List[Product] = withSession { implicit session ⇒
     val query = for {
-      relation ← ProductBrandRelations if relation.brandId === this.id
+      relation ← ProductBrandAssociations if relation.brandId === this.id
       product ← relation.product
     } yield product
     query.sortBy(_.title.toLowerCase).list

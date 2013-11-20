@@ -31,7 +31,7 @@
             @helper.select(
               form("parentId"),
               ("", "Choose a product parent") :: Product.findAll.map(p => (p.id.get.toString, p.title)),
-              '_label -> "Parent")
+              '_label -> "Parent", '_help -> "")
 
             <button class="btn btn-primary" type="submit">Save</button>
         }

@@ -28,9 +28,9 @@ import models.Contribution
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `Contributions` database table mapping.
+ * `Contribution` database table mapping.
  */
-private[models] object Contributions extends Table[Contribution]("CONTRIBUTIONS") {
+private[models] object Contributions extends Table[Contribution]("CONTRIBUTION") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def contributorId = column[Long]("CONTRIBUTOR_ID")
   def productId = column[Long]("PRODUCT_ID")

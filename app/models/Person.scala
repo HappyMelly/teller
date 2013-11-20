@@ -66,19 +66,15 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = {
-    withSession { implicit session ⇒
-      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
-    }
+  def addMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+    OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
 
   /**
    * Removes this person’s membership in the given organisation.
    */
-  def deleteMembership(organisationId: Long): Unit = {
-    withSession { implicit session ⇒
-      OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
-    }
+  def deleteMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+    OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
   }
 
   /**
