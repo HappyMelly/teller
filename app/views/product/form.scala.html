@@ -1,0 +1,40 @@
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  title: Option[String],
+  form: Form[Product])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpers._
+
+@defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>
+    @main("Product", Some(user)) {
+
+        <h1>@productName</h1>
+
+        @if(form.hasErrors) {
+          <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            Please fix the validation errors.
+          </div>
+        }
+
+        @helper.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create()))) {
+            @helper.inputText(form("title"), '_label -> "Title")
+            @helper.inputText(form("subtitle"), '_label -> "Subtitle")
+            @helper.inputText(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
+            @helper.select(
+              form("category"),
+              ("", "None") +: models.ProductCategory.values.map(value => value.toString -> Messages(s"models.ProductCategory.${value.
+              toString}")).toSeq,
+              '_label -> "Category")
+
+            @helper.select(
+              form("parentId"),
+              ("", "Choose a product parent") :: Product.findAll.map(p => (p.id.get.toString, p.title)),
+              '_label -> "Parent", '_help -> "")
+
+            <button class="btn btn-primary" type="submit">Save</button>
+        }
+    }
+}
+

@@ -22,31 +22,20 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
+package controllers
 
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
+import play.mvc.Controller
+import play.api.libs.json._
+import models.ContributionView
 
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
+object ContributionsApi extends Controller with ApiAuthentication {
 
+  import ProductsApi.productWrites
 
-});
+  implicit val contributionWrites = new Writes[ContributionView] {
+    def writes(contribution: ContributionView) = Json.obj(
+      "product" -> contribution.product,
+      "role" -> contribution.contribution.role)
+  }
 
+}

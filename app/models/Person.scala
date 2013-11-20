@@ -66,19 +66,15 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = {
-    withSession { implicit session ⇒
-      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
-    }
+  def addMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+    OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
 
   /**
    * Removes this person’s membership in the given organisation.
    */
-  def deleteMembership(organisationId: Long): Unit = {
-    withSession { implicit session ⇒
-      OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
-    }
+  def deleteMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+    OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
   }
 
   /**
@@ -103,6 +99,13 @@ case class Person(
     query.sortBy(_._2.name.toLowerCase).list.map {
       case (license, brand) ⇒ LicenseView(brand, license)
     }
+  }
+
+  /**
+   * Returns a list of this person's contributions.
+   */
+  def contributions: List[ContributionView] = withSession { implicit session ⇒
+    Contribution.contributions(this.id.get, true)
   }
 
   /**
@@ -149,6 +152,7 @@ case class Person(
 
   def asSummary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 }
+
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)
 
 object Person {
@@ -163,10 +167,8 @@ object Person {
     query.update(active)
   }
 
-  def delete(id: Long): Unit = {
-    withSession { implicit session ⇒
-      People.where(_.id === id).delete
-    }
+  def delete(id: Long): Unit = withSession { implicit session ⇒
+    People.where(_.id === id).mutate(_.delete())
   }
 
   def find(id: Long): Option[Person] = withSession { implicit session ⇒

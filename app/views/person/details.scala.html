@@ -1,4 +1,6 @@
-@(user: securesocial.core.Identity, person: Person, organisations: List[Organisation], otherOrganisations: List[Organisation],
+@(user: securesocial.core.Identity, person: Person,
+  organisations: List[Organisation], otherOrganisations: List[Organisation],
+  contributions: List[ContributionView], products: List[Product],
   licenses: List[LicenseView], accountRole: Option[models.UserRole.Role.Role], twitterUser: Option[UserAccount])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -43,7 +45,7 @@
         }
       </form>
       <div class="clearfix"></div>
-      <form class="delete" method="post" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
+      <form class="delete" method="post" text="person" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
         <button class="btn btn-danger btn-block" type="submit" @if(!organisations.isEmpty || !licenses.isEmpty) { disabled="disabled" title="You cannot delete this person because there are organization memberships or content licenses" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
@@ -196,6 +198,51 @@
             }
           </select>
           <button class="btn"><i class="icon-plus"></i>Add Membership</button>
+        </p>
+      </form>
+    }
+  </div>
+
+  <div class="span8">
+    <h3>Product contributions</h3>
+    @if(contributions.isEmpty) {
+      <p>@person.fullName has no contributions.</p>
+    } else {
+      <table  class="datatables table table-bordered">
+        <thead>
+          <th>Product</th>
+          <th>Role</th>
+          <th></th>
+        </thead>
+        <tbody>
+          @for(contribution <- contributions) {
+            <tr>
+              <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+              <td>@contribution.contribution.role</td>
+              <td>
+                @restrict(handler, List(as(Editor.toString))) {
+                  <a href="@routes.Contributions.delete("person", contribution.contribution.id.get)">
+                  <i class="icon-pencil"></i> Remove contribution</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @restrict(handler, List(as(Editor.toString))) {
+      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("person"))">
+        <p>
+          <input type="hidden" name="page" value="person">
+          <input type="hidden" name="contributorId" value="@person.id.get">
+          <input type="hidden" name="isPerson" value="true">
+          <select name="productId">
+            @for(product <- products) {
+              <option value="@product.id">@product.title</option>
+            }
+          </select>
+          <input name="role" placeholder="Role">
+          <button class="btn"><i class="icon-plus"></i>Add Contribution</button>
         </p>
       </form>
     }

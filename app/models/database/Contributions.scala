@@ -22,31 +22,25 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
+package models.database
 
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
+import models.Contribution
+import play.api.db.slick.Config.driver.simple._
 
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
+/**
+ * `Contribution` database table mapping.
+ */
+private[models] object Contributions extends Table[Contribution]("CONTRIBUTION") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def contributorId = column[Long]("CONTRIBUTOR_ID")
+  def productId = column[Long]("PRODUCT_ID")
+  def isPerson = column[Boolean]("IS_PERSON")
+  def role = column[String]("ROLE")
 
+  def product = foreignKey("CONTRIBUTION_FK", productId, Products)(_.id)
 
-});
+  def * = id.? ~ contributorId ~ productId ~ isPerson ~
+    role <> (Contribution.apply _, Contribution.unapply _)
 
+  def forInsert = * returning id
+}

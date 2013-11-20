@@ -44,6 +44,7 @@ object OrganisationsApi extends Controller with ApiAuthentication {
   }
 
   import PeopleApi.personWrites
+  import ContributionsApi.contributionWrites
 
   val organisationDetailsWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {
@@ -57,7 +58,8 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
         "category" -> organisation.category.map(_.toString).orNull,
-        "members" -> organisation.members)
+        "members" -> organisation.members,
+        "contributions" -> organisation.contributions)
     }
   }
 

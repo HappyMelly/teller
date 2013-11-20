@@ -37,6 +37,15 @@ models.OrganisationCategory.brandentity.label = label-inverse
 models.OrganisationCategory.legalentity = Legal Entity
 models.OrganisationCategory.legalentity.label = label-info
 
+# Product category label names and Bootstrap label CSS classes.
+models.ProductCategory.book = Book
+models.ProductCategory.book.label = label-inverse
+models.ProductCategory.game = Game
+models.ProductCategory.game.label = label-info
+models.ProductCategory.software = Software
+models.ProductCategory.software.label = label-warning
+
+
 # Activity stream entries
 activity.signup = {0} signed up
 activity.create = {0} added {1}
@@ -46,6 +55,8 @@ activity.activate = {0} activated {1}
 activity.deactivate = {0} deactivated {1}
 activity.relationship.create = {0} to {1}
 activity.relationship.delete = {0} from {1}
+activity.contribution.create = new contribution to {0}
+activity.contribution.delete = a contribution from {0}
 
 # Controller error messages
 # {0} Object name
@@ -68,6 +79,7 @@ error.url.web = Invalid web site URL
 constraint.brand.code = Capital letters and numbers
 constraint.brand.code.error = Capital letters and numbers only
 constraint.brand.code.exists = A brand with code {0} already exists
+constraint.product.title.exists = A product with title "{0}" already exists
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org

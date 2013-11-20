@@ -22,31 +22,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
+package models.database
 
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
+import play.api.db.slick.Config.driver.simple._
 
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
+/**
+ * Database table mapping for the association between Product and Brand
+ */
+private[models] object ProductBrandAssociations extends Table[(Option[Long], Long, Long)]("PRODUCT_BRAND_ASSOCIATION") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def productId = column[Long]("PRODUCT_ID")
+  def brandId = column[Long]("BRAND_ID")
 
+  def product = foreignKey("PRODUCT_BRAND_FK", productId, Products)(_.id)
+  def brand = foreignKey("PRODUCT_BRAND_FK", brandId, Brands)(_.id)
 
-});
-
+  def * = id.? ~ productId ~ brandId
+  def forInsert = productId ~ brandId returning id
+}

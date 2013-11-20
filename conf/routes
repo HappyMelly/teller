@@ -40,6 +40,20 @@ POST /brand/:code          controllers.Brands.update(code)
 GET  /brand/:code/edit     controllers.Brands.edit(code)
 POST /brand/:code/delete   controllers.Brands.delete(code)
 
+GET  /products             controllers.Products.index
+GET  /product/new          controllers.Products.add
+POST /product/new          controllers.Products.create
+GET  /product/:id          controllers.Products.details(id: Long)
+POST /product/:id          controllers.Products.update(id: Long)
+GET  /product/:id/edit     controllers.Products.edit(id: Long)
+POST /product/:id/delete   controllers.Products.delete(id: Long)
+
+POST /product/brand/new                         controllers.Products.addBrand
+GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+
+POST /contribution/new         controllers.Contributions.create(page: String)
+GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
+
 POST /user    controllers.UserAccounts.update
 
 GET  /account/:id            controllers.Accounts.details(id: Long)
@@ -60,6 +74,9 @@ GET /api/v1/person/:id   controllers.PeopleApi.person(id: Long)
 
 GET /api/v1/organizations      controllers.OrganisationsApi.organisations(legal_entities_only: Option[Boolean])
 GET /api/v1/organization/:id   controllers.OrganisationsApi.organisation(id: Long)
+
+GET /api/v1/products      controllers.ProductsApi.products
+GET /api/v1/product/:id   controllers.ProductsApi.product(id: Long)
 
 GET /assets/*file   controllers.Assets.at(path="/public", file)
 
