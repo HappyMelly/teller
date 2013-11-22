@@ -24,12 +24,30 @@
 
 package models
 
+import models.database.ExchangeRates
 import org.joda.money.{ Money, CurrencyUnit }
-import org.joda.time.DateTime
+import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.DateTimeZone.UTC
 import math.BigDecimal.int2bigDecimal
 import java.math.RoundingMode
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB.withSession
+import play.api.Play.current
+import models.JodaMoney.CurrencyMapper
+import com.github.tototoshi.slick.JodaSupport._
 
-case class ExchangeRate(base: CurrencyUnit, counter: CurrencyUnit, rate: BigDecimal, timestamp: DateTime) {
+/**
+ * Represents an exchange rate between two currencies at a certain time.
+ *
+ * The exchange rate means that a one `base` is worth `rate` in the `counter` currency.
+ * @see http://en.wikipedia.org/wiki/Currency_pair
+ * @see https://openexchangerates.org/documentation#how-to-use
+ * @param base The base currency (a.k.a. ‘unit’)
+ * @param counter The counter currency (a.k.a. ‘quote’)
+ * @param rate The conversion rate
+ * @param timestamp The time at which the exchange rate was determined
+ */
+case class ExchangeRate(id: Option[Long], base: CurrencyUnit, counter: CurrencyUnit, rate: BigDecimal, timestamp: DateTime) {
   if (rate.signum != 1) throw new IllegalArgumentException(s"Illegal rate: $rate")
   assert(!base.equals(counter) || (base.equals(counter) && rate.compare(1.bigDecimal) == 0))
 
@@ -59,5 +77,29 @@ case class ExchangeRate(base: CurrencyUnit, counter: CurrencyUnit, rate: BigDeci
    */
   def canConvert(amount: Money): Boolean = base.equals(amount.getCurrencyUnit) || counter.equals(amount.getCurrencyUnit)
 
+  def insert: ExchangeRate = withSession { implicit session ⇒
+    val id = ExchangeRates.forInsert.insert(this)
+    this.copy(id = Some(id))
+  }
+
   override def toString = s"$base$counter $rate"
+}
+
+object ExchangeRate {
+
+  import play.api.Play.current
+
+  private def today = LocalDate.now(UTC)
+
+  def fromDatabase(base: CurrencyUnit, counter: CurrencyUnit, date: LocalDate = today): Option[ExchangeRate] = withSession {
+    implicit session ⇒
+      (for {
+        rate ← ExchangeRates
+        if rate.base === base
+        if rate.counter === counter
+        if rate.timestamp >= date.toDateTimeAtStartOfDay(UTC)
+        if rate.timestamp < date.plusDays(1).toDateTimeAtStartOfDay(UTC)
+      } yield rate).firstOption
+  }
+
 }

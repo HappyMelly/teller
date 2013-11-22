@@ -23,18 +23,18 @@
  */
 
 import models.ExchangeRate
-import org.joda.money.{Money, CurrencyUnit}
+import org.joda.money.{ Money, CurrencyUnit }
 import org.joda.money.CurrencyUnit._
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 import scala.concurrent.Future
 import scala.Some
-import services.{CurrencyConverter, ExchangeRateProvider}
+import services.{ CurrencyConverter, ExchangeRateProvider }
 import play.api.test.Helpers._
 
 class CurrencyConverterSpec extends Specification {
 
-  val eurUsd = ExchangeRate(EUR, USD, BigDecimal("1.35098"), DateTime.now())
+  val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now())
   val oneEuro = Money.of(EUR, 1)
 
   val someProvider = new ExchangeRateProvider {

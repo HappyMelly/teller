@@ -31,8 +31,8 @@ import math.BigDecimal.int2bigDecimal
 
 class ExchangeRateSpec extends Specification {
 
-  val eurUsd = ExchangeRate(EUR, USD, BigDecimal("1.35098"), DateTime.now())
-  val usdEur = ExchangeRate(USD, EUR, BigDecimal("0.740417"), DateTime.now())
+  val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now())
+  val usdEur = ExchangeRate(None, USD, EUR, BigDecimal("0.740417"), DateTime.now())
 
   val oneEuro = Money.of(EUR, 1.bigDecimal)
   val oneDollar = Money.of(USD, 1.bigDecimal)
@@ -51,17 +51,17 @@ class ExchangeRateSpec extends Specification {
     }
 
     "accept only positive rates" in {
-      ExchangeRate(EUR, USD, -1, DateTime.now()) must throwAn[IllegalArgumentException]
-      ExchangeRate(EUR, USD, 0, DateTime.now()) must throwAn[IllegalArgumentException]
+      ExchangeRate(None, EUR, USD, -1, DateTime.now()) must throwAn[IllegalArgumentException]
+      ExchangeRate(None, EUR, USD, 0, DateTime.now()) must throwAn[IllegalArgumentException]
     }
 
     "accept only a rate of 1 when both currencies are the same" in {
-      ExchangeRate(EUR, EUR, 2.bigDecimal, DateTime.now()) must throwAn[AssertionError]
-      (ExchangeRate(EUR, EUR, 1.bigDecimal, DateTime.now()) must not).throwAn[AssertionError]
+      ExchangeRate(None, EUR, EUR, 2.bigDecimal, DateTime.now()) must throwAn[AssertionError]
+      (ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now()) must not).throwAn[AssertionError]
     }
 
     "return the input when both currencies are the same" in {
-      val eurEur = ExchangeRate(EUR, EUR, 1.bigDecimal, DateTime.now())
+      val eurEur = ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now())
       eurEur convert oneEuro must be equalTo oneEuro
     }
 

@@ -29,12 +29,15 @@ import models.ExchangeRate
 import scala.concurrent.Future
 import scala.util.Try
 
+/**
+ * Looks up exchange rates and converts amounts between currencies.
+ */
 object CurrencyConverter {
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
   class NoExchangeRateException(message: String) extends RuntimeException(message)
 
-  private val defaultProviders: List[ExchangeRateProvider] = YahooExchangeRateProvider :: Nil
+  private val defaultProviders: List[ExchangeRateProvider] = DatabaseExchangeRateProvider :: PersistingExchangeRateProvider(YahooExchangeRateProvider) :: Nil
 
   /**
    * Converts `amount` to `targetCurrency`, using the default exchange rate providers.
