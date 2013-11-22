@@ -31,42 +31,63 @@ import math.BigDecimal.int2bigDecimal
 
 class ExchangeRateSpec extends Specification {
 
-  val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now())
-  val usdEur = ExchangeRate(None, USD, EUR, BigDecimal("0.740417"), DateTime.now())
-
   val oneEuro = Money.of(EUR, 1.bigDecimal)
-  val oneDollar = Money.of(USD, 1.bigDecimal)
+  val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now)
   val onePound = Money.of(GBP, 1.bigDecimal)
 
-  "Exchange rate conversion " should {
+  s"The exchange rate $eurUsd" should {
 
-    "correctly convert from base to counter" in {
-      eurUsd convert oneEuro must be equalTo Money.of(USD, 1.35)
-      usdEur convert oneDollar must be equalTo Money.of(EUR, 0.74)
+    val oneEurInUsd = Money.of(USD, 1.35)
+    val oneEuroConvertedTwice = Money.of(EUR, 0.99)
+
+    s"convert $oneEuro to $oneEurInUsd" in {
+      eurUsd convert oneEuro must be equalTo oneEurInUsd
     }
 
-    "correctly convert from counter to base" in {
-      eurUsd convert Money.of(USD, 1.35) must be equalTo Money.of(EUR, 0.99)
-      usdEur convert Money.of(EUR, 0.74) must be equalTo Money.of(USD, 0.99)
+    s"convert $oneEurInUsd to $oneEuroConvertedTwice" in {
+      eurUsd convert oneEurInUsd must be equalTo oneEuroConvertedTwice
     }
 
-    "accept only positive rates" in {
-      ExchangeRate(None, EUR, USD, -1, DateTime.now()) must throwAn[IllegalArgumentException]
-      ExchangeRate(None, EUR, USD, 0, DateTime.now()) must throwAn[IllegalArgumentException]
+    s"not be able to convert $onePound" in {
+      eurUsd convert onePound must throwA[IllegalArgumentException]
+    }
+  }
+
+  val usdEur = ExchangeRate(None, USD, EUR, BigDecimal("0.740417"), DateTime.now)
+
+  s"The exchange rate $usdEur" should {
+
+    val oneDollar = Money.of(USD, 1.bigDecimal)
+    val oneDollarInEur = Money.of(EUR, 0.74)
+    val oneDollarConvertedTwice = Money.of(USD, 0.99)
+
+    s"convert $oneDollar to $oneDollarInEur" in {
+      usdEur convert oneDollar must be equalTo oneDollarInEur
     }
 
-    "accept only a rate of 1 when both currencies are the same" in {
-      ExchangeRate(None, EUR, EUR, 2.bigDecimal, DateTime.now()) must throwAn[AssertionError]
-      (ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now()) must not).throwAn[AssertionError]
+    s"convert $oneDollarInEur to base" in {
+      usdEur convert oneDollarInEur must be equalTo oneDollarConvertedTwice
+    }
+  }
+
+  "Exchange rate conversion" should {
+
+    "reject a negative rate" in {
+      ExchangeRate(None, EUR, USD, -1, DateTime.now) must throwAn[IllegalArgumentException]
+    }
+
+    "reject a zero rate" in {
+      ExchangeRate(None, EUR, USD, 0, DateTime.now) must throwAn[IllegalArgumentException]
+    }
+
+    "only accept a rate of 1.0000 when both currencies are the same" in {
+      ExchangeRate(None, EUR, EUR, 2.bigDecimal, DateTime.now) must throwAn[AssertionError]
+      (ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now) must not).throwAn[AssertionError]
     }
 
     "return the input when both currencies are the same" in {
-      val eurEur = ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now())
+      val eurEur = ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now)
       eurEur convert oneEuro must be equalTo oneEuro
-    }
-
-    "not be able to convert other currencies" in {
-      eurUsd convert onePound must throwA[IllegalArgumentException]
     }
   }
 }

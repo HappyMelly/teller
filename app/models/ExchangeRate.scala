@@ -82,7 +82,7 @@ case class ExchangeRate(id: Option[Long], base: CurrencyUnit, counter: CurrencyU
     this.copy(id = Some(id))
   }
 
-  override def toString = s"$base$counter $rate"
+  override def toString = s"$base/$counter $rate"
 }
 
 object ExchangeRate {
