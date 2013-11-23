@@ -50,14 +50,16 @@ object Contributions extends Controller with Security {
       val contributorId = boundForm.data("contributorId").toLong
       val route = if (page == "organisation") {
         routes.Organisations.details(contributorId)
-      } else {
+      } else if (page == "person") {
         routes.People.details(contributorId)
+      } else {
+        routes.Products.details(boundForm.data("productId").toLong)
       }
       boundForm.bindFromRequest.fold(
-        formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contribution cannot be empty"),
+        formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contributor cannot be empty"),
         contribution ⇒ {
           contribution.insert
-          val activityObject = Messages("activity.contribution.create", contribution.product.title)
+          val activityObject = Messages("activity.contribution.create", contribution.product.title, contribution.role)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         })
@@ -70,7 +72,7 @@ object Contributions extends Controller with Security {
       Contribution.find(id).map {
         contribution ⇒
           Contribution.delete(id)
-          val activityObject = Messages("activity.contribution.delete", contribution.product.title)
+          val activityObject = Messages("activity.contribution.delete", contribution.product.title, contribution.role)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
           val route = if (page == "organisation") {
             routes.Organisations.details(contribution.contributorId)
