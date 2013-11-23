@@ -47,6 +47,13 @@ $(document).ready( function() {
         });
     });
 
+    // Select functionality for product details page
+    $("#contributor > select").change(function(){
+        $("#contributor > select option:selected").each(function() {
+            $("#contributor > input[name=isPerson]").attr("value", $(this).attr("isPerson"));
+            console.log($("#contributor > input[name=isPerson]").attr("value"));
+        })
+    });
 
 });
 

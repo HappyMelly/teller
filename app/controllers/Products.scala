@@ -25,7 +25,8 @@
 package controllers
 
 import Forms._
-import models.{ Activity, Product, ProductCategory, Brand, Contribution }
+import models.{ Activity, Product, ProductCategory, Brand, Contribution, Person, Organisation }
+import models.PotentialContributorView
 import play.api.mvc._
 import org.joda.time._
 import play.api.data._
@@ -173,8 +174,10 @@ object Products extends Controller with Security {
           val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
           val brands = Brand.findAll
           val contributors = Contribution.contributors(id)
+          val people = Person.findAll.sortBy(_.firstName)
+          val organisations = Organisation.findAll.sortBy(_.name)
 
-          Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors))
+          Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors, people, organisations))
       }.getOrElse(NotFound)
 
   }

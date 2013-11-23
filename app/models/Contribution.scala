@@ -53,6 +53,8 @@ case class Contribution(
 
 case class ContributorView(name: String, id: Long, contribution: Contribution)
 
+case class PotentialContributorView(name: String, id: Long, category: String)
+
 case class ContributionView(product: Product, contribution: Contribution)
 
 object Contribution {
