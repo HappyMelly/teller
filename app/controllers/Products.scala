@@ -26,7 +26,6 @@ package controllers
 
 import Forms._
 import models.{ Activity, Product, ProductCategory, Brand, Contribution, Person, Organisation }
-import models.PotentialContributorView
 import play.api.mvc._
 import org.joda.time._
 import play.api.data._
