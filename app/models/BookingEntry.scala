@@ -129,7 +129,7 @@ object BookingEntry {
       toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
       brand.code, entry.summary)
 
-    query.sortBy(_._1.desc).mapResult {
+    query.sortBy(_._2.desc).mapResult {
       case (created, number, date, source, sourcePercentage,
         fromPersonFirstName, fromPersonLastName, fromOrganisation, fromAmount,
         toPersonFirstName, toPersonLastName, toOrganisation, toAmount,
