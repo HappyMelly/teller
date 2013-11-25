@@ -173,8 +173,8 @@ object Products extends Controller with Security {
           val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
           val brands = Brand.findAll
           val contributors = Contribution.contributors(id)
-          val people = Person.findAll.sortBy(_.firstName)
-          val organisations = Organisation.findAll.sortBy(_.name)
+          val people = Person.findAll
+          val organisations = Organisation.findAll
 
           Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors, people, organisations))
       }.getOrElse(NotFound)
