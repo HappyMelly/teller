@@ -26,27 +26,35 @@ import models.ExchangeRate
 import org.joda.money.{ Money, CurrencyUnit }
 import CurrencyUnit.{ EUR, USD, GBP }
 import org.joda.time.DateTime
+import org.specs2.matcher.DataTables
 import org.specs2.mutable._
 import math.BigDecimal.int2bigDecimal
 
-class ExchangeRateSpec extends Specification {
+class ExchangeRateSpec extends Specification with Tables {
 
-  val oneEuro = Money.of(EUR, 1.bigDecimal)
+  "Exchange rates".title
+
+  "Exchange rate conversion should give the expected results, rounded to currency amounts:" ^ {
+
+    "Base" | "Counter" | "Rate" | "From currency" | "From amount" | "Result currency" | "Result amount" |
+      "EUR" ! "USD" ! 1.35098 ! "EUR" ! 1.00 ! "USD" ! 1.35 |
+      "EUR" ! "USD" ! 1.35098 ! "USD" ! 1.35 ! "EUR" ! 0.99 |
+      "USD" ! "EUR" ! 0.740417 ! "USD" ! 1.00 ! "EUR" ! 0.74 |
+      "USD" ! "EUR" ! 0.740417 ! "EUR" ! 0.74 ! "USD" ! 0.99 |> {
+        (base, counter, rate, fromCurrency, fromAmount, resultCurrency, resultAmount) ⇒
+          val baseCurrency = CurrencyUnit.of(base)
+          val counterCurrency = CurrencyUnit.of(counter)
+          val exchangeRate = ExchangeRate(None, baseCurrency, counterCurrency, BigDecimal(rate), DateTime.now)
+          val from = Money.of(CurrencyUnit.of(fromCurrency), fromAmount)
+          val result = Money.of(CurrencyUnit.of(resultCurrency), resultAmount)
+          exchangeRate convert from must be equalTo result
+      }
+  } bt
+
   val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now)
   val onePound = Money.of(GBP, 1.bigDecimal)
 
   s"The exchange rate $eurUsd" should {
-
-    val oneEurInUsd = Money.of(USD, 1.35)
-    val oneEuroConvertedTwice = Money.of(EUR, 0.99)
-
-    s"convert $oneEuro to $oneEurInUsd" in {
-      eurUsd convert oneEuro must be equalTo oneEurInUsd
-    }
-
-    s"convert $oneEurInUsd to $oneEuroConvertedTwice" in {
-      eurUsd convert oneEurInUsd must be equalTo oneEuroConvertedTwice
-    }
 
     s"not be able to convert $onePound" in {
       eurUsd convert onePound must throwA[IllegalArgumentException]
@@ -54,21 +62,6 @@ class ExchangeRateSpec extends Specification {
   }
 
   val usdEur = ExchangeRate(None, USD, EUR, BigDecimal("0.740417"), DateTime.now)
-
-  s"The exchange rate $usdEur" should {
-
-    val oneDollar = Money.of(USD, 1.bigDecimal)
-    val oneDollarInEur = Money.of(EUR, 0.74)
-    val oneDollarConvertedTwice = Money.of(USD, 0.99)
-
-    s"convert $oneDollar to $oneDollarInEur" in {
-      usdEur convert oneDollar must be equalTo oneDollarInEur
-    }
-
-    s"convert $oneDollarInEur to base" in {
-      usdEur convert oneDollarInEur must be equalTo oneDollarConvertedTwice
-    }
-  }
 
   "Exchange rate conversion" should {
 
@@ -85,8 +78,9 @@ class ExchangeRateSpec extends Specification {
       (ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now) must not).throwAn[AssertionError]
     }
 
-    "return the input when both currencies are the same" in {
+    "return the input when the base and counter currencies are the same" in {
       val eurEur = ExchangeRate(None, EUR, EUR, 1.bigDecimal, DateTime.now)
+      val oneEuro = Money.of(EUR, 1.bigDecimal)
       eurEur convert oneEuro must be equalTo oneEuro
     }
   }
