@@ -2,6 +2,8 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
+GET /exchangerate       controllers.ExchangeRates.rate
+GET /exchangerates/:base controllers.ExchangeRates.rates(base: String)
 
 GET  /organizations                 controllers.Organisations.index
 POST /organizations                 controllers.Organisations.create

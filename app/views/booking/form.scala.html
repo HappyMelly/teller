@@ -11,7 +11,7 @@
   <select name="@field.name" class="span3" id="@field.id">
     <option value="">Choose an account</option>
     @for(account <- accounts) {
-      <option value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currencyCode)</option>
+      <option data-currency="@account.currencyCode" value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currencyCode)</option>
     }
   </select>
 }
@@ -42,7 +42,7 @@
               <option value="@currency.getCurrencyCode" @if(form("source.currency").value == Some(currency.getCurrencyCode)) { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
             }
           </select>
-          <input class="input-small" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
+          <input class="input-small source amount" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
           <div class="input-append">
             <input class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
           </div>
@@ -54,9 +54,6 @@
             }
           </span>
           </div>
-          @* MOCK-UP FOR T92
-          <strong>USD 100.00</strong>
-          *@
         </div>
       }
 
@@ -79,18 +76,15 @@
         </div>
       }
 
-      @* MOCK-UP FOR T92
       <div class="row">
-        <div class="span3" title="Exchange rate 0.756182 (USD to EUR) measured 02-09-2013">
-          <strong>EUR 75.62</strong> (credit)
+        <div class="span3">
+          <span class="fromId converted"><strong class="amount"> </strong> (credit)</span>
         </div>
         <div class="span2">
         </div>
-        <div class="span3" title="Exchange rate 2.38295 (USD to BRL) measured 02-09-2013">
-          <strong>BRL 238.30</strong> (debit)
+        <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (debit)</span>
         </div>
       </div>
-      *@
 
     <div class="control-group @if(form("reference").hasErrors || form("referenceDate").hasErrors) {error}">
       <label for="reference">Reference number</label>
@@ -122,6 +116,11 @@
 
     <button class="btn btn-primary" type="submit">Save</button>
   </form>
+
+
+  <script src="@routes.Assets.at("javascripts/money-0.13.min.js")"></script>
+  <script src="@routes.Assets.at("currency-conversion.js")"></script>
+
 
 @* JQuery script for the 'Owes To'/'Is Owed By' button, which updates the button appearance and a hidden input value. *@
 <script type="text/javascript">
