@@ -82,7 +82,7 @@ case class ExchangeRate(id: Option[Long], base: CurrencyUnit, counter: CurrencyU
     this.copy(id = Some(id))
   }
 
-  def inverse = ExchangeRate(id, counter, base, inverseRate, timestamp)
+  def inverse = ExchangeRate(None, counter, base, inverseRate, timestamp)
 
   override def toString = s"$base/$counter $rate"
 }
@@ -106,13 +106,26 @@ object ExchangeRate {
       } yield rate
 
       // Invert any rates that were found with base and counter the wrong way around.
-      val results = query.list.map { rate ⇒
-        rate match {
-          case ExchangeRate(_, resultBase, resultCounter, _, _) if resultBase == counter && resultCounter == base ⇒ rate.inverse
-          case _ ⇒ rate
-        }
+      val results = query.list.map {
+        case rate@ExchangeRate(_, resultBase, resultCounter, _, _) if resultBase == counter && resultCounter == base ⇒ rate.inverse
+        case rate ⇒ rate
       }
       results.headOption
   }
 
+  def ratesFromDatabase(base: CurrencyUnit, date: LocalDate = today): List[ExchangeRate] = withSession {
+    implicit session ⇒
+      val query = for {
+        rate ← ExchangeRates
+        if rate.base === base || rate.counter === base
+        if rate.timestamp >= date.toDateTimeAtStartOfDay(UTC)
+        if rate.timestamp < date.plusDays(1).toDateTimeAtStartOfDay(UTC)
+      } yield rate
+
+      // Invert any rates that were found with base and counter the wrong way around.
+      query.list.map {
+        case rate@ExchangeRate(_, _, resultCounter, _, _) if resultCounter == base ⇒ rate.inverse
+        case rate ⇒ rate
+      }
+  }
 }

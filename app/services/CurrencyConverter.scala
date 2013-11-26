@@ -46,7 +46,7 @@ object CurrencyConverter {
    * @param exchangeRateProviders The list of `ExchangeRateProvider`s to use. Defaults to `defaultProviders`.
    * @return The converted amount if successful, or `NoExchangeRateException`
    */
-  def convert(amount: Money, targetCurrency: CurrencyUnit, exchangeRateProviders: Seq[ExchangeRateProvider]): Future[Try[Money]] = {
+  def convert(amount: Money, targetCurrency: CurrencyUnit, exchangeRateProviders: Seq[ExchangeRateProvider] = defaultProviders): Future[Try[Money]] = {
     findRate(amount.getCurrencyUnit, targetCurrency, exchangeRateProviders).map{ maybeRate ⇒
       Try{
         maybeRate.map(rate ⇒ rate.apply(amount))

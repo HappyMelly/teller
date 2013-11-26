@@ -1,13 +1,5 @@
 $ = jQuery
 
-fx.base = "EUR"
-fx.rates = {
-  "USD" : 1.342099,
-  "GBP" : 0.647710,
-  "HKD" : 7.781919,
-  "EUR" : 1
-}
-
 $ ->
   scope = $('form')
 
@@ -28,18 +20,12 @@ $ ->
   update = ->
     targetCurrency = findCurrency(this)
     if(targetCurrency)
-      if(fx.base != baseCurrency)
-        console.error("Wrong base currency!")
-        return
-      rate = fx.rates[targetCurrency]
-      if(!rate)
-        console.warn("No rate for #{targetCurrency}")
-        return
-
-      result = Math.floor(fx(baseAmount).from(baseCurrency).to(targetCurrency) * 100) / 100
-      title = "Exchange rate #{rate} (#{baseCurrency} to #{targetCurrency}, measured today"
-      $(".#{this.id}.converted .amount", scope).text("#{targetCurrency} #{result}")
-      $(".#{this.id}.converted", scope).attr('title', title).show()
+      url = jsRoutes.controllers.ExchangeRates.convert("#{baseCurrency}#{baseAmount}", targetCurrency).url
+      $.getJSON(url, (data) =>
+        title = "Exchange rate #{data.rate} (#{baseCurrency} to #{targetCurrency}, measured today"
+        $(".#{this.id}.converted .amount", scope).text("#{data.result}")
+        $(".#{this.id}.converted", scope).attr('title', title).show()
+      )
     else
       $(".#{this.id}.converted", scope).hide()
 

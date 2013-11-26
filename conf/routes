@@ -2,8 +2,9 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
-GET /exchangerate       controllers.ExchangeRates.rate
-GET /exchangerates/:base controllers.ExchangeRates.rates(base: String)
+GET /exchangerate               controllers.ExchangeRates.rate
+GET /exchangerate/:target/:amount controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
+GET /exchangerates/:base        controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
 
 GET  /organizations                 controllers.Organisations.index
 POST /organizations                 controllers.Organisations.create
