@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, form: Form[BookingEntry], accounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, form: Form[BookingEntry], accounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
@@ -76,13 +76,13 @@
         </div>
       }
 
-      <div class="row">
+      <div class="row" id="conversionInfo">
         <div class="span3">
-          <span class="fromId converted"><strong class="amount"> </strong> (credit)</span>
+          <span class="fromId converted"><strong class="amount"> </strong> (<span class="direction">credit</span>)</span>
         </div>
         <div class="span2">
         </div>
-        <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (debit)</span>
+        <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (<span class="direction">debit</span>)</span>
         </div>
       </div>
 
@@ -117,7 +117,9 @@
     <button class="btn btn-primary" type="submit">Save</button>
   </form>
 
-
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.ExchangeRates.convert
+  )
   <script src="@routes.Assets.at("javascripts/money-0.13.min.js")"></script>
   <script src="@routes.Assets.at("currency-conversion.js")"></script>
 
@@ -130,9 +132,13 @@
       var owes = $(this).hasClass('btn-inverse');
       if (owes) {
         $(this).html('Owes To <i class="icon-arrow-right icon-white"></i>');
+        $('#conversionInfo').find('.fromId.converted .direction' ).text("credit");
+        $('#conversionInfo').find('.toId.converted .direction' ).text("debit")
       }
       else {
         $(this).html('<i class="icon-arrow-left icon-white"></i> Is Owed By');
+      $('#conversionInfo').find('.fromId.converted .direction' ).text("debit");
+      $('#conversionInfo').find('.toId.converted .direction' ).text("credit")
       }
       $('#owes_value').val(owes)
     })
