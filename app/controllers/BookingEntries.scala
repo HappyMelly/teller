@@ -37,6 +37,8 @@ import play.api.data.validation.Constraints._
 import securesocial.core.SecuredRequest
 import scala.util.Random
 import play.api.i18n.Messages
+import services.CurrencyConverter
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object BookingEntries extends Controller with Security {
 
@@ -93,12 +95,14 @@ object BookingEntries extends Controller with Security {
       bookingEntryForm(request).bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.booking.form(request.user, formWithErrors, Account.findAllActive)),
-        entry ⇒ {
-          val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-          val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
-          val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
+        entry ⇒ Async {
+          entry.withSourceConverted.map { entry ⇒
+            val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+            val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
+            val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
+          }
         })
   }
 
