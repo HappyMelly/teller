@@ -32,6 +32,8 @@ import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB._
 import scala.Some
+import services.CurrencyConverter
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -73,6 +75,12 @@ case class BookingEntry(
     val id = BookingEntries.forInsert.insert(this.copy(bookingNumber = nextBookingNumber))
     this.copy(id = Some(id), bookingNumber = nextBookingNumber)
   }
+
+  def withSourceConverted = for {
+    fromAmountConverted ← CurrencyConverter.convert(source, from.currency)
+    toAmountConverted ← CurrencyConverter.convert(source, to.currency)
+  } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
+
 }
 
 /**
