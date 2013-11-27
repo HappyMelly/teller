@@ -33,16 +33,25 @@ object `package` {
 
   // CurrencyUnit
 
-  private def currencyLookup(code: String) = Try {
+  /**
+   * Returns the CurrencyUnit for `code`, or an error String if `code` is not a known currency code.
+   */
+  private def currencyLookup(code: String): Either[String, CurrencyUnit] = Try {
     CurrencyUnit.of(code.toUpperCase)
   }.toOption.toRight("Not a known currency code: " + code)
 
+  /**
+   * Binds 3-letter currency codes (e.g. `EUR`) as a `CurrencyUnit` and vice versa
+   */
   implicit def currencyUnitPathBindable: PathBindable[CurrencyUnit] = new PathBindable[CurrencyUnit] {
     def bind(key: String, value: String): Either[String, CurrencyUnit] = currencyLookup(value)
 
     def unbind(key: String, value: CurrencyUnit): String = value.getCurrencyCode
   }
 
+  /**
+   * Binds 3-letter currency codes (e.g. `EUR`) as a `CurrencyUnit` and vice versa
+   */
   implicit def currencyUnitQueryStringBindable: QueryStringBindable[CurrencyUnit] = new QueryStringBindable[CurrencyUnit] {
     def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, CurrencyUnit]] = {
       params.get(key).flatMap(_.headOption).map(currencyLookup)
@@ -53,18 +62,29 @@ object `package` {
 
   // Money
 
-  private def parseMoney(input: String) = Try {
+  private val moneyFormatter = new MoneyFormatterBuilder().appendCurrencyCode().appendAmount(MoneyAmountStyle.ASCII_DECIMAL_POINT_NO_GROUPING).toFormatter
+
+  /**
+   * Parses monetary amounts, e.g. 'EUR1.50' and returns the `Money` representation,
+   * or an error string if the input is not valid.
+   */
+  private def parseMoney(input: String): Either[String, Money] = Try {
     moneyFormatter.parseMoney(input.trim.toUpperCase)
   }.toOption.toRight("Not a valid monetary amount: " + input)
 
-  private val moneyFormatter = new MoneyFormatterBuilder().appendCurrencyCode().appendAmount(MoneyAmountStyle.ASCII_DECIMAL_POINT_NO_GROUPING).toFormatter
 
+  /**
+   * Binds strings in the form of 'EUR1.50' to `Money` instances.
+   */
   implicit def moneyPathBindable: PathBindable[Money] = new PathBindable[Money] {
     def bind(key: String, value: String): Either[String, Money] = parseMoney(value)
 
     def unbind(key: String, value: Money): String = moneyFormatter.print(value)
   }
 
+  /**
+   * Binds strings in the form of 'EUR1.50' to `Money` instances.
+   */
   implicit def moneyQueryStringBindable = new QueryStringBindable[Money] {
     def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Money]] = {
       params.get(key).flatMap(_.headOption).map(parseMoney)
