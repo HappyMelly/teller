@@ -37,14 +37,14 @@
         <div class="control-group @if(hasErrors) {error}">
           <label for="source">Source amount</label>
           <div class="input">
-          <select id="source" name="source.currency">
+          <select id="source_currency" name="source.currency">
             @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
               <option value="@currency.getCurrencyCode" @if(form("source.currency").value == Some(currency.getCurrencyCode)) { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
             }
           </select>
-          <input class="input-small source amount" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
+          <input id="source_amount" class="input-small" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
           <div class="input-append">
-            <input class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
+            <input id="source_percentage" class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
           </div>
           <span class="help-inline">
             @if(hasErrors) {
@@ -76,7 +76,7 @@
         </div>
       }
 
-      <div class="row" id="conversionInfo">
+      <div class="row control-group" id="conversionInfo">
         <div class="span3">
           <span class="fromId converted"><strong class="amount"> </strong> (<span class="direction">credit</span>)</span>
         </div>

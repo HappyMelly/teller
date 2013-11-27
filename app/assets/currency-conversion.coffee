@@ -3,10 +3,10 @@ $ = jQuery
 $ ->
   scope = $('form')
 
-  baseCurrencyInput = $('#source', scope)
-  baseAmountInput = $('.source.amount', scope)
-  baseElements = [baseCurrencyInput.get(0), baseAmountInput.get(0)]
-
+  baseCurrencyInput = $('#source_currency', scope)
+  baseAmountInput = $('#source_amount', scope)
+  basePercentageInput = $('#source_percentage', scope)
+  baseElements = [baseCurrencyInput.get(0), baseAmountInput.get(0), basePercentageInput.get(0)]
 
   fromAccountInput = $('#fromId', scope)
   toAccountInput = $('#toId', scope)
@@ -20,10 +20,13 @@ $ ->
   update = ->
     targetCurrency = findCurrency(this)
     if(targetCurrency)
-      url = jsRoutes.controllers.ExchangeRates.convert("#{baseCurrency}#{baseAmount}", targetCurrency).url
+      basePercentage = basePercentageInput.val()
+      conversionAmount = Math.floor(baseAmount * basePercentage) / 100
+      url = jsRoutes.controllers.ExchangeRates.convert("#{baseCurrency}#{conversionAmount}", targetCurrency).url
       $.getJSON(url, (data) =>
-        title = "Exchange rate #{data.rate} (#{baseCurrency} to #{targetCurrency}, measured today"
-        $(".#{this.id}.converted .amount", scope).text("#{data.result}")
+        title = "Exchange rate #{baseCurrency}/#{targetCurrency} #{data.rate} (measured today)"
+        resultText = "#{baseCurrency} #{conversionAmount} × #{data.rate} = #{data.result}"
+        $(".#{this.id}.converted .amount", scope).text(resultText)
         $(".#{this.id}.converted", scope).attr('title', title).show()
       )
     else
