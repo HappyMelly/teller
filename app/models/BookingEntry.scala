@@ -34,6 +34,7 @@ import play.api.db.slick.DB._
 import scala.Some
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -76,7 +77,13 @@ case class BookingEntry(
     this.copy(id = Some(id), bookingNumber = nextBookingNumber)
   }
 
-  def withSourceConverted = for {
+  /**
+   * Creates a copy of this `BookingEntry` with the value of `fromAmount` and `toAmount` set by converting
+   * `source` to the currency for the `from` and `to` accounts respectively, using today’s exchange rate.
+   *
+   * Returns a `Future` because WS calls are potentially involved.
+   */
+  def withSourceConverted: Future[BookingEntry] = for {
     fromAmountConverted ← CurrencyConverter.convert(source, from.currency)
     toAmountConverted ← CurrencyConverter.convert(source, to.currency)
   } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
