@@ -29,6 +29,7 @@ import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 import scala.concurrent.Future
 import scala.Some
+import services.CurrencyConverter.NoExchangeRateException
 import services.{ CurrencyConverter, ExchangeRateProvider }
 import play.api.test.Helpers._
 
@@ -57,12 +58,11 @@ class CurrencyConverterSpec extends Specification {
     }
 
     "convert between currencies it has a provider for" in {
-      await(CurrencyConverter.convert(oneEuro, USD, someFirst)).isSuccess must beTrue
-      await(CurrencyConverter.convert(oneEuro, USD, someFirst)).get must beEqualTo(eurUsd(oneEuro))
+      await(CurrencyConverter.convert(oneEuro, USD, someFirst)) must beAnInstanceOf[Money]
     }
 
     "fail conversions for which there is no exchange rate" in {
-      await(CurrencyConverter.convert(oneEuro, USD, noneOnly)).isSuccess must beFalse
+      await(CurrencyConverter.convert(oneEuro, USD, noneOnly)) must throwA[NoExchangeRateException]
     }
   }
 
