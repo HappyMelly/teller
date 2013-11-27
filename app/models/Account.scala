@@ -29,6 +29,7 @@ import models.database.{ Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
+import play.api.Logger
 
 /**
  * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
@@ -53,14 +54,16 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
   /**
    * Checks if the given user has permission to (de)activate this account:
    * - An account for a person may only be (de)activated by that person
-   * - An account for an organisation may only be (de)activated by members of that organisation
+   * - An account for an organisation may only be (de)activated by members of that organisation, or admins
    * - The Levy account may only be (de)activated by admins
    */
-
-  def canBeActivatedBy(user: UserAccount) = accountHolder match {
-    case organisation: Organisation ⇒ organisation.members.map(_.id.get).contains(user.personId)
-    case person: Person ⇒ person.id.get == user.personId
-    case Levy ⇒ user.getPermissions.contains(UserRole.Role.Admin)
+  def canBeActivatedBy(user: UserAccount) = {
+    val admin = user.getRoles.contains(UserRole(UserRole.Role.Admin))
+    accountHolder match {
+      case organisation: Organisation ⇒ admin || organisation.members.map(_.id.get).contains(user.personId)
+      case person: Person ⇒ person.id.get == user.personId
+      case Levy ⇒ admin
+    }
   }
 
   /** Activates this account and sets the balance currency **/
