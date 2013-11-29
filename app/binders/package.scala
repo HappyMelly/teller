@@ -72,7 +72,6 @@ object `package` {
     moneyFormatter.parseMoney(input.trim.toUpperCase)
   }.toOption.toRight("Not a valid monetary amount: " + input)
 
-
   /**
    * Binds strings in the form of 'EUR1.50' to `Money` instances.
    */
