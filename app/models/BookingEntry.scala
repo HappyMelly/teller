@@ -35,6 +35,7 @@ import scala.Some
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import java.math.RoundingMode
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -78,15 +79,26 @@ case class BookingEntry(
   }
 
   /**
+   * Returns the source amount with the percentage applied, used to calculate from and to amounts.
+   */
+  def sourceProRata: Money = {
+    val percentage = BigDecimal(sourcePercentage) / BigDecimal(100)
+    source.multipliedBy(percentage.underlying(), RoundingMode.DOWN)
+  }
+
+  /**
    * Creates a copy of this `BookingEntry` with the value of `fromAmount` and `toAmount` set by converting
-   * `source` to the currency for the `from` and `to` accounts respectively, using today’s exchange rate.
+   * `source` to the currency for the `from` and `to` accounts respectively, using today’s exchange rate,
+   * and applying the source percentage.
    *
    * Returns a `Future` because WS calls are potentially involved.
    */
-  def withSourceConverted: Future[BookingEntry] = for {
-    fromAmountConverted ← CurrencyConverter.convert(source, from.currency)
-    toAmountConverted ← CurrencyConverter.convert(source, to.currency)
-  } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
+  def withSourceConverted: Future[BookingEntry] = {
+    for {
+      fromAmountConverted ← CurrencyConverter.convert(sourceProRata, from.currency)
+      toAmountConverted ← CurrencyConverter.convert(sourceProRata, to.currency)
+    } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
+  }
 
 }
 

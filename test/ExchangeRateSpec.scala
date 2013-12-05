@@ -34,22 +34,24 @@ class ExchangeRateSpec extends Specification with Tables {
 
   "Exchange rates".title
 
+  // format: OFF
   "Exchange rate conversion should give the expected results, rounded to currency amounts:" ^ {
 
     "Base" | "Counter" | "Rate" | "From currency" | "From amount" | "Result currency" | "Result amount" |
-      "EUR" ! "USD" ! 1.35098 ! "EUR" ! 1.00 ! "USD" ! 1.35 |
-      "EUR" ! "USD" ! 1.35098 ! "USD" ! 1.35 ! "EUR" ! 0.99 |
-      "USD" ! "EUR" ! 0.740417 ! "USD" ! 1.00 ! "EUR" ! 0.74 |
-      "USD" ! "EUR" ! 0.740417 ! "EUR" ! 0.74 ! "USD" ! 0.99 |> {
-        (base, counter, rate, fromCurrency, fromAmount, resultCurrency, resultAmount) ⇒
-          val baseCurrency = CurrencyUnit.of(base)
-          val counterCurrency = CurrencyUnit.of(counter)
-          val exchangeRate = ExchangeRate(None, baseCurrency, counterCurrency, BigDecimal(rate), DateTime.now)
-          val from = Money.of(CurrencyUnit.of(fromCurrency), fromAmount)
-          val result = Money.of(CurrencyUnit.of(resultCurrency), resultAmount)
-          exchangeRate convert from must be equalTo result
-      }
+    "EUR" ! "USD" ! 1.35098 ! "EUR" ! 1.00 ! "USD" ! 1.35 |
+    "EUR" ! "USD" ! 1.35098 ! "USD" ! 1.35 ! "EUR" ! 0.99 |
+    "USD" ! "EUR" ! 0.740417 ! "USD" ! 1.00 ! "EUR" ! 0.74 |
+    "USD" ! "EUR" ! 0.740417 ! "EUR" ! 0.74 ! "USD" ! 0.99 |> {
+      (base, counter, rate, fromCurrency, fromAmount, resultCurrency, resultAmount) ⇒
+        val baseCurrency = CurrencyUnit.of(base)
+        val counterCurrency = CurrencyUnit.of(counter)
+        val exchangeRate = ExchangeRate(None, baseCurrency, counterCurrency, BigDecimal(rate), DateTime.now)
+        val from = Money.of(CurrencyUnit.of(fromCurrency), fromAmount)
+        val result = Money.of(CurrencyUnit.of(resultCurrency), resultAmount)
+        exchangeRate convert from must be equalTo result
+    }
   } bt
+  // format: ON
 
   val eurUsd = ExchangeRate(None, EUR, USD, BigDecimal("1.35098"), DateTime.now)
   val onePound = Money.of(GBP, 1.bigDecimal)
