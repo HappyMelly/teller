@@ -49,7 +49,7 @@ object BookingEntries extends Controller with Security {
     "summary" -> nonEmptyText(maxLength = 50),
     "source" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
     "sourcePercentage" -> number(0, 100),
-    "fromId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "fromId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying("error.account.noAccess", isAccessible(request, _)),
     "fromAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
     "toId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "toAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
@@ -80,10 +80,13 @@ object BookingEntries extends Controller with Security {
     e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId, e.reference, e.referenceDate,
     e.description, e.url, e.source.isPositiveOrZero))
 
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
-      Ok(views.html.booking.form(request.user, form, Account.findAllActive))
+      val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+      val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+
+      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts))
   }
 
   /**
@@ -93,8 +96,11 @@ object BookingEntries extends Controller with Security {
     implicit handler ⇒
 
       bookingEntryForm(request).bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.booking.form(request.user, formWithErrors, Account.findAllActive)),
+        formWithErrors ⇒ {
+          val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+          val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts))
+        },
         entry ⇒ Async {
           entry.withSourceConverted.map { entry ⇒
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -116,6 +122,23 @@ object BookingEntries extends Controller with Security {
       BookingEntry.findByBookingNumber(bookingNumber).map{ bookingEntry ⇒
         Ok(views.html.booking.details(request.user, bookingEntry))
       }.getOrElse(NotFound)
+  }
+
+  private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
+    val allActive: List[AccountSummary] = Account.findAllActive
+    if (user.getRoles.contains(Editor)) {
+      (allActive, allActive)
+    } else {
+      val person: Option[Person] = user.person
+      val accessible: List[AccountSummary] = person.map(_.findAccessibleAccounts).toList.flatten
+      (accessible, allActive)
+    }
+  }
+
+  private def isAccessible(request: SecuredRequest[_], accountId: Long): Boolean = {
+    val person = request.user.asInstanceOf[LoginIdentity].userAccount.person
+    val accessibleAccountIds = person.map(_.findAccessibleAccounts.map(_.id)).toList.flatten
+    accessibleAccountIds.contains(accountId)
   }
 
 }

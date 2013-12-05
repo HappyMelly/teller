@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, form: Form[BookingEntry], accounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
+@(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary], toAccounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
@@ -7,11 +7,11 @@
 
 
 @* Returns an HTML select for organisation and person accounts. *@
-@selectAccount(field: Field) = {
+@selectAccount(field: Field, accounts:List[AccountSummary]) = {
   <select name="@field.name" class="span3" id="@field.id">
     <option value="">Choose an account</option>
     @for(account <- accounts) {
-      <option data-currency="@account.currencyCode" value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currencyCode)</option>
+      <option data-currency="@account.currency" value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currency)</option>
     }
   </select>
 }
@@ -59,12 +59,12 @@
 
       <div class="controls-row control-group @if(form("fromId").hasErrors || form("toId").hasErrors) {error}">
         <label for="fromId">Accounts</label>
-        @selectAccount(form("fromId"))
+        @selectAccount(form("fromId"), fromAccounts)
         <div class="span2" style="text-align: center">
           <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
           <input id="owes_value" type="hidden" name="owes" value="true">
         </div>
-        @selectAccount(form("toId"))
+        @selectAccount(form("toId"), toAccounts)
         <span class="help-inline">Required</span>
       </div>
 

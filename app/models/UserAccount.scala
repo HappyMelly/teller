@@ -46,6 +46,7 @@ case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, 
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
+  def person: Option[Person] = Person.find(personId)
 }
 
 object UserAccount {

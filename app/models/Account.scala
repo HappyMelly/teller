@@ -71,7 +71,6 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
     if (active) throw new IllegalStateException("Cannot activate an already active account")
     assert(balance.isZero, "Inactive account's balance should be zero")
     updateStatus(active = true, currency)
-    copy(active = true, currency = currency)
   }
 
   /** Deactivates this account  **/
@@ -79,7 +78,10 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
     if (!active) throw new IllegalStateException("Cannot deactivate an already inactive account")
     if (!balance.isZero) throw new IllegalStateException("Cannot deactivate with non-zero balance")
     updateStatus(active = false, currency)
-    copy(active = false)
+  }
+
+  def asSummary: AccountSummary = {
+    AccountSummary(id.get, accountHolder.name, currency)
   }
 
   private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = withSession { implicit session ⇒
@@ -94,7 +96,7 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
  * @param id Account ID
  * @param name Account holder name
  */
-case class AccountSummary(id: Long, name: String, currencyCode: String)
+case class AccountSummary(id: Long, name: String, currency: CurrencyUnit)
 
 object Account {
   def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
@@ -131,7 +133,7 @@ object Account {
 
     query.mapResult{
       case (id, currency, firstName, lastName, organisationName) ⇒
-        AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency.getCode)
+        AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency)
     }.list.sortBy(_.name.toLowerCase)
   }
 }

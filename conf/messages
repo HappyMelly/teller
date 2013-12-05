@@ -66,6 +66,7 @@ error.date.range = Start date after end date
 error.money.negativeOrZero = Amount greater than zero required
 error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
+error.account.noAccess = You do not have access to this account
 
 # Play form validation error overrides
 error.date = Invalid date

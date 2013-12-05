@@ -24,13 +24,15 @@
 
 package models
 
-import models.database.{ Licenses, People, OrganisationMemberships, Addresses }
+import models.database._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import scala.slick.lifted.Query
+import scala.Some
+import JodaMoney._
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -148,6 +150,26 @@ case class Person(
       updateQuery.update(personUpdateTuple)
       this
     }
+  }
+
+  /**
+   * Finds the active `Account`s that this `Person` has access rights to.
+   *
+   * Currently, ‘having access rights to an account’ means that:
+   *  - This person is the account‘s holder
+   *  - This person is a member of the organisation that is the account’s holder
+   *
+   * @return The list of accounts that this person has access to
+   */
+  def findAccessibleAccounts: List[AccountSummary] = withSession { implicit session ⇒
+    val query = for {
+      account ← Accounts if account.active
+      organisation ← Organisations if account.organisationId === organisation.id.?
+      membership ← OrganisationMemberships if membership.organisationId === organisation.id
+      if membership.personId.? === this.id
+    } yield (account.id, organisation.name, account.currency)
+
+    account.asSummary :: query.list.map(AccountSummary.tupled)
   }
 
   def asSummary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
