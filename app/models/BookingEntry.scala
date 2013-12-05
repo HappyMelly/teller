@@ -121,39 +121,49 @@ object BookingEntry {
     Query(BookingEntries).filter(_.bookingNumber === bookingNumber).firstOption
   }
 
+  // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
+  // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
+  val bookingEntriesQuery = for {
+    entry ← BookingEntries
+    brand ← entry.brand
+    ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
+      People on (_.personId === _.id) leftJoin
+      Organisations on (_._1.organisationId === _.id)
+    if fromAccount.id === entry.fromId
+    ((toAccount, toPerson), toOrganisation) ← Accounts leftJoin
+      People on (_.personId === _.id) leftJoin
+      Organisations on (_._1.organisationId === _.id)
+    if toAccount.id === entry.toId
+  } yield (fromAccount.id, toAccount.id, entry.created, entry.bookingNumber, entry.bookingDate,
+    entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
+    fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
+    toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
+    brand.code, entry.summary)
+
+  type BookingEntriesQueryResult = (Long, Long, DateTime, Int, LocalDate, (String, BigDecimal), Int, Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], Option[String], Option[String], (String, BigDecimal), String, String)
+
+  val mapBookingEntryResult: (BookingEntriesQueryResult ⇒ BookingEntrySummary) = {
+    case (fromId, toId, created, number, date, source, sourcePercentage, fromPersonFirstName, fromPersonLastName, fromOrganisation,
+      fromAmount, toPersonFirstName, toPersonLastName, toOrganisation, toAmount, brandCode, summary) ⇒ {
+      val from = Account.accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
+      val to = Account.accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
+      val owes = source.isPositiveOrZero
+      BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
+    }
+  }
+
   /**
    * Returns a list of entries in reverse chronological order of date created.
    */
   def findAll: List[BookingEntrySummary] = withSession { implicit session ⇒
+    bookingEntriesQuery.sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
+  }
 
-    // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
-    // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
-    val query = for {
-      entry ← BookingEntries
-      brand ← entry.brand
-      ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
-        People on (_.personId === _.id) leftJoin
-        Organisations on (_._1.organisationId === _.id)
-      if fromAccount.id === entry.fromId
-      ((toAccount, toPerson), toOrganisation) ← Accounts leftJoin
-        People on (_.personId === _.id) leftJoin
-        Organisations on (_._1.organisationId === _.id)
-      if toAccount.id === entry.toId
-    } yield (entry.created, entry.bookingNumber, entry.bookingDate, entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
-      fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
-      toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
-      brand.code, entry.summary)
-
-    query.sortBy(_._2.desc).mapResult {
-      case (created, number, date, source, sourcePercentage,
-        fromPersonFirstName, fromPersonLastName, fromOrganisation, fromAmount,
-        toPersonFirstName, toPersonLastName, toOrganisation, toAmount,
-        brandCode, summary) ⇒
-        val from = Account.accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
-        val to = Account.accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
-        val owes = source.isPositiveOrZero
-        BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
-    }.list
+  /**
+   * Returns a list of entries for the given account, in reverse chronological order of date created.
+   */
+  def findByAccountId(accountId: Long): List[BookingEntrySummary] = withSession { implicit session ⇒
+    bookingEntriesQuery.filter(row ⇒ row._1 === accountId || row._2 === accountId).sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
   }
 
   private def nextBookingNumber: Int = withSession { implicit session ⇒

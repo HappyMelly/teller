@@ -36,6 +36,14 @@ object Accounts extends Controller with Security {
 
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 
+  /**
+   * An overview of bookings for the given account.
+   */
+  def bookings(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.booking.index(request.user, Account.find(id), BookingEntry.findByAccountId(id)))
+  }
+
   def details(id: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒
