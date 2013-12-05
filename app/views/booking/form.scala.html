@@ -9,7 +9,9 @@
 @* Returns an HTML select for organisation and person accounts. *@
 @selectAccount(field: Field, accounts:List[AccountSummary]) = {
   <select name="@field.name" class="span3" id="@field.id">
-    <option value="">Choose an account</option>
+    @if(accounts.size != 1) {
+      <option value="">Choose an account</option>
+    }
     @for(account <- accounts) {
       <option data-currency="@account.currency" value="@account.id" @if(field.value == Some(account.id.toString)) {selected}>@account.name (@account.currency)</option>
     }
