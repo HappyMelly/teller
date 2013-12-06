@@ -20,9 +20,7 @@
   @account.map { a =>
     <p><a href="@routes.BookingEntries.index()">All booking entries</a></p>
     <h2>@a.accountHolder.name</h2>
-    <!--
     <p>Balance = @a.balance.format</p>
-    -->
   }.getOrElse {
     @levy.map { l =>
       <p><a href="@routes.Accounts.bookings(l.id)">@l.name booking entries</a></p>
