@@ -90,12 +90,15 @@
     }
 
     <p><strong>Financial account</strong>
-      <br>@if(organisation.account.active){Active}else{Inactive}
-      @if(organisation.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-        (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
+      @defining(organisation.account) { account =>
+        <br>@if(account.active){Active}else{Inactive}
+        @if(account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+          (<a href="@routes.Accounts.details(account.id.get)">@if(account.active){Deactivate}else{Activate}</a>)
+        }
+        <p><strong>Account history</strong>
+        <br><a href="@routes.Accounts.bookings(account.id.get)">Booking entries</a></p>
       }
     </p>
-
 
     @organisation.vatNumber.map { number =>
       <p><strong>VAT number</strong>
