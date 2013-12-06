@@ -116,7 +116,7 @@
     @if(members.isEmpty) {
       <p>@organisation.name has no members.</p>
     } else {
-    	@views.html.person.table(members.map(_.asSummary)) { person =>
+    	@views.html.person.table(members.map(_.summary)) { person =>
         @restrict(handler, List(as(Editor.toString))) {
 		    	<a href="@routes.People.deleteMembership("organisation", person.id, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
         }
