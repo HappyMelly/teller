@@ -135,7 +135,7 @@ object BookingEntry {
 
   // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
   // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
-  val bookingEntriesQuery = for {
+  lazy val bookingEntriesQuery = for {
     entry ← BookingEntries
     brand ← entry.brand
     ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
