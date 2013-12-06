@@ -51,7 +51,7 @@
               </td>
               <td>@entry.bookingDate</td>
               <td>
-                @entry.fromAmount.format
+                @entry.fromAmount.abs.format
                 <br>@entry.from</td>
               <td>
                 @if(entry.owes) {
@@ -61,7 +61,7 @@
                 }
               </td>
               <td>
-                @entry.toAmount.format
+                @entry.toAmount.abs.format
                 <br>@entry.to
               </td>
               <td>@entry.source.abs.format</td>
