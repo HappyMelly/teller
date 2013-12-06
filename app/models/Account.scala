@@ -29,7 +29,6 @@ import models.database.{ Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
-import play.api.Logger
 
 /**
  * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
@@ -135,5 +134,17 @@ object Account {
       case (id, currency, firstName, lastName, organisationName) ⇒
         AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency)
     }.list.sortBy(_.name.toLowerCase)
+  }
+
+  /**
+   * Returns a summary of the levy account, for use in views, if it is active.
+   */
+  def findLevy: Option[AccountSummary] = {
+    val levy = Account.find(Levy)
+    if (levy.active) {
+      Some(AccountSummary(levy.id.get, Levy.name, levy.currency.getCode))
+    } else {
+      None
+    }
   }
 }
