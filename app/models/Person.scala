@@ -167,12 +167,12 @@ case class Person(
       organisation ← Organisations if account.organisationId === organisation.id.?
       membership ← OrganisationMemberships if membership.organisationId === organisation.id
       if membership.personId.? === this.id
-    } yield (account.id, organisation.name, account.currency)
+    } yield (account.id, organisation.name, account.currency, account.active)
 
-    account.asSummary :: query.list.map(AccountSummary.tupled)
+    account.summary :: query.list.map(AccountSummary.tupled)
   }
 
-  def asSummary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
+  def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

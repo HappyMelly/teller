@@ -41,7 +41,7 @@ object Accounts extends Controller with Security {
    */
   def bookings(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.booking.index(request.user, Account.find(id), BookingEntry.findByAccountId(id)))
+      Ok(views.html.booking.index(request.user, Account.find(id), None, BookingEntry.findByAccountId(id)))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Viewer) {

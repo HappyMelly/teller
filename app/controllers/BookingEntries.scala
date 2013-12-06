@@ -114,7 +114,9 @@ object BookingEntries extends Controller with Security {
 
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.booking.index(request.user, None, BookingEntry.findAll))
+      val levy = Account.find(Levy)
+      val levySummary = if (levy.active) Some(levy.summary) else None
+      Ok(views.html.booking.index(request.user, None, levySummary, BookingEntry.findAll))
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
