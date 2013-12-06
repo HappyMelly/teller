@@ -79,8 +79,8 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
     updateStatus(active = false, currency)
   }
 
-  def asSummary: AccountSummary = {
-    AccountSummary(id.get, accountHolder.name, currency)
+  def summary: AccountSummary = {
+    AccountSummary(id.get, accountHolder.name, currency, active)
   }
 
   private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = withSession { implicit session ⇒
@@ -95,7 +95,7 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
  * @param id Account ID
  * @param name Account holder name
  */
-case class AccountSummary(id: Long, name: String, currency: CurrencyUnit)
+case class AccountSummary(id: Long, name: String, currency: CurrencyUnit, active: Boolean)
 
 object Account {
   def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
@@ -128,23 +128,11 @@ object Account {
         People on (_.personId === _.id) leftJoin
         Organisations on (_._1.organisationId === _.id)
       if account.active === true
-    } yield (account.id, account.currency, person.firstName.?, person.lastName.?, organisation.name.?)
+    } yield (account.id, account.currency, person.firstName.?, person.lastName.?, organisation.name.?, account.active)
 
     query.mapResult{
-      case (id, currency, firstName, lastName, organisationName) ⇒
-        AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency)
+      case (id, currency, firstName, lastName, organisationName, active) ⇒
+        AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency, active)
     }.list.sortBy(_.name.toLowerCase)
-  }
-
-  /**
-   * Returns a summary of the levy account, for use in views, if it is active.
-   */
-  def findLevy: Option[AccountSummary] = {
-    val levy = Account.find(Levy)
-    if (levy.active) {
-      Some(AccountSummary(levy.id.get, Levy.name, levy.currency.getCode))
-    } else {
-      None
-    }
   }
 }
