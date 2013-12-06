@@ -25,11 +25,12 @@
 package models
 
 import org.joda.money.{ Money, CurrencyUnit }
-import models.database.{ Organisations, People, Accounts }
+import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
 import play.api.Logger
+import scala.math.BigDecimal.RoundingMode
 
 /**
  * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
@@ -49,7 +50,7 @@ case class Account(id: Option[Long], organisationId: Option[Long], personId: Opt
     case _ ⇒ throw new IllegalStateException(s"Account $id has both organisation and person for holder")
   }
 
-  def balance: Money = Money.of(currency, 0)
+  def balance: Money = Money.of(currency, Account.findBalance(id.get).bigDecimal)
 
   /**
    * Checks if the given user has permission to (de)activate this account:
@@ -136,4 +137,25 @@ object Account {
         AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency)
     }.list.sortBy(_.name.toLowerCase)
   }
+
+  /**
+   * Calculates the balance for a certain account by subtracting the total amount sent from the total amount received.
+   * @param accountId The ID of the account to find the balance for.
+   * @return The current balance for the account.
+   */
+  def findBalance(accountId: Long): BigDecimal = withSession { implicit session ⇒
+    val creditQuery = for {
+      entry ← BookingEntries if entry.fromId === accountId
+    } yield entry.fromAmount
+
+    val debitQuery = for {
+      entry ← BookingEntries if entry.toId === accountId
+    } yield entry.toAmount
+
+    val credit = Query(creditQuery.sum).first.getOrElse(BigDecimal(0))
+    val debit = Query(debitQuery.sum).first.getOrElse(BigDecimal(0))
+
+    (debit - credit).setScale(2, RoundingMode.DOWN)
+  }
+
 }

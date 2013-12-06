@@ -19,9 +19,7 @@
 
   @account.map { a =>
     <h2>@a.accountHolder.name</h2>
-    <!--
     <p>Balance = @a.balance.format</p>
-    -->
   }.getOrElse {
     <p>An overview of financial booking entries - money owed between people and organisations in the Happy Melly network.</p>
   }
