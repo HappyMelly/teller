@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ OrganisationMemberships, Organisations }
+import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -80,12 +80,13 @@ case class Organisation(
   }
 
   /**
-   * Inserts this organisation into the database.
+   * Inserts this organisation into the database, with an inactive account.
    * @return The Organisation as it is saved (with the id added)
    */
   def insert: Organisation = DB.withSession { implicit session ⇒
-    val id = Organisations.forInsert.insert(this)
-    this.copy(id = Some(id))
+    val organisationId = Organisations.forInsert.insert(this)
+    Accounts.insert(Account(organisationId = Some(organisationId)))
+    this.copy(id = Some(organisationId))
   }
 
   def update = DB.withSession { implicit session ⇒

@@ -30,7 +30,6 @@ import models.UserRole.Role._
 import org.joda.money.CurrencyUnit
 import play.api.data.Form
 import play.api.data.Forms._
-import scala.Some
 
 object Accounts extends Controller with Security {
 

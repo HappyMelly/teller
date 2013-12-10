@@ -1,4 +1,5 @@
-@(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary], toAccounts: List[AccountSummary])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
+@(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary],
+  toAccounts: List[AccountSummary], brands: List[BrandView], transactionTypes: List[TransactionType])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
@@ -103,7 +104,7 @@
     </div>
 
     <div class="control-group">
-      @helper.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+      @helper.select(form("brandId"), brands.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
     </div>
 
     <div class="control-group @if(form("description").hasErrors) {error}">
@@ -115,6 +116,12 @@
     </div>
 
     @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge", '_help -> "")
+
+    <div class="control-group">
+      @helper.select(form("transactionTypeId"), transactionTypes.map(t => (t.id.get.toString, t.name)),
+        '_default -> "Choose a transaction type", '_label -> "Transaction type")
+    </div>
+
 
     <button class="btn btn-primary" type="submit">Save</button>
   </form>

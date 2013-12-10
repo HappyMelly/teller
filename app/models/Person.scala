@@ -126,8 +126,9 @@ case class Person(
    */
   def insert: Person = DB.withSession { implicit session ⇒
     val newAddress = Address.insert(this.address)
-    val newId = People.forInsert.insert(this.copy(address = newAddress))
-    this.copy(id = Some(newId))
+    val personId = People.forInsert.insert(this.copy(address = newAddress))
+    Accounts.insert(Account(personId = Some(personId)))
+    this.copy(id = Some(personId))
   }
 
   /**

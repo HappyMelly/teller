@@ -57,8 +57,9 @@ case class BookingEntry(
   brandId: Long,
   reference: Option[String],
   referenceDate: LocalDate,
-  description: Option[String],
-  url: Option[String],
+  description: Option[String] = None,
+  url: Option[String] = None,
+  transactionTypeId: Option[Long] = None,
 
   created: DateTime = DateTime.now()) {
 
@@ -71,6 +72,8 @@ case class BookingEntry(
   def brand = Brand.find(brandId).get
 
   def owes = source.isPositiveOrZero
+
+  def transactionType = transactionTypeId.flatMap(TransactionType.find(_))
 
   def insert: BookingEntry = withSession { implicit session ⇒
     val nextBookingNumber = Some(BookingEntry.nextBookingNumber)
@@ -123,11 +126,7 @@ case class BookingEntrySummary(
 object BookingEntry {
 
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
-    0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now, None, None)
-
-  def find(id: Long): Option[BookingEntry] = withSession { implicit session ⇒
-    Query(BookingEntries).filter(_.id === id).firstOption
-  }
+    0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now)
 
   def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = withSession { implicit session ⇒
     Query(BookingEntries).filter(_.bookingNumber === bookingNumber).firstOption
