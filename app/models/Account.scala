@@ -29,14 +29,14 @@ import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
-import play.api.Logger
 import scala.math.BigDecimal.RoundingMode
 
 /**
  * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
  * the `Levy`. Accounts have a currency set upon activation and may only be deactivated when their balance is zero.
  */
-case class Account(id: Option[Long], organisationId: Option[Long], personId: Option[Long], currency: CurrencyUnit, active: Boolean) {
+case class Account(id: Option[Long] = None, organisationId: Option[Long] = None, personId: Option[Long] = None,
+  currency: CurrencyUnit = CurrencyUnit.EUR, active: Boolean = false) {
 
   /** Resolves the holder for this account **/
   def accountHolder = (organisationId, personId) match {

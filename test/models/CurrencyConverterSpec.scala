@@ -1,3 +1,5 @@
+package models
+
 /*
  * Happy Melly Teller
  * Copyright (C) 2013, Happy Melly http://www.happymelly.com

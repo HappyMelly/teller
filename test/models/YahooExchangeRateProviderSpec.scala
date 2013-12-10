@@ -1,3 +1,5 @@
+package models
+
 /*
  * Happy Melly Teller
  * Copyright (C) 2013, Happy Melly http://www.happymelly.com
@@ -22,28 +24,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.BookingEntry
-import org.joda.money.{ Money, CurrencyUnit }
-import org.specs2.mutable.{ Tables, Specification }
+import models.ExchangeRate
+import org.joda.money.CurrencyUnit._
+import org.specs2.mutable._
+import play.api.test.Helpers._
+import services.YahooExchangeRateProvider
 
-class BookingEntrySpec extends Specification with Tables {
+class YahooExchangeRateProviderSpec extends Specification {
+  implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
-  "Booking entries".title
-
-  // format: OFF
-  "Booking entries calculate the correct pro rata amount by applying the source percentage to the source amount:" ^ {
-
-    "Source" | "Percentage" | "Pro rata" |
-    "1000.00" ! 100 ! "1000.00" |
-    "1000.00" ! 95 ! "950.00" |
-    "0.10" ! 95 ! "0.09" |> {
-      (sourceAmount, percentage, result) ⇒
-        val source = Money.of(CurrencyUnit.EUR, BigDecimal(sourceAmount).underlying())
-        val entry = BookingEntry.blank.copy(source = source, sourcePercentage = percentage)
-        val sourceProRataAmount = BigDecimal(entry.sourceProRata.getAmount)
-        sourceProRataAmount.scale must be equalTo 2
-        sourceProRataAmount must be equalTo BigDecimal(result)
+  "The provider" should {
+    "return a result for EUR-USD" in {
+      val result = await(YahooExchangeRateProvider(EUR, USD))
+      result must beSome[ExchangeRate]
     }
-  } bt
-  // format: ON
+
+  }
+
 }

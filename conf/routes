@@ -69,6 +69,9 @@ GET  /booking/new              controllers.BookingEntries.add
 POST /booking/new              controllers.BookingEntries.create
 GET  /booking/:bookingNumber   controllers.BookingEntries.details(bookingNumber: Int)
 
+GET  /admin/settings                     controllers.Administration.settings
+POST /admin/transactiontype/new          controllers.Administration.createTransactionType
+POST /admin/transactiontype/:id/delete   controllers.Administration.deleteTransactionType(id: Long)
 
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
