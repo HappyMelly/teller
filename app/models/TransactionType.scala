@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ Brands, TransactionTypes }
+import models.database.TransactionTypes
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
@@ -44,7 +44,7 @@ object TransactionType {
    * Returns true if a transaction type with the given value already exists.
    */
   def exists(value: String): Boolean = withSession { implicit session ⇒
-    Query(Query(TransactionTypes).filter(_.name === value.trim).exists).first
+    Query(Query(TransactionTypes).filter(_.name === value).exists).first
   }
 
   def find(id: Long): Option[TransactionType] = withSession { implicit session ⇒
