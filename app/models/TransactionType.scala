@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.TransactionTypes
+import models.database.{ BookingEntries, TransactionTypes }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
 import play.api.Play.current
@@ -37,6 +37,7 @@ case class TransactionType(id: Option[Long], name: String)
 object TransactionType {
 
   def delete(id: Long): Unit = withSession { implicit session ⇒
+    BookingEntries.filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
     TransactionTypes.where(_.id === id).mutate(_.delete())
   }
 

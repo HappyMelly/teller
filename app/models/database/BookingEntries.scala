@@ -59,6 +59,7 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def referenceDate = column[LocalDate]("REFERENCE_DATE")
   def description = column[Option[String]]("DESCRIPTION")
   def url = column[Option[String]]("URL")
+  def transactionTypeId = column[Option[Long]]("TRANSACTION_TYPE_ID")
 
   def created = column[DateTime]("CREATED")
 
@@ -66,19 +67,20 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def from = foreignKey("BOOKING_FROM_FK", fromId, Accounts)(_.id)
   def to = foreignKey("BOOKING_TO_FK", toId, Accounts)(_.id)
   def brand = foreignKey("BOOKING_BRAND_FK", brandId, Brands)(_.id)
+  def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TransactionTypes)(_.id)
 
   def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~
     sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
-    brandId ~ reference ~ referenceDate ~ description ~ url ~ created <> (
+    brandId ~ reference ~ referenceDate ~ description ~ url ~ transactionTypeId ~ created <> (
       { (e) ⇒
         e match {
           case (id, ownerId, bookingDate, bookingNumber, summary,
             sourceCurrency, sourceAmount, sourcePercentage, fromId, fromCurrency, fromAmount, toId, toCurrency, toAmount,
-            brandId, reference, referenceDate, description, url, created) ⇒
+            brandId, reference, referenceDate, description, url, transactionTypeId, created) ⇒
 
             BookingEntry(id, ownerId, bookingDate, bookingNumber, summary,
               sourceCurrency -> sourceAmount, sourcePercentage, fromId, fromCurrency -> fromAmount, toId, toCurrency -> toAmount,
-              brandId, reference, referenceDate, description, url, created)
+              brandId, reference, referenceDate, description, url, transactionTypeId, created)
         }
       },
       { (e: BookingEntry) ⇒
@@ -86,7 +88,7 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
           e.source.getCurrencyUnit.getCode, e.source.getAmount, e.sourcePercentage,
           e.fromId, e.fromAmount.getCurrencyUnit.getCode, e.fromAmount.getAmount,
           e.toId, e.toAmount.getCurrencyUnit.getCode, e.toAmount.getAmount,
-          e.brandId, e.reference, e.referenceDate, e.description, e.url, e.created))
+          e.brandId, e.reference, e.referenceDate, e.description, e.url, e.transactionTypeId, e.created))
       })
 
   def forInsert = * returning id

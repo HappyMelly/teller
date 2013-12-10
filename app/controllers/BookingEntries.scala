@@ -58,6 +58,7 @@ object BookingEntries extends Controller with Security {
     "referenceDate" -> jodaLocalDate.verifying("error.date.future", (d: LocalDate) ⇒ d.isBefore(LocalDate.now.plusDays(1))),
     "description" -> optional(text(maxLength = 250)),
     "url" -> optional(webUrl),
+    "transactionTypeId" -> optional(longNumber),
     "owes" -> boolean)(fromForm)(toForm))
 
   /**
@@ -66,10 +67,11 @@ object BookingEntries extends Controller with Security {
   def fromForm(id: Option[Long], ownerId: Long, bookingNumber: Option[Int], summary: String, source: Money, sourcePercentage: Int,
     fromId: Long, fromAmount: Money, toId: Long, toAmount: Money,
     brandId: Long, reference: Option[String], referenceDate: LocalDate,
-    description: Option[String], url: Option[String], owes: Boolean) = {
+    description: Option[String], url: Option[String], transactionTypeId: Option[Long], owes: Boolean) = {
 
     BookingEntry(id, ownerId, LocalDate.now, bookingNumber, summary, if (owes) source else source.negated,
-      sourcePercentage, fromId, fromAmount, toId, toAmount, brandId, reference, referenceDate, description, url)
+      sourcePercentage, fromId, fromAmount, toId, toAmount, brandId, reference, referenceDate, description, url,
+      transactionTypeId)
   }
 
   /**
@@ -78,7 +80,7 @@ object BookingEntries extends Controller with Security {
   def toForm(e: BookingEntry) = Some((e.id, e.ownerId, e.bookingNumber, e.summary,
     if (e.source.isNegative) e.source.multipliedBy(-1L) else e.source,
     e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId, e.reference, e.referenceDate,
-    e.description, e.url, e.source.isPositiveOrZero))
+    e.description, e.url, e.transactionTypeId, e.source.isPositiveOrZero))
 
   def add = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
@@ -86,7 +88,7 @@ object BookingEntries extends Controller with Security {
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
 
-      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts))
+      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll))
   }
 
   /**
@@ -99,13 +101,15 @@ object BookingEntries extends Controller with Security {
         formWithErrors ⇒ {
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts))
+          val brands = Brand.findAll
+          val transactionTypes = TransactionType.findAll
+          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
         },
         entry ⇒ Async {
           entry.withSourceConverted.map { entry ⇒
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
             val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
-            val activityObject = Messages("models.BookingEntry.name", entry.source.toString)
+            val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
             Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
           }

@@ -49,6 +49,11 @@
         <p><strong>URL</strong>
         <br><a href="@url">@url</a></p>
       }
+
+      @booking.transactionType.map { transactionType =>
+        <p><strong>Transaction type</strong>
+        <br>@transactionType.name</a></p>
+      }
     </div>
   </div>
 

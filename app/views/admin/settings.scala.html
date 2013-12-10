@@ -12,6 +12,9 @@
   <div class="span8">
     <h3>Transaction types</h3>
     @if(!transactionTypes.isEmpty) {
+      <div class="alert">
+        <strong>Warning</strong> Deleting a transaction type will remove it from the corresponding booking entries.
+      </div>
       <table id="transactiontypes" class="datatables table table-bordered">
         <thead>
         <tr>
@@ -24,7 +27,7 @@
           <tr>
             <td>@transactionType.name</td>
             <td>
-              <form method="post" action="@CSRF(routes.Administration.deleteTransactionType(transactionType.id.get))">
+              <form class="delete" method="post" text="transaction type" action="@CSRF(routes.Administration.deleteTransactionType(transactionType.id.get))">
                 <button class="btn btn-link"><i class="icon-trash"></i> Delete</button>
               </form>
             </td>
