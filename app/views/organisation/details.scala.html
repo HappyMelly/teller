@@ -1,6 +1,9 @@
-@(user: securesocial.core.Identity, organisation: Organisation,
-  members: List[Person], otherPeople: List[Person],
-  contributions: List[ContributionView], products: List[Product]
+@(user: securesocial.core.Identity,
+  organisation: Organisation,
+  members: List[Person],
+  otherPeople: List[Person],
+  contributions: List[ContributionView],
+  products: List[Product]
   )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -40,7 +43,8 @@
       </form>
         <div class="clearfix"></div>
       <form class="delete" method="post" text="organisation" action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!members.isEmpty) { disabled="disabled" title="You cannot delete this organisation because it has members" }>
+        <button class="btn btn-danger btn-block" type="submit"
+          @if(!organisation.canDelete) { disabled="disabled" title="You cannot delete this organisation because it has members, booking entries or an active account" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>
@@ -90,14 +94,12 @@
     }
 
     <p><strong>Financial account</strong>
-      @defining(organisation.account) { account =>
-        <br>@if(account.active){Active}else{Inactive}
-        @if(account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-          (<a href="@routes.Accounts.details(account.id.get)">@if(account.active){Deactivate}else{Activate}</a>)
-        }
-        <p><strong>Account history</strong>
-        <br><a href="@routes.Accounts.bookings(account.id.get)">Booking entries</a></p>
+      <br>@if(organisation.account.active){Active}else{Inactive}
+      @if(organisation.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+        (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
       }
+      <p><strong>Account history</strong>
+      <br><a href="@routes.Accounts.bookings(organisation.account.id.get)">Booking entries</a></p>
     </p>
 
     @organisation.vatNumber.map { number =>

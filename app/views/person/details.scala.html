@@ -1,7 +1,13 @@
-@(user: securesocial.core.Identity, person: Person,
-  organisations: List[Organisation], otherOrganisations: List[Organisation],
-  contributions: List[ContributionView], products: List[Product],
-  licenses: List[LicenseView], accountRole: Option[models.UserRole.Role.Role], twitterUser: Option[UserAccount])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  person: Person,
+  organisations: List[Organisation],
+  otherOrganisations: List[Organisation],
+  contributions: List[ContributionView],
+  products: List[Product],
+  licenses: List[LicenseView],
+  accountRole: Option[models.UserRole.Role.Role],
+  twitterUser: Option[UserAccount]
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.UserRole.Role._
@@ -46,7 +52,8 @@
       </form>
       <div class="clearfix"></div>
       <form class="delete" method="post" text="person" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!organisations.isEmpty || !licenses.isEmpty) { disabled="disabled" title="You cannot delete this person because there are organization memberships or content licenses" }>
+        <button class="btn btn-danger btn-block" type="submit"
+          @if(!person.canDelete) { disabled="disabled" title="You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>
@@ -170,14 +177,12 @@
 
   <div class="span8">
     <h3>Accounting details</h3>
-    @defining(person.account) { account =>
-      <p><strong>Financial account</strong><br>@if(account.active){Active}else{Inactive}
-      @if(account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-          (<a href="@routes.Accounts.details(account.id.get)">@if(account.active){Deactivate}else{Activate}</a>)</p>
-      }
-      <p><strong>Account history</strong>
-      <br><a href="@routes.Accounts.bookings(account.id.get)">Booking entries</a></p>
+    <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
+    @if(person.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+        (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p>
     }
+    <p><strong>Account history</strong>
+    <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
   </div>
 
   <div class="span8">

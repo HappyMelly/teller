@@ -27,7 +27,7 @@ package models
 import org.joda.money.{ Money, CurrencyUnit }
 import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB._
 import play.api.Play.current
 import scala.math.BigDecimal.RoundingMode
 
@@ -67,6 +67,17 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     }
   }
 
+  /**
+   * Returns true if this account may be deleted.
+   */
+  lazy val canDelete: Boolean = withSession { implicit session ⇒
+    val hasBookingEntries = id.map { accountId ⇒
+      val query = Query(BookingEntries).filter(e ⇒ e.ownerId === accountId || e.fromId === accountId || e.toId === accountId)
+      Query(query.exists).first
+    }.getOrElse(false)
+    !active && !hasBookingEntries
+  }
+
   /** Activates this account and sets the balance currency **/
   def activate(currency: CurrencyUnit): Unit = {
     if (active) throw new IllegalStateException("Cannot activate an already active account")
@@ -79,6 +90,11 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     if (!active) throw new IllegalStateException("Cannot deactivate an already inactive account")
     if (!balance.isZero) throw new IllegalStateException("Cannot deactivate with non-zero balance")
     updateStatus(active = false, currency)
+  }
+
+  def delete: Unit = withSession { implicit session ⇒
+    assert(canDelete, "Attempt to delete account that is active or has booking entries")
+    Accounts.where(_.id === id).mutate(_.delete())
   }
 
   def summary: AccountSummary = {

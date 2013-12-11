@@ -64,7 +64,12 @@ case class Organisation(
   updated: DateTime,
   updatedBy: String) extends AccountHolder {
 
-  def members: List[Person] = withSession { implicit session ⇒
+  /**
+   * Returns true if this person may be deleted.
+   */
+  lazy val canDelete: Boolean = account.canDelete && contributions.isEmpty && members.isEmpty
+
+  lazy val members: List[Person] = withSession { implicit session ⇒
     val query = for {
       membership ← OrganisationMemberships if membership.organisationId === this.id
       person ← membership.person
@@ -75,7 +80,7 @@ case class Organisation(
   /**
    * Returns a list of this organisation's contributions.
    */
-  def contributions: List[ContributionView] = withSession { implicit session ⇒
+  lazy val contributions: List[ContributionView] = withSession { implicit session ⇒
     Contribution.contributions(this.id.get, false)
   }
 
@@ -119,6 +124,7 @@ object Organisation {
    * Deletes an organisation.
    */
   def delete(id: Long): Unit = withSession { implicit session ⇒
+    find(id).map(_.account).map(_.delete)
     Organisations.where(_.id === id).mutate(_.delete())
   }
 

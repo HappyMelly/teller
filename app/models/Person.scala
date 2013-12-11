@@ -73,6 +73,11 @@ case class Person(
   }
 
   /**
+   * Returns true if this person may be deleted.
+   */
+  lazy val canDelete: Boolean = account.canDelete && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
+
+  /**
    * Removes this person’s membership in the given organisation.
    */
   def deleteMembership(organisationId: Long): Unit = withSession { implicit session ⇒
@@ -91,7 +96,7 @@ case class Person(
   /**
    * Returns a list of this person’s content licenses.
    */
-  def licenses: List[LicenseView] = withSession { implicit session ⇒
+  lazy val licenses: List[LicenseView] = withSession { implicit session ⇒
 
     val query = for {
       license ← Licenses if license.licenseeId === this.id
@@ -106,14 +111,14 @@ case class Person(
   /**
    * Returns a list of this person's contributions.
    */
-  def contributions: List[ContributionView] = withSession { implicit session ⇒
+  lazy val contributions: List[ContributionView] = withSession { implicit session ⇒
     Contribution.contributions(this.id.get, true)
   }
 
   /**
    * Returns a list of the organisations this person is a member of.
    */
-  def memberships: List[Organisation] = withSession { implicit session ⇒
+  lazy val memberships: List[Organisation] = withSession { implicit session ⇒
     val query = for {
       membership ← OrganisationMemberships if membership.personId === this.id
       organisation ← membership.organisation
@@ -190,7 +195,11 @@ object Person {
     query.update(active)
   }
 
+  /**
+   * Deletes the person with the given ID and their account.
+   */
   def delete(id: Long): Unit = withSession { implicit session ⇒
+    find(id).map(_.account).map(_.delete)
     People.where(_.id === id).mutate(_.delete())
   }
 
