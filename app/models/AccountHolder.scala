@@ -29,8 +29,8 @@ import org.joda.time.DateTime
 /** The 'owner' of an account **/
 trait AccountHolder {
   def name: String
-  def account: Account = Account.find(this)
   def levy: Boolean = false
+  lazy val account: Account = Account.find(this)
 
   /** Updates the `updatedBy` and `updated` properties, if applicable **/
   def updated(updatedBy: String): AccountHolder = {
