@@ -91,7 +91,7 @@ object Brands extends Controller with Security {
     implicit handler ⇒
       Brand.find(code).map {
         case BrandView(brand, coordinator, licenseIds) ⇒
-          Ok(views.html.brand.details(request.user, brand, coordinator, licenseIds))
+          Ok(views.html.brand.details(request.user, brand, coordinator))
       }.getOrElse(NotFound)
 
   }

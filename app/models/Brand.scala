@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ Licenses, Brands, ProductBrandAssociations }
+import models.database.{ BookingEntries, Licenses, Brands, ProductBrandAssociations }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB.withSession
@@ -36,7 +36,18 @@ import play.api.Play.current
 case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
   created: DateTime, createdBy: String, updated: DateTime, updatedBy: String) {
 
-  def products: List[Product] = withSession { implicit session ⇒
+  /**
+   * Returns true if this brand may be deleted.
+   */
+  lazy val deletable: Boolean = withSession { implicit session ⇒
+    val hasLicences = id.map { brandId ⇒
+      val query = Query(Licenses).filter(l ⇒ l.brandId === brandId)
+      Query(query.exists).first
+    }.getOrElse(false)
+    !hasLicences && products.isEmpty
+  }
+
+  lazy val products: List[Product] = withSession { implicit session ⇒
     val query = for {
       relation ← ProductBrandAssociations if relation.brandId === this.id
       product ← relation.product

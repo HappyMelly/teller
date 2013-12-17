@@ -67,7 +67,7 @@ case class Organisation(
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val canDelete: Boolean = account.canDelete && contributions.isEmpty && members.isEmpty
+  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && members.isEmpty
 
   lazy val members: List[Person] = withSession { implicit session ⇒
     val query = for {
