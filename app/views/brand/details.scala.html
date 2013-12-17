@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, brand: Brand, coordinator: Person, licenseIds: Seq[Long])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, brand: Brand, coordinator: Person)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.UserRole.Role._
@@ -24,7 +24,7 @@
   @restrict(handler, List(as(Editor.toString))) {
     <div class="span2 actions">
       <form class="delete" method="post" text="brand" action="@CSRF(routes.Brands.delete(brand.code))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!licenseIds.isEmpty) { disabled="disabled" title="You cannot delete this brand because it has licenses" }>
+        <button class="btn btn-danger btn-block" type="submit" @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has licenses" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>

@@ -70,7 +70,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
   /**
    * Returns true if this account may be deleted.
    */
-  lazy val canDelete: Boolean = withSession { implicit session ⇒
+  lazy val deletable: Boolean = withSession { implicit session ⇒
     val hasBookingEntries = id.map { accountId ⇒
       val query = Query(BookingEntries).filter(e ⇒ e.ownerId === accountId || e.fromId === accountId || e.toId === accountId)
       Query(query.exists).first
@@ -93,7 +93,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
   }
 
   def delete: Unit = withSession { implicit session ⇒
-    assert(canDelete, "Attempt to delete account that is active or has booking entries")
+    assert(deletable, "Attempt to delete account that is active or has booking entries")
     Accounts.where(_.id === id).mutate(_.delete())
   }
 

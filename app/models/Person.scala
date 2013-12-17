@@ -75,7 +75,7 @@ case class Person(
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val canDelete: Boolean = account.canDelete && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
+  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
 
   /**
    * Removes this person’s membership in the given organisation.
