@@ -41,7 +41,7 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info],
   passwordInfo: Option[PasswordInfo] = None, twitterHandle: String, apiToken: String) extends Identity {
 
-  def person = DB.withSession { implicit session ⇒
+  def person = DB.withSession { implicit session: Session ⇒
     (for {
       account ← UserAccounts if account.twitterHandle === twitterHandle
       person ← People if person.id === account.personId
@@ -50,7 +50,7 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   }
 
   /** Returns the `UserAccount` for this identity **/
-  def userAccount = DB.withSession { implicit session ⇒
+  def userAccount = DB.withSession { implicit session: Session ⇒
     (for { account ← UserAccounts if account.twitterHandle === twitterHandle } yield account).first
   }
 }
@@ -62,50 +62,46 @@ object LoginIdentity {
 
   private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
 
-  def findBytoken(token: String): Option[LoginIdentity] = DB.withSession {
-    implicit session ⇒
-      Query(LoginIdentities).filter(_.apiToken === token).list.headOption
+  def findBytoken(token: String): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
+    Query(LoginIdentities).filter(_.apiToken === token).list.headOption
   }
 
-  def findByUid(uid: Long) = DB.withSession {
-    implicit session ⇒
-      val q = for {
-        user ← LoginIdentities
-        if user.uid is uid
-      } yield user
+  def findByUid(uid: Long) = DB.withSession { implicit session: Session ⇒
+    val q = for {
+      user ← LoginIdentities
+      if user.uid is uid
+    } yield user
 
-      q.firstOption
+    q.firstOption
   }
 
-  def findByUserId(identityId: IdentityId): Option[LoginIdentity] = DB.withSession {
-    implicit session ⇒
-      val q = for {
-        identity ← LoginIdentities
-        if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-      } yield identity
+  def findByUserId(identityId: IdentityId): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
+    val q = for {
+      identity ← LoginIdentities
+      if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+    } yield identity
 
-      q.firstOption
+    q.firstOption
   }
 
-  def save(user: LoginIdentity) = DB.withSession {
-    implicit session ⇒
-      findByUserId(user.identityId) match {
-        case None ⇒ {
-          Activity.insert(user.fullName, Activity.Predicate.SignedUp)
-          val uid = LoginIdentities.forInsert.insert(user)
-          user.copy(uid = Some(uid))
-        }
-        case Some(existingUser) ⇒ {
-          val userRow = for {
-            u ← LoginIdentities
-            if u.uid is existingUser.uid
-          } yield u
-
-          val updatedUser = user.copy(uid = existingUser.uid, apiToken = existingUser.apiToken)
-          userRow.update(updatedUser)
-          updatedUser
-        }
+  def save(user: LoginIdentity) = DB.withSession { implicit session: Session ⇒
+    findByUserId(user.identityId) match {
+      case None ⇒ {
+        Activity.insert(user.fullName, Activity.Predicate.SignedUp)
+        val uid = LoginIdentities.forInsert.insert(user)
+        user.copy(uid = Some(uid))
       }
+      case Some(existingUser) ⇒ {
+        val userRow = for {
+          u ← LoginIdentities
+          if u.uid is existingUser.uid
+        } yield u
+
+        val updatedUser = user.copy(uid = existingUser.uid, apiToken = existingUser.apiToken)
+        userRow.update(updatedUser)
+        updatedUser
+      }
+    }
   }
 }
 

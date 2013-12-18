@@ -27,7 +27,7 @@ package models
 import models.database.{ ProductBrandAssociations, Products }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 
 /**
@@ -57,7 +57,7 @@ case class Product(
   /**
    * Get all brands associated with this product
    */
-  def brands: List[Brand] = withSession { implicit session ⇒
+  def brands: List[Brand] = DB.withSession { implicit session: Session ⇒
     val query = for {
       relation ← ProductBrandAssociations if relation.productId === this.id
       brand ← relation.brand
@@ -68,25 +68,25 @@ case class Product(
   /**
    * Assign this product to a brand
    */
-  def addBrand(brandId: Long): Unit = withSession { implicit session ⇒
+  def addBrand(brandId: Long): Unit = DB.withSession { implicit session: Session ⇒
     ProductBrandAssociations.forInsert.insert(this.id.get, brandId)
   }
 
   /**
    * Unassign this product to a brand
    */
-  def deleteBrand(brandId: Long): Unit = withSession { implicit session ⇒
+  def deleteBrand(brandId: Long): Unit = DB.withSession { implicit session: Session ⇒
     ProductBrandAssociations.filter(relation ⇒ relation.productId === id && relation.brandId === brandId).mutate(_.delete)
   }
 
-  def insert: Product = withSession { implicit session ⇒
+  def insert: Product = DB.withSession { implicit session: Session ⇒
     val id = Products.forInsert.insert(this)
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = Product.delete(this.id.get)
 
-  def update: Product = withSession { implicit session ⇒
+  def update: Product = DB.withSession { implicit session: Session ⇒
     val updateTuple = (title, subtitle, url, category, parentId, updated, updatedBy)
     val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
@@ -96,30 +96,30 @@ case class Product(
 
 object Product {
 
-  def exists(title: String): Boolean = withSession { implicit session ⇒
+  def exists(title: String): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(Products).filter(_.title === title).exists).first
   }
   /**
    * Returns true if and only if there is a product with the given title.
    */
-  def exists(title: String, id: Long): Boolean = withSession { implicit session ⇒
+  def exists(title: String, id: Long): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(Products).filter(_.title === title).filter(_.id =!= id).exists).first
   }
 
   /** Finds a product by ID **/
-  def find(id: Long) = withSession { implicit session ⇒
+  def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Products).filter(_.id === id).firstOption
   }
 
-  def findDerivatives(parentId: Long): List[Product] = withSession { implicit session ⇒
+  def findDerivatives(parentId: Long): List[Product] = DB.withSession { implicit session: Session ⇒
     Query(Products).filter(_.parentId === parentId).list
   }
 
-  def findAll: List[Product] = withSession { implicit session ⇒
+  def findAll: List[Product] = DB.withSession { implicit session: Session ⇒
     Query(Products).sortBy(_.title.toLowerCase).list
   }
 
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Products.where(_.id === id).mutate(_.delete())
   }
 

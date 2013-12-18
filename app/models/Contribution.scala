@@ -26,7 +26,7 @@ package models
 
 import models.database.{ Contributions, People, Organisations }
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 
 /**
@@ -40,11 +40,11 @@ case class Contribution(
   isPerson: Boolean,
   role: String) {
 
-  def product: Product = withSession { implicit session ⇒
+  def product: Product = DB.withSession { implicit session: Session ⇒
     Product.find(this.productId).get
   }
 
-  def insert: Contribution = withSession { implicit session ⇒
+  def insert: Contribution = DB.withSession { implicit session: Session ⇒
     val id = Contributions.forInsert.insert(this)
     this.copy(id = Some(id))
   }
@@ -60,7 +60,7 @@ object Contribution {
   /**
    * Returns a list of all contributions for the given contributor.
    */
-  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = withSession { implicit session ⇒
+  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession { implicit session: Session ⇒
 
     val query = for {
       contribution ← Contributions if contribution.contributorId === contributorId && contribution.isPerson === isPerson
@@ -72,7 +72,7 @@ object Contribution {
     }
   }
 
-  def contributors(productId: Long): List[ContributorView] = withSession { implicit session ⇒
+  def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session: Session ⇒
     val peopleQuery = for {
       contribution ← Contributions if contribution.productId === productId && contribution.isPerson === true
       person ← People if person.id === contribution.contributorId
@@ -97,11 +97,11 @@ object Contribution {
   /**
    * Finds a contribution by ID.
    */
-  def find(id: Long): Option[Contribution] = withSession { implicit session ⇒
+  def find(id: Long): Option[Contribution] = DB.withSession { implicit session: Session ⇒
     Query(Contributions).filter(_.id === id).firstOption
   }
 
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Contributions.filter(_.id === id).mutate(_.delete)
   }
 

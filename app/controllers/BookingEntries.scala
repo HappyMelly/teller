@@ -39,6 +39,7 @@ import scala.util.Random
 import play.api.i18n.Messages
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object BookingEntries extends Controller with Security {
 
@@ -94,26 +95,25 @@ object BookingEntries extends Controller with Security {
   /**
    * Creates a user from an ‘add form’ submission.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       bookingEntryForm(request).bindFromRequest.fold(
-        formWithErrors ⇒ {
+        formWithErrors ⇒ Future.successful {
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
           val brands = Brand.findAll
           val transactionTypes = TransactionType.findAll
           BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
         },
-        entry ⇒ Async {
+        entry ⇒
           entry.withSourceConverted.map { entry ⇒
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
             val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
             Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
-          }
-        })
+          })
   }
 
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒

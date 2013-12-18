@@ -29,7 +29,7 @@ import models.database.{ Addresses, People, Brands, Licenses }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ Interval, LocalDate }
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 
 /**
@@ -57,7 +57,7 @@ case class LicenseLicenseeBrandView(license: License, brand: Brand, licensee: Pe
 
 object License {
 
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Licenses.filter(_.id === id).mutate(_.delete)
   }
 
@@ -72,14 +72,14 @@ object License {
   /**
    * Finds a license by ID.
    */
-  def find(id: Long): Option[License] = withSession { implicit session ⇒
+  def find(id: Long): Option[License] = DB.withSession { implicit session: Session ⇒
     Query(Licenses).filter(_.id === id).firstOption
   }
 
   /**
    * Finds a license by ID, joined with brand and licensee.
    */
-  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] = withSession { implicit session ⇒
+  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       license ← Licenses if license.id === id
       brand ← license.brand
@@ -99,7 +99,7 @@ object License {
    * Start dates for previous licenses that join up with current licenses are not found. For example, if there is a
    * license for 1 January to 31 December every year, this function returns 1 January of this year, not the first year.
    */
-  def licensedSince(licenseeId: Long, brandCode: String): Option[LocalDate] = withSession { implicit session ⇒
+  def licensedSince(licenseeId: Long, brandCode: String): Option[LocalDate] = DB.withSession { implicit session: Session ⇒
     val today = LocalDate.now()
     val query = for {
       license ← Licenses if license.start <= today && license.end >= today
@@ -110,13 +110,13 @@ object License {
     Query(query.min).first
   }
 
-  def insert(license: License) = withSession { implicit session ⇒
+  def insert(license: License) = DB.withSession { implicit session: Session ⇒
     val id = Licenses.forInsert.insert(license)
     license.copy(id = Some(id))
   }
 
   /** Finds a licensee by license ID **/
-  def licensee(licenseId: Long): Option[Person] = withSession { implicit session ⇒
+  def licensee(licenseId: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       license ← Licenses if license.id === licenseId
       licensee ← license.licensee
@@ -127,7 +127,7 @@ object License {
   /**
    * Returns a list of people who are licensed for the given brand on the given date, usually today.
    */
-  def licensees(brandCode: String, date: LocalDate = LocalDate.now()): List[Person] = withSession { implicit session ⇒
+  def licensees(brandCode: String, date: LocalDate = LocalDate.now()): List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       license ← Licenses if license.start <= date && license.end >= date
       brand ← license.brand if brand.code === brandCode
@@ -139,7 +139,7 @@ object License {
   /**
    * Returns a list of content licenses for the given person.
    */
-  def licenses(personId: Long): List[LicenseView] = withSession { implicit session ⇒
+  def licenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒
 
     val query = for {
       license ← Licenses if license.licenseeId === personId
@@ -154,7 +154,7 @@ object License {
   /**
    * Updates this license in the database.
    */
-  def update(license: License): Unit = withSession { implicit session ⇒
+  def update(license: License): Unit = DB.withSession { implicit session: Session ⇒
     license.id.map { id ⇒
       Query(Licenses).filter(_.id === id).update(license)
     }

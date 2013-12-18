@@ -27,7 +27,7 @@ package models
 import org.joda.money.{ Money, CurrencyUnit }
 import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB._
+import play.api.db.slick.DB
 import play.api.Play.current
 import scala.math.BigDecimal.RoundingMode
 
@@ -70,7 +70,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
   /**
    * Returns true if this account may be deleted.
    */
-  lazy val deletable: Boolean = withSession { implicit session ⇒
+  lazy val deletable: Boolean = DB.withSession { implicit session: Session ⇒
     val hasBookingEntries = id.exists { accountId ⇒
       val query = Query(BookingEntries).filter(e ⇒ e.ownerId === accountId || e.fromId === accountId || e.toId === accountId)
       Query(query.exists).first
@@ -92,7 +92,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     updateStatus(active = false, currency)
   }
 
-  def delete(): Unit = withSession { implicit session ⇒
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
     assert(deletable, "Attempt to delete account that is active or has booking entries")
     Accounts.where(_.id === id).mutate(_.delete())
   }
@@ -101,7 +101,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     AccountSummary(id.get, accountHolder.name, currency, active)
   }
 
-  private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = withSession { implicit session ⇒
+  private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = DB.withSession { implicit session: Session ⇒
     val updateQuery = for { a ← Accounts if a.id === this.id } yield (a.id, a.active, a.currency)
     updateQuery.mutate(mutator ⇒ mutator.row = (mutator.row._1, active, currency))
   }
@@ -124,7 +124,7 @@ object Account {
       case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
     }
 
-  def find(holder: AccountHolder): Account = withSession { implicit session ⇒
+  def find(holder: AccountHolder): Account = DB.withSession { implicit session: Session ⇒
     val query = holder match {
       case o: Organisation ⇒ Query(Accounts).filter(_.organisationId === o.id)
       case p: Person ⇒ Query(Accounts).filter(_.personId === p.id)
@@ -133,14 +133,14 @@ object Account {
     query.first()
   }
 
-  def find(id: Long): Option[Account] = withSession { implicit session ⇒
+  def find(id: Long): Option[Account] = DB.withSession { implicit session: Session ⇒
     Query(Accounts).filter(_.id === id).firstOption()
   }
 
   /**
    * Returns a summary list of active accounts.
    */
-  def findAllActive: List[AccountSummary] = withSession { implicit session ⇒
+  def findAllActive: List[AccountSummary] = DB.withSession { implicit session: Session ⇒
     val query = for {
       ((account, person), organisation) ← Accounts leftJoin
         People on (_.personId === _.id) leftJoin
@@ -159,7 +159,7 @@ object Account {
    * @param accountId The ID of the account to find the balance for.
    * @return The current balance for the account.
    */
-  def findBalance(accountId: Long): BigDecimal = withSession { implicit session ⇒
+  def findBalance(accountId: Long): BigDecimal = DB.withSession { implicit session: Session ⇒
     val creditQuery = for {
       entry ← BookingEntries if entry.fromId === accountId
     } yield entry.fromAmount

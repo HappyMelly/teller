@@ -26,7 +26,7 @@ package models
 
 import models.database.Addresses
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB._
+import play.api.db.slick.DB
 import play.api.Play.current
 
 case class Address(
@@ -40,16 +40,16 @@ case class Address(
 
 object Address {
 
-  def find(id: Long): Address = withSession { implicit session ⇒
+  def find(id: Long): Address = DB.withSession { implicit session: Session ⇒
     Query(Addresses).filter(_.id === id).first
   }
 
-  def insert(address: Address): Address = withSession { implicit session ⇒
+  def insert(address: Address): Address = DB.withSession { implicit session: Session ⇒
     val id = Addresses.forInsert.insert(address)
     address.copy(id = Some(id))
   }
 
-  def update(address: Address): Unit = withSession { implicit session ⇒
+  def update(address: Address): Unit = DB.withSession { implicit session: Session ⇒
     Addresses.filter(_.id === address.id).update(address)
   }
 }

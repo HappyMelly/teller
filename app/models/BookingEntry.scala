@@ -30,7 +30,7 @@ import org.joda.time.{ DateTime, LocalDate }
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB._
+import play.api.db.slick.DB
 import scala.Some
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -75,7 +75,7 @@ case class BookingEntry(
 
   def transactionType = transactionTypeId.flatMap(TransactionType.find(_))
 
-  def insert: BookingEntry = withSession { implicit session ⇒
+  def insert: BookingEntry = DB.withSession { implicit session: Session ⇒
     val nextBookingNumber = Some(BookingEntry.nextBookingNumber)
     val id = BookingEntries.forInsert.insert(this.copy(bookingNumber = nextBookingNumber))
     this.copy(id = Some(id), bookingNumber = nextBookingNumber)
@@ -128,7 +128,7 @@ object BookingEntry {
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now)
 
-  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = withSession { implicit session ⇒
+  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session: Session ⇒
     Query(BookingEntries).filter(_.bookingNumber === bookingNumber).firstOption
   }
 
@@ -166,18 +166,18 @@ object BookingEntry {
   /**
    * Returns a list of entries in reverse chronological order of date created.
    */
-  def findAll: List[BookingEntrySummary] = withSession { implicit session ⇒
+  def findAll: List[BookingEntrySummary] = DB.withSession { implicit session: Session ⇒
     bookingEntriesQuery.sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
   }
 
   /**
    * Returns a list of entries for the given account, in reverse chronological order of date created.
    */
-  def findByAccountId(accountId: Long): List[BookingEntrySummary] = withSession { implicit session ⇒
+  def findByAccountId(accountId: Long): List[BookingEntrySummary] = DB.withSession { implicit session: Session ⇒
     bookingEntriesQuery.filter(row ⇒ row._1 === accountId || row._2 === accountId).sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
   }
 
-  private def nextBookingNumber: Int = withSession { implicit session ⇒
+  private def nextBookingNumber: Int = DB.withSession { implicit session: Session ⇒
     Query(BookingEntries.map(_.bookingNumber).max).first().map(_ + 1).getOrElse(1001)
   }
 

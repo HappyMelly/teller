@@ -11,18 +11,19 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     jdbc,
+    cache,
     filters,
-    "be.objectify" %% "deadbolt-scala" % "2.1-RC2",
-    "com.github.tototoshi" %% "slick-joda-mapper" % "0.3.0",
-    "com.typesafe.play" %% "play-slick" % "0.3.3",
-    "com.typesafe.slick" %% "slick" % "1.0.1",
-    "mysql" % "mysql-connector-java" % "5.1.21",
+    "be.objectify" %% "deadbolt-scala" % "2.2-RC2",
+    "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0",
+    "com.typesafe.play" %% "play-slick" % "0.5.0.8",
+    //"com.typesafe.slick" %% "slick" % "1.0.1",
+    "mysql" % "mysql-connector-java" % "5.1.27",
     "org.joda" % "joda-money" % "0.9",
-    "org.pegdown" % "pegdown" % "1.2.1",
-    "org.jsoup" % "jsoup" % "1.7.2",
+    "org.pegdown" % "pegdown" % "1.4.2",
+    "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
-    "org.seleniumhq.selenium" % "selenium-java" % "2.32.0",
-    "securesocial" %% "securesocial" % "2.1.1"
+    "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
+    "securesocial" %% "securesocial" % "2.1.2"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(

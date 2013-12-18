@@ -27,7 +27,7 @@ package models
 import be.objectify.deadbolt.core.models.{ Permission, Subject }
 import models.database.UserAccounts
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 import play.libs.Scala
 
@@ -51,21 +51,21 @@ case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, 
 
 object UserAccount {
 
-  def delete(personId: Long) = withSession { implicit session ⇒
+  def delete(personId: Long) = DB.withSession { implicit session: Session ⇒
     UserAccounts.where(_.personId === personId).mutate(_.delete)
   }
 
   /**
    * Returns the account for the person with the given Twitter handle.
    */
-  def findByTwitterHandle(twitterHandle: String): Option[UserAccount] = withSession { implicit session ⇒
+  def findByTwitterHandle(twitterHandle: String): Option[UserAccount] = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts if account.twitterHandle.toLowerCase === twitterHandle.toLowerCase
     } yield account
     query.firstOption
   }
 
-  def insert(account: UserAccount) = withSession { implicit session ⇒
+  def insert(account: UserAccount) = DB.withSession { implicit session: Session ⇒
     val id = UserAccounts.forInsert.insert(account)
     account.copy(id = Some(id))
   }
@@ -73,7 +73,7 @@ object UserAccount {
   /**
    * Returns the given person’s role.
    */
-  def findRole(personId: Long): Option[UserRole.Role.Role] = withSession { implicit session ⇒
+  def findRole(personId: Long): Option[UserRole.Role.Role] = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts if account.personId === personId
     } yield account.role
@@ -83,7 +83,7 @@ object UserAccount {
   /**
    * Returns the given person’s role.
    */
-  def findRoleByTwitterHandle(twitterHandle: String): Option[UserRole] = withSession { implicit session ⇒
+  def findRoleByTwitterHandle(twitterHandle: String): Option[UserRole] = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts
       person ← account.person if person.twitterHandle === twitterHandle
@@ -94,7 +94,7 @@ object UserAccount {
   /**
    * Updates the user’s role.
    */
-  def updateRole(personId: Long, role: String): Unit = withSession { implicit session ⇒
+  def updateRole(personId: Long, role: String): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts if account.personId === personId
     } yield account.role

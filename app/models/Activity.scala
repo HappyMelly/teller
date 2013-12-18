@@ -27,7 +27,7 @@ package models
 import models.database.Activities
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
 import play.api.i18n.Messages
@@ -66,7 +66,7 @@ object Activity {
   /**
    * Returns all activity stream entries in reverse chronological order.
    */
-  def findAll: List[Activity] = withSession { implicit session ⇒
+  def findAll: List[Activity] = DB.withSession { implicit session ⇒
     Query(Activities).sortBy(_.created.desc).take(50).list
   }
 
@@ -82,7 +82,7 @@ object Activity {
    * Inserts a new activity stream entry.
    */
   private def insert(subject: String, predicate: Predicate, activityObject: Option[String]): Activity = {
-    withSession { implicit session ⇒
+    DB.withSession { implicit session ⇒
       val activity = Activity(None, subject, predicate.toString, activityObject)
       val id = Activities.forInsert.insert(activity)
       activity.copy(id = Some(id))

@@ -27,9 +27,10 @@ package controllers
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltHandler }
 import be.objectify.deadbolt.core.models.Subject
 import models.UserAccount
-import play.api.mvc.{ Request, Result }
+import play.api.mvc.{ SimpleResult, Request, Result }
 import play.api.i18n.Messages
 import play.api.mvc.Results.Redirect
+import scala.concurrent.Future
 
 /**
  * Deadbolt authorisation handler.
@@ -42,7 +43,7 @@ class AuthorisationHandler(account: Option[UserAccount]) extends DeadboltHandler
 
   override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = None
 
-  def onAuthFailure[A](request: Request[A]): Result = {
+  def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
     Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
   }
 }
