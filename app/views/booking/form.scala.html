@@ -1,5 +1,6 @@
 @(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary],
-  toAccounts: List[AccountSummary], brands: List[BrandView], transactionTypes: List[TransactionType])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
+  toAccounts: List[AccountSummary], brands: List[BrandView], transactionTypes: List[TransactionType],
+  successMessage: Option[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
@@ -27,6 +28,13 @@
 }
 
 @main("Add booking entry", Some(user)) {
+
+  @successMessage.map { message =>
+    <div class="alert alert-success">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      @message
+    </div>
+  }
 
   <h1>Add booking entry</h1>
 
@@ -135,7 +143,9 @@
 
     @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge", '_help -> "")
 
-    <button class="btn btn-primary" type="submit">Save</button>
+    <button class="btn btn-primary" type="submit">Save &amp; View All</button>
+    <button name="next" value="add" class="btn" type="submit">Save &amp; Add New Entry</button>
+    <button name="next" value="copy" class="btn" type="submit">Save &amp; Copy Entry</button>
   </form>
 
   @helper.javascriptRouter("jsRoutes")(
