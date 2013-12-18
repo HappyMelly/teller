@@ -33,9 +33,10 @@ import org.joda.time.LocalDate
 import play.api.mvc.Controller
 import play.api.data.Forms._
 import play.api.data.Form
+import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
-import securesocial.core.SecuredRequest
+import scala.concurrent.Future
 
 object BookingEntries extends Controller with Security {
 
@@ -95,12 +96,12 @@ object BookingEntries extends Controller with Security {
   /**
    * Creates a booking entry from an ‘add form’ submission.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       val form = bookingEntryForm(request).bindFromRequest
       form.fold(
-        formWithErrors ⇒ {
+        formWithErrors ⇒ Future.successful {
           // Handle errors
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
@@ -108,7 +109,7 @@ object BookingEntries extends Controller with Security {
           val transactionTypes = TransactionType.findAll
           BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
         },
-        entry ⇒ Async {
+        entry ⇒ {
           entry.withSourceConverted.map { entry ⇒
             // Create booking entry.
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount

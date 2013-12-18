@@ -26,9 +26,9 @@ package models
 
 import models.database.{ BookingEntries, Licenses, Brands, ProductBrandAssociations }
 import org.joda.time.DateTime
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
 import play.api.Play.current
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -39,7 +39,7 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
   /**
    * Returns true if this brand may be deleted.
    */
-  lazy val deletable: Boolean = withSession { implicit session ⇒
+  lazy val deletable: Boolean = DB.withSession { implicit session: Session ⇒
     val hasLicences = id.map { brandId ⇒
       val query = Query(Licenses).filter(l ⇒ l.brandId === brandId)
       Query(query.exists).first
@@ -47,7 +47,7 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
     !hasLicences && products.isEmpty
   }
 
-  lazy val products: List[Product] = withSession { implicit session ⇒
+  lazy val products: List[Product] = DB.withSession { implicit session: Session ⇒
     val query = for {
       relation ← ProductBrandAssociations if relation.brandId === this.id
       product ← relation.product
@@ -55,14 +55,14 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
     query.sortBy(_.title.toLowerCase).list
   }
 
-  def insert: Brand = withSession { implicit session ⇒
+  def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = Brand.delete(this.id.get)
 
-  def update = withSession { implicit session ⇒
+  def update = DB.withSession { implicit session: Session ⇒
     val updateTuple = (code, name, coordinatorId, updated, updatedBy)
     val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
@@ -77,11 +77,11 @@ object Brand {
   /**
    * Returns true if and only if there is a brand with the given code.
    */
-  def exists(code: String): Boolean = withSession { implicit session ⇒
+  def exists(code: String): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(Brands).filter(_.code === code).exists).first
   }
 
-  def find(code: String): Option[BrandView] = withSession { implicit session ⇒
+  def find(code: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
       coordinator ← brand.coordinator
@@ -96,11 +96,11 @@ object Brand {
   }
 
   /** Finds a brand by ID **/
-  def find(id: Long) = withSession { implicit session ⇒
+  def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Brands).filter(_.id === id).firstOption
   }
 
-  def findAll: List[BrandView] = withSession { implicit session ⇒
+  def findAll: List[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId)
       coordinator ← brand.coordinator
@@ -116,7 +116,7 @@ object Brand {
     }.toList
   }
 
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Brands.where(_.id === id).mutate(_.delete())
   }
 

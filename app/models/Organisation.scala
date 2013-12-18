@@ -28,7 +28,7 @@ import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
@@ -69,7 +69,7 @@ case class Organisation(
    */
   lazy val deletable: Boolean = account.deletable && contributions.isEmpty && members.isEmpty
 
-  lazy val members: List[Person] = withSession { implicit session ⇒
+  lazy val members: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       membership ← OrganisationMemberships if membership.organisationId === this.id
       person ← membership.person
@@ -80,7 +80,7 @@ case class Organisation(
   /**
    * Returns a list of this organisation's contributions.
    */
-  lazy val contributions: List[ContributionView] = withSession { implicit session ⇒
+  lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
     Contribution.contributions(this.id.get, false)
   }
 
@@ -88,13 +88,13 @@ case class Organisation(
    * Inserts this organisation into the database, with an inactive account.
    * @return The Organisation as it is saved (with the id added)
    */
-  def insert: Organisation = DB.withSession { implicit session ⇒
+  def insert: Organisation = DB.withSession { implicit session: Session ⇒
     val organisationId = Organisations.forInsert.insert(this)
     Accounts.insert(Account(organisationId = Some(organisationId)))
     this.copy(id = Some(organisationId))
   }
 
-  def update = DB.withSession { implicit session ⇒
+  def update = DB.withSession { implicit session: Session ⇒
     assert(id.isDefined, "Can only update Organisations that have an id")
     val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
     val q = filter.map { org ⇒ org.forUpdate }
@@ -113,7 +113,7 @@ object Organisation {
   /**
    * Activates the organisation, if the parameter is true, or deactivates it.
    */
-  def activate(id: Long, active: Boolean): Unit = withSession { implicit session ⇒
+  def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {
       organisation ← Organisations if organisation.id === id
     } yield organisation.active
@@ -123,28 +123,28 @@ object Organisation {
   /**
    * Deletes an organisation.
    */
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     find(id).map(_.account).map(_.delete)
     Organisations.where(_.id === id).mutate(_.delete())
   }
 
-  def find(id: Long): Option[Organisation] = withSession { implicit session ⇒
+  def find(id: Long): Option[Organisation] = DB.withSession { implicit session: Session ⇒
     Query(Organisations).filter(_.id === id).list.headOption
   }
 
-  def findAll: List[Organisation] = withSession { implicit session ⇒
+  def findAll: List[Organisation] = DB.withSession { implicit session: Session ⇒
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }
 
   /**
    * Returns a list of active organisations, optionally filtered to only include legal entities.
    */
-  def find(legalEntitiesOnly: Boolean): List[Organisation] = withSession { implicit session ⇒
+  def find(legalEntitiesOnly: Boolean): List[Organisation] = DB.withSession { implicit session: Session ⇒
     val query = if (legalEntitiesOnly) Query(Organisations).filter(_.category === OrganisationCategory.LegalEntity) else Query(Organisations)
     query.filter(_.active).sortBy(_.name.toLowerCase).list
   }
 
-  def findActive: List[Organisation] = withSession { implicit session ⇒
+  def findActive: List[Organisation] = DB.withSession { implicit session: Session ⇒
     Query(Organisations).filter(_.active === true).sortBy(_.name.toLowerCase).list
   }
 }

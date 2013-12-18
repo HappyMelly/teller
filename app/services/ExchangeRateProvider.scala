@@ -86,10 +86,10 @@ object DatabaseExchangeRateProvider extends ExchangeRateProvider {
 case class PersistingExchangeRateProvider(private val wrappedProvider: ExchangeRateProvider) extends ExchangeRateProvider {
   import scala.concurrent.ExecutionContext.Implicits.global
   import play.api.db.slick.Config.driver.simple._
-  import play.api.db.slick.DB.withSession
+  import play.api.db.slick.DB
   import play.api.Play.current
 
-  override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] = withSession { implicit session ⇒
+  override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] = DB.withSession { implicit session: Session ⇒
     val futureMaybeRate: Future[Option[ExchangeRate]] = wrappedProvider(base, counter)
     for (Some(rate) ← futureMaybeRate if rate.id.isEmpty) yield Some(rate.insert)
   }

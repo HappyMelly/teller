@@ -26,7 +26,7 @@ package models
 
 import models.database.{ BookingEntries, TransactionTypes }
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 
 /**
@@ -36,7 +36,7 @@ case class TransactionType(id: Option[Long], name: String)
 
 object TransactionType {
 
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     BookingEntries.filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
     TransactionTypes.where(_.id === id).mutate(_.delete())
   }
@@ -44,22 +44,22 @@ object TransactionType {
   /**
    * Returns true if a transaction type with the given value already exists.
    */
-  def exists(value: String): Boolean = withSession { implicit session ⇒
+  def exists(value: String): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(TransactionTypes).filter(_.name === value).exists).first
   }
 
-  def find(id: Long): Option[TransactionType] = withSession { implicit session ⇒
+  def find(id: Long): Option[TransactionType] = DB.withSession { implicit session: Session ⇒
     Query(TransactionTypes).filter(_.id === id).firstOption
   }
 
-  def findAll: List[TransactionType] = withSession { implicit session ⇒
+  def findAll: List[TransactionType] = DB.withSession { implicit session: Session ⇒
     Query(TransactionTypes).sortBy(_.name.toLowerCase).list
   }
 
   /**
    * Inserts a new transaction type with the given value.
    */
-  def insert(value: String): Unit = withSession { implicit session ⇒
+  def insert(value: String): Unit = DB.withSession { implicit session: Session ⇒
     val transactionType = TransactionType(None, value)
     TransactionTypes.forInsert.insert(transactionType)
   }

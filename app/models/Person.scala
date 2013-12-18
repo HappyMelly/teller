@@ -28,7 +28,7 @@ import models.database._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.db.slick.DB.withSession
+import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
 import scala.Some
@@ -68,7 +68,7 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+  def addMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
     OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
 
@@ -80,7 +80,7 @@ case class Person(
   /**
    * Removes this person’s membership in the given organisation.
    */
-  def deleteMembership(organisationId: Long): Unit = withSession { implicit session ⇒
+  def deleteMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
     OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
   }
 
@@ -96,7 +96,7 @@ case class Person(
   /**
    * Returns a list of this person’s content licenses.
    */
-  lazy val licenses: List[LicenseView] = withSession { implicit session ⇒
+  lazy val licenses: List[LicenseView] = DB.withSession { implicit session: Session ⇒
 
     val query = for {
       license ← Licenses if license.licenseeId === this.id
@@ -111,14 +111,14 @@ case class Person(
   /**
    * Returns a list of this person's contributions.
    */
-  lazy val contributions: List[ContributionView] = withSession { implicit session ⇒
+  lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
     Contribution.contributions(this.id.get, true)
   }
 
   /**
    * Returns a list of the organisations this person is a member of.
    */
-  lazy val memberships: List[Organisation] = withSession { implicit session ⇒
+  lazy val memberships: List[Organisation] = DB.withSession { implicit session: Session ⇒
     val query = for {
       membership ← OrganisationMemberships if membership.personId === this.id
       organisation ← membership.organisation
@@ -129,7 +129,7 @@ case class Person(
   /**
    * Inserts this person into the database and returns the saved Person, with the ID added.
    */
-  def insert: Person = DB.withSession { implicit session ⇒
+  def insert: Person = DB.withSession { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
     val personId = People.forInsert.insert(this.copy(address = newAddress))
     Accounts.insert(Account(personId = Some(personId)))
@@ -139,7 +139,7 @@ case class Person(
   /**
    * Updates this person in the database and returns the saved person.
    */
-  def update: Person = DB.withSession { implicit session ⇒
+  def update: Person = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
 
       val addressId = People.filter(_.id === this.id).map(_.addressId).first
@@ -167,7 +167,7 @@ case class Person(
    *
    * @return The list of accounts that this person has access to
    */
-  def findAccessibleAccounts: List[AccountSummary] = withSession { implicit session ⇒
+  def findAccessibleAccounts: List[AccountSummary] = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← Accounts if account.active
       organisation ← Organisations if account.organisationId === organisation.id.?
@@ -188,7 +188,7 @@ object Person {
   /**
    * Activates the organisation, if the parameter is true, or deactivates it.
    */
-  def activate(id: Long, active: Boolean): Unit = withSession { implicit session ⇒
+  def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {
       person ← People if person.id === id
     } yield person.active
@@ -198,12 +198,12 @@ object Person {
   /**
    * Deletes the person with the given ID and their account.
    */
-  def delete(id: Long): Unit = withSession { implicit session ⇒
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     find(id).map(_.account).map(_.delete)
     People.where(_.id === id).mutate(_.delete())
   }
 
-  def find(id: Long): Option[Person] = withSession { implicit session ⇒
+  def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       person ← People if person.id === id
     } yield person
@@ -212,7 +212,7 @@ object Person {
   }
 
   /** Finds all active people, filtered by stakeholder and/or board member status **/
-  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = withSession { implicit session ⇒
+  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
     val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
     val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
@@ -221,7 +221,7 @@ object Person {
   }
 
   /** Retrieves a list of all people from the database **/
-  def findAll: List[PersonSummary] = withSession { implicit session ⇒
+  def findAll: List[PersonSummary] = DB.withSession { implicit session: Session ⇒
     (for {
       person ← People
       address ← Addresses if person.addressId === address.id
@@ -230,7 +230,7 @@ object Person {
       .mapResult(PersonSummary.tupled).list
   }
 
-  def findActive: List[Person] = withSession { implicit session ⇒
+  def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 

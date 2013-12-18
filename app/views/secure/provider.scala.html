@@ -1,4 +1,4 @@
-@(providerId: String, loginForm: Option[Form[(String, String)]] = None)(implicit request: RequestHeader, token: play.filters.csrf.CSRF.Token)
+@(providerId: String, loginForm: Option[Form[(String, String)]] = None)(implicit request: RequestHeader)
 
 @import securesocial.core.Registry
 @import securesocial.core.IdentityProvider
