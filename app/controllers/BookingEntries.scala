@@ -33,12 +33,9 @@ import org.joda.time.LocalDate
 import play.api.mvc.Controller
 import play.api.data.Forms._
 import play.api.data.Form
-import play.api.data.validation.Constraints._
-import securesocial.core.SecuredRequest
-import scala.util.Random
 import play.api.i18n.Messages
-import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
+import securesocial.core.SecuredRequest
 
 object BookingEntries extends Controller with Security {
 
@@ -59,7 +56,8 @@ object BookingEntries extends Controller with Security {
     "description" -> optional(text(maxLength = 250)),
     "url" -> optional(webUrl),
     "transactionTypeId" -> optional(longNumber),
-    "owes" -> boolean)(fromForm)(toForm))
+    "owes" -> boolean,
+    "next" -> optional(text))(fromForm)(toForm))
 
   /**
    * Creates a `BookingEntry` from form data.
@@ -67,7 +65,7 @@ object BookingEntries extends Controller with Security {
   def fromForm(id: Option[Long], ownerId: Long, bookingNumber: Option[Int], summary: String, source: Money, sourcePercentage: Int,
     fromId: Long, fromAmount: Money, toId: Long, toAmount: Money,
     brandId: Long, reference: Option[String], referenceDate: LocalDate,
-    description: Option[String], url: Option[String], transactionTypeId: Option[Long], owes: Boolean) = {
+    description: Option[String], url: Option[String], transactionTypeId: Option[Long], owes: Boolean, next: Option[String]) = {
 
     BookingEntry(id, ownerId, LocalDate.now, bookingNumber, summary, if (owes) source else source.negated,
       sourcePercentage, fromId, fromAmount, toId, toAmount, brandId, reference, referenceDate, description, url,
@@ -80,8 +78,11 @@ object BookingEntries extends Controller with Security {
   def toForm(e: BookingEntry) = Some((e.id, e.ownerId, e.bookingNumber, e.summary,
     if (e.source.isNegative) e.source.multipliedBy(-1L) else e.source,
     e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId, e.reference, e.referenceDate,
-    e.description, e.url, e.transactionTypeId, e.source.isPositiveOrZero))
+    e.description, e.url, e.transactionTypeId, e.source.isPositiveOrZero, None))
 
+  /**
+   * Renders the page for adding a new booking entry.
+   */
   def add = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
@@ -92,13 +93,15 @@ object BookingEntries extends Controller with Security {
   }
 
   /**
-   * Creates a user from an ‘add form’ submission.
+   * Creates a booking entry from an ‘add form’ submission.
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      bookingEntryForm(request).bindFromRequest.fold(
+      val form = bookingEntryForm(request).bindFromRequest
+      form.fold(
         formWithErrors ⇒ {
+          // Handle errors
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
           val brands = Brand.findAll
@@ -107,11 +110,25 @@ object BookingEntries extends Controller with Security {
         },
         entry ⇒ Async {
           entry.withSourceConverted.map { entry ⇒
+            // Create booking entry.
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-            val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
+            entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-            Redirect(routes.BookingEntries.index()).flashing("success" -> activity.toString)
+            val success = "success" -> activity.toString
+
+            // Redirect or re-render according to which submit button was clicked.
+            form("next").value match {
+              case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing(success)
+              case Some("copy") ⇒ {
+                val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+                val brands = Brand.findAll
+                val transactionTypes = TransactionType.findAll
+                val successMessage = Some(activity.toString)
+                Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, brands, transactionTypes, successMessage))
+              }
+              case _ ⇒ Redirect(routes.BookingEntries.index()).flashing(success)
+            }
           }
         })
   }
