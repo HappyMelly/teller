@@ -89,7 +89,7 @@ object BookingEntries extends Controller with Security {
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
 
-      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll, None))
+      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll))
   }
 
   /**
@@ -106,22 +106,21 @@ object BookingEntries extends Controller with Security {
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
           val brands = Brand.findAll
           val transactionTypes = TransactionType.findAll
-          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None))
+          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
         },
         entry ⇒ Async {
           entry.withSourceConverted.map { entry ⇒
             // Create booking entry.
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-            val updatedEntry = entry.copy(ownerId = currentUser.personId).insert
+            entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
             val success = "success" -> activity.toString
 
-            // Redirect according to which submit button was clicked.
+            // Redirect or re-render according to which submit button was clicked.
             form("next").value match {
               case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing(success)
               case Some("copy") ⇒ {
-                val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
                 val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
                 val brands = Brand.findAll
                 val transactionTypes = TransactionType.findAll

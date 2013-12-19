@@ -1,6 +1,6 @@
 @(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary],
   toAccounts: List[AccountSummary], brands: List[BrandView], transactionTypes: List[TransactionType],
-  successMessage: Option[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
+  successMessage: Option[String] = None)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
