@@ -68,6 +68,8 @@ GET  /bookings                        controllers.BookingEntries.index
 GET  /booking/new                     controllers.BookingEntries.add
 POST /booking/new                     controllers.BookingEntries.create
 GET  /booking/:bookingNumber          controllers.BookingEntries.details(bookingNumber: Int)
+POST /booking/:bookingNumber          controllers.BookingEntries.update(bookingNumber: Int)
+GET  /booking/:bookingNumber/edit     controllers.BookingEntries.edit(bookingNumber: Int)
 POST /booking/:bookingNumber/delete   controllers.BookingEntries.delete(bookingNumber: Int)
 
 GET  /admin/settings                     controllers.Administration.settings

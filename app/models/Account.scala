@@ -58,7 +58,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
    * - An account for an organisation may only be (de)activated by members of that organisation, or admins
    * - The Levy account may only be (de)activated by admins
    */
-  def canBeActivatedBy(user: UserAccount) = {
+  def canBeEditedBy(user: UserAccount) = {
     val admin = user.getRoles.contains(UserRole(UserRole.Role.Admin))
     accountHolder match {
       case organisation: Organisation ⇒ admin || organisation.members.map(_.id.get).contains(user.personId)
@@ -152,6 +152,10 @@ object Account {
       case (id, currency, firstName, lastName, organisationName, active) ⇒
         AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency, active)
     }.list.sortBy(_.name.toLowerCase)
+  }
+
+  def findByPerson(personId: Long): Option[Account] = DB.withSession { implicit session ⇒
+    Query(Accounts).filter(_.personId === personId).firstOption()
   }
 
   /**

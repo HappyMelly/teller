@@ -28,9 +28,7 @@ import org.joda.money.{ CurrencyUnit, Money }
 import java.math.RoundingMode
 import play.api.data.Mapping
 import play.api.data.Forms._
-import scala.Some
 import scala.Predef._
-import scala.Some
 import scala.slick.lifted.MappedTypeMapper
 
 /**
