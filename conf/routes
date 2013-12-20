@@ -64,10 +64,11 @@ GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long)
 POST /account/:id/activate   controllers.Accounts.activate(id: Long)
 POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 
-GET  /bookings                 controllers.BookingEntries.index
-GET  /booking/new              controllers.BookingEntries.add
-POST /booking/new              controllers.BookingEntries.create
-GET  /booking/:bookingNumber   controllers.BookingEntries.details(bookingNumber: Int)
+GET  /bookings                        controllers.BookingEntries.index
+GET  /booking/new                     controllers.BookingEntries.add
+POST /booking/new                     controllers.BookingEntries.create
+GET  /booking/:bookingNumber          controllers.BookingEntries.details(bookingNumber: Int)
+POST /booking/:bookingNumber/delete   controllers.BookingEntries.delete(bookingNumber: Int)
 
 GET  /admin/settings                     controllers.Administration.settings
 POST /admin/transactiontype/new          controllers.Administration.createTransactionType

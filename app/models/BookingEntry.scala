@@ -31,7 +31,6 @@ import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import scala.Some
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -63,17 +62,24 @@ case class BookingEntry(
 
   created: DateTime = DateTime.now()) {
 
-  def from = Account.find(fromId).get
+  lazy val from = Account.find(fromId).get
 
-  def to = Account.find(toId).get
+  lazy val to = Account.find(toId).get
 
-  def owner = Person.find(ownerId).get
+  lazy val owner = Person.find(ownerId).get
 
-  def brand = Brand.find(brandId).get
+  lazy val brand = Brand.find(brandId).get
 
-  def owes = source.isPositiveOrZero
+  lazy val owes = source.isPositiveOrZero
 
-  def transactionType = transactionTypeId.flatMap(TransactionType.find(_))
+  lazy val transactionType = transactionTypeId.flatMap(TransactionType.find(_))
+
+  lazy val editable = from.active && to.active
+
+  /**
+   * Checks if the given user has permission to delete this entry, because he is the owner.
+   */
+  def canBeDeletedBy(user: UserAccount): Boolean = editable && user.personId == ownerId
 
   def insert: BookingEntry = DB.withSession { implicit session: Session ⇒
     val nextBookingNumber = Some(BookingEntry.nextBookingNumber)
@@ -128,14 +134,14 @@ object BookingEntry {
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now)
 
-  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session: Session ⇒
-    Query(BookingEntries).filter(_.bookingNumber === bookingNumber).firstOption
+  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session ⇒
+    BookingEntries.filtered.filter(_.bookingNumber === bookingNumber).firstOption
   }
 
   // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
   // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
   lazy val bookingEntriesQuery = for {
-    entry ← BookingEntries
+    entry ← BookingEntries.filtered
     brand ← entry.brand
     ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
       People on (_.personId === _.id) leftJoin
@@ -161,6 +167,13 @@ object BookingEntry {
       val owes = source.isPositiveOrZero
       BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
     }
+  }
+
+  /**
+   * Soft-deletes a booking entry by marking it as deleted.
+   */
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    BookingEntries.filter(_.id === id).map(_.deleted).update(true)
   }
 
   /**
