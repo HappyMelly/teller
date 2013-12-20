@@ -24,7 +24,6 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.ExchangeRate
 import org.joda.money.CurrencyUnit._
 import org.specs2.mutable._
 import play.api.test.Helpers._
@@ -35,8 +34,7 @@ class YahooExchangeRateProviderSpec extends Specification {
 
   "The provider" should {
     "return a result for EUR-USD" in {
-      val result = await(YahooExchangeRateProvider(EUR, USD))
-      result must beSome[ExchangeRate]
+      YahooExchangeRateProvider(EUR, USD) must beSome[ExchangeRate].await
     }
 
   }

@@ -24,7 +24,6 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.ExchangeRate
 import org.joda.money.{ Money, CurrencyUnit }
 import org.joda.money.CurrencyUnit._
 import org.joda.time.DateTime
@@ -54,17 +53,17 @@ class CurrencyConverterSpec extends Specification {
 
   "The currency converter" should {
     "pick the first provider that can provide an exchange rate" in {
-      await(CurrencyConverter.findRate(EUR, USD, someFirst)) should beSome(eurUsd)
-      await(CurrencyConverter.findRate(EUR, USD, noneFirst)) should beSome(eurUsd)
-      await(CurrencyConverter.findRate(EUR, USD, noneOnly)) should beNone
+      CurrencyConverter.findRate(EUR, USD, someFirst) should beSome(eurUsd).await
+      CurrencyConverter.findRate(EUR, USD, noneFirst) should beSome(eurUsd).await
+      CurrencyConverter.findRate(EUR, USD, noneOnly) should beNone.await
     }
 
     "convert between currencies it has a provider for" in {
-      await(CurrencyConverter.convert(oneEuro, USD, someFirst)) must beAnInstanceOf[Money]
+      CurrencyConverter.convert(oneEuro, USD, someFirst) must beAnInstanceOf[Money].await
     }
 
     "fail conversions for which there is no exchange rate" in {
-      await(CurrencyConverter.convert(oneEuro, USD, noneOnly)) must throwA[NoExchangeRateException]
+      CurrencyConverter.convert(oneEuro, USD, noneOnly) must throwA[NoExchangeRateException].await
     }
   }
 

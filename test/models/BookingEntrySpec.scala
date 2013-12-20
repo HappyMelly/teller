@@ -24,7 +24,6 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.BookingEntry
 import org.joda.money.{ Money, CurrencyUnit }
 import org.specs2.mutable.{ Tables, Specification }
 

@@ -24,7 +24,6 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.ExchangeRate
 import org.joda.money.{ Money, CurrencyUnit }
 import CurrencyUnit.{ EUR, USD, GBP }
 import org.joda.time.DateTime
