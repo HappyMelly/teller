@@ -24,7 +24,7 @@
   @restrict(handler, List(as(Editor.toString))) {
     <div class="span2 actions">
       <form class="delete" method="post" text="brand" action="@CSRF(routes.Brands.delete(brand.code))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has licenses" }>
+        <button class="btn btn-danger btn-block" type="submit" @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>

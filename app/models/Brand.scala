@@ -44,7 +44,11 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
       val query = Query(Licenses).filter(l ⇒ l.brandId === brandId)
       Query(query.exists).first
     }.getOrElse(false)
-    !hasLicences && products.isEmpty
+    val hasBookings = id.map { brandId ⇒
+      val query = Query(BookingEntries).filter(e ⇒ e.brandId === brandId)
+      Query(query.exists).first
+    }.getOrElse(false)
+    !hasLicences && !hasBookings && products.isEmpty
   }
 
   lazy val products: List[Product] = DB.withSession { implicit session: Session ⇒
