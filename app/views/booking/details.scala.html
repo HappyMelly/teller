@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, booking: BookingEntry)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 @import scala.math.BigDecimal.RoundingMode
 
 @import helper.CSRF
@@ -9,17 +9,35 @@
 
 @main(booking.summary + " - Booking", Some(user)) {
 
-  <header>
-    <h1>Booking: @booking.summary</h1>
-    <p><small>Created by @booking.owner.fullName on @booking.created.format </small></p>
-  </header>
+  <div class="row">
+    <div class="span8">
+      <header>
+        <h1>Booking: @booking.summary</h1>
+        <p><small>Created by @booking.owner.fullName on @booking.created.format </small></p>
+      </header>
+    </div>
 
-  @booking.description.map { description =>
-    <h3>Description</h3>
-    <p>@description</p>
-  }
+    @if(booking.canBeDeletedBy(currentUser)) {
+      <div class="span2 actions">
+        <form class="delete" method="post" text="booking entry" action="@CSRF(routes.BookingEntries.delete(booking.bookingNumber.getOrElse(0)))">
+          <button class="btn btn-danger btn-block" type="submit">
+          <i class="icon-white icon-trash"></i> Delete
+          </button>
+        </form>
+      </div>
+    }
+  </div>
 
-  <h3>Booking details</h3>
+  <div class="row">
+    <div class="span8">
+      @booking.description.map { description =>
+        <h3>Description</h3>
+        <p>@description</p>
+      }
+
+      <h3>Booking details</h3>
+    </div>
+  </div>
 
   <div class="row">
     <div class="span4">
@@ -95,4 +113,6 @@
       @booking.to.accountHolder.name
     </div>
   </div>
+
+  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

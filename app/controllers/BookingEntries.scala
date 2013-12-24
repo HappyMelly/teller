@@ -134,6 +134,24 @@ object BookingEntries extends Controller with Security {
         })
   }
 
+  def delete(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
+        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        if (entry.canBeDeletedBy(currentUser)) {
+          entry.id.map { id ⇒
+            BookingEntry.delete(id)
+            val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+            Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
+          }.getOrElse(NotFound)
+        } else {
+          Redirect(routes.BookingEntries.index).flashing("error" -> "Only the owner can delete a booking")
+        }
+      }.getOrElse(NotFound)
+  }
+
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val levy = Account.find(Levy)
@@ -144,7 +162,8 @@ object BookingEntries extends Controller with Security {
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map{ bookingEntry ⇒
-        Ok(views.html.booking.details(request.user, bookingEntry))
+        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        Ok(views.html.booking.details(request.user, bookingEntry, currentUser))
       }.getOrElse(NotFound)
   }
 

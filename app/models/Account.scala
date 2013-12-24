@@ -161,11 +161,11 @@ object Account {
    */
   def findBalance(accountId: Long): BigDecimal = DB.withSession { implicit session: Session ⇒
     val creditQuery = for {
-      entry ← BookingEntries if entry.fromId === accountId
+      entry ← BookingEntries.filtered if entry.fromId === accountId
     } yield entry.fromAmount
 
     val debitQuery = for {
-      entry ← BookingEntries if entry.toId === accountId
+      entry ← BookingEntries.filtered if entry.toId === accountId
     } yield entry.toAmount
 
     val credit = Query(creditQuery.sum).first.getOrElse(BigDecimal(0))

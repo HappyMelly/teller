@@ -36,6 +36,8 @@ import play.api.db.slick.Config.driver.simple._
  */
 object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
 
+  def filtered = Query(BookingEntries).filter(_.deleted === false)
+
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def ownerId = column[Long]("OWNER_ID")
   def bookingDate = column[LocalDate]("BOOKING_DATE")
@@ -69,6 +71,8 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def brand = foreignKey("BOOKING_BRAND_FK", brandId, Brands)(_.id)
   def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TransactionTypes)(_.id)
 
+  def deleted = column[Boolean]("DELETED")
+
   def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~
     sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
     brandId ~ reference ~ referenceDate ~ description ~ url ~ transactionTypeId ~ created <> (
@@ -92,4 +96,5 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
       })
 
   def forInsert = * returning id
+
 }
