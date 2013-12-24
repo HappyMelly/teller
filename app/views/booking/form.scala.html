@@ -36,117 +36,120 @@
     </div>
   }
 
-  <h1>Add booking entry</h1>
+  @defining(form.value.flatMap(_.id).isDefined) { editing =>
+    <h1>@if(editing) { Edit } else { Add } booking entry</h1>
 
-  @validationErrors(form)
+    @validationErrors(form)
 
-  <form class="form-horizontal" method="post" action="@CSRF(routes.BookingEntries.create)">
 
-    @defining(form("summary").hasErrors) { hasErrors =>
-      <div class="controls-row control-group @if(hasErrors) {error}">
-        <label for="summary">Transaction type &amp; summary</label>
-        <select name="transactionTypeId">
-          <option value="">Choose a transaction type</option>
-          @for(transactionType <- transactionTypes) {
-            <option value="@transactionType.id.get.toString" @if(form("transactionTypeId").value == transactionType.id.map(_.toString)) { selected }>@transactionType.name</option>
-          }
-        </select>
-        <input id="summary" class="input-xxlarge" name="summary" placeholder="Summary" type="text" value="@form("summary").value">
-        <span class="help-inline">
-          @if(hasErrors) {
-            Missing summary
-          } else {
-            Required
-          }
-        </span>
+    <form class="form-horizontal" method="post" action="@CSRF(if(editing) { routes.BookingEntries.update(form.value.flatMap(_.bookingNumber).getOrElse(0)) } else { routes.BookingEntries.create })">
+
+      @defining(form("summary").hasErrors) { hasErrors =>
+        <div class="controls-row control-group @if(hasErrors) {error}">
+          <label for="summary">Transaction type &amp; summary</label>
+          <select name="transactionTypeId">
+            <option value="">Choose a transaction type</option>
+            @for(transactionType <- transactionTypes) {
+              <option value="@transactionType.id.get.toString" @if(form("transactionTypeId").value == transactionType.id.map(_.toString)) { selected }>@transactionType.name</option>
+            }
+          </select>
+          <input id="summary" class="input-xxlarge" name="summary" placeholder="Summary" type="text" value="@form("summary").value">
+          <span class="help-inline">
+            @if(hasErrors) {
+              Missing summary
+            } else {
+              Required
+            }
+          </span>
+        </div>
+      }
+
+      <div class="controls-row control-group @if(form("fromId").hasErrors || form("toId").hasErrors) {error}">
+        <label for="fromId">Accounts</label>
+        @selectAccount(form("fromId"), fromAccounts)
+        <div class="span2" style="text-align: center">
+          <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
+          <input id="owes_value" type="hidden" name="owes" value="true">
+        </div>
+        @selectAccount(form("toId"), toAccounts)
+        <span class="help-inline">Required</span>
       </div>
-    }
 
-    <div class="controls-row control-group @if(form("fromId").hasErrors || form("toId").hasErrors) {error}">
-      <label for="fromId">Accounts</label>
-      @selectAccount(form("fromId"), fromAccounts)
-      <div class="span2" style="text-align: center">
-        <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
-        <input id="owes_value" type="hidden" name="owes" value="true">
+      @defining(form("source").hasErrors || form("source.amount").hasErrors || form("sourcePercentage").hasErrors) { hasErrors =>
+        <div class="control-group @if(hasErrors) {error}">
+          <label for="source">Source amount</label>
+          <div class="input">
+          <select id="source_currency" name="source.currency">
+            @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
+              <option value="@currency.getCurrencyCode" @if(form("source.currency").value == Some(currency.getCurrencyCode)) { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
+            }
+          </select>
+          <input id="source_amount" class="input-small" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
+          <div class="input-append">
+            <input id="source_percentage" class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
+          </div>
+          <span class="help-inline">
+            @if(hasErrors) {
+              @fieldErrors(form("source"), form("source.amount"), form("sourcePercentage"))
+            } else {
+              Required
+            }
+          </span>
+          </div>
+        </div>
+      }
+
+      @if(form("fromId").hasErrors || form("toId").hasErrors) {
+        <div class="row control-group error">
+          <div class="span3 help-inline">@fieldErrors(form("fromId"))</div>
+          <div class="span2"></div>
+          <div class="span3 help-inline">@fieldErrors(form("toId"))</div>
+        </div>
+      }
+
+      <div class="row control-group" id="conversionInfo">
+        <div class="span3">
+          <span class="fromId converted"><strong class="amount"> </strong> (<span class="direction">credit</span>)</span>
+        </div>
+        <div class="span2">
+        </div>
+        <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (<span class="direction">debit</span>)</span>
+        </div>
       </div>
-      @selectAccount(form("toId"), toAccounts)
-      <span class="help-inline">Required</span>
-    </div>
 
-    @defining(form("source").hasErrors || form("source.amount").hasErrors || form("sourcePercentage").hasErrors) { hasErrors =>
-      <div class="control-group @if(hasErrors) {error}">
-        <label for="source">Source amount</label>
+      <div class="control-group @if(form("reference").hasErrors || form("referenceDate").hasErrors) {error}">
+        <label for="reference">Reference number</label>
         <div class="input">
-        <select id="source_currency" name="source.currency">
-          @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
-            <option value="@currency.getCurrencyCode" @if(form("source.currency").value == Some(currency.getCurrencyCode)) { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
-          }
-        </select>
-        <input id="source_amount" class="input-small" name="source.amount" type="number" min="0" step="0.01" value="@form("source.amount").value"> ×
-        <div class="input-append">
-          <input id="source_percentage" class="input-mini" name="sourcePercentage" type="number" min="0" step="1.0" value="@form("sourcePercentage").value"><span class="add-on">%</span>
-        </div>
-        <span class="help-inline">
-          @if(hasErrors) {
-            @fieldErrors(form("source"), form("source.amount"), form("sourcePercentage"))
-          } else {
-            Required
-          }
-        </span>
+          <input type="text" name="reference" id="reference" value="@form("reference").value"> on
+          <input class="input-medium" type="date" name="referenceDate" value="@form("referenceDate").value">
+          <span class="help-inline">
+            @if(form("reference").hasErrors || form("referenceDate").hasErrors) {
+              @fieldErrors(form("reference"), form("referenceDate"))
+            } else {
+              Date, Required
+            }</span>
         </div>
       </div>
-    }
 
-    @if(form("fromId").hasErrors || form("toId").hasErrors) {
-      <div class="row control-group error">
-        <div class="span3 help-inline">@fieldErrors(form("fromId"))</div>
-        <div class="span2"></div>
-        <div class="span3 help-inline">@fieldErrors(form("toId"))</div>
+      <div class="control-group">
+        @helper.select(form("brandId"), brands.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
       </div>
-    }
 
-    <div class="row control-group" id="conversionInfo">
-      <div class="span3">
-        <span class="fromId converted"><strong class="amount"> </strong> (<span class="direction">credit</span>)</span>
+      <div class="control-group @if(form("description").hasErrors) {error}">
+        <label for="description">Booking description</label>
+        <div class="input">
+          <textarea id="description" name="description" class="input-xxlarge" rows="5">@form("description").value</textarea>
+          <span class="help-inline">@fieldErrors(form("description"))</span>
+        </div>
       </div>
-      <div class="span2">
-      </div>
-      <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (<span class="direction">debit</span>)</span>
-      </div>
-    </div>
 
-    <div class="control-group @if(form("reference").hasErrors || form("referenceDate").hasErrors) {error}">
-      <label for="reference">Reference number</label>
-      <div class="input">
-        <input type="text" name="reference" id="reference" value="@form("reference").value"> on
-        <input class="input-medium" type="date" name="referenceDate" value="@form("referenceDate").value">
-        <span class="help-inline">
-          @if(form("reference").hasErrors || form("referenceDate").hasErrors) {
-            @fieldErrors(form("reference"), form("referenceDate"))
-          } else {
-            Date, Required
-          }</span>
-      </div>
-    </div>
-
-    <div class="control-group">
-      @helper.select(form("brandId"), brands.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
-    </div>
-
-    <div class="control-group @if(form("description").hasErrors) {error}">
-      <label for="description">Booking description</label>
-      <div class="input">
-        <textarea id="description" name="description" class="input-xxlarge" rows="5">@form("description").value</textarea>
-        <span class="help-inline">@fieldErrors(form("description"))</span>
-      </div>
-    </div>
-
-    @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge", '_help -> "")
+      @helper.inputText(form("url"), '_label -> "URL", 'class -> "input-xxlarge", '_help -> "")
 
     <button class="btn btn-primary" type="submit">Save &amp; View All</button>
     <button name="next" value="add" class="btn" type="submit">Save &amp; Add New Entry</button>
     <button name="next" value="copy" class="btn" type="submit">Save &amp; Copy Entry</button>
-  </form>
+    </form>
+  }
 
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.ExchangeRates.convert

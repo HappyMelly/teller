@@ -12,12 +12,17 @@
   <div class="row">
     <div class="span8">
       <header>
-        <h1>Booking: @booking.summary</h1>
+        <h1>
+          Booking: @booking.summary
+          @if(booking.editableBy(currentUser)) {
+            <a class="btn-small btn"href="@routes.BookingEntries.edit(booking.bookingNumber.get)"><i class="icon-pencil"></i> Edit</a>
+          }
+        </h1>
         <p><small>Created by @booking.owner.fullName on @booking.created.format </small></p>
       </header>
     </div>
 
-    @if(booking.canBeDeletedBy(currentUser)) {
+    @if(booking.editableBy(currentUser)) {
       <div class="span2 actions">
         <form class="delete" method="post" text="booking entry" action="@CSRF(routes.BookingEntries.delete(booking.bookingNumber.getOrElse(0)))">
           <button class="btn btn-danger btn-block" type="submit">
@@ -30,12 +35,12 @@
 
   <div class="row">
     <div class="span8">
-      @booking.description.map { description =>
-        <h3>Description</h3>
-        <p>@description</p>
-      }
+  @booking.description.map { description =>
+    <h3>Description</h3>
+    <p>@description</p>
+  }
 
-      <h3>Booking details</h3>
+  <h3>Booking details</h3>
     </div>
   </div>
 

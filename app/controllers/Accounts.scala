@@ -55,7 +55,7 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map{ account ⇒
-          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
+          if (account.canBeEditedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             currencyForm.bindFromRequest().fold (
               form ⇒ BadRequest(views.html.account.details(request.user, account, form)),
               currency ⇒ {
@@ -75,7 +75,7 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map(account ⇒
-          if (account.canBeActivatedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
+          if (account.canBeEditedBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             account.deactivate()
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deactivated, "the account for " + account.accountHolder.name)
             account.accountHolder.updated(request.user.fullName)

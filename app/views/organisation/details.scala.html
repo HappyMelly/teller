@@ -95,7 +95,7 @@
 
     <p><strong>Financial account</strong>
       <br>@if(organisation.account.active){Active}else{Inactive}
-      @if(organisation.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+      @if(organisation.account.canBeEditedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
         (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
       }
       <p><strong>Account history</strong>

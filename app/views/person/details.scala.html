@@ -178,7 +178,7 @@
   <div class="span8">
     <h3>Accounting details</h3>
     <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
-    @if(person.account.canBeActivatedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+    @if(person.account.canBeEditedBy(user.asInstanceOf[LoginIdentity].userAccount)) {
         (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p>
     }
     <p><strong>Account history</strong>

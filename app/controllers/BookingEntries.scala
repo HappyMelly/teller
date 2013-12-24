@@ -30,13 +30,13 @@ import models.UserRole.Role._
 import models._
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.LocalDate
-import play.api.mvc.Controller
+import play.api.mvc.{ AnyContent, SimpleResult, Controller }
 import play.api.data.Forms._
 import play.api.data.Form
-import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import securesocial.core.{ Identity, SecuredRequest }
 
 object BookingEntries extends Controller with Security {
 
@@ -116,22 +116,31 @@ object BookingEntries extends Controller with Security {
             entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-            val success = "success" -> activity.toString
-
-            // Redirect or re-render according to which submit button was clicked.
-            form("next").value match {
-              case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing(success)
-              case Some("copy") ⇒ {
-                val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-                val brands = Brand.findAll
-                val transactionTypes = TransactionType.findAll
-                val successMessage = Some(activity.toString)
-                Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, brands, transactionTypes, successMessage))
-              }
-              case _ ⇒ Redirect(routes.BookingEntries.index()).flashing(success)
-            }
+            nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
           }
         })
+  }
+
+  def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
+        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        Ok(views.html.booking.details(request.user, bookingEntry, currentUser))
+      }.getOrElse(NotFound)
+  }
+
+  def edit(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
+        if (bookingEntry.editable) {
+          val form = bookingEntryForm.fill(bookingEntry)
+          val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+          val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll))
+        } else {
+          Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
+        }
+      }.getOrElse(NotFound)
   }
 
   def delete(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
@@ -139,7 +148,7 @@ object BookingEntries extends Controller with Security {
 
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-        if (entry.canBeDeletedBy(currentUser)) {
+        if (entry.editableBy(currentUser)) {
           entry.id.map { id ⇒
             BookingEntry.delete(id)
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
@@ -159,14 +168,6 @@ object BookingEntries extends Controller with Security {
       Ok(views.html.booking.index(request.user, None, levySummary, BookingEntry.findAll))
   }
 
-  def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-      BookingEntry.findByBookingNumber(bookingNumber).map{ bookingEntry ⇒
-        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-        Ok(views.html.booking.details(request.user, bookingEntry, currentUser))
-      }.getOrElse(NotFound)
-  }
-
   private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
     val allActive: List[AccountSummary] = Account.findAllActive
     if (user.getRoles.contains(Editor)) {
@@ -184,4 +185,52 @@ object BookingEntries extends Controller with Security {
     accessibleAccountIds.contains(accountId)
   }
 
+  /**
+   * Updates a booking entry.
+   */
+  def update(bookingNumber: Int) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      BookingEntry.findByBookingNumber(bookingNumber).map { existingEntry ⇒
+        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        if (existingEntry.editableBy(currentUser)) {
+          val form = bookingEntryForm(request).bindFromRequest
+          form.fold(
+            formWithErrors ⇒ Future.successful {
+              val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+              val brands = Brand.findAll
+              val transactionTypes = TransactionType.findAll
+              BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
+            },
+            editedEntry ⇒ {
+              editedEntry.withSourceConverted.map { editedEntry ⇒
+                BookingEntry.update(editedEntry.copy(id = existingEntry.id))
+                val activityObject = Messages("models.BookingEntry.name", editedEntry.source.abs.toString)
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+                nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
+              }
+            })
+        } else {
+          Future.successful {
+            Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Editing entry not allowed")
+          }
+        }
+      }.getOrElse(Future.successful(NotFound))
+  }
+
+  // Redirect or re-render according to which submit button was clicked.
+  private def nextPageResult(next: Option[String], successMessage: String, form: Form[BookingEntry],
+    currentUser: UserAccount, user: Identity)(implicit request: SecuredRequest[AnyContent]): SimpleResult = {
+
+    next match {
+      case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
+      case Some("copy") ⇒ {
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val brands = Brand.findAll
+        val transactionTypes = TransactionType.findAll
+        Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))
+      }
+      case _ ⇒ Redirect(routes.BookingEntries.index()).flashing("success" -> successMessage)
+    }
+  }
 }
