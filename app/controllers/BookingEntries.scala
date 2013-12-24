@@ -116,7 +116,7 @@ object BookingEntries extends Controller with Security {
             entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-            nextPageResult(form("next").value, "success" -> activity.toString, form, currentUser, request.user)
+            nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
           }
         })
   }
@@ -207,7 +207,7 @@ object BookingEntries extends Controller with Security {
                 BookingEntry.update(editedEntry.copy(id = existingEntry.id))
                 val activityObject = Messages("models.BookingEntry.name", editedEntry.source.abs.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-                nextPageResult(form("next").value, "success" -> activity.toString, form, currentUser, request.user)
+                nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
               }
             })
         } else {
@@ -219,18 +219,18 @@ object BookingEntries extends Controller with Security {
   }
 
   // Redirect or re-render according to which submit button was clicked.
-  def nextPageResult(next: Option[String], success: (String, String), form: Form[BookingEntry],
+  private def nextPageResult(next: Option[String], successMessage: String, form: Form[BookingEntry],
     currentUser: UserAccount, user: Identity)(implicit request: SecuredRequest[AnyContent]): SimpleResult = {
 
     next match {
-      case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing(success)
+      case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
       case Some("copy") ⇒ {
         val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
         val brands = Brand.findAll
         val transactionTypes = TransactionType.findAll
-        Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(success._2)))
+        Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))
       }
-      case _ ⇒ Redirect(routes.BookingEntries.index()).flashing(success)
+      case _ ⇒ Redirect(routes.BookingEntries.index()).flashing("success" -> successMessage)
     }
   }
 }

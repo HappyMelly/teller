@@ -53,10 +53,10 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
   def balance: Money = Money.of(currency, Account.findBalance(id.get).bigDecimal)
 
   /**
-   * Checks if the given user has permission to (de)activate this account:
-   * - An account for a person may only be (de)activated by that person
-   * - An account for an organisation may only be (de)activated by members of that organisation, or admins
-   * - The Levy account may only be (de)activated by admins
+   * Checks if the given user has permission to edit this account, including (de)activation:
+   * - An account for a person may only be edited by that person
+   * - An account for an organisation may only be edited by members of that organisation, or admins
+   * - The Levy account may only be edited by admins
    */
   def canBeEditedBy(user: UserAccount) = {
     val admin = user.getRoles.contains(UserRole(UserRole.Role.Admin))
