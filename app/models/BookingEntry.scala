@@ -80,7 +80,7 @@ case class BookingEntry(
    * Checks if the given user has permission to edit this booking entry.
    */
   def editableBy(user: UserAccount) = {
-    editable && (user.personId == ownerId || from.canBeEditedBy(user) || to.canBeEditedBy(user))
+    editable && (user.admin || user.personId == ownerId || from.editableBy(user) || to.editableBy(user))
   }
 
   def insert: BookingEntry = DB.withSession { implicit session: Session ⇒

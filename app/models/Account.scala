@@ -58,12 +58,11 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
    * - An account for an organisation may only be edited by members of that organisation, or admins
    * - The Levy account may only be edited by admins
    */
-  def canBeEditedBy(user: UserAccount) = {
-    val admin = user.getRoles.contains(UserRole(UserRole.Role.Admin))
+  def editableBy(user: UserAccount) = {
     accountHolder match {
-      case organisation: Organisation ⇒ admin || organisation.members.map(_.id.get).contains(user.personId)
-      case person: Person ⇒ person.id.get == user.personId
-      case Levy ⇒ admin
+      case organisation: Organisation ⇒ user.admin || organisation.members.map(_.id.get).contains(user.personId)
+      case person: Person ⇒ user.admin || person.id.get == user.personId
+      case Levy ⇒ user.admin
     }
   }
 
