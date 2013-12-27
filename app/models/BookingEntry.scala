@@ -27,7 +27,7 @@ package models
 import java.math.RoundingMode
 import models.JodaMoney._
 import models.database._
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{ Seconds, Hours, DateTime, LocalDate }
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -35,6 +35,10 @@ import play.api.db.slick.DB
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import play.api.Play
+import fly.play.s3.S3
+import java.net.URLEncoder
+import services.S3Bucket
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -59,6 +63,7 @@ case class BookingEntry(
   description: Option[String] = None,
   url: Option[String] = None,
   transactionTypeId: Option[Long] = None,
+  attachmentKey: Option[String] = None,
 
   created: DateTime = DateTime.now()) {
 
@@ -110,6 +115,18 @@ case class BookingEntry(
       toAmountConverted ← CurrencyConverter.convert(sourceProRata, to.currency)
     } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
   }
+
+  /**
+   * Creates a signed URL for the file attachment, valid for 1 hour.
+   */
+  def attachmentUrl: Option[String] = attachmentKey.map { key ⇒
+    S3Bucket.url(URLEncoder.encode(key, "UTF-8"), Hours.ONE.toStandardSeconds.getSeconds)
+  }
+
+  /**
+   * Returns the filename for the file attachment based on its key.
+   */
+  def attachmentFilename = attachmentKey.map { _.split("/").last }
 
 }
 
@@ -206,7 +223,7 @@ object BookingEntry {
       val fromAmount: BigDecimal = e.fromAmount.getAmount
       val updateTuple = (e.summary, e.source.getCurrencyUnit.getCode, sourceAmount, e.sourcePercentage, e.fromId,
         e.fromAmount.getCurrencyUnit.getCode, fromAmount, e.toId, e.toAmount.getCurrencyUnit.getCode, toAmount,
-        e.brandId, e.reference, e.referenceDate, e.description, e.url, e.transactionTypeId)
+        e.brandId, e.reference, e.referenceDate, e.description, e.url, e.attachmentKey, e.transactionTypeId)
       val updateQuery = Query(BookingEntries).filter(_.id === id).map(_.forUpdate)
       updateQuery.update(updateTuple)
     }

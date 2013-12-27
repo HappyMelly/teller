@@ -29,14 +29,23 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models._
 import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.LocalDate
-import play.api.mvc.{ AnyContent, SimpleResult, Controller }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.mvc._
 import play.api.data.Forms._
 import play.api.data.Form
 import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import securesocial.core.{ Identity, SecuredRequest }
+import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
+import play.api.Play
+import play.api.Play.current
+import java.net.URLDecoder
+import scala.Some
+import play.api.mvc.SimpleResult
+import models.AccountSummary
+import securesocial.core.SecuredRequest
+import services.S3Bucket
 
 object BookingEntries extends Controller with Security {
 
@@ -123,9 +132,37 @@ object BookingEntries extends Controller with Security {
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
+      val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-        Ok(views.html.booking.details(request.user, bookingEntry, currentUser))
+        Ok(views.html.booking.details(request.user, bookingEntry, currentUser, attachmentForm))
+      }.getOrElse(NotFound)
+  }
+
+  /** This action exsits only so that there can be a route to attach file without the `key` query parameter **/
+  def s3Callback(bookingNumber: Int) = Action {
+    NotImplemented
+  }
+
+  /**
+   * Amazon S3 will redirect here after a successful upload.
+   * @param bookingNumber the BookingEntry that the file is being attached to
+   * @param key The S3 object key for the uploaded file
+   * @return Redirect to the booking entries’ detail page, flashing a success message
+   */
+  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
+        // Update entity
+        val updatedEntry = entry.copy(attachmentKey = Some(URLDecoder.decode(key, "UTF-8")))
+        BookingEntry.update(updatedEntry)
+
+        //Construct activity
+        val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
+        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber)
+        val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
+
+        Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -233,4 +270,27 @@ object BookingEntries extends Controller with Security {
       case _ ⇒ Redirect(routes.BookingEntries.index()).flashing("success" -> successMessage)
     }
   }
+
+  /**
+   * Creates an S3 form for a file attachment.
+   * The form is usable for an hour, and the resulting S3 object will have the BUCKET_OWNER_FULL_CONTROL acl.
+   *
+   * The callback for the upload is BookingEntries.attachFile(bookingNumber, key).
+   *
+   * @see http://docs.aws.amazon.com/AmazonS3/latest/dev/HTTPPOSTForms.html
+   * @see http://docs.aws.amazon.com/AmazonS3/latest/dev/ACLOverview.html?CannedACL
+   */
+  private def s3Form(bookingNumber: Int)(implicit request: RequestHeader) = {
+    import fly.play.s3.upload.Condition._
+    import fly.play.s3.upload.Form
+    val policy = S3Bucket.uploadPolicy(expiration = DateTime.now().plusHours(1).toDate)
+      .withConditions(key startsWith attachmentKeyPath(bookingNumber),
+        acl eq BUCKET_OWNER_FULL_CONTROL,
+        successActionRedirect eq routes.BookingEntries.s3Callback(bookingNumber).absoluteURL())
+
+    Form(policy)
+  }
+
+  /** Constructs the path for an attachmentKey **/
+  private def attachmentKeyPath(bookingNumber: Int) = s"bookingentries/$bookingNumber"
 }
