@@ -1,7 +1,8 @@
-@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount, attachmentForm: fly.play.s3.upload.Form)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 @import scala.math.BigDecimal.RoundingMode
 
 @import helper.CSRF
+@import services.S3Bucket
 @import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
@@ -39,12 +40,17 @@
     <h3>Description</h3>
     <p>@description</p>
   }
-
-  <h3>Booking details</h3>
     </div>
   </div>
 
   <div class="row">
+    <div class="span8">
+      <h3>Booking details</h3>
+    </div>
+    <div class="span4">
+      <h3>File attachment</h3>
+    </div>
+
     <div class="span4">
       <p><strong>Booking number</strong>
       <br>@booking.bookingNumber.get</p>
@@ -75,8 +81,27 @@
 
       @booking.transactionType.map { transactionType =>
         <p><strong>Transaction type</strong>
-        <br>@transactionType.name</a></p>
+        <br>@transactionType.name</p>
       }
+    </div>
+
+    <div class="span4">
+      <p><a href="@booking.attachmentUrl"><i class="icon-file"></i>@booking.attachmentFilename</a></p>
+      <form action="@S3Bucket.url("")" method="post" enctype="multipart/form-data">
+        @for(field <- attachmentForm.fields) {
+          @if(field.name == "key") {
+            <input type="hidden" name="@field.name" value="@{field.value}/${filename}"/>
+          } else {
+            <input type="hidden" name="@field.name" value="@field.value"/>
+          }
+        }
+        <div class="control-group">
+          <label for="attachment">@booking.attachmentKey.map(_ => "Replace file").getOrElse("Attach file")</label>
+          <input id="attachment" type="file" name="file"/>
+        </div>
+
+        <button class="btn btn-primary" type="submit">@booking.attachmentKey.map(_ => "Replace").getOrElse("Upload")</button>
+      </form>
     </div>
   </div>
 

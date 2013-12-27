@@ -59,6 +59,8 @@ object Activity {
     val Deleted = Value("delete")
     val Activated = Value("activate")
     val Deactivated = Value("deactivate")
+    val Added = Value("add")
+    val Replaced = Value("replace")
   }
 
   import Predicate.Predicate

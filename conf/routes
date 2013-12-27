@@ -71,6 +71,9 @@ GET  /booking/:bookingNumber          controllers.BookingEntries.details(booking
 POST /booking/:bookingNumber          controllers.BookingEntries.update(bookingNumber: Int)
 GET  /booking/:bookingNumber/edit     controllers.BookingEntries.edit(bookingNumber: Int)
 POST /booking/:bookingNumber/delete   controllers.BookingEntries.delete(bookingNumber: Int)
+POST /booking/:bookingNumber/attach   controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
+GET  /booking/:bookingNumber/attach   controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
+POST /booking/:bookingNumber/attach   controllers.BookingEntries.s3Callback(bookingNumber: Int)
 
 GET  /admin/settings                     controllers.Administration.settings
 POST /admin/transactiontype/new          controllers.Administration.createTransactionType
