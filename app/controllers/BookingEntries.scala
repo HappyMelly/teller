@@ -139,7 +139,7 @@ object BookingEntries extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  /** This action exsits only so that there can be a route to attach file without the `key` query parameter **/
+  /** This action exsits only so that there can be a route to `attachFile` without the `key` query parameter **/
   def s3Callback(bookingNumber: Int) = Action {
     NotImplemented
   }
@@ -159,7 +159,7 @@ object BookingEntries extends Controller with Security {
 
         //Construct activity
         val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
-        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber)
+        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
