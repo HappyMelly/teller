@@ -86,7 +86,9 @@
     </div>
 
     <div class="span4">
-      <p><a href="@booking.attachmentUrl"><i class="icon-file"></i>@booking.attachmentFilename</a></p>
+      @if(booking.attachmentKey) {
+        <p><a href="@booking.attachmentUrl"><i class="icon-file"></i>@booking.attachmentFilename</a></p>
+      }
       <form action="@S3Bucket.url("")" method="post" enctype="multipart/form-data">
         @for(field <- attachmentForm.fields) {
           @if(field.name == "key") {
@@ -95,12 +97,9 @@
             <input type="hidden" name="@field.name" value="@field.value"/>
           }
         }
-        <div class="control-group">
-          <label for="attachment">@booking.attachmentKey.map(_ => "Replace file").getOrElse("Attach file")</label>
-          <input id="attachment" type="file" name="file"/>
-        </div>
 
-        <button class="btn btn-primary" type="submit">@booking.attachmentKey.map(_ => "Replace").getOrElse("Upload")</button>
+        <input id="attachment" type="file" name="file"/>
+        <button class="btn btn-primary" type="submit">@booking.attachmentKey.map(_ => "Replace File").getOrElse("Upload File")</button>
       </form>
     </div>
   </div>
