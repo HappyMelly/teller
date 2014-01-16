@@ -69,7 +69,7 @@
         @selectAccount(form("fromId"), fromAccounts)
         <div class="span2" style="text-align: center">
           <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
-          <input id="owes_value" type="hidden" name="owes" value="true">
+          <input id="owes_value" type="hidden" name="owes" value="@form("owes").value.getOrElse(true)">
         </div>
         @selectAccount(form("toId"), toAccounts)
         <span class="help-inline">Required</span>
@@ -161,21 +161,33 @@
 @* JQuery script for the 'Owes To'/'Is Owed By' button, which updates the button appearance and a hidden input value. *@
 <script type="text/javascript">
   $(document).ready( function() {
-    $('#owes_toggle').click(function() {
-      $(this).toggleClass('btn-inverse').toggleClass('btn-danger');
-      var owes = $(this).hasClass('btn-inverse');
+    var updateOwesToggle = function() {
+      var owes = $('#owes_value').val() === 'true';
       if (owes) {
-        $(this).html('Owes To <i class="icon-arrow-right icon-white"></i>');
+        $('#owes_toggle')
+          .addClass('btn-inverse')
+          .removeClass('btn-danger')
+          .html('Owes To <i class="icon-arrow-right icon-white"></i>');
         $('#conversionInfo').find('.fromId.converted .direction' ).text("credit");
         $('#conversionInfo').find('.toId.converted .direction' ).text("debit")
       }
       else {
-        $(this).html('<i class="icon-arrow-left icon-white"></i> Is Owed By');
-      $('#conversionInfo').find('.fromId.converted .direction' ).text("debit");
-      $('#conversionInfo').find('.toId.converted .direction' ).text("credit")
+        $('#owes_toggle')
+          .removeClass('btn-inverse')
+          .addClass('btn-danger')
+          .html('<i class="icon-arrow-left icon-white"></i> Is Owed By');
+        $('#conversionInfo').find('.fromId.converted .direction' ).text("debit");
+        $('#conversionInfo').find('.toId.converted .direction' ).text("credit")
       }
       $('#owes_value').val(owes)
-    })
+    };
+
+    $('#owes_toggle').click(function() {
+      var owes = $('#owes_value').val() === 'true';
+      $('#owes_value').val(!owes);
+      updateOwesToggle()
+    });
+    updateOwesToggle();
   });
 </script>
 }
