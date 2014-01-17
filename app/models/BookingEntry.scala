@@ -27,7 +27,7 @@ package models
 import java.math.RoundingMode
 import models.JodaMoney._
 import models.database._
-import org.joda.time.{ Seconds, Hours, DateTime, LocalDate }
+import org.joda.time.{ Days, DateTime, LocalDate }
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -35,8 +35,6 @@ import play.api.db.slick.DB
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import play.api.Play
-import fly.play.s3.S3
 import java.net.URLEncoder
 import services.S3Bucket
 
@@ -77,7 +75,7 @@ case class BookingEntry(
 
   lazy val owes = source.isPositiveOrZero
 
-  lazy val transactionType = transactionTypeId.flatMap(TransactionType.find(_))
+  lazy val transactionType = transactionTypeId.flatMap(TransactionType.find)
 
   lazy val editable = from.active && to.active
 
@@ -120,7 +118,7 @@ case class BookingEntry(
    * Creates a signed URL for the file attachment, valid for 1 hour.
    */
   def attachmentUrl: Option[String] = attachmentKey.map { key ⇒
-    S3Bucket.url(URLEncoder.encode(key, "UTF-8"), Hours.ONE.toStandardSeconds.getSeconds)
+    S3Bucket.url(URLEncoder.encode(key, "UTF-8"), Days.ONE.toStandardSeconds.getSeconds)
   }
 
   /**

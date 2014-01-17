@@ -64,15 +64,16 @@ GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long)
 POST /account/:id/activate   controllers.Accounts.activate(id: Long)
 POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 
-GET  /bookings                            controllers.BookingEntries.index
-GET  /booking/new                         controllers.BookingEntries.add
-POST /booking/new                         controllers.BookingEntries.create
-GET  /booking/:bookingNumber              controllers.BookingEntries.details(bookingNumber: Int)
-POST /booking/:bookingNumber              controllers.BookingEntries.update(bookingNumber: Int)
-GET  /booking/:bookingNumber/edit         controllers.BookingEntries.edit(bookingNumber: Int)
-POST /booking/:bookingNumber/delete       controllers.BookingEntries.delete(bookingNumber: Int)
-GET  /booking/:bookingNumber/attachment   controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
-GET  /booking/:bookingNumber/attachment   controllers.BookingEntries.s3Callback(bookingNumber: Int)
+GET  /bookings                                controllers.BookingEntries.index
+GET  /booking/new                             controllers.BookingEntries.add
+POST /booking/new                             controllers.BookingEntries.create
+GET  /booking/:bookingNumber                  controllers.BookingEntries.details(bookingNumber: Int)
+POST /booking/:bookingNumber                  controllers.BookingEntries.update(bookingNumber: Int)
+GET  /booking/:bookingNumber/edit             controllers.BookingEntries.edit(bookingNumber: Int)
+POST /booking/:bookingNumber/delete           controllers.BookingEntries.delete(bookingNumber: Int)
+GET  /booking/:bookingNumber/attachment       controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
+GET  /booking/:bookingNumber/attachment       controllers.BookingEntries.s3Callback(bookingNumber: Int)
+POST /booking/:bookingNumber/deleteAttachment controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
 GET  /admin/settings                     controllers.Administration.settings
 POST /admin/transactiontype/new          controllers.Administration.createTransactionType

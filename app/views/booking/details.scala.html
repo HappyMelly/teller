@@ -86,10 +86,10 @@
     </div>
 
     <div class="span4">
-      @if(booking.attachmentKey) {
-        <p><a href="@booking.attachmentUrl"><i class="icon-file"></i>@booking.attachmentFilename</a></p>
+      @if(booking.attachmentKey.isDefined) {
+        <p><i class="icon-file"></i> <a href="@booking.attachmentUrl">@booking.attachmentFilename</a></p>
       }
-      <form action="@S3Bucket.url("")" method="post" enctype="multipart/form-data">
+      <form id="attachmentUpload" action="@S3Bucket.url("")" method="post" enctype="multipart/form-data">
         @for(field <- attachmentForm.fields) {
           @if(field.name == "key") {
             <input type="hidden" name="@field.name" value="@{field.value}/${filename}"/>
@@ -99,8 +99,13 @@
         }
 
         <input id="attachment" type="file" name="file"/>
-        <button class="btn btn-primary" type="submit">@booking.attachmentKey.map(_ => "Replace File").getOrElse("Upload File")</button>
       </form>
+      <button form="attachmentUpload" class="btn btn-primary" type="submit">@booking.attachmentKey.map(_ => "Replace File").getOrElse("Upload File")</button>
+      @if(booking.attachmentKey.isDefined) {
+        <button form="attachmentDelete" class="btn btn-danger" type="submit"><i class="icon-trash icon-white"></i> Delete File</button>
+        <form id="attachmentDelete" method="post" action="@CSRF(routes.BookingEntries.deleteAttachment(booking.bookingNumber.get))">
+        </form>
+      }
     </div>
   </div>
 

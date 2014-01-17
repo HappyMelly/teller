@@ -146,11 +146,11 @@ object BookingEntries extends Controller with Security {
 
   /**
    * Amazon S3 will redirect here after a successful upload.
-   * @param bookingNumber the BookingEntry that the file is being attached to
+   * @param bookingNumber the id of the BookingEntry that the file is being attached to
    * @param key The S3 object key for the uploaded file
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         // Update entity
@@ -161,6 +161,24 @@ object BookingEntries extends Controller with Security {
         val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
+
+        Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Removes the attachment form the booking number. Note that the actual file on S3 is not deleted.
+   * @param bookingNumber the id of the BookingEntry to remove the attachment from
+   * @return Redirect to the booking entries’ detail page, flashing a success message
+   */
+  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
+        val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
+        BookingEntry.update(updatedEntry)
+
+        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
