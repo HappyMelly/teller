@@ -63,10 +63,10 @@ td .btn-link {
 .icon-activity-signup {
     background-position: -168px 0;
 }
-.icon-activity-create {
+.icon-activity-create, .icon-activity-add {
     background-position: 0px -96px;
 }
-.icon-activity-update {
+.icon-activity-update, .icon-activity-replace {
     background-position: -96px -72px;
 }
 .icon-activity-delete {
