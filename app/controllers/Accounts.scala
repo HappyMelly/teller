@@ -85,4 +85,9 @@ object Accounts extends Controller with Security {
           }).getOrElse(NotFound)
   }
 
+  def index = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒
+        Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))
+  }
 }
