@@ -23,7 +23,7 @@
 #
 
 # Models
-models.BookingEntry.name = a booking entry for {0}
+models.BookingEntry.name = booking entry {0}
 models.BookingEntry.attachment = booking entry {0}’s attachment
 models.Brand = Brand
 models.Organisation = Organization

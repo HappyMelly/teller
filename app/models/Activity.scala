@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.Activities
+import models.database.{ BookingEntryActivities, Activities }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -72,12 +72,32 @@ object Activity {
     Query(Activities).sortBy(_.created.desc).take(50).list
   }
 
+  /**
+   * Returns activity stream entries for the given booking entry
+   */
+  def findForBookingEntry(bookingEntryId: Long): List[Activity] = DB.withSession { implicit session ⇒
+    val query = for {
+      entryActivity ← BookingEntryActivities if entryActivity.bookingEntryId === bookingEntryId
+      activity ← Activities if activity.id === entryActivity.activityId
+    } yield activity
+    query.sortBy(_.created.desc).list
+  }
+
   def insert(subject: String, predicate: Predicate): Activity = {
     insert(subject, predicate, None)
   }
 
   def insert(subject: String, predicate: Predicate, activityObject: String): Activity = {
     insert(subject, predicate, Some(activityObject))
+  }
+
+  /**
+   * Links the given booking entry and activity.
+   */
+  def link(entry: BookingEntry, activity: Activity): Unit = DB.withSession { implicit session: Session ⇒
+    for (entryId ← entry.id; activityId ← activity.id) {
+      BookingEntryActivities.insert(entryId, activityId)
+    }
   }
 
   /**
