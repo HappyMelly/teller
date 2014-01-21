@@ -28,7 +28,6 @@ import models.database._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
 import scala.Some

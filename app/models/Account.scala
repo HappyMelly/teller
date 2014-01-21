@@ -114,7 +114,10 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
  */
 case class AccountSummary(id: Long, name: String, currency: CurrencyUnit, active: Boolean)
 
+case class AccountSummaryWithBalance(id: Long, name: String, balance: Money)
+
 object Account {
+
   def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
     (firstName, lastName, organisation) match {
       case (Some(first), Some(last), None) ⇒ first + " " + last
@@ -151,6 +154,34 @@ object Account {
       case (id, currency, firstName, lastName, organisationName, active) ⇒
         AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency, active)
     }.list.sortBy(_.name.toLowerCase)
+  }
+
+  /**
+   * Returns a summary list of active accounts with balances.
+   */
+  def findAllActiveWithBalance: List[AccountSummaryWithBalance] = DB.withSession { implicit session: Session ⇒
+
+    // Sum booking entries’ credits and debits, grouped by account ID.
+    val creditQuery = BookingEntries.groupBy(_.fromId).map {
+      case (accountId, entry) ⇒
+        accountId -> entry.map(_.fromAmount).sum
+    }
+    val debitQuery = BookingEntries.groupBy(_.toId).map {
+      case (accountId, entry) ⇒
+        accountId -> entry.map(_.toAmount).sum
+    }
+
+    // Transform each query result to a Map, for looking-up credit/debit by account ID.
+    val credits = creditQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
+    val debits = debitQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
+
+    // Add the balances to the account summaries.
+    findAllActive.map { account ⇒
+      val accountDebit = debits.getOrElse(account.id, BigDecimal(0))
+      val accountCredit = credits.getOrElse(account.id, BigDecimal(0))
+      val balance = (accountDebit - accountCredit).setScale(2, RoundingMode.DOWN)
+      AccountSummaryWithBalance(account.id, account.name, Money.of(account.currency, balance.bigDecimal))
+    }
   }
 
   def findByPerson(personId: Long): Option[Account] = DB.withSession { implicit session ⇒

@@ -6,6 +6,11 @@
 
 @main("Booking entries", Some(user)) {
 
+  <ul class="nav nav-tabs">
+    <li class="active"><a href="@routes.BookingEntries.index()">Booking entries</a></li>
+    <li><a href="@routes.Accounts.index()">Accounts</a></li>
+  </ul>
+
   <div class="row">
     <div class="span7">
       <h1>Booking entries</h1>
