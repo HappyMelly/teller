@@ -126,18 +126,19 @@ object BookingEntries extends Controller with Security {
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
             Activity.link(insertedEntry, activity)
-            sendEmailNotification(insertedEntry, activity)
+            sendEmailNotification(insertedEntry, activity, entry.participants)
+            sendEmailNotification(insertedEntry, activity, Person.findActiveAdmins -- entry.participants)
             nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
           }
         })
   }
 
   /**
-   * Sends an e-mail notification for a newly-created booking entry, to the entry’s participants.
+   * Sends an e-mail notification for a booking entry to the given recipients.
    */
-  def sendEmailNotification(entry: BookingEntry, activity: Activity)(implicit request: RequestHeader): Unit = {
+  def sendEmailNotification(entry: BookingEntry, activity: Activity, recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    EmailService.send(entry.participants, subject, mail.txt.booking(entry).toString)
+    EmailService.send(recipients, subject, mail.txt.booking(entry).toString)
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -173,6 +174,7 @@ object BookingEntries extends Controller with Security {
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
         Activity.link(entry, activity)
+        sendEmailNotification(updatedEntry, activity, Person.findActiveAdmins)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -192,6 +194,7 @@ object BookingEntries extends Controller with Security {
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
         Activity.link(entry, activity)
+        sendEmailNotification(updatedEntry, activity, Person.findActiveAdmins)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -218,10 +221,12 @@ object BookingEntries extends Controller with Security {
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
         if (entry.editableBy(currentUser)) {
           entry.id.map { id ⇒
+            val deletedEntry = entry.copy()
             BookingEntry.delete(id)
             val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
             Activity.link(entry, activity)
+            sendEmailNotification(deletedEntry, activity, Person.findActiveAdmins)
             Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
           }.getOrElse(NotFound)
         } else {
@@ -273,10 +278,13 @@ object BookingEntries extends Controller with Security {
             },
             editedEntry ⇒ {
               editedEntry.withSourceConverted.map { editedEntry ⇒
-                BookingEntry.update(editedEntry.copy(id = existingEntry.id))
+                val updatedEntry = editedEntry.copy(id = existingEntry.id, bookingNumber = existingEntry.bookingNumber,
+                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
+                BookingEntry.update(updatedEntry)
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
                 Activity.link(existingEntry, activity)
+                sendEmailNotification(updatedEntry, activity, Person.findActiveAdmins)
                 nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
               }
             })

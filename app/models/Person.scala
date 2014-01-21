@@ -219,6 +219,17 @@ object Person {
     boardMembersFilteredQuery.list
   }
 
+  /**
+   * Finds active people who have a user account with administrator role.
+   */
+  def findActiveAdmins: Set[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      account ← UserAccounts if account.role === UserRole.Role.Admin.toString
+      person ← People if person.id === account.personId
+    } yield person
+    query.list.toSet
+  }
+
   def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.boardMember).list.toSet
   }
