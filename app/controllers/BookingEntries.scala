@@ -45,7 +45,7 @@ import scala.Some
 import play.api.mvc.SimpleResult
 import models.AccountSummary
 import securesocial.core.SecuredRequest
-import services.S3Bucket
+import services.{ EmailService, S3Bucket }
 
 object BookingEntries extends Controller with Security {
 
@@ -133,17 +133,11 @@ object BookingEntries extends Controller with Security {
   }
 
   /**
-   * Sends an e-mail notification for a newly-created booking entry. The recipients are participants in the entry who
-   * are currently active.
+   * Sends an e-mail notification for a newly-created booking entry, to the entry’s participants.
    */
   def sendEmailNotification(entry: BookingEntry, activity: Activity)(implicit request: RequestHeader): Unit = {
-    import com.typesafe.plugin._
-    val mailer = use[MailerPlugin].email
-    val recipients = entry.participants.filter(_.active).map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
-    mailer.setRecipient(recipients.toList: _*)
-    Play.configuration.getString("mail.from").map(mailer.setFrom(_))
-    mailer.setSubject(s"${activity.description} - ${entry.summary}")
-    mailer.send(mail.txt.booking(entry).toString.trim)
+    val subject = s"${activity.description} - ${entry.summary}"
+    EmailService.send(entry.participants, subject, mail.txt.booking(entry).toString)
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
