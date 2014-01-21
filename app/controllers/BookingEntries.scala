@@ -38,14 +38,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import securesocial.core.{ Identity, SecuredRequest }
 import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
-import play.api.{ Logger, Play }
+import play.api.Play
 import play.api.Play.current
 import java.net.URLDecoder
 import scala.Some
 import play.api.mvc.SimpleResult
 import models.AccountSummary
 import securesocial.core.SecuredRequest
-import services.S3Bucket
+import services.{ EmailService, S3Bucket }
 
 object BookingEntries extends Controller with Security {
 
@@ -126,9 +126,18 @@ object BookingEntries extends Controller with Security {
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
             Activity.link(insertedEntry, activity)
+            sendEmailNotification(insertedEntry, activity)
             nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
           }
         })
+  }
+
+  /**
+   * Sends an e-mail notification for a newly-created booking entry, to the entry’s participants.
+   */
+  def sendEmailNotification(entry: BookingEntry, activity: Activity)(implicit request: RequestHeader): Unit = {
+    val subject = s"${activity.description} - ${entry.summary}"
+    EmailService.send(entry.participants, subject, mail.txt.booking(entry).toString)
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒

@@ -219,6 +219,10 @@ object Person {
     boardMembersFilteredQuery.list
   }
 
+  def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
+    Query(People).filter(_.boardMember).list.toSet
+  }
+
   /** Retrieves a list of all people from the database **/
   def findAll: List[PersonSummary] = DB.withSession { implicit session: Session ⇒
     (for {

@@ -1,3 +1,4 @@
+1500:com.typesafe.plugin.CommonsMailerPlugin
 9994:securesocial.core.DefaultAuthenticatorStore
 9995:securesocial.core.DefaultIdGenerator
 9997:services.SecureSocialTemplatesPlugin

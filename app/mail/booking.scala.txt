@@ -1,0 +1,27 @@
+@(booking: BookingEntry)(implicit request: RequestHeader)
+@import templates.Formatters._
+Summary: @booking.summary@booking.description.map { description =>
+Description: @description }
+@routes.BookingEntries.details(booking.bookingNumber.getOrElse(0)).absoluteURL(false)
+
+
+BOOKING DETAILS
+
+Booking number: @booking.bookingNumber.get
+Booking owner: @booking.owner.fullName
+Booking date: @booking.bookingDate.format
+Brand: @booking.brand.name@booking.reference.map { reference =>
+Reference number: @reference }
+Reference date: @booking.referenceDate.format@booking.url.map { url =>
+URL: @url }@booking.transactionType.map { transactionType =>
+Transaction type: @transactionType.name }
+
+
+TRANSACTION DETAILS
+
+Source amount: @booking.source.abs.formatText
+Percentage: @booking.sourcePercentage%
+Transaction: @booking.from.accountHolder.name (@booking.fromAmount.formatText) @if(booking.owes) { owes } else { owed by } @booking.to.accountHolder.name (@booking.toAmount.formatText)
+
+
+THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM HAPPY MELLY TELLER

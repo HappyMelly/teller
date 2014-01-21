@@ -50,6 +50,7 @@ object Formatters {
 
   implicit class RichMoney(money: Money) {
     def format: Html = Html(s"<small>${money.getCurrencyUnit.getCode}</small>&nbsp;${money.getAmount}")
+    def formatText = s"${money.getCurrencyUnit.getCode} ${money.getAmount}"
   }
 
   implicit class RichString(val string: String) extends AnyVal {

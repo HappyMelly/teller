@@ -79,6 +79,8 @@ case class BookingEntry(
 
   lazy val editable = from.active && to.active
 
+  lazy val participants = from.participants ++ to.participants
+
   /**
    * Checks if the given user has permission to edit this booking entry.
    */
