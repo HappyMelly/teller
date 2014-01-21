@@ -61,7 +61,7 @@ object EmailService {
         mailer.setRecipient(message.to: _*)
         mailer.setSubject(message.subject)
         mailer.setFrom(message.from)
-        Logger.info("Sending e-mail to: " + message.to.mkString(", "))
+        Logger.debug(s"Sending e-mail with subject: ${message.subject}")
         mailer.send(message.body.trim)
       }
     }
