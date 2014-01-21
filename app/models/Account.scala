@@ -50,6 +50,16 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     case _ ⇒ throw new IllegalStateException(s"Account $id has both organisation and person for holder")
   }
 
+  /**
+   * Returns a set of people involved in this account, either as the direct account holder or organisation member,
+   * where the board members are ‘participants’ of the levy account.
+   */
+  def participants: Set[Person] = accountHolder match {
+    case organisation: Organisation ⇒ organisation.members.toSet
+    case person: Person ⇒ Set(person)
+    case Levy ⇒ Person.findBoardMembers
+  }
+
   def balance: Money = Money.of(currency, Account.findBalance(id.get).bigDecimal)
 
   /**

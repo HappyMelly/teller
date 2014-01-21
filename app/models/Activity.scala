@@ -43,6 +43,10 @@ import play.api.i18n.Messages
  */
 case class Activity(id: Option[Long], subject: String, predicate: String, activityObject: Option[String], created: DateTime = DateTime.now()) {
 
+  // Full description including subject (current user’s name).
+  def description = Messages("activity." + predicate, subject, activityObject.getOrElse(""))
+
+  // Short description for use in Flash messages.
   override def toString = Messages("activity." + predicate, "", activityObject.getOrElse("")).trim.capitalize
 }
 
