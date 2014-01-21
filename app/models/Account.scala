@@ -177,8 +177,8 @@ object Account {
 
     // Add the balances to the account summaries.
     findAllActive.map { account ⇒
-      val accountDebit = debits.get(account.id).getOrElse(BigDecimal(0))
-      val accountCredit = credits.get(account.id).getOrElse(BigDecimal(0))
+      val accountDebit = debits.getOrElse(account.id, BigDecimal(0))
+      val accountCredit = credits.getOrElse(account.id, BigDecimal(0))
       val balance = (accountDebit - accountCredit).setScale(2, RoundingMode.DOWN)
       AccountSummaryWithBalance(account.id, account.name, Money.of(account.currency, balance.bigDecimal))
     }
