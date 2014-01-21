@@ -1,4 +1,6 @@
-@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount, attachmentForm: fly.play.s3.upload.Form)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount,
+  attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any], flash: Flash,
+  handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 @import scala.math.BigDecimal.RoundingMode
 
 @import helper.CSRF
@@ -106,6 +108,8 @@
         <form id="attachmentDelete" method="post" action="@CSRF(routes.BookingEntries.deleteAttachment(booking.bookingNumber.get))">
         </form>
       }
+
+
     </div>
   </div>
 
@@ -141,12 +145,31 @@
   </div>
   <div class="row">
     <div class="span4">
-      @booking.from.accountHolder.name
+      <p>@booking.from.accountHolder.name</p>
     </div>
     <div class="span4">
-      @booking.to.accountHolder.name
+      <p>@booking.to.accountHolder.name</p>
     </div>
   </div>
 
-  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+  <h3>Activity</h3>
+
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered">
+      @for(activity <- activityStream) {
+      <tr>
+        <td>
+          <i class="icon-activity-@activity.predicate"></i>
+          @Messages("activity." + activity.predicate, activity.subject, activity.activityObject.getOrElse(""))
+        </td>
+        <td><small>@activity.created.format</small></td>
+      </tr>
+      }
+    </table>
+  </div>
+  </div>
+
+
+<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

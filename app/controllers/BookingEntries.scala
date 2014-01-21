@@ -38,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import securesocial.core.{ Identity, SecuredRequest }
 import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
-import play.api.Play
+import play.api.{ Logger, Play }
 import play.api.Play.current
 import java.net.URLDecoder
 import scala.Some
@@ -122,9 +122,10 @@ object BookingEntries extends Controller with Security {
           entry.withSourceConverted.map { entry ⇒
             // Create booking entry.
             val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-            entry.copy(ownerId = currentUser.personId).insert
-            val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
+            val insertedEntry = entry.copy(ownerId = currentUser.personId).insert
+            val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            Activity.link(insertedEntry, activity)
             nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
           }
         })
@@ -135,7 +136,8 @@ object BookingEntries extends Controller with Security {
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-        Ok(views.html.booking.details(request.user, bookingEntry, currentUser, attachmentForm))
+        val activity = Activity.findForBookingEntry(bookingEntry.id.getOrElse(0))
+        Ok(views.html.booking.details(request.user, bookingEntry, currentUser, attachmentForm, activity))
       }.getOrElse(NotFound)
   }
 
@@ -161,6 +163,7 @@ object BookingEntries extends Controller with Security {
         val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
+        Activity.link(entry, activity)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -179,6 +182,7 @@ object BookingEntries extends Controller with Security {
 
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        Activity.link(entry, activity)
 
         Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -206,8 +210,9 @@ object BookingEntries extends Controller with Security {
         if (entry.editableBy(currentUser)) {
           entry.id.map { id ⇒
             BookingEntry.delete(id)
-            val activityObject = Messages("models.BookingEntry.name", entry.source.abs.toString)
+            val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+            Activity.link(entry, activity)
             Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
           }.getOrElse(NotFound)
         } else {
@@ -260,8 +265,9 @@ object BookingEntries extends Controller with Security {
             editedEntry ⇒ {
               editedEntry.withSourceConverted.map { editedEntry ⇒
                 BookingEntry.update(editedEntry.copy(id = existingEntry.id))
-                val activityObject = Messages("models.BookingEntry.name", editedEntry.source.abs.toString)
+                val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+                Activity.link(existingEntry, activity)
                 nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
               }
             })
