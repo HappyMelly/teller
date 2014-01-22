@@ -135,6 +135,9 @@ object BookingEntries extends Controller with Security {
 
   /**
    * Sends an e-mail notification for a booking entry to the given recipients.
+   *
+   * If this becomes more complex, refactor to a new `BookingEntryNotification` actor that handles notifications
+   * asynchronously, delegating to concrete notifiers, such as the `EmailServiceActor`.
    */
   def sendEmailNotification(entry: BookingEntry, activity: Activity, recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
@@ -278,13 +281,17 @@ object BookingEntries extends Controller with Security {
             },
             editedEntry ⇒ {
               editedEntry.withSourceConverted.map { editedEntry ⇒
-                val updatedEntry = editedEntry.copy(id = existingEntry.id, bookingNumber = existingEntry.bookingNumber,
-                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
-                BookingEntry.update(updatedEntry)
+                BookingEntry.update(editedEntry.copy(id = existingEntry.id))
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
                 Activity.link(existingEntry, activity)
+
+                // Construct a fully-populated entry from the edited entry by adding the missing properties from the
+                // existing entry, for use in the e-mail notification (some fields are not included in edit/update).
+                val updatedEntry = editedEntry.copy(id = existingEntry.id, bookingNumber = existingEntry.bookingNumber,
+                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
                 sendEmailNotification(updatedEntry, activity, Person.findActiveAdmins)
+
                 nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
               }
             })
