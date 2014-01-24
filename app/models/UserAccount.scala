@@ -37,9 +37,10 @@ import play.libs.Scala
 case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, role: String) extends Subject {
 
   lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
+  lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
 
   /**
-   * Returns a string list of role names.
+   * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = {
     val accountRole = UserAccount.findRole(personId).map(role ⇒ UserRole(role))

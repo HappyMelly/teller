@@ -247,7 +247,7 @@ object BookingEntries extends Controller with Security {
 
   private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
     val allActive: List[AccountSummary] = Account.findAllActive
-    if (user.getRoles.contains(Editor)) {
+    if (user.editor) {
       (allActive, allActive)
     } else {
       val person: Option[Person] = user.person
