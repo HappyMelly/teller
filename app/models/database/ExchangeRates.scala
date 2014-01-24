@@ -31,7 +31,7 @@ import models.JodaMoney.CurrencyMapper
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
-object ExchangeRates extends Table[ExchangeRate]("Exchange_Rate") {
+object ExchangeRates extends Table[ExchangeRate]("EXCHANGE_RATE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def base = column[CurrencyUnit]("base")
