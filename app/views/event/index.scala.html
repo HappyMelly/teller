@@ -1,0 +1,30 @@
+@(user: securesocial.core.Identity, events: List[Event])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main("Events", Some(user)) {
+
+  <div class="span7">
+  <h1>Events</h1>
+  </div>
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="span3">
+      <a class="btn btn-success" href="@routes.Events.add()">
+      <i class="icon-plus icon-white"></i>Add Event</a>
+    </div>
+  }
+
+  <div class="span10">
+    @if(events.isEmpty) {
+      <p>There are no events</p>
+    } else {
+      @table(events) { event =>
+        @restrict(handler, List(as(Editor.toString))) {
+        }
+			}
+    }
+  </div>
+
+	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+}
