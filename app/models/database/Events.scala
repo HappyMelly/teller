@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Schedule, Event }
+import models.{ Location, Schedule, Event }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 
@@ -54,6 +54,7 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def isPrivate = column[Boolean]("IS_PRIVATE")
   def isArchived = column[Boolean]("IS_ARCHIVED")
+
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
@@ -64,8 +65,8 @@ private[models] object Events extends Table[Event]("EVENT") {
   def * = id.? ~ brandId ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
     description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
     isPrivate ~ isArchived ~ created ~ createdBy ~ updated ~ updatedBy <> (
-      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, e._6, e._7, e._8, e._9, Schedule(e._10, e._11, e._12), e._13, e._14, e._15, e._16, e._17, e._18, e._19, e._20),
-      (e: Event) ⇒ Some((e.id, e.brandId, e.title, e.spokenLanguage, e.materialsLanguage, e.city, e.countryCode, e.description, e.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.webSite, e.registrationPage, e.isPrivate, e.isArchived, e.created, e.createdBy, e.updated, e.updatedBy)))
+      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, Location(e._6, e._7), e._8, e._9, Schedule(e._10, e._11, e._12), e._13, e._14, e._15, e._16, e._17, e._18, e._19, e._20),
+      (e: Event) ⇒ Some((e.id, e.brandId, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.description, e.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.webSite, e.registrationPage, e.isPrivate, e.isArchived, e.created, e.createdBy, e.updated, e.updatedBy)))
 
   def forInsert = * returning id
 

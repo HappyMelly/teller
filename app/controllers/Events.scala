@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.{ Schedule, Activity, Event }
+import models.{ Location, Schedule, Activity, Event, Brand }
 import play.api.mvc._
 import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
@@ -48,8 +48,9 @@ object Events extends Controller with Security {
     "title" -> nonEmptyText,
     "spokenLanguage" -> nonEmptyText,
     "materialsLanguage" -> optional(text),
-    "city" -> nonEmptyText,
-    "country" -> nonEmptyText,
+    "location" -> mapping(
+      "city" -> nonEmptyText,
+      "country" -> nonEmptyText) (Location.apply)(Location.unapply),
     "description" -> optional(text),
     "specialAttention" -> optional(text),
     "schedule" -> mapping(
@@ -72,7 +73,8 @@ object Events extends Controller with Security {
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Ok(views.html.event.form(request.user, None, eventForm))
+      val brands = Brand.findAll
+      Ok(views.html.event.form(request.user, None, brands, eventForm))
   }
 
   /**
@@ -83,7 +85,7 @@ object Events extends Controller with Security {
 
       eventForm.bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.event.form(request.user, None, formWithErrors)),
+          BadRequest(views.html.event.form(request.user, None, Brand.findAll, formWithErrors)),
         event ⇒ {
           val eventObj = event.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
@@ -145,7 +147,7 @@ object Events extends Controller with Security {
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
 
       val events = Event.findAll
@@ -160,8 +162,10 @@ object Events extends Controller with Security {
     implicit handler ⇒
 
       eventForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.event.form(request.user, Some(id), formWithErrors)),
+        formWithErrors ⇒ {
+          val brands = Brand.findAll
+          BadRequest(views.html.event.form(request.user, Some(id), brands, formWithErrors))
+        },
         event ⇒ {
           event.copy(id = Some(id)).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)

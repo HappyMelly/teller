@@ -49,8 +49,15 @@ case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 
+  def isFacilitator: Boolean = {
+    !licenses.isEmpty || !brands.isEmpty
+  }
+
   lazy val person: Option[Person] = Person.find(personId)
   lazy val account: Option[Account] = Account.findByPerson(personId)
+  lazy val licenses: List[LicenseView] = License.activeLicenses(personId)
+  lazy val brands: List[Brand] = Brand.findByCoordinator(personId)
+
 }
 
 object UserAccount {

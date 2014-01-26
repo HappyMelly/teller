@@ -22,28 +22,24 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+$(document).ready( function() {
 
-import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltHandler }
-import be.objectify.deadbolt.core.models.Subject
-import models.UserAccount
-import play.api.mvc.{ SimpleResult, Request, Result }
-import play.api.i18n.Messages
-import play.api.mvc.Results.Redirect
-import scala.concurrent.Future
+    $("#brandId").change(function() {
+        getAvailableFacilitators($(this).find(':selected').val());
+    });
 
-/**
- * Deadbolt authorisation handler.
- */
-class AuthorisationHandler(account: Option[UserAccount]) extends DeadboltHandler {
+    function getAvailableFacilitators(brandCode) {
+        $.ajax({
+            url: '/license/' + brandCode,
+            dataType: "json"
+        }).done(function(data) {
+            for(var i = 0; i < data.length; i++) {
+                var name = data[i]["first_name"] + " " + data[i]["last_name"]
+                $('#facilitatorIds').append($("<option></option>").attr("value", data[i]["id"]).text(name));
+            }
+        }).fail(function() {
+            alert("Oops!");
+        });
+    }
+});
 
-  override def getSubject[A](request: Request[A]): Option[Subject] = account
-
-  def beforeAuthCheck[A](request: Request[A]) = None
-
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = Some(new FacilitatorResourceHandler(account))
-
-  def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
-    Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
-  }
-}

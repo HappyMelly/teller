@@ -1,8 +1,12 @@
-@(user: securesocial.core.Identity, id: Option[Long], eventForm: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  brands: List[BrandView],
+  eventForm: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
 @import views.ViewHelpers._
+
 
 @defining(eventForm.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
     @main("Events", Some(user)) {
@@ -17,12 +21,21 @@
         }
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-            @helper.select(eventForm("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+            @helper.select(eventForm("brandId"), brands.map(b => (b.brand.code, b.brand.name)), '_label -> "Brand")
             @helper.inputText(eventForm("title"), '_label -> "Title")
             @helper.inputText(eventForm("spokenLanguage"), '_label -> "Spoken Language")
             @helper.inputText(eventForm("materialsLanguage"), '_label -> "Materials Language")
             @helper.inputText(eventForm("city"), '_label -> "City")
             @helper.select(eventForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
+            <section class="container">
+                <label for="facilitatorIds">Facilitators</label>
+                <div>
+                    <select id="facilitatorIds"></select>
+                </div>
+                <div>
+                    <input type="text" value="Test" readonly/>
+                </div>
+            </section>
             @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date")
             @helper.inputDate(eventForm("schedule.end"), '_label -> "End date")
             @helper.inputText(eventForm("schedule.hoursPerDay"), '_label -> "Hours per day")
@@ -44,5 +57,8 @@
             </div>
             <button class="btn btn-primary" type="submit">Save</button>
         }
+
+        <script src='@routes.Assets.at("event/form.js")' type="text/javascript"></script>
+
     }
 }
