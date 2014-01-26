@@ -1,0 +1,22 @@
+@(events: List[Event])(actions: (Event) => Html)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@if(!events.isEmpty) {
+
+  <table class="datatables table table-bordered">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>City</th>
+      <th>Country</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+}
