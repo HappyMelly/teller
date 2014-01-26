@@ -104,6 +104,11 @@ object Brand {
     Query(Brands).filter(_.id === id).firstOption
   }
 
+  /** Finds all brands belonging to one coordinator **/
+  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
+    Query(Brands).filter(_.coordinatorId == coordinatorId).list
+  }
+
   def findAll: List[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId)
