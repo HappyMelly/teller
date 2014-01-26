@@ -11,9 +11,9 @@ from third-party apps and websites.
 ### Pre-requisites
 
 1. Install Java JDK 1.7
-2. Download and install Play framework 2.1.3
+2. Download and install Play framework 2.2.1
     * [http://www.playframework.com/download](http://www.playframework.com/download)
-    * [http://www.playframework.com/documentation/2.1.3/Installing](http://www.playframework.com/documentation/2.1.2/Installing)
+    * [http://www.playframework.com/documentation/2.2.1/Installing](http://www.playframework.com/documentation/2.2.1/Installing)
 3. Download/install and start MySQL 5.6
 4. Create the database and user:
     * `create database happymelly;`
@@ -29,7 +29,7 @@ from third-party apps and websites.
 1. Clone the repo
 2. Run the application
     * `cd teller`
-    * `TWITTER_KEY=[your app consumer key] TWITTER_SECRET=[your app consumer secret] play run`
+    * `AWS_ACCESS_KEY_ID=false AWS_SECRET_KEY=false TWITTER_KEY=[your app consumer key] TWITTER_SECRET=[your app consumer secret] play run`
 3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
     * on the _Database 'default' needs evolution!_ page, click _Apply this script now!_
