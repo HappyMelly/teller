@@ -30,6 +30,7 @@ POST /person/:id/delete       controllers.People.delete(id: Long)
 GET   /person/:id/licenses/new   controllers.Licenses.add(id: Long)
 POST  /person/:id/licenses/new   controllers.Licenses.create(id: Long)
 
+GET  /license/:brandCode   controllers.Licenses.index(brandCode: String)
 GET  /license/:id/edit     controllers.Licenses.edit(id: Long)
 POST /license/:id          controllers.Licenses.update(id: Long)
 POST /license/:id/delete   controllers.Licenses.delete(id: Long)

@@ -22,28 +22,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package models.database
 
-import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltHandler }
-import be.objectify.deadbolt.core.models.Subject
-import models.UserAccount
-import play.api.mvc.{ SimpleResult, Request, Result }
-import play.api.i18n.Messages
-import play.api.mvc.Results.Redirect
-import scala.concurrent.Future
+import play.api.db.slick.Config.driver.simple._
 
 /**
- * Deadbolt authorisation handler.
+ * `EventFacilitator` database table mapping.
  */
-class AuthorisationHandler(account: Option[UserAccount]) extends DeadboltHandler {
+private[models] object EventFacilitator extends Table[(Option[Long], Long, Long)]("EVENT_FACILITATOR") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def eventId = column[Long]("EVENT_ID")
+  def facilitatorId = column[Long]("FACILITATOR_ID")
 
-  override def getSubject[A](request: Request[A]): Option[Subject] = account
+  def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
+  def facilitator = foreignKey("FACILITATOR_FK", facilitatorId, People)(_.id)
 
-  def beforeAuthCheck[A](request: Request[A]) = None
-
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = Some(new FacilitatorResourceHandler(account))
-
-  def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
-    Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
-  }
+  def * = id.? ~ eventId ~ facilitatorId
+  def forInsert = eventId ~ facilitatorId returning id
 }

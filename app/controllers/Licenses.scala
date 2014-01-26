@@ -34,6 +34,7 @@ import play.api.libs.json._
 import play.api.mvc.Controller
 import scala.util.{ Failure, Success, Try }
 import models.UserRole.Role._
+import play.Logger
 
 /**
  * Content license pages and API.
@@ -56,6 +57,26 @@ object Licenses extends Controller with Security {
     "fee" -> jodaMoney(13, 0), // Set scale to zero to force whole numbers.
     "feePaid" -> optional(jodaMoney()))(License.apply)(License.unapply).verifying(
       "error.date.range", (license: License) ⇒ !license.start.isAfter(license.end)))
+
+  implicit val personWrites = new Writes[Person] {
+    def writes(person: Person): JsValue = {
+      Json.obj(
+        "first_name" -> person.firstName,
+        "last_name" -> person.lastName,
+        "id" -> person.id.get)
+    }
+  }
+
+  /**
+   * Returns a list of licensees for the given brand on today.
+   */
+  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      if (Brand.exists(brandCode)) {
+        val licensees = License.licensees(brandCode, LocalDate.now())
+        Ok(Json.toJson(licensees))
+      } else NotFound("Unknown brand")
+  }
 
   /**
    * Page for adding a new content license.

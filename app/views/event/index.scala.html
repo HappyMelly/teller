@@ -8,7 +8,7 @@
   <div class="span7">
   <h1>Events</h1>
   </div>
-  @restrict(handler, List(as(Editor.toString))) {
+  @dynamic(handler, "event", "edit") {
     <div class="span3">
       <a class="btn btn-success" href="@routes.Events.add()">
       <i class="icon-plus icon-white"></i>Add Event</a>

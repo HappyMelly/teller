@@ -29,10 +29,10 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.Events
+import models.database.{ EventFacilitator, OrganisationMemberships, Events }
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
-
+case class Location(city: String, countryCode: String)
 /**
  * An event such as a Management 3.0 course or a DARE Festival.
  */
@@ -42,8 +42,7 @@ case class Event(
   title: String,
   spokenLanguage: String,
   materialsLanguage: Option[String],
-  city: String,
-  countryCode: String,
+  location: Location,
   description: Option[String],
   specialAttention: Option[String],
   schedule: Schedule,
@@ -56,6 +55,14 @@ case class Event(
   updated: DateTime,
   updatedBy: String) {
 
+  lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      facilitation ← EventFacilitator if facilitation.eventId === this.id
+      person ← facilitation.facilitator
+    } yield person
+    query.sortBy(_.lastName.toLowerCase).list
+  }
+
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
     this.copy(id = Some(id))
@@ -64,7 +71,7 @@ case class Event(
   def delete(): Unit = Event.delete(this.id.get)
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (brandId, title, spokenLanguage, materialsLanguage, city, countryCode, description, specialAttention,
+    val updateTuple = (brandId, title, spokenLanguage, materialsLanguage, location.city, location.countryCode, description, specialAttention,
       schedule.start, schedule.end, schedule.hoursPerDay, webSite, registrationPage, isPrivate, isArchived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
