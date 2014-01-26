@@ -1,0 +1,75 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+
+package models.database
+
+import com.github.tototoshi.slick.JodaSupport._
+import models.{ Schedule, Event }
+import org.joda.time.{ LocalDate, DateTime }
+import play.api.db.slick.Config.driver.simple._
+
+/**
+ * `Event` database table mapping.
+ */
+private[models] object Events extends Table[Event]("EVENT") {
+
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brandId = column[Long]("BRAND_ID")
+  def title = column[String]("TITLE")
+
+  def spokenLanguage = column[String]("SPOKEN_LANGUAGE")
+  def materialsLanguage = column[Option[String]]("MATERIALS_LANGUAGE")
+  def city = column[String]("CITY")
+  def countryCode = column[String]("COUNTRY_CODE")
+
+  def description = column[Option[String]]("DESCRIPTION", O.DBType("TEXT"))
+  def specialAttention = column[Option[String]]("SPECIAL_ATTENTION", O.DBType("TEXT"))
+  def start = column[LocalDate]("START_DATE")
+  def end = column[LocalDate]("END_DATE")
+  def hoursPerDay = column[Int]("HOURS_PER_DAY")
+
+  def webSite = column[Option[String]]("WEBSITE")
+  def registrationPage = column[Option[String]]("REGISTRATION_PAGE")
+
+  def isPrivate = column[Boolean]("IS_PRIVATE")
+  def isArchived = column[Boolean]("IS_ARCHIVED")
+  def created = column[DateTime]("CREATED")
+  def createdBy = column[String]("CREATED_BY")
+  def updated = column[DateTime]("UPDATED")
+  def updatedBy = column[String]("UPDATED_BY")
+
+  def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
+
+  def * = id.? ~ brandId ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
+    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
+    isPrivate ~ isArchived ~ created ~ createdBy ~ updated ~ updatedBy <> (
+      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, e._6, e._7, e._8, e._9, Schedule(e._10, e._11, e._12), e._13, e._14, e._15, e._16, e._17, e._18, e._19, e._20),
+      (e: Event) ⇒ Some((e.id, e.brandId, e.title, e.spokenLanguage, e.materialsLanguage, e.city, e.countryCode, e.description, e.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.webSite, e.registrationPage, e.isPrivate, e.isArchived, e.created, e.createdBy, e.updated, e.updatedBy)))
+
+  def forInsert = * returning id
+
+  def forUpdate = brandId ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
+    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
+    isPrivate ~ isArchived ~ updated ~ updatedBy
+}
