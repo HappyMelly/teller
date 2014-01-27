@@ -2,7 +2,7 @@
 
 create table EVENT (
   ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  BRAND_ID BIGINT NOT NULL,
+  BRAND_CODE VARCHAR(254) NOT NULL,
   TITLE VARCHAR(254) NOT NULL,
   SPOKEN_LANGUAGE VARCHAR(254) NOT NULL,
   MATERIALS_LANGUAGE VARCHAR(254),
@@ -23,7 +23,7 @@ create table EVENT (
   UPDATED_BY VARCHAR(254) NOT NULL DEFAULT 'Sergey Kotlov'
 );
 
-alter table EVENT add constraint EVENT_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
+alter table EVENT add constraint EVENT_BRAND_FK foreign key(BRAND_CODE) references BRAND(CODE) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
 

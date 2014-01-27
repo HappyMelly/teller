@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.{ Location, Schedule, Activity, Event, Brand }
+import models._
 import play.api.mvc._
 import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
@@ -36,6 +36,11 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import scala.Some
 import play.api.data.format.Formatter
+import play.Logger
+import models.Location
+import securesocial.core.SecuredRequest
+import models.Schedule
+import scala.Some
 
 object Events extends Controller with Security {
 
@@ -44,22 +49,26 @@ object Events extends Controller with Security {
    */
   def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "brandCode" -> nonEmptyText.verifying(
+      "error.brand.invalid", (brandCode: String) ⇒ Brand.isAllowed(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText,
     "spokenLanguage" -> nonEmptyText,
     "materialsLanguage" -> optional(text),
     "location" -> mapping(
       "city" -> nonEmptyText,
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
-    "description" -> optional(text),
-    "specialAttention" -> optional(text),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
       "end" -> jodaLocalDate,
       "hoursPerDay" -> number(1, 24, true))(Schedule.apply)(Schedule.unapply).verifying(
         "error.date.range", (schedule: Schedule) ⇒ !schedule.start.isAfter(schedule.end)),
-    "webSite" -> optional(webUrl),
-    "registrationPage" -> optional(webUrl),
+    "details" -> mapping(
+      "facilitatorIds" -> list(number).verifying(
+        "An event should have at least one facilitator", (ids: List[Int]) ⇒ !ids.isEmpty),
+      "description" -> optional(text),
+      "specialAttention" -> optional(text),
+      "webSite" -> optional(webUrl),
+      "registrationPage" -> optional(webUrl))(Details.apply)(Details.unapply),
     "isPrivate" -> default(boolean, false),
     "isArchived" -> default(boolean, false),
     "created" -> ignored(DateTime.now()),
@@ -83,13 +92,21 @@ object Events extends Controller with Security {
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      eventForm.bindFromRequest.fold(
+      val form = eventForm.bindFromRequest
+      form.fold(
         formWithErrors ⇒
           BadRequest(views.html.event.form(request.user, None, Brand.findAll, formWithErrors)),
         event ⇒ {
-          val eventObj = event.insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
-          Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+          val validLicensees = License.licensees(event.brandCode)
+          if (event.details.facilitatorIds.forall(id ⇒ validLicensees.exists(_.id.get == id))) {
+            val eventObj = event.insert
+
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
+            Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+          } else {
+            BadRequest(views.html.event.form(request.user, None, Brand.findAll,
+              form.withError("details.facilitatorIds", "Some facilitators do not have valid licenses")))
+          }
         })
   }
 

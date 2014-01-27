@@ -29,7 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EventFacilitator` database table mapping.
  */
-private[models] object EventFacilitator extends Table[(Option[Long], Long, Long)]("EVENT_FACILITATOR") {
+private[models] object EventFacilitators extends Table[(Option[Long], Long, Long)]("EVENT_FACILITATOR") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
   def facilitatorId = column[Long]("FACILITATOR_ID")
