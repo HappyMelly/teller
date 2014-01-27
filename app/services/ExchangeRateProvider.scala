@@ -30,7 +30,6 @@ import play.api.libs.ws.WS
 import scala.concurrent.Future
 import org.joda.time.DateTime
 import math.BigDecimal.int2bigDecimal
-import play.api.libs.json.JsValue
 
 /**
  * A trait for anything that can return the current exchange rate for two given currencies.
@@ -51,6 +50,9 @@ object YahooExchangeRateProvider extends ExchangeRateProvider {
   private val query = "select id, Rate from yahoo.finance.xchange where pair = \"%s%s\""
     .format(_: CurrencyUnit, _: CurrencyUnit)
 
+  /**
+   * Returns the exchange rate from the API request, or `None` if the request didn’t return a rate.
+   */
   override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] =
     {
       WS.url(serviceUrl)
@@ -60,12 +62,16 @@ object YahooExchangeRateProvider extends ExchangeRateProvider {
           "env" -> "store://datatables.org/alltableswithkeys")
         .get().map {
           response ⇒
-            val json: JsValue = response.json
-            assert((json \ "query" \ "results" \ "rate" \ "id").as[String].equals(s"$base$counter"))
-            val timestamp = DateTime.parse((json \ "query" \ "created").as[String])
-            val rate = (json \ "query" \ "results" \ "rate" \ "Rate").as[BigDecimal]
-            if (rate.compare(0) == 0) None
-            else Some(ExchangeRate(None, base, counter, rate, timestamp))
+            try {
+              val json = response.json
+              assert((json \ "query" \ "results" \ "rate" \ "id").as[String].equals(s"$base$counter"))
+              val timestamp = DateTime.parse((json \ "query" \ "created").as[String])
+              val rate = (json \ "query" \ "results" \ "rate" \ "Rate").as[BigDecimal]
+              if (rate.compare(0) == 0) None
+              else Some(ExchangeRate(None, base, counter, rate, timestamp))
+            } catch {
+              case _ ⇒ None
+            }
         }
     }
 

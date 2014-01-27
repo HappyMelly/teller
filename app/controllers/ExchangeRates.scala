@@ -70,10 +70,16 @@ object ExchangeRates extends Controller {
   }
 
   def convert(amount: Money, target: CurrencyUnit) = Action.async {
-    for {
+    val future = for {
       Some(rate) ← CurrencyConverter.findRate(amount.getCurrencyUnit, target)
       result = rate.convert(amount)
     } yield Ok(Json.toJson(ConversionResult(rate.rate, result)))
+
+    future.recover {
+      case _ ⇒
+        val oneSecond = "1"
+        ServiceUnavailable.withHeaders(RETRY_AFTER -> oneSecond)
+    }
   }
 
 }
