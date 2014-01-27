@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Location, Schedule, Event }
+import models.{ Details, Location, Schedule, Event }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 
@@ -35,7 +35,7 @@ import play.api.db.slick.Config.driver.simple._
 private[models] object Events extends Table[Event]("EVENT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandId = column[Long]("BRAND_ID")
+  def brandCode = column[String]("BRAND_CODE")
   def title = column[String]("TITLE")
 
   def spokenLanguage = column[String]("SPOKEN_LANGUAGE")
@@ -60,17 +60,17 @@ private[models] object Events extends Table[Event]("EVENT") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
+  def brand = foreignKey("BRAND_FK", brandCode, Brands)(_.code)
 
-  def * = id.? ~ brandId ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
+  def * = id.? ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
     description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
     isPrivate ~ isArchived ~ created ~ createdBy ~ updated ~ updatedBy <> (
-      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, Location(e._6, e._7), e._8, e._9, Schedule(e._10, e._11, e._12), e._13, e._14, e._15, e._16, e._17, e._18, e._19, e._20),
-      (e: Event) ⇒ Some((e.id, e.brandId, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.description, e.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.webSite, e.registrationPage, e.isPrivate, e.isArchived, e.created, e.createdBy, e.updated, e.updatedBy)))
+      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, Location(e._6, e._7), Schedule(e._10, e._11, e._12), Details(List[Int](), e._8, e._9, e._13, e._14), e._15, e._16, e._17, e._18, e._19, e._20),
+      (e: Event) ⇒ Some((e.id, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.details.webSite, e.details.registrationPage, e.isPrivate, e.isArchived, e.created, e.createdBy, e.updated, e.updatedBy)))
 
   def forInsert = * returning id
 
-  def forUpdate = brandId ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
+  def forUpdate = brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
     description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
     isPrivate ~ isArchived ~ updated ~ updatedBy
 }

@@ -21,26 +21,36 @@
         }
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-            @helper.select(eventForm("brandId"), brands.map(b => (b.brand.code, b.brand.name)), '_label -> "Brand")
+            @helper.select(eventForm("brandCode"), brands.map(b => (b.brand.code, b.brand.name)), '_label -> "Brand")
             @helper.inputText(eventForm("title"), '_label -> "Title")
             @helper.inputText(eventForm("spokenLanguage"), '_label -> "Spoken Language")
             @helper.inputText(eventForm("materialsLanguage"), '_label -> "Materials Language")
-            @helper.inputText(eventForm("city"), '_label -> "City")
-            @helper.select(eventForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
-            <section class="container">
+            @helper.inputText(eventForm("location.city"), '_label -> "City")
+            @helper.select(eventForm("location.country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
+            @helper.textarea(eventForm("details.description"), '_label -> "Description")
+            @helper.textarea(eventForm("details.specialAttention"), '_label -> "Special attention")
+            @if(eventForm.error("details.facilitatorIds").isDefined) {
+            <div id="details_facilitatorIds_field" class="control-group error">
+            } else {
+            <div id="details_facilitatorIds_field" class="control-group">
+            }
                 <label for="facilitatorIds">Facilitators</label>
-                <div>
-                    <select id="facilitatorIds"></select>
+                <div class="input">
+                    <select id="facilitatorIds" name="facilitatorIds"></select>
+            @if(eventForm.error("details.facilitatorIds").isDefined) {
+                    <span class="help-inline">@eventForm.error("details.facilitatorIds").get.message</span>
+            } else {
+                    <span class="help-inline">Choose at least one facilitator</span>
+            }
                 </div>
-                <div>
-                    <input type="text" value="Test" readonly/>
+                <div id="chosenFacilitators">
                 </div>
-            </section>
+            </div>
             @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date")
             @helper.inputDate(eventForm("schedule.end"), '_label -> "End date")
             @helper.inputText(eventForm("schedule.hoursPerDay"), '_label -> "Hours per day")
-            @helper.inputText(eventForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-            @helper.inputText(eventForm("registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
+            @helper.inputText(eventForm("details.webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
+            @helper.inputText(eventForm("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
             <div class="control-group" id="isPrivate_field">
                 <label for="isPrivate" class="checkbox">
                     <input type="checkbox" id="isPrivate" name="isPrivate" value="true"
