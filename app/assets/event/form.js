@@ -24,22 +24,91 @@
 
 $(document).ready( function() {
 
-    $("#brandId").change(function() {
-        getAvailableFacilitators($(this).find(':selected').val());
-    });
-
-    function getAvailableFacilitators(brandCode) {
-        $.ajax({
-            url: '/license/' + brandCode,
-            dataType: "json"
-        }).done(function(data) {
-            for(var i = 0; i < data.length; i++) {
-                var name = data[i]["first_name"] + " " + data[i]["last_name"]
-                $('#facilitatorIds').append($("<option></option>").attr("value", data[i]["id"]).text(name));
+    var facilitators = {
+        retrieved: [],
+        chosen: [],
+        retrieve: function(brandCode) {
+            this.retrieved = []
+            $.ajax({
+                url: '/license/' + brandCode,
+                dataType: "json"
+            }).done(function(data) {
+                for(var i = 0; i < data.length; i++) {
+                    var name = data[i]["first_name"] + " " + data[i]["last_name"];
+                    facilitators.retrieved[i] = { name: name, id: data[i]['id'] }
+                }
+                facilitators.updateState();
+            }).fail(function() {
+                alert("Oops!");
+            });
+        },
+        updateState: function() {
+            // update a list of available facilitators
+            $('#facilitatorIds')
+                .empty()
+                .append($("<option></option>").attr("value", 0).text(""));
+            this.retrieved.sort(this.sortByName)
+            for(var i = 0; i < this.retrieved.length; i++) {
+                var name = this.retrieved[i]['name'];
+                $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i]["id"]).text(name));
             }
-        }).fail(function() {
-            alert("Oops!");
-        });
-    }
+            // update a list of chosen facilitators
+            $('#chosenFacilitators').empty();
+            this.chosen.sort(this.sortByName);
+            for(var i = 0; i < this.chosen.length; i++) {
+                var person = this.chosen[i];
+                $('#chosenFacilitators').append(
+                    $("<div>").append(
+                        $("<input readonly type='hidden'>")
+                            .attr("value", person['id'])
+                            .attr('name', 'details.facilitatorIds[' + (i + 1) + ']')
+                    ).append(
+                        $("<input readonly type='text'>")
+                            .attr("value", person['name'])
+                    ).append(
+                        $("<button class='btn btn-mini btn-danger deselect'>Delete</button>")
+                    )
+                )
+            }
+        },
+        select: function(id) {
+            this.move(id, this.retrieved, this.chosen);
+        },
+        deselect: function(id) {
+            this.move(id, this.chosen, this.retrieved);
+        },
+        move: function(id, from, to) {
+            var index = -1;
+            for(var i = 0; i < from.length; i++) {
+                if (from[i]['id'] == id) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1) {
+                var name = from[index]["name"];
+                to[to.length] = { name: name, id: id };
+                from.splice(index, 1);
+            }
+            this.updateState();
+        },
+        sortByName: function(left, right) {
+            return left.name > right.name
+        }
+    };
+
+    // Binds
+    $("#brandCode").change(function() {
+        facilitators.retrieve($(this).find(':selected').val());
+    });
+    $('#facilitatorIds').change(function() {
+        facilitators.select($(this).find(':selected').val());
+    });
+    $(this).on('click', '.deselect', function(event) {
+        event.preventDefault();
+        var id = $(this).parent('div').children('input').first().val();
+        facilitators.deselect(id);
+    });
+    facilitators.retrieve($('#brandCode').find(':selected').val());
 });
 

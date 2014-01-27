@@ -29,25 +29,24 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitator, OrganisationMemberships, Events }
+import models.database.{ EventFacilitators, Events }
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
+case class Details(facilitatorIds: List[Int], description: Option[String], specialAttention: Option[String],
+  webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
 /**
  * An event such as a Management 3.0 course or a DARE Festival.
  */
 case class Event(
   id: Option[Long],
-  brandId: Long,
+  brandCode: String,
   title: String,
   spokenLanguage: String,
   materialsLanguage: Option[String],
   location: Location,
-  description: Option[String],
-  specialAttention: Option[String],
   schedule: Schedule,
-  webSite: Option[String],
-  registrationPage: Option[String],
+  details: Details,
   isPrivate: Boolean = false,
   isArchived: Boolean = false,
   created: DateTime = DateTime.now(),
@@ -57,7 +56,7 @@ case class Event(
 
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
-      facilitation ← EventFacilitator if facilitation.eventId === this.id
+      facilitation ← EventFacilitators if facilitation.eventId === this.id
       person ← facilitation.facilitator
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
@@ -65,14 +64,16 @@ case class Event(
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
+    this.details.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.forInsert.insert((id, facilitatorId.toLong)))
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = Event.delete(this.id.get)
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (brandId, title, spokenLanguage, materialsLanguage, location.city, location.countryCode, description, specialAttention,
-      schedule.start, schedule.end, schedule.hoursPerDay, webSite, registrationPage, isPrivate, isArchived, updated, updatedBy)
+    val updateTuple = (brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
+      details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay,
+      details.webSite, details.registrationPage, isPrivate, isArchived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this

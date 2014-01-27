@@ -85,6 +85,17 @@ object Brand {
     Query(Query(Brands).filter(_.code === code).exists).first
   }
 
+  /**
+   * Returns true if and only if a user is allowed to manage this brand
+   */
+  def isAllowed(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    if (!exists(code))
+      false
+    else {
+      UserRole.forName(user.role).editor || License.licensees(code).exists(_.id == user.id)
+    }
+  }
+
   def find(code: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
