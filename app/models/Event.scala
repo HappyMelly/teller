@@ -32,7 +32,7 @@ import scala.slick.lifted.Query
 import models.database.{ EventFacilitators, Events }
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
-case class Details(facilitatorIds: List[Int], description: Option[String], specialAttention: Option[String],
+case class Details(description: Option[String], specialAttention: Option[String],
   webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
 case class EventFacilitator(eventId: Long, facilitatorId: Long)
@@ -54,7 +54,8 @@ case class Event(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) {
+  updatedBy: String,
+  facilitatorIds: List[Long]) {
 
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
@@ -64,17 +65,11 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  def facilitatorIds: List[Long] = DB.withSession { implicit session: Session ⇒
-    (for {
-      e ← EventFacilitators if e.eventId === id
-    } yield (e)).list.map(_._3)
-  }
-
   lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
-    this.details.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.forInsert.insert((id, facilitatorId.toLong)))
+    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.forInsert.insert((id, facilitatorId.toLong)))
     this.copy(id = Some(id))
   }
 
@@ -91,6 +86,12 @@ case class Event(
 }
 
 object Event {
+
+  def getFacilitatorIds(id: Long): List[Long] = DB.withSession { implicit session: Session ⇒
+    (for {
+      e ← EventFacilitators if e.eventId === id
+    } yield (e)).list.map(_._3)
+  }
 
   /**
    * Deletes an event.
