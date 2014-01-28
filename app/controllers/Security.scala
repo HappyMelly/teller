@@ -94,7 +94,7 @@ class FacilitatorResourceHandler(account: Option[UserAccount]) extends DynamicRe
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     if (name == "event" && account.isDefined) {
-      if (meta == "edit") {
+      if (meta == "add") {
         account.get.isFacilitator || UserRole.forName(account.get.role).editor
       } else {
         true
@@ -106,4 +106,5 @@ class FacilitatorResourceHandler(account: Option[UserAccount]) extends DynamicRe
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
     false
   }
+
 }

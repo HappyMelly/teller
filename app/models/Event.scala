@@ -35,6 +35,8 @@ case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
 case class Details(facilitatorIds: List[Int], description: Option[String], specialAttention: Option[String],
   webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
+case class EventFacilitator(eventId: Long, facilitatorId: Long)
+
 /**
  * An event such as a Management 3.0 course or a DARE Festival.
  */
@@ -60,6 +62,12 @@ case class Event(
       person ← facilitation.facilitator
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
+  }
+
+  def facilitatorIds: List[Long] = DB.withSession { implicit session: Session ⇒
+    (for {
+      e ← EventFacilitators if e.eventId === id
+    } yield (e)).list.map(_._3)
   }
 
   lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
