@@ -24,7 +24,7 @@
 
 package models
 
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.{ Duration, LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -61,6 +61,8 @@ case class Event(
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
   }
+
+  lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
