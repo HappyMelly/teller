@@ -1,6 +1,7 @@
 @(user: securesocial.core.Identity,
   id: Option[Long],
-  brands: List[BrandView],
+  brands: List[Brand],
+  currentUserId: Long,
   eventForm: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -21,7 +22,7 @@
         }
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-            @helper.select(eventForm("brandCode"), brands.map(b => (b.brand.code, b.brand.name)), '_label -> "Brand")
+            @helper.select(eventForm("brandCode"), brands.map(b => (b.code, b.name)), '_label -> "Brand")
             @helper.inputText(eventForm("title"), '_label -> "Title")
             @helper.inputText(eventForm("spokenLanguage"), '_label -> "Spoken Language")
             @helper.inputText(eventForm("materialsLanguage"), '_label -> "Materials Language")
@@ -29,6 +30,7 @@
             @helper.select(eventForm("location.country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
             @helper.textarea(eventForm("details.description"), '_label -> "Description")
             @helper.textarea(eventForm("details.specialAttention"), '_label -> "Special attention")
+            <div id="currentUserId" value="@currentUserId"/>
             @if(eventForm.error("details.facilitatorIds").isDefined) {
             <div id="details_facilitatorIds_field" class="control-group error">
             } else {
@@ -36,14 +38,14 @@
             }
                 <label for="facilitatorIds">Facilitators</label>
                 <div class="input">
-                    <select id="facilitatorIds" name="facilitatorIds"></select>
+                    <select id="facilitatorIds"></select>
             @if(eventForm.error("details.facilitatorIds").isDefined) {
                     <span class="help-inline">@eventForm.error("details.facilitatorIds").get.message</span>
             } else {
                     <span class="help-inline">Choose at least one facilitator</span>
             }
                 </div>
-                <div id="chosenFacilitators">
+                <div id="chosenFacilitators" value="@helper.repeat(eventForm("details.facilitatorIds"), min=0) { f =>@f.value,}">
                 </div>
             </div>
             @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date")

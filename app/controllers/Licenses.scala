@@ -68,17 +68,6 @@ object Licenses extends Controller with Security {
   }
 
   /**
-   * Returns a list of licensees for the given brand on today.
-   */
-  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-      if (Brand.exists(brandCode)) {
-        val licensees = License.licensees(brandCode, LocalDate.now())
-        Ok(Json.toJson(licensees))
-      } else NotFound("Unknown brand")
-  }
-
-  /**
    * Page for adding a new content license.
    */
   def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒

@@ -29,6 +29,7 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.Logger
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -86,13 +87,30 @@ object Brand {
   }
 
   /**
-   * Returns true if and only if a user is allowed to manage this brand
+   * Returns true if and only if a user is allowed to manage this brand.
+   * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
+   *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
+   *  license holders.
    */
-  def isAllowed(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+  def canManage(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
     if (!exists(code))
       false
+    else
+      findManagable(user).exists(_.code == code)
+  }
+
+  /**
+   * Returns a list of all managable brands
+   * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
+   *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
+   *  license holders.
+   */
+  def findManagable(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
+    if (UserRole.forName(user.role).editor)
+      Query(Brands).list
     else {
-      UserRole.forName(user.role).editor || License.licensees(code).exists(_.id == user.id)
+      val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
+      findByCoordinator(user.personId).union(facilitatedBrands).distinct
     }
   }
 
@@ -117,7 +135,7 @@ object Brand {
 
   /** Finds all brands belonging to one coordinator **/
   def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.coordinatorId == coordinatorId).list
+    Query(Brands).filter(_.coordinatorId === coordinatorId).list
   }
 
   def findAll: List[BrandView] = DB.withSession { implicit session: Session ⇒
