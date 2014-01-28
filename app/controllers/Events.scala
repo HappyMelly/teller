@@ -79,7 +79,7 @@ object Events extends Controller with Security {
   /**
    * Create page.
    */
-  def add = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def add = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -90,7 +90,7 @@ object Events extends Controller with Security {
   /**
    * Create form submits to this action.
    */
-  def create = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def create = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
       val form = eventForm.bindFromRequest
@@ -154,19 +154,21 @@ object Events extends Controller with Security {
   //          Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
   //        }
   //    }
-  //
-  //  /**
-  //   * Edit page.
-  //   * @param id Organisation ID
-  //   */
-  //  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-  //    implicit handler ⇒
-  //
-  //      Organisation.find(id).map {
-  //        organisation ⇒
-  //          Ok(views.html.organisation.form(request.user, Some(id), organisationForm.fill(organisation)))
-  //      }.getOrElse(NotFound)
-  //  }
+
+  /**
+   * Edit page.
+   * @param id Event ID
+   */
+  def edit(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      Event.find(id).map {
+        event ⇒
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val brands = Brand.findManagable(account)
+          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, eventForm.fill(event)))
+      }.getOrElse(NotFound)
+  }
 
   /**
    * List page.
