@@ -7,16 +7,39 @@
 
   <table class="datatables table table-bordered">
     <thead>
-    <tr>
-      <th>Name</th>
-      <th>Category</th>
-      <th>City</th>
-      <th>Country</th>
-      <th></th>
-    </tr>
+        <tr>
+          <th>Title</th>
+          <th>Brand</th>
+          <th>Facilitators</th>
+          <th>City</th>
+          <th>Country</th>
+          <th>Dates</th>
+          <th>Total hours</th>
+          <th>Materials Language</th>
+          <th></th>
+        </tr>
     </thead>
     <tbody>
-
+    @for(event <- events) {
+        <tr>
+            <td><a href="routes.events.details(event.id.getOrElse(0))">@event.title</a></td>
+            <td><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></td>
+            <td>
+                @for(facilitator <- event.facilitators) {
+                    <a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/>
+                }
+            </td>
+            <td>@event.location.city</td>
+            <td>
+                <img width="16" src="/assets/images/flags/16/@(event.location.countryCode.toLowerCase).png" align="absmiddle">
+                @Messages("country." + event.location.countryCode)
+            </td>
+            <td>@event.schedule.start.toDate.format("dd/MM/yy") - @event.schedule.end.toDate.format("dd/MM/yy")</td>
+            <td>@event.totalHours</td>
+            <td>@event.materialsLanguage</td>
+            <td></td>
+        </tr>
+    }        
     </tbody>
   </table>
 }

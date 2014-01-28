@@ -132,28 +132,28 @@ object Events extends Controller with Security {
   //      }.getOrElse(NotFound)
   //  }
   //
-  //  /**
-  //   * Details page.
-  //   * @param id Organisation ID
-  //   */
-  //  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-  //    implicit handler ⇒
+  //    /**
+  //     * Details page.
+  //     * @param id Organisation ID
+  //     */
+  //    def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  //      implicit handler ⇒
   //
-  //      Event.find(id).map {
-  //        event ⇒
-  //          val members = event.members
-  //          val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-  //          val contributions = Contribution.contributions(id, false)
-  //          val products = Product.findAll
+  //        Event.find(id).map {
+  //          event ⇒
+  //            val members = event.members
+  //            val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
+  //            val contributions = Contribution.contributions(id, false)
+  //            val products = Product.findAll
   //
-  //          Ok(views.html.organisation.details(request.user, organisation,
-  //            members, otherPeople,
-  //            contributions, products))
-  //      } getOrElse {
-  //        //TODO return 404
-  //        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
-  //      }
-  //  }
+  //            Ok(views.html.organisation.details(request.user, organisation,
+  //              members, otherPeople,
+  //              contributions, products))
+  //        } getOrElse {
+  //          //TODO return 404
+  //          Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
+  //        }
+  //    }
   //
   //  /**
   //   * Edit page.
@@ -174,7 +174,7 @@ object Events extends Controller with Security {
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
 
-      val events = Event.findAll
+      val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
       Ok(views.html.event.index(request.user, events))
   }
 
