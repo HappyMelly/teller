@@ -22,20 +22,56 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+function User(data) {
+    this.name = data["first_name"] + " " + data["last_name"];
+    this.id = data["id"];
+    this.coordinator = data["coordinator"];
+}
+
+User.prototype.isFacilitator = function(userId) {
+    return !this.coordinator && this.id == userId;
+}
+
 $(document).ready( function() {
 
     var facilitators = {
         retrieved: [],
         chosen: [],
-        retrieve: function(brandCode) {
-            this.retrieved = []
+        userId: 0,
+        initialize: function(brandCode) {
+            this.userId = parseInt($('#currentUserId').attr('value'));
+            var values = $('#chosenFacilitators').attr('value').split(',');
             $.ajax({
-                url: '/license/' + brandCode,
+                url: '/facilitators/' + brandCode,
                 dataType: "json"
             }).done(function(data) {
                 for(var i = 0; i < data.length; i++) {
-                    var name = data[i]["first_name"] + " " + data[i]["last_name"];
-                    facilitators.retrieved[i] = { name: name, id: data[i]['id'] }
+                    var user = new User(data[i]);
+                    if (values.indexOf(user.id.toString()) >= 0 || user.isFacilitator(facilitators.userId)) {
+                        facilitators.chosen[facilitators.chosen.length] = user
+                    } else {
+                        facilitators.retrieved[facilitators.retrieved.length] = user
+                    }
+                }
+                facilitators.updateState();
+            }).fail(function() {
+                alert("Oops!");
+            });
+        },
+        retrieve: function(brandCode) {
+            this.retrieved = [];
+            this.chosen = [];
+            $.ajax({
+                url: '/facilitators/' + brandCode,
+                dataType: "json"
+            }).done(function(data) {
+                for(var i = 0; i < data.length; i++) {
+                    var user = new User(data[i]);
+                    if (user.isFacilitator(facilitators.userId)) {
+                        facilitators.chosen[facilitators.chosen.length] = user
+                    } else {
+                        facilitators.retrieved[facilitators.retrieved.length] = user
+                    }
                 }
                 facilitators.updateState();
             }).fail(function() {
@@ -49,26 +85,29 @@ $(document).ready( function() {
                 .append($("<option></option>").attr("value", 0).text(""));
             this.retrieved.sort(this.sortByName)
             for(var i = 0; i < this.retrieved.length; i++) {
-                var name = this.retrieved[i]['name'];
-                $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i]["id"]).text(name));
+                var name = this.retrieved[i].name;
+                $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i].id).text(name));
             }
             // update a list of chosen facilitators
             $('#chosenFacilitators').empty();
             this.chosen.sort(this.sortByName);
             for(var i = 0; i < this.chosen.length; i++) {
-                var person = this.chosen[i];
-                $('#chosenFacilitators').append(
-                    $("<div>").append(
-                        $("<input readonly type='hidden'>")
-                            .attr("value", person['id'])
-                            .attr('name', 'details.facilitatorIds[' + (i + 1) + ']')
-                    ).append(
-                        $("<input readonly type='text'>")
-                            .attr("value", person['name'])
-                    ).append(
-                        $("<button class='btn btn-mini btn-danger deselect'>Delete</button>")
-                    )
-                )
+                var user = this.chosen[i];
+                var div = $("<div>").append(
+                    $("<input readonly type='hidden'>")
+                        .attr("value", user.id)
+                        .attr("id", "details_facilitatorIds_" + i)
+                        .attr('name', 'details.facilitatorIds[' + i + ']')
+                ).append(
+                    $("<input readonly type='text'>")
+                        .attr("value", user.name)
+                );
+                if (!user.isFacilitator(this.userId)) {
+                    div.append(
+                        $("<button class='btn btn-mini btn-link deselect'>Remove</button>")
+                    );
+                }
+                $('#chosenFacilitators').append(div);
             }
         },
         select: function(id) {
@@ -80,14 +119,13 @@ $(document).ready( function() {
         move: function(id, from, to) {
             var index = -1;
             for(var i = 0; i < from.length; i++) {
-                if (from[i]['id'] == id) {
+                if (from[i].id == id) {
                     index = i;
                     break;
                 }
             }
             if (index != -1) {
-                var name = from[index]["name"];
-                to[to.length] = { name: name, id: id };
+                to[to.length] = from[index];
                 from.splice(index, 1);
             }
             this.updateState();
@@ -109,6 +147,7 @@ $(document).ready( function() {
         var id = $(this).parent('div').children('input').first().val();
         facilitators.deselect(id);
     });
-    facilitators.retrieve($('#brandCode').find(':selected').val());
+    facilitators.initialize($('#brandCode').find(':selected').val());
+    $("input[type='date']").datepicker({ dateFormat: "yy-mm-dd" });
 });
 

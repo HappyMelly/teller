@@ -30,7 +30,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import play.libs.Scala
-
+import play.Logger
 /**
  * A log-in user account.
  */
