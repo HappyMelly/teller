@@ -35,7 +35,10 @@
 
   @dynamic(handler, "event", "edit") {
     <div class="span2 actions">
-        <div class="clearfix"></div>
+        <a href="@CSRF(routes.Events.duplicate(event.id.getOrElse(0)))" class="btn btn-success btn-block" type="submit">
+            <i class="icon-white icon-edit"></i> Duplicate
+        </a><br/>
+      <div class="clearfix"></div>
       <form class="delete" method="post" text="event" action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
         <button class="btn btn-danger btn-block" type="submit">
           <i class="icon-white icon-trash"></i> Delete

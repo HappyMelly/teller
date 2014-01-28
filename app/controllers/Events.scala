@@ -88,6 +88,20 @@ object Events extends Controller with Security {
   }
 
   /**
+   * Duplicate page.
+   */
+  def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      Event.find(id).map {
+        event ⇒
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val brands = Brand.findManagable(account)
+          Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm.fill(event)))
+      }.getOrElse(NotFound)
+  }
+
+  /**
    * Create form submits to this action.
    */
   def create = SecuredDynamicAction("event", "add") { implicit request ⇒
