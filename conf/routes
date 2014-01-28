@@ -80,7 +80,8 @@ POST /booking/:bookingNumber/attachment/delete   controllers.BookingEntries.dele
 
 GET  /events                 controllers.Events.index
 POST /events                 controllers.Events.create
-GET  /events/new             controllers.Events.add
+GET  /events/new/            controllers.Events.add
+GET  /event/:id/duplicate    controllers.Events.duplicate(id: Long)
 GET  /event/:id/edit         controllers.Events.edit(id: Long)
 GET  /event/:id              controllers.Events.details(id: Long)
 POST /event/:id              controllers.Events.update(id: Long)
