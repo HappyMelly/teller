@@ -50,7 +50,7 @@ object Events extends Controller with Security {
   def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "brandCode" -> nonEmptyText.verifying(
-      "error.brand.invalid", (brandCode: String) ⇒ Brand.isAllowed(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
+      "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText,
     "spokenLanguage" -> nonEmptyText,
     "materialsLanguage" -> optional(text),
@@ -79,32 +79,39 @@ object Events extends Controller with Security {
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      val brands = Brand.findAll
-      Ok(views.html.event.form(request.user, None, brands, eventForm))
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val brands = Brand.findManagable(account)
+      Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm))
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val form = eventForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.event.form(request.user, None, Brand.findAll, formWithErrors)),
+        formWithErrors ⇒ {
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val brands = Brand.findManagable(account)
+          BadRequest(views.html.event.form(request.user, None, brands, account.personId, formWithErrors))
+        },
         event ⇒ {
           val validLicensees = License.licensees(event.brandCode)
-          if (event.details.facilitatorIds.forall(id ⇒ validLicensees.exists(_.id.get == id))) {
+          val coordinator = Brand.find(event.brandCode).get.coordinator
+          if (event.details.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val eventObj = event.insert
 
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
-            BadRequest(views.html.event.form(request.user, None, Brand.findAll,
+            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val brands = Brand.findManagable(account)
+            BadRequest(views.html.event.form(request.user, None, brands, account.personId,
               form.withError("details.facilitatorIds", "Some facilitators do not have valid licenses")))
           }
         })
@@ -180,8 +187,9 @@ object Events extends Controller with Security {
 
       eventForm.bindFromRequest.fold(
         formWithErrors ⇒ {
-          val brands = Brand.findAll
-          BadRequest(views.html.event.form(request.user, Some(id), brands, formWithErrors))
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val brands = Brand.findManagable(account)
+          BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, formWithErrors))
         },
         event ⇒ {
           event.copy(id = Some(id)).update

@@ -30,7 +30,6 @@ import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
 import securesocial.core.SecuredRequest
 import scala.concurrent.Future
-import play.Logger
 
 /**
  * Integrates SecureSocial authentication with Deadbolt.
