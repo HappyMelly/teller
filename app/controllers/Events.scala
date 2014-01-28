@@ -112,7 +112,7 @@ object Events extends Controller with Security {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
             val brands = Brand.findManagable(account)
             BadRequest(views.html.event.form(request.user, None, brands, account.personId,
-              form.withError("details.facilitatorIds", "Some facilitators do not have valid licenses")))
+              form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
         })
   }
@@ -184,19 +184,30 @@ object Events extends Controller with Security {
    * Edit form submits to this action.
    * @param id Event ID
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
-      eventForm.bindFromRequest.fold(
+      val form = eventForm.bindFromRequest
+      form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findManagable(account)
           BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, formWithErrors))
         },
         event ⇒ {
-          event.copy(id = Some(id)).update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
-          Redirect(routes.Events.index).flashing("success" -> activity.toString)
+          val validLicensees = License.licensees(event.brandCode)
+          val coordinator = Brand.find(event.brandCode).get.coordinator
+          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
+            event.copy(id = Some(id)).update
+
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
+            Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+          } else {
+            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val brands = Brand.findManagable(account)
+            BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId,
+              form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
+          }
         })
   }
 
