@@ -96,8 +96,8 @@ $(document).ready( function() {
                 var div = $("<div>").append(
                     $("<input readonly type='hidden'>")
                         .attr("value", user.id)
-                        .attr("id", "details_facilitatorIds_" + i)
-                        .attr('name', 'details.facilitatorIds[' + i + ']')
+                        .attr("id", "facilitatorIds_" + i)
+                        .attr('name', 'facilitatorIds[' + i + ']')
                 ).append(
                     $("<input readonly type='text'>")
                         .attr("value", user.name)

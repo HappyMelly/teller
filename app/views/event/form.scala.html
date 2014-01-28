@@ -32,20 +32,20 @@
             @helper.textarea(eventForm("details.specialAttention"), '_label -> "Special attention")
             <div id="currentUserId" value="@currentUserId"/>
             @if(eventForm.error("details.facilitatorIds").isDefined) {
-            <div id="details_facilitatorIds_field" class="control-group error">
+            <div id="facilitatorIds_field" class="control-group error">
             } else {
-            <div id="details_facilitatorIds_field" class="control-group">
+            <div id="facilitatorIds_field" class="control-group">
             }
                 <label for="facilitatorIds">Facilitators</label>
                 <div class="input">
                     <select id="facilitatorIds"></select>
-            @if(eventForm.error("details.facilitatorIds").isDefined) {
-                    <span class="help-inline">@eventForm.error("details.facilitatorIds").get.message</span>
+            @if(eventForm.error("facilitatorIds").isDefined) {
+                    <span class="help-inline">@eventForm.error("facilitatorIds").get.message</span>
             } else {
                     <span class="help-inline">Choose at least one facilitator</span>
             }
                 </div>
-                <div id="chosenFacilitators" value="@helper.repeat(eventForm("details.facilitatorIds"), min=0) { f =>@f.value,}">
+                <div id="chosenFacilitators" value="@helper.repeat(eventForm("facilitatorIds"), min=0) { f =>@f.value,}">
                 </div>
             </div>
             @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date")

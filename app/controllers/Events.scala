@@ -63,8 +63,6 @@ object Events extends Controller with Security {
       "hoursPerDay" -> number(1, 24, true))(Schedule.apply)(Schedule.unapply).verifying(
         "error.date.range", (schedule: Schedule) ⇒ !schedule.start.isAfter(schedule.end)),
     "details" -> mapping(
-      "facilitatorIds" -> list(number).verifying(
-        "An event should have at least one facilitator", (ids: List[Int]) ⇒ !ids.isEmpty),
       "description" -> optional(text),
       "specialAttention" -> optional(text),
       "webSite" -> optional(webUrl),
@@ -74,7 +72,9 @@ object Events extends Controller with Security {
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))(Event.apply)(Event.unapply))
+    "updatedBy" -> ignored(request.user.fullName),
+    "facilitatorIds" -> list(longNumber).verifying(
+      "An event should have at least one facilitator", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
 
   /**
    * Create page.
@@ -103,7 +103,7 @@ object Events extends Controller with Security {
         event ⇒ {
           val validLicensees = License.licensees(event.brandCode)
           val coordinator = Brand.find(event.brandCode).get.coordinator
-          if (event.details.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
+          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val eventObj = event.insert
 
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
@@ -159,7 +159,7 @@ object Events extends Controller with Security {
    * Edit page.
    * @param id Event ID
    */
-  def edit(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
       Event.find(id).map {
