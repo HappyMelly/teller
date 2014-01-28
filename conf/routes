@@ -82,8 +82,9 @@ GET  /events                 controllers.Events.index
 POST /events                 controllers.Events.create
 GET  /events/new             controllers.Events.add
 GET  /event/:id/edit         controllers.Events.edit(id: Long)
-#GET  /organization/:id              controllers.Organisations.details(id: Long)
+GET  /event/:id              controllers.Events.details(id: Long)
 POST /event/:id              controllers.Events.update(id: Long)
+POST /event/:id/delete       controllers.Events.delete(id: Long)
 
 GET  /facilitators/:brandCode   controllers.Facilitators.index(brandCode: String)
 

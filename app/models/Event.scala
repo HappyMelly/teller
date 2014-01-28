@@ -35,7 +35,6 @@ case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
   webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
-case class EventFacilitator(eventId: Long, facilitatorId: Long)
 
 /**
  * An event such as a Management 3.0 course or a DARE Festival.
@@ -66,6 +65,10 @@ case class Event(
   }
 
   lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
+
+  def isEditable(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    UserRole.forName(account.role).editor || facilitatorIds.exists(_ == account.personId) || Brand.find(brandCode).get.coordinator.id.get == account.personId
+  }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
@@ -101,6 +104,7 @@ object Event {
    * Deletes an event.
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    EventFacilitators.where(_.eventId === id).mutate(_.delete())
     Events.where(_.id === id).mutate(_.delete())
   }
 

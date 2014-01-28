@@ -29,6 +29,7 @@ models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
 models.License = License
+models.Event = Event
 models.TransactionType.name = transaction type ‘{0}’
 
 object.UserAccount = {0} role
