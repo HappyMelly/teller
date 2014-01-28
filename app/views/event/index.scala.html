@@ -20,6 +20,9 @@
       <p>There are no events</p>
     } else {
       @table(events) { event =>
+          @restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a>
+          }
       }
     }
   </div>
