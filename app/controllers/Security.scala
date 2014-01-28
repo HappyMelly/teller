@@ -24,12 +24,14 @@
 
 package controllers
 
-import models.{ UserAccount, LoginIdentity, UserRole }
+import models.{ UserAccount, LoginIdentity, UserRole, Event }
 import securesocial.core.{ Identity, SecureSocial, SecuredRequest, Authorization }
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
 import securesocial.core.SecuredRequest
 import scala.concurrent.Future
+import play.api.Logger
+import scala.util.matching.Regex
 
 /**
  * Integrates SecureSocial authentication with Deadbolt.
@@ -93,13 +95,17 @@ trait Security extends SecureSocial with DeadboltActions {
 class FacilitatorResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    if (name == "event" && account.isDefined) {
-      if (meta == "add") {
-        account.get.isFacilitator || UserRole.forName(account.get.role).editor
-      } else {
-        true
+    if (name == "event" && account.isDefined)
+      meta match {
+        case "add" ⇒ account.get.isFacilitator || UserRole.forName(account.get.role).editor
+        case "edit" ⇒ {
+          val pattern = new Regex("\\d+")
+          val eventId = pattern findFirstIn request.uri
+          UserRole.forName(account.get.role).editor || Event.find(eventId.get.toLong).map { _.isEditable(account.get) }.getOrElse(false)
+        }
+        case _ ⇒ true
       }
-    } else
+    else
       false
   }
 
