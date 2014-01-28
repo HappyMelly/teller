@@ -117,43 +117,36 @@ object Events extends Controller with Security {
         })
   }
 
-  //  /**
-  //   * Deletes an organisation.
-  //   * @param id Organisation ID
-  //   */
-  //  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-  //    implicit handler ⇒
-  //
-  //      Event.find(id).map {
-  //        event ⇒
-  //          Event.delete(id)
-  //          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.name)
-  //          Redirect(routes.Events.index).flashing("success" -> activity.toString)
-  //      }.getOrElse(NotFound)
-  //  }
-  //
-  //    /**
-  //     * Details page.
-  //     * @param id Organisation ID
-  //     */
-  //    def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-  //      implicit handler ⇒
-  //
-  //        Event.find(id).map {
-  //          event ⇒
-  //            val members = event.members
-  //            val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-  //            val contributions = Contribution.contributions(id, false)
-  //            val products = Product.findAll
-  //
-  //            Ok(views.html.organisation.details(request.user, organisation,
-  //              members, otherPeople,
-  //              contributions, products))
-  //        } getOrElse {
-  //          //TODO return 404
-  //          Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
-  //        }
-  //    }
+  /**
+   * Deletes an event.
+   * @param id Event ID
+   */
+  def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      Event.find(id).map {
+        event ⇒
+          Event.delete(id)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
+          Redirect(routes.Events.index).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Details page.
+   * @param id Event ID
+   */
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+
+      Event.find(id).map {
+        event ⇒
+          Ok(views.html.event.details(request.user, event))
+      } getOrElse {
+        //TODO return 404
+        Redirect(routes.Events.index).flashing("error" -> Messages("error.notFound", Messages("models.Event")))
+      }
+  }
 
   /**
    * Edit page.

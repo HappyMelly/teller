@@ -22,7 +22,7 @@
     <tbody>
     @for(event <- events) {
         <tr>
-            <td><a href="routes.events.details(event.id.getOrElse(0))">@event.title</a></td>
+            <td><a href="@routes.Events.details(event.id.getOrElse(0))">@event.title</a></td>
             <td><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></td>
             <td>
                 @for(facilitator <- event.facilitators) {

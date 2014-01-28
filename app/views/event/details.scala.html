@@ -1,0 +1,106 @@
+@(user: securesocial.core.Identity,
+  event: Event
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import models.UserRole.Role._
+@import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main(event.title + " - Event", Some(user)) {
+
+  <div class="span8">
+    <header>
+
+    <h1>
+      @event.title
+        @dynamic(handler, "event", "edit") {
+        <a class="btn-small btn"href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a>
+      }
+    </h1>
+        <p><small>Added by @event.createdBy on @event.created.format <br> Updated by @event.updatedBy on @event.updated.format</small>
+
+        </p>
+        <p>
+            @if(event.isPrivate) {
+            <span class="label label-success">Private</span>
+            }
+            @if(event.isArchived) {
+            <span class="label label-important">Archived</span>
+            }
+        </p>
+    </header>
+  </div>
+
+  @dynamic(handler, "event", "edit") {
+    <div class="span2 actions">
+        <div class="clearfix"></div>
+      <form class="delete" method="post" text="event" action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
+        <button class="btn btn-danger btn-block" type="submit">
+          <i class="icon-white icon-trash"></i> Delete
+        </button>
+      </form>
+    </div>
+  }
+  <div class="span5">
+      <h3>Details</h3>
+      <p>
+          <strong>Brand</strong><br/>
+          <a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a>
+      </p>
+      <p>
+          <strong>Spoken Language</strong><br/>
+          @event.spokenLanguage
+      </p>
+      @event.materialsLanguage.map { lang =>
+      <p>
+          <strong>Materials Language</strong><br/>@lang
+      </p>
+      }
+      @event.details.description.map { desc =>
+      <p>
+          <strong>Short description</strong><br/>@desc
+      </p>
+      }
+      @event.details.specialAttention.map { attention =>
+      <p>
+          <strong>Special attention</strong><br/>@attention
+      </p>
+      }
+      @event.details.webSite.map { url =>
+      <p><strong>Web site</strong>
+          <br><a href="@url">@url</a></p>
+      }
+
+      @event.details.registrationPage.map { url =>
+      <p><strong>Registration page</strong>
+          <br><a href="@url">@url</a></p>
+      }
+  </div>
+  <div class="span3">
+    <h3>Who</h3>
+    @for(facilitator <- event.facilitators) {
+      <a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/>
+    }
+    <h3>Where</h3>
+    <address>
+      <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png" align="baseline">
+      @Messages("country." + event.location.countryCode), @event.location.city
+    </address>
+    <h3>When</h3>
+    <p>
+        <strong>Start date</strong><br/>@event.schedule.start.toDate.format("dd/MM/yy")
+    </p>
+    <p>
+        <strong>End date</strong><br/>@event.schedule.end.toDate.format("dd/MM/yy")
+    </p>
+    <p>
+        <strong>Hours per day / Total hours</strong><br/>@event.schedule.hoursPerDay / @event.totalHours
+    </p>
+
+
+  </div>
+
+	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+}
