@@ -34,7 +34,6 @@ import play.api.libs.json._
 import play.api.mvc.Controller
 import scala.util.{ Failure, Success, Try }
 import models.UserRole.Role._
-import play.Logger
 
 /**
  * Content license pages and API.

@@ -29,7 +29,6 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.Logger
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -96,16 +95,16 @@ object Brand {
     if (!exists(code))
       false
     else
-      findManagable(user).exists(_.code == code)
+      findForUser(user).exists(_.code == code)
   }
 
   /**
-   * Returns a list of all managable brands
+   * Returns a list of all brands for a specified user
    * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
    */
-  def findManagable(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
+  def findForUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
     if (UserRole.forName(user.role).editor)
       Query(Brands).list
     else {

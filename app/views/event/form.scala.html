@@ -14,12 +14,14 @@
 
         <h1>@eventTitle</h1>
 
+        <div id="error">
         @if(eventForm.hasErrors) {
           <div class="alert alert-error">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             Please fix the validation errors.
           </div>
         }
+        </div>
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
             @helper.select(eventForm("brandCode"), brands.map(b => (b.code, b.name)), '_label -> "Brand")
@@ -53,17 +55,17 @@
             @helper.inputText(eventForm("schedule.hoursPerDay"), '_label -> "Hours per day")
             @helper.inputText(eventForm("details.webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
             @helper.inputText(eventForm("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
-            <div class="control-group" id="isPrivate_field">
-                <label for="isPrivate" class="checkbox">
-                    <input type="checkbox" id="isPrivate" name="isPrivate" value="true"
-                    @if(eventForm("isPrivate").value.exists(_ == "true")){checked}>
+            <div class="control-group" id="notPublic_field">
+                <label for="notPublic" class="checkbox">
+                    <input type="checkbox" id="notPublic" name="notPublic" value="true"
+                    @if(eventForm("notPublic").value.exists(_ == "true")){checked}>
                     Private Event
                 </label>
             </div>
-            <div class="control-group" id="isArchived_field">
-                <label for="isArchived" class="checkbox">
-                    <input type="checkbox" id="isArchived" name="isArchived" value="true"
-                    @if(eventForm("isArchived").value.exists(_ == "true")){checked}>
+            <div class="control-group" id="archived_field">
+                <label for="archived" class="checkbox">
+                    <input type="checkbox" id="archived" name="archived" value="true"
+                    @if(eventForm("archived").value.exists(_ == "true")){checked}>
                     Archived Event
                 </label>
             </div>
