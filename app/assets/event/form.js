@@ -32,7 +32,55 @@ User.prototype.isFacilitator = function(userId) {
     return !this.coordinator && this.id == userId;
 }
 
+function showError(message) {
+    $('#error').append(
+        $('<div class="alert alert-error">')
+            .text(message)
+            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+    );
+}
+function hideError() {
+    $('#error').empty();
+}
+
 $(document).ready( function() {
+
+    /**
+     * Check if we should add a user to the list of chosen facilitators or not
+     * @param user User
+     * @param chosenFacilitators Array[Int]
+     * @returns Boolean
+     */
+    function isChosenOne(user, chosenFacilitators) {
+        if (user.isFacilitator(facilitators.userId)) return true;
+        return (chosenFacilitators && chosenFacilitators.indexOf(user.id.toString()) >= 0);
+    }
+
+    /**
+     * Retrieve a list of facilitators for the brand and fill 'chosen' and 'retrieved' arrays
+     * in 'facilitators' object
+     * @param brandCode String
+     * @param chosenFacilitators Array[Int] or null
+     */
+    function getFacilitators(brandCode, chosenFacilitators) {
+        $.ajax({
+            url: '/facilitators/' + brandCode,
+            dataType: "json"
+        }).done(function(data) {
+                hideError();
+                for(var i = 0; i < data.length; i++) {
+                    var user = new User(data[i]);
+                    if (isChosenOne(user, chosenFacilitators)) {
+                        facilitators.chosen[facilitators.chosen.length] = user
+                    } else {
+                        facilitators.retrieved[facilitators.retrieved.length] = user
+                    }
+                }
+                facilitators.updateState();
+            }).fail(function() {
+                showError("Sorry we don't know anything about the brand you try to request")
+            });
+    }
 
     var facilitators = {
         retrieved: [],
@@ -41,42 +89,12 @@ $(document).ready( function() {
         initialize: function(brandCode) {
             this.userId = parseInt($('#currentUserId').attr('value'));
             var values = $('#chosenFacilitators').attr('value').split(',');
-            $.ajax({
-                url: '/facilitators/' + brandCode,
-                dataType: "json"
-            }).done(function(data) {
-                for(var i = 0; i < data.length; i++) {
-                    var user = new User(data[i]);
-                    if (values.indexOf(user.id.toString()) >= 0 || user.isFacilitator(facilitators.userId)) {
-                        facilitators.chosen[facilitators.chosen.length] = user
-                    } else {
-                        facilitators.retrieved[facilitators.retrieved.length] = user
-                    }
-                }
-                facilitators.updateState();
-            }).fail(function() {
-                alert("Oops!");
-            });
+            getFacilitators(brandCode, values);
         },
         retrieve: function(brandCode) {
             this.retrieved = [];
             this.chosen = [];
-            $.ajax({
-                url: '/facilitators/' + brandCode,
-                dataType: "json"
-            }).done(function(data) {
-                for(var i = 0; i < data.length; i++) {
-                    var user = new User(data[i]);
-                    if (user.isFacilitator(facilitators.userId)) {
-                        facilitators.chosen[facilitators.chosen.length] = user
-                    } else {
-                        facilitators.retrieved[facilitators.retrieved.length] = user
-                    }
-                }
-                facilitators.updateState();
-            }).fail(function() {
-                alert("Oops!");
-            });
+            getFacilitators(brandCode, null);
         },
         updateState: function() {
             // update a list of available facilitators

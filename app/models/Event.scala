@@ -48,8 +48,8 @@ case class Event(
   location: Location,
   schedule: Schedule,
   details: Details,
-  isPrivate: Boolean = false,
-  isArchived: Boolean = false,
+  notPublic: Boolean = false,
+  archived: Boolean = false,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -81,7 +81,7 @@ case class Event(
   def update: Event = DB.withSession { implicit session: Session ⇒
     val updateTuple = (brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
       details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay,
-      details.webSite, details.registrationPage, isPrivate, isArchived, updated, updatedBy)
+      details.webSite, details.registrationPage, notPublic, archived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
 

@@ -27,7 +27,7 @@ from third-party apps and websites.
 ### Application
 
 1. Clone the repo
-2. Run the application
+2. Run the application. You can use any value for AWS keys, if you don't need booking entry attachments to work.
     * `cd teller`
     * `AWS_ACCESS_KEY_ID=false AWS_SECRET_KEY=false TWITTER_KEY=[your app consumer key] TWITTER_SECRET=[your app consumer secret] play run`
 3. Open the application in a web browser and run Evolutions to populate the database

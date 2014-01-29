@@ -23,10 +23,10 @@
 
         </p>
         <p>
-            @if(event.isPrivate) {
+            @if(event.notPublic) {
             <span class="label label-success">Private</span>
             }
-            @if(event.isArchived) {
+            @if(event.archived) {
             <span class="label label-important">Archived</span>
             }
         </p>

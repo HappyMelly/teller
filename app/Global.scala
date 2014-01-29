@@ -24,6 +24,15 @@
 
 import play.api._
 import play.api.mvc._
+import play.api.mvc.Results._
 import play.filters.csrf._
+import scala.concurrent.Future
 
-object Global extends WithFilters(CSRFFilter()) with GlobalSettings
+object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
+
+  override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
+    Future.successful(NotFound(
+      views.html.notFoundPage(request.path)))
+  }
+
+}

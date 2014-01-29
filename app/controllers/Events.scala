@@ -67,8 +67,8 @@ object Events extends Controller with Security {
       "specialAttention" -> optional(text),
       "webSite" -> optional(webUrl),
       "registrationPage" -> optional(webUrl))(Details.apply)(Details.unapply),
-    "isPrivate" -> default(boolean, false),
-    "isArchived" -> default(boolean, false),
+    "notPublic" -> default(boolean, false),
+    "archived" -> default(boolean, false),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
@@ -83,7 +83,7 @@ object Events extends Controller with Security {
     implicit handler ⇒
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val brands = Brand.findManagable(account)
+      val brands = Brand.findForUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm))
   }
 
@@ -96,7 +96,7 @@ object Events extends Controller with Security {
       Event.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findManagable(account)
+          val brands = Brand.findForUser(account)
           Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
@@ -111,7 +111,7 @@ object Events extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findManagable(account)
+          val brands = Brand.findForUser(account)
           BadRequest(views.html.event.form(request.user, None, brands, account.personId, formWithErrors))
         },
         event ⇒ {
@@ -124,7 +124,7 @@ object Events extends Controller with Security {
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val brands = Brand.findManagable(account)
+            val brands = Brand.findForUser(account)
             BadRequest(views.html.event.form(request.user, None, brands, account.personId,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
@@ -156,10 +156,7 @@ object Events extends Controller with Security {
       Event.find(id).map {
         event ⇒
           Ok(views.html.event.details(request.user, event))
-      } getOrElse {
-        //TODO return 404
-        Redirect(routes.Events.index).flashing("error" -> Messages("error.notFound", Messages("models.Event")))
-      }
+      }.getOrElse(NotFound)
   }
 
   /**
@@ -172,7 +169,7 @@ object Events extends Controller with Security {
       Event.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findManagable(account)
+          val brands = Brand.findForUser(account)
           Ok(views.html.event.form(request.user, Some(id), brands, account.personId, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
@@ -198,7 +195,7 @@ object Events extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findManagable(account)
+          val brands = Brand.findForUser(account)
           BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, formWithErrors))
         },
         event ⇒ {
@@ -211,7 +208,7 @@ object Events extends Controller with Security {
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val brands = Brand.findManagable(account)
+            val brands = Brand.findForUser(account)
             BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
