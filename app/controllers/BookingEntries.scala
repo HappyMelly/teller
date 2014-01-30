@@ -45,7 +45,7 @@ import scala.Some
 import play.api.mvc.SimpleResult
 import models.AccountSummary
 import securesocial.core.SecuredRequest
-import services.{ EmailService, S3Bucket }
+import services.{ CurrencyConverter, EmailService, S3Bucket }
 
 object BookingEntries extends Controller with Security {
 
@@ -108,20 +108,23 @@ object BookingEntries extends Controller with Security {
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
+      val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val form = bookingEntryForm(request).bindFromRequest
+
+      // Extracted function to handle the error case, either from validation or currency conversion failure,
+      // by redisplaying the edit page with error messages.
+      val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val brands = Brand.findAll
+        val transactionTypes = TransactionType.findAll
+        BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
+      }
+
       form.fold(
-        formWithErrors ⇒ Future.successful {
-          // Handle errors
-          val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
-          val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-          val brands = Brand.findAll
-          val transactionTypes = TransactionType.findAll
-          BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
-        },
+        formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
         entry ⇒ {
           entry.withSourceConverted.map { entry ⇒
             // Create booking entry.
-            val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
             val insertedEntry = entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
@@ -129,6 +132,10 @@ object BookingEntries extends Controller with Security {
             sendEmailNotification(insertedEntry, activity, entry.participants)
             sendEmailNotification(insertedEntry, activity, Person.findActiveAdmins -- entry.participants)
             nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
+          }.recover {
+            case e: CurrencyConverter.NoExchangeRateException ⇒
+              val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
+              handleFormWithErrors(formWithError)
           }
         })
   }
@@ -210,7 +217,7 @@ object BookingEntries extends Controller with Security {
           val form = bookingEntryForm.fill(bookingEntry)
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll))
+          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
           Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
         }
@@ -257,9 +264,13 @@ object BookingEntries extends Controller with Security {
   }
 
   private def isAccessible(request: SecuredRequest[_], accountId: Long): Boolean = {
-    val person = request.user.asInstanceOf[LoginIdentity].userAccount.person
-    val accessibleAccountIds = person.map(_.findAccessibleAccounts.map(_.id)).toList.flatten
-    accessibleAccountIds.contains(accountId)
+    val account = request.user.asInstanceOf[LoginIdentity].userAccount
+    if (account.admin) {
+      true
+    } else {
+      val accessibleAccountIds = account.person.map(_.findAccessibleAccounts.map(_.id)).toList.flatten
+      accessibleAccountIds.contains(accountId)
+    }
   }
 
   /**
@@ -272,13 +283,18 @@ object BookingEntries extends Controller with Security {
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
         if (existingEntry.editableBy(currentUser)) {
           val form = bookingEntryForm(request).bindFromRequest
+
+          // Extracted function to handle the error case, either from validation or currency conversion failure,
+          // by redisplaying the edit page with error messages.
+          val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
+            val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+            val brands = Brand.findAll
+            val transactionTypes = TransactionType.findAll
+            BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
+          }
+
           form.fold(
-            formWithErrors ⇒ Future.successful {
-              val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-              val brands = Brand.findAll
-              val transactionTypes = TransactionType.findAll
-              BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
-            },
+            formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
             editedEntry ⇒ {
               editedEntry.withSourceConverted.map { editedEntry ⇒
                 BookingEntry.update(editedEntry.copy(id = existingEntry.id))
@@ -293,6 +309,10 @@ object BookingEntries extends Controller with Security {
                 sendEmailNotification(updatedEntry, activity, Person.findActiveAdmins)
 
                 nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
+              }.recover {
+                case e: CurrencyConverter.NoExchangeRateException ⇒
+                  val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
+                  handleFormWithErrors(formWithError)
               }
             })
         } else {

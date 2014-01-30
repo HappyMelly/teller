@@ -27,7 +27,6 @@ package services
 import org.joda.money.{ CurrencyUnit, Money }
 import models.ExchangeRate
 import scala.concurrent.Future
-import scala.util.Try
 
 /**
  * Looks up exchange rates and converts amounts between currencies.
@@ -47,9 +46,9 @@ object CurrencyConverter {
    * @return The converted amount if successful, or `NoExchangeRateException`
    */
   def convert(amount: Money, targetCurrency: CurrencyUnit, exchangeRateProviders: Seq[ExchangeRateProvider] = defaultProviders): Future[Money] = {
-    findRate(amount.getCurrencyUnit, targetCurrency, exchangeRateProviders).map{ maybeRate ⇒
-      maybeRate.map(rate ⇒ rate.apply(amount))
-        .getOrElse(throw new NoExchangeRateException(s"No exchange rate found for ${amount.getCurrencyUnit} - $targetCurrency"))
+    findRate(amount.getCurrencyUnit, targetCurrency, exchangeRateProviders).map {
+      case Some(rate) ⇒ rate.apply(amount)
+      case None ⇒ throw new NoExchangeRateException(s"No exchange rate found for ${amount.getCurrencyUnit} - $targetCurrency")
     }
   }
 
@@ -68,6 +67,8 @@ object CurrencyConverter {
         rateMaybeFuture.flatMap {
           case Some(rate) ⇒ Future.successful(Some(rate))
           case None ⇒ findRate(base, counter, tail)
+        }.recover {
+          case _ ⇒ None
         }
       case Nil ⇒ Future.successful(None)
     }

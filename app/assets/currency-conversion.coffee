@@ -49,14 +49,15 @@ $ ->
       basePercentage = basePercentageInput.val()
       conversionAmount = Math.floor(baseAmount * basePercentage) / 100
       url = jsRoutes.controllers.ExchangeRates.convert("#{baseCurrency}#{conversionAmount}", targetCurrency).url
+      convertedElements = $(".#{this.id}.converted", scope)
       $.getJSON(url, (data) =>
         title = "Exchange rate #{baseCurrency}/#{targetCurrency} #{data.rate} (measured today)"
         resultText = "#{baseCurrency} #{conversionAmount} × #{data.rate} = #{data.result}"
         $(".#{this.id}.converted .amount", scope).text(resultText)
-        $(".#{this.id}.converted", scope).attr('title', title).show()
-      )
+        convertedElements.attr('title', title).show()
+      ).error(convertedElements.hide())
     else
-      $(".#{this.id}.converted", scope).hide()
+      convertedElements.hide()
 
   $(counterElements).change(update)
   $(baseElements).change(->

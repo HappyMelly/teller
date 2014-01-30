@@ -37,6 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import java.net.URLEncoder
 import services.S3Bucket
+import services.CurrencyConverter.NoExchangeRateException
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -110,10 +111,15 @@ case class BookingEntry(
    * Returns a `Future` because WS calls are potentially involved.
    */
   def withSourceConverted: Future[BookingEntry] = {
-    for {
+    val future = for {
       fromAmountConverted ← CurrencyConverter.convert(sourceProRata, from.currency)
       toAmountConverted ← CurrencyConverter.convert(sourceProRata, to.currency)
     } yield copy(fromAmount = fromAmountConverted, toAmount = toAmountConverted)
+
+    // Preserve the error for the controller to handle.
+    future.recover {
+      case e ⇒ throw e
+    }
   }
 
   /**

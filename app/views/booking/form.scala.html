@@ -1,6 +1,6 @@
 @(user: securesocial.core.Identity, form: Form[BookingEntry], fromAccounts: List[AccountSummary],
   toAccounts: List[AccountSummary], brands: List[BrandView], transactionTypes: List[TransactionType],
-  successMessage: Option[String] = None)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
+  successMessage: Option[String] = None, bookingNumber: Option[Int] = None)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token, requestHeader: RequestHeader)
 
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
@@ -27,22 +27,23 @@
   }
 }
 
-@main("Add booking entry", Some(user)) {
+@defining(bookingNumber.isDefined) { editing =>
 
-  @successMessage.map { message =>
-    <div class="alert alert-success">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-      @message
-    </div>
-  }
+  @main(if(editing) { "Edit booking entry" } else { "Add booking entry" }, Some(user)) {
 
-  @defining(form.value.flatMap(_.id).isDefined) { editing =>
+    @successMessage.map { message =>
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        @message
+      </div>
+    }
+
     <h1>@if(editing) { Edit } else { Add } booking entry</h1>
 
     @validationErrors(form)
 
 
-    <form class="form-horizontal" method="post" action="@CSRF(if(editing) { routes.BookingEntries.update(form.value.flatMap(_.bookingNumber).getOrElse(0)) } else { routes.BookingEntries.create })">
+    <form class="form-horizontal" method="post" action="@CSRF(if(editing) { routes.BookingEntries.update(bookingNumber.getOrElse(0)) } else { routes.BookingEntries.create })">
 
       @defining(form("summary").hasErrors) { hasErrors =>
         <div class="controls-row control-group @if(hasErrors) {error}">
