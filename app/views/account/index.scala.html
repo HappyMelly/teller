@@ -30,7 +30,7 @@
             <tbody>
             @for(account <- accounts) {
               <tr>
-                <td>@account.name</td>
+                <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
                 <td>@account.balance.format</td>
               </tr>
             }

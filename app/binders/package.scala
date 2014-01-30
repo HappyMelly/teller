@@ -28,8 +28,19 @@ import play.api.mvc.{ QueryStringBindable, PathBindable }
 import org.joda.money.{ Money, CurrencyUnit }
 import scala.util.Try
 import org.joda.money.format.{ MoneyAmountStyle, MoneyFormatterBuilder }
+import org.joda.time.LocalDate
+import org.joda.time.format.DateTimeFormat
+import templates.Formatters
+import play.api.mvc.QueryStringBindable.Parsing
 
 object `package` {
+
+  // Option[LocalDate] query strings, supporting empty string query string values
+
+  implicit object bindableLocalDate extends Parsing[Option[LocalDate]](
+    dateString ⇒ if (dateString.isEmpty) None else Some(DateTimeFormat.forPattern(Formatters.DatePattern).parseLocalDate(dateString)),
+    _.map(_.toString(Formatters.DatePattern)).getOrElse(""),
+    (key: String, e: Exception) ⇒ "Cannot parse parameter %s as LocalDate: %s".format(key, e.getMessage))
 
   // CurrencyUnit
 
