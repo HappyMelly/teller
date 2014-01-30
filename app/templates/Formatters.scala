@@ -36,6 +36,7 @@ import org.jsoup.safety.Whitelist
  */
 object Formatters {
 
+  val DatePattern = "yyyy-MM-dd"
   val DefaultTimeZone = DateTimeZone.forID("Europe/Brussels")
 
   implicit class RichDateTime(dateTime: DateTime) {
@@ -44,7 +45,7 @@ object Formatters {
   }
 
   implicit class RichLocalDate(date: LocalDate) {
-    def format(): String = format("yyyy-MM-dd")
+    def format(): String = format(DatePattern)
     def format(pattern: String) = date.toString(pattern)
   }
 

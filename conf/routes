@@ -62,7 +62,7 @@ GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id
 POST /user    controllers.UserAccounts.update
 
 GET  /account/:id            controllers.Accounts.details(id: Long)
-GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long)
+GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
 POST /account/:id/activate   controllers.Accounts.activate(id: Long)
 POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 

@@ -24,6 +24,7 @@
 
 package models
 
+import com.github.tototoshi.slick.JodaSupport._
 import java.math.RoundingMode
 import models.JodaMoney._
 import models.database._
@@ -211,8 +212,18 @@ object BookingEntry {
   /**
    * Returns a list of entries for the given account, in reverse chronological order of date created.
    */
-  def findByAccountId(accountId: Long): List[BookingEntrySummary] = DB.withSession { implicit session: Session ⇒
-    bookingEntriesQuery.filter(row ⇒ row._1 === accountId || row._2 === accountId).sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
+  def findByAccountId(accountId: Long, from: Option[LocalDate], to: Option[LocalDate]): List[BookingEntrySummary] = DB.withSession { implicit session: Session ⇒
+    val baseQuery = bookingEntriesQuery.filter(row ⇒ row._1 === accountId || row._2 === accountId)
+
+    val fromQuery = from.map { fromDate ⇒
+      baseQuery.filter(row ⇒ row._5 >= fromDate)
+    }.getOrElse(baseQuery)
+
+    val toQuery = to.map { toDate ⇒
+      fromQuery.filter(row ⇒ row._5 <= toDate)
+    }.getOrElse(fromQuery)
+
+    toQuery.sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
   }
 
   private def nextBookingNumber: Int = DB.withSession { implicit session: Session ⇒

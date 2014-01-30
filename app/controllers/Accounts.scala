@@ -30,6 +30,7 @@ import models.UserRole.Role._
 import org.joda.money.CurrencyUnit
 import play.api.data.Form
 import play.api.data.Forms._
+import org.joda.time.LocalDate
 
 object Accounts extends Controller with Security {
 
@@ -38,9 +39,10 @@ object Accounts extends Controller with Security {
   /**
    * An overview of bookings for the given account.
    */
-  def bookings(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.booking.index(request.user, Account.find(id), None, BookingEntry.findByAccountId(id)))
+      val entries = BookingEntry.findByAccountId(id, from, to)
+      Ok(views.html.booking.index(request.user, Account.find(id), None, entries, from, to))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Viewer) {
