@@ -31,7 +31,7 @@ import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import org.joda.time.DateTime
+import org.joda.time.{ LocalDate, DateTime }
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import scala.Some
@@ -43,6 +43,33 @@ import models.Schedule
 import scala.Some
 
 object Events extends Controller with Security {
+
+  val dateRangeFormatter = new Formatter[LocalDate] {
+
+    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], LocalDate] = {
+      // "data" lets you access all form data values
+      try {
+        val start = LocalDate.parse(data.get("schedule.start").get)
+        try {
+          val end = LocalDate.parse(data.get("schedule.end").get)
+          if (start.isAfter(end)) {
+            Left(List(FormError("schedule.start", "error.date.range"), FormError("schedule.end", "error.date.range")))
+          } else {
+            Right(end)
+          }
+        } catch {
+          case e: IllegalArgumentException ⇒ Left(List(FormError("schedule.end", "Invalid date")))
+        }
+      } catch {
+        // The list is empty because we've already handled a date parse error inside the form (jodaLocalDate formatter)
+        case e: IllegalArgumentException ⇒ return Left(List())
+      }
+    }
+
+    override def unbind(key: String, value: LocalDate): Map[String, String] = {
+      Map(key -> value.toString)
+    }
+  }
 
   /**
    * HTML form mapping for creating and editing.
@@ -59,9 +86,8 @@ object Events extends Controller with Security {
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
-      "end" -> jodaLocalDate,
-      "hoursPerDay" -> number(1, 24, true))(Schedule.apply)(Schedule.unapply).verifying(
-        "error.date.range", (schedule: Schedule) ⇒ !schedule.start.isAfter(schedule.end)),
+      "end" -> of(dateRangeFormatter),
+      "hoursPerDay" -> number(1, 24, true))(Schedule.apply)(Schedule.unapply),
     "details" -> mapping(
       "description" -> optional(text),
       "specialAttention" -> optional(text),

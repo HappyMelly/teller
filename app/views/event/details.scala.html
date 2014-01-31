@@ -88,15 +88,16 @@
     }
     <h3>Where</h3>
     <address>
+      @event.location.city,
       <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png" align="baseline">
-      @Messages("country." + event.location.countryCode), @event.location.city
+        @Messages("country." + event.location.countryCode)
     </address>
     <h3>When</h3>
     <p>
-        <strong>Start date</strong><br/>@event.schedule.start.toDate.format("dd/MM/yy")
+        <strong>Start date</strong><br/>@event.schedule.start
     </p>
     <p>
-        <strong>End date</strong><br/>@event.schedule.end.toDate.format("dd/MM/yy")
+        <strong>End date</strong><br/>@event.schedule.end
     </p>
     <p>
         <strong>Hours per day / Total hours</strong><br/>@event.schedule.hoursPerDay / @event.totalHours
