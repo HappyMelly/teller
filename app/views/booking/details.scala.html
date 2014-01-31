@@ -65,8 +65,10 @@
     </div>
 
     <div class="span4">
-      <p><strong>Brand</strong>
-      <br><a href="@routes.Brands.details(booking.brand.code)">@booking.brand.name</a></p>
+      @booking.brand.map { brand =>
+        <p><strong>Brand</strong>
+        <br><a href="@routes.Brands.details(brand.code)">@brand.name</a></p>
+      }
 
       @booking.reference.map { reference =>
         <p><strong>Reference number</strong>

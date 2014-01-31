@@ -38,6 +38,20 @@ object Accounts extends Controller with Security {
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 
   /**
+   * Balance accounts, creating booking entries, and redirect to the accounts page. The user-interface should not
+   * execute this action (the button is disabled) if accounts do not require balancing.
+   */
+  def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
+    implicit request ⇒
+      implicit handler ⇒
+        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.BalancedAccounts, bookingEntries.size.toString)
+          Redirect(routes.Accounts.index()).flashing("success" -> activity.toString)
+        }
+  }
+
+  /**
    * An overview of bookings for the given account.
    */
   def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -100,7 +114,8 @@ object Accounts extends Controller with Security {
         val levy = Account.find(Levy)
         Account.findAllForAdjustment(levy.currency).map { accounts ⇒
           val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
-          Ok(views.html.account.balance(request.user, totalBalance, accounts))
+          val canBalanceAccounts = accounts.exists(!_.adjustment.isZero)
+          Ok(views.html.account.balance(request.user, totalBalance, accounts, canBalanceAccounts))
         }
   }
 }

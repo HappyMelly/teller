@@ -6,6 +6,7 @@ GET /api     controllers.Dashboard.api
 
 GET  /accounts           controllers.Accounts.index
 GET  /accounts/balance   controllers.Accounts.previewBalance
+POST /accounts/balance   controllers.Accounts.balanceAccounts
 
 GET  /account/:id            controllers.Accounts.details(id: Long)
 GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)

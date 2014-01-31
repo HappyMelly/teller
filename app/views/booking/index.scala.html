@@ -76,7 +76,11 @@
               </td>
               <td>@entry.source.abs.format</td>
               <td>@entry.sourcePercentage%</td>
-              <td><a href="@routes.Brands.details(entry.brandCode)">@entry.brandCode</a></td>
+              <td>
+                @entry.brandCode.map { brand =>
+                  <a href="@routes.Brands.details(brand)">@brand</a>
+                }
+              </td>
             </tr>
           }
         </tbody>

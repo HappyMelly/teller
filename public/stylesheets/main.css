@@ -75,6 +75,9 @@ td .btn-link {
 .icon-activity-activate, .icon-activity-deactivate {
     background-position: -384px 0px;
 }
+.icon-activity-balance {
+    background-position: -336px -48px;
+}
 
 .inactive, .inactive a {
     color: #bbb;

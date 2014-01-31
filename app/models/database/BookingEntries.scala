@@ -55,7 +55,7 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def toCurrency = column[String]("TO_CURRENCY", O.DBType("CHAR(3)"))
   def toAmount = column[BigDecimal]("TO_AMOUNT", O.DBType("DECIMAL(13,3)"))
 
-  def brandId = column[Long]("BRAND_ID")
+  def brandId = column[Option[Long]]("BRAND_ID")
   def reference = column[Option[String]]("REFERENCE")
   def referenceDate = column[LocalDate]("REFERENCE_DATE")
   def description = column[Option[String]]("DESCRIPTION")

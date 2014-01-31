@@ -1,3 +1,5 @@
+package models
+
 /*
  * Happy Melly Teller
  * Copyright (C) 2013, Happy Melly http://www.happymelly.com
@@ -22,15 +24,28 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "bFilter": false,
-            "bPaginate": false,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bLengthChange": false,
-            "sDom": "t<'row'<'span5'i>>"
-        });
-    });
-});
+import org.joda.money.{ Money, CurrencyUnit }
+import org.joda.money.CurrencyUnit._
+import org.specs2.mutable.Specification
+
+class AccountSpec extends Specification {
+
+  val SEK = CurrencyUnit.of("SEK")
+
+  val accounts = List(
+    AccountSummaryWithAdjustment(1, "Happy Melly Levy", Money.zero(EUR), Money.zero(EUR), Money.zero(EUR)),
+    AccountSummaryWithAdjustment(2, "Happy Melly One BV", Money.of(EUR, -440.0), Money.of(EUR, -440.0), Money.zero(EUR)),
+    AccountSummaryWithAdjustment(3, "Happy Melly Levy", Money.of(SEK, 4000.0), Money.of(EUR, 450.0), Money.zero(EUR)))
+
+  val eur10 = Money.of(EUR, 10.0)
+
+  "Balancing accounts" should {
+    "calculate the total balance from converted balances" in {
+      Account.calculateTotalBalance(EUR, accounts) must be equalTo eur10
+    }
+    "equally divide the adjustment across accounts (rounding down)" in {
+      Account.calculateAdjustment(eur10, accounts) must be equalTo Money.of(EUR, -3.33)
+    }
+  }
+
+}
