@@ -58,6 +58,10 @@ class CurrencyConverterSpec extends Specification {
       CurrencyConverter.findRate(EUR, USD, noneOnly) should beNone.await
     }
 
+    "convert from a currency to itself without a provider" in {
+      CurrencyConverter.convert(oneEuro, EUR, noneOnly) must beAnInstanceOf[Money].await
+    }
+
     "convert between currencies it has a provider for" in {
       CurrencyConverter.convert(oneEuro, USD, someFirst) must beAnInstanceOf[Money].await
     }
