@@ -29,6 +29,9 @@ import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
+import services.CurrencyConverter
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.BigDecimal.RoundingMode
 
 /**
@@ -49,6 +52,8 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     case (None, None) ⇒ Levy
     case _ ⇒ throw new IllegalStateException(s"Account $id has both organisation and person for holder")
   }
+
+  def levy: Boolean = organisationId.isEmpty && personId.isEmpty
 
   /**
    * Returns a set of people involved in this account, either as the direct account holder or organisation member,
@@ -126,6 +131,8 @@ case class AccountSummary(id: Long, name: String, currency: CurrencyUnit, active
 
 case class AccountSummaryWithBalance(id: Long, name: String, balance: Money)
 
+case class AccountSummaryWithAdjustment(id: Long, name: String, balance: Money, balanceConverted: Money, adjustment: Money)
+
 object Account {
 
   def accountHolderName(firstName: Option[String], lastName: Option[String], organisation: Option[String]): String =
@@ -135,6 +142,23 @@ object Account {
       case (None, None, None) ⇒ Levy.name
       case _ ⇒ throw new IllegalStateException(s"Invalid combination of first, last and organisation names ($firstName, $lastName, $organisation)")
     }
+
+  /**
+   * Returns the total balance for a set of accounts, which must all have the specified currency.
+   */
+  def calculateTotalBalance(currency: CurrencyUnit, accounts: List[AccountSummaryWithAdjustment]): Money = {
+    accounts.foldLeft(Money.zero(currency)) { (balance, account) ⇒
+      balance.plus(account.balanceConverted)
+    }
+  }
+
+  /**
+   * Calculates the adjustment per account, for balancing the accounts. For the initial implementation, this is just
+   * the equal share of the total balance.
+   */
+  def calculateAdjustment(totalBalance: Money, accounts: List[AccountSummaryWithAdjustment]): Money = {
+    totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN)
+  }
 
   def find(holder: AccountHolder): Account = DB.withSession { implicit session: Session ⇒
     val query = holder match {
@@ -194,6 +218,23 @@ object Account {
     }
   }
 
+  /**
+   * Returns a summary of accounts for balancing accounts, which converts balances to the levy account’s balance
+   * and calculates a balancing adjustment for each account.
+   */
+  def findAllForAdjustment(currency: CurrencyUnit): Future[List[AccountSummaryWithAdjustment]] = DB.withSession { implicit session: Session ⇒
+    val futureAccounts = findAllActiveWithBalance.map { account ⇒
+      CurrencyConverter.convert(account.balance, currency).map { convertedBalance ⇒
+        AccountSummaryWithAdjustment(account.id, account.name, account.balance, convertedBalance, Money.zero(currency))
+      }
+    }
+    Future.sequence(futureAccounts).map { accountsWithConvertedBalance ⇒
+      val totalBalance = calculateTotalBalance(currency, accountsWithConvertedBalance)
+      val adjustment = calculateAdjustment(totalBalance, accountsWithConvertedBalance)
+      accountsWithConvertedBalance.map(_.copy(adjustment = adjustment))
+    }
+  }
+
   def findByPerson(personId: Long): Option[Account] = DB.withSession { implicit session ⇒
     Query(Accounts).filter(_.personId === personId).firstOption()
   }
@@ -217,5 +258,4 @@ object Account {
 
     (debit - credit).setScale(2, RoundingMode.DOWN)
   }
-
 }

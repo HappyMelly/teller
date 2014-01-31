@@ -46,9 +46,13 @@ object CurrencyConverter {
    * @return The converted amount if successful, or `NoExchangeRateException`
    */
   def convert(amount: Money, targetCurrency: CurrencyUnit, exchangeRateProviders: Seq[ExchangeRateProvider] = defaultProviders): Future[Money] = {
-    findRate(amount.getCurrencyUnit, targetCurrency, exchangeRateProviders).map {
-      case Some(rate) ⇒ rate.apply(amount)
-      case None ⇒ throw new NoExchangeRateException(s"No exchange rate found for ${amount.getCurrencyUnit} - $targetCurrency")
+    if (targetCurrency == amount.getCurrencyUnit) {
+      Future.successful(amount)
+    } else {
+      findRate(amount.getCurrencyUnit, targetCurrency, exchangeRateProviders).map {
+        case Some(rate) ⇒ rate.apply(amount)
+        case None ⇒ throw new NoExchangeRateException(s"No exchange rate found for ${amount.getCurrencyUnit} - $targetCurrency")
+      }
     }
   }
 

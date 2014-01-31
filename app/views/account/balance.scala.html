@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, accounts: List[AccountSummaryWithBalance])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity, balance: org.joda.money.Money, accounts: List[AccountSummaryWithAdjustment])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -13,14 +13,12 @@
 
   <div class="row">
     <div class="span7">
-      <h1>Accounts overview</h1>
+      <h1>Balance accounts</h1>
     </div>
-    @restrict(handler, List(as(Admin.toString))) {
-    <div class="span3">
-      <a class="btn" href="@routes.Accounts.previewBalance()"><i class="icon-align-justify"></i>Balance Accounts</a>
-    </div>
-    }
   </div>
+
+  <p><strong>Total balance</strong>
+  <br>@balance.format</p>
 
   @if(!accounts.isEmpty) {
       <div class="row">
@@ -30,6 +28,8 @@
             <tr>
               <th>Account</th>
               <th>Balance</th>
+              <th>Balance in @balance.getCurrencyUnit.getCode</th>
+              <th>Adjustment</th>
             </tr>
             </thead>
             <tbody>
@@ -37,6 +37,8 @@
               <tr>
                 <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
                 <td>@account.balance.format</td>
+                <td>@account.balanceConverted.format</td>
+                <td>@account.adjustment.format</td>
               </tr>
             }
             </tbody>
@@ -44,8 +46,8 @@
         </div>
       </div>
     } else {
-    <p>There are no active accounts.</p>
+    <p>There are no active accounts to balance.</p>
     }
 
-  <script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("account/balance.js")" type="text/javascript"></script>
 }

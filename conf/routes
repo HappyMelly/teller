@@ -4,7 +4,9 @@ GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
-GET  /accounts   controllers.Accounts.index
+GET  /accounts           controllers.Accounts.index
+GET  /accounts/balance   controllers.Accounts.previewBalance
+
 GET  /account/:id            controllers.Accounts.details(id: Long)
 GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
 POST /account/:id/activate   controllers.Accounts.activate(id: Long)

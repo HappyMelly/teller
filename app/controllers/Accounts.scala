@@ -28,9 +28,10 @@ import play.api.mvc.Controller
 import models._
 import models.UserRole.Role._
 import org.joda.money.CurrencyUnit
+import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
-import org.joda.time.LocalDate
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Accounts extends Controller with Security {
 
@@ -93,9 +94,13 @@ object Accounts extends Controller with Security {
         Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))
   }
 
-  def previewBalance = SecuredRestrictedAction(Admin) {
+  def previewBalance = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒
-        Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))
+        val levy = Account.find(Levy)
+        Account.findAllForAdjustment(levy.currency).map { accounts ⇒
+          val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
+          Ok(views.html.account.balance(request.user, totalBalance, accounts))
+        }
   }
 }
