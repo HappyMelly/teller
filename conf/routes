@@ -1,12 +1,60 @@
+# Application pages
+
 GET /        controllers.Dashboard.index
 GET /about   controllers.Dashboard.about
 GET /api     controllers.Dashboard.api
 
-GET /accounts   controllers.Accounts.index
+GET  /accounts   controllers.Accounts.index
+GET  /account/:id            controllers.Accounts.details(id: Long)
+GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
+POST /account/:id/activate   controllers.Accounts.activate(id: Long)
+POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
+
+GET  /admin/settings                     controllers.Administration.settings
+POST /admin/transactiontype/new          controllers.Administration.createTransactionType
+POST /admin/transactiontype/:id/delete   controllers.Administration.deleteTransactionType(id: Long)
+
+GET  /bookings                        controllers.BookingEntries.index
+GET  /booking/new                     controllers.BookingEntries.add
+POST /booking/new                     controllers.BookingEntries.create
+GET  /booking/:bookingNumber          controllers.BookingEntries.details(bookingNumber: Int)
+POST /booking/:bookingNumber          controllers.BookingEntries.update(bookingNumber: Int)
+GET  /booking/:bookingNumber/edit     controllers.BookingEntries.edit(bookingNumber: Int)
+POST /booking/:bookingNumber/delete   controllers.BookingEntries.delete(bookingNumber: Int)
+
+GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
+GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.s3Callback(bookingNumber: Int)
+POST /booking/:bookingNumber/attachment/delete   controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
+
+GET  /brands               controllers.Brands.index
+GET  /brand/new            controllers.Brands.add
+POST /brand/new            controllers.Brands.create
+GET  /brand/:code          controllers.Brands.details(code)
+POST /brand/:code          controllers.Brands.update(code)
+GET  /brand/:code/edit     controllers.Brands.edit(code)
+POST /brand/:code/delete   controllers.Brands.delete(code)
+
+POST /contribution/new         controllers.Contributions.create(page: String)
+GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
+
+GET  /events                 controllers.Events.index
+POST /events                 controllers.Events.create
+GET  /events/new/            controllers.Events.add
+GET  /event/:id/duplicate    controllers.Events.duplicate(id: Long)
+GET  /event/:id/edit         controllers.Events.edit(id: Long)
+GET  /event/:id              controllers.Events.details(id: Long)
+POST /event/:id              controllers.Events.update(id: Long)
+POST /event/:id/delete       controllers.Events.delete(id: Long)
 
 GET /exchangerate               controllers.ExchangeRates.rate
 GET /exchangerate/:target/:amount controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
 GET /exchangerates/:base        controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
+
+GET /facilitators/:brandCode   controllers.Facilitators.index(brandCode: String)
+
+GET  /license/:id/edit     controllers.Licenses.edit(id: Long)
+POST /license/:id          controllers.Licenses.update(id: Long)
+POST /license/:id/delete   controllers.Licenses.delete(id: Long)
 
 GET  /organizations                 controllers.Organisations.index
 POST /organizations                 controllers.Organisations.create
@@ -27,23 +75,11 @@ GET  /person/:id/edit         controllers.People.edit(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
 
-GET   /person/:id/licenses/new   controllers.Licenses.add(id: Long)
-POST  /person/:id/licenses/new   controllers.Licenses.create(id: Long)
-
-GET  /license/:id/edit     controllers.Licenses.edit(id: Long)
-POST /license/:id          controllers.Licenses.update(id: Long)
-POST /license/:id/delete   controllers.Licenses.delete(id: Long)
+GET  /person/:id/licenses/new   controllers.Licenses.add(id: Long)
+POST /person/:id/licenses/new   controllers.Licenses.create(id: Long)
 
 POST /person/membership/new                                controllers.People.addMembership
 GET  /person/:personId/membership/:organisationId/delete   controllers.People.deleteMembership(page: String, personId: Long, organisationId: Long)
-
-GET  /brands               controllers.Brands.index
-GET  /brand/new            controllers.Brands.add
-POST /brand/new            controllers.Brands.create
-GET  /brand/:code          controllers.Brands.details(code)
-POST /brand/:code          controllers.Brands.update(code)
-GET  /brand/:code/edit     controllers.Brands.edit(code)
-POST /brand/:code/delete   controllers.Brands.delete(code)
 
 GET  /products             controllers.Products.index
 GET  /product/new          controllers.Products.add
@@ -56,42 +92,10 @@ POST /product/:id/delete   controllers.Products.delete(id: Long)
 POST /product/brand/new                         controllers.Products.addBrand
 GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
-POST /contribution/new         controllers.Contributions.create(page: String)
-GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
-
 POST /user    controllers.UserAccounts.update
 
-GET  /account/:id            controllers.Accounts.details(id: Long)
-GET  /account/:id/bookings   controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
-POST /account/:id/activate   controllers.Accounts.activate(id: Long)
-POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 
-GET  /bookings                        controllers.BookingEntries.index
-GET  /booking/new                     controllers.BookingEntries.add
-POST /booking/new                     controllers.BookingEntries.create
-GET  /booking/:bookingNumber          controllers.BookingEntries.details(bookingNumber: Int)
-POST /booking/:bookingNumber          controllers.BookingEntries.update(bookingNumber: Int)
-GET  /booking/:bookingNumber/edit     controllers.BookingEntries.edit(bookingNumber: Int)
-POST /booking/:bookingNumber/delete   controllers.BookingEntries.delete(bookingNumber: Int)
-
-GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
-GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.s3Callback(bookingNumber: Int)
-POST /booking/:bookingNumber/attachment/delete   controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
-
-GET  /events                 controllers.Events.index
-POST /events                 controllers.Events.create
-GET  /events/new/            controllers.Events.add
-GET  /event/:id/duplicate    controllers.Events.duplicate(id: Long)
-GET  /event/:id/edit         controllers.Events.edit(id: Long)
-GET  /event/:id              controllers.Events.details(id: Long)
-POST /event/:id              controllers.Events.update(id: Long)
-POST /event/:id/delete       controllers.Events.delete(id: Long)
-
-GET  /facilitators/:brandCode   controllers.Facilitators.index(brandCode: String)
-
-GET  /admin/settings                     controllers.Administration.settings
-POST /admin/transactiontype/new          controllers.Administration.createTransactionType
-POST /admin/transactiontype/:id/delete   controllers.Administration.deleteTransactionType(id: Long)
+# API
 
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
@@ -107,9 +111,11 @@ GET /api/v1/product/:id   controllers.ProductsApi.product(id: Long)
 
 GET /assets/*file   controllers.Assets.at(path="/public", file)
 
+
 ## SecureSocial
 GET      /login                      securesocial.controllers.LoginPage.login
 GET      /logout                     securesocial.controllers.LoginPage.logout
+
 
 # OAuth entry points
 GET      /authenticate/:provider     securesocial.controllers.ProviderController.authenticate(provider)
