@@ -39,6 +39,8 @@ import scala.concurrent.Future
 import java.net.URLEncoder
 import services.S3Bucket
 import services.CurrencyConverter.NoExchangeRateException
+import models.BookingEntrySummary
+import scala.Some
 
 /**
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
@@ -57,7 +59,7 @@ case class BookingEntry(
   toId: Long,
   toAmount: Money,
 
-  brandId: Long,
+  brandId: Option[Long],
   reference: Option[String],
   referenceDate: LocalDate,
   description: Option[String] = None,
@@ -73,7 +75,7 @@ case class BookingEntry(
 
   lazy val owner = Person.find(ownerId).get
 
-  lazy val brand = Brand.find(brandId).get
+  lazy val brand = brandId.flatMap(Brand.find(_))
 
   lazy val owes = source.isPositiveOrZero
 
@@ -152,13 +154,13 @@ case class BookingEntrySummary(
   to: String,
   toAmount: Money,
 
-  brandCode: String,
+  brandCode: Option[String],
   summary: String)
 
 object BookingEntry {
 
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
-    0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), 0, None, LocalDate.now)
+    0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), None, None, LocalDate.now)
 
   def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session ⇒
     BookingEntries.filtered.filter(_.bookingNumber === bookingNumber).firstOption
@@ -167,8 +169,7 @@ object BookingEntry {
   // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
   // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
   lazy val bookingEntriesQuery = for {
-    entry ← BookingEntries.filtered
-    brand ← entry.brand
+    (entry, brand) ← BookingEntries.filtered leftJoin Brands on (_.brandId === _.id)
     ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
       People on (_.personId === _.id) leftJoin
       Organisations on (_._1.organisationId === _.id)
@@ -181,9 +182,9 @@ object BookingEntry {
     entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
     fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
     toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
-    brand.code, entry.summary)
+    brand.code.?, entry.summary)
 
-  type BookingEntriesQueryResult = (Long, Long, DateTime, Int, LocalDate, (String, BigDecimal), Int, Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], Option[String], Option[String], (String, BigDecimal), String, String)
+  type BookingEntriesQueryResult = (Long, Long, DateTime, Int, LocalDate, (String, BigDecimal), Int, Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], String)
 
   val mapBookingEntryResult: (BookingEntriesQueryResult ⇒ BookingEntrySummary) = {
     case (fromId, toId, created, number, date, source, sourcePercentage, fromPersonFirstName, fromPersonLastName, fromOrganisation,

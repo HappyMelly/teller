@@ -9,8 +9,8 @@ BOOKING DETAILS
 
 Booking number: @booking.bookingNumber.get
 Booking owner: @booking.owner.fullName
-Booking date: @booking.bookingDate.format
-Brand: @booking.brand.name@booking.reference.map { reference =>
+Booking date: @booking.bookingDate.format@booking.brand.map { brand =>
+Brand: @brand.name} @booking.reference.map { reference =>
 Reference number: @reference }
 Reference date: @booking.referenceDate.format@booking.url.map { url =>
 URL: @url }@booking.transactionType.map { transactionType =>

@@ -25,9 +25,11 @@
 package models
 
 import org.joda.money.{ Money, CurrencyUnit }
+import org.joda.time.LocalDate
 import models.database.{ BookingEntries, Organisations, People, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.i18n.Messages
 import play.api.Play.current
 import services.CurrencyConverter
 import scala.concurrent.Future
@@ -153,11 +155,38 @@ object Account {
   }
 
   /**
+   * Balances all of the accounts by inserting booking entries that adjust all of the counts, resetting the total to
+   * zero (plus the surplus left after rounding). Each booking entry is from the Levy to
+   */
+  def balanceAccounts(ownerId: Long): Future[List[BookingEntry]] = {
+    val levy = find(Levy)
+    assert(levy.id.isDefined, "Levy must have an ID")
+    findAllForAdjustment(levy.currency).flatMap { accounts ⇒
+      // Don’t create any booking entiries for zero adjustments.
+      val accountsToAdjust = accounts.filter(!_.adjustment.isZero)
+      val futureBookingEntries = accountsToAdjust.map { account ⇒
+        val sourceAmount = account.adjustment
+        CurrencyConverter.convert(sourceAmount, account.balance.getCurrencyUnit).map { toAmount ⇒
+          val today = LocalDate.now()
+          // The from amount is zero, making this an unbalanced transaction, because the purpose is to re-balance other transactions.
+          val fromAmount = Money.zero(levy.currency)
+          val summary = Messages("models.BookingEntry.summary.balance")
+          val entry = BookingEntry(None, ownerId, today, None, summary, sourceAmount, 100, levy.id.get, fromAmount,
+            account.id, toAmount, None, None, today)
+          entry.insert
+        }
+      }
+      Future.sequence(futureBookingEntries)
+    }
+  }
+
+  /**
    * Calculates the adjustment per account, for balancing the accounts. For the initial implementation, this is just
-   * the equal share of the total balance.
+   * the equal share of the total balance. The amount is multiplied by -1 because a positive network balance is
+   * conversion residue that must be corrected.
    */
   def calculateAdjustment(totalBalance: Money, accounts: List[AccountSummaryWithAdjustment]): Money = {
-    totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN)
+    totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN).multipliedBy(-1L)
   }
 
   def find(holder: AccountHolder): Account = DB.withSession { implicit session: Session ⇒

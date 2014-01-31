@@ -78,7 +78,7 @@ object BookingEntries extends Controller with Security {
     description: Option[String], url: Option[String], transactionTypeId: Option[Long], owes: Boolean, next: Option[String]) = {
 
     BookingEntry(id, ownerId, LocalDate.now, bookingNumber, summary, if (owes) source else source.negated,
-      sourcePercentage, fromId, fromAmount, toId, toAmount, brandId, reference, referenceDate, description, url,
+      sourcePercentage, fromId, fromAmount, toId, toAmount, Some(brandId), reference, referenceDate, description, url,
       transactionTypeId)
   }
 
@@ -87,7 +87,7 @@ object BookingEntries extends Controller with Security {
    */
   def toForm(e: BookingEntry) = Some((e.id, e.ownerId, e.bookingNumber, e.summary,
     if (e.source.isNegative) e.source.multipliedBy(-1L) else e.source,
-    e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId, e.reference, e.referenceDate,
+    e.sourcePercentage, e.fromId, e.fromAmount, e.toId, e.toAmount, e.brandId.getOrElse(0L), e.reference, e.referenceDate,
     e.description, e.url, e.transactionTypeId, e.source.isPositiveOrZero, None))
 
   /**
