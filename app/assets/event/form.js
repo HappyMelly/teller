@@ -39,9 +39,6 @@ function showError(message) {
             .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
     );
 }
-function hideError() {
-    $('#error').empty();
-}
 
 $(document).ready( function() {
 
@@ -67,7 +64,6 @@ $(document).ready( function() {
             url: '/facilitators/' + brandCode,
             dataType: "json"
         }).done(function(data) {
-                hideError();
                 for(var i = 0; i < data.length; i++) {
                     var user = new User(data[i]);
                     if (isChosenOne(user, chosenFacilitators)) {
@@ -166,6 +162,5 @@ $(document).ready( function() {
         facilitators.deselect(id);
     });
     facilitators.initialize($('#brandCode').find(':selected').val());
-    $("input[type='date']").datepicker({ dateFormat: "yy-mm-dd" });
 });
 

@@ -49,7 +49,7 @@ private[models] object Events extends Table[Event]("EVENT") {
   def end = column[LocalDate]("END_DATE")
   def hoursPerDay = column[Int]("HOURS_PER_DAY")
 
-  def webSite = column[Option[String]]("WEBSITE")
+  def webSite = column[Option[String]]("WEB_SITE")
   def registrationPage = column[Option[String]]("REGISTRATION_PAGE")
 
   def notPublic = column[Boolean]("NOT_PUBLIC")

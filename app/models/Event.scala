@@ -72,7 +72,7 @@ case class Event(
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
-    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.forInsert.insert((id, facilitatorId)))
+    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
     this.copy(id = Some(id))
   }
 
@@ -86,7 +86,7 @@ case class Event(
     updateQuery.update(updateTuple)
 
     EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
-    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.forInsert.insert((this.id.get, facilitatorId)))
+    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
 
     this
   }
@@ -97,7 +97,7 @@ object Event {
   def getFacilitatorIds(id: Long): List[Long] = DB.withSession { implicit session: Session ⇒
     (for {
       e ← EventFacilitators if e.eventId === id
-    } yield (e)).list.map(_._3)
+    } yield (e)).list.map(_._2)
   }
 
   /**

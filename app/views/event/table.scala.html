@@ -34,7 +34,7 @@
                 <img width="16" src="/assets/images/flags/16/@(event.location.countryCode.toLowerCase).png" align="absmiddle">
                 @Messages("country." + event.location.countryCode)
             </td>
-            <td>@event.schedule.start.toDate.format("dd/MM/yy") - @event.schedule.end.toDate.format("dd/MM/yy")</td>
+            <td>@event.schedule.start - @event.schedule.end</td>
             <td>@event.totalHours</td>
             <td>@event.materialsLanguage</td>
             <td>@actions(event)</td>
