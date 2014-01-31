@@ -42,7 +42,7 @@ object Accounts extends Controller with Security {
   def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val entries = BookingEntry.findByAccountId(id, from, to)
-      Ok(views.html.booking.index(request.user, Account.find(id), None, entries, from, to))
+      Ok(views.html.booking.index(request.user, Account.find(id), entries, from, to))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Viewer) {

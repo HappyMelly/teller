@@ -1,5 +1,5 @@
-@(user: securesocial.core.Identity, account: Option[Account], levy: Option[AccountSummary],
-  entries: List[BookingEntrySummary], from: Option[org.joda.time.LocalDate] = None, to: Option[org.joda.time.LocalDate] = None)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity, account: Option[Account], entries: List[BookingEntrySummary],
+  from: Option[org.joda.time.LocalDate] = None, to: Option[org.joda.time.LocalDate] = None)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._

@@ -247,9 +247,7 @@ object BookingEntries extends Controller with Security {
 
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      val levy = Account.find(Levy)
-      val levySummary = if (levy.active) Some(levy.summary) else None
-      Ok(views.html.booking.index(request.user, None, levySummary, BookingEntry.findAll))
+      Ok(views.html.booking.index(request.user, None, BookingEntry.findAll))
   }
 
   private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
