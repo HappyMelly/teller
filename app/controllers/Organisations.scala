@@ -159,10 +159,7 @@ object Organisations extends Controller with Security {
           Ok(views.html.organisation.details(request.user, organisation,
             members, otherPeople,
             contributions, products))
-      } getOrElse {
-        //TODO return 404
-        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
-      }
+      }.getOrElse(NotFound)
   }
 
   /**

@@ -78,6 +78,17 @@ GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.atta
 GET  /booking/:bookingNumber/attachment          controllers.BookingEntries.s3Callback(bookingNumber: Int)
 POST /booking/:bookingNumber/attachment/delete   controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
+GET  /events                 controllers.Events.index
+POST /events                 controllers.Events.create
+GET  /events/new/            controllers.Events.add
+GET  /event/:id/duplicate    controllers.Events.duplicate(id: Long)
+GET  /event/:id/edit         controllers.Events.edit(id: Long)
+GET  /event/:id              controllers.Events.details(id: Long)
+POST /event/:id              controllers.Events.update(id: Long)
+POST /event/:id/delete       controllers.Events.delete(id: Long)
+
+GET  /facilitators/:brandCode   controllers.Facilitators.index(brandCode: String)
+
 GET  /admin/settings                     controllers.Administration.settings
 POST /admin/transactiontype/new          controllers.Administration.createTransactionType
 POST /admin/transactiontype/:id/delete   controllers.Administration.deleteTransactionType(id: Long)

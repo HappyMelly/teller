@@ -85,6 +85,34 @@ object Brand {
     Query(Query(Brands).filter(_.code === code).exists).first
   }
 
+  /**
+   * Returns true if and only if a user is allowed to manage this brand.
+   * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
+   *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
+   *  license holders.
+   */
+  def canManage(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    if (!exists(code))
+      false
+    else
+      findForUser(user).exists(_.code == code)
+  }
+
+  /**
+   * Returns a list of all brands for a specified user
+   * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
+   *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
+   *  license holders.
+   */
+  def findForUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
+    if (UserRole.forName(user.role).editor)
+      Query(Brands).list
+    else {
+      val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
+      findByCoordinator(user.personId).union(facilitatedBrands).distinct
+    }
+  }
+
   def find(code: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
@@ -102,6 +130,11 @@ object Brand {
   /** Finds a brand by ID **/
   def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Brands).filter(_.id === id).firstOption
+  }
+
+  /** Finds all brands belonging to one coordinator **/
+  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
+    Query(Brands).filter(_.coordinatorId === coordinatorId).list
   }
 
   def findAll: List[BrandView] = DB.withSession { implicit session: Session ⇒

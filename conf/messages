@@ -29,6 +29,7 @@ models.Brand = Brand
 models.Organisation = Organization
 models.Person = Person
 models.License = License
+models.Event = Event
 models.TransactionType.name = transaction type ‘{0}’
 
 object.UserAccount = {0} role
@@ -71,6 +72,7 @@ error.money.negativeOrZero = Amount greater than zero required
 error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
+error.brand.invalid = You are not allowed to create events for this brand
 
 # Play form validation error overrides
 error.date = Invalid date

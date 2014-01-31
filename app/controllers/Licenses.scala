@@ -57,6 +57,15 @@ object Licenses extends Controller with Security {
     "feePaid" -> optional(jodaMoney()))(License.apply)(License.unapply).verifying(
       "error.date.range", (license: License) ⇒ !license.start.isAfter(license.end)))
 
+  implicit val personWrites = new Writes[Person] {
+    def writes(person: Person): JsValue = {
+      Json.obj(
+        "first_name" -> person.firstName,
+        "last_name" -> person.lastName,
+        "id" -> person.id.get)
+    }
+  }
+
   /**
    * Page for adding a new content license.
    */

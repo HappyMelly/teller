@@ -1,5 +1,4 @@
 # Bug: wrong precision for persisted exchange rates.
-
 # --- !Ups
 
 -- Delete today’s rates, so they’ll be refetched, and invalid zero rates.

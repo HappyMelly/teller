@@ -22,17 +22,19 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import play.api._
-import play.api.mvc._
-import play.api.mvc.Results._
-import play.filters.csrf._
-import scala.concurrent.Future
+package models.database
 
-object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
+import play.api.db.slick.Config.driver.simple._
 
-  override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
-    Future.successful(NotFound(
-      views.html.notFoundPage(request.path)))
-  }
+/**
+ * `EventFacilitator` database table mapping.
+ */
+private[models] object EventFacilitators extends Table[(Long, Long)]("EVENT_FACILITATOR") {
+  def eventId = column[Long]("EVENT_ID")
+  def facilitatorId = column[Long]("FACILITATOR_ID")
 
+  def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
+  def facilitator = foreignKey("FACILITATOR_FK", facilitatorId, People)(_.id)
+
+  def * = eventId ~ facilitatorId
 }

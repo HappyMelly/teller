@@ -24,12 +24,14 @@
 
 package controllers
 
-import models.{ UserAccount, LoginIdentity, UserRole }
+import models.{ UserAccount, LoginIdentity, UserRole, Event }
 import securesocial.core.{ Identity, SecureSocial, SecuredRequest, Authorization }
 import play.api.mvc._
-import be.objectify.deadbolt.scala.DeadboltActions
+import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
 import securesocial.core.SecuredRequest
 import scala.concurrent.Future
+import play.api.Logger
+import scala.util.matching.Regex
 
 /**
  * Integrates SecureSocial authentication with Deadbolt.
@@ -55,6 +57,24 @@ trait Security extends SecureSocial with DeadboltActions {
   }
 
   /**
+   * Defines an action that authenticates using SecureSocial, and uses Deadbolt to restrict access to the given role.
+   */
+  def SecuredDynamicAction(name: String, meta: String)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+
+      // Look-up the authenticated user’s account details.
+      val twitterHandle = request.user.asInstanceOf[LoginIdentity].twitterHandle
+      val account = UserAccount.findByTwitterHandle(twitterHandle)
+
+      // Use the account details to construct a handler (to look up account role) for Deadbolt authorisation.
+      val handler = new AuthorisationHandler(account)
+      val restrictedAction = Dynamic(name, meta, handler)(SecuredAction(f(_)(handler)))
+      val result: Future[SimpleResult] = restrictedAction(request)
+      result
+    }
+  }
+
+  /**
    * Async version of SecuredRestrictedAction
    */
   def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ Future[SimpleResult]): Action[AnyContent] = {
@@ -70,4 +90,37 @@ trait Security extends SecureSocial with DeadboltActions {
       restrictedAction(request)
     }
   }
+}
+
+/**
+ * A security handler to check if a user is allowed to work with the specific events.
+ *
+ * The system supports three roles - Viewer, Editor and Admin. The event module has its specific roles - Facilitator
+ *  and Brand Coordinator.
+ *
+ *  A Brand Coordinator is able to create events for his/her own brand even if he/she is a Viewer.
+ *  A Facilitator is able to create events for any brand he/she has active content licenses even if he/she is a Viewer.
+ */
+class FacilitatorResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
+
+  def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
+    if (name == "event" && account.isDefined)
+      meta match {
+        case "add" ⇒ account.get.isFacilitator || UserRole.forName(account.get.role).editor
+        case "edit" ⇒
+          val pattern = new Regex("\\d+")
+          val eventId = pattern findFirstIn request.uri
+          // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
+          //   edit it
+          UserRole.forName(account.get.role).editor || Event.find(eventId.get.toLong).map { _.isEditable(account.get) }.getOrElse(false)
+        case _ ⇒ true
+      }
+    else
+      false
+  }
+
+  def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
+    false
+  }
+
 }
