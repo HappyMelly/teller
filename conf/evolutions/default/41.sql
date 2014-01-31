@@ -23,8 +23,6 @@ create table EVENT (
   UPDATED_BY VARCHAR(254) NOT NULL DEFAULT 'Sergey Kotlov'
 );
 
-alter table EVENT add constraint EVENT_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
-
 # --- !Downs
 
 drop table EVENT;
