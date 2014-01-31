@@ -50,7 +50,7 @@
                 <div id="chosenFacilitators" value="@helper.repeat(eventForm("facilitatorIds"), min=0) { f =>@f.value,}">
                 </div>
             </div>
-            @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date", '_error -> "Test")
+            @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date")
             @helper.inputDate(eventForm("schedule.end"), '_label -> "End date")
             @helper.inputText(eventForm("schedule.hoursPerDay"), '_label -> "Hours per day")
             @helper.inputText(eventForm("details.webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")

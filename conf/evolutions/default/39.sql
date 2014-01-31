@@ -5,4 +5,3 @@ alter table BOOKING_ENTRY modify column CREATED timestamp not null;
 
 # --- !Downs
 
-
