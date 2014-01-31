@@ -38,8 +38,14 @@ object `package` {
   // Option[LocalDate] query strings, supporting empty string query string values. See `play.api.mvc.QueryStringBindable.Parsing`.
 
   implicit object bindableLocalDate extends Parsing[Option[LocalDate]](
-    dateString ⇒ if (dateString.isEmpty) None else Some(DateTimeFormat.forPattern(Formatters.DatePattern).parseLocalDate(dateString)),
-    _.map(_.toString(Formatters.DatePattern)).getOrElse(""),
+    // bind
+    { dateString ⇒
+      if (dateString.isEmpty) None else Some(DateTimeFormat.forPattern(Formatters.DatePattern).parseLocalDate(dateString))
+    },
+    // unbind
+    { localDateOption ⇒
+      localDateOption.map(date ⇒ date.toString(Formatters.DatePattern)).getOrElse("")
+    },
     (key: String, e: Exception) ⇒ s"Cannot parse parameter $key as LocalDate: ${e.getMessage}")
 
   // CurrencyUnit
