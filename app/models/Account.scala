@@ -171,12 +171,14 @@ object Account {
    */
   def findAllActiveWithBalance: List[AccountSummaryWithBalance] = DB.withSession { implicit session: Session ⇒
 
+    val bookingEntriesQuery = BookingEntries.filter(_.deleted === false)
+
     // Sum booking entries’ credits and debits, grouped by account ID.
-    val creditQuery = BookingEntries.groupBy(_.fromId).map {
+    val creditQuery = bookingEntriesQuery.groupBy(_.fromId).map {
       case (accountId, entry) ⇒
         accountId -> entry.map(_.fromAmount).sum
     }
-    val debitQuery = BookingEntries.groupBy(_.toId).map {
+    val debitQuery = bookingEntriesQuery.groupBy(_.toId).map {
       case (accountId, entry) ⇒
         accountId -> entry.map(_.toAmount).sum
     }
