@@ -1,16 +1,9 @@
-<<<<<<< HEAD
-@(user: securesocial.core.Identity, balance: org.joda.money.Money, accounts: List[AccountSummaryWithAdjustment])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-=======
 @(user: securesocial.core.Identity, balance: org.joda.money.Money, accounts: List[AccountSummaryWithAdjustment],
   canBalanceAccounts: Boolean)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
 @import models.UserRole.Role._
->>>>>>> T107 Balance accounts
 @import templates.Formatters._
 
 @main("Accounts", Some(user)) {
@@ -30,35 +23,6 @@
   <br>@balance.format</p>
 
   @if(!accounts.isEmpty) {
-<<<<<<< HEAD
-      <div class="row">
-        <div class="span16">
-          <table class="datatables table table-bordered">
-            <thead>
-            <tr>
-              <th>Account</th>
-              <th>Balance</th>
-              <th>Balance in @balance.getCurrencyUnit.getCode</th>
-              <th>Adjustment</th>
-            </tr>
-            </thead>
-            <tbody>
-            @for(account <- accounts) {
-              <tr>
-                <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
-                <td>@account.balance.format</td>
-                <td>@account.balanceConverted.format</td>
-                <td>@account.adjustment.format</td>
-              </tr>
-            }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    } else {
-    <p>There are no active accounts to balance.</p>
-    }
-=======
     <div class="row">
       <div class="span16">
         <table class="datatables table table-bordered">
@@ -96,7 +60,6 @@
       </button>
     </div>
   </form>
->>>>>>> T107 Balance accounts
 
   <script src="@routes.Assets.at("account/balance.js")" type="text/javascript"></script>
 }
