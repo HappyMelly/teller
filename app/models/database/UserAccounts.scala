@@ -34,12 +34,13 @@ private[models] object UserAccounts extends Table[UserAccount]("USER_ACCOUNT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Long]("PERSON_ID")
-  def twitterHandle = column[String]("TWITTER_HANDLE")
   def role = column[String]("ROLE")
+  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
+  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
 
   def person = foreignKey("PERSON_FK", personId, People)(_.id)
 
-  def * = id.? ~ personId ~ twitterHandle ~ role <> (UserAccount.apply _, UserAccount.unapply _)
+  def * = id.? ~ personId ~ role ~ twitterHandle ~ facebookUrl <> (UserAccount.apply _, UserAccount.unapply _)
 
   def forInsert = * returning id
 

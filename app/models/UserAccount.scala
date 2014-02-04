@@ -34,10 +34,12 @@ import play.libs.Scala
 /**
  * A log-in user account.
  */
-case class UserAccount(id: Option[Long], personId: Long, twitterHandle: String, role: String) extends Subject {
+case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
+  facebookUrl: Option[String]) extends Subject {
 
   lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
   lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
+  lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
 
   /**
    * Returns a string list of role names, for the Subject interface.
@@ -90,17 +92,6 @@ object UserAccount {
       account ← UserAccounts if account.personId === personId
     } yield account.role
     query.firstOption.map(role ⇒ UserRole.Role.withName(role))
-  }
-
-  /**
-   * Returns the given person’s role.
-   */
-  def findRoleByTwitterHandle(twitterHandle: String): Option[UserRole] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      account ← UserAccounts
-      person ← account.person if person.twitterHandle === twitterHandle
-    } yield account.role
-    query.firstOption.map(role ⇒ UserRole.forName(role))
   }
 
   /**

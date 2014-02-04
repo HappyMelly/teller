@@ -32,33 +32,68 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import scala.util.Random
 import securesocial.core._
+import scala.Predef._
+import securesocial.core.OAuth2Info
+import securesocial.core.OAuth1Info
+import securesocial.core.IdentityId
+import securesocial.core.PasswordInfo
+import securesocial.core.providers.{ FacebookProvider, TwitterProvider }
 
 /**
  * Contains profile and authentication info for a SecureSocial Identity.
  */
-case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String, fullName: String,
-  email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
-  oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info],
-  passwordInfo: Option[PasswordInfo] = None, twitterHandle: String, apiToken: String) extends Identity {
+case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String,
+  fullName: String, email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
+  oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info], passwordInfo: Option[PasswordInfo] = None,
+  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String]) extends Identity {
 
-  def person = DB.withSession { implicit session: Session ⇒
+  def name = identityId.providerId match {
+    case TwitterProvider.Twitter ⇒ twitterHandle
+    case FacebookProvider.Facebook ⇒ facebookUrl
+  }
+
+  /**
+   * Returns the `Person` associated with this identity.
+   */
+  def person: Person = DB.withSession { implicit session: Session ⇒
+    val accountQuery = identityId.providerId match {
+      case TwitterProvider.Twitter ⇒ UserAccounts.filter(_.twitterHandle === twitterHandle)
+      case FacebookProvider.Facebook ⇒ UserAccounts.filter(_.facebookUrl === facebookUrl)
+    }
+
     (for {
-      account ← UserAccounts if account.twitterHandle === twitterHandle
+      account ← accountQuery
       person ← People if person.id === account.personId
-
     } yield person).first
   }
 
-  /** Returns the `UserAccount` for this identity **/
-  def userAccount = DB.withSession { implicit session: Session ⇒
-    (for { account ← UserAccounts if account.twitterHandle === twitterHandle } yield account).first
+  /**
+   * Returns the `UserAccount` associated with this identity.
+   */
+  def userAccount: UserAccount = DB.withSession { implicit session: Session ⇒
+    val query = identityId.providerId match {
+      case TwitterProvider.Twitter ⇒ Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
+      case FacebookProvider.Facebook ⇒ Query(UserAccounts).filter(_.facebookUrl === facebookUrl)
+    }
+    query.first
   }
 }
 
 object LoginIdentity {
 
-  def apply(i: Identity): (String) ⇒ LoginIdentity = LoginIdentity(None, i.identityId, i.firstName, i.lastName, i.fullName, i.email,
-    i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo, _, generateApiToken(i))
+  /**
+   * Factory method to return a Twitter login identity.
+   */
+  def forTwitterHandle(i: Identity, twitterHandle: String): LoginIdentity = LoginIdentity(None, i.identityId,
+    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
+    generateApiToken(i), Some(twitterHandle), None)
+
+  /**
+   * Factory method to return a Facebook login identity.
+   */
+  def forFacebookUrl(i: Identity, facebookUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
+    generateApiToken(i), None, Some(facebookUrl))
 
   private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
 

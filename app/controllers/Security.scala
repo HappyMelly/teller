@@ -25,12 +25,12 @@
 package controllers
 
 import models.{ UserAccount, LoginIdentity, UserRole, Event }
-import securesocial.core.{ Identity, SecureSocial, SecuredRequest, Authorization }
+import securesocial.core.SecureSocial
 import play.api.mvc._
+import play.api.mvc.Results.Redirect
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
 import securesocial.core.SecuredRequest
 import scala.concurrent.Future
-import play.api.Logger
 import scala.util.matching.Regex
 
 /**
@@ -39,20 +39,27 @@ import scala.util.matching.Regex
 trait Security extends SecureSocial with DeadboltActions {
 
   /**
+   * A redirect to the login page, used when authorisation fails due to a missing user account, e.g. because the user
+   * removed their own account while logged in.
+   */
+  val MissingUserAccountResult = Future.successful(Redirect(securesocial.controllers.routes.LoginPage.logout))
+
+  /**
    * Defines an action that authenticates using SecureSocial, and uses Deadbolt to restrict access to the given role.
    */
   def SecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
 
-      // Look-up the authenticated user’s account details.
-      val twitterHandle = request.user.asInstanceOf[LoginIdentity].twitterHandle
-      val account = UserAccount.findByTwitterHandle(twitterHandle)
-
-      // Use the account details to construct a handler (to look up account role) for Deadbolt authorisation.
-      val handler = new AuthorisationHandler(account)
-      val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)))
-      val result: Future[SimpleResult] = restrictedAction(request)
-      result
+      try {
+        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val handler = new AuthorisationHandler(Some(account))
+        val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)))
+        val result: Future[SimpleResult] = restrictedAction(request)
+        result
+      } catch {
+        case _: NoSuchElementException ⇒ MissingUserAccountResult
+      }
     }
   }
 
@@ -62,15 +69,16 @@ trait Security extends SecureSocial with DeadboltActions {
   def SecuredDynamicAction(name: String, meta: String)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
 
-      // Look-up the authenticated user’s account details.
-      val twitterHandle = request.user.asInstanceOf[LoginIdentity].twitterHandle
-      val account = UserAccount.findByTwitterHandle(twitterHandle)
-
-      // Use the account details to construct a handler (to look up account role) for Deadbolt authorisation.
-      val handler = new AuthorisationHandler(account)
-      val restrictedAction = Dynamic(name, meta, handler)(SecuredAction(f(_)(handler)))
-      val result: Future[SimpleResult] = restrictedAction(request)
-      result
+      try {
+        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val handler = new AuthorisationHandler(Some(account))
+        val restrictedAction = Dynamic(name, meta, handler)(SecuredAction(f(_)(handler)))
+        val result: Future[SimpleResult] = restrictedAction(request)
+        result
+      } catch {
+        case _: NoSuchElementException ⇒ MissingUserAccountResult
+      }
     }
   }
 
@@ -80,14 +88,15 @@ trait Security extends SecureSocial with DeadboltActions {
   def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ Future[SimpleResult]): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
 
-      // Look-up the authenticated user’s account details.
-      val twitterHandle = request.user.asInstanceOf[LoginIdentity].twitterHandle
-      val account = UserAccount.findByTwitterHandle(twitterHandle)
-
-      // Use the account details to construct a handler (to look up account role) for Deadbolt authorisation.
-      val handler = new AuthorisationHandler(account)
-      val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction.async(f(_)(handler)))
-      restrictedAction(request)
+      try {
+        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val handler = new AuthorisationHandler(Some(account))
+        val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction.async(f(_)(handler)))
+        restrictedAction(request)
+      } catch {
+        case _: NoSuchElementException ⇒ MissingUserAccountResult
+      }
     }
   }
 }
