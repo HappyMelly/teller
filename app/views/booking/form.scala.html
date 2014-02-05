@@ -54,10 +54,10 @@
               <option value="@transactionType.id.get.toString" @if(form("transactionTypeId").value == transactionType.id.map(_.toString)) { selected }>@transactionType.name</option>
             }
           </select>
-          <input id="summary" class="input-xxlarge" name="summary" placeholder="Summary" type="text" value="@form("summary").value">
+          <input id="summary" class="input-xxlarge" name="summary" placeholder="Summary" type="text" value="@form("summary").value" maxlength="50">
           <span class="help-inline">
             @if(hasErrors) {
-              Missing summary
+              @fieldErrors(form("transactionTypeId"), form("summary"))
             } else {
               Required
             }
