@@ -35,7 +35,7 @@ import play.libs.Scala
  * A log-in user account.
  */
 case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
-  facebookUrl: Option[String]) extends Subject {
+  facebookUrl: Option[String], linkedInUrl: Option[String]) extends Subject {
 
   lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
   lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))

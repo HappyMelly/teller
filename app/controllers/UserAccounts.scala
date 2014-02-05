@@ -59,7 +59,7 @@ object UserAccounts extends Controller with Security {
               if (UserAccount.findRole(personId).isDefined) {
                 UserAccount.updateRole(personId, role.get)
               } else {
-                UserAccount.insert(UserAccount(None, personId, role.get, person.twitterHandle, person.facebookUrl))
+                UserAccount.insert(UserAccount(None, personId, role.get, person.twitterHandle, person.facebookUrl, person.linkedInUrl))
               }
             } else { // Remove the account
               UserAccount.delete(personId)

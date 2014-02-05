@@ -37,7 +37,7 @@ import securesocial.core.OAuth2Info
 import securesocial.core.OAuth1Info
 import securesocial.core.IdentityId
 import securesocial.core.PasswordInfo
-import securesocial.core.providers.{ FacebookProvider, TwitterProvider }
+import securesocial.core.providers.{ LinkedInProvider, FacebookProvider, TwitterProvider }
 
 /**
  * Contains profile and authentication info for a SecureSocial Identity.
@@ -45,7 +45,7 @@ import securesocial.core.providers.{ FacebookProvider, TwitterProvider }
 case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String,
   fullName: String, email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info], passwordInfo: Option[PasswordInfo] = None,
-  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String]) extends Identity {
+  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String], linkedInUrl: Option[String]) extends Identity {
 
   /**
    * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
@@ -60,6 +60,7 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   def name = identityId.providerId match {
     case TwitterProvider.Twitter ⇒ twitterHandle
     case FacebookProvider.Facebook ⇒ facebookUrl
+    case LinkedInProvider.LinkedIn ⇒ linkedInUrl
   }
 
   /**
@@ -77,8 +78,8 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
    */
   def userAccount: UserAccount = DB.withSession { implicit session: Session ⇒
     accountQuery.first
+    }
   }
-}
 
 object LoginIdentity {
 
@@ -87,14 +88,21 @@ object LoginIdentity {
    */
   def forTwitterHandle(i: Identity, twitterHandle: String): LoginIdentity = LoginIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), Some(twitterHandle), None)
+    generateApiToken(i), Some(twitterHandle), None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
   def forFacebookUrl(i: Identity, facebookUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, Some(facebookUrl))
+    generateApiToken(i), None, Some(facebookUrl), None)
+
+  /**
+   * Factory method to return a LinkedIn login identity.
+   */
+  def forLinkedInUrl(i: Identity, linkedInUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
+    generateApiToken(i), None, None, Some(linkedInUrl))
 
   private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
 

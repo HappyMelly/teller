@@ -31,7 +31,7 @@ import play.api.libs.ws.WS
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
 import securesocial.core._
-import securesocial.core.providers.{ TwitterProvider, FacebookProvider, Token }
+import securesocial.core.providers.{ LinkedInProvider, TwitterProvider, FacebookProvider, Token }
 import scala.concurrent.Await
 
 /**
@@ -46,6 +46,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       case su: SocialUser ⇒ su.identityId.providerId match {
         case TwitterProvider.Twitter ⇒ LoginIdentity.forTwitterHandle(su, findTwitterHandle(su))
         case FacebookProvider.Facebook ⇒ LoginIdentity.forFacebookUrl(su, findFacebookUrl(su))
+        case LinkedInProvider.LinkedIn ⇒ LoginIdentity.forLinkedInUrl(su, findLinkedInUrl(su))
       }
       case li: LoginIdentity ⇒ li
     }
@@ -90,6 +91,27 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   }
 
   /**
+   * Returns the LinkedIn profile URL for the Secure Social identity being used to log in, or throws an authentication error.
+   */
+  private def findLinkedInUrl(identity: Identity): String = {
+    assert(identity.identityId.providerId == LinkedInProvider.LinkedIn, "LinkedIn identity required")
+    play.api.Logger.debug(s"identity = $identity")
+
+    val info = identity.oAuth1Info.get
+    val calculator = OAuthCalculator(SecureSocial.serviceInfoFor(identity).get.key, RequestToken(info.token, info.secret))
+    val call = WS.url(LinkedInProfile).sign(calculator).get()
+
+    try {
+      Await.result(call.map(response ⇒ (response.xml \ PublicProfileUrl).text), IdentityProvider.secondsToWait)
+    } catch {
+      case e: Exception ⇒ {
+        Logger.error("Error retrieving LinkedIn profile information", e)
+        throw new AuthenticationException()
+      }
+    }
+  }
+
+  /**
    * Returns the Twitter handle for the Secure Social identity being used to log in, or throws an authentication error.
    */
   private def findTwitterHandle(identity: Identity): String = {
@@ -117,4 +139,7 @@ object LoginIdentityService {
 
   val FacebookProfile = "https://graph.facebook.com/%s?access_token=%s"
   val Link = "link"
+
+  val LinkedInProfile = "http://api.linkedin.com/v1/people/~:(public-profile-url)"
+  val PublicProfileUrl = "public-profile-url"
 }
