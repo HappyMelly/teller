@@ -31,15 +31,18 @@ import org.joda.money.CurrencyUnit
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
+import services.CurrencyConverter.NoExchangeRateException
 
 object Accounts extends Controller with Security {
 
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 
   /**
-   * Balance accounts, creating booking entries, and redirect to the accounts page. The user-interface should not
-   * execute this action (the button is disabled) if accounts do not require balancing.
+   * Balance accounts - every now and then all accounts in the system will have to be balanced, because of the currency
+   * exchange rate fluctuations. This creates booking entries, and redirect to the accounts page. The user-interface
+   * should not execute this action (the button is disabled) if accounts do not require balancing.
    */
   def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
@@ -116,6 +119,10 @@ object Accounts extends Controller with Security {
           val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
           val canBalanceAccounts = accounts.exists(!_.adjustment.isZero)
           Ok(views.html.account.balance(request.user, totalBalance, accounts, canBalanceAccounts))
+        }.recover {
+          case e: NoExchangeRateException ⇒ {
+            Redirect(routes.Accounts.index()).flashing("error" -> Messages("error.retry", e.getMessage))
+          }
         }
   }
 }

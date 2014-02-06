@@ -158,6 +158,8 @@ case class BookingEntrySummary(
 
 object BookingEntry {
 
+  val DefaultSourcePercentage = 100
+
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), None, None, LocalDate.now)
 

@@ -162,22 +162,35 @@ object Account {
     val levy = find(Levy)
     assert(levy.id.isDefined, "Levy must have an ID")
     findAllForAdjustment(levy.currency).flatMap { accounts ⇒
-      // Don’t create any booking entiries for zero adjustments.
+      // Don’t create any booking entries for zero adjustments.
       val accountsToAdjust = accounts.filter(!_.adjustment.isZero)
       val futureBookingEntries = accountsToAdjust.map { account ⇒
         val sourceAmount = account.adjustment
         CurrencyConverter.convert(sourceAmount, account.balance.getCurrencyUnit).map { toAmount ⇒
-          val today = LocalDate.now()
-          // The from amount is zero, making this an unbalanced transaction, because the purpose is to re-balance other transactions.
-          val fromAmount = Money.zero(levy.currency)
-          val summary = Messages("models.BookingEntry.summary.balance")
-          val entry = BookingEntry(None, ownerId, today, None, summary, sourceAmount, 100, levy.id.get, fromAmount,
-            account.id, toAmount, None, None, today)
+          val entry = adjustmentBookingEntry(ownerId, account.id, levy, account.adjustment, toAmount)
           entry.insert
         }
       }
       Future.sequence(futureBookingEntries)
     }
+  }
+
+  /**
+   * Creates a booking entry for a single account to use when balancing accounts. The booking entry’s ‘from amount’ is
+   * zero, making this an unbalanced transaction, because the purpose is to re-balance other transactions.
+   *
+   * @param ownerId The ID of the person who is balancing accounts.
+   * @param accountId The ID of the target account that this booking entry will adjust.
+   * @param levy The Happy Melly Levy account, which the booking entry adjusts from.
+   * @param adjustment The amount of money that the target account will be adjusted by, to balance accounts.
+   * @param adjustmentConverted The adjustment amount converted to the target account’s currency.
+   */
+  def adjustmentBookingEntry(ownerId: Long, accountId: Long, levy: Account, adjustment: Money, adjustmentConverted: Money): BookingEntry = {
+    val today = LocalDate.now()
+    val fromAmount = Money.zero(levy.currency)
+    val summary = Messages("models.BookingEntry.summary.balance")
+    BookingEntry(None, ownerId, today, None, summary, adjustment, BookingEntry.DefaultSourcePercentage, levy.id.get,
+      fromAmount, accountId, adjustmentConverted, None, None, today)
   }
 
   /**
@@ -244,7 +257,7 @@ object Account {
     findAllActive.map { account ⇒
       val accountDebit = debits.getOrElse(account.id, BigDecimal(0))
       val accountCredit = credits.getOrElse(account.id, BigDecimal(0))
-      val balance = (accountDebit - accountCredit).setScale(2, RoundingMode.DOWN)
+      val balance = (accountDebit - accountCredit).setScale(account.currency.getDecimalPlaces, RoundingMode.DOWN)
       AccountSummaryWithBalance(account.id, account.name, Money.of(account.currency, balance.bigDecimal))
     }
   }
