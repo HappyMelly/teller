@@ -101,7 +101,7 @@ case class BookingEntry(
    * Returns the source amount with the percentage applied, used to calculate from and to amounts.
    */
   def sourceProRata: Money = {
-    val percentage = BigDecimal(sourcePercentage) / BigDecimal(100)
+    val percentage = BigDecimal(sourcePercentage) / BigDecimal(BookingEntry.DefaultSourcePercentage)
     source.multipliedBy(percentage.underlying(), RoundingMode.DOWN)
   }
 
@@ -160,7 +160,7 @@ object BookingEntry {
 
   val DefaultSourcePercentage = 100
 
-  def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), 100,
+  def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), DefaultSourcePercentage,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), None, None, LocalDate.now)
 
   def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session ⇒
