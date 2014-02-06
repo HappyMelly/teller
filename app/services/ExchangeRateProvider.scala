@@ -70,7 +70,7 @@ object YahooExchangeRateProvider extends ExchangeRateProvider {
               if (rate.compare(0) == 0) None
               else Some(ExchangeRate(None, base, counter, rate, timestamp))
             } catch {
-              case _ ⇒ None
+              case _: Throwable ⇒ None
             }
         }
     }
