@@ -31,7 +31,7 @@ import play.api.libs.ws.WS
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
 import securesocial.core._
-import securesocial.core.providers.{ LinkedInProvider, TwitterProvider, FacebookProvider, Token }
+import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider, Token }
 import scala.concurrent.Await
 
 /**
@@ -42,10 +42,12 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   def find(id: IdentityId) = LoginIdentity.findByUserId(id)
 
   def save(user: Identity) = {
+    play.api.Logger.debug(s"user = $user")
     val loginIdentity = user match {
       case su: SocialUser ⇒ su.identityId.providerId match {
         case TwitterProvider.Twitter ⇒ LoginIdentity.forTwitterHandle(su, findTwitterHandle(su))
         case FacebookProvider.Facebook ⇒ LoginIdentity.forFacebookUrl(su, findFacebookUrl(su))
+        case GoogleProvider.Google ⇒ LoginIdentity.forGooglePlusUrl(su, findGooglePlusUrl(su))
         case LinkedInProvider.LinkedIn ⇒ LoginIdentity.forLinkedInUrl(su, findLinkedInUrl(su))
       }
       case li: LoginIdentity ⇒ li
@@ -86,6 +88,30 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       }
     }.getOrElse {
       Logger.error("Missing Facebook OAuth2 information")
+      throw new AuthenticationException()
+    }
+  }
+
+  /**
+   * Returns the Google+ profile URL for the Secure Social identity being used to log in, or throws an authentication error.
+   */
+  private def findGooglePlusUrl(identity: Identity): String = {
+    assert(identity.identityId.providerId == GoogleProvider.Google, "Google identity required")
+    identity.oAuth2Info.map { oAuth2Info ⇒
+      val googleId = identity.identityId.userId
+      val url = GoogleProfile format (googleId)
+      val call = WS.url(url).withHeaders("Authorization" -> "Bearer %s".format(oAuth2Info.accessToken)).get()
+
+      try {
+        Await.result(call.map(response ⇒ (response.json \ URL).as[String]), IdentityProvider.secondsToWait)
+      } catch {
+        case e: Exception ⇒ {
+          Logger.error("Error retrieving Google profile information", e)
+          throw new AuthenticationException()
+        }
+      }
+    }.getOrElse {
+      Logger.error("Missing Google OAuth2 information")
       throw new AuthenticationException()
     }
   }
@@ -139,6 +165,9 @@ object LoginIdentityService {
 
   val FacebookProfile = "https://graph.facebook.com/%s?access_token=%s"
   val Link = "link"
+
+  val GoogleProfile = "https://www.googleapis.com/plus/v1/people/%s"
+  val URL = "url"
 
   val LinkedInProfile = "http://api.linkedin.com/v1/people/~:(public-profile-url)"
   val PublicProfileUrl = "public-profile-url"

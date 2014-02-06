@@ -37,7 +37,7 @@ import securesocial.core.OAuth2Info
 import securesocial.core.OAuth1Info
 import securesocial.core.IdentityId
 import securesocial.core.PasswordInfo
-import securesocial.core.providers.{ LinkedInProvider, FacebookProvider, TwitterProvider }
+import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
 
 /**
  * Contains profile and authentication info for a SecureSocial Identity.
@@ -45,15 +45,21 @@ import securesocial.core.providers.{ LinkedInProvider, FacebookProvider, Twitter
 case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String,
   fullName: String, email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info], passwordInfo: Option[PasswordInfo] = None,
-  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String], linkedInUrl: Option[String]) extends Identity {
+  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String], googlePlusUrl: Option[String],
+  linkedInUrl: Option[String]) extends Identity {
 
   /**
    * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
    */
   private def accountQuery: Query[UserAccounts.type, UserAccount] = identityId.providerId match {
-    case TwitterProvider.Twitter ⇒ Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
+    case TwitterProvider.Twitter ⇒ {
+      Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
+    }
     case FacebookProvider.Facebook ⇒ {
       Query(UserAccounts).filter(_.facebookUrl like "https?".r.replaceFirstIn(facebookUrl.getOrElse(""), "%"))
+    }
+    case GoogleProvider.Google ⇒ {
+      Query(UserAccounts).filter(_.googlePlusUrl === googlePlusUrl)
     }
     case LinkedInProvider.LinkedIn ⇒ {
       Query(UserAccounts).filter(_.linkedInUrl like "https?".r.replaceFirstIn(linkedInUrl.getOrElse(""), "%"))
@@ -63,6 +69,7 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   def name = identityId.providerId match {
     case TwitterProvider.Twitter ⇒ twitterHandle
     case FacebookProvider.Facebook ⇒ facebookUrl
+    case GoogleProvider.Google ⇒ googlePlusUrl
     case LinkedInProvider.LinkedIn ⇒ linkedInUrl
   }
 
@@ -91,21 +98,28 @@ object LoginIdentity {
    */
   def forTwitterHandle(i: Identity, twitterHandle: String): LoginIdentity = LoginIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), Some(twitterHandle), None, None)
+    generateApiToken(i), Some(twitterHandle), None, None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
   def forFacebookUrl(i: Identity, facebookUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, Some(facebookUrl), None)
+    generateApiToken(i), None, Some(facebookUrl), None, None)
+
+  /**
+   * Factory method to return a Facebook login identity.
+   */
+  def forGooglePlusUrl(i: Identity, googlePlusUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
+    generateApiToken(i), None, None, Some(googlePlusUrl), None)
 
   /**
    * Factory method to return a LinkedIn login identity.
    */
   def forLinkedInUrl(i: Identity, linkedInUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, None, Some(linkedInUrl))
+    generateApiToken(i), None, None, None, Some(linkedInUrl))
 
   private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
 

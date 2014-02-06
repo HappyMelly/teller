@@ -67,6 +67,7 @@ private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENT
   def apiToken = column[String]("API_TOKEN")
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
+  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
   def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
 
   // oAuth 1
@@ -76,13 +77,14 @@ private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENT
   def accessToken = column[Option[String]]("ACCESS_TOKEN")
 
   def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~
-    secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ apiToken ~ twitterHandle ~ facebookUrl ~ linkedInUrl <> (
-      u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17, u._18, u._19),
+    secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ apiToken ~ twitterHandle ~ facebookUrl ~
+    googlePlusUrl ~ linkedInUrl <> (
+      u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17, u._18, u._19, u._20),
       (u: LoginIdentity) ⇒ {
         Some((u.uid, u.identityId.userId, u.identityId.providerId, u.firstName, u.lastName, u.fullName, u.email,
           u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret),
           u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn),
-          u.oAuth2Info.flatMap(_.refreshToken), u.apiToken, u.twitterHandle, u.facebookUrl, u.linkedInUrl))
+          u.oAuth2Info.flatMap(_.refreshToken), u.apiToken, u.twitterHandle, u.facebookUrl, u.googlePlusUrl, u.linkedInUrl))
       })
 
   def forInsert = * returning uid
