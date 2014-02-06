@@ -47,6 +47,16 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info], passwordInfo: Option[PasswordInfo] = None,
   apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String]) extends Identity {
 
+  /**
+   * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
+   */
+  def accountQuery: Query[UserAccounts.type, UserAccount] = identityId.providerId match {
+    case TwitterProvider.Twitter ⇒ Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
+    case FacebookProvider.Facebook ⇒ {
+      Query(UserAccounts).filter(_.facebookUrl like "https?".r.replaceFirstIn(facebookUrl.getOrElse(""), "%"))
+    }
+  }
+
   def name = identityId.providerId match {
     case TwitterProvider.Twitter ⇒ twitterHandle
     case FacebookProvider.Facebook ⇒ facebookUrl
@@ -56,11 +66,6 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
    * Returns the `Person` associated with this identity.
    */
   def person: Person = DB.withSession { implicit session: Session ⇒
-    val accountQuery = identityId.providerId match {
-      case TwitterProvider.Twitter ⇒ UserAccounts.filter(_.twitterHandle === twitterHandle)
-      case FacebookProvider.Facebook ⇒ UserAccounts.filter(_.facebookUrl === facebookUrl)
-    }
-
     (for {
       account ← accountQuery
       person ← People if person.id === account.personId
@@ -71,11 +76,7 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
    * Returns the `UserAccount` associated with this identity.
    */
   def userAccount: UserAccount = DB.withSession { implicit session: Session ⇒
-    val query = identityId.providerId match {
-      case TwitterProvider.Twitter ⇒ Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
-      case FacebookProvider.Facebook ⇒ Query(UserAccounts).filter(_.facebookUrl === facebookUrl)
-    }
-    query.first
+    accountQuery.first
   }
 }
 
