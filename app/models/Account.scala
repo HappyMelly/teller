@@ -67,7 +67,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
     case Levy ⇒ Person.findBoardMembers
   }
 
-  def balance: Money = Money.of(currency, Account.findBalance(id.get).bigDecimal)
+  def balance: Money = Account.findBalance(id.get, currency)
 
   /**
    * Checks if the given user has permission to edit this account, including (de)activation:
@@ -273,7 +273,7 @@ object Account {
    * @param accountId The ID of the account to find the balance for.
    * @return The current balance for the account.
    */
-  def findBalance(accountId: Long): BigDecimal = DB.withSession { implicit session: Session ⇒
+  def findBalance(accountId: Long, currency: CurrencyUnit): Money = DB.withSession { implicit session: Session ⇒
     val creditQuery = for {
       entry ← BookingEntries.filtered if entry.fromId === accountId
     } yield entry.fromAmount
@@ -285,6 +285,7 @@ object Account {
     val credit = Query(creditQuery.sum).first.getOrElse(BigDecimal(0))
     val debit = Query(debitQuery.sum).first.getOrElse(BigDecimal(0))
 
-    (debit - credit).setScale(2, RoundingMode.DOWN)
+    val balance = (debit - credit).setScale(currency.getDecimalPlaces, RoundingMode.DOWN)
+    Money.of(currency, balance.bigDecimal)
   }
 }
