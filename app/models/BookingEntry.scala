@@ -26,6 +26,7 @@ package models
 
 import com.github.tototoshi.slick.JodaSupport._
 import java.math.RoundingMode
+import java.net.URLEncoder
 import models.JodaMoney._
 import models.database._
 import org.joda.time.{ Days, DateTime, LocalDate }
@@ -36,10 +37,8 @@ import play.api.db.slick.DB
 import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import java.net.URLEncoder
 import services.S3Bucket
 import services.CurrencyConverter.NoExchangeRateException
-import models.BookingEntrySummary
 import scala.Some
 
 /**
