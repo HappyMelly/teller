@@ -107,7 +107,6 @@ object UserAccount {
   /**
    * Updates the social network authentication provider identifiers, used when these may have been edited for a person,
    * so that an existing account can be able to log in on a new provider or for a provider with a edited identifier.
-   * @param person
    */
   def updateSocialNetworkProfiles(person: Person): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {

@@ -50,10 +50,13 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
   /**
    * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
    */
-  def accountQuery: Query[UserAccounts.type, UserAccount] = identityId.providerId match {
+  private def accountQuery: Query[UserAccounts.type, UserAccount] = identityId.providerId match {
     case TwitterProvider.Twitter ⇒ Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
     case FacebookProvider.Facebook ⇒ {
       Query(UserAccounts).filter(_.facebookUrl like "https?".r.replaceFirstIn(facebookUrl.getOrElse(""), "%"))
+    }
+    case LinkedInProvider.LinkedIn ⇒ {
+      Query(UserAccounts).filter(_.linkedInUrl like "https?".r.replaceFirstIn(linkedInUrl.getOrElse(""), "%"))
     }
   }
 
@@ -78,8 +81,8 @@ case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: S
    */
   def userAccount: UserAccount = DB.withSession { implicit session: Session ⇒
     accountQuery.first
-    }
   }
+}
 
 object LoginIdentity {
 
