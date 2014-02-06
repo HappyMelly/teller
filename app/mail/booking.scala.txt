@@ -1,10 +1,15 @@
-@(booking: BookingEntry)(implicit request: RequestHeader)
+@(booking: BookingEntry, changes: List[BookingEntry.FieldChange])(implicit request: RequestHeader)
 @import templates.Formatters._
 Summary: @booking.summary@booking.description.map { description =>
 Description: @description }
 @routes.BookingEntries.details(booking.bookingNumber.getOrElse(0)).absoluteURL(false)
 
+@if(!changes.isEmpty) {
+CHANGES
 
+@changes.mkString("\n")
+
+}
 BOOKING DETAILS
 
 Booking number: @booking.bookingNumber.get
