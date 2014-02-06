@@ -153,6 +153,8 @@ case class Person(
         linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
+
+      UserAccount.updateSocialNetworkProfiles(this)
       this
     }
   }
