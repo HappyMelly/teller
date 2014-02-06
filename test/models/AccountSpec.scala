@@ -38,6 +38,7 @@ class AccountSpec extends Specification {
     AccountSummaryWithAdjustment(3, "Happy Melly Levy", Money.of(SEK, 4000.0), Money.of(EUR, 450.0), Money.zero(EUR)))
 
   val eur10 = Money.of(EUR, 10.0)
+  val eur0 = Money.of(EUR, 0)
 
   "Balancing accounts" should {
     "calculate the total balance from converted balances" in {
@@ -45,6 +46,10 @@ class AccountSpec extends Specification {
     }
     "equally divide the adjustment across accounts (rounding down)" in {
       Account.calculateAdjustment(eur10, accounts) must be equalTo Money.of(EUR, -3.33)
+    }
+    "generate booking entries with a zero from amount" in {
+      val levy = Account(id = Some(0), currency = EUR)
+      Account.adjustmentBookingEntry(0, 0, levy, eur10, eur10).fromAmount must be equalTo eur0
     }
   }
 
