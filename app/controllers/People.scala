@@ -210,7 +210,7 @@ object People extends Controller with Security {
           memberships, otherOrganisations,
           contributions, products,
           licenses, accountRole,
-          person.findUserWithSameTwitter))
+          UserAccount.findDuplicateIdentity(person)))
       } getOrElse {
         Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }

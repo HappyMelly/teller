@@ -70,12 +70,15 @@ object UserAccount {
   }
 
   /**
-   * Returns the account for the person with the given Twitter handle.
+   * Returns the account for the person who has a duplicate social network identity, if there is one.
    */
-  def findByTwitterHandle(twitterHandle: String): Option[UserAccount] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      account ← UserAccounts if account.twitterHandle.toLowerCase === twitterHandle.toLowerCase
-    } yield account
+  def findDuplicateIdentity(person: Person): Option[UserAccount] = DB.withSession { implicit session: Session ⇒
+    val query = Query(UserAccounts).filter { account ⇒
+      account.twitterHandle.toLowerCase === person.twitterHandle.map(_.toLowerCase) ||
+        account.googlePlusUrl === person.googlePlusUrl ||
+        (account.facebookUrl like "https?".r.replaceFirstIn(person.facebookUrl.getOrElse(""), "%")) ||
+        (account.linkedInUrl like "https?".r.replaceFirstIn(person.linkedInUrl.getOrElse(""), "%"))
+    }
     query.firstOption
   }
 

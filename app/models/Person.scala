@@ -72,6 +72,11 @@ case class Person(
   }
 
   /**
+   * Returns true if it is possible to grant log in access to this user.
+   */
+  def canHaveUserAccount: Boolean = twitterHandle.isDefined || facebookUrl.isDefined || googlePlusUrl.isDefined || linkedInUrl.isDefined
+
+  /**
    * Returns true if this person may be deleted.
    */
   lazy val deletable: Boolean = account.deletable && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
@@ -81,15 +86,6 @@ case class Person(
    */
   def deleteMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
     OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
-  }
-
-  /**
-   * Returns a user for a different person to this one who has the same Twitter handle, if there is one.
-   * This is used to check for duplicate Twitter handles when creating accounts.
-   */
-  def findUserWithSameTwitter: Option[UserAccount] = {
-    val userSameTwitter = this.twitterHandle.map(handle ⇒ UserAccount.findByTwitterHandle(handle)).flatten
-    if (userSameTwitter.map(_.personId) == this.id) None else userSameTwitter
   }
 
   /**
