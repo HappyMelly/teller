@@ -35,7 +35,7 @@ import play.libs.Scala
  * A log-in user account.
  */
 case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
-  facebookUrl: Option[String], linkedInUrl: Option[String]) extends Subject {
+  facebookUrl: Option[String], linkedInUrl: Option[String], googlePlusUrl: Option[String]) extends Subject {
 
   lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
   lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
@@ -111,7 +111,7 @@ object UserAccount {
   def updateSocialNetworkProfiles(person: Person): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts if account.personId === person.id
-    } yield account.twitterHandle ~ account.facebookUrl
-    query.update(person.twitterHandle, person.facebookUrl)
+    } yield account.twitterHandle ~ account.facebookUrl ~ account.googlePlusUrl ~ account.linkedInUrl
+    query.update(person.twitterHandle, person.facebookUrl, person.googlePlusUrl, person.linkedInUrl)
   }
 }
