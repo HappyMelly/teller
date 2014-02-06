@@ -53,22 +53,20 @@ object UserAccounts extends Controller with Security {
         user ⇒ {
           val (personId, role) = user
           Person.find(personId).map { person ⇒
-            person.twitterHandle.map { twitterHandle ⇒
-              Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
-              val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
-              if (role.isDefined) {
-                if (UserAccount.findRole(personId).isDefined) {
-                  UserAccount.updateRole(personId, role.get)
-                } else {
-                  UserAccount.insert(UserAccount(None, personId, twitterHandle, role.get))
-                }
-              } else { // Remove the account
-                UserAccount.delete(personId)
+            Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
+            val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
+            if (role.isDefined) {
+              if (UserAccount.findRole(personId).isDefined) {
+                UserAccount.updateRole(personId, role.get)
+              } else {
+                UserAccount.insert(UserAccount(None, personId, role.get, person.twitterHandle, person.facebookUrl, person.linkedInUrl))
               }
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-              person.copy(updated = DateTime.now, updatedBy = request.user.fullName).update
-              Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
-            }.getOrElse(BadRequest("invalid form data - no Twitter handle"))
+            } else { // Remove the account
+              UserAccount.delete(personId)
+            }
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+            person.copy(updated = DateTime.now, updatedBy = request.user.fullName).update
+            Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
           }.getOrElse(BadRequest("invalid form data - person not found"))
         })
   }

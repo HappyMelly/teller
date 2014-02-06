@@ -4,3 +4,5 @@
 9997:services.SecureSocialTemplatesPlugin
 9998:services.LoginIdentityService
 10000:securesocial.core.providers.TwitterProvider
+10001:securesocial.core.providers.FacebookProvider
+10003:securesocial.core.providers.LinkedInProvider
