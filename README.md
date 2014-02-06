@@ -41,6 +41,8 @@ from third-party apps and websites.
         export TWITTER_SECRET=[Twitter app consumer secret]
         export FACEBOOK_ID=[App ID]
         export FACEBOOK_SECRET=[App secret]
+        export LINKEDIN_KEY=[App key]
+        export LINKEDIN_SECRET=[App secret]
         export play run
 
 3. Open the application in a web browser and run Evolutions to populate the database
