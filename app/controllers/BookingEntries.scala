@@ -300,7 +300,7 @@ object BookingEntries extends Controller with Security {
             formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
             editedEntry ⇒ {
               editedEntry.withSourceConverted.map { editedEntry ⇒
-                BookingEntry.update(editedEntry.copy(id = existingEntry.id))
+                BookingEntry.update(editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey))
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
                 Activity.link(existingEntry, activity)
@@ -308,7 +308,8 @@ object BookingEntries extends Controller with Security {
                 // Construct a fully-populated entry from the edited entry by adding the missing properties from the
                 // existing entry, for use in the e-mail notification (some fields are not included in edit/update).
                 val updatedEntry = editedEntry.copy(id = existingEntry.id, bookingNumber = existingEntry.bookingNumber,
-                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
+                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId,
+                  attachmentKey = existingEntry.attachmentKey)
                 val changes = BookingEntry.compare(existingEntry, updatedEntry)
                 sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
 
