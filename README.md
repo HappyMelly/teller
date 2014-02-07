@@ -41,6 +41,8 @@ from third-party apps and websites.
         export TWITTER_SECRET=[Twitter app consumer secret]
         export FACEBOOK_ID=[App ID]
         export FACEBOOK_SECRET=[App secret]
+        export GOOGLE_ID=[App ID]
+        export GOOGLE_SECRET=[App secret]
         export LINKEDIN_KEY=[App key]
         export LINKEDIN_SECRET=[App secret]
         export GOOGLE_ID=[App ID]
@@ -50,7 +52,8 @@ from third-party apps and websites.
 3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
     * on the _Database 'default' needs evolution!_ page, click _Apply this script now!_
-4. Update database (required to give you access by your Twitter account)
+4. Update database (required to give you access by your Twitter account). Alternatively, add a Facebook profile URL, a
+   Google+ profile URL or a LinkedIn public profile URL, in the appropriate table columns.
 
         update PERSON set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";
 
