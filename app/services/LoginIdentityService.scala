@@ -42,7 +42,6 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   def find(id: IdentityId) = LoginIdentity.findByUserId(id)
 
   def save(user: Identity) = {
-    Logger.debug(s"user = $user")
     val loginIdentity = user match {
       case su: SocialUser ⇒ su.identityId.providerId match {
         case TwitterProvider.Twitter ⇒ LoginIdentity.forTwitterHandle(su, findTwitterHandle(su))
@@ -121,7 +120,6 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    */
   private def findLinkedInUrl(identity: Identity): String = {
     assert(identity.identityId.providerId == LinkedInProvider.LinkedIn, "LinkedIn identity required")
-    Logger.debug(s"identity = $identity")
 
     val info = identity.oAuth1Info.get
     val calculator = OAuthCalculator(SecureSocial.serviceInfoFor(identity).get.key, RequestToken(info.token, info.secret))

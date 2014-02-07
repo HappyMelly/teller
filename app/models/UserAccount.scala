@@ -114,12 +114,7 @@ object UserAccount {
   def updateSocialNetworkProfiles(person: Person): Unit = DB.withSession { implicit session: Session ⇒
     val query = for {
       account ← UserAccounts if account.personId === person.id
-<<<<<<< HEAD
-    } yield account.twitterHandle ~ account.facebookUrl ~ account.linkedInUrl
-    query.update(person.twitterHandle, person.facebookUrl, person.linkedInUrl)
-=======
     } yield account.twitterHandle ~ account.facebookUrl ~ account.googlePlusUrl ~ account.linkedInUrl
     query.update(person.twitterHandle, person.facebookUrl, person.googlePlusUrl, person.linkedInUrl)
->>>>>>> T142 Google log in
   }
 }
