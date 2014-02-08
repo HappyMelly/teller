@@ -56,11 +56,7 @@ object Facilitators extends Controller with Security {
           licensees
         else
           brand.coordinator :: licensees
-        if (UserRole.forName(request.user.asInstanceOf[LoginIdentity].userAccount.role).editor)
-          // we do not care about coordinators if the user is Editor
-          Ok(Json.toJson(facilitators.map(person ⇒ (person, true))))
-        else
-          Ok(Json.toJson(facilitators.map(person ⇒ (person, person.id == brand.coordinator.id))))
+        Ok(Json.toJson(facilitators.map(person ⇒ (person, person.id == brand.coordinator.id))))
       }.getOrElse(NotFound("Unknown brand"))
   }
 

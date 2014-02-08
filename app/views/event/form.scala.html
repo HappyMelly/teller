@@ -2,20 +2,26 @@
   id: Option[Long],
   brands: List[Brand],
   currentUserId: Long,
-  eventForm: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
 @import views.ViewHelpers._
 
+@* Returns a comma-separated list of validation error messages, for one or more fields. *@
+@fieldErrors(fields: Field*) = {
+  @if(fields.exists(_.hasErrors)) {
+    @fields.map(_.errors.map(error => Messages(error.message, error.args: _*))).flatten.toSet.mkString(", ")
+  }
+}
 
-@defining(eventForm.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
+@defining(form.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
     @main("Events", Some(user)) {
 
         <h1>@eventTitle</h1>
 
         <div id="error">
-        @if(eventForm.hasErrors) {
+        @if(form.hasErrors) {
           <div class="alert alert-error">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             Please fix the validation errors.
@@ -24,16 +30,64 @@
         </div>
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-            @helper.select(eventForm("brandCode"), brands.map(b => (b.code, b.name)), '_label -> "Brand")
-            @helper.inputText(eventForm("title"), '_label -> "Title")
-            @helper.inputText(eventForm("spokenLanguage"), '_label -> "Spoken Language")
-            @helper.inputText(eventForm("materialsLanguage"), '_label -> "Materials Language")
-            @helper.inputText(eventForm("location.city"), '_label -> "City")
-            @helper.select(eventForm("location.country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
-            @helper.textarea(eventForm("details.description"), '_label -> "Description")
-            @helper.textarea(eventForm("details.specialAttention"), '_label -> "Special attention")
-            <div id="currentUserId" value="@currentUserId"/>
-            @if(eventForm.error("facilitatorIds").isDefined) {
+            <div id="currentUserId" value="@currentUserId"></div>
+            @defining(form("brandCode").hasErrors || form("title").hasErrors) { hasErrors =>
+                <div class="controls-row control-group @if(hasErrors) {error}">
+                    @defining(form("brandCode")) { field =>
+                    <label for="@field.id">Brand & Title</label>
+                    <select name="@field.name" id="@field.id">
+                        @brands.map { brand =>
+                        <option value="@brand.code" @if(field.value.toSet.contains(brand.code)){selected}>@brand.name</option>
+                        }
+                    </select>
+                    }
+                    <input id="title" class="input-xxlarge" name="title" placeholder="Title" type="text" value="@form("title").value">
+                    <span class="help-inline">
+                        @if(hasErrors) {
+                          @fieldErrors(form("brandCode"), form("title"))
+                        } else {
+                          Required
+                        }
+                    </span>
+                </div>
+            }
+            <div class="controls-row control-group @if(form("spokenLanguage").hasErrors) {error}">
+                <label for="spokenLanguage">Spoken & Materials Languages</label>
+                <input id="spokenLanguage" class="input-large" name="spokenLanguage" placeholder="Spoken Language" type="text" value="@form("spokenLanguage").value">
+                <input id="materialsLanguage" class="input-large" name="materialsLanguage" type="text" placeholder="Materials Language"
+                    value="@form("materialsLanguage").value">
+                <span class="help-inline">
+                    @if(form("spokenLanguage").hasErrors) {
+                      @fieldErrors(form("spokenLanguage"))
+                    } else {
+                      Required
+                    }
+                </span>
+            </div>
+            @defining(form("location.city").hasErrors || form("location.country").hasErrors) { hasErrors =>
+                <div class="controls-row control-group @if(hasErrors) {error}">
+                    @defining(form("location.country")) { field =>
+                    <label for="@field.id">Location</label>
+                    <select name="@field.name" id="@field.id">
+                        <option value="">Choose a country</option>
+                        @Countries.all.map { country =>
+                        <option value="@country._1" @if(field.value.toSet.contains(country._1)){selected}>@country._2</option>
+                        }
+                    </select>
+                    }
+                    <input id="location_city" class="input-large" name="location.city" placeholder="City" type="text" value="@form("location.city").value">
+                    <span class="help-inline">
+                        @if(hasErrors) {
+                          @fieldErrors(form("location.country"), form("location.city"))
+                        } else {
+                          Required
+                        }
+                    </span>
+                </div>
+            }
+            @helper.textarea(form("details.description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge")
+            @helper.textarea(form("details.specialAttention"), '_label -> "Special attention", 'cols -> 50, 'class -> "input-xxlarge")
+            @if(form.error("facilitatorIds").isDefined) {
             <div id="facilitatorIds_field" class="control-group error">
             } else {
             <div id="facilitatorIds_field" class="control-group">
@@ -41,31 +95,45 @@
                 <label for="facilitatorIds">Facilitators</label>
                 <div class="input">
                     <select id="facilitatorIds"></select>
-            @if(eventForm.error("facilitatorIds").isDefined) {
-                    <span class="help-inline">@eventForm.error("facilitatorIds").get.message</span>
+            @if(form.error("facilitatorIds").isDefined) {
+                    <span class="help-inline">@form.error("facilitatorIds").get.message</span>
             } else {
                     <span class="help-inline">Choose at least one facilitator</span>
             }
                 </div>
-                <div id="chosenFacilitators" value="@helper.repeat(eventForm("facilitatorIds"), min=0) { f =>@f.value,}">
+                <div id="chosenFacilitators" value="@helper.repeat(form("facilitatorIds"), min=0) { f =>@f.value,}">
                 </div>
             </div>
-            @helper.inputDate(eventForm("schedule.start"), '_label -> "Start date", '_error -> "Test")
-            @helper.inputDate(eventForm("schedule.end"), '_label -> "End date")
-            @helper.inputText(eventForm("schedule.hoursPerDay"), '_label -> "Hours per day")
-            @helper.inputText(eventForm("details.webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-            @helper.inputText(eventForm("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
+            <legend>Schedule</legend>
+            @defining(form("schedule.start").hasErrors || form("schedule.end").hasErrors) { hasErrors =>
+            <div class="controls-row control-group @if(hasErrors) {error}">
+                <label for="schedule_start">Start date/End date</label>
+                <input id="schedule_start" class="input" type="date" name="schedule.start" value="@form("schedule.start").value">
+                <input id="schedule_end" class="input" type="date" name="schedule.end" value="@form("schedule.end").value">
+                <span class="help-inline">
+                    @if(hasErrors) {
+                      @fieldErrors(form("schedule.start"), form("schedule.end"))
+                    } else {
+                      Required
+                    }
+                </span>
+            </div>
+            }
+            @helper.inputText(form("schedule.hoursPerDay"), '_label -> "Hours per day", 'class -> "input-small")
+            <legend>Misc</legend>
+            @helper.inputText(form("details.webSite"), '_label -> "Organizer website", 'placeholder -> "http://", '_help -> "Web site URL")
+            @helper.inputText(form("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
             <div class="control-group" id="notPublic_field">
                 <label for="notPublic" class="checkbox">
                     <input type="checkbox" id="notPublic" name="notPublic" value="true"
-                    @if(eventForm("notPublic").value.exists(_ == "true")){checked}>
+                    @if(form("notPublic").value.exists(_ == "true")){checked}>
                     Private Event
                 </label>
             </div>
             <div class="control-group" id="archived_field">
                 <label for="archived" class="checkbox">
                     <input type="checkbox" id="archived" name="archived" value="true"
-                    @if(eventForm("archived").value.exists(_ == "true")){checked}>
+                    @if(form("archived").value.exists(_ == "true")){checked}>
                     Archived Event
                 </label>
             </div>

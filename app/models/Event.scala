@@ -64,8 +64,6 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
-
   def isEditable(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
     UserRole.forName(account.role).editor || facilitatorIds.exists(_ == account.personId) || Brand.find(brandCode).get.coordinator.id.get == account.personId
   }
