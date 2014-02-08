@@ -120,6 +120,7 @@
             </div>
             }
             @helper.inputText(form("schedule.hoursPerDay"), '_label -> "Hours per day", 'class -> "input-small")
+            @helper.inputText(form("schedule.totalHours"), '_label -> "Total Hours", 'class -> "input-small", '_help -> "Required")
             <legend>Misc</legend>
             @helper.inputText(form("details.webSite"), '_label -> "Organizer website", 'placeholder -> "http://", '_help -> "Web site URL")
             @helper.inputText(form("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")

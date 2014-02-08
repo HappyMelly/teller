@@ -48,6 +48,7 @@ private[models] object Events extends Table[Event]("EVENT") {
   def start = column[LocalDate]("START_DATE")
   def end = column[LocalDate]("END_DATE")
   def hoursPerDay = column[Int]("HOURS_PER_DAY")
+  def totalHours = column[Int]("TOTAL_HOURS")
 
   def webSite = column[Option[String]]("WEB_SITE")
   def registrationPage = column[Option[String]]("REGISTRATION_PAGE")
@@ -63,14 +64,14 @@ private[models] object Events extends Table[Event]("EVENT") {
   def brand = foreignKey("BRAND_FK", brandCode, Brands)(_.code)
 
   def * = id.? ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
-    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
+    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ totalHours ~ webSite ~ registrationPage ~
     notPublic ~ archived ~ created ~ createdBy ~ updated ~ updatedBy <> (
-      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, Location(e._6, e._7), Schedule(e._10, e._11, e._12), Details(e._8, e._9, e._13, e._14), e._15, e._16, e._17, e._18, e._19, e._20, Event.getFacilitatorIds(e._1.getOrElse(0))),
-      (e: Event) ⇒ Some((e.id, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.details.webSite, e.details.registrationPage, e.notPublic, e.archived, e.created, e.createdBy, e.updated, e.updatedBy)))
+      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, Location(e._6, e._7), Schedule(e._10, e._11, e._12, e._13), Details(e._8, e._9, e._14, e._15), e._16, e._17, e._18, e._19, e._20, e._21, Event.getFacilitatorIds(e._1.getOrElse(0))),
+      (e: Event) ⇒ Some((e.id, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.schedule.totalHours, e.details.webSite, e.details.registrationPage, e.notPublic, e.archived, e.created, e.createdBy, e.updated, e.updatedBy)))
 
   def forInsert = * returning id
 
   def forUpdate = brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
-    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ webSite ~ registrationPage ~
+    description ~ specialAttention ~ start ~ end ~ hoursPerDay ~ totalHours ~ webSite ~ registrationPage ~
     notPublic ~ archived ~ updated ~ updatedBy
 }

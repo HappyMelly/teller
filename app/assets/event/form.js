@@ -182,7 +182,7 @@ $(document).ready( function() {
     });
     facilitators.initialize($('#brandCode').find(':selected').val());
     // turn it on only for a new event
-    if ($("form").attr("action").indexOf('events')) {
+    if ($("form").attr("action").indexOf('events') != -1) {
         // clean default values here because it's too difficult to implement it on the server side
         // they'll also be cleaned on duplication but it's not a big deal as the dates are different in most cases
         $("#schedule_start").val('');
