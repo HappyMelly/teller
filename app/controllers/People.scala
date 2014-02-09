@@ -36,8 +36,6 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
 import scala.util.matching.Regex
-import net.liftweb.json._
-import dispatch._
 
 object People extends Controller with Security {
 
