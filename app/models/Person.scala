@@ -32,7 +32,22 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import scala.Some
 import JodaMoney._
+import scala.util.matching.Regex
 
+case class Photo(id: Option[String], url: Option[String])
+
+object Photo {
+
+  def parse(url: Option[String]): Photo = {
+    url.map { photoUrl ⇒
+      val pattern = new Regex("facebook")
+      (pattern findFirstIn photoUrl).map { substr ⇒
+        Photo(Some("facebook"), url)
+      }.getOrElse(Photo(Some("twitter"), url))
+    }.getOrElse(Photo(None, None))
+  }
+
+}
 /**
  * A person, such as the owner or employee of an organisation.
  */
@@ -41,6 +56,7 @@ case class Person(
   firstName: String,
   lastName: String,
   emailAddress: String,
+  photo: Photo,
   address: Address,
   bio: Option[String],
   interests: Option[String],
@@ -145,7 +161,7 @@ case class Person(
       addressQuery.update(address.copy(id = Some(addressId)))
 
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, emailAddress, bio, interests, twitterHandle, facebookUrl,
+      val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests, twitterHandle, facebookUrl,
         linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)

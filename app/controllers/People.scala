@@ -28,14 +28,41 @@ import Forms._
 import models._
 import org.joda.time.DateTime
 import play.api.mvc._
-import play.api.data.Form
+import play.api.data.{ FormError, Form }
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.i18n.Messages
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
+import play.api.data.format.Formatter
+import scala.util.matching.Regex
 
 object People extends Controller with Security {
+
+  val photoFormatter = new Formatter[Photo] {
+
+    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
+      // "data" lets you access all form data values
+      data.get("photo").map { socialId ⇒
+        socialId match {
+          case "twitter" ⇒ { Left(List(FormError("profile.twitterHandle", "error.twitter"))) }
+          case "facebook" ⇒ {
+            data.get("profile.facebookUrl").map { url ⇒
+              val pattern = new Regex("\\w+$")
+              (pattern findFirstIn url).map { userId ⇒
+                Right(Photo(Some(socialId), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
+              }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
+            }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
+          }
+          case _ ⇒ { Right(Photo(None, None)) }
+        }
+      }.getOrElse(Right(Photo(None, None)))
+    }
+
+    override def unbind(key: String, value: Photo): Map[String, String] = {
+      Map(key -> value.id.getOrElse(""))
+    }
+  }
 
   /**
    * HTML form mapping for a person’s address.
@@ -58,6 +85,7 @@ object People extends Controller with Security {
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
+      "photo" -> of(photoFormatter),
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
@@ -74,14 +102,14 @@ object People extends Controller with Security {
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(request.user.fullName),
       "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(request.user.fullName))(
-        { (id, firstName, lastName, emailAddress, address, bio, interests, profiles, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, address, bio, interests, profiles._1, profiles._2, profiles._3,
+      "updatedBy" -> ignored(request.user.fullName)) (
+        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
+          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2, profiles._3,
             profiles._4, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.address, p.bio, p.interests,
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
                 (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
                 p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
           }))

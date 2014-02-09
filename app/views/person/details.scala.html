@@ -27,8 +27,10 @@
     <header>
 
     <h1>
-      <img width="32" src="/assets/images/flags/32/@(person.address.countryCode.toLowerCase).png" align="baseline">
-      @person.fullName
+        @person.photo.url.map { photo =>
+            <img width="64" src="@photo"/>
+        }
+        @person.fullName
       @restrict(handler, List(as(Editor.toString))) {
         <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
@@ -80,6 +82,7 @@
       @person.address.province.map { addressLine =>
         @addressLine<br>
       }
+      <img width="32" src="/assets/images/flags/32/@(person.address.countryCode.toLowerCase).png" align="baseline">
       @Messages("country." + person.address.countryCode)
     </address>
 
