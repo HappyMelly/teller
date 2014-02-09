@@ -43,7 +43,7 @@ object Photo {
       val pattern = new Regex("facebook")
       (pattern findFirstIn photoUrl).map { substr ⇒
         Photo(Some("facebook"), url)
-      }.getOrElse(Photo(Some("twitter"), url))
+      }.getOrElse(Photo(None, None))
     }.getOrElse(Photo(None, None))
   }
 

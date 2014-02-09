@@ -32,10 +32,9 @@
       <input type="hidden" value="@personForm("photo").value.getOrElse("")" id="photo" name="photo"/>
       <div class="control-group @if(personForm("profile.twitterHandle").hasErrors) {error}" id="twitterHandle">
         <label for="twitterHandle">Twitter user name</label>
-        <div class="input-prepend input-append">
+        <div class="input-prepend">
           <span class="add-on">@@</span>
           <input type="text" id="twitterHandle" name="profile.twitterHandle" value="@personForm("profile.twitterHandle").value.getOrElse("")" placeholder="MyTwitter">
-          <button class="btn-success photo-button" id="twitter">Use profile photo</button>
         </div>
         <span class="help-inline">
           @if(personForm("profile.twitterHandle").hasErrors) {

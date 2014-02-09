@@ -36,6 +36,8 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
 import scala.util.matching.Regex
+import net.liftweb.json._
+import dispatch._
 
 object People extends Controller with Security {
 
@@ -45,16 +47,14 @@ object People extends Controller with Security {
       // "data" lets you access all form data values
       data.get("photo").map { socialId ⇒
         socialId match {
-          case "twitter" ⇒ { Left(List(FormError("profile.twitterHandle", "error.twitter"))) }
-          case "facebook" ⇒ {
+          case "facebook" ⇒
             data.get("profile.facebookUrl").map { url ⇒
               val pattern = new Regex("\\w+$")
               (pattern findFirstIn url).map { userId ⇒
                 Right(Photo(Some(socialId), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
               }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
             }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
-          }
-          case _ ⇒ { Right(Photo(None, None)) }
+          case _ ⇒ Right(Photo(None, None))
         }
       }.getOrElse(Right(Photo(None, None)))
     }

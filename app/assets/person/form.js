@@ -72,7 +72,7 @@ PhotoButtonGroup.prototype.click = function(name) {
 }
 
 $(document).ready( function() {
-    var buttons = [new PhotoButton("twitter", false), new PhotoButton("facebook", false)];
+    var buttons = [new PhotoButton("facebook", false)];
     var group = new PhotoButtonGroup(buttons, $('#photo').val());
     $(".photo-button").click(function(event) {
         event.preventDefault();
