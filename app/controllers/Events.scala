@@ -86,8 +86,9 @@ object Events extends Controller with Security {
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
-      "end" -> of(dateRangeFormatter),
-      "hoursPerDay" -> number(1, 24, true))(Schedule.apply)(Schedule.unapply),
+      "end" -> jodaLocalDate,
+      "hoursPerDay" -> number(1, 24, true),
+      "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "details" -> mapping(
       "description" -> optional(text),
       "specialAttention" -> optional(text),
@@ -108,9 +109,12 @@ object Events extends Controller with Security {
   def add = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
+      val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
+      val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
+      val default = Event(None, "", "", "", Some("English"), Location("", ""), defaultSchedule, defaultDetails, false, false, DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
-      Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm))
+      Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm.fill(default)))
   }
 
   /**
