@@ -28,7 +28,6 @@ import concurrent.duration._
 import org.joda.money.CurrencyUnit._
 import org.specs2.mutable._
 import org.specs2.time.NoTimeConversions
-import play.api.test.Helpers._
 import services.YahooExchangeRateProvider
 
 class YahooExchangeRateProviderSpec extends Specification with NoTimeConversions {
@@ -36,9 +35,11 @@ class YahooExchangeRateProviderSpec extends Specification with NoTimeConversions
 
   "The provider" should {
     "return a result for EUR-USD" in {
+      pending("but needs a way to avoid failures caused by API throttling")
+      // TODO: replace this with a way to test our app, not Yahoo’s API. Checking that Yahoo’s API is still working
+      // requires a separate check that doesn’t happen at build time, e.g. a separate asynchronous job.
       YahooExchangeRateProvider(EUR, USD) must beSome[ExchangeRate].await(2, 3.seconds)
     }
-
   }
 
 }
