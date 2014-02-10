@@ -183,7 +183,7 @@ object BookingEntry {
       FieldChange("From amount", was.fromAmount.abs.formatText, now.fromAmount.abs.formatText),
       FieldChange("Transaction direction", was.owesText, now.owesText),
       FieldChange("To amount", was.toAmount.abs.formatText, now.toAmount.abs.formatText),
-      FieldChange("Brand", was.brand.map(_.name).getOrElse(""), now.brand.map(_.name).getOrElse("")),
+      FieldChange("Brand", was.brand.map(_.code).getOrElse(""), now.brand.map(_.code).getOrElse("")),
       FieldChange("Reference", was.reference.getOrElse(""), now.reference.getOrElse("")),
       FieldChange("Reference date", was.referenceDate.format, now.referenceDate.format),
       FieldChange("Transaction type", was.transactionType.map(_.name).getOrElse(""), now.transactionType.map(_.name).getOrElse("")),
