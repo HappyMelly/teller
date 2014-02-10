@@ -47,7 +47,7 @@
        <label for="facebookUrl">Facebook profile</label>
        <div class="input-append">
          <input type="text" id="facebookUrl" class="input-xxlarge" name="profile.facebookUrl" value="@personForm("profile.facebookUrl").value.getOrElse("")" placeholder="http://www.facebook.com/my.profile">
-         <button class="btn-success photo-button" id="facebook">Use profile photo</button>
+         <button class="btn-success photo-button" id="facebook">Get Facebook Photo</button>
        </div>
        <span class="help-inline">
           @if(personForm("profile.facebookUrl").hasErrors) {

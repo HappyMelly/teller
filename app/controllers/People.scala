@@ -47,8 +47,7 @@ object People extends Controller with Security {
         socialId match {
           case "facebook" ⇒
             data.get("profile.facebookUrl").map { url ⇒
-              val pattern = new Regex("\\w+$")
-              (pattern findFirstIn url).map { userId ⇒
+              ("""[\w\.]+$""".r findFirstIn url).map { userId ⇒
                 Right(Photo(Some(socialId), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
               }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
             }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))

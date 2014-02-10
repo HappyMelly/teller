@@ -33,7 +33,7 @@ PhotoButton.prototype.active = function() {
 
 PhotoButton.prototype.deactivate = function() {
     if (this.state) {
-        $('#' + this.name).removeClass('btn-danger').addClass('btn-success').text('Use profile photo');
+        $('#' + this.name).removeClass('btn-danger').addClass('btn-success').text('Get Facebook Photo');
         $('#photo').val('');
     }
     this.state = false;
@@ -42,7 +42,7 @@ PhotoButton.prototype.deactivate = function() {
 
 PhotoButton.prototype.activate = function() {
     this.state = true;
-    $('#' + this.name).addClass('btn-danger').removeClass('btn-success').text("Don't use profile photo");
+    $('#' + this.name).addClass('btn-danger').removeClass('btn-success').text('Remove Facebook Photo');
     $('#photo').val(this.name);
 }
 
