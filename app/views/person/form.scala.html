@@ -16,7 +16,7 @@
       </div>
     }
 
-		@helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
+	  @helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
       @helper.inputText(personForm("firstName"), '_label -> "First name")
       @helper.inputText(personForm("lastName"), '_label -> "Last name")
       @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
@@ -29,6 +29,7 @@
       @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
       @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
 
+      <input type="hidden" value="@personForm("photo").value.getOrElse("")" id="photo" name="photo"/>
       <div class="control-group @if(personForm("profile.twitterHandle").hasErrors) {error}" id="twitterHandle">
         <label for="twitterHandle">Twitter user name</label>
         <div class="input-prepend">
@@ -42,7 +43,18 @@
         </span>
       </div>
 
-      @helper.inputText(personForm("profile.facebookUrl"), '_label -> "Facebook profile", 'class -> "input-xxlarge", 'placeholder -> "http://www.facebook.com/my.profile")
+       <div class="control-group @if(personForm("profile.facebookUrl").hasErrors) {error}" id="facebookUrl">
+       <label for="facebookUrl">Facebook profile</label>
+       <div class="input-append">
+         <input type="text" id="facebookUrl" class="input-xxlarge" name="profile.facebookUrl" value="@personForm("profile.facebookUrl").value.getOrElse("")" placeholder="http://www.facebook.com/my.profile">
+         <button class="btn-success photo-button" id="facebook">Get Facebook Photo</button>
+       </div>
+       <span class="help-inline">
+          @if(personForm("profile.facebookUrl").hasErrors) {
+            @personForm("profile.facebookUrl").errors.map(error => Messages(error.message)).mkString(", ")
+          }
+       </span>
+       </div>
       @helper.inputText(personForm("profile.linkedInUrl"), '_label -> "LinkedIn public profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
       @helper.inputText(personForm("profile.googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")
 
@@ -68,4 +80,5 @@
       <button class="btn btn-primary" type="submit">Save</button>
     }
   }
+  <script src="@routes.Assets.at("person/form.js")" type="text/javascript"></script>
 }

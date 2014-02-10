@@ -37,6 +37,7 @@ object PeopleApi extends Controller with ApiAuthentication {
         "href" -> routes.PeopleApi.person(person.id.get).url,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
+        "photo" -> person.photo.url,
         "country" -> person.address.countryCode)
     }
   }
@@ -70,6 +71,7 @@ object PeopleApi extends Controller with ApiAuthentication {
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "email_address" -> person.emailAddress,
+        "photo" -> person.photo.url,
         "address" -> person.address,
         "stakeholder" -> person.stakeholder,
         "board_member" -> person.boardMember,
