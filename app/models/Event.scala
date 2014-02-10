@@ -31,7 +31,7 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import models.database.{ EventFacilitators, Events }
 
-case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int)
+case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
   webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
@@ -64,8 +64,6 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  lazy val totalHours: Int = (new Duration(schedule.start.toDateTimeAtCurrentTime.getMillis, schedule.end.toDateTimeAtCurrentTime.getMillis).getStandardDays.toInt + 1) * schedule.hoursPerDay
-
   def isEditable(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
     UserRole.forName(account.role).editor || facilitatorIds.exists(_ == account.personId) || Brand.find(brandCode).get.coordinator.id.get == account.personId
   }
@@ -80,7 +78,7 @@ case class Event(
 
   def update: Event = DB.withSession { implicit session: Session ⇒
     val updateTuple = (brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
-      details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay,
+      details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
       details.webSite, details.registrationPage, notPublic, archived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)

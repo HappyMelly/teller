@@ -29,7 +29,10 @@ function User(data) {
 }
 
 User.prototype.isFacilitator = function(userId) {
-    return !this.coordinator && this.id == userId;
+    return this.id == userId;
+}
+User.prototype.isCoordinator = function() {
+    return this.coordinator;
 }
 
 function showError(message) {
@@ -78,6 +81,22 @@ $(document).ready( function() {
             });
     }
 
+    /**
+     * Automatically set an end date to a start date + 1 day
+     * @param dateString String
+     * @param locator String
+     */
+    function updateEndDate(dateString, locator) {
+        try {
+            var start = new Date(dateString);
+            var dayInMilliseconds = 24 * 3600 * 1000;
+            var endDate = new Date(start.getTime() + dayInMilliseconds);
+            $(locator).val(endDate.toISOString().split('T')[0]);
+        } catch (RangeError) {
+            // empty body
+        }
+    }
+
     var facilitators = {
         retrieved: [],
         chosen: [],
@@ -116,9 +135,9 @@ $(document).ready( function() {
                     $("<input readonly type='text'>")
                         .attr("value", user.name)
                 );
-                if (!user.isFacilitator(this.userId)) {
+                if (!user.isFacilitator(this.userId) || user.isCoordinator()) {
                     div.append(
-                        $("<button class='btn btn-mini btn-link deselect'>Remove</button>")
+                        $("<a href='#' class='btn btn-mini btn-link deselect'>Remove</a>")
                     );
                 }
                 $('#chosenFacilitators').append(div);
@@ -162,5 +181,18 @@ $(document).ready( function() {
         facilitators.deselect(id);
     });
     facilitators.initialize($('#brandCode').find(':selected').val());
+    // turn it on only for a new event
+    if ($("form").attr("action").indexOf('events') != -1) {
+        // clean default values here because it's too difficult to implement it on the server side
+        // they'll also be cleaned on duplication but it's not a big deal as the dates are different in most cases
+        $("#schedule_start").val('');
+        $("#schedule_end").val('');
+        $("#schedule_start").on('input', function() {
+            updateEndDate($(this).val(), "#schedule_end");
+        });
+        $('#schedule_end').on('input', function() {
+           $('#schedule_start').unbind('input');
+        });
+    }
 });
 
