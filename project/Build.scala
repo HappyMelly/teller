@@ -41,5 +41,8 @@ object ApplicationBuild extends Build {
       setPreference(SpacesWithinPatternBinders, false).
       setPreference(RewriteArrowSymbols, true).
       setPreference(PreserveSpaceBeforeArguments, true)
-  )
+  // Avoid building Scaladocs and sources to reduce build time.
+  ).settings(sources in (Compile,doc) := Seq.empty
+  ).settings(publishArtifact in (Compile, packageDoc) := false
+  ).settings(publishArtifact in (Compile, packageSrc) := false)
 }
