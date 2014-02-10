@@ -73,7 +73,7 @@ object UserAccount {
    * Returns the account for the person who has a duplicate social network identity, if there is one.
    */
   def findDuplicateIdentity(person: Person): Option[UserAccount] = DB.withSession { implicit session: Session ⇒
-    val query = Query(UserAccounts).filter { account ⇒
+    val query = Query(UserAccounts).filter(_.personId =!= person.id).filter { account ⇒
       account.twitterHandle.toLowerCase === person.twitterHandle.map(_.toLowerCase) ||
         account.googlePlusUrl === person.googlePlusUrl ||
         (account.facebookUrl like "https?".r.replaceFirstIn(person.facebookUrl.getOrElse(""), "%")) ||
