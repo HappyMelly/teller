@@ -76,7 +76,9 @@ case class BookingEntry(
 
   lazy val brand = brandId.flatMap(Brand.find(_))
 
-  lazy val owes = source.isPositiveOrZero
+  val owes = source.isPositiveOrZero
+
+  val owesText = if (owes) "owes" else "owed by"
 
   lazy val transactionType = transactionTypeId.flatMap(TransactionType.find)
 
@@ -159,6 +161,36 @@ case class BookingEntrySummary(
 object BookingEntry {
 
   val DefaultSourcePercentage = 100
+
+  /**
+   * A string representation of a change to a field value.
+   */
+  case class FieldChange(label: String, oldValue: String, newValue: String) {
+    override def toString = s"$label: $newValue (was: $oldValue)"
+  }
+
+  /**
+   * Compares two booking entires and returns a list of changes.
+   * @param was The booking entry with ‘old’ values.
+   * @param now The booking entry with ‘new’ values.
+   */
+  def compare(was: BookingEntry, now: BookingEntry): List[FieldChange] = {
+    import templates.Formatters._
+    val changes = List(
+      FieldChange("Summary", was.summary, now.summary),
+      FieldChange("Source amount", was.source.abs.formatText, now.source.abs.formatText),
+      FieldChange("Source percentage", was.sourcePercentage.toString, now.sourcePercentage.toString),
+      FieldChange("From amount", was.fromAmount.abs.formatText, now.fromAmount.abs.formatText),
+      FieldChange("Transaction direction", was.owesText, now.owesText),
+      FieldChange("To amount", was.toAmount.abs.formatText, now.toAmount.abs.formatText),
+      FieldChange("Brand", was.brand.map(_.name).getOrElse(""), now.brand.map(_.name).getOrElse("")),
+      FieldChange("Reference", was.reference.getOrElse(""), now.reference.getOrElse("")),
+      FieldChange("Reference date", was.referenceDate.format, now.referenceDate.format),
+      FieldChange("Transaction type", was.transactionType.map(_.name).getOrElse(""), now.transactionType.map(_.name).getOrElse("")),
+      FieldChange("Attachment", was.attachmentFilename.getOrElse(""), now.attachmentFilename.getOrElse("")))
+
+    changes.filter(change ⇒ change.oldValue != change.newValue)
+  }
 
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), DefaultSourcePercentage,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), None, None, LocalDate.now)
