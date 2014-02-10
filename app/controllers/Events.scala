@@ -86,7 +86,7 @@ object Events extends Controller with Security {
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
-      "end" -> jodaLocalDate, /* of(dateRangeFormatter), */
+      "end" -> jodaLocalDate,
       "hoursPerDay" -> number(1, 24, true),
       "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "details" -> mapping(

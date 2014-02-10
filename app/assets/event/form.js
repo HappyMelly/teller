@@ -137,7 +137,7 @@ $(document).ready( function() {
                 );
                 if (!user.isFacilitator(this.userId) || user.isCoordinator()) {
                     div.append(
-                        $("<button class='btn btn-mini btn-link deselect'>Remove</button>")
+                        $("<a href='#' class='btn btn-mini btn-link deselect'>Remove</a>")
                     );
                 }
                 $('#chosenFacilitators').append(div);
@@ -189,6 +189,9 @@ $(document).ready( function() {
         $("#schedule_end").val('');
         $("#schedule_start").on('input', function() {
             updateEndDate($(this).val(), "#schedule_end");
+        });
+        $('#schedule_end').on('input', function() {
+           $('#schedule_start').unbind('input');
         });
     }
 });
