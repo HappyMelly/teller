@@ -27,7 +27,7 @@ package services
 import LoginIdentityService._
 import models.LoginIdentity
 import play.api.{ Logger, Application }
-import play.api.libs.ws.WS
+import play.api.libs.ws.{ Response, WS }
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
 import securesocial.core._
@@ -76,9 +76,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       val facebookId = identity.identityId.userId
       val url = FacebookProfile format (facebookId, oAuth2Info.accessToken)
       val call = WS.url(url).get()
+      Logger.debug(s"GET $url")
 
       try {
-        Await.result(call.map(response ⇒ (response.json \ Link).as[String]), IdentityProvider.secondsToWait)
+        val parseResponse = (response: Response) ⇒ {
+          Logger.debug(s"${response.status} ${response.statusText}\n${response.json}")
+          (response.json \ Link).as[String]
+        }
+        Await.result(call.map(parseResponse), IdentityProvider.secondsToWait)
       } catch {
         case e: Exception ⇒ {
           Logger.error("Error retrieving Facebook profile information", e)
@@ -100,9 +105,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       val googleId = identity.identityId.userId
       val url = GoogleProfile format (googleId)
       val call = WS.url(url).withHeaders("Authorization" -> "Bearer %s".format(oAuth2Info.accessToken)).get()
+      Logger.debug(s"GET $url")
 
       try {
-        Await.result(call.map(response ⇒ (response.json \ URL).as[String]), IdentityProvider.secondsToWait)
+        val parseResponse = (response: Response) ⇒ {
+          Logger.debug(s"${response.status} ${response.statusText}\n${response.json}")
+          (response.json \ URL).as[String]
+        }
+        Await.result(call.map(parseResponse), IdentityProvider.secondsToWait)
       } catch {
         case e: Exception ⇒ {
           Logger.error("Error retrieving Google profile information", e)
@@ -124,9 +134,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
     val info = identity.oAuth1Info.get
     val calculator = OAuthCalculator(SecureSocial.serviceInfoFor(identity).get.key, RequestToken(info.token, info.secret))
     val call = WS.url(LinkedInProfile).sign(calculator).get()
+    Logger.debug(s"GET $LinkedInProfile")
 
     try {
-      Await.result(call.map(response ⇒ (response.xml \ PublicProfileUrl).text), IdentityProvider.secondsToWait)
+      val parseResponse = (response: Response) ⇒ {
+        Logger.debug(s"${response.status} ${response.statusText}\n${response.xml}")
+        (response.xml \ PublicProfileUrl).text
+      }
+      Await.result(call.map(parseResponse), IdentityProvider.secondsToWait)
     } catch {
       case e: Exception ⇒ {
         Logger.error("Error retrieving LinkedIn profile information", e)
@@ -143,9 +158,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
     val info = identity.oAuth1Info.get
     val calculator = OAuthCalculator(SecureSocial.serviceInfoFor(identity).get.key, RequestToken(info.token, info.secret))
     val call = WS.url(TwitterSettings).sign(calculator).get()
+    Logger.debug(s"GET $TwitterSettings")
 
     try {
-      Await.result(call.map(response ⇒ (response.json \ ScreenName).as[String]), IdentityProvider.secondsToWait)
+      val parseResponse = (response: Response) ⇒ {
+        Logger.debug(s"${response.status} ${response.statusText}\n${response.json}")
+        (response.json \ ScreenName).as[String]
+      }
+      Await.result(call.map(parseResponse), IdentityProvider.secondsToWait)
     } catch {
       case e: Exception ⇒ {
         Logger.error("Error retrieving Twitter profile information", e)
