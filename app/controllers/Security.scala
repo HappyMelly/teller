@@ -102,7 +102,7 @@ trait Security extends SecureSocial with DeadboltActions {
 }
 
 /**
- * A security handler to check if a user is allowed to work with the specific events.
+ * A security handler to check if a user is allowed to work with the specific objects.
  *
  * The system supports three roles - Viewer, Editor and Admin. The event module has its specific roles - Facilitator
  *  and Brand Coordinator.
@@ -110,22 +110,32 @@ trait Security extends SecureSocial with DeadboltActions {
  *  A Brand Coordinator is able to create events for his/her own brand even if he/she is a Viewer.
  *  A Facilitator is able to create events for any brand he/she has active content licenses even if he/she is a Viewer.
  */
-class FacilitatorResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
+class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    if (name == "event" && account.isDefined)
-      meta match {
-        case "add" ⇒ account.get.isFacilitator || UserRole.forName(account.get.role).editor
-        case "edit" ⇒
-          val pattern = new Regex("\\d+")
-          val eventId = pattern findFirstIn request.uri
-          // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
-          //   edit it
-          UserRole.forName(account.get.role).editor || Event.find(eventId.get.toLong).map { _.isEditable(account.get) }.getOrElse(false)
-        case _ ⇒ true
+    account.map { existingAccount ⇒
+      name match {
+        case "event" ⇒
+          meta match {
+            case "add" ⇒ existingAccount.isFacilitator || UserRole.forName(existingAccount.role).editor
+            case "edit" ⇒
+              val eventId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
+              //   edit it
+              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.isEditable(existingAccount))
+            case _ ⇒ true
+          }
+        case "person" ⇒
+          meta match {
+            case "edit" ⇒
+              val personId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role or it should be her own profile
+              UserRole.forName(existingAccount.role).editor || personId.get.toLong == existingAccount.personId
+            case _ ⇒ true
+          }
+        case _ ⇒ false
       }
-    else
-      false
+    }.getOrElse(false)
   }
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {

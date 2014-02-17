@@ -31,7 +31,7 @@
             <img width="64" src="@photo"/>
         }
         @person.fullName
-      @restrict(handler, List(as(Editor.toString))) {
+        @dynamic(handler, "person", "edit") {
         <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>

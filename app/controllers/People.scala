@@ -245,7 +245,7 @@ object People extends Controller with Security {
    * Edit page.
    * @param id Person ID
    */
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       Person.find(id).map { person ⇒
@@ -257,7 +257,7 @@ object People extends Controller with Security {
    * Edit form submits to this action.
    * @param id Person ID
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       personForm(request).bindFromRequest.fold(

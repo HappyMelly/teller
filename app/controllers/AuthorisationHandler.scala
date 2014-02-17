@@ -41,7 +41,7 @@ class AuthorisationHandler(account: Option[UserAccount]) extends DeadboltHandler
 
   def beforeAuthCheck[A](request: Request[A]) = None
 
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = Some(new FacilitatorResourceHandler(account))
+  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = Some(new TellerResourceHandler(account))
 
   def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
     Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
