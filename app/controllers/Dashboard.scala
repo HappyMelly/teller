@@ -52,4 +52,13 @@ object Dashboard extends Controller with SecureSocial {
     Ok(views.html.dashboard(request.user, activity))
   }
 
+  /**
+   * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
+   * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
+   */
+  def profile = SecuredAction { implicit request ⇒
+    val currentUser = request.user.asInstanceOf[LoginIdentity].person
+    Redirect(routes.People.details(currentUser.id.getOrElse(0)))
+  }
+
 }
