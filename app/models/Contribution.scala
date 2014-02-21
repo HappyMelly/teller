@@ -72,6 +72,9 @@ object Contribution {
     }
   }
 
+  /**
+   * Returns a list of contributors for the given product
+   */
   def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session: Session ⇒
     val peopleQuery = for {
       contribution ← Contributions if contribution.productId === productId && contribution.isPerson === true

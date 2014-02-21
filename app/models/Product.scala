@@ -65,6 +65,8 @@ case class Product(
     query.sortBy(_.name.toLowerCase).list
   }
 
+  def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
+
   /**
    * Assign this product to a brand
    */
