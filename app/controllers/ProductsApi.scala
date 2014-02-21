@@ -42,6 +42,8 @@ object ProductsApi extends Controller with ApiAuthentication {
     }
   }
 
+  import ContributionsApi.contributorWrites
+
   val productDetailsWrites = new Writes[Product] {
     def writes(product: Product): JsValue = {
       Json.obj(
@@ -49,7 +51,8 @@ object ProductsApi extends Controller with ApiAuthentication {
         "subtitle" -> product.subtitle,
         "url" -> product.url,
         "category" -> product.category.map(_.toString).orNull,
-        "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url))
+        "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),
+        "contributors" -> product.contributors)
     }
   }
 

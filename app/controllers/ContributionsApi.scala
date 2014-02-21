@@ -26,7 +26,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.ContributionView
+import models.{ ContributorView, ContributionView }
 
 object ContributionsApi extends Controller with ApiAuthentication {
 
@@ -38,4 +38,10 @@ object ContributionsApi extends Controller with ApiAuthentication {
       "role" -> contribution.contribution.role)
   }
 
+  implicit val contributorWrites = new Writes[ContributorView] {
+    def writes(contributor: ContributorView) = Json.obj(
+      "name" -> contributor.name,
+      "href" -> routes.PeopleApi.person(contributor.id).url,
+      "role" -> contributor.contribution.role)
+  }
 }
