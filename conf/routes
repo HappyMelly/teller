@@ -50,6 +50,9 @@ GET  /event/:id              controllers.Events.details(id: Long)
 POST /event/:id              controllers.Events.update(id: Long)
 POST /event/:id/delete       controllers.Events.delete(id: Long)
 
+POST /eventtype/new         controllers.EventTypes.create
+GET  /eventtype/:id/delete  controllers.EventTypes.delete(id: Long)
+
 GET /exchangerate               controllers.ExchangeRates.rate
 GET /exchangerate/:target/:amount controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
 GET /exchangerates/:base        controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])

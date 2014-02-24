@@ -63,12 +63,12 @@
       }
       @event.details.description.map { desc =>
       <p>
-          <strong>Short description</strong><br/>@desc
+          <strong>Short description</strong><br/>@desc.markdown
       </p>
       }
       @event.details.specialAttention.map { attention =>
       <p>
-          <strong>Special attention</strong><br/>@attention
+          <strong>Special attention</strong><br/>@attention.markdown
       </p>
       }
       @event.details.webSite.map { url =>
@@ -88,9 +88,7 @@
     }
     <h3>Where</h3>
     <address>
-      @event.location.city,
-      <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png" align="baseline">
-        @Messages("country." + event.location.countryCode)
+      <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png" align="baseline"> @event.location.city
     </address>
     <h3>When</h3>
     <p>

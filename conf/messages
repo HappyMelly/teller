@@ -63,6 +63,8 @@ activity.relationship.create = {0} to {1}
 activity.relationship.delete = {0} from {1}
 activity.contribution.create = new contributor ({1}) to {0}
 activity.contribution.delete = a contributor ({1}) from {0}
+activity.eventType.create = new event type ({1}) to {0}
+activity.eventType.delete = an event type ({1}) from {0}
 activity.balance = {0} balanced {1} accounts
 
 # Controller error messages

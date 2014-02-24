@@ -85,8 +85,8 @@
                     </span>
                 </div>
             }
-            @helper.textarea(form("details.description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge")
-            @helper.textarea(form("details.specialAttention"), '_label -> "Special attention", 'cols -> 50, 'class -> "input-xxlarge")
+            @helper.textarea(form("details.description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
+            @helper.textarea(form("details.specialAttention"), '_label -> "Special attention", 'cols -> 50, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
             @if(form.error("facilitatorIds").isDefined) {
             <div id="facilitatorIds_field" class="control-group error">
             } else {

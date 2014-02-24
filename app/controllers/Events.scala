@@ -76,6 +76,7 @@ object Events extends Controller with Security {
    */
   def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
+    "eventTypeId" -> longNumber(min = 1),
     "brandCode" -> nonEmptyText.verifying(
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText,
@@ -111,7 +112,7 @@ object Events extends Controller with Security {
 
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
-      val default = Event(None, "", "", "", Some("English"), Location("", ""), defaultSchedule, defaultDetails, false, false, DateTime.now(), "", DateTime.now(), "", List[Long]())
+      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultSchedule, defaultDetails, false, false, DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm.fill(default)))
