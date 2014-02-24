@@ -29,6 +29,8 @@ import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
+import play.api.libs.Crypto
+import scala.util.Random
 
 /**
  * Category classifications that a product has zero or one of.
@@ -47,6 +49,7 @@ case class Product(
   title: String,
   subtitle: Option[String],
   url: Option[String],
+  picture: Option[String],
   category: Option[ProductCategory.Value],
   parentId: Option[Long],
   created: DateTime,
@@ -89,7 +92,7 @@ case class Product(
   def delete(): Unit = Product.delete(this.id.get)
 
   def update: Product = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (title, subtitle, url, category, parentId, updated, updatedBy)
+    val updateTuple = (title, subtitle, url, picture, category, parentId, updated, updatedBy)
     val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
@@ -97,6 +100,12 @@ case class Product(
 }
 
 object Product {
+
+  def imagePath(filename: String): String = s"images/products/$filename"
+
+  def filePath(filename: String): String = "public/" + imagePath(filename)
+
+  def generateImageName(filename: String): String = Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
 
   def exists(title: String): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(Products).filter(_.title === title).exists).first

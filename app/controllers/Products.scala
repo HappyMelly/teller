@@ -36,6 +36,7 @@ import securesocial.core.SecuredRequest
 import scala.Some
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
+import java.io.File
 
 object Products extends Controller with Security {
 
@@ -63,6 +64,7 @@ object Products extends Controller with Security {
     "title" -> nonEmptyText,
     "subtitle" -> optional(text),
     "url" -> optional(text),
+    "picture" -> optional(text),
     "category" -> optional(categoryMapping),
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
     "created" -> ignored(DateTime.now),
@@ -96,8 +98,12 @@ object Products extends Controller with Security {
             BadRequest(views.html.product.form(request.user, None, None,
               boundForm.withError("title", "constraint.product.title.exists", product.title)))
           else {
-            val savedProduct = product.insert
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedProduct.title)
+            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+              val filename = Product.generateImageName(picture.filename)
+              picture.ref.moveTo(new File(Product.filePath(filename)))
+              product.copy(picture = Some(filename)).insert
+            }.getOrElse(product.insert)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
             Redirect(routes.Products.index()).flashing("success" -> activity.toString)
           }
         })
@@ -181,6 +187,24 @@ object Products extends Controller with Security {
 
   }
 
+  /** Delete picture form submits to this action **/
+  def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+
+      Product.find(id).map {
+        product ⇒
+          {
+            product.picture.map { picture ⇒
+              (new File(Product.filePath(picture))).delete
+            }
+            product.copy(picture = None).update
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
+            Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
+          }
+      }.getOrElse(NotFound)
+
+  }
+
   /** Edit page **/
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -197,7 +221,8 @@ object Products extends Controller with Security {
     implicit handler ⇒
 
       val boundForm: Form[Product] = productForm.bindFromRequest
-      val productTitle = Some(Product.find(id).get.title)
+      val oldProduct = Product.find(id).get
+      val productTitle = Some(oldProduct.title)
       boundForm.fold(
         formWithErrors ⇒ {
           BadRequest (views.html.product.form(request.user, Some(id), productTitle, boundForm))
@@ -207,7 +232,14 @@ object Products extends Controller with Security {
             BadRequest(views.html.product.form(request.user, Some(id), productTitle,
               boundForm.withError("title", "constraint.product.title.exists", product.title)))
           else {
-            product.copy(id = Some(id)).update
+            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+              val filename = Product.generateImageName(picture.filename)
+              picture.ref.moveTo(new File(Product.filePath(filename)))
+              product.copy(id = Some(id)).copy(picture = Some(filename)).update
+              oldProduct.picture.map { oldPicture ⇒
+                (new File(Product.filePath(oldPicture))).delete
+              }
+            }.getOrElse(product.copy(id = Some(id)).update)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
             Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
           }

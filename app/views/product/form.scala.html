@@ -18,10 +18,11 @@
           </div>
         }
 
-        @helper.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create()))) {
+        @helper.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create())), 'enctype -> "multipart/form-data") {
             @helper.inputText(form("title"), '_label -> "Title")
             @helper.inputText(form("subtitle"), '_label -> "Subtitle")
             @helper.inputText(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
+            @helper.inputFile(form("picture"), '_label -> "Picture")
             @helper.select(
               form("category"),
               ("", "None") +: models.ProductCategory.values.map(value => value.toString -> Messages(s"models.ProductCategory.${value.

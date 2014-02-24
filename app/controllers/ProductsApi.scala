@@ -38,6 +38,7 @@ object ProductsApi extends Controller with ApiAuthentication {
       Json.obj(
         "href" -> product.id.map(productId ⇒ routes.ProductsApi.product(productId).url),
         "title" -> product.title,
+        "image" -> product.picture.map(picture ⇒ routes.Assets.at(Product.imagePath(picture)).url),
         "category" -> product.category.map(_.toString).orNull)
     }
   }
@@ -50,6 +51,7 @@ object ProductsApi extends Controller with ApiAuthentication {
         "title" -> product.title,
         "subtitle" -> product.subtitle,
         "url" -> product.url,
+        "image" -> product.picture.map(picture ⇒ routes.Assets.at(Product.imagePath(picture)).url),
         "category" -> product.category.map(_.toString).orNull,
         "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),
         "contributors" -> product.contributors)
