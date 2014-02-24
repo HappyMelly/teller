@@ -33,12 +33,8 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import org.joda.time.{ LocalDate, DateTime }
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import scala.Some
 import play.api.data.format.Formatter
-import play.Logger
 import models.Location
-import securesocial.core.SecuredRequest
 import models.Schedule
 import scala.Some
 
@@ -62,11 +58,42 @@ object Events extends Controller with Security {
         }
       } catch {
         // The list is empty because we've already handled a date parse error inside the form (jodaLocalDate formatter)
-        case e: IllegalArgumentException ⇒ return Left(List())
+        case e: IllegalArgumentException ⇒ Left(List())
       }
     }
 
     override def unbind(key: String, value: LocalDate): Map[String, String] = {
+      Map(key -> value.toString)
+    }
+  }
+
+  val eventTypeFormatter = new Formatter[Long] {
+
+    def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
+      // "data" lets you access all form data values
+      try {
+        val eventTypeId = data.get("eventTypeId").get.toLong
+        try {
+          val brandCode = data.get("brandCode").get
+          if (EventType.exists(eventTypeId)) {
+            val event = EventType.find(eventTypeId).get
+            if (event.brand.code == brandCode) {
+              Right(eventTypeId)
+            } else {
+              Left(List(FormError("eventTypeId", "Selected event type doesn't belong to a selected brand")))
+            }
+          } else {
+            Left(List(FormError("eventTypeId", "Unknown event type")))
+          }
+        } catch {
+          case e: IllegalArgumentException ⇒ Left(List(FormError("brandCode", "Select a brand")))
+        }
+      } catch {
+        case e: IllegalArgumentException ⇒ Left(List(FormError("eventTypeId", "Select an event type")))
+      }
+    }
+
+    def unbind(key: String, value: Long): Map[String, String] = {
       Map(key -> value.toString)
     }
   }
@@ -76,7 +103,7 @@ object Events extends Controller with Security {
    */
   def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "eventTypeId" -> longNumber(min = 1),
+    "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText,
@@ -87,7 +114,7 @@ object Events extends Controller with Security {
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
-      "end" -> jodaLocalDate,
+      "end" -> of(dateRangeFormatter),
       "hoursPerDay" -> number(1, 24, true),
       "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "details" -> mapping(
@@ -102,7 +129,7 @@ object Events extends Controller with Security {
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(request.user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "An event should have at least one facilitator", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
+      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
 
   /**
    * Create page.
@@ -119,7 +146,9 @@ object Events extends Controller with Security {
   }
 
   /**
-   * Duplicate page.
+   * Duplicate an event
+   * @param id Event Id
+   * @return
    */
   def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
@@ -163,7 +192,7 @@ object Events extends Controller with Security {
   }
 
   /**
-   * Deletes an event.
+   * Delete an event.
    * @param id Event ID
    */
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒

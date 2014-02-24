@@ -45,6 +45,13 @@ case class EventType(id: Option[Long], brandId: Long, name: String, defaultTitle
 object EventType {
 
   /**
+   * Checks if an event type with id exists
+   */
+  def exists(id: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    Query(Query(EventTypes).filter(_.id === id).exists).first
+  }
+
+  /**
    * Returns a list of all event types for the given brand.
    */
   def findByBrand(brandId: Long): List[EventType] = DB.withSession { implicit session: Session ⇒

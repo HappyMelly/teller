@@ -24,13 +24,14 @@
 
 package controllers
 
-import models.{ Brand, EventType, Activity }
+import models.{ Event, Brand, EventType, Activity }
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
+import play.api.libs.json.{ JsValue, Writes, Json }
 
 object EventTypes extends Controller with Security {
 
@@ -41,7 +42,26 @@ object EventTypes extends Controller with Security {
     "name" -> nonEmptyText,
     "defaultTitle" -> optional(text))(EventType.apply)(EventType.unapply))
 
-  /** Create an event type **/
+  implicit val eventTypeWrites = new Writes[EventType] {
+    def writes(data: EventType): JsValue = {
+      Json.obj(
+        "name" -> data.name,
+        "defaultTitle" -> data.defaultTitle,
+        "id" -> data.id.get)
+    }
+  }
+
+  /**
+   * Returns a list of event types for the given brand
+   */
+  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(brandCode).map { brand ⇒
+        Ok(Json.toJson(EventType.findByBrand(brand.brand.id.get)))
+      }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  /** Creates an event type **/
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
@@ -57,16 +77,20 @@ object EventTypes extends Controller with Security {
         })
   }
 
-  /** Delete an event type **/
+  /** Deletes an event type **/
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
-        EventType.delete(id)
-        val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-        Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+        if (Event.getNumberByEventType(eventType.id.get) > 0) {
+          Redirect(routes.Brands.details(brand.code)).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
+        } else {
+          EventType.delete(id)
+          val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+        }
       }.getOrElse(NotFound)
   }
 

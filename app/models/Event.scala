@@ -100,7 +100,16 @@ object Event {
   }
 
   /**
-   * Deletes an event.
+   * Return a number of events with a specified event type
+   * @param eventTypeId Event type id
+   * @return Int
+   */
+  def getNumberByEventType(eventTypeId: Long): Int = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.eventTypeId === eventTypeId).list.length
+  }
+
+  /**
+   * Delete an event.
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === id).mutate(_.delete())

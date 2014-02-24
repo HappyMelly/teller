@@ -31,7 +31,7 @@
 
         @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
             <div id="currentUserId" value="@currentUserId"></div>
-            @defining(form("brandCode").hasErrors || form("title").hasErrors) { hasErrors =>
+            @defining(form("brandCode").hasErrors || form("eventTypeId").hasErrors) { hasErrors =>
                 <div class="controls-row control-group @if(hasErrors) {error}">
                     @defining(form("brandCode")) { field =>
                     <label for="@field.id">Brand & Title</label>
@@ -41,16 +41,22 @@
                         }
                     </select>
                     }
-                    <input id="title" class="input-xxlarge" name="title" placeholder="Title" type="text" value="@form("title").value">
+                    @defining(form("eventTypeId")) { field =>
+                    <select name="@field.name" id="@field.id" value="@field.value">
+                        <option value="">Choose an event type</option>
+                    </select>
+                    }
                     <span class="help-inline">
                         @if(hasErrors) {
-                          @fieldErrors(form("brandCode"), form("title"))
+                          @fieldErrors(form("brandCode"), form("eventTypeId"))
                         } else {
                           Required
                         }
                     </span>
                 </div>
             }
+            @helper.inputText(form("title"), '_label -> "", '_placeholder -> "Title", 'class -> "input-xxlarge")
+
             <div class="controls-row control-group @if(form("spokenLanguage").hasErrors) {error}">
                 <label for="spokenLanguage">Spoken & Materials Languages</label>
                 <input id="spokenLanguage" class="input-large" name="spokenLanguage" placeholder="Spoken Language" type="text" value="@form("spokenLanguage").value">
