@@ -63,6 +63,8 @@ activity.relationship.create = {0} to {1}
 activity.relationship.delete = {0} from {1}
 activity.contribution.create = new contributor ({1}) to {0}
 activity.contribution.delete = a contributor ({1}) from {0}
+activity.eventType.create = new event type ({1}) to {0}
+activity.eventType.delete = an event type ({1}) from {0}
 activity.balance = {0} balanced {1} accounts
 
 # Controller error messages
@@ -75,6 +77,9 @@ error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
 error.brand.invalid = You are not allowed to create events for this brand
+error.event.nofacilitators = An event should have at least one facilitator
+error.event.wrongFacilitators = Some facilitators do not have valid licenses
+error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
 error.retry = {0}. Please try again.
 
 # Play form validation error overrides

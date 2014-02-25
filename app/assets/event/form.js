@@ -43,6 +43,59 @@ function showError(message) {
     );
 }
 
+/**
+ * Retrieve a list of event types for the brand
+ * @param brandCode String
+ */
+function getEventTypes(brandCode) {
+    $.ajax({
+        url: '/eventtypes/' + brandCode,
+        dataType: "json"
+    }).done(function(data) {
+            var selector = "#eventTypeId";
+            var value = parseInt($(selector).attr('value'));
+            $(selector)
+                .empty()
+                .append($("<option></option>").attr("value", 0).text("Choose an event type"));
+            for(var i = 0; i < data.length; i++) {
+                var option = $("<option></option>")
+                    .attr("value", data[i].id)
+                    .attr("defaultTitle", data[i].defaultTitle)
+                    .text(data[i].name);
+                if (value == data[i].id) {
+                    option.attr('selected', 'selected');
+                }
+                $(selector).append(option);
+            }
+        }).fail(function() {
+            showError("Sorry we don't know anything about the brand you try to request")
+        });
+}
+
+/**
+ * Update 'Title' field
+ * @param title String
+ */
+function updateTitle(title) {
+    $("#title").val(title);
+}
+
+/**
+ * Automatically set an end date to a start date + 1 day
+ * @param dateString String
+ * @param locator String
+ */
+function updateEndDate(dateString, locator) {
+    try {
+        var start = new Date(dateString);
+        var dayInMilliseconds = 24 * 3600 * 1000;
+        var endDate = new Date(start.getTime() + dayInMilliseconds);
+        $(locator).val(endDate.toISOString().split('T')[0]);
+    } catch (RangeError) {
+        // empty body
+    }
+}
+
 $(document).ready( function() {
 
     /**
@@ -79,22 +132,6 @@ $(document).ready( function() {
             }).fail(function() {
                 showError("Sorry we don't know anything about the brand you try to request")
             });
-    }
-
-    /**
-     * Automatically set an end date to a start date + 1 day
-     * @param dateString String
-     * @param locator String
-     */
-    function updateEndDate(dateString, locator) {
-        try {
-            var start = new Date(dateString);
-            var dayInMilliseconds = 24 * 3600 * 1000;
-            var endDate = new Date(start.getTime() + dayInMilliseconds);
-            $(locator).val(endDate.toISOString().split('T')[0]);
-        } catch (RangeError) {
-            // empty body
-        }
     }
 
     var facilitators = {
@@ -170,7 +207,9 @@ $(document).ready( function() {
 
     // Binds
     $("#brandCode").change(function() {
-        facilitators.retrieve($(this).find(':selected').val());
+        var code = $(this).find(':selected').val();
+        getEventTypes(code);
+        facilitators.retrieve(code);
     });
     $('#facilitatorIds').change(function() {
         facilitators.select($(this).find(':selected').val());
@@ -180,7 +219,9 @@ $(document).ready( function() {
         var id = $(this).parent('div').children('input').first().val();
         facilitators.deselect(id);
     });
-    facilitators.initialize($('#brandCode').find(':selected').val());
+    var code = $('#brandCode').find(':selected').val();
+    getEventTypes(code);
+    facilitators.initialize(code);
     // turn it on only for a new event
     if ($("form").attr("action").indexOf('events') != -1) {
         // clean default values here because it's too difficult to implement it on the server side
@@ -192,6 +233,16 @@ $(document).ready( function() {
         });
         $('#schedule_end').on('input', function() {
            $('#schedule_start').unbind('input');
+        });
+
+        $("#eventTypeId").change(function() {
+            var option = $(this).find(':selected');
+            if (option.attr('defaultTitle')) {
+                updateTitle(option.attr('defaultTitle'));
+            }
+        });
+        $("#title").on('keyup', function() {
+            $("#eventTypeId").unbind('change');
         });
     }
 });

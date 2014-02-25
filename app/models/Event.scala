@@ -41,6 +41,7 @@ case class Location(city: String, countryCode: String)
  */
 case class Event(
   id: Option[Long],
+  eventTypeId: Long,
   brandCode: String,
   title: String,
   spokenLanguage: String,
@@ -77,7 +78,7 @@ case class Event(
   def delete(): Unit = Event.delete(this.id.get)
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
+    val updateTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
       details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
       details.webSite, details.registrationPage, notPublic, archived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
@@ -99,7 +100,16 @@ object Event {
   }
 
   /**
-   * Deletes an event.
+   * Return a number of events with a specified event type
+   * @param eventTypeId Event type id
+   * @return Int
+   */
+  def getNumberByEventType(eventTypeId: Long): Int = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.eventTypeId === eventTypeId).list.length
+  }
+
+  /**
+   * Delete an event.
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === id).mutate(_.delete())

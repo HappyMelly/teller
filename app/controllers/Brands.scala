@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ BrandView, Activity, Brand }
+import models.{ EventType, BrandView, Activity, Brand }
 import org.joda.time._
 import play.api.mvc._
 import play.api.data.Form
@@ -47,6 +47,7 @@ object Brands extends Controller with Security {
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(request.user.fullName))(Brand.apply)(Brand.unapply))
 
+  /** Shows all brands **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
@@ -54,7 +55,6 @@ object Brands extends Controller with Security {
       Ok(views.html.brand.index(request.user, brands))
   }
 
-  /** Show all brands **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Ok(views.html.brand.form(request.user, None, brandsForm))
@@ -90,8 +90,10 @@ object Brands extends Controller with Security {
   def details(code: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Brand.find(code).map {
-        case BrandView(brand, coordinator, licenseIds) ⇒
-          Ok(views.html.brand.details(request.user, brand, coordinator))
+        case BrandView(brand, coordinator, licenseIds) ⇒ {
+          val eventTypes = EventType.findByBrand(brand.id.get)
+          Ok(views.html.brand.details(request.user, brand, coordinator, eventTypes))
+        }
       }.getOrElse(NotFound)
 
   }
