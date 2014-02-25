@@ -11,6 +11,10 @@ alter table EVENT_TYPE add constraint EVENT_BRAND_FK foreign key(BRAND_ID) refer
 
 alter table EVENT add column EVENT_TYPE_ID BIGINT NOT NULL after ID;
 
+insert into EVENT_TYPE (BRAND_ID, NAME, DEFAULT_TITLE) values
+  (1, 'Regular 2-Day course', 'Regular 2-Day Management 3.0 Course'),
+  (1, '1-Day Workshop', 'Exclusive 1-Day Book Tour Workshop');
+update EVENT set EVENT_TYPE_ID = 1;
 alter table EVENT add constraint EVENT_TYPE_FK foreign key(EVENT_TYPE_ID) references EVENT_TYPE(ID) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
