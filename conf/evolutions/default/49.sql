@@ -18,6 +18,7 @@ update EVENT set EVENT_TYPE_ID = 1;
 alter table EVENT add constraint EVENT_TYPE_FK foreign key(EVENT_TYPE_ID) references EVENT_TYPE(ID) on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
+alter table EVENT drop foreign key EVENT_TYPE_FK;
+alter table EVENT_TYPE drop foreign key EVENT_BRAND_FK;
 drop table EVENT_TYPE;
 alter table EVENT drop column EVENT_TYPE_ID;
-
