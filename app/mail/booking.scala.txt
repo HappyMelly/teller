@@ -26,7 +26,7 @@ TRANSACTION DETAILS
 
 Source amount: @booking.source.abs.formatText
 Percentage: @booking.sourcePercentage%
-Transaction: @booking.from.accountHolder.name (@booking.fromAmount.formatText) @if(booking.owes) { owes } else { owed by } @booking.to.accountHolder.name (@booking.toAmount.formatText)
+Transaction: @booking.from.accountHolder.name (@booking.fromAmount.abs.formatText) @if(booking.owes) { owes } else { owed by } @booking.to.accountHolder.name (@booking.toAmount.abs.formatText)
 
 
 THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM HAPPY MELLY TELLER
