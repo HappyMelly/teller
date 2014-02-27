@@ -31,6 +31,7 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import play.api.libs.Crypto
 import scala.util.Random
+import play.Logger
 
 /**
  * Category classifications that a product has zero or one of.
@@ -101,11 +102,9 @@ case class Product(
 
 object Product {
 
-  def imagePath(filename: String): String = s"images/products/$filename"
+  def cacheId(id: Long): String = "products." + id.toString
 
-  def filePath(filename: String): String = "public/" + imagePath(filename)
-
-  def generateImageName(filename: String): String = Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
+  def generateImageName(filename: String): String = "products/" + Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
 
   def exists(title: String): Boolean = DB.withSession { implicit session: Session ⇒
     Query(Query(Products).filter(_.title === title).exists).first

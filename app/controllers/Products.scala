@@ -24,22 +24,31 @@
 
 package controllers
 
-import Forms._
-import models.{ Activity, Product, ProductCategory, Brand, Contribution, Person, Organisation }
+import models._
 import play.api.mvc._
 import org.joda.time._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import scala.Some
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import java.io.File
+import play.api.cache.Cache
+import services._
+import play.api.data.FormError
+import scala.Some
+import securesocial.core.SecuredRequest
+import fly.play.s3.{ BucketFile, S3Exception }
+import play.api.Play.current
+import scala.io.Source
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
 
 object Products extends Controller with Security {
 
+  val contentType = "image/jpeg"
+  val encoding = "ISO-8859-1"
   /**
    * Formatter used to define a form mapping for the `ProductCategory` enumeration.
    */
@@ -61,7 +70,7 @@ object Products extends Controller with Security {
   /** HTML form mapping for creating and editing. */
   def productForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "title" -> nonEmptyText,
+    "title" -> text.verifying(nonEmpty),
     "subtitle" -> optional(text),
     "url" -> optional(text),
     "picture" -> optional(text),
@@ -87,24 +96,35 @@ object Products extends Controller with Security {
   }
 
   /** Add form submits to this action **/
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      val boundForm: Form[Product] = productForm.bindFromRequest
-      boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.product.form(request.user, None, None, formWithErrors)),
+      val form: Form[Product] = productForm.bindFromRequest
+      form.fold(
+        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, None, None, formWithErrors))),
         product ⇒ {
           if (Product.exists(product.title))
-            BadRequest(views.html.product.form(request.user, None, None,
-              boundForm.withError("title", "constraint.product.title.exists", product.title)))
+            Future.successful(BadRequest(views.html.product.form(request.user, None, None,
+              form.withError("title", "constraint.product.title.exists", product.title))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
               val filename = Product.generateImageName(picture.filename)
-              picture.ref.moveTo(new File(Product.filePath(filename)))
-              product.copy(picture = Some(filename)).insert
-            }.getOrElse(product.insert)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
-            Redirect(routes.Products.index()).flashing("success" -> activity.toString)
+              val source = Source.fromFile(picture.ref.file.getPath, encoding)
+              val byteArray = source.toArray.map(_.toByte)
+              source.close()
+              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                product.copy(picture = Some(filename)).insert
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+                Redirect(routes.Products.index()).flashing("success" -> activity.toString)
+              }.recover {
+                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(request.user, None, None,
+                  form.withError("picture", "Image cannot be temporary saved")))
+              }
+            }.getOrElse {
+              product.insert
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+              Future.successful(Redirect(routes.Products.index()).flashing("success" -> activity.toString))
+            }
           }
         })
   }
@@ -163,9 +183,27 @@ object Products extends Controller with Security {
 
       Product.find(id).map {
         product ⇒
+          product.picture.map { picture ⇒
+            S3Bucket.remove(picture)
+            Cache.remove(Product.cacheId(product.id.get))
+          }
           Product.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, product.title)
           Redirect(routes.Products.index).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /** Delete picture form submits to this action **/
+  def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Product.find(id).map { product ⇒
+        product.picture.map { picture ⇒
+          S3Bucket.remove(picture)
+          Cache.remove(Product.cacheId(product.id.get))
+        }
+        product.copy(picture = None).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
+        Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -187,24 +225,6 @@ object Products extends Controller with Security {
 
   }
 
-  /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-
-      Product.find(id).map {
-        product ⇒
-          {
-            product.picture.map { picture ⇒
-              (new File(Product.filePath(picture))).delete
-            }
-            product.copy(picture = None).update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
-            Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
-          }
-      }.getOrElse(NotFound)
-
-  }
-
   /** Edit page **/
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -217,34 +237,72 @@ object Products extends Controller with Security {
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      val boundForm: Form[Product] = productForm.bindFromRequest
-      val oldProduct = Product.find(id).get
-      val productTitle = Some(oldProduct.title)
-      boundForm.fold(
-        formWithErrors ⇒ {
-          BadRequest (views.html.product.form(request.user, Some(id), productTitle, boundForm))
-        },
-        product ⇒ {
-          if (Product.exists(product.title, id))
-            BadRequest(views.html.product.form(request.user, Some(id), productTitle,
-              boundForm.withError("title", "constraint.product.title.exists", product.title)))
-          else {
-            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-              val filename = Product.generateImageName(picture.filename)
-              picture.ref.moveTo(new File(Product.filePath(filename)))
-              product.copy(id = Some(id)).copy(picture = Some(filename)).update
-              oldProduct.picture.map { oldPicture ⇒
-                (new File(Product.filePath(oldPicture))).delete
+      Product.find(id).map { existingProduct ⇒
+        val form: Form[Product] = productForm.bindFromRequest
+        val title = Some(existingProduct.title)
+        form.fold(
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title, form))),
+          product ⇒ {
+            if (Product.exists(product.title, id))
+              Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title,
+                form.withError("title", "constraint.product.title.exists", product.title))))
+            else {
+              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                val filename = Product.generateImageName(picture.filename)
+                val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                val byteArray = source.toArray.map(_.toByte)
+                source.close()
+                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                  product.copy(id = Some(id)).copy(picture = Some(filename)).update
+                  Cache.remove(Product.cacheId(id))
+                  existingProduct.picture.map { oldPicture ⇒
+                    S3Bucket.remove(oldPicture)
+                  }
+                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                  Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
+                }.recover {
+                  case S3Exception(status, code, message, originalXml) ⇒
+                    BadRequest(views.html.product.form(request.user, Some(id), title,
+                      form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
+                }
+              }.getOrElse {
+                product.copy(id = Some(id)).copy(picture = existingProduct.picture).update
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
               }
-            }.getOrElse(product.copy(id = Some(id)).update)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
-            Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
-          }
-        })
+            }
+          })
+      }.getOrElse(Future.successful(NotFound))
+  }
 
+  /**
+   * Retrieve and cache a product's image
+   */
+  def picture(id: Long) = Action.async {
+    val cached = Cache.getAs[Array[Byte]](Product.cacheId(id))
+    if (cached.isDefined) {
+      Future.successful(Ok(cached.get).as(contentType))
+    } else {
+      val empty = Array[Byte]()
+      val image: Future[Array[Byte]] = Product.find(id).map { entry ⇒
+        entry.picture.map { picture ⇒
+          val result = S3Bucket.get(entry.picture.get)
+          result.map {
+            case BucketFile(name, contentType, content, acl, headers) ⇒ content
+          }.recover {
+            case S3Exception(status, code, message, originalXml) ⇒ empty
+          }
+        }.getOrElse(Future.successful(empty))
+      }.getOrElse(Future.successful(empty))
+      image.map {
+        case value ⇒
+          Cache.set(Product.cacheId(id), value)
+          Ok(value).as(contentType)
+      }
+    }
   }
 
 }

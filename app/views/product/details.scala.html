@@ -82,8 +82,8 @@
           }
         </h3>
       </form>
-      <a href="@routes.Assets.at(Product.imagePath(picture))">
-          <img src="@routes.Assets.at(Product.imagePath(picture))"/></a>
+      <a href="@routes.Products.picture(product.id.get).url">
+          <img src="@routes.Products.picture(product.id.get).url"/></a>
     }
     <h3>Brands</h3>
     @if(product.brands.isEmpty) {
