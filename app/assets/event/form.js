@@ -87,10 +87,8 @@ function updateTitle(title) {
  */
 function updateEndDate(dateString, locator) {
     try {
-        var start = new Date(dateString);
-        var dayInMilliseconds = 24 * 3600 * 1000;
-        var endDate = new Date(start.getTime() + dayInMilliseconds);
-        $(locator).val(endDate.toISOString().split('T')[0]);
+        var endDate = Date.parse(dateString).addDays(1);
+        $(locator).val(endDate.toString("yyyy-MM-dd"));
     } catch (RangeError) {
         // empty body
     }
