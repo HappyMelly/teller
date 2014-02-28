@@ -5,7 +5,41 @@
 
 @if(!events.isEmpty) {
 
-  <table class="datatables table table-bordered">
+  <style>
+      #events tr *:nth-child(8) {
+        display: none;
+      }
+      #events tr *:nth-child(9) {
+        display: none;
+      }
+
+  </style>
+  <div id="filter-containter">
+    <div class="btn-toolbar pull-right">
+      <div class="btn-group">
+        <select id="past-future" class="input-small">
+          <option value="all">All</option>
+          <option value="future" selected>Future</option>
+          <option value="past">Past</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <select id="private" class="input-small">
+          <option value="all">All</option>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <select id="archived" class="input-small">
+          <option value="all">All</option>
+          <option value="current">Current</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <table id="events" class="datatables table table-bordered">
     <thead>
         <tr>
           <th>Title & Location</th>
@@ -15,6 +49,8 @@
           <th>Dates</th>
           <th>Total hours</th>
           <th>Materials</th>
+          <th>Private</th>
+          <th>Archived</th>
           <th></th>
         </tr>
     </thead>
@@ -33,6 +69,8 @@
             <td style="white-space: nowrap;">@event.schedule.start / @event.schedule.end</td>
             <td>@event.schedule.totalHours</td>
             <td>@event.materialsLanguage</td>
+            <td>@event.notPublic</td>
+            <td>@event.archived</td>
             <td>@actions(event)</td>
         </tr>
     }        
