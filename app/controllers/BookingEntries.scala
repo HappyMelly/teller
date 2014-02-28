@@ -299,19 +299,40 @@ object BookingEntries extends Controller with Security {
           form.fold(
             formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
             editedEntry ⇒ {
-              editedEntry.withSourceConverted.map { editedEntry ⇒
-                BookingEntry.update(editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey))
+              // Update the entry with or without currency conversion, depending on whether the source amount changed,
+              // to avoid applying a new exchange rate when only the direction changed.
+              val sourceChanged = editedEntry.source.abs != existingEntry.source.abs
+              val futureUpdatedEntry = if (sourceChanged) {
+                editedEntry.withSourceConverted.map { editedEntry ⇒
+                  val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey)
+                  BookingEntry.update(updatedEntry)
+                  updatedEntry
+                }
+              } else {
+                val directionChanged = editedEntry.source == existingEntry.source.multipliedBy(-1L)
+                val (fromAmount, toAmount) = if (directionChanged) {
+                  (existingEntry.fromAmount.multipliedBy(-1L), existingEntry.toAmount.multipliedBy(-1L))
+                } else {
+                  (existingEntry.fromAmount, existingEntry.toAmount)
+                }
+                val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey,
+                  fromAmount = fromAmount, toAmount = toAmount)
+                BookingEntry.update(updatedEntry)
+                Future.successful(updatedEntry)
+              }
+
+              futureUpdatedEntry.map { updatedEntry ⇒
+                // Construct a fully-populated entry from the edited entry by adding the missing properties from the
+                // existing entry (that are not included in edit/update), for use in the e-mail notification.
+                val populatedUpdatedEntry = updatedEntry.copy(bookingNumber = existingEntry.bookingNumber,
+                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
+
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
                 Activity.link(existingEntry, activity)
 
-                // Construct a fully-populated entry from the edited entry by adding the missing properties from the
-                // existing entry, for use in the e-mail notification (some fields are not included in edit/update).
-                val updatedEntry = editedEntry.copy(id = existingEntry.id, bookingNumber = existingEntry.bookingNumber,
-                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId,
-                  attachmentKey = existingEntry.attachmentKey)
-                val changes = BookingEntry.compare(existingEntry, updatedEntry)
-                sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
+                val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)
+                sendEmailNotification(populatedUpdatedEntry, changes, activity, Person.findActiveAdmins)
 
                 nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
               }.recover {
