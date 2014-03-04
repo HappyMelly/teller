@@ -21,7 +21,7 @@
     <h1>
       @product.title
       @restrict(handler, List(as(Editor.toString))) {
-        <a class="btn-small btn"href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
+        <a class="btn-small btn" href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>
     <p><small>Added by @product.createdBy on @product.created.format <br> Updated by @product.updatedBy on @product.updated.format</small></p>
@@ -58,8 +58,33 @@
         <br><a href="@routes.Products.details(parent.get.id.getOrElse(0))">@parent.get.title</a>
 
     }
+    <br/><br/>
+    <h3>Derivative Products</h3>
+    @if(derivatives.isEmpty) {
+      <p>There are no derivative products.</p>
+    } else {
+      @views.html.product.table(derivatives) { product =>
+        @restrict(handler, List(as(Editor.toString))) {
+          <a href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
+        }
+      }
+    }
   </div>
   <div class="span4">
+    @product.picture.map { picture =>
+
+      <form class="delete" method="post" text="image" action="@CSRF(routes.Products.deletePicture(product.id.getOrElse(0)))">
+        <h3>Picture
+          @restrict(handler, List(as(Editor.toString))) {
+            <button class="btn btn-danger" type="submit">
+              <i class="icon-white icon-trash"></i> Delete Picture
+            </button>
+          }
+        </h3>
+      </form>
+      <a href="@routes.Products.picture(product.id.get).url">
+          <img src="@routes.Products.picture(product.id.get).url"/></a>
+    }
     <h3>Brands</h3>
     @if(product.brands.isEmpty) {
       <p>This product doesn't belong to any brand.</p>
@@ -98,18 +123,6 @@
           <button class="btn"><i class="icon-plus"></i>Assign Brand</button>
         </p>
       </form>
-    }
-  </div>
-  <div class="span8">
-    <h3>Derivative Products</h3>
-    @if(derivatives.isEmpty) {
-      <p>There are no derivative products.</p>
-    } else {
-      @views.html.product.table(derivatives) { product =>
-        @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
-        }
-      }
     }
   </div>
   <div class="span8">

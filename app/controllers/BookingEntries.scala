@@ -37,7 +37,7 @@ import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import securesocial.core.{ Identity, SecuredRequest }
-import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
+import fly.play.s3.{ BUCKET_OWNER_FULL_CONTROL }
 import play.api.Play
 import play.api.Play.current
 import java.net.URLDecoder

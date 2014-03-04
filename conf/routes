@@ -97,6 +97,9 @@ POST /product/:id          controllers.Products.update(id: Long)
 GET  /product/:id/edit     controllers.Products.edit(id: Long)
 POST /product/:id/delete   controllers.Products.delete(id: Long)
 
+GET  /product/:id/picture          controllers.Products.picture(id: Long)
+POST /product/:id/picture/delete   controllers.Products.deletePicture(id: Long)
+
 POST /product/brand/new                         controllers.Products.addBrand
 GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
