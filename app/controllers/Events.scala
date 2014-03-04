@@ -99,6 +99,18 @@ object Events extends Controller with Security {
   }
 
   /**
+   * HTML form mapping for an event’s invoice.
+   */
+  val invoiceMapping = mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "eventId" -> ignored(Option.empty[Long]),
+    "invoiceTo" -> longNumber.verifying(
+      "Such organization doesn't exist", (invoiceTo: Long) ⇒ Organisation.find(invoiceTo).isDefined),
+    "invoiceBy" -> optional(longNumber).verifying(
+      "Such organization doesn't exist", (invoiceBy: Option[Long]) ⇒ invoiceBy.map{ value ⇒ Organisation.find(value).isDefined }.getOrElse(true)),
+    "number" -> optional(nonEmptyText))(EventInvoice.apply)(EventInvoice.unapply)
+
+  /**
    * HTML form mapping for creating and editing.
    */
   def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
@@ -112,18 +124,19 @@ object Events extends Controller with Security {
     "location" -> mapping(
       "city" -> nonEmptyText,
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
-    "schedule" -> mapping(
-      "start" -> jodaLocalDate,
-      "end" -> of(dateRangeFormatter),
-      "hoursPerDay" -> number(1, 24, true),
-      "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "details" -> mapping(
       "description" -> optional(text),
       "specialAttention" -> optional(text),
       "webSite" -> optional(webUrl),
       "registrationPage" -> optional(webUrl))(Details.apply)(Details.unapply),
+    "schedule" -> mapping(
+      "start" -> jodaLocalDate,
+      "end" -> of(dateRangeFormatter),
+      "hoursPerDay" -> number(1, 24, true),
+      "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "notPublic" -> default(boolean, false),
     "archived" -> default(boolean, false),
+    "invoice" -> invoiceMapping,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
@@ -139,7 +152,8 @@ object Events extends Controller with Security {
 
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
-      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultSchedule, defaultDetails, false, false, DateTime.now(), "", DateTime.now(), "", List[Long]())
+      val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
+      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule, false, false, defaultInvoice, DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, eventForm.fill(default)))

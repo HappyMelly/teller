@@ -47,10 +47,11 @@ case class Event(
   spokenLanguage: String,
   materialsLanguage: Option[String],
   location: Location,
-  schedule: Schedule,
   details: Details,
+  schedule: Schedule,
   notPublic: Boolean = false,
   archived: Boolean = false,
+  invoice: EventInvoice,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -79,8 +80,9 @@ case class Event(
 
   def update: Event = DB.withSession { implicit session: Session ⇒
     val updateTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
-      details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
-      details.webSite, details.registrationPage, notPublic, archived, updated, updatedBy)
+      details.description, details.specialAttention, details.webSite, details.registrationPage,
+      schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
+      notPublic, archived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
 
