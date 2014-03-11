@@ -6,10 +6,10 @@
 @if(!events.isEmpty) {
 
   <style>
-      #events tr *:nth-child(8) {
+      #events tr *:nth-child(9) {
         display: none;
       }
-      #events tr *:nth-child(9) {
+      #events tr *:nth-child(10) {
         display: none;
       }
 
@@ -49,6 +49,7 @@
           <th>Dates</th>
           <th>Total hours</th>
           <th>Materials</th>
+          <th>Invoice</th>
           <th>Private</th>
           <th>Archived</th>
           <th></th>
@@ -69,6 +70,7 @@
             <td style="white-space: nowrap;">@event.schedule.start / @event.schedule.end</td>
             <td>@event.schedule.totalHours</td>
             <td>@event.materialsLanguage</td>
+            <td>@event.invoice.invoiceBy.map{ v => Yes }.getOrElse("No")</td>
             <td>@event.notPublic</td>
             <td>@event.archived</td>
             <td>@actions(event)</td>

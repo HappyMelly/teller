@@ -48,7 +48,7 @@ function filterByDate(oSettings, aData, iDataIndex) {
  * Filter events checking if they are public or private
  */
 function filterByPublicity(oSettings, aData, iDataIndex) {
-    var index = 7;
+    var index = 8;
     var filter = $('#private').find(':selected').val();
     if (filter == 'all') {
         return true;
@@ -64,7 +64,7 @@ function filterByPublicity(oSettings, aData, iDataIndex) {
  * Filter events checking if they are archived or not
  */
 function filterArchived(oSettings, aData, iDataIndex) {
-    var index = 8;
+    var index = 9;
     var filter = $('#archived').find(':selected').val();
     if (filter == 'all') {
         return true;

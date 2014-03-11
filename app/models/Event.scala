@@ -24,7 +24,7 @@
 
 package models
 
-import org.joda.time.{ Duration, LocalDate, DateTime }
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -47,10 +47,11 @@ case class Event(
   spokenLanguage: String,
   materialsLanguage: Option[String],
   location: Location,
-  schedule: Schedule,
   details: Details,
+  schedule: Schedule,
   notPublic: Boolean = false,
   archived: Boolean = false,
+  invoice: EventInvoice,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -65,13 +66,18 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  def isEditable(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    UserRole.forName(account.role).editor || facilitatorIds.exists(_ == account.personId) || Brand.find(brandCode).get.coordinator.id.get == account.personId
+  def canEdit(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    facilitatorIds.exists(_ == account.personId) || canAdministrate(account)
+  }
+
+  def canAdministrate(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    UserRole.forName(account.role).editor || Brand.find(brandCode).get.coordinator.id.get == account.personId
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
     this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
+    EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
     this.copy(id = Some(id))
   }
 
@@ -79,13 +85,16 @@ case class Event(
 
   def update: Event = DB.withSession { implicit session: Session ⇒
     val updateTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
-      details.description, details.specialAttention, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
-      details.webSite, details.registrationPage, notPublic, archived, updated, updatedBy)
+      details.description, details.specialAttention, details.webSite, details.registrationPage,
+      schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
+      notPublic, archived, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
 
     EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
     this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
+
+    EventInvoice.update(this.invoice)
 
     this
   }
@@ -114,6 +123,7 @@ object Event {
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === id).mutate(_.delete())
     Events.where(_.id === id).mutate(_.delete())
+    EventInvoice.delete(id)
   }
 
   def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒

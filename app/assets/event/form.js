@@ -26,6 +26,7 @@ function User(data) {
     this.name = data["first_name"] + " " + data["last_name"];
     this.id = data["id"];
     this.coordinator = data["coordinator"];
+    this.memberships = data["memberships"];
 }
 
 User.prototype.isFacilitator = function(userId) {
@@ -94,6 +95,23 @@ function updateEndDate(dateString, locator) {
     }
 }
 
+/**
+ * Update a list of organisations for invoicing
+ * @param organisations Array
+ */
+function updateInvoicingOrganisations(organisations, selectedId) {
+    $('#invoice_invoiceTo')
+        .empty()
+        .append($("<option></option>").attr("value", 0).text("Choose an organisation"));
+    for(var key in organisations) {
+        var option = $("<option></option>").attr("value", key).text(organisations[key]);
+        if (key == selectedId) {
+            option.attr('selected', 'selected');
+        }
+        $('#invoice_invoiceTo').append(option);
+    }
+}
+
 $(document).ready( function() {
 
     /**
@@ -136,8 +154,10 @@ $(document).ready( function() {
         retrieved: [],
         chosen: [],
         userId: 0,
+        invoiceOrgId: 0,
         initialize: function(brandCode) {
             this.userId = parseInt($('#currentUserId').attr('value'));
+            this.invoiceOrgId = parseInt($('#invoice_invoiceTo').attr('value'));
             var values = $('#chosenFacilitators').attr('value').split(',');
             getFacilitators(brandCode, values);
         },
@@ -159,8 +179,17 @@ $(document).ready( function() {
             // update a list of chosen facilitators
             $('#chosenFacilitators').empty();
             this.chosen.sort(this.sortByName);
+            var organisations = [];
             for(var i = 0; i < this.chosen.length; i++) {
                 var user = this.chosen[i];
+                for(var j = 0; j < user.memberships.length; j++) {
+                    var company = user.memberships[j];
+                    if (organisations.indexOf(company.id) > 0) {
+                        continue;
+                    } else {
+                        organisations[company.id] = company.name;
+                    }
+                }
                 var div = $("<div>").append(
                     $("<input readonly type='hidden'>")
                         .attr("value", user.id)
@@ -177,6 +206,7 @@ $(document).ready( function() {
                 }
                 $('#chosenFacilitators').append(div);
             }
+            updateInvoicingOrganisations(organisations, this.invoiceOrgId);
         },
         select: function(id) {
             this.move(id, this.retrieved, this.chosen);
@@ -220,10 +250,7 @@ $(document).ready( function() {
     var code = $('#brandCode').find(':selected').val();
     getEventTypes(code);
     facilitators.initialize(code);
-    // turn it on only for a new event
-    if ($("form").attr("action").indexOf('events') != -1) {
-        // clean default values here because it's too difficult to implement it on the server side
-        // they'll also be cleaned on duplication but it's not a big deal as the dates are different in most cases
+    if ($("#emptyForm").attr("value") == 'true') {
         $("#schedule_start").val('');
         $("#schedule_end").val('');
         $("#schedule_start").on('input', function() {
