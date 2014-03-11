@@ -49,6 +49,7 @@ GET  /event/:id/edit         controllers.Events.edit(id: Long)
 GET  /event/:id              controllers.Events.details(id: Long)
 POST /event/:id              controllers.Events.update(id: Long)
 POST /event/:id/delete       controllers.Events.delete(id: Long)
+POST /event/:id/invoice      controllers.Events.invoice(id: Long)
 
 GET  /eventtypes/:brandCode  controllers.EventTypes.index(brandCode: String)
 POST /eventtype/new          controllers.EventTypes.create

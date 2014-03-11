@@ -117,12 +117,16 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
       name match {
         case "event" ⇒
           meta match {
-            case "add" ⇒ existingAccount.isFacilitator || UserRole.forName(existingAccount.role).editor
+            case "add" ⇒ existingAccount.facilitator || UserRole.forName(existingAccount.role).editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
               //   edit it
-              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.isEditable(existingAccount))
+              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))
+            case "admin" ⇒
+              val eventId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role or be a Brand Coordinator to admin it
+              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(existingAccount))
             case _ ⇒ true
           }
         case "person" ⇒

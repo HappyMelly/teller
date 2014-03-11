@@ -2,7 +2,6 @@
   id: Option[Long],
   brands: List[Brand],
   currentUserId: Long,
-  legalEntities: List[Organisation],
   emptyForm: Boolean,
   form: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
@@ -147,24 +146,13 @@
           </label>
       </div>
       <legend>Invoice</legend>
-      @defining(form("invoice.invoiceTo").hasErrors || form("invoice.invoiceBy").hasErrors || form("invoice.number").hasErrors) { hasErrors =>
+      @defining(form("invoice.invoiceTo").hasErrors) { hasErrors =>
       <div class="controls-row control-group @if(hasErrors) {error}">
-        <label for="invoice_invoiceTo">Invoice to/Invoice by/Invoice number</label>
+        <label for="invoice_invoiceTo">Invoice To</label>
         <select id="invoice_invoiceTo" name="invoice.invoiceTo" value="@form("invoice.invoiceTo").value"></select>
-        @defining(form("invoice.invoiceBy")) { field =>
-          <select name="@field.name" id="@field.id">
-            <option value="">Choose an organisation</option>
-            @legalEntities.map { entity =>
-            <option value="@entity.id" test="@field.value" @if(field.value.map{ value => value == entity.id.get.toString}){selected}>@entity.name</option>
-            }
-          </select>
-        }
-        @defining(form("invoice.number")) { field =>
-          <input id="@field.id" class="input" type="text" name="@field.name" value="@field.value">
-        }
         <span class="help-inline">
           @if(hasErrors) {
-            @fieldErrors(form("invoice.invoiceTo"), form("invoice.invoiceBy"), form("invoice.number"))
+            @fieldErrors(form("invoice.invoiceTo"))
           } else {
             Required
           }

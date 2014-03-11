@@ -33,7 +33,11 @@ case class EventInvoice(id: Option[Long],
   eventId: Option[Long],
   invoiceTo: Long,
   invoiceBy: Option[Long],
-  number: Option[String])
+  number: Option[String]) {
+
+  lazy val invoiceToOrg: Option[Organisation] = Organisation.find(invoiceTo)
+  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map{ Organisation.find(_) }.getOrElse(None)
+}
 
 object EventInvoice {
 

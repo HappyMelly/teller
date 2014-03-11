@@ -52,7 +52,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 
-  def isFacilitator: Boolean = {
+  def facilitator: Boolean = {
     !licenses.isEmpty || !brands.isEmpty
   }
 

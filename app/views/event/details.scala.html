@@ -1,4 +1,5 @@
 @(user: securesocial.core.Identity,
+  legalEntities: List[Organisation],
   event: Event
   )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
@@ -15,7 +16,7 @@
 
     <h1>
       @event.title
-        @dynamic(handler, "event", "edit") {
+      @dynamic(handler, "event", "edit") {
         <a class="btn-small btn"href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>
@@ -79,6 +80,36 @@
       @event.details.registrationPage.map { url =>
       <p><strong>Registration page</strong>
           <br><a href="@url">@url</a></p>
+      }
+      <h3>Invoice</h3>
+      <p>
+        <strong>To:</strong> <a href="@routes.Organisations.details(event.invoice.invoiceTo)">@event.invoice.invoiceToOrg.get.name</a>
+        @event.invoice.invoiceBy.map { id =>
+          &nbsp;&nbsp;&nbsp;<strong>By:</strong> <a href="@routes.Organisations.details(id)">@event.invoice.invoiceByOrg.get.name</a>
+        }
+        @event.invoice.number.map { number =>
+          <br/>
+          <strong>Invoice #:</strong> @number
+        }
+      </p>
+      @dynamic(handler, "event", "admin") {
+        <form class="form-inline" method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
+          <p>
+            <input type="hidden" name="id" value="@event.invoice.id">
+            <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">
+            <input type="hidden" name="eventId" id="eventId" value="@event.id">
+            <select name="invoiceBy" id="invoiceBy">
+              <option value="">Choose an organisation</option>
+              @legalEntities.map { entity =>
+              <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)){selected}>@entity.name</option>
+              }
+            </select>
+            <input id="number" class="input" type="text" name="number" value="@event.invoice.number">
+          </p>
+          <p>
+            <button class="btn">Update Invoice Info</button>
+          </p>
+        </form>
       }
   </div>
   <div class="span3">

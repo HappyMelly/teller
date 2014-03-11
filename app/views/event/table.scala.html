@@ -15,6 +15,7 @@
           <th>Dates</th>
           <th>Total hours</th>
           <th>Materials</th>
+          <th>Invoice</th>
           <th></th>
         </tr>
     </thead>
@@ -33,6 +34,7 @@
             <td style="white-space: nowrap;">@event.schedule.start / @event.schedule.end</td>
             <td>@event.schedule.totalHours</td>
             <td>@event.materialsLanguage</td>
+            <td>@event.invoice.invoiceBy.map{ v => Yes }.getOrElse("No")</td>
             <td>@actions(event)</td>
         </tr>
     }        
