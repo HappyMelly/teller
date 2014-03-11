@@ -24,12 +24,12 @@
 
 package models
 
-import org.joda.time.{ Duration, LocalDate, DateTime }
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.{ EventInvoices, EventFacilitators, Events }
+import models.database.{ EventFacilitators, Events }
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],

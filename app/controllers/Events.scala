@@ -27,7 +27,7 @@ package controllers
 import Forms._
 import models._
 import play.api.mvc._
-import securesocial.core.{ SecuredRequest, SecureSocial }
+import securesocial.core.SecuredRequest
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -37,7 +37,6 @@ import play.api.data.format.Formatter
 import models.Location
 import models.Schedule
 import scala.Some
-import play.Logger
 
 object Events extends Controller with Security {
 
