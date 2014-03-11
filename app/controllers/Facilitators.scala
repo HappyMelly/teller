@@ -35,13 +35,22 @@ import models.UserRole.Role._
  */
 object Facilitators extends Controller with Security {
 
+  implicit val organizationWrites = new Writes[Organisation] {
+    def writes(data: Organisation): JsValue = {
+      Json.obj(
+        "id" -> data.id.get,
+        "name" -> data.name)
+    }
+  }
+
   implicit val personWrites = new Writes[(Person, Boolean)] {
     def writes(data: (Person, Boolean)): JsValue = {
       Json.obj(
         "first_name" -> data._1.firstName,
         "last_name" -> data._1.lastName,
         "coordinator" -> data._2,
-        "id" -> data._1.id.get)
+        "id" -> data._1.id.get,
+        "memberships" -> data._1.memberships)
     }
   }
 

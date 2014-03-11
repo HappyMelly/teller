@@ -2,6 +2,8 @@
   id: Option[Long],
   brands: List[Brand],
   currentUserId: Long,
+  legalEntities: List[Organisation],
+  emptyForm: Boolean,
   form: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -28,7 +30,7 @@
       </div>
     }
     </div>
-
+    <div id="emptyForm" value="@emptyForm"></div>
     @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
       <div id="currentUserId" value="@currentUserId"></div>
       @defining(form("brandCode").hasErrors || form("eventTypeId").hasErrors) { hasErrors =>
@@ -75,10 +77,10 @@
               @defining(form("location.country")) { field =>
               <label for="@field.id">Location</label>
               <select name="@field.name" id="@field.id">
-                  <option value="">Choose a country</option>
-                  @Countries.all.map { country =>
-                  <option value="@country._1" @if(field.value.toSet.contains(country._1)){selected}>@country._2</option>
-                  }
+                <option value="">Choose a country</option>
+                @Countries.all.map { country =>
+                <option value="@country._1" @if(field.value.toSet.contains(country._1)){selected}>@country._2</option>
+                }
               </select>
               }
               <input id="location_city" class="input-large" name="location.city" placeholder="City" type="text" value="@form("location.city").value">
@@ -145,19 +147,28 @@
           </label>
       </div>
       <legend>Invoice</legend>
-      @defining(form("invoice.to").hasErrors) { hasErrors =>
+      @defining(form("invoice.invoiceTo").hasErrors || form("invoice.invoiceBy").hasErrors || form("invoice.number").hasErrors) { hasErrors =>
       <div class="controls-row control-group @if(hasErrors) {error}">
-        <label for="invoice_to">Invoice to/Invoice by/Invoice number</label>
-        <select id="invoice_to" name="invoice.to"></select>
-        <input id="invoice_by" class="input" type="text" name="invoice.by" value="@form("invoice.by").value">
-        <input id="invoice_number" class="input" type="text" name="invoice.number" value="@form("invoice.number").value">
-          <span class="help-inline">
-            @if(hasErrors) {
-              @fieldErrors(form("invoice.to"))
-            } else {
-              Required
+        <label for="invoice_invoiceTo">Invoice to/Invoice by/Invoice number</label>
+        <select id="invoice_invoiceTo" name="invoice.invoiceTo" value="@form("invoice.invoiceTo").value"></select>
+        @defining(form("invoice.invoiceBy")) { field =>
+          <select name="@field.name" id="@field.id">
+            <option value="">Choose an organisation</option>
+            @legalEntities.map { entity =>
+            <option value="@entity.id" test="@field.value" @if(field.value.map{ value => value == entity.id.get.toString}){selected}>@entity.name</option>
             }
-          </span>
+          </select>
+        }
+        @defining(form("invoice.number")) { field =>
+          <input id="@field.id" class="input" type="text" name="@field.name" value="@field.value">
+        }
+        <span class="help-inline">
+          @if(hasErrors) {
+            @fieldErrors(form("invoice.invoiceTo"), form("invoice.invoiceBy"), form("invoice.number"))
+          } else {
+            Required
+          }
+        </span>
       </div>
       }
       <button class="btn btn-primary" type="submit">Save</button>

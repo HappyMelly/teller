@@ -29,7 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitators, Events }
+import models.database.{ EventInvoices, EventFacilitators, Events }
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -73,6 +73,7 @@ case class Event(
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val id = Events.forInsert.insert(this)
     this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
+    EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
     this.copy(id = Some(id))
   }
 
@@ -88,6 +89,8 @@ case class Event(
 
     EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
     this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
+
+    EventInvoice.update(this.invoice)
 
     this
   }
@@ -116,6 +119,7 @@ object Event {
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === id).mutate(_.delete())
     Events.where(_.id === id).mutate(_.delete())
+    EventInvoice.delete(id)
   }
 
   def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒
