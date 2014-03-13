@@ -46,9 +46,12 @@ models.ProductCategory.book = Book
 models.ProductCategory.book.label = label-inverse
 models.ProductCategory.game = Game
 models.ProductCategory.game.label = label-info
-models.ProductCategory.software = Software
-models.ProductCategory.software.label = label-warning
-
+models.ProductCategory.apps = Apps
+models.ProductCategory.apps.label = label-warning
+models.ProductCategory.conference = Conference
+models.ProductCategory.conference.label = label-primary
+models.ProductCategory.course = Course
+models.ProductCategory.course.label = label-success
 
 # Activity stream entries
 activity.signup = {0} signed up

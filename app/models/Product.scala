@@ -39,7 +39,9 @@ import play.Logger
 object ProductCategory extends Enumeration {
   val Book = Value("book")
   val Game = Value("game")
-  val Software = Value("software")
+  val Apps = Value("apps")
+  val Conference = Value("conference")
+  val Course = Value("course")
 }
 
 /**
@@ -50,6 +52,9 @@ case class Product(
   title: String,
   subtitle: Option[String],
   url: Option[String],
+  description: Option[String],
+  callToActionUrl: Option[String],
+  callToActionText: Option[String],
   picture: Option[String],
   category: Option[ProductCategory.Value],
   parentId: Option[Long],
@@ -93,7 +98,7 @@ case class Product(
   def delete(): Unit = Product.delete(this.id.get)
 
   def update: Product = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (title, subtitle, url, picture, category, parentId, updated, updatedBy)
+    val updateTuple = (title, subtitle, url, description, callToActionUrl, callToActionText, picture, category, parentId, updated, updatedBy)
     val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this

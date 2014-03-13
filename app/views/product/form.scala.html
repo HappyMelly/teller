@@ -22,6 +22,9 @@
             @helper.inputText(form("title"), '_label -> "Title")
             @helper.inputText(form("subtitle"), '_label -> "Subtitle")
             @helper.inputText(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
+            @helper.textarea(form("description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
+            @helper.inputText(form("callToActionUrl"), '_label -> "Call To Action URL", '_placeholder -> "http://", '_help -> "URL for a Call To Action button")
+            @helper.inputText(form("callToActionText"), '_label -> "Button text", '_placeholder -> "Buy Now", '_help -> "A text for a Call To Action button")
             @helper.inputFile(form("picture"), '_label -> "Picture")
             @helper.select(
               form("category"),

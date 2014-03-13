@@ -49,6 +49,19 @@
     <p><strong>Web site</strong>
         <br><a href="@url">@url</a></p>
     }
+    @product.description.map { desc =>
+    <p>
+      <strong>Description</strong><br/>@desc.markdown
+    </p>
+    }
+    @product.callToActionUrl.map { url =>
+    <p><strong>Call To Action URL</strong>
+      <br><a href="@url">@url</a></p>
+    }
+    @product.callToActionText.map { text =>
+    <p><strong>Call To Action button text</strong>
+      <br>text</p>
+    }
     @product.category.map { name =>
       <p><strong>Category</strong>
       <br/><span class="label @Messages(s"models.ProductCategory.$name.label")">@Messages(s"models.ProductCategory.$name")</span>
