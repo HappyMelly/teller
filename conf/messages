@@ -42,15 +42,15 @@ models.OrganisationCategory.legalentity = Legal Entity
 models.OrganisationCategory.legalentity.label = label-info
 
 # Product category label names and Bootstrap label CSS classes.
-models.ProductCategory.book = Book
+models.ProductCategory.book = Books
 models.ProductCategory.book.label = label-inverse
-models.ProductCategory.game = Game
+models.ProductCategory.game = Games
 models.ProductCategory.game.label = label-info
 models.ProductCategory.apps = Apps
 models.ProductCategory.apps.label = label-warning
-models.ProductCategory.conference = Conference
+models.ProductCategory.conference = Conferences
 models.ProductCategory.conference.label = label-primary
-models.ProductCategory.course = Course
+models.ProductCategory.course = Courses
 models.ProductCategory.course.label = label-success
 
 # Activity stream entries
