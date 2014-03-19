@@ -27,6 +27,7 @@ package controllers
 import play.api.mvc.Controller
 import play.api.libs.json._
 import models.Product
+import play.api.i18n.Messages
 
 /**
  * Products API.
@@ -42,7 +43,7 @@ object ProductsApi extends Controller with ApiAuthentication {
         "title" -> product.title,
         "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
-        "category" -> product.category.map(_.toString).orNull)
+        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
   }
 
@@ -59,7 +60,7 @@ object ProductsApi extends Controller with ApiAuthentication {
         "cta_text" -> product.callToActionText,
         "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
-        "category" -> product.category.map(_.toString).orNull,
+        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
         "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),
         "contributors" -> product.contributors)
     }
