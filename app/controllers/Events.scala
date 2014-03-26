@@ -37,6 +37,7 @@ import play.api.data.format.Formatter
 import models.Location
 import models.Schedule
 import scala.Some
+import services.EmailService
 
 object Events extends Controller with Security {
 
@@ -145,6 +146,16 @@ object Events extends Controller with Security {
       "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
 
   /**
+   * Sends an e-mail notification for an event to the given recipients.
+   *
+   */
+  def sendEmailNotification(event: Event, changes: List[Event.FieldChange], activity: Activity,
+    recipient: Person)(implicit request: RequestHeader): Unit = {
+    val subject = s"${activity.description} - ${event.title}"
+    EmailService.send(Set(recipient), subject, mail.txt.event(event, changes).toString)
+  }
+
+  /**
    * Create page.
    */
   def add = SecuredDynamicAction("event", "add") { implicit request ⇒
@@ -192,9 +203,10 @@ object Events extends Controller with Security {
           val validLicensees = License.licensees(event.brandCode)
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
-            val eventObj = event.insert
+            val addedEvent = event.insert
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, addedEvent.title)
+            sendEmailNotification(addedEvent, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
 
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, eventObj.title)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -213,9 +225,11 @@ object Events extends Controller with Security {
     implicit handler ⇒
 
       Event.find(id).map {
-        event ⇒
+        deletedEvent ⇒
           Event.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, deletedEvent.title)
+          sendEmailNotification(deletedEvent, List.empty, activity, Brand.find(deletedEvent.brandCode).get.coordinator)
+
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -295,13 +309,18 @@ object Events extends Controller with Security {
           val brands = Brand.findForUser(account)
           BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false, formWithErrors))
         },
-        event ⇒ {
-          val validLicensees = License.licensees(event.brandCode)
-          val coordinator = Brand.find(event.brandCode).get.coordinator
-          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
-            event.copy(id = Some(id)).update
+        updatedEvent ⇒ {
+          val validLicensees = License.licensees(updatedEvent.brandCode)
+          val coordinator = Brand.find(updatedEvent.brandCode).get.coordinator
+          if (updatedEvent.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
+            val existingEvent = Event.find(id).get
+            val updatedInvoice = updatedEvent.invoice.copy(id = existingEvent.invoice.id)
+            updatedEvent.copy(id = Some(id)).copy(invoice = updatedInvoice).update
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, updatedEvent.title)
 
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
+            val changes = Event.compare(existingEvent, updatedEvent)
+            sendEmailNotification(updatedEvent, changes, activity, Brand.find(updatedEvent.brandCode).get.coordinator)
+
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount

@@ -44,4 +44,6 @@ private[models] object EventInvoices extends Table[EventInvoice]("EVENT_INVOICE"
   def * = id.? ~ eventId ~ invoiceTo ~ invoiceBy ~ number <> (EventInvoice.apply _, EventInvoice.unapply _)
 
   def forInsert = * returning id
+
+  def forUpdate = invoiceTo ~ invoiceBy ~ number
 }
