@@ -240,14 +240,18 @@ object Event {
   def findByFacilitator(facilitatorId: Long, brandCode: String,
     future: Option[Boolean],
     public: Option[Boolean]): List[Event] = DB.withSession { implicit session: Session ⇒
-    // TODO: add a filter by facilitator
-    val baseQuery = Query(Events).filter(_.brandCode === brandCode)
+
+    val baseQuery = for {
+      (entry, event) ← Query(EventFacilitators).filter(_.facilitatorId === facilitatorId).leftJoin(Events) on (_.eventId === _.id)
+    } yield event
+
+    val brandQuery = baseQuery.filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) baseQuery.filter(_.end >= today)
-      else baseQuery.filter(_.end <= today)
+      if (value) brandQuery.filter(_.end >= today)
+      else brandQuery.filter(_.end <= today)
     }.getOrElse(baseQuery)
 
     val publicityQuery = public.map { value ⇒

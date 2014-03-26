@@ -25,7 +25,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.Event
+import models.{Brand, Event}
 import play.api.i18n.Messages
 
 /**
@@ -52,6 +52,28 @@ object EventsApi extends Controller with ApiAuthentication {
           "name" -> Messages("country." + event.location.countryCode)),
         "website" -> event.details.webSite,
         "registrationPage" -> event.details.registrationPage)
+    }
+  }
+
+  val noFacilitatorsEventsWrites = new Writes[List[Event]] {
+    def writes(events: List[Event]): JsValue = {
+      val serializedEvents = events.map { event ⇒
+        Json.obj(
+          "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
+          "title" -> event.title,
+          "description" -> event.details.description,
+          "spokenLanguage" -> event.spokenLanguage,
+          "start" -> event.schedule.start,
+          "end" -> event.schedule.end,
+          "totalHours" -> event.schedule.totalHours,
+          "city" -> event.location.city,
+          "country" -> Json.obj(
+            "code" -> event.location.countryCode,
+            "name" -> Messages("country." + event.location.countryCode)),
+          "website" -> event.details.webSite,
+          "registrationPage" -> event.details.registrationPage)
+      }
+      JsArray(serializedEvents)
     }
   }
 
@@ -82,6 +104,15 @@ object EventsApi extends Controller with ApiAuthentication {
   }
 
   /**
+   * A list of countries with a number of events for a given brand
+   */
+  def countries(brandCode: String) = TokenSecuredAction { implicit request ⇒
+    Brand.find(brandCode).map { brandView =>
+      val events: List[Event] = Event.findByBrand(brandCode)
+    }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  /**
    * Event details API.
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
@@ -102,4 +133,11 @@ object EventsApi extends Controller with ApiAuthentication {
     Ok(Json.toJson(events))
   }
 
+  /**
+   * Events list for a given facilitator
+   */
+  def eventsByFacilitator(brandCode: String, facilitatorId: Long, future: Option[Boolean], public: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
+    val events: List[Event] = Event.findByFacilitator(facilitatorId, brandCode, future, public)
+    Ok(Json.toJson(events)(noFacilitatorsEventsWrites))
+  }
 }

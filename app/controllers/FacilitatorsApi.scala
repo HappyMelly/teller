@@ -25,39 +25,22 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.Event
-import play.api.i18n.Messages
+import models.Brand
 
 /**
  * Facilitators API
  */
 object FacilitatorsApi extends Controller with ApiAuthentication {
 
-  implicit val eventWrites = new Writes[Event] {
-    def writes(event: Event): JsValue = {
-      Json.obj(
-        "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
-        "title" -> event.title,
-        "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
-        "start" -> event.schedule.start,
-        "end" -> event.schedule.end,
-        "totalHours" -> event.schedule.totalHours,
-        "city" -> event.location.city,
-        "country" -> Json.obj(
-          "code" -> event.location.countryCode,
-          "name" -> Messages("country." + event.location.countryCode)),
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage)
-    }
-  }
+  import PeopleApi.personWrites
 
   /**
-   * Events list for a given facilitator
+   * Facilitators list for a given brand
    */
-  def events(facilitatorId: Long, brandCode: String, future: Option[Boolean], public: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = Event.findByFacilitator(facilitatorId, brandCode, future, public)
-    Ok(Json.toJson(events))
+  def facilitators(brandCode: String) = TokenSecuredAction { implicit request ⇒
+    Brand.find(brandCode).map { brand ⇒
+      Ok(Json.toJson(Brand.findFacilitators(brandCode, brand.coordinator)))
+    }.getOrElse(NotFound("Unknown brand"))
   }
 
 }
