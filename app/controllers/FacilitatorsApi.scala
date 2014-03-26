@@ -29,11 +29,9 @@ import models.Event
 import play.api.i18n.Messages
 
 /**
- * Events API
+ * Facilitators API
  */
-object EventsApi extends Controller with ApiAuthentication {
-
-  import PeopleApi.personWrites
+object FacilitatorsApi extends Controller with ApiAuthentication {
 
   implicit val eventWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
@@ -45,7 +43,6 @@ object EventsApi extends Controller with ApiAuthentication {
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
         "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators,
         "city" -> event.location.city,
         "country" -> Json.obj(
           "code" -> event.location.countryCode,
@@ -55,50 +52,11 @@ object EventsApi extends Controller with ApiAuthentication {
     }
   }
 
-  val eventDetailsWrites = new Writes[Event] {
-    def writes(event: Event): JsValue = {
-      Json.obj(
-        "brand" -> event.brandCode,
-        "eventType" -> event.eventTypeId,
-        "title" -> event.title,
-        "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
-        "materialsLanguage" -> event.materialsLanguage,
-        "specialAttention" -> event.details.specialAttention,
-        "start" -> event.schedule.start,
-        "end" -> event.schedule.end,
-        "hoursPerDay" -> event.schedule.hoursPerDay,
-        "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators,
-        "city" -> event.location.city,
-        "country" -> Json.obj(
-          "code" -> event.location.countryCode,
-          "name" -> Messages("country." + event.location.countryCode)),
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage,
-        "public" -> !event.notPublic,
-        "archived" -> event.archived)
-    }
-  }
-
   /**
-   * Event details API.
+   * Events list for a given facilitator
    */
-  def event(id: Long) = TokenSecuredAction { implicit request ⇒
-    Event.find(id).map { event ⇒
-      Ok(Json.toJson(event)(eventDetailsWrites))
-    }.getOrElse(NotFound("Unknown event"))
-  }
-
-  /**
-   * Events list
-   */
-  def events(brandCode: String,
-    future: Option[Boolean],
-    public: Option[Boolean],
-    countryCode: Option[String],
-    eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = Event.findByParameters(brandCode, future, public, countryCode, eventType)
+  def events(facilitatorId: Long, brandCode: String, future: Option[Boolean], public: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
+    val events: List[Event] = Event.findByFacilitator(facilitatorId, brandCode, future, public)
     Ok(Json.toJson(events))
   }
 

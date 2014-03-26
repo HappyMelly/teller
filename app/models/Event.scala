@@ -204,14 +204,12 @@ object Event {
 
   /**
    * Find a list of events based on a brand, time and publicity
-   * @param brandCode String
-   * @param future Option[Boolean]
-   * @param public Option[Boolean]
    */
-  def findByBrandTimeAndPublicity(brandCode: String,
+  def findByParameters(brandCode: String,
     future: Option[Boolean],
     public: Option[Boolean],
-    countryCode: Option[String]): List[Event] = DB.withSession { implicit session: Session ⇒
+    countryCode: Option[String],
+    eventType: Option[Long]): List[Event] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(Events).filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
@@ -229,7 +227,34 @@ object Event {
       publicityQuery.filter(_.countryCode === value)
     }.getOrElse(publicityQuery)
 
-    countryQuery.sortBy(_.start).list
+    val typeQuery = eventType.map { value ⇒
+      countryQuery.filter(_.eventTypeId === value)
+    }.getOrElse(countryQuery)
+
+    typeQuery.sortBy(_.start).list
+  }
+
+  /**
+   * Find a list of events for a given facilitator
+   */
+  def findByFacilitator(facilitatorId: Long, brandCode: String,
+    future: Option[Boolean],
+    public: Option[Boolean]): List[Event] = DB.withSession { implicit session: Session ⇒
+    // TODO: add a filter by facilitator
+    val baseQuery = Query(Events).filter(_.brandCode === brandCode)
+
+    val timeQuery = future.map { value ⇒
+      val now = LocalDate.now()
+      val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+      if (value) baseQuery.filter(_.end >= today)
+      else baseQuery.filter(_.end <= today)
+    }.getOrElse(baseQuery)
+
+    val publicityQuery = public.map { value ⇒
+      timeQuery.filter(_.notPublic === !value)
+    }.getOrElse(timeQuery)
+
+    publicityQuery.sortBy(_.start).list
   }
 
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
