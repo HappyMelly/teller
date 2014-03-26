@@ -30,6 +30,7 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
 import models.database.{ EventFacilitators, Events }
+import play.api.i18n.Messages
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -102,6 +103,74 @@ case class Event(
 
 object Event {
 
+  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
+    def changed() = oldValue != newValue
+  }
+
+  class SimpleFieldChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
+    override def toString = s"$label: $newValue (was: $oldValue)"
+  }
+
+  class BrandChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
+    override def toString = {
+      val oldBrand = Brand.find(oldValue).get.brand.name
+      val newBrand = Brand.find(newValue).get.brand.name
+      s"$label: $newBrand (was: $oldBrand)"
+    }
+  }
+
+  class EventTypeChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
+    override def toString = {
+      val oldEventType = EventType.find(oldValue).get.name
+      val newEventType = EventType.find(newValue).get.name
+      s"$label: $newEventType (was: $oldEventType)"
+    }
+  }
+
+  class InvoiceChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
+    override def toString = {
+      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
+      val newInvoiceToOrg = Organisation.find(newValue).get.name
+      s"$label: $newInvoiceToOrg (was: $oldInvoiceToOrg)"
+    }
+  }
+
+  class FacilitatorChange(label: String, oldValue: List[Long], newValue: List[Long]) extends FieldChange(label, oldValue, newValue) {
+    override def toString = {
+      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
+      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
+      s"Removed $label: $removedFacilitators / Added $label: $newFacilitators"
+    }
+  }
+
+  /**
+   * Compares two events and returns a list of changes.
+   * @param was The event with ‘old’ values.
+   * @param now The event with ‘new’ values.
+   */
+  def compare(was: Event, now: Event): List[FieldChange] = {
+    val changes = List(
+      new BrandChange("Brand", was.brandCode, now.brandCode),
+      new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
+      new SimpleFieldChange("Title", was.title, now.title),
+      new SimpleFieldChange("Spoken Language", was.spokenLanguage, now.spokenLanguage),
+      new SimpleFieldChange("Materials Language", was.materialsLanguage.getOrElse(""), now.materialsLanguage.getOrElse("")),
+      new SimpleFieldChange("City", was.location.city, now.location.city),
+      new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
+      new SimpleFieldChange("Description", was.details.description.getOrElse(""), now.details.description.getOrElse("")),
+      new SimpleFieldChange("Special Attention", was.details.specialAttention.getOrElse(""), now.details.specialAttention.getOrElse("")),
+      new SimpleFieldChange("Start Date", was.schedule.start.toString, now.schedule.start.toString),
+      new SimpleFieldChange("End Date", was.schedule.end.toString, now.schedule.end.toString),
+      new SimpleFieldChange("Hours Per Day", was.schedule.hoursPerDay.toString, now.schedule.hoursPerDay.toString),
+      new SimpleFieldChange("Total Hours", was.schedule.totalHours.toString, now.schedule.totalHours.toString),
+      new SimpleFieldChange("Private Event", was.notPublic.toString, now.notPublic.toString),
+      new SimpleFieldChange("Achived Event", was.archived.toString, now.archived.toString),
+      new FacilitatorChange("Facilitators", was.facilitatorIds, now.facilitatorIds),
+      new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
+
+    changes.filter(change ⇒ change.changed())
+  }
+
   def getFacilitatorIds(id: Long): List[Long] = DB.withSession { implicit session: Session ⇒
     (for {
       e ← EventFacilitators if e.eventId === id
@@ -122,8 +191,8 @@ object Event {
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === id).mutate(_.delete())
-    Events.where(_.id === id).mutate(_.delete())
     EventInvoice.delete(id)
+    Query(Events).filter(_.id === id).delete
   }
 
   def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒

@@ -51,7 +51,7 @@ object EventInvoice {
   }
 
   def update(invoice: EventInvoice): Unit = DB.withSession { implicit session: Session ⇒
-    EventInvoices.filter(_.id === invoice.id).update(invoice)
+    EventInvoices.filter(_.id === invoice.id).map(_.forUpdate).update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
   }
 
   def delete(eventId: Long): Unit = DB.withSession { implicit session: Session ⇒

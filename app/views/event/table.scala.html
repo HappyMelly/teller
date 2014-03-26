@@ -62,7 +62,7 @@
             <td><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></td>
             <td>
                 @for(facilitator <- event.facilitators) {
-                    <a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/>
+                    <div><a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/></div>
                 }
             </td>
             <td><img width="16" src="/assets/images/flags/16/@(event.location.countryCode.toLowerCase).png" align="absmiddle">
