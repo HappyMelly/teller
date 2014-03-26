@@ -151,7 +151,7 @@ object Events extends Controller with Security {
    */
   def sendEmailNotification(event: Event, changes: List[Event.FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
-    val subject = s"${activity.description} - ${event.title}"
+    val subject = s"${activity.description} event"
     EmailService.send(Set(recipient), subject, mail.txt.event(event, changes).toString)
   }
 
