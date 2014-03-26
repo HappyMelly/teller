@@ -99,6 +99,7 @@ trait Security extends SecureSocial with DeadboltActions {
       }
     }
   }
+
 }
 
 /**
