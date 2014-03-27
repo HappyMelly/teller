@@ -11,6 +11,7 @@
     <li><a href="#event">Event</a></li>
     <li><a href="#events">Events</a></li>
     <li><a href="#eventtypes">Event Types</a></li>
+    <li><a href="#eventsByCountry">Events By Country</a></li>
     <li><a href="#eventsByFacilitator">Events By Facilitator</a></li>
     <li><a href="#facilitators">Facilitators</a></li>
     <li><a href="#licensees">Licensees</a></li>
@@ -211,6 +212,57 @@
       <td>
         <a href="/api/v1/events/mgt30?api_token=@user.apiToken">GET /api/v1/events/mgt30</a>
         <br><a href="/api/v1/events/mgt30?future=true&public=true&api_token=@user.apiToken">GET /api/v1/events/mgt30?future=true&public=true</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="eventsByCountry">Events By Country</h3>
+
+  <p>A list with a number of events per country.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/events/{brand}/grouped/country</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td><code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td>none
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of objects, with properties:</p>
+        <ul>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+          <li><code>eventsNumber</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/events/mgt30/grouped/country?api_token=@user.apiToken">GET /api/v1/events/mgt30/grouped/country</a>
       </td>
     </tr>
   </table>

@@ -203,7 +203,7 @@ object Event {
   }
 
   /**
-   * Find a list of events based on a brand, time and publicity
+   * Return a list of events based on a brand, time and publicity
    */
   def findByParameters(brandCode: String,
     future: Option[Boolean],
@@ -235,7 +235,7 @@ object Event {
   }
 
   /**
-   * Find a list of events for a given facilitator
+   * Return a list of events for a given facilitator
    */
   def findByFacilitator(facilitatorId: Long, brandCode: String,
     future: Option[Boolean],
@@ -259,6 +259,13 @@ object Event {
     }.getOrElse(timeQuery)
 
     publicityQuery.sortBy(_.start).list
+  }
+
+  def findByBrandGroupByCountry(brandCode: String): List[(String, Int)] = DB.withSession { implicit session: Session ⇒
+    val now = LocalDate.now()
+    val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+    val query = Query(Events).filter(_.brandCode === brandCode).filter(_.end >= today).groupBy(_.countryCode)
+    query.map { case (code, events) ⇒ (code, events.length) }.list
   }
 
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒

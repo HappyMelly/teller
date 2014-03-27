@@ -25,7 +25,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.{Brand, Event}
+import models.{ Brand, Event }
 import play.api.i18n.Messages
 
 /**
@@ -103,12 +103,22 @@ object EventsApi extends Controller with ApiAuthentication {
     }
   }
 
+  implicit val countryInfoWrites = new Writes[(String, Int)] {
+    def writes(countryInfo: (String, Int)): JsValue = {
+      Json.obj(
+        "country" -> Json.obj(
+          "code" -> countryInfo._1,
+          "name" -> Messages("country." + countryInfo._1)),
+        "eventsNumber" -> countryInfo._2)
+    }
+  }
+
   /**
    * A list of countries with a number of events for a given brand
    */
   def countries(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(brandCode).map { brandView =>
-      val events: List[Event] = Event.findByBrand(brandCode)
+    Brand.find(brandCode).map { brandView ⇒
+      Ok(Json.toJson(Event.findByBrandGroupByCountry(brandCode)))
     }.getOrElse(NotFound("Unknown brand"))
   }
 
