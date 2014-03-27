@@ -47,9 +47,7 @@ object EventsApi extends Controller with ApiAuthentication {
         "totalHours" -> event.schedule.totalHours,
         "facilitators" -> event.facilitators,
         "city" -> event.location.city,
-        "country" -> Json.obj(
-          "code" -> event.location.countryCode,
-          "name" -> Messages("country." + event.location.countryCode)),
+        "country" -> event.location.countryCode,
         "website" -> event.details.webSite,
         "registrationPage" -> event.details.registrationPage)
     }
@@ -67,9 +65,7 @@ object EventsApi extends Controller with ApiAuthentication {
           "end" -> event.schedule.end,
           "totalHours" -> event.schedule.totalHours,
           "city" -> event.location.city,
-          "country" -> Json.obj(
-            "code" -> event.location.countryCode,
-            "name" -> Messages("country." + event.location.countryCode)),
+          "country" -> event.location.countryCode,
           "website" -> event.details.webSite,
           "registrationPage" -> event.details.registrationPage)
       }
@@ -93,9 +89,7 @@ object EventsApi extends Controller with ApiAuthentication {
         "totalHours" -> event.schedule.totalHours,
         "facilitators" -> event.facilitators,
         "city" -> event.location.city,
-        "country" -> Json.obj(
-          "code" -> event.location.countryCode,
-          "name" -> Messages("country." + event.location.countryCode)),
+        "country" -> event.location.countryCode,
         "website" -> event.details.webSite,
         "registrationPage" -> event.details.registrationPage,
         "public" -> !event.notPublic,
@@ -106,9 +100,7 @@ object EventsApi extends Controller with ApiAuthentication {
   implicit val countryInfoWrites = new Writes[(String, Int)] {
     def writes(countryInfo: (String, Int)): JsValue = {
       Json.obj(
-        "country" -> Json.obj(
-          "code" -> countryInfo._1,
-          "name" -> Messages("country." + countryInfo._1)),
+        "country" -> countryInfo._1,
         "eventsNumber" -> countryInfo._2)
     }
   }
