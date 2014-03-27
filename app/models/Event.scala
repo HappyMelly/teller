@@ -31,6 +31,7 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import models.database.{ EventFacilitators, Events }
 import play.api.i18n.Messages
+import com.github.tototoshi.slick.JodaSupport._
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -163,6 +164,8 @@ object Event {
       new SimpleFieldChange("End Date", was.schedule.end.toString, now.schedule.end.toString),
       new SimpleFieldChange("Hours Per Day", was.schedule.hoursPerDay.toString, now.schedule.hoursPerDay.toString),
       new SimpleFieldChange("Total Hours", was.schedule.totalHours.toString, now.schedule.totalHours.toString),
+      new SimpleFieldChange("Organizer Website", was.details.webSite.getOrElse(""), now.details.webSite.getOrElse("")),
+      new SimpleFieldChange("Registration Page", was.details.registrationPage.getOrElse(""), now.details.registrationPage.getOrElse("")),
       new SimpleFieldChange("Private Event", was.notPublic.toString, now.notPublic.toString),
       new SimpleFieldChange("Achived Event", was.archived.toString, now.archived.toString),
       new FacilitatorChange("Facilitators", was.facilitatorIds, now.facilitatorIds),
@@ -197,6 +200,72 @@ object Event {
 
   def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).filter(_.id === id).list.headOption
+  }
+
+  /**
+   * Return a list of events based on a brand, time and publicity
+   */
+  def findByParameters(brandCode: String,
+    future: Option[Boolean],
+    public: Option[Boolean],
+    countryCode: Option[String],
+    eventType: Option[Long]): List[Event] = DB.withSession { implicit session: Session ⇒
+    val baseQuery = Query(Events).filter(_.brandCode === brandCode)
+
+    val timeQuery = future.map { value ⇒
+      val now = LocalDate.now()
+      val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+      if (value) baseQuery.filter(_.end >= today)
+      else baseQuery.filter(_.end <= today)
+    }.getOrElse(baseQuery)
+
+    val publicityQuery = public.map { value ⇒
+      timeQuery.filter(_.notPublic === !value)
+    }.getOrElse(timeQuery)
+
+    val countryQuery = countryCode.map { value ⇒
+      publicityQuery.filter(_.countryCode === value)
+    }.getOrElse(publicityQuery)
+
+    val typeQuery = eventType.map { value ⇒
+      countryQuery.filter(_.eventTypeId === value)
+    }.getOrElse(countryQuery)
+
+    typeQuery.sortBy(_.start).list
+  }
+
+  /**
+   * Return a list of events for a given facilitator
+   */
+  def findByFacilitator(facilitatorId: Long, brandCode: String,
+    future: Option[Boolean],
+    public: Option[Boolean]): List[Event] = DB.withSession { implicit session: Session ⇒
+
+    val baseQuery = for {
+      (entry, event) ← Query(EventFacilitators).filter(_.facilitatorId === facilitatorId).leftJoin(Events) on (_.eventId === _.id)
+    } yield event
+
+    val brandQuery = baseQuery.filter(_.brandCode === brandCode)
+
+    val timeQuery = future.map { value ⇒
+      val now = LocalDate.now()
+      val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+      if (value) brandQuery.filter(_.end >= today)
+      else brandQuery.filter(_.end <= today)
+    }.getOrElse(baseQuery)
+
+    val publicityQuery = public.map { value ⇒
+      timeQuery.filter(_.notPublic === !value)
+    }.getOrElse(timeQuery)
+
+    publicityQuery.sortBy(_.start).list
+  }
+
+  def findByBrandGroupByCountry(brandCode: String): List[(String, Int)] = DB.withSession { implicit session: Session ⇒
+    val now = LocalDate.now()
+    val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+    val query = Query(Events).filter(_.brandCode === brandCode).filter(_.end >= today).groupBy(_.countryCode)
+    query.map { case (code, events) ⇒ (code, events.length) }.list
   }
 
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒

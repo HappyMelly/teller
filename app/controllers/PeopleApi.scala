@@ -28,6 +28,7 @@ import play.mvc.Controller
 import models._
 import play.api.libs.json._
 import models.LicenseView
+import play.api.i18n.Messages
 
 object PeopleApi extends Controller with ApiAuthentication {
 
@@ -38,7 +39,9 @@ object PeopleApi extends Controller with ApiAuthentication {
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "photo" -> person.photo.url,
-        "country" -> person.address.countryCode)
+        "country" -> Json.obj(
+          "code" -> person.address.countryCode,
+          "name" -> Messages("country." + person.address.countryCode)))
     }
   }
 

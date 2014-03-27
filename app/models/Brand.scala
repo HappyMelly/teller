@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ BookingEntries, Licenses, Brands, ProductBrandAssociations }
-import org.joda.time.DateTime
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -125,6 +125,17 @@ object Brand {
           BrandView(brand, coordinator, licenses)
       }.toList.headOption
 
+  }
+
+  /**
+   * Return a list of facilitators for a given brand
+   */
+  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
+    val licensees = License.licensees(code, LocalDate.now())
+    if (licensees.exists(_.id == coordinator.id))
+      licensees
+    else
+      coordinator :: licensees
   }
 
   /** Finds a brand by ID **/

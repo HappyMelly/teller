@@ -60,11 +60,7 @@ object Facilitators extends Controller with Security {
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Brand.find(brandCode).map { brand ⇒
-        val licensees = License.licensees(brandCode, LocalDate.now())
-        val facilitators = if (licensees.exists(_.id == brand.coordinator.id))
-          licensees
-        else
-          brand.coordinator :: licensees
+        val facilitators = Brand.findFacilitators(brandCode, brand.coordinator)
         Ok(Json.toJson(facilitators.map(person ⇒ (person, person.id == brand.coordinator.id))))
       }.getOrElse(NotFound("Unknown brand"))
   }

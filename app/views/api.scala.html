@@ -8,6 +8,12 @@
   <p>This page documents the JSON-based REST API, for programmatic access to data. The API is split into <em>resources:</em></p>
 
   <ul>
+    <li><a href="#event">Event</a></li>
+    <li><a href="#events">Events</a></li>
+    <li><a href="#eventtypes">Event Types</a></li>
+    <li><a href="#eventsByCountry">Events By Country</a></li>
+    <li><a href="#eventsByFacilitator">Events By Facilitator</a></li>
+    <li><a href="#facilitators">Facilitators</a></li>
     <li><a href="#licensees">Licensees</a></li>
     <li><a href="#licensee">Licensee details</a></li>
     <li><a href="#organizations">Organizations</a></li>
@@ -52,6 +58,378 @@
 
 
   <h2>HTTP resources</h2>
+  <h3 id="event">Event</h3>
+
+  <p>The <em>event details</em> resource provides more details about an entry in the <a href="#events">list</a>.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/event/{eventId}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <p><code>eventId</code> unique identifier for the event, e.g. <code>42</code></p>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of events objects, with properties:</p>
+        <ul>
+          <li><code>brand</code> - a code for a brand</li>
+          <li><code>eventType</code> - see <a href="#eventtypes">Event Types</a></li>
+          <li><code>title</code></li>
+          <li><code>description</code></li>
+          <li><code>spokenLanguage</code></li>
+          <li><code>materialsLanguage</code></li>
+          <li><code>start</code></li>
+          <li><code>end</code></li>
+          <li><code>hoursPerDay</code></li>
+          <li><code>totalHours</code></li>
+          <li><code>facilitators</code> - an array of objects
+            <ul>
+              <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+              <li><code>name</code></li>
+              <li><code>photo</code></li>
+              <li><code>city</code></li>
+              <li><code>country</code>
+                <ul>
+                  <li><code>code</code> - ISO 8166-2 country code</li>
+                  <li><code>name</code></li>
+                </ul></li>
+            </ul>
+          </li>
+          <li><code>city</code></li>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+          <li><code>website</code></li>
+          <li><code>registrationPage</code></li>
+          <li><code>public</code> - <code>true</code> if the event is public</li>
+          <li><code>archived</code> - <code>true</code> if the event is archived</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/event/1?api_token=@user.apiToken">GET /api/v1/event/1</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="events">Events</h3>
+
+  <p>The <em>events</em> resource is a list of events for a particular brand, optionally filtered by several parameters.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/events/{brand}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td>
+        <ul>
+          <li><code>future</code> - filter events by time: <code>true</code> for future events and <code>false</code> for past events</li>
+          <li><code>public</code> - filter events by publicity: <code>true</code> for public events and <code>false</code> for private events</li>
+          <li><code>countryCode</code> - filter events by ISO 8166-2 country code, e.g. AT </li>
+          <li><code>eventType</code> - filter events by an event type</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of events objects, with properties:</p>
+        <ul>
+          <li><code>title</code></li>
+          <li><code>description</code></li>
+          <li><code>spokenLanguage</code></li>
+          <li><code>start</code></li>
+          <li><code>end</code></li>
+          <li><code>totalHours</code></li>
+          <li><code>facilitators</code> - an array of objects
+            <ul>
+              <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+              <li><code>name</code></li>
+              <li><code>photo</code></li>
+              <li><code>city</code></li>
+              <li><code>country</code>
+                <ul>
+                  <li><code>code</code> - ISO 8166-2 country code</li>
+                  <li><code>name</code></li>
+                </ul></li>
+            </ul>
+          </li>
+          <li><code>city</code></li>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+          <li><code>website</code></li>
+          <li><code>registrationPage</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/events/mgt30?api_token=@user.apiToken">GET /api/v1/events/mgt30</a>
+        <br><a href="/api/v1/events/mgt30?future=true&public=true&api_token=@user.apiToken">GET /api/v1/events/mgt30?future=true&public=true</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="eventsByCountry">Events By Country</h3>
+
+  <p>A list with a number of events per country.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/events/{brand}/grouped/country</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td><code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td>none
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of objects, with properties:</p>
+        <ul>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+          <li><code>eventsNumber</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/events/mgt30/grouped/country?api_token=@user.apiToken">GET /api/v1/events/mgt30/grouped/country</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="eventsByFacilitator">Events By Facilitator</h3>
+
+  <p>The <em>events</em> resource is a list of events for a particular brand and a parcticular facilitator, optionally filtered by several parameters.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/events/{brand}/facilitator/{facilitatorId}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <ul>
+          <li><code>brand</code> a brand code to return events for, e.g. <code>mgt30</code></li>
+          <li><code>facilitatorId</code> an unique identifier of a facilitator to return events for</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters (optional)</th>
+      <td>
+        <ul>
+          <li><code>future</code> - filter events by time: <code>true</code> for future events and <code>false</code> for past events</li>
+          <li><code>public</code> - filter events by publicity: <code>true</code> for public events and <code>false</code> for private events</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of events objects, with properties:</p>
+        <ul>
+          <li><code>title</code></li>
+          <li><code>description</code></li>
+          <li><code>spokenLanguage</code></li>
+          <li><code>start</code></li>
+          <li><code>end</code></li>
+          <li><code>totalHours</code></li>
+          <li><code>city</code></li>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+          <li><code>website</code></li>
+          <li><code>registrationPage</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/events/mgt30/facilitator/1?api_token=@user.apiToken">GET /api/v1/events/mgt30/facilitator/1</a>
+        <br><a href="/api/v1/events/mgt30/facilitator/1?future=true&public=true&api_token=@user.apiToken">GET /api/v1/events/mgt30/facilitator/1?future=true&public=true</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="eventtypes">Event Types</h3>
+
+  <p>The <em>event types</em> resource is a list of event types for a particular brand.</p>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/eventtypes/{brand}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <code>brand</code> a brand code to return event types for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of event types objects, with properties:</p>
+        <ul>
+          <li><code>id</code> - unique identification number of the type</li>
+          <li><code>brand</code> - a brand code, e.g. <code>MGT30</code></li>
+          <li><code>name</code></li>
+          <li><code>defaultTitle</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>
+        <p><code>404 Not Found</code> if the given brand code is not defined</p>
+      </td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td>
+        <a href="/api/v1/eventtypes/mgt30?api_token=@user.apiToken">GET /api/v1/eventtypes/mgt30</a>
+      </td>
+    </tr>
+  </table>
+
+  <h3 id="facilitators">Facilitators</h3>
+  <table class="table table-bordered">
+    <tr>
+      <th>Description</th>
+      <td>A list of facilitators for a particular brand</td>
+    </tr>
+    <tr>
+      <th>Request</th>
+      <td><code>GET /api/v1/facilitators/{brand}</code></td>
+    </tr>
+    <tr>
+      <th>Request path parameters</th>
+      <td>
+        <code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+      </td>
+    </tr>
+    <tr>
+      <th>Request query string parameters</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Response content type</th>
+      <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+      <th>Response body</th>
+      <td>
+        <p>A JSON array of person objects, with properties:</p>
+        <ul>
+          <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+          <li><code>name</code></li>
+          <li><code>photo</code></li>
+          <li><code>city</code></li>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <th>Errors (HTTP status)</th>
+      <td>none</td>
+    </tr>
+    <tr>
+      <th>Examples</th>
+      <td><a href="/api/v1/facilitators/mgt30?api_token=@user.apiToken">GET /api/v1/facilitators/mgt30</a><br>
+    </tr>
+  </table>
 
   <h3 id="licensees">Licensees</h3>
 
@@ -323,7 +701,11 @@
           <li><code>name</code></li>
           <li><code>photo</code></li>
           <li><code>city</code></li>
-          <li><code>country</code> - ISO 8166-2 country code</li>
+          <li><code>country</code>
+            <ul>
+              <li><code>code</code> - ISO 8166-2 country code</li>
+              <li><code>name</code></li>
+            </ul></li>
         </ul>
       </td>
     </tr>
