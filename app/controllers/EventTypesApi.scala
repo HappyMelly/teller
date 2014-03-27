@@ -32,7 +32,7 @@ import models.{ Brand, EventType }
  */
 object EventTypesApi extends Controller with ApiAuthentication {
 
-  implicit val eventWrites = new Writes[EventType] {
+  implicit val eventTypeWrites = new Writes[EventType] {
     def writes(eventType: EventType): JsValue = {
       Json.obj(
         "id" -> eventType.id,
