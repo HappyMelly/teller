@@ -137,6 +137,7 @@ object Events extends Controller with Security {
       "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "notPublic" -> default(boolean, false),
     "archived" -> default(boolean, false),
+    "confirmed" -> default(boolean, false),
     "invoice" -> invoiceMapping,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
@@ -164,7 +165,8 @@ object Events extends Controller with Security {
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
-      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule, false, false, defaultInvoice, DateTime.now(), "", DateTime.now(), "", List[Long]())
+      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule,
+        false, false, false, defaultInvoice, DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))

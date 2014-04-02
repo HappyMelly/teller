@@ -43,7 +43,7 @@ object EmailService {
   /**
    * Sends an e-mail message asynchronously using an actor. Does not send to non-active recipients.
    */
-  def send(recipients: Set[Person], subject: String, body: String)(implicit request: RequestHeader): Unit = {
+  def send(recipients: Set[Person], subject: String, body: String): Unit = {
     val recipientAddresses = recipients.filter(_.active).map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
     val message = EmailMessage(recipientAddresses.toList, from, subject, body)
     emailServiceActor ! message

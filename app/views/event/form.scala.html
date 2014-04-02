@@ -145,6 +145,13 @@
               Archived Event
           </label>
       </div>
+      <div class="control-group" id="confirmed_field">
+          <label for="confirmed" class="checkbox">
+              <input type="checkbox" id="confirmed" name="confirmed" value="true"
+              @if(form("confirmed").value.exists(_ == "true")){checked}>
+              Confirmed Event
+          </label>
+      </div>
       <legend>Invoice</legend>
       @defining(form("invoice.invoiceTo").hasErrors) { hasErrors =>
       <div class="controls-row control-group @if(hasErrors) {error}">
