@@ -131,7 +131,7 @@ object EventsApi extends Controller with ApiAuthentication {
     public: Option[Boolean],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = Event.findByParameters(brandCode, future, public, countryCode, eventType)
+    val events: List[Event] = Event.findByParameters(brandCode, future, public, None, countryCode, eventType)
     Ok(Json.toJson(events))
   }
 

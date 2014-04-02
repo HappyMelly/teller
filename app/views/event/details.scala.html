@@ -20,15 +20,15 @@
         <a class="btn-small btn"href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a>
       }
     </h1>
-        <p><small>Added by @event.createdBy on @event.created.format <br> Updated by @event.updatedBy on @event.updated.format</small>
-
-        </p>
         <p>
             @if(event.notPublic) {
-            <span class="label label-success">Private</span>
+            <span class="label label-inverse">Private</span>
             }
             @if(event.archived) {
-            <span class="label label-important">Archived</span>
+            <span class="label label-info">Archived</span>
+            }
+            @if(event.confirmed) {
+            <span class="label label-success">Confirmed</span>
             }
         </p>
     </header>

@@ -52,6 +52,7 @@
           <th>Invoice</th>
           <th>Private</th>
           <th>Archived</th>
+          <th>Confirmed</th>
           <th></th>
         </tr>
     </thead>
@@ -73,9 +74,14 @@
             <td>@event.invoice.invoiceBy.map{ v => Yes }.getOrElse("No")</td>
             <td>@event.notPublic</td>
             <td>@event.archived</td>
+            <td>@if(event.confirmed) {
+              <span class="label label-success">yes</span>
+            } else {
+              <span class="label label-important">no</span>
+            }</td>
             <td>@actions(event)</td>
         </tr>
-    }        
+    }
     </tbody>
   </table>
 }

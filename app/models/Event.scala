@@ -32,6 +32,7 @@ import scala.slick.lifted.Query
 import models.database.{ EventFacilitators, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
+import services.EmailService
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -53,6 +54,7 @@ case class Event(
   schedule: Schedule,
   notPublic: Boolean = false,
   archived: Boolean = false,
+  confirmed: Boolean = false,
   invoice: EventInvoice,
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -77,7 +79,11 @@ case class Event(
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
-    val id = Events.forInsert.insert(this)
+    val insertTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
+      details.description, details.specialAttention, details.webSite, details.registrationPage,
+      schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
+      notPublic, archived, confirmed, created, createdBy)
+    val id = Events.forInsert.insert(insertTuple)
     this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
     EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
     this.copy(id = Some(id))
@@ -89,7 +95,7 @@ case class Event(
     val updateTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
       details.description, details.specialAttention, details.webSite, details.registrationPage,
       schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
-      notPublic, archived, updated, updatedBy)
+      notPublic, archived, confirmed, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
 
@@ -203,11 +209,12 @@ object Event {
   }
 
   /**
-   * Return a list of events based on a brand, time and publicity
+   * Return a list of events based on several parameters
    */
   def findByParameters(brandCode: String,
     future: Option[Boolean],
     public: Option[Boolean],
+    confirmed: Option[Boolean],
     countryCode: Option[String],
     eventType: Option[Long]): List[Event] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(Events).filter(_.brandCode === brandCode)
@@ -223,9 +230,13 @@ object Event {
       timeQuery.filter(_.notPublic === !value)
     }.getOrElse(timeQuery)
 
-    val countryQuery = countryCode.map { value ⇒
-      publicityQuery.filter(_.countryCode === value)
+    val confirmedQuery = confirmed.map { value ⇒
+      publicityQuery.filter(_.confirmed === value)
     }.getOrElse(publicityQuery)
+
+    val countryQuery = countryCode.map { value ⇒
+      confirmedQuery.filter(_.countryCode === value)
+    }.getOrElse(confirmedQuery)
 
     val typeQuery = eventType.map { value ⇒
       countryQuery.filter(_.eventTypeId === value)
@@ -270,6 +281,15 @@ object Event {
 
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).sortBy(_.title.toLowerCase).list
+  }
+
+  def sendConfirmationAlert = {
+    Brand.findAll.foreach { brand ⇒
+      Event.findByParameters(brand.brand.code, Some(false), None, Some(false), None, None).foreach { event ⇒
+        val subject = "Сonfirm your event " + event.title
+        EmailService.send(event.facilitators.toSet, subject, mail.txt.confirm(event).toString)
+      }
+    }
   }
 
 }

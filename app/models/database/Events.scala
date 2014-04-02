@@ -56,6 +56,7 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def notPublic = column[Boolean]("NOT_PUBLIC")
   def archived = column[Boolean]("ARCHIVED")
+  def confirmed = column[Boolean]("CONFIRMED")
 
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
@@ -66,14 +67,17 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
     description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
-    notPublic ~ archived ~ created ~ createdBy ~ updated ~ updatedBy <> (
+    notPublic ~ archived ~ confirmed <> (
       e ⇒ Event(e._1, e._2, e._3, e._4, e._5, e._6, Location(e._7, e._8), Details(e._9, e._10, e._11, e._12),
-        Schedule(e._13, e._14, e._15, e._16), e._17, e._18, EventInvoice.findByEvent(e._1.get), e._19, e._20, e._21, e._22, Event.getFacilitatorIds(e._1.getOrElse(0))),
-      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.schedule.totalHours, e.notPublic, e.archived, e.created, e.createdBy, e.updated, e.updatedBy)))
+        Schedule(e._13, e._14, e._15, e._16), e._17, e._18, e._19, EventInvoice.findByEvent(e._1.get),
+        DateTime.now(), "", DateTime.now(), "", Event.getFacilitatorIds(e._1.getOrElse(0))),
+      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.schedule.totalHours, e.notPublic, e.archived, e.confirmed)))
 
-  def forInsert = * returning id
+  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
+    description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
+    notPublic ~ archived ~ confirmed ~ created ~ createdBy returning id
 
   def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
     description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
-    notPublic ~ archived ~ updated ~ updatedBy
+    notPublic ~ archived ~ confirmed ~ updated ~ updatedBy
 }
