@@ -2,8 +2,8 @@
 @import play.api.Play
 @import play.api.Play.current
 @import templates.Formatters._
-You received this e-mail because you were added as a facilitator for a <strong>@Brand.find(event.brandCode).get.brand.name</strong> event <a href="@Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0))">@event.title</a>.
+You received this e-mail because you were added as a facilitator for a @Brand.find(event.brandCode).get.brand.name event @event.title (link: @Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0))).
 
-Please, <a href="@Play.configuration.getString("application.baseUrl")@routes.Events.edit(event.id.getOrElse(0))">confirm</a> if the event actually took place or <a href="@Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0))">delete</a> it.
+Please, follow the link @Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0)) to confirm the event if it actually took place or delete it.
 
 THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM HAPPY MELLY TELLER
