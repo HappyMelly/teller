@@ -81,6 +81,7 @@ activity.contribution.delete = a contributor ({1}) from {0}
 activity.eventType.create = new event type ({1}) to {0}
 activity.eventType.delete = an event type ({1}) from {0}
 activity.balance = {0} balanced {1} accounts
+activity.confirm = {0} confirmed {1} event
 
 # Controller error messages
 # {0} Object name

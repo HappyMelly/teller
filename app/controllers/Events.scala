@@ -333,4 +333,17 @@ object Events extends Controller with Security {
         })
   }
 
+  /**
+   * Confirm form submits to this action.
+   * @param id Event ID
+   */
+  def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
+    implicit handler ⇒
+      Event.find(id).map {
+        event ⇒
+          event.copy(confirmed = true).update
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Confirmed, event.title)
+          Redirect(routes.Events.details(event.id.getOrElse(0))).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
 }
