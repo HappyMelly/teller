@@ -31,7 +31,6 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import play.api.libs.Crypto
 import scala.util.Random
-import play.Logger
 
 /**
  * Category classifications that a product has zero or one of.

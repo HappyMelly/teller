@@ -25,7 +25,8 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.Brand
+import models.{ Brand, BrandView }
+import play.api.i18n.Messages
 
 /**
  * Brands API
@@ -38,6 +39,49 @@ object BrandsApi extends Controller with ApiAuthentication {
         "code" -> brand.code,
         "name" -> brand.name)
     }
+  }
+
+  implicit val brandViewWrites = new Writes[BrandView] {
+    def writes(brandView: BrandView): JsValue = {
+      Json.obj(
+        "href" -> routes.BrandsApi.brand(brandView.brand.code).url,
+        "name" -> brandView.brand.name,
+        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
+        "description" -> brandView.brand.description,
+        "status" -> Messages("models.BrandStatus." + brandView.brand.status))
+    }
+  }
+
+  import PeopleApi.personWrites
+  import ProductsApi.productWrites
+
+  val brandViewDetailsWrites = new Writes[BrandView] {
+    def writes(brandView: BrandView): JsValue = {
+      Json.obj(
+        "code" -> brandView.brand.code,
+        "name" -> brandView.brand.name,
+        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
+        "description" -> brandView.brand.description,
+        "status" -> Messages("models.BrandStatus." + brandView.brand.status),
+        "coordinator" -> brandView.coordinator,
+        "products" -> brandView.brand.products)
+    }
+  }
+
+  /**
+   * Brand details API.
+   */
+  def brand(code: String) = TokenSecuredAction { implicit request ⇒
+    Brand.find(code).map { brandView ⇒
+      Ok(Json.toJson(brandView)(brandViewDetailsWrites))
+    }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  /**
+   * Brand list API.
+   */
+  def brands = TokenSecuredAction { implicit request ⇒
+    Ok(Json.toJson(Brand.findAll))
   }
 
 }
