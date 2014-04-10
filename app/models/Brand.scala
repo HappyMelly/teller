@@ -29,12 +29,34 @@ import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.libs.Crypto
+import scala.util.Random
+
+/**
+ * Brand classifications that a brand has one of.
+ */
+object BrandStatus extends Enumeration {
+  val Accepted = Value("accepted")
+  val HuddleGathering = Value("huddlegathering")
+  val GatheringHuddle = Value("gatheringhuddle")
+  val ProvisionallyAccepted = Value("provisionallyaccepted")
+  val Experimental = Value("experimental")
+}
 
 /**
  * A person, such as the owner or employee of an organisation.
  */
-case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Long,
-  created: DateTime, createdBy: String, updated: DateTime, updatedBy: String) {
+case class Brand(id: Option[Long],
+  code: String,
+  name: String,
+  coordinatorId: Long,
+  description: Option[String],
+  status: BrandStatus.Value,
+  picture: Option[String],
+  created: DateTime,
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
 
   /**
    * Returns true if this brand may be deleted.
@@ -67,7 +89,7 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
   def delete(): Unit = Brand.delete(this.id.get)
 
   def update = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (code, name, coordinatorId, updated, updatedBy)
+    val updateTuple = (code, name, coordinatorId, description, status, picture, updated, updatedBy)
     val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
@@ -77,6 +99,10 @@ case class Brand(id: Option[Long], code: String, name: String, coordinatorId: Lo
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
 
 object Brand {
+
+  def cacheId(code: String): String = "brands." + code
+
+  def generateImageName(filename: String): String = "brands/" + Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
 
   /**
    * Returns true if and only if there is a brand with the given code.

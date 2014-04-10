@@ -49,6 +49,7 @@ object Products extends Controller with Security {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
+
   /**
    * Formatter used to define a form mapping for the `ProductCategory` enumeration.
    */

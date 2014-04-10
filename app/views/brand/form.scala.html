@@ -16,10 +16,16 @@
           </div>
         }
 
-        @helper.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create()))) {
+        @helper.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())), 'enctype -> "multipart/form-data") {
             @helper.inputText(form("code"), '_label -> "Code")
             @helper.inputText(form("name"), '_label -> "Name")
             @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")
+            @helper.textarea(form("description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
+            @helper.select(
+              form("status"),
+              ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
+              '_label -> "Status")
+            @helper.inputFile(form("picture"), '_label -> "Picture")
 
             <button class="btn btn-primary" type="submit">Save</button>
         }

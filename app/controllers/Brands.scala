@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ EventType, BrandView, Activity, Brand }
+import models.{ EventType, BrandView, Activity, Brand, BrandStatus }
 import org.joda.time._
 import play.api.mvc._
 import play.api.data.Form
@@ -33,8 +33,39 @@ import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import scala.Some
+import play.api.data.FormError
+import play.api.data.format.Formatter
+import java.io.File
+import play.api.cache.Cache
+import services._
+import fly.play.s3.{ BucketFile, S3Exception }
+import play.api.Play.current
+import scala.io.Source
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
 
 object Brands extends Controller with Security {
+
+  val contentType = "image/jpeg"
+  val encoding = "ISO-8859-1"
+
+  /**
+   * Formatter used to define a form mapping for the `BrandStatus` enumeration.
+   */
+  implicit def brandStatus: Formatter[BrandStatus.Value] = new Formatter[BrandStatus.Value] {
+
+    def bind(key: String, data: Map[String, String]) = {
+      try {
+        data.get(key).map(BrandStatus.withName(_)).toRight(Seq.empty)
+      } catch {
+        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
+      }
+    }
+
+    def unbind(key: String, value: BrandStatus.Value) = Map(key -> value.toString)
+  }
+
+  val brandMapping = of[BrandStatus.Value]
 
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit request: SecuredRequest[_]) = Form(mapping(
@@ -42,6 +73,9 @@ object Brands extends Controller with Security {
     "code" -> nonEmptyText.verifying(pattern("[A-Z0-9]*".r, "constraint.brand.code", "constraint.brand.code.error"), maxLength(5)),
     "name" -> nonEmptyText,
     "coordinatorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "description" -> optional(text),
+    "status" -> brandMapping,
+    "picture" -> optional(text),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
@@ -60,19 +94,37 @@ object Brands extends Controller with Security {
       Ok(views.html.brand.form(request.user, None, brandsForm))
   }
 
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      val boundForm: Form[Brand] = brandsForm.bindFromRequest
-      boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.brand.form(request.user, None, formWithErrors)),
+      val form: Form[Brand] = brandsForm.bindFromRequest
+      form.fold(
+        formWithErrors ⇒ Future.successful(
+          BadRequest(views.html.brand.form(request.user, None, formWithErrors))),
         brand ⇒ {
-          if (Brand.exists(brand.code)) BadRequest(views.html.brand.form(request.user, None,
-            boundForm.withError("code", "constraint.brand.code.exists", brand.code)))
-
-          val savedBrand = brand.insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, savedBrand.name)
-          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+          if (Brand.exists(brand.code))
+            Future.successful(BadRequest(views.html.brand.form(request.user, None,
+              form.withError("code", "constraint.brand.code.exists", brand.code))))
+          else {
+            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+              val filename = Brand.generateImageName(picture.filename)
+              val source = Source.fromFile(picture.ref.file.getPath, encoding)
+              val byteArray = source.toArray.map(_.toByte)
+              source.close()
+              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                brand.copy(picture = Some(filename)).insert
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
+                Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+              }.recover {
+                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.brand.form(request.user, None,
+                  form.withError("picture", "Image cannot be temporary saved")))
+              }
+            }.getOrElse {
+              brand.insert
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
+              Future.successful(Redirect(routes.Brands.index()).flashing("success" -> activity.toString))
+            }
+          }
         })
   }
 
@@ -81,9 +133,28 @@ object Brands extends Controller with Security {
     implicit handler ⇒
       Brand.find(code).map {
         case BrandView(brand, _, _) ⇒
+          brand.picture.map { picture ⇒
+            S3Bucket.remove(picture)
+            Cache.remove(Brand.cacheId(brand.code))
+          }
           brand.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
           Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /** Delete picture form submits to this action **/
+  def deletePicture(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(code).map { brandView ⇒
+        brandView.brand.picture.map { picture ⇒
+          S3Bucket.remove(picture)
+          Cache.remove(Brand.cacheId(brandView.brand.code))
+        }
+        brandView.brand.copy(picture = None).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
+          "image from the brand " + brandView.brand.name)
+        Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -108,19 +179,66 @@ object Brands extends Controller with Security {
   }
 
   /** Edit form submits to this action **/
-  def update(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(code: String) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Brand.find(code).map { originalBrandView ⇒
-        brandsForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.brand.form(request.user, Some(code), form)),
+      Brand.find(code).map { existingBrandView ⇒
+        val form: Form[Brand] = brandsForm.bindFromRequest
+        form.fold(
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.brand.form(request.user, Some(code), form))),
           brand ⇒ {
-            brand.copy(id = originalBrandView.brand.id).update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
-            Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+              val filename = Brand.generateImageName(picture.filename)
+              val source = Source.fromFile(picture.ref.file.getPath, encoding)
+              val byteArray = source.toArray.map(_.toByte)
+              source.close()
+              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                brand.copy(id = existingBrandView.brand.id).copy(picture = Some(filename)).update
+                Cache.remove(Brand.cacheId(code))
+                existingBrandView.brand.picture.map { oldPicture ⇒
+                  S3Bucket.remove(oldPicture)
+                }
+                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+                Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
+              }.recover {
+                case S3Exception(status, code, message, originalXml) ⇒
+                  BadRequest(views.html.brand.form(request.user, Some(brand.code),
+                    form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
+              }
+            }.getOrElse {
+              brand.copy(id = existingBrandView.brand.id).copy(picture = existingBrandView.brand.picture).update
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+              Future.successful(Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString))
+            }
           })
-      }.getOrElse(NotFound)
+      }.getOrElse(Future.successful(NotFound))
+  }
 
+  /**
+   * Retrieve and cache a product's image
+   */
+  def picture(code: String) = Action.async {
+    val cached = Cache.getAs[Array[Byte]](Brand.cacheId(code))
+    if (cached.isDefined) {
+      Future.successful(Ok(cached.get).as(contentType))
+    } else {
+      val empty = Array[Byte]()
+      val image: Future[Array[Byte]] = Brand.find(code).map { entry ⇒
+        entry.brand.picture.map { picture ⇒
+          val result = S3Bucket.get(entry.brand.picture.get)
+          result.map {
+            case BucketFile(name, contentType, content, acl, headers) ⇒ content
+          }.recover {
+            case S3Exception(status, code, message, originalXml) ⇒ empty
+          }
+        }.getOrElse(Future.successful(empty))
+      }.getOrElse(Future.successful(empty))
+      image.map {
+        case value ⇒
+          Cache.set(Brand.cacheId(code), value)
+          Ok(value).as(contentType)
+      }
+    }
   }
 
 }

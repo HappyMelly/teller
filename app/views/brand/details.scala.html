@@ -42,8 +42,28 @@
     <br>@brand.code</p>
       <p><strong>Brand coordinator</strong>
     <br><a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a></p>
+    @brand.description.map { desc =>
+    <p>
+      <strong>Description</strong><br/>@desc.markdown
+    </p>
+    }
+    <p><strong>Status</strong>
+    <br/><span class="label @Messages(s"models.BrandStatus." + brand.status + ".label")">@Messages(s"models.BrandStatus." + brand.status)</span>
   </div>
   <div class="span4">
+    @brand.picture.map { picture =>
+      <form class="delete" method="post" text="image" action="@CSRF(routes.Brands.deletePicture(brand.code))">
+        <h3>Picture
+          @restrict(handler, List(as(Editor.toString))) {
+            <button class="btn btn-danger" type="submit">
+              <i class="icon-white icon-trash"></i> Delete Picture
+            </button>
+          }
+        </h3>
+      </form>
+      <a href="@routes.Brands.picture(brand.code).url">
+          <img src="@routes.Brands.picture(brand.code).url"/></a>
+    }
     <h3>Products</h3>
     @if(brand.products.isEmpty) {
       <p>This brand doesn't have any products.</p>
