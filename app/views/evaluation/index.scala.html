@@ -1,0 +1,31 @@
+@(user: securesocial.core.Identity, evaluations: List[Evaluation])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main("Evaluations", Some(user)) {
+
+  <div class="span5">
+    <h1>Evaluations</h1>
+  </div>
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="span3">
+      <a class="btn btn-success" href="@routes.Evaluations.add()">
+      <i class="icon-plus icon-white"></i>Add Evaluation</a>
+    </div>
+  }
+
+  <div class="span10">
+    @if(evaluations.isEmpty) {
+      <p>There are no evaluations</p>
+    } else {
+      @table(evaluations) { evaluation =>
+        @restrict(handler, List(as(Editor.toString))) {
+          <a href="@routes.Evaluations.edit(evaluation.id)"><i class="icon-pencil"></i> Edit</a>
+        }
+      }
+    }
+  </div>
+
+	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+}
