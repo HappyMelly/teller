@@ -66,7 +66,7 @@ object Evaluations extends Controller with Security {
   val statusMapping = of[EvaluationStatus.Value]
 
   /** HTML form mapping for creating and editing. */
-  def EvaluationForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def evaluationForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
       "Such event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
@@ -76,41 +76,45 @@ object Evaluations extends Controller with Security {
     "question3" -> nonEmptyText,
     "question4" -> nonEmptyText,
     "question5" -> nonEmptyText,
-    "question6" -> number,
-    "question7" -> number,
+    "question6" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
+    "question7" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
     "question8" -> nonEmptyText,
-    "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
+    "status" -> statusMapping,
+    "handled" -> optional(jodaLocalDate),
+    "certificate" -> optional(nonEmptyText),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now),
     "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
 
-  /** Show all Evaluations **/
+  /** Show all evaluations **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      val Evaluations = models.Evaluation.findAll
-      Ok(views.html.Evaluation.index(request.user, Evaluations))
+      val evaluations = models.Evaluation.findAll
+      Ok(views.html.evaluation.index(request.user, evaluations))
   }
 
   /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.Evaluation.form(request.user, None, EvaluationForm))
+      // TODO: some rules on filtering events
+      val events = Event.findAll
+      Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
   }
 
   /** Add form submits to this action **/
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      val form: Form[Evaluation] = EvaluationForm.bindFromRequest
+      val form: Form[Evaluation] = evaluationForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ BadRequest(views.html.Evaluation.form(request.user, None, formWithErrors)),
+        formWithErrors ⇒ BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, Event.findAll)),
         evaluation ⇒ {
           evaluation.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
-          Future.successful(Redirect(routes.Evaluations.index()).flashing("success" -> activity.toString))
-      })
+          Redirect(routes.Evaluations.index()).flashing("success" -> activity.toString)
+        })
   }
 
   /** Delete an evaluation **/
@@ -131,7 +135,7 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.Evaluation.details(request.user, evaluation))
+          Ok(views.html.evaluation.details(request.user, evaluation))
       }.getOrElse(NotFound)
 
   }
@@ -142,7 +146,7 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.Evaluation.form(request.user, Some(id), EvaluationForm.fill(evaluation)))
+          Ok(views.html.evaluation.form(request.user, Some(id), evaluationForm.fill(evaluation), Event.findAll))
       }.getOrElse(NotFound)
 
   }
@@ -152,15 +156,14 @@ object Evaluations extends Controller with Security {
     implicit handler ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = EvaluationForm.bindFromRequest
-        val title = Some(existingEvaluation.title)
+        val form: Form[Evaluation] = evaluationForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.Evaluation.form(request.user, Some(id), form)),
+          formWithErrors ⇒ BadRequest(views.html.evaluation.form(request.user, Some(id), form, Event.findAll)),
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
             Redirect(routes.Evaluations.details(id)).flashing("success" -> activity.toString)
-        })
+          })
       }.getOrElse(NotFound)
   }
 

@@ -5,22 +5,33 @@
   <table id="evaluations" class="datatables table table-bordered">
   <thead>
     <tr>
-      <th>First Name</th>
-      <th class="sorting_asc">Last Name</th>
-      <th>Country</th>
+      <th>Participant</th>
+      <th>Event</th>
+      <th>Event Location</th>
+      <th>Event Date</th>
+      <th>General Impression</th>
+      <th>Status</th>
+      <th>Evaluation Date</th>
+      <th>Handled Date</th>
+      <th>Certificate Number</th>
       <th></th>
     </tr>
   </thead>
   <tbody>
-    @for(person <- evaluations) {
-      <tr @if(!person.active) { class="inactive" title="deactivated" })>
-        <td><a href="@routes.Evaluations.details(person.id)">@person.firstName</a></td>
-        <td><a href="@routes.Evaluations.details(person.id)">@person.lastName</a></td>
+    @for(evaluation <- evaluations) {
+      <tr>
+        <td><a href="@routes.People.details(evaluation.participantId.get)">@evaluation.participant.fullName</a></td>
+        <td><a href="@routes.Events.details(evaluation.eventId)">@evaluation.event.title</a></td>
         <td>
-          <img width="16" src="/assets/images/flags/16/@(person.countryCode.toLowerCase).png" align="absmiddle">
-          @Messages("country." + person.countryCode)
+          <img width="16" src="/assets/images/flags/16/@(evaluation.event.location.countryCode.toLowerCase).png" align="absmiddle">
+          @evaluation.event.location.city
         </td>
-        <td>@actions(person)</td>
+        <td style="white-space: nowrap;">@evaluation.event.schedule.start / @evaluation.event.schedule.end</td>
+        <td>@evaluation.question6</td>
+        <td><span class="label @Messages(s"models.EvaluationStatus." + evaluation.status + ".label")">@Messages(s"models.EvaluationStatus." + evaluation.status)</span></td>
+        <td>@evaluation.handled</td>
+        <td>@evaluation.certificate</td>
+        <td>@actions(evaluation)</td>
       </tr>
     }
   </tbody>

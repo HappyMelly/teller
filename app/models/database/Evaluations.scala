@@ -26,7 +26,7 @@ package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.{ Evaluation, EvaluationStatus }
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 
 /**
@@ -49,8 +49,8 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
   def question6 = column[Int]("QUESTION_6")
   def question7 = column[Int]("QUESTION_7")
   def question8 = column[String]("QUESTION_8")
-  def status = column[EvaluationStatus.Value](STATUS)
-  def handled = column[Option[DateTime]]("HANDLED")
+  def status = column[EvaluationStatus.Value]("STATUS")
+  def handled = column[Option[LocalDate]]("HANDLED")
   def certificate = column[Option[String]]("CERTIFICATE")
 
   def created = column[DateTime]("CREATED")

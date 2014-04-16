@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ Evaluations }
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -57,8 +57,8 @@ case class Evaluation(
   question7: Int,
   question8: String,
   status: EvaluationStatus.Value,
-  handled: Option[DateTime],
-  certificate: Option[String]
+  handled: Option[LocalDate],
+  certificate: Option[String],
   created: DateTime,
   createdBy: String,
   updated: DateTime,

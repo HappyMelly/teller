@@ -1,84 +1,46 @@
-@(user: securesocial.core.Identity, id: Option[Long], personForm: Form[Person])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  form: Form[Evaluation],
+  events: List[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import views.Countries
+@import views.Evaluations
 @import views.ViewHelpers._
 
-@main("Person", Some(user)) {
+@main("Evaluation", Some(user)) {
 
-  @defining(personForm.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
-    <h1>@personName</h1>
+  @defining(form.value.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
+    <h1>@title</h1>
 
-    @if(personForm.hasErrors) {
+    @if(form.hasErrors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         Please fix the validation errors.
       </div>
     }
 
-	  @helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
-      @helper.inputText(personForm("firstName"), '_label -> "First name")
-      @helper.inputText(personForm("lastName"), '_label -> "Last name")
-      @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
-      @helper.inputText(personForm("address.street1"), '_label -> "Address line 1")
-      @helper.inputText(personForm("address.street2"), '_label -> "Address line 2")
-      @helper.inputText(personForm("address.postCode"), '_label -> "Post code")
-      @helper.inputText(personForm("address.city"), '_label -> "City")
-      @helper.inputText(personForm("address.province"), '_label -> "Province or state")
-      @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
-      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
-      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
-
-      <input type="hidden" value="@personForm("photo").value.getOrElse("")" id="photo" name="photo"/>
-      <div class="control-group @if(personForm("profile.twitterHandle").hasErrors) {error}" id="twitterHandle">
-        <label for="twitterHandle">Twitter user name</label>
-        <div class="input-prepend">
-          <span class="add-on">@@</span>
-          <input type="text" id="twitterHandle" name="profile.twitterHandle" value="@personForm("profile.twitterHandle").value.getOrElse("")" placeholder="MyTwitter">
-        </div>
-        <span class="help-inline">
-          @if(personForm("profile.twitterHandle").hasErrors) {
-            @personForm("profile.twitterHandle").errors.map(error => Messages(error.message)).mkString(", ")
-          }
-        </span>
+	  @helper.form(action = CSRF(id.map(id => routes.Evaluations.update(id)).getOrElse(routes.Evaluations.create()))) {
+      @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
+      <div class="controls-row control-group">
+        @defining(form("participantId")) { field =>
+          <select name="@field.name" id="@field.id" value="@field.value">
+              <option value="">Choose a participant</option>
+          </select>
+        }
       </div>
-
-       <div class="control-group @if(personForm("profile.facebookUrl").hasErrors) {error}" id="facebookUrl">
-       <label for="facebookUrl">Facebook profile</label>
-       <div class="input-append">
-         <input type="text" id="facebookUrl" class="input-xxlarge" name="profile.facebookUrl" value="@personForm("profile.facebookUrl").value.getOrElse("")" placeholder="http://www.facebook.com/my.profile">
-         <button class="btn-success photo-button" id="facebook">Get Facebook Photo</button>
-       </div>
-       <span class="help-inline">
-          @if(personForm("profile.facebookUrl").hasErrors) {
-            @personForm("profile.facebookUrl").errors.map(error => Messages(error.message)).mkString(", ")
-          }
-       </span>
-       </div>
-      @helper.inputText(personForm("profile.linkedInUrl"), '_label -> "LinkedIn public profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
-      @helper.inputText(personForm("profile.googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")
-
-      <div class="control-group" id="boardMember_field">
-        <label for="boardMember" class="checkbox">
-          <input type="checkbox" id="boardMember" name="boardMember" value="true"
-					@if(personForm("boardMember").value.exists(_ == "true")){checked}>
-          Board member
-        </label>
-      </div>
-
-      <div class="control-group" id="stakeholder_field">
-        <label for="stakeholder" class="checkbox">
-          <input type="checkbox" id="stakeholder" name="stakeholder" value="true"
-					@if(personForm("stakeholder").value.exists(_ == "true")){checked}>
-          Stakeholder
-        </label>
-      </div>
-
-      @helper.inputText(personForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-      @helper.inputText(personForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
+      @helper.textarea(form("question1"), '_label -> "What triggered you to register for this event?")
+      @helper.textarea(form("question2"), '_label -> "Which action items did you take away from the event?")
+      @helper.textarea(form("question3"), '_label -> "What do you suggest to add or change to the program?")
+      @helper.textarea(form("question4"), '_label -> "What were specific qualities of the trainer/facilitator?")
+      @helper.textarea(form("question5"), '_label -> "What can be improved about the course/event location?")
+      @helper.select(form("question6"), Evaluations.impression, '_label -> "General impression")
+      @helper.select(form("question7"), Evaluations.recommendation, '_label -> "How likely are you to recommend this event to others?")
+      @helper.textarea(form("question8"), '_label -> "How could the trainer/facilitator have made the event better?")
+      @helper.select(form("status"),
+        models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq, '_label -> "Status")
+      @helper.textarea(form("certificate"), '_label -> "Certificate Number")
 
       <button class="btn btn-primary" type="submit">Save</button>
     }
   }
-  <script src="@routes.Assets.at("person/form.js")" type="text/javascript"></script>
 }
