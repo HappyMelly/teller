@@ -101,18 +101,24 @@
         }
       </p>
       @dynamic(handler, "event", "admin") {
-        <form class="form-inline" method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
+        <form method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
           <p>
             <input type="hidden" name="id" value="@event.invoice.id">
             <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">
             <input type="hidden" name="eventId" id="eventId" value="@event.id">
-            <select name="invoiceBy" id="invoiceBy">
-              <option value="">Choose an organisation</option>
-              @legalEntities.map { entity =>
-              <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)){selected}>@entity.name</option>
-              }
-            </select>
-            <input id="number" class="input" type="text" name="number" value="@event.invoice.number">
+            <div class="controls-row control-group" id="invoiceBy_field">
+              <label for="invoiceBy">Invoiced By</label>
+              <select name="invoiceBy" id="invoiceBy">
+                <option value="">Choose an organisation</option>
+                @legalEntities.map { entity =>
+                <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)){selected}>@entity.name</option>
+                }
+              </select>
+            </div>
+            <div class="controls-row control-group" id="number_field">
+              <label for="number">Invoice Number</label>
+              <input id="number" class="input" type="text" name="number" value="@event.invoice.number">
+            </div>
           </p>
           <p>
             <button class="btn">Update Invoice Info</button>

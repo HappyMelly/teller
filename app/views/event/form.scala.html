@@ -135,21 +135,21 @@
           <label for="notPublic" class="checkbox">
               <input type="checkbox" id="notPublic" name="notPublic" value="true"
               @if(form("notPublic").value.exists(_ == "true")){checked}>
-              Private Event
+              Private Event : Private events are not shown on the calendar, but evaluation is still possible
           </label>
       </div>
       <div class="control-group" id="archived_field">
           <label for="archived" class="checkbox">
               <input type="checkbox" id="archived" name="archived" value="true"
               @if(form("archived").value.exists(_ == "true")){checked}>
-              Archived Event
+              Archived Event : Evaluation is not possible anymore for archived events
           </label>
       </div>
       <div class="control-group" id="confirmed_field">
           <label for="confirmed" class="checkbox">
               <input type="checkbox" id="confirmed" name="confirmed" value="true"
               @if(form("confirmed").value.exists(_ == "true")){checked}>
-              Confirmed Event
+              Confirmed Event : Invoicing for licenses only happens for confirmed events
           </label>
       </div>
       <legend>Invoice</legend>
