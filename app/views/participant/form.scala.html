@@ -1,0 +1,55 @@
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  events: List[Event],
+  people: List[Person],
+  newPersonForm: Form[Participant],
+  existingPersonForm: Form[(Option[Long], Long, Long)])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.Countries
+@import views.ViewHelpers._
+
+@main("Participants", Some(user)) {
+
+  <h1>Add Participant</h1>
+
+  <div id="error">
+  @if(newPersonForm.hasErrors || existingPersonForm.hasErrors) {
+    <div class="alert alert-error">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      Please fix the validation errors.
+    </div>
+  }
+  </div>
+  <div id="switcher">
+    <label class="radio inline">
+      <input type="radio" name="participantType" id="existingPerson" value="existing" checked>
+      Existing Person
+    </label>
+    <label class="radio inline">
+      <input type="radio" name="participantType" id="newPerson" value="new">
+      New Person
+    </label>
+
+    <div class="existingPerson">
+      @helper.form(action = CSRF(routes.EventParticipants.create())) {
+        @helper.select(existingPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
+        @helper.select(existingPersonForm("personId"), ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person")
+        <button class="btn btn-primary" type="submit">Save</button>
+      }
+    </div>
+    <div class="newPerson">
+      @helper.form(action = CSRF(routes.EventParticipants.createParticipantAndPerson())) {
+        @helper.select(newPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
+        @helper.inputText(newPersonForm("firstName"), '_label -> "First name")
+        @helper.inputText(newPersonForm("lastName"), '_label -> "Last name")
+        @helper.inputDate(newPersonForm("birthDate"), '_label -> "Birth date")
+        @helper.inputText(newPersonForm("emailAddress"), '_label -> "E-mail address")
+        @helper.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+        @helper.inputText(newPersonForm("city"), '_label -> "City")
+        <button class="btn btn-primary" type="submit">Save</button>
+      }
+    </div>
+  </div>
+
+}

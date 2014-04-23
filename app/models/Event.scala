@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -29,10 +29,11 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitators, Events }
+import models.database.{ EventFacilitators, EventParticipants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
+import play.Logger
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -66,6 +67,14 @@ case class Event(
     val query = for {
       facilitation ← EventFacilitators if facilitation.eventId === this.id
       person ← facilitation.facilitator
+    } yield person
+    query.sortBy(_.lastName.toLowerCase).list
+  }
+
+  lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      participation ← EventParticipants if participation.eventId === this.id
+      person ← participation.participant
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
   }
@@ -204,6 +213,16 @@ object Event {
     Query(Events).filter(_.id === id).delete
   }
 
+  /**
+   * Returns true if and only if a user is allowed to manage this event.
+   */
+  def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
+    if (!find(eventId).isEmpty)
+      false
+    else
+      findByUser(user).exists(_.id.get == eventId)
+  }
+
   def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).filter(_.id === id).list.headOption
   }
@@ -243,6 +262,25 @@ object Event {
     }.getOrElse(countryQuery)
 
     typeQuery.sortBy(_.start).list
+  }
+
+  /**
+   * Returns a list of all event for a specified user
+   */
+  def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
+    if (UserRole.forName(user.role).editor)
+      Query(Events).filter(_.archived === true).sortBy(_.start).list
+    else {
+      val brands = Brand.findForUser(user)
+      if (brands.length > 0) {
+        val brandIds = brands.map(_.id.get)
+        Logger.debug(brandIds.toString);
+        val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
+        events.filter(e ⇒ brandIds.exists(_ == e.id.get))
+      } else {
+        Query(Events).filter(_.archived === true).sortBy(_.start).list
+      }
+    }
   }
 
   /**

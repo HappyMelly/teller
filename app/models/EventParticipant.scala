@@ -24,42 +24,26 @@
 
 package models
 
-import be.objectify.deadbolt.core.models.Role
-import play.libs.Scala
-import scala.collection.mutable.ListBuffer
+import models.database.EventParticipants
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/**
- *
- */
-case class UserRole(role: UserRole.Role.Role) extends Role {
-  def getName: String = role.toString
+case class EventParticipant(id: Option[Long], eventId: Long, participantId: Long) {
 
-  import UserRole.Role._
+  lazy val event: Option[Event] = Event.find(eventId)
+  lazy val participant: Option[Person] = Person.find(participantId)
+}
 
-  def admin: Boolean = role == Admin
-  def editor: Boolean = role == Editor || admin
-  def viewer: Boolean = role == Viewer || editor
+object EventParticipant {
 
-  /**
-   * Returns the list of rules implied by this role.
-   */
-  def list: java.util.List[UserRole] = {
-    val roles = ListBuffer[UserRole]()
-    if (viewer) roles += UserRole(Viewer)
-    if (editor) roles += UserRole(Editor)
-    if (admin) roles += UserRole(Admin)
-    Scala.asJava(roles)
+  def insert(participant: EventParticipant): EventParticipant = DB.withSession { implicit session: Session ⇒
+    val id = EventParticipants.forInsert.insert(participant)
+    participant.copy(id = Some(id))
+  }
+
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    EventParticipants.where(_.id === id).mutate(_.delete())
   }
 }
 
-object UserRole {
-
-  object Role extends Enumeration {
-    type Role = Value
-    val Viewer = Value("viewer")
-    val Editor = Value("editor")
-    val Admin = Value("admin")
-  }
-
-  def forName(name: String): UserRole = UserRole(Role.withName(name))
-}

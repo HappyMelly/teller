@@ -52,6 +52,11 @@ GET  /evaluation/:id              controllers.Evaluations.details(id: Long)
 POST /evaluation/:id              controllers.Evaluations.update(id: Long)
 POST /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
 
+GET  /participants/new/           controllers.EventParticipants.add
+POST /participants                controllers.EventParticipants.create
+POST /participants/newperson      controllers.EventParticipants.createParticipantAndPerson
+
+
 GET  /events                 controllers.Events.index
 POST /events                 controllers.Events.create
 GET  /events/new/            controllers.Events.add

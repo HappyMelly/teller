@@ -22,44 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+package models.database
 
-import be.objectify.deadbolt.core.models.Role
-import play.libs.Scala
-import scala.collection.mutable.ListBuffer
+import models.EventParticipant
+import play.api.db.slick.Config.driver.simple._
 
 /**
- *
+ * `EventParticipant` database table mapping.
  */
-case class UserRole(role: UserRole.Role.Role) extends Role {
-  def getName: String = role.toString
+private[models] object EventParticipants extends Table[EventParticipant]("EVENT_PARTICIPANT") {
 
-  import UserRole.Role._
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def eventId = column[Long]("EVENT_ID")
+  def participantId = column[Long]("PARTICIPANT_ID")
 
-  def admin: Boolean = role == Admin
-  def editor: Boolean = role == Editor || admin
-  def viewer: Boolean = role == Viewer || editor
+  def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
+  def participant = foreignKey("PARTICIPANT_FK", participantId, People)(_.id)
 
-  /**
-   * Returns the list of rules implied by this role.
-   */
-  def list: java.util.List[UserRole] = {
-    val roles = ListBuffer[UserRole]()
-    if (viewer) roles += UserRole(Viewer)
-    if (editor) roles += UserRole(Editor)
-    if (admin) roles += UserRole(Admin)
-    Scala.asJava(roles)
-  }
-}
-
-object UserRole {
-
-  object Role extends Enumeration {
-    type Role = Value
-    val Viewer = Value("viewer")
-    val Editor = Value("editor")
-    val Admin = Value("admin")
-  }
-
-  def forName(name: String): UserRole = UserRole(Role.withName(name))
+  def * = id.? ~ eventId ~ participantId <> (EventParticipant.apply _, EventParticipant.unapply _)
+  def forInsert = * returning id
 }
