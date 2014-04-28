@@ -24,51 +24,71 @@
 
 package controllers
 
-import models.{ EventParticipant, Person, Event, LoginIdentity }
-import org.joda.time.LocalDate
+import models.{ EventParticipant, Person, Event, LoginIdentity, Activity, Address, Photo }
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
+import play.Logger
 
-case class Participant(id: Option[Long], eventId: Long, firstName: String, lastName: String,
-  birthDate: Option[LocalDate], emailAddress: String, city: String, country: String)
+case class Participant(id: Option[Long],
+  eventId: Long,
+  firstName: String,
+  lastName: String,
+  birthDate: Option[LocalDate],
+  emailAddress: String,
+  city: String,
+  country: String,
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
+
+  lazy val event: Option[Event] = Event.find(eventId)
+}
 
 object EventParticipants extends Controller with Security {
 
-  def newPersonForm(request: SecuredRequest[_]) = {
+  def newPersonForm(implicit request: SecuredRequest[_]) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "eventId" -> longNumber.verifying(
-        "error.event.invalid", (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
+        "error.event.invalid",
+        (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "birthDate" -> optional(jodaLocalDate),
       "emailAddress" -> email,
       "city" -> nonEmptyText,
-      "country" -> nonEmptyText)(Participant.apply)(Participant.unapply))
+      "country" -> nonEmptyText,
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(request.user.fullName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(request.user.fullName))(Participant.apply)(Participant.unapply))
   }
 
-  def existingPersonForm(request: SecuredRequest[_]) = {
-    Form(tuple(
+  def existingPersonForm(implicit request: SecuredRequest[_]) = {
+    Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "eventId" -> longNumber.verifying(
-        "error.event.invalid", (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
-      "personId" -> longNumber.verifying(
-        "error.person.invalid", (personId: Long) ⇒ Person.find(personId).isEmpty)))
+        "error.event.invalid",
+        (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
+      "participantId" -> longNumber.verifying(
+        "error.person.invalid",
+        (participantId: Long) ⇒ !Person.find(participantId).isEmpty))(EventParticipant.apply)(EventParticipant.unapply))
   }
 
   /**
-   * Returns a list of event types for the given brand
+   * Returns a list of participants
    */
-  // def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-  //   implicit handler ⇒
-  //     Brand.find(brandCode).map { brand ⇒
-  //       Ok(Json.toJson(EventType.findByBrand(brand.brand.id.get)))
-  //     }.getOrElse(NotFound("Unknown brand"))
-  // }
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      val participants = EventParticipant.findAll
+      Ok(views.html.participant.index(request.user, participants))
+  }
 
   /**
    * Create page.
@@ -84,12 +104,49 @@ object EventParticipants extends Controller with Security {
 
   def create = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
-      Redirect(routes.EventParticipants.add).flashing("success" -> "Yay!")
+      val form: Form[EventParticipant] = existingPersonForm.bindFromRequest
+
+      form.fold(
+        formWithErrors ⇒ {
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val events = Event.findByUser(account)
+          var people = Person.findActive
+          BadRequest(views.html.participant.form(request.user, None, events, people,
+            newPersonForm(request), formWithErrors))
+        },
+        participant ⇒ {
+          EventParticipant.insert(participant)
+          val activityObject = Messages("activity.participant.create",
+            participant.participant.get.fullName, participant.event.get.title)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          Redirect(routes.EventParticipants.add).flashing("success" -> activity.toString)
+        })
   }
 
   def createParticipantAndPerson = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
-      Redirect(routes.EventParticipants.add).flashing("success" -> "Yay!")
+      val form: Form[Participant] = newPersonForm.bindFromRequest
+
+      form.fold(
+        formWithErrors ⇒ {
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val events = Event.findByUser(account)
+          var people = Person.findActive
+          BadRequest(views.html.participant.form(request.user, None, events, people,
+            formWithErrors, existingPersonForm(request), false))
+        },
+        participant ⇒ {
+          val address = Address(None, None, None, Some(participant.city), None, None, participant.country)
+          val person = Person(None, participant.firstName, participant.lastName, participant.emailAddress,
+            Photo(None, None), address, None, None, None, None, None, None, false, false, None, None, true,
+            participant.created, participant.createdBy, participant.updated, participant.updatedBy)
+          val newPerson = person.insert
+          val eventParticipant = EventParticipant(None, participant.eventId, newPerson.id.get)
+          EventParticipant.insert(eventParticipant)
+          val activityObject = Messages("activity.participant.create", person.fullName, participant.event.get.title)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          Redirect(routes.EventParticipants.add).flashing("success" -> activity.toString)
+        })
   }
 
   // /** Creates an event type **/

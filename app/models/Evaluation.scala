@@ -88,6 +88,10 @@ case class Evaluation(
 
 object Evaluation {
 
+  def findByEventAndPerson(participantId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
+    Query(Evaluations).filter(_.participantId === participantId).filter(_.eventId === eventId).firstOption
+  }
+
   def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).filter(_.id === id).firstOption
   }

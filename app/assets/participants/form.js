@@ -21,3 +21,27 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
+function showNewPersonForm() {
+  $('.newPerson').show();
+  $('.existingPerson').hide();
+}
+
+function showExistingPersonForm() {
+  $('.existingPerson').show();
+  $('.newPerson').hide();
+}
+
+$(document).ready(function() {
+  $('#existingPerson').on('change', function() {
+    showExistingPersonForm();
+  });
+  $('#newPerson').on('change', function() {
+    showNewPersonForm();
+  });
+  if ($('#newPerson').prop("checked")) {
+    showNewPersonForm();
+  } else {
+    showExistingPersonForm();
+  }
+});

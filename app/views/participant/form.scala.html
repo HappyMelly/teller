@@ -3,7 +3,8 @@
   events: List[Event],
   people: List[Person],
   newPersonForm: Form[Participant],
-  existingPersonForm: Form[(Option[Long], Long, Long)])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  existingPersonForm: Form[EventParticipant],
+  showExistingPersonForm: Boolean = true)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
@@ -22,19 +23,21 @@
   }
   </div>
   <div id="switcher">
-    <label class="radio inline">
-      <input type="radio" name="participantType" id="existingPerson" value="existing" checked>
-      Existing Person
-    </label>
-    <label class="radio inline">
-      <input type="radio" name="participantType" id="newPerson" value="new">
-      New Person
-    </label>
+    <form class="form-inline">
+      <label class="radio inline">
+        <input type="radio" name="participantType" id="existingPerson" value="existing" @if(showExistingPersonForm) {checked }>
+        Existing Person
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="participantType" id="newPerson" value="new" @if(!showExistingPersonForm) {checked}>
+        New Person
+      </label>
+    </form>
 
     <div class="existingPerson">
       @helper.form(action = CSRF(routes.EventParticipants.create())) {
         @helper.select(existingPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
-        @helper.select(existingPersonForm("personId"), ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person")
+        @helper.select(existingPersonForm("participantId"), ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person")
         <button class="btn btn-primary" type="submit">Save</button>
       }
     </div>
@@ -52,4 +55,5 @@
     </div>
   </div>
 
+  <script src='@routes.Assets.at("participants/form.js")' type="text/javascript"></script>
 }

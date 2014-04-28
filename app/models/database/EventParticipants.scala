@@ -34,11 +34,11 @@ private[models] object EventParticipants extends Table[EventParticipant]("EVENT_
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
-  def participantId = column[Long]("PARTICIPANT_ID")
+  def personId = column[Long]("PERSON_ID")
 
   def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
-  def participant = foreignKey("PARTICIPANT_FK", participantId, People)(_.id)
+  def participant = foreignKey("PARTICIPANT_FK", personId, People)(_.id)
 
-  def * = id.? ~ eventId ~ participantId <> (EventParticipant.apply _, EventParticipant.unapply _)
+  def * = id.? ~ eventId ~ personId <> (EventParticipant.apply _, EventParticipant.unapply _)
   def forInsert = * returning id
 }

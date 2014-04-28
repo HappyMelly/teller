@@ -217,7 +217,7 @@ object Event {
    * Returns true if and only if a user is allowed to manage this event.
    */
   def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (!find(eventId).isEmpty)
+    if (find(eventId).isEmpty)
       false
     else
       findByUser(user).exists(_.id.get == eventId)

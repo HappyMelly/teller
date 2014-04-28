@@ -45,20 +45,22 @@ POST /contribution/new         controllers.Contributions.create(page: String)
 GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
 
 GET  /evaluations                 controllers.Evaluations.index
-POST /evaluations                 controllers.Evaluations.create
-GET  /evaluations/new/            controllers.Evaluations.add
+POST /evaluation                 controllers.Evaluations.create
+GET  /evaluation/new/            controllers.Evaluations.add
 GET  /evaluation/:id/edit         controllers.Evaluations.edit(id: Long)
 GET  /evaluation/:id              controllers.Evaluations.details(id: Long)
 POST /evaluation/:id              controllers.Evaluations.update(id: Long)
 POST /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
 
-GET  /participants/new/           controllers.EventParticipants.add
-POST /participants                controllers.EventParticipants.create
-POST /participants/newperson      controllers.EventParticipants.createParticipantAndPerson
+
+GET  /participants                controllers.EventParticipants.index
+GET  /participant/new/           controllers.EventParticipants.add
+POST /participant                controllers.EventParticipants.create
+POST /participant/newperson      controllers.EventParticipants.createParticipantAndPerson
 
 
 GET  /events                 controllers.Events.index
-POST /events                 controllers.Events.create
+POST /event                  controllers.Events.create
 GET  /events/new/            controllers.Events.add
 GET  /event/:id/duplicate    controllers.Events.duplicate(id: Long)
 GET  /event/:id/edit         controllers.Events.edit(id: Long)
