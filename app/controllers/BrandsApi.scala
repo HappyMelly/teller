@@ -25,7 +25,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.{ Brand, BrandView }
+import models.{ Brand, BrandView, BrandStatus }
 import play.api.i18n.Messages
 
 /**
@@ -49,6 +49,14 @@ object BrandsApi extends Controller with ApiAuthentication {
         "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
         "description" -> brandView.brand.description,
         "status" -> Messages("models.BrandStatus." + brandView.brand.status))
+    }
+  }
+
+  implicit val brandByStatusViewWrites = new Writes[(BrandStatus.Value, List[BrandView])] {
+    def writes(data: (BrandStatus.Value, List[BrandView])): JsValue = {
+      Json.obj(
+        "status" -> Messages("models.BrandStatus." + data._1),
+        "brands" -> data._2)
     }
   }
 
@@ -84,4 +92,10 @@ object BrandsApi extends Controller with ApiAuthentication {
     Ok(Json.toJson(Brand.findAll))
   }
 
+  /**
+   * A list of brands grouped by status
+   */
+  def brandsByStatus = TokenSecuredAction { implicit request ⇒
+    Ok(Json.toJson(Brand.findAll.groupBy(_.brand.status)))
+  }
 }

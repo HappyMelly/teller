@@ -10,6 +10,7 @@
   <ul>
     <li><a href="#brand">Brand</a></li>
     <li><a href="#brands">Brands</a></li>
+    <li><a href="#brandsByStatus">Brands By Status</a></li>
     <li><a href="#event">Event</a></li>
     <li><a href="#events">Events</a></li>
     <li><a href="#eventtypes">Event Types</a></li>
@@ -106,7 +107,57 @@
       </tr>
     </table>
 
-    <h3 id="brand">Brand details</h3>
+  <h3 id="brandsByStatus">Brands By Status</h3>
+  <table class="table table-bordered">
+      <tr>
+        <th>Description</th>
+        <td>A list of Happy Melly brands, grouped by statuses</td>
+      </tr>
+      <tr>
+        <th>Request</th>
+        <td><code>GET /api/v1/brands/grouped/status</code></td>
+      </tr>
+      <tr>
+        <th>Request path parameters</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+      </tr>
+      <tr>
+        <th>Response body</th>
+        <td>
+          <p>A JSON array of brand objects, with properties:</p>
+          <ul>
+            <li><code>status</code></li>
+            <li><code>brands</code> - a list of objects
+              <ul>
+                <li><code>href</code> - URL of the <a href="#brand">brand details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+                <li><code>name</code></li>
+                <li><code>image</code> - URL of a brand's logo, excluding protocol/host</li>
+                <li><code>description</code></li>
+                <li><code>status</code></li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+      </tr>
+      <tr>
+        <th>Example</th>
+        <td><a href="/api/v1/brands/grouped/status?api_token=@user.apiToken">GET /api/v1/brands/grouped/status</a>
+      </tr>
+    </table>
+
+  <h3 id="brand">Brand details</h3>
 
     <p>The <em>brand details</em> resource provides more details about an entry in the <a href="#brands">list</a>.</p>
 
