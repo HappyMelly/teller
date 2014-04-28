@@ -56,7 +56,7 @@ object BookingEntries extends Controller with Security {
     "bookingNumber" -> ignored(Option.empty[Int]),
     "summary" -> nonEmptyText(maxLength = 50),
     "source" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
-    "sourcePercentage" -> number(0, BookingEntry.DefaultSourcePercentage),
+    "sourcePercentage" -> number(min = 0),
     "fromId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying("error.account.noAccess", isAccessible(request, _)),
     "fromAmount" -> ignored(Money.zero(CurrencyUnit.EUR)),
     "toId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
