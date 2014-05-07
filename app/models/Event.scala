@@ -33,7 +33,6 @@ import models.database.{ EventFacilitators, EventParticipants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
-import play.Logger
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -84,7 +83,7 @@ case class Event(
   }
 
   def canAdministrate(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    UserRole.forName(account.role).editor || Brand.find(brandCode).get.coordinator.id.get == account.personId
+    account.editor || Brand.find(brandCode).get.coordinator.id.get == account.personId
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
@@ -265,21 +264,34 @@ object Event {
   }
 
   /**
-   * Returns a list of all event for a specified user
+   * Returns a list of all events for a specified user
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
-    if (UserRole.forName(user.role).editor)
+    if (user.editor)
       Query(Events).filter(_.archived === true).sortBy(_.start).list
     else {
       val brands = Brand.findForUser(user)
       if (brands.length > 0) {
-        val brandIds = brands.map(_.id.get)
-        Logger.debug(brandIds.toString);
+        val brandCodes = brands.map(_.code)
         val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
-        events.filter(e ⇒ brandIds.exists(_ == e.id.get))
+        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
       } else {
         Query(Events).filter(_.archived === true).sortBy(_.start).list
       }
+    }
+  }
+
+  /**
+   * Returns a list of all events for a specified coordinator
+   */
+  def findByCoordinator(coordinatorId: Long): List[Event] = DB.withSession { implicit session: Session ⇒
+    val brands = Brand.findByCoordinator(coordinatorId)
+    if (brands.length > 0) {
+      val brandCodes = brands.map(_.code)
+      val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
+      events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+    } else {
+      List[Event]()
     }
   }
 

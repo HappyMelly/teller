@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ UserAccount, LoginIdentity, UserRole, Event }
+import models.{ UserAccount, LoginIdentity, UserRole, Event, Evaluation }
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect
@@ -116,18 +116,28 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     account.map { existingAccount ⇒
       name match {
+        case "evaluation" ⇒
+          meta match {
+            case "add" ⇒ existingAccount.coordinator || existingAccount.editor
+            case "edit" ⇒
+              val evaluationId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role or a Brand Coordinator to be able to edit the evaluation
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong)
+                .exists(_.event.canAdministrate(existingAccount))
+            case _ ⇒ true
+          }
         case "event" ⇒
           meta match {
-            case "add" ⇒ existingAccount.facilitator || UserRole.forName(existingAccount.role).editor
+            case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
               //   edit it
-              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or be a Brand Coordinator to admin it
-              UserRole.forName(existingAccount.role).editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(existingAccount))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(existingAccount))
             case _ ⇒ true
           }
         case "person" ⇒
@@ -135,7 +145,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "edit" ⇒
               val personId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or it should be her own profile
-              UserRole.forName(existingAccount.role).editor || personId.get.toLong == existingAccount.personId
+              existingAccount.editor || personId.get.toLong == existingAccount.personId
             case _ ⇒ true
           }
         case _ ⇒ false

@@ -88,22 +88,22 @@ object Evaluations extends Controller with Security {
     "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
 
   /** Add page **/
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val events = Event.findByUser(account)
+      val events = findEvents(account)
       Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
   }
 
   /** Add form submits to this action **/
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
 
       val form: Form[Evaluation] = evaluationForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val events = Event.findByUser(account)
+          val events = findEvents(account)
           BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events))
         },
         evaluation ⇒ {
@@ -137,19 +137,19 @@ object Evaluations extends Controller with Security {
   }
 
   /** Edit page **/
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
     implicit handler ⇒
 
       Evaluation.find(id).map { evaluation ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
-        val events = Event.findByUser(account)
+        val events = findEvents(account)
         Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events))
       }.getOrElse(NotFound)
 
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
     implicit handler ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
@@ -157,7 +157,7 @@ object Evaluations extends Controller with Security {
         form.fold(
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val events = Event.findByUser(account)
+            val events = findEvents(account)
             BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events))
           },
           evaluation ⇒ {
@@ -168,4 +168,11 @@ object Evaluations extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
+  private def findEvents(account: UserAccount): List[Event] = {
+    if (account.editor) {
+      Event.findAll
+    } else {
+      Event.findByCoordinator(account.personId)
+    }
+  }
 }

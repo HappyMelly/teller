@@ -56,6 +56,10 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
     !licenses.isEmpty || !brands.isEmpty
   }
 
+  def coordinator: Boolean = {
+    !brands.isEmpty
+  }
+
   lazy val person: Option[Person] = Person.find(personId)
   lazy val account: Option[Account] = Account.findByPerson(personId)
   lazy val licenses: List[LicenseView] = License.activeLicenses(personId)

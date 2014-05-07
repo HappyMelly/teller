@@ -33,7 +33,6 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.Logger
 
 case class Participant(id: Option[Long],
   eventId: Long,

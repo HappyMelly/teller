@@ -131,7 +131,7 @@ object Brand {
    *  license holders.
    */
   def findForUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
-    if (UserRole.forName(user.role).editor)
+    if (user.editor)
       Query(Brands).list
     else {
       val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)

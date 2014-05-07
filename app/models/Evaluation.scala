@@ -68,8 +68,6 @@ case class Evaluation(
 
   lazy val participant: Person = Person.find(participantId.get).get
 
-  def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
-
   def insert: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
     this.copy(id = Some(id))

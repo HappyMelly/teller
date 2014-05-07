@@ -10,16 +10,18 @@
   <div class="span4">
     <h1>Participants</h1>
   </div>
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="span4">
+  <div class="span4">
+    @dynamic(handler, "event", "add") {
       <a class="btn btn-success" href="@routes.EventParticipants.add()">
         <i class="icon-plus icon-white"></i>Add Participant
       </a>
+    }
+    @dynamic(handler, "evaluation", "add") {
       <a class="btn btn-success" href="@routes.Evaluations.add()">
         <i class="icon-plus icon-white"></i>Add Evaluation
       </a>
-    </div>
-  }
+    }
+  </div>
 
   <div class="span10">
     @if(participants.isEmpty) {
