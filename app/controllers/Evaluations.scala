@@ -87,19 +87,11 @@ object Evaluations extends Controller with Security {
     "updated" -> ignored(DateTime.now),
     "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
 
-  /** Show all evaluations **/
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-
-      val evaluations = models.Evaluation.findAll
-      Ok(views.html.evaluation.index(request.user, evaluations))
-  }
-
   /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      // TODO: some rules on filtering events
-      val events = Event.findAll
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val events = Event.findByUser(account)
       Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
   }
 
@@ -109,11 +101,15 @@ object Evaluations extends Controller with Security {
 
       val form: Form[Evaluation] = evaluationForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, Event.findAll)),
+        formWithErrors ⇒ {
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val events = Event.findByUser(account)
+          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events))
+        },
         evaluation ⇒ {
           evaluation.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
-          Redirect(routes.Evaluations.index()).flashing("success" -> activity.toString)
+          Redirect(routes.EventParticipants.index()).flashing("success" -> activity.toString)
         })
   }
 
@@ -125,7 +121,7 @@ object Evaluations extends Controller with Security {
         evaluation ⇒
           evaluation.delete
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
-          Redirect(routes.Evaluations.index).flashing("success" -> activity.toString)
+          Redirect(routes.EventParticipants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -146,7 +142,11 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.evaluation.form(request.user, Some(id), evaluationForm.fill(evaluation), Event.findAll))
+          {
+            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val events = Event.findByUser(account)
+            Ok(views.html.evaluation.form(request.user, Some(id), evaluationForm.fill(evaluation), events))
+          }
       }.getOrElse(NotFound)
 
   }
@@ -158,7 +158,11 @@ object Evaluations extends Controller with Security {
       Evaluation.find(id).map { existingEvaluation ⇒
         val form: Form[Evaluation] = evaluationForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.evaluation.form(request.user, Some(id), form, Event.findAll)),
+          formWithErrors ⇒ {
+            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val events = Event.findByUser(account)
+            BadRequest(views.html.evaluation.form(request.user, Some(id), form, events))
+          },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")

@@ -44,7 +44,6 @@ POST /brand/:code/picture/delete   controllers.Brands.deletePicture(code: String
 POST /contribution/new         controllers.Contributions.create(page: String)
 GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
 
-GET  /evaluations                 controllers.Evaluations.index
 POST /evaluation                 controllers.Evaluations.create
 GET  /evaluation/new/            controllers.Evaluations.add
 GET  /evaluation/:id/edit         controllers.Evaluations.edit(id: Long)
@@ -53,7 +52,8 @@ POST /evaluation/:id              controllers.Evaluations.update(id: Long)
 POST /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
 
 
-GET  /participants                controllers.EventParticipants.index
+GET  /participants               controllers.EventParticipants.index
+GET  /participants/:eventId      controllers.EventParticipants.participants(eventId: Long)
 GET  /participant/new/           controllers.EventParticipants.add
 POST /participant                controllers.EventParticipants.create
 POST /participant/newperson      controllers.EventParticipants.createParticipantAndPerson

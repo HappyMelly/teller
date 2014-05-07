@@ -27,11 +27,11 @@
           @participant.event.location.city
         </td>
         <td>@participant.event.schedule.start / @participant.event.schedule.end</td>
-        <td>@participant.impression.map{ impression => impression }</td>
-        <td>@participant.status.map{ status => status }</td>
-        <td>@participant.date.map{ date => date }</td>
-        <td>@participant.handled.map{ handled => handled }</td>
-        <td>@participant.certificate.map{ certificate => certificate }</td>
+        <td>@participant.impression.map{ impression => @impression }</td>
+        <td>@participant.status.map{ status => <span class="label @Messages(s"models.EvaluationStatus.${status}.label")">@Messages(s"models.EvaluationStatus.${status}") }</td>
+        <td>@participant.date.map{ date => @date.toString("yyyy-MM-dd") }</td>
+        <td>@participant.handled.map{ handled => @handled }</td>
+        <td>@participant.certificate.map{ certificate => @certificate }</td>
         <td>@actions(participant)</td>
       </tr>
     }

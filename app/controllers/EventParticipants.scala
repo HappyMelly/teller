@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ EventParticipant, Person, Event, LoginIdentity, Activity, Address, Photo }
+import models.{ EventParticipant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
@@ -32,6 +32,7 @@ import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
+import play.api.libs.json._
 import play.Logger
 
 case class Participant(id: Option[Long],
@@ -87,7 +88,28 @@ object EventParticipants extends Controller with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val participants = EventParticipant.findAll
+      Logger.debug(participants.length.toString)
       Ok(views.html.participant.index(request.user, participants))
+  }
+
+  /**
+   * Returns a list of participants without evaluations for a particular event
+   */
+  def participants(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit val personWrites = new Writes[Person] {
+      def writes(person: Person): JsValue = {
+        Json.obj(
+          "id" -> person.id.get,
+          "name" -> person.fullName)
+      }
+    }
+
+    implicit handler ⇒
+      Event.find(eventId).map { event ⇒
+        val participants = event.participants
+        val evaluations = Evaluation.findByEvent(eventId)
+        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(_.participantId == p.id))))
+      }.getOrElse(NotFound("Unknown event"))
   }
 
   /**
@@ -148,38 +170,4 @@ object EventParticipants extends Controller with Security {
           Redirect(routes.EventParticipants.add).flashing("success" -> activity.toString)
         })
   }
-
-  // /** Creates an event type **/
-  // def create = SecuredDynamicAction("event", "add") { implicit request ⇒
-  //   implicit handler ⇒
-
-  //     val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
-  //     val brand = Brand.find(boundForm.data("brandId").toLong).get
-  //     boundForm.bindFromRequest.fold(
-  //       formWithErrors ⇒ Redirect(routes.Brands.details(brand.code)).flashing("error" -> "A name of an event type cannot be empty"),
-  //       eventType ⇒ {
-  //         eventType.insert
-  //         val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
-  //         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-  //         Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
-  //       })
-  // }
-
-  // /** Deletes an event type **/
-  // def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-  //   implicit handler ⇒
-
-  //     EventType.find(id).map { eventType ⇒
-  //       val brand = eventType.brand
-  //       if (Event.getNumberByEventType(eventType.id.get) > 0) {
-  //         Redirect(routes.Brands.details(brand.code)).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
-  //       } else {
-  //         EventType.delete(id)
-  //         val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
-  //         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-  //         Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
-  //       }
-  //     }.getOrElse(NotFound)
-  // }
-
 }

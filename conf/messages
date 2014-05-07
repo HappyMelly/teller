@@ -54,12 +54,12 @@ models.BrandStatus.experimental = In Experimental Phase
 models.BrandStatus.experimental.label = label-warning
 
 # Evaluation status label names and Bootstrap label CSS classes.
-models.BrandStatus.1 = Pending
-models.BrandStatus.1.label = label-inverse
-models.BrandStatus.2 = Approved
-models.BrandStatus.2.label = label-success
-models.BrandStatus.3 = Rejected
-models.BrandStatus.3.label = label-warning
+models.EvaluationStatus.1 = Pending
+models.EvaluationStatus.1.label = label-inverse
+models.EvaluationStatus.2 = Approved
+models.EvaluationStatus.2.label = label-success
+models.EvaluationStatus.3 = Rejected
+models.EvaluationStatus.3.label = label-warning
 
 # Product category label names and Bootstrap label CSS classes.
 models.ProductCategory.book = Books

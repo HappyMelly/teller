@@ -7,13 +7,17 @@
 
 @main("Participants", Some(user)) {
 
-  <div class="span5">
+  <div class="span4">
     <h1>Participants</h1>
   </div>
   @restrict(handler, List(as(Editor.toString))) {
-    <div class="span3">
+    <div class="span4">
       <a class="btn btn-success" href="@routes.EventParticipants.add()">
-      <i class="icon-plus icon-white"></i>Add Participant</a>
+        <i class="icon-plus icon-white"></i>Add Participant
+      </a>
+      <a class="btn btn-success" href="@routes.Evaluations.add()">
+        <i class="icon-plus icon-white"></i>Add Evaluation
+      </a>
     </div>
   }
 
@@ -21,8 +25,11 @@
     @if(participants.isEmpty) {
       <p>There are no participants</p>
     } else {
-      @table(participants) { person =>
+      @table(participants) { participant =>
         @restrict(handler, List(as(Editor.toString))) {
+          @participant.evaluationId.map { id =>
+            <a href="@routes.Evaluations.edit(id)"><i class="icon-pencil"></i>Edit</a><br/>
+          }
         }
       }
     }
