@@ -87,10 +87,9 @@ object EventParticipants extends Controller with Security {
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      val participants = EventParticipant.findAll(None)
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
-      Ok(views.html.participant.index(request.user, participants, brands))
+      Ok(views.html.participant.index(request.user, brands))
   }
 
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒

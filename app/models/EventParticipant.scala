@@ -38,7 +38,7 @@ case class EventParticipant(id: Option[Long], eventId: Long, participantId: Long
 case class ParticipantView(person: Person,
   event: Event,
   evaluationId: Option[Long],
-  participantId: Option[Option[Long]],
+  secondEvaluationId: Option[Long],
   impression: Option[Int],
   status: Option[EvaluationStatus.Value],
   date: Option[DateTime],
@@ -50,14 +50,16 @@ object EventParticipant {
   def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
       ((((part, p), e), ev), ev2) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
-    } yield (p, e, ev2.id.?, ev2.participantId.?, ev2.question6.?, ev2.status.?, ev2.created.?, ev2.handled.?, ev2.certificate.?)
+    } yield (p, e, ev.id.?, ev2.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
 
     val brandQuery = brandCode.map { value ⇒
       baseQuery.filter(_._2.brandCode === value)
     }.getOrElse(baseQuery)
-    // brandQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ v.person.id == v.participantId.get)
-
-    brandQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ Some(v.person.id) == v.participantId)
+    val rawList = brandQuery.mapResult(ParticipantView.tupled).list
+    val withEvaluation = rawList.filter(obj ⇒ obj.evaluationId == obj.secondEvaluationId)
+    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
+      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None, None))
+    withEvaluation.union(withoutEvaluation)
   }
 
   def insert(participant: EventParticipant): EventParticipant = DB.withSession { implicit session: Session ⇒

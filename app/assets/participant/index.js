@@ -121,7 +121,8 @@ $(document).ready( function() {
                 "targets": 1
             }, {
                 "render": function(data, type, row) {
-                    return '<img width="16" src="/assets/images/flags/16/' + data.country + '.png"/>' + data.city;
+                    return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
+                        data.country + '.png"/> ' + data.city;
                 },
                 "targets": 2
             }, {
@@ -131,13 +132,18 @@ $(document).ready( function() {
                 "targets": 3
             }, {
                 "render": function(data, type, row) {
-                    return '<strong>' + data + '</strong>';
+                    if (data) {
+                        return '<strong>' + data + '</strong>';
+                    }
+                    return '';
                 },
                 "targets": 4
             }, {
                 "render": function(data, type, row) {
-                    if ('edit' in data) {
-                        return '<a href="' + data.edit + '" title="Edit Evaluation"><i class="icon-pencil"></i>Edit</a>';
+                    if ('edit' in data && data.edit) {
+                        var html = '<a href="' + data.edit;
+                        html += '" title="Edit Evaluation"><i class="icon-pencil"></i>Edit</a>'
+                        return html;
                     }
                     return '';
                 },

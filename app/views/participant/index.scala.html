@@ -1,5 +1,4 @@
 @(user: securesocial.core.Identity,
-  participants: List[ParticipantView],
   brands: List[Brand])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @import models.UserRole.Role._
@@ -8,11 +7,11 @@
 
 @main("Participants", Some(user)) {
 
-  <div class="span10">
-    <div class="span4">
+  <div class="span12">
+    <div class="span7">
       <h1>Participants</h1>
     </div>
-    <div class="span4">
+    <div class="span4 pull-right">
       @dynamic(handler, "event", "add") {
         <a class="btn btn-success" href="@routes.EventParticipants.add()">
           <i class="icon-plus icon-white"></i>Add Participant
@@ -25,38 +24,34 @@
       }
     </div>
   </div>
-  <div class="span10">
-    @if(participants.isEmpty) {
-      <p>There are no participants</p>
-    } else {
-      <div id="filter-containter">
-        <div class="btn-toolbar pull-right">
-          <div class="btn-group">
-            <select id="brands" class="input-large">
-              @for(brand <- brands) {
-                <option value="@brand.code">@brand.name</option>
-              }
-            </select>
-          </div>
+  <div class="span12">
+    <div id="filter-containter">
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <select id="brands" class="input-large">
+            @for(brand <- brands) {
+              <option value="@brand.code">@brand.name</option>
+            }
+          </select>
         </div>
       </div>
-      <table id="participants" class="datatables table table-bordered">
-        <thead>
-          <tr>
-            <th>Participant</th>
-            <th width="20%">Event</th>
-            <th>Location</th>
-            <th>Dates</th>
-            <th width="5%">General Impression</th>
-            <th>Status</th>
-            <th>Evaluation Date</th>
-            <th>Handled Date</th>
-            <th>Certificate Number</th>
-            <th></th>
-          </tr>
-        </thead>
-      </table>
-    }
+    </div>
+    <table id="participants" class="datatables table table-bordered">
+      <thead>
+        <tr>
+          <th>Participant</th>
+          <th width="20%">Event</th>
+          <th>Location</th>
+          <th>Dates</th>
+          <th width="5%" align="center">General Impr</th>
+          <th>Status</th>
+          <th>Evaluation Date</th>
+          <th>Handled Date</th>
+          <th>Certificate Number</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
   </div>
 
 	<script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
