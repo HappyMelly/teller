@@ -113,16 +113,31 @@ object EventParticipants extends Controller with Security {
                 "start" -> data.event.schedule.start.toString,
                 "end" -> data.event.schedule.end.toString),
               "impression" -> data.impression.map(_.toString),
-              "status" -> data.status.map(status ⇒ Messages("models.EvaluationStatus." + status)),
+              "status" -> data.status.map(status ⇒
+                Json.obj(
+                  "label" -> Messages("models.EvaluationStatus." + status),
+                  "value" -> status.id)),
               "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
               "handled" -> data.handled.map(_.toString),
               "certificate" -> data.certificate.map(_.toString),
-              "actions" -> Json.obj(
-                "edit" -> data.evaluationId.map(id ⇒
-                  if (account.editor || brand.brand.coordinatorId == account.personId)
-                    routes.Evaluations.edit(id).url
-                  else
-                    "")))
+              // "actions" -> Json.obj(
+              //   "edit" -> data.evaluationId.map(id ⇒
+              //     if (account.editor || brand.brand.coordinatorId == account.personId)
+              //       routes.Evaluations.edit(id).url
+              //     else
+              //       "")))
+              "actions" -> {
+                data.evaluationId match {
+                  case Some(id) ⇒ Json.obj(
+                    "edit" -> {
+                      if (account.editor || brand.brand.coordinatorId == account.personId)
+                        routes.Evaluations.edit(id).url
+                      else ""
+                    },
+                    "view" -> routes.Evaluations.details(id).url)
+                  case None ⇒ Json.obj()
+                }
+              })
           }
         }
         val participants = EventParticipant.findAll(Some(brandCode))

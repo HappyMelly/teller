@@ -34,17 +34,25 @@
             }
           </select>
         </div>
+        <div class="btn-group">
+          <select id="status" class="input-small">
+            <option value="all">All</option>
+            <option value="0">Pending</option>
+            <option value="1">Approved</option>
+            <option value="2">Rejected</option>
+          </select>
+        </div>
       </div>
     </div>
     <table id="participants" class="datatables table table-bordered">
       <thead>
         <tr>
+          <th></th>
           <th>Participant</th>
           <th width="20%">Event</th>
           <th>Location</th>
           <th>Dates</th>
           <th width="5%" align="center">General Impr</th>
-          <th>Status</th>
           <th>Evaluation Date</th>
           <th>Handled Date</th>
           <th>Certificate Number</th>

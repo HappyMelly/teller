@@ -44,21 +44,18 @@
 //     }
 // }
 
-// /**
-//  * Filter events checking if they are public or private
-//  */
-// function filterByPublicity(oSettings, aData, iDataIndex) {
-//     var index = 8;
-//     var filter = $('#private').find(':selected').val();
-//     if (filter == 'all') {
-//         return true;
-//     }
-//     if (filter == 'private') {
-//         return aData[index] == 'true';
-//     } else {
-//         return aData[index] == 'false';
-//     }
-// }
+/**
+ * Filter evaluations checking if they are pending, approved or rejected
+ */
+function filterByStatus(oSettings, aData, iDataIndex) {
+    var index = 0;
+    var filter = $('#status').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    var value = $(aData[index]).attr('value');
+    return value == filter;
+}
 
 // /**
 //  * Filter events checking if they are archived or not
@@ -76,17 +73,33 @@
 //     }
 // }
 // $.fn.dataTableExt.afnFiltering.push(filterByDate);
-// $.fn.dataTableExt.afnFiltering.push(filterByPublicity);
+$.fn.dataTableExt.afnFiltering.push(filterByStatus);
 // $.fn.dataTableExt.afnFiltering.push(filterArchived);
 
 $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
+function renderDropdown(data) {
+    var html = '<div class="dropdown">';
+    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class=" icon-tasks"></i></a>';
+    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
+    if ('edit' in data && data.edit) {
+        html += '<li><a tabindex="-1" href="' + data.edit;
+        html += '" title="Edit Evaluation"><i class="icon-pencil"></i> Edit Evaluation</a></li>';
+    }
+    if ('view' in data && data.view) {
+        html += '<li><a tabindex="-1" href="' + data.view;
+        html += '" title="View Evaluation"><i class="icon-eye-open"></i> View Evaluation</a></li>';
+    }
+    html += '</ul></div>';
+    return html;
+}
+
 $(document).ready( function() {
     var currentBrand = $('#brands').find(':selected').val();
 
-    var participantTable = $('#participants').DataTable({
+    var participantTable = $('#participants').dataTable({
         "sPaginationType": "bootstrap",
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
@@ -98,12 +111,12 @@ $(document).ready( function() {
             "dataSrc": ""
         },
         "columns": [
+            { "data": "status" },
             { "data": "person" },
             { "data": "event" },
             { "data": "location" },
             { "data": "schedule" },
             { "data": "impression" },
-            { "data": "status" },
             { "data": "creation" },
             { "data": "handled" },
             { "data": "certificate" },
@@ -111,25 +124,42 @@ $(document).ready( function() {
         ],
         "columnDefs": [{
                 "render": function(data, type, row) {
-                    return '<a href="' + data.url + '">' + data.name + '</a>';
+                    var style = [
+                        { badge: '', icon: 'icon-hand-right' },
+                        { badge: 'badge-success', icon: 'icon-thumbs-up' },
+                        { badge: 'badge-important', icon: 'icon-thumbs-down' }
+                    ];
+                    if (data) {
+                        var html = '<span class="badge ' + style[data.value].badge + '"';
+                        html += ' value="' + data.value + '" ';
+                        html += 'title="Status: ' + data.label + '">';
+                        html += '<i class="' + style[data.value].icon + '"></i></span>';
+                        return html;
+                    }
+                    return '';
                 },
                 "targets": 0
             }, {
                 "render": function(data, type, row) {
-                    return '<a href="' + data.url + '">' + data.title + '</a>';
+                    return '<a href="' + data.url + '">' + data.name + '</a>';
                 },
                 "targets": 1
+            }, {
+                "render": function(data, type, row) {
+                    return '<a href="' + data.url + '">' + data.title + '</a>';
+                },
+                "targets": 2
             }, {
                 "render": function(data, type, row) {
                     return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
                         data.country + '.png"/> ' + data.city;
                 },
-                "targets": 2
+                "targets": 3
             }, {
                 "render": function(data, type, row) {
                     return data.start + ' / ' + data.end;
                 },
-                "targets": 3
+                "targets": 4
             }, {
                 "render": function(data, type, row) {
                     if (data) {
@@ -137,15 +167,10 @@ $(document).ready( function() {
                     }
                     return '';
                 },
-                "targets": 4
+                "targets": 5
             }, {
                 "render": function(data, type, row) {
-                    if ('edit' in data && data.edit) {
-                        var html = '<a href="' + data.edit;
-                        html += '" title="Edit Evaluation"><i class="icon-pencil"></i>Edit</a>'
-                        return html;
-                    }
-                    return '';
+                    return renderDropdown(data);
                 },
                 "targets": 9
             }
@@ -153,6 +178,8 @@ $(document).ready( function() {
     });
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
+    $('#status').on('change', function() { participantTable.fnDraw(); } );
+
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
         participantTable.ajax.url("participants/brand/" + brandCode).load();
