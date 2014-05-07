@@ -31,12 +31,11 @@ import play.api.db.slick.DB
 import play.api.Play.current
 
 case class EventParticipant(id: Option[Long], eventId: Long, participantId: Long) {
-
   lazy val event: Option[Event] = Event.find(eventId)
   lazy val participant: Option[Person] = Person.find(participantId)
 }
 
-case class ParticipantView(person: Person, event: Event, evaluationId: Option[Long], impression: Option[Int],
+case class ParticipantView(person: Person, event: Event, evaluationId: Option[Long], participantId: Option[Option[Long]], impression: Option[Int],
   status: Option[EvaluationStatus.Value], date: Option[DateTime], handled: Option[Option[LocalDate]],
   certificate: Option[Option[String]])
 
@@ -44,9 +43,9 @@ object EventParticipant {
 
   def findAll: List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
-      ((((part, p), e), e1), e2) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
-    } yield (p, e, e2.id.?, e2.question6.?, e2.status.?, e2.created.?, e2.handled.?, e2.certificate.?)
-    baseQuery.mapResult(ParticipantView.tupled).list
+      (((part, p), e), e1) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId)
+    } yield (p, e, e1.id.?, e1.participantId.?, e1.question6.?, e1.status.?, e1.created.?, e1.handled.?, e1.certificate.?)
+    baseQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ v.person.id == v.participantId.get)
   }
 
   def insert(participant: EventParticipant): EventParticipant = DB.withSession { implicit session: Session ⇒

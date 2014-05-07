@@ -140,13 +140,10 @@ object Evaluations extends Controller with Security {
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Evaluation.find(id).map {
-        evaluation ⇒
-          {
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val events = Event.findByUser(account)
-            Ok(views.html.evaluation.form(request.user, Some(id), evaluationForm.fill(evaluation), events))
-          }
+      Evaluation.find(id).map { evaluation ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val events = Event.findByUser(account)
+        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events))
       }.getOrElse(NotFound)
 
   }
@@ -161,12 +158,12 @@ object Evaluations extends Controller with Security {
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
             val events = Event.findByUser(account)
-            BadRequest(views.html.evaluation.form(request.user, Some(id), form, events))
+            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-            Redirect(routes.Evaluations.details(id)).flashing("success" -> activity.toString)
+            Redirect(routes.EventParticipants.index).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
   }

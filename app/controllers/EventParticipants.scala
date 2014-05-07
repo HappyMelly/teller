@@ -88,7 +88,6 @@ object EventParticipants extends Controller with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val participants = EventParticipant.findAll
-      Logger.debug(participants.length.toString)
       Ok(views.html.participant.index(request.user, participants))
   }
 

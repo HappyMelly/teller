@@ -1,5 +1,5 @@
 @(user: securesocial.core.Identity,
-  id: Option[Long],
+  evaluation: Option[Evaluation],
   form: Form[Evaluation],
   events: List[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
@@ -9,36 +9,53 @@
 
 @main("Evaluation", Some(user)) {
 
-  @defining(form.value.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
+  @defining(evaluation.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
     <h1>@title</h1>
 
+    <div id="error">
     @if(form.hasErrors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         Please fix the validation errors.
       </div>
     }
+    </div>
 
-	  @helper.form(action = CSRF(id.map(id => routes.Evaluations.update(id)).getOrElse(routes.Evaluations.create()))) {
-      @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
-      <div class="controls-row control-group">
-        @defining(form("participantId")) { field =>
-          <select name="@field.name" id="@field.id" value="@field.value">
-              <option value="">Choose a participant</option>
-          </select>
-        }
-      </div>
-      @helper.textarea(form("question1"), '_label -> "What triggered you to register for this event?")
-      @helper.textarea(form("question2"), '_label -> "Which action items did you take away from the event?")
-      @helper.textarea(form("question3"), '_label -> "What do you suggest to add or change to the program?")
-      @helper.textarea(form("question4"), '_label -> "What were specific qualities of the trainer/facilitator?")
-      @helper.textarea(form("question5"), '_label -> "What can be improved about the course/event location?")
+	  @helper.form(action = CSRF(evaluation.map(evaluation => routes.Evaluations.update(evaluation.id.get)).getOrElse(routes.Evaluations.create()))) {
+      <!-- Different logic for add and edit forms -->
+      @if(evaluation.isEmpty) {
+        @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
+        <div class="controls-row control-group">
+          @defining(form("participantId")) { field =>
+            <select name="@field.name" id="@field.id" value="@field.value">
+                <option value="">Choose a participant</option>
+            </select>
+          }
+        </div>
+      } else {
+        <input type="hidden" name="eventId" value="@form("eventId").value"/>
+        @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event", 'disabled -> "true")
+        <input type="hidden" name="participantId" value="@form("participantId").value"/>
+      }
+      @helper.textarea(form("question1"),
+        '_label -> "What triggered you to register for this event?", 'class -> "input-xxlarge")
+      @helper.textarea(form("question2"),
+        '_label -> "Which action items did you take away from the event?", 'class -> "input-xxlarge")
+      @helper.textarea(form("question3"),
+        '_label -> "What do you suggest to add or change to the program?", 'class -> "input-xxlarge")
+      @helper.textarea(form("question4"),
+        '_label -> "What were specific qualities of the trainer/facilitator?", 'class -> "input-xxlarge")
+      @helper.textarea(form("question5"),
+        '_label -> "What can be improved about the course/event location?", 'class -> "input-xxlarge")
       @helper.select(form("question6"), Evaluations.impression, '_label -> "General impression")
-      @helper.select(form("question7"), Evaluations.recommendation, '_label -> "How likely are you to recommend this event to others?")
-      @helper.textarea(form("question8"), '_label -> "How could the trainer/facilitator have made the event better?")
+      @helper.select(form("question7"), Evaluations.recommendation,
+        '_label -> "How likely are you to recommend this event to others?")
+      @helper.textarea(form("question8"),
+        '_label -> "How could the trainer/facilitator have made the event better?", 'class -> "input-xxlarge")
+      <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
       @helper.select(form("status"),
-        models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq, '_label -> "Status")
-      @helper.textarea(form("certificate"), '_label -> "Certificate Number")
+        models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq, '_label -> "Status", 'disabled -> "true")
+      @helper.textarea(form("certificate"), '_label -> "Certificate Number", '_help -> "")
 
       <button class="btn btn-primary" type="submit">Save</button>
     }
