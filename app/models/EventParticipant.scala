@@ -35,17 +35,29 @@ case class EventParticipant(id: Option[Long], eventId: Long, participantId: Long
   lazy val participant: Option[Person] = Person.find(participantId)
 }
 
-case class ParticipantView(person: Person, event: Event, evaluationId: Option[Long], participantId: Option[Option[Long]], impression: Option[Int],
-  status: Option[EvaluationStatus.Value], date: Option[DateTime], handled: Option[Option[LocalDate]],
+case class ParticipantView(person: Person,
+  event: Event,
+  evaluationId: Option[Long],
+  participantId: Option[Option[Long]],
+  impression: Option[Int],
+  status: Option[EvaluationStatus.Value],
+  date: Option[DateTime],
+  handled: Option[Option[LocalDate]],
   certificate: Option[Option[String]])
 
 object EventParticipant {
 
-  def findAll: List[ParticipantView] = DB.withSession { implicit session: Session ⇒
+  def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
-      (((part, p), e), e1) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId)
-    } yield (p, e, e1.id.?, e1.participantId.?, e1.question6.?, e1.status.?, e1.created.?, e1.handled.?, e1.certificate.?)
-    baseQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ v.person.id == v.participantId.get)
+      ((((part, p), e), ev), ev2) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
+    } yield (p, e, ev2.id.?, ev2.participantId.?, ev2.question6.?, ev2.status.?, ev2.created.?, ev2.handled.?, ev2.certificate.?)
+
+    val brandQuery = brandCode.map { value ⇒
+      baseQuery.filter(_._2.brandCode === value)
+    }.getOrElse(baseQuery)
+    // brandQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ v.person.id == v.participantId.get)
+
+    brandQuery.mapResult(ParticipantView.tupled).list.filter(v ⇒ Some(v.person.id) == v.participantId)
   }
 
   def insert(participant: EventParticipant): EventParticipant = DB.withSession { implicit session: Session ⇒

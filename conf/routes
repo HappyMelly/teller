@@ -52,7 +52,8 @@ POST /evaluation/:id              controllers.Evaluations.update(id: Long)
 POST /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
 
 
-GET  /participants               controllers.EventParticipants.index
+GET  /participants                   controllers.EventParticipants.index
+GET  /participants/brand/:brandCode  controllers.EventParticipants.participantsByBrand(brandCode: String)
 GET  /participants/:eventId      controllers.EventParticipants.participants(eventId: Long)
 GET  /participant/new/           controllers.EventParticipants.add
 POST /participant                controllers.EventParticipants.create

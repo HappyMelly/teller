@@ -25,6 +25,7 @@
 package controllers
 
 import models.{ EventParticipant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
+import models.{ Brand, ParticipantView }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
@@ -86,8 +87,49 @@ object EventParticipants extends Controller with Security {
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      val participants = EventParticipant.findAll
-      Ok(views.html.participant.index(request.user, participants))
+      val participants = EventParticipant.findAll(None)
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val brands = Brand.findForUser(account)
+      Ok(views.html.participant.index(request.user, participants, brands))
+  }
+
+  def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(brandCode).map { brand ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+
+        implicit val participantViewWrites = new Writes[ParticipantView] {
+          def writes(data: ParticipantView): JsValue = {
+            Json.obj(
+              "person" -> Json.obj(
+                "url" -> routes.People.details(data.person.id.get).url,
+                "name" -> data.person.fullName),
+              "event" -> Json.obj(
+                "url" -> routes.Events.details(data.event.id.get).url,
+                "title" -> data.event.title),
+              "location" -> Json.obj(
+                "country" -> data.event.location.countryCode.toLowerCase,
+                "city" -> data.event.location.city),
+              "schedule" -> Json.obj(
+                "start" -> data.event.schedule.start.toString,
+                "end" -> data.event.schedule.end.toString),
+              "impression" -> data.impression.map(_.toString),
+              "status" -> data.status.map(status ⇒ Messages("models.EvaluationStatus." + status)),
+              "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
+              "handled" -> data.handled.map(_.toString),
+              "certificate" -> data.certificate.map(_.toString),
+              "actions" -> Json.obj(
+                "edit" -> data.evaluationId.map(id ⇒
+                  if (account.editor || brand.brand.coordinatorId == account.personId)
+                    routes.Evaluations.edit(id).url
+                  else
+                    "")))
+          }
+        }
+        val participants = EventParticipant.findAll(Some(brandCode))
+        Ok(Json.toJson(participants))
+        // Ok("")
+      }.getOrElse(NotFound("Unknown brand"))
   }
 
   /**

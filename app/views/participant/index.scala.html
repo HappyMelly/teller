@@ -1,5 +1,6 @@
 @(user: securesocial.core.Identity,
-  participants: List[ParticipantView])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+  participants: List[ParticipantView],
+  brands: List[Brand])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
@@ -7,35 +8,56 @@
 
 @main("Participants", Some(user)) {
 
-  <div class="span4">
-    <h1>Participants</h1>
+  <div class="span10">
+    <div class="span4">
+      <h1>Participants</h1>
+    </div>
+    <div class="span4">
+      @dynamic(handler, "event", "add") {
+        <a class="btn btn-success" href="@routes.EventParticipants.add()">
+          <i class="icon-plus icon-white"></i>Add Participant
+        </a>
+      }
+      @dynamic(handler, "evaluation", "add") {
+        <a class="btn btn-success" href="@routes.Evaluations.add()">
+          <i class="icon-plus icon-white"></i>Add Evaluation
+        </a>
+      }
+    </div>
   </div>
-  <div class="span4">
-    @dynamic(handler, "event", "add") {
-      <a class="btn btn-success" href="@routes.EventParticipants.add()">
-        <i class="icon-plus icon-white"></i>Add Participant
-      </a>
-    }
-    @dynamic(handler, "evaluation", "add") {
-      <a class="btn btn-success" href="@routes.Evaluations.add()">
-        <i class="icon-plus icon-white"></i>Add Evaluation
-      </a>
-    }
-  </div>
-
   <div class="span10">
     @if(participants.isEmpty) {
       <p>There are no participants</p>
     } else {
-      @table(participants) { participant =>
-        @restrict(handler, List(as(Editor.toString))) {
-          @participant.evaluationId.map { id =>
-            <a href="@routes.Evaluations.edit(id)"><i class="icon-pencil"></i>Edit</a><br/>
-          }
-        }
-      }
+      <div id="filter-containter">
+        <div class="btn-toolbar pull-right">
+          <div class="btn-group">
+            <select id="brands" class="input-large">
+              @for(brand <- brands) {
+                <option value="@brand.code">@brand.name</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+      <table id="participants" class="datatables table table-bordered">
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th width="20%">Event</th>
+            <th>Location</th>
+            <th>Dates</th>
+            <th width="5%">General Impression</th>
+            <th>Status</th>
+            <th>Evaluation Date</th>
+            <th>Handled Date</th>
+            <th>Certificate Number</th>
+            <th></th>
+          </tr>
+        </thead>
+      </table>
     }
   </div>
 
-	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+	<script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
 }
