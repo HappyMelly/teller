@@ -2,6 +2,7 @@
   evaluation: Evaluation)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
+@import views.Evaluations
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -10,15 +11,95 @@
 
   <div class="span8">
     <header>
-
-    <h1>Evaluation for @evaluation.participant.fullName
-        @dynamic(handler, "evaluation", "edit") {
-        <a class="btn-small btn"href="@routes.Evaluations.edit(evaluation.id.get)"><i class="icon-pencil"></i> Edit</a>
-      }
-    </h1>
-    <p><small>Added by @evaluation.createdBy on @evaluation.created.format <br> Updated by @evaluation.updatedBy on @evaluation.updated.format</small></p>
+      <h1>Evaluation for @evaluation.participant.fullName
+          @dynamic(handler, "evaluation", "edit") {
+          <a class="btn-small btn"href="@routes.Evaluations.edit(evaluation.id.get)"><i class="icon-pencil"></i> Edit</a>
+        }
+      </h1>
     </header>
   </div>
+  @dynamic(handler, "evaluation", "manage") {
+    <div class="span2 actions">
 
+      <div class="clearfix"></div>
+      <form class="delete" method="get" text="evaluation" action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0)))">
+        <button class="btn btn-danger btn-block" type="submit"
+          <i class="icon-white icon-trash"></i> Delete
+        </button>
+      </form>
+    </div>
+  }
+
+  <div class="span8">
+    <div class="span3">
+        <p>
+            <strong>Event</strong><br/>
+            <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
+        </p>
+        <p>
+            <strong>General Impression</strong><br/>
+            @Messages("evaluation.impression." + evaluation.question6)
+        </p>
+    </div>
+    <div class="span3">
+        <p>
+            <strong>Status</strong><br/>
+            <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
+              @Messages("models.EvaluationStatus." + evaluation.status)</span>
+        </p>
+        @if(evaluation.status == "2") {
+          @evaluation.handled.map { value =>
+            <p>
+              <strong>Handled Date</strong><br/>@value
+            </p>
+          }
+          @evaluation.certificate.map { value =>
+            <p>
+              <strong>Certificate #</strong><br/>@value
+            </p>
+          }
+        }
+    </div>
+  </div>
+  <div class="span8">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Answer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>What triggered you to register for this event?</td>
+            <td>@evaluation.question1</td>
+          </tr>
+          <tr>
+            <td>Which action items did you take away from the event?</td>
+            <td>@evaluation.question2</td>
+          </tr>
+          <tr>
+            <td>What do you suggest to add or change to the program?</td>
+            <td>@evaluation.question3</td>
+          </tr>
+          <tr>
+            <td>What were specific qualities of the trainer/facilitator?</td>
+            <td>@evaluation.question4</td>
+          </tr>
+          <tr>
+            <td>What can be improved about the course/event location?</td>
+            <td>@evaluation.question5</td>
+          </tr>
+          <tr>
+            <td>How likely are you to recommend this event to others?</td>
+            <td>@Messages("evaluation.impression." + evaluation.question7)</td>
+          </tr>
+          <tr>
+            <td>How could the trainer/facilitator have made the event better?</td>
+            <td>@evaluation.question8</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
   <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

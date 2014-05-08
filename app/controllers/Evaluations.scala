@@ -114,7 +114,7 @@ object Evaluations extends Controller with Security {
   }
 
   /** Delete an evaluation **/
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
 
       Evaluation.find(id).map {

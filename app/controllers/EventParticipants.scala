@@ -128,7 +128,8 @@ object EventParticipants extends Controller with Security {
                         routes.Evaluations.edit(id).url
                       else ""
                     },
-                    "view" -> routes.Evaluations.details(id).url)
+                    "view" -> routes.Evaluations.details(id).url,
+                    "remove" -> routes.Evaluations.delete(id).url)
                   case None ⇒ Json.obj()
                 }
               })

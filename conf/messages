@@ -55,7 +55,7 @@ models.BrandStatus.experimental.label = label-warning
 
 # Evaluation status label names and Bootstrap label CSS classes.
 models.EvaluationStatus.1 = Pending
-models.EvaluationStatus.1.label = label-inverse
+models.EvaluationStatus.1.label =
 models.EvaluationStatus.2 = Approved
 models.EvaluationStatus.2.label = label-success
 models.EvaluationStatus.3 = Rejected
@@ -400,3 +400,28 @@ country.YE = Yemen
 country.ZM = Zambia
 country.ZW = Zimbabwe
 country.AX = Åland Islands]
+
+# Evaluations
+evaluation.impression.0 = terrible
+evaluation.impression.1 = very bad
+evaluation.impression.2 = bad
+evaluation.impression.3 = disappointing
+evaluation.impression.4 = below average
+evaluation.impression.5 = average
+evaluation.impression.6 = above average
+evaluation.impression.7 = fine
+evaluation.impression.8 = good
+evaluation.impression.9 = very good
+evaluation.impression.10 = excellent
+
+evaluation.recommendation.0 = certainly not
+evaluation.recommendation.1 = highly unlikely
+evaluation.recommendation.2 = unlikely
+evaluation.recommendation.3 = quite unlikely
+evaluation.recommendation.4 = possibly not
+evaluation.recommendation.5 = maybe
+evaluation.recommendation.6 = yes, possibly
+evaluation.recommendation.7 = quite possibly
+evaluation.recommendation.8 = likely
+evaluation.recommendation.9 = highly likely
+evaluation.recommendation.10 = certainly

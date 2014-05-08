@@ -49,7 +49,7 @@ GET  /evaluation/new/            controllers.Evaluations.add
 GET  /evaluation/:id/edit         controllers.Evaluations.edit(id: Long)
 GET  /evaluation/:id              controllers.Evaluations.details(id: Long)
 POST /evaluation/:id              controllers.Evaluations.update(id: Long)
-POST /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
+GET  /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
 
 
 GET  /participants                   controllers.EventParticipants.index

@@ -124,6 +124,12 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               // A User should have an Editor role or a Brand Coordinator to be able to edit the evaluation
               existingAccount.editor || Evaluation.find(evaluationId.get.toLong)
                 .exists(_.event.canAdministrate(existingAccount))
+            case "manage" ⇒
+              val evaluationId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role, a Brand Coordinator or a Facilitator to be able
+              // to manage (delete, approve and reject) the evaluation
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong)
+                .exists(_.event.canEdit(existingAccount))
             case _ ⇒ true
           }
         case "event" ⇒

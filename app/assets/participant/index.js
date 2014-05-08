@@ -65,6 +65,12 @@ function renderDropdown(data) {
         html += '<li><a tabindex="-1" href="' + data.view;
         html += '" title="View Evaluation"><i class="icon-eye-open"></i> View Evaluation</a></li>';
     }
+    if ('remove' in data && data.remove) {
+        html += '<li><a tabindex="-1" href="' + data.remove;
+        html += '" title="Delete Evaluation" onclick="';
+        html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
+        html += '<i class="icon-trash"></i> Delete Evaluation</a></li>';
+    }
     html += '</ul></div>';
     return html;
 }

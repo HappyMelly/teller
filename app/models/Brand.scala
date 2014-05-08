@@ -135,7 +135,7 @@ object Brand {
       Query(Brands).list
     else {
       val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
-      findByCoordinator(user.personId).union(facilitatedBrands).distinct
+      findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
     }
   }
 
