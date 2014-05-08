@@ -96,6 +96,7 @@ $(document).ready( function() {
             "url" : "participants/brand/" + currentBrand,
             "dataSrc": ""
         },
+        "order": [[ 6, "desc" ]],
         "columns": [
             { "data": "status" },
             { "data": "person" },
@@ -119,7 +120,7 @@ $(document).ready( function() {
                         var html = '<span class="badge ' + style[data.value].badge + '"';
                         html += ' value="' + data.value + '" ';
                         html += 'title="Status: ' + data.label + '">';
-                        html += '<i class="' + style[data.value].icon + '"></i></span>';
+                        html += '<i class="icon-white ' + style[data.value].icon + '"></i></span>';
                         return html;
                     }
                     return '';
@@ -162,7 +163,8 @@ $(document).ready( function() {
                 "render": function(data, type, row) {
                     return renderDropdown(data);
                 },
-                "targets": 9
+                "targets": 9,
+                "bSortable": false
             }
         ]
     });
