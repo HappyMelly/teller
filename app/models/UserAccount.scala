@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -54,6 +54,10 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
 
   def facilitator: Boolean = {
     !licenses.isEmpty || !brands.isEmpty
+  }
+
+  def coordinator: Boolean = {
+    !brands.isEmpty
   }
 
   lazy val person: Option[Person] = Person.find(personId)

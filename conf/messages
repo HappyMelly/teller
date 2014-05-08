@@ -1,6 +1,6 @@
 #
 # Happy Melly Teller
-# Copyright (C) 2013, Happy Melly http://www.happymelly.com
+# Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
 #
 # This file is part of the Happy Melly Teller.
 #
@@ -53,6 +53,14 @@ models.BrandStatus.provisionallyaccepted.label = label-primary
 models.BrandStatus.experimental = In Experimental Phase
 models.BrandStatus.experimental.label = label-warning
 
+# Evaluation status label names and Bootstrap label CSS classes.
+models.EvaluationStatus.1 = Pending
+models.EvaluationStatus.1.label =
+models.EvaluationStatus.2 = Approved
+models.EvaluationStatus.2.label = label-success
+models.EvaluationStatus.3 = Rejected
+models.EvaluationStatus.3.label = label-warning
+
 # Product category label names and Bootstrap label CSS classes.
 models.ProductCategory.book = Books
 models.ProductCategory.book.label = label-inverse
@@ -80,6 +88,8 @@ activity.contribution.create = new contributor ({1}) to {0}
 activity.contribution.delete = a contributor ({1}) from {0}
 activity.eventType.create = new event type ({1}) to {0}
 activity.eventType.delete = an event type ({1}) from {0}
+activity.participant.create = new participant ({1}) to {0}
+activity.participant.delete = a participant ({1}) from {0}
 activity.balance = {0} balanced {1} accounts
 activity.confirm = {0} confirmed {1} event
 
@@ -93,9 +103,11 @@ error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
 error.brand.invalid = You are not allowed to create events for this brand
+error.event.invalid = You are not allowed to manage this event
 error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
+error.person.invalid = A person with such id does not exist
 error.retry = {0}. Please try again.
 
 # Play form validation error overrides
@@ -389,3 +401,28 @@ country.YE = Yemen
 country.ZM = Zambia
 country.ZW = Zimbabwe
 country.AX = Åland Islands]
+
+# Evaluations
+evaluation.impression.0 = terrible
+evaluation.impression.1 = very bad
+evaluation.impression.2 = bad
+evaluation.impression.3 = disappointing
+evaluation.impression.4 = below average
+evaluation.impression.5 = average
+evaluation.impression.6 = above average
+evaluation.impression.7 = fine
+evaluation.impression.8 = good
+evaluation.impression.9 = very good
+evaluation.impression.10 = excellent
+
+evaluation.recommendation.0 = certainly not
+evaluation.recommendation.1 = highly unlikely
+evaluation.recommendation.2 = unlikely
+evaluation.recommendation.3 = quite unlikely
+evaluation.recommendation.4 = possibly not
+evaluation.recommendation.5 = maybe
+evaluation.recommendation.6 = yes, possibly
+evaluation.recommendation.7 = quite possibly
+evaluation.recommendation.8 = likely
+evaluation.recommendation.9 = highly likely
+evaluation.recommendation.10 = certainly

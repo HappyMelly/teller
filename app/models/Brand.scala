@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -131,11 +131,11 @@ object Brand {
    *  license holders.
    */
   def findForUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
-    if (UserRole.forName(user.role).editor)
-      Query(Brands).list
+    if (user.editor)
+      Query(Brands).list.sortBy(_.name)
     else {
       val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
-      findByCoordinator(user.personId).union(facilitatedBrands).distinct
+      findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
     }
   }
 
