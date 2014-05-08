@@ -22,28 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-// /**
-//  * Filter events checking if they are future or past
-//  */
-// function filterByDate(oSettings, aData, iDataIndex) {
-//     var index = 4;
-//     var filter = $('#past-future').find(':selected').val();
-//     if (filter == 'all') {
-//         return true;
-//     }
-//     var dates = aData[index].split('/')
-//     if (dates.length != 2) {
-//         return true;
-//     }
-//     var end = Date.parse(dates[1]);
-//     var today = Date.today();
-//     if (filter == 'past') {
-//         return (today > end);
-//     } else {
-//         return (today <= end);
-//     }
-// }
-
 /**
  * Filter evaluations checking if they are pending, approved or rejected
  */
@@ -57,24 +35,19 @@ function filterByStatus(oSettings, aData, iDataIndex) {
     return value == filter;
 }
 
-// /**
-//  * Filter events checking if they are archived or not
-//  */
-// function filterArchived(oSettings, aData, iDataIndex) {
-//     var index = 9;
-//     var filter = $('#archived').find(':selected').val();
-//     if (filter == 'all') {
-//         return true;
-//     }
-//     if (filter == 'archived') {
-//         return aData[index] == 'true';
-//     } else {
-//         return aData[index] == 'false';
-//     }
-// }
-// $.fn.dataTableExt.afnFiltering.push(filterByDate);
+/**
+ * Filter evaluations by an event
+ */
+function filterByEvent(oSettings, aData, iDataIndex) {
+    var index = 2;
+    var filter = $('#events').find(':selected').val();
+    if (filter == '') {
+        return true;
+    }
+    return aData[index] == filter;
+}
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
-// $.fn.dataTableExt.afnFiltering.push(filterArchived);
+$.fn.dataTableExt.afnFiltering.push(filterByEvent);
 
 $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
@@ -98,7 +71,7 @@ function renderDropdown(data) {
 
 $(document).ready( function() {
     var currentBrand = $('#brands').find(':selected').val();
-
+    var events = [];
     var participantTable = $('#participants').dataTable({
         "sPaginationType": "bootstrap",
         "sDom": '<"toolbar">rtip',
@@ -146,6 +119,10 @@ $(document).ready( function() {
                 "targets": 1
             }, {
                 "render": function(data, type, row) {
+                    var result = $.grep(events, function(e){ return e.url == data.url; });
+                    if (result.length == 0) {
+                        events.push(data);
+                    }
                     return '<a href="' + data.url + '">' + data.title + '</a>';
                 },
                 "targets": 2
@@ -179,9 +156,21 @@ $(document).ready( function() {
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
     $('#status').on('change', function() { participantTable.fnDraw(); } );
+    $("#events").on('change', function() { participantTable.fnDraw(); } );
 
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
-        participantTable.ajax.url("participants/brand/" + brandCode).load();
+        events = [];
+        participantTable
+            .api()
+            .ajax
+            .url("participants/brand/" + brandCode)
+            .load(function(){
+                $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
+                for(var i = 0; i < events.length; i++) {
+                    var event = events[i];
+                    $('#events').append( $('<option value="'+ event.title +'">' + event.title +'</option>') );
+                }
+            });
     });
 });
