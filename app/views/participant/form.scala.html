@@ -2,8 +2,8 @@
   id: Option[Long],
   events: List[Event],
   people: List[Person],
-  newPersonForm: Form[Participant],
-  existingPersonForm: Form[EventParticipant],
+  newPersonForm: Form[ParticipantData],
+  existingPersonForm: Form[Participant],
   showExistingPersonForm: Boolean = true)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -35,14 +35,14 @@
     </form>
 
     <div class="existingPerson">
-      @helper.form(action = CSRF(routes.EventParticipants.create())) {
+      @helper.form(action = CSRF(routes.Participants.create())) {
         @helper.select(existingPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
         @helper.select(existingPersonForm("participantId"), ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person")
         <button class="btn btn-primary" type="submit">Save</button>
       }
     </div>
     <div class="newPerson">
-      @helper.form(action = CSRF(routes.EventParticipants.createParticipantAndPerson())) {
+      @helper.form(action = CSRF(routes.Participants.createParticipantAndPerson())) {
         @helper.select(newPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event")
         @helper.inputText(newPersonForm("firstName"), '_label -> "First name")
         @helper.inputText(newPersonForm("lastName"), '_label -> "Last name")

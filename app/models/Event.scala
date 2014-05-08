@@ -29,7 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitators, EventParticipants, Events }
+import models.database.{ EventFacilitators, Participants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
@@ -72,7 +72,7 @@ case class Event(
 
   lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
-      participation ← EventParticipants if participation.eventId === this.id
+      participation ← Participants if participation.eventId === this.id
       person ← participation.participant
     } yield person
     query.sortBy(_.lastName.toLowerCase).list

@@ -24,13 +24,13 @@
 
 package models
 
-import models.database.{ EventParticipants, People, Events, Evaluations }
+import models.database.{ Participants, People, Events, Evaluations }
 import play.api.db.slick.Config.driver.simple._
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.DB
 import play.api.Play.current
 
-case class EventParticipant(id: Option[Long], eventId: Long, participantId: Long) {
+case class Participant(id: Option[Long], eventId: Long, participantId: Long) {
   lazy val event: Option[Event] = Event.find(eventId)
   lazy val participant: Option[Person] = Person.find(participantId)
 }
@@ -45,11 +45,11 @@ case class ParticipantView(person: Person,
   handled: Option[Option[LocalDate]],
   certificate: Option[Option[String]])
 
-object EventParticipant {
+object Participant {
 
   def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
-      ((((part, p), e), ev), ev2) ← EventParticipants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
+      ((((part, p), e), ev), ev2) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
     } yield (p, e, ev.id.?, ev2.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
 
     val brandQuery = brandCode.map { value ⇒
@@ -63,13 +63,13 @@ object EventParticipant {
     withEvaluation.union(withoutEvaluation)
   }
 
-  def insert(participant: EventParticipant): EventParticipant = DB.withSession { implicit session: Session ⇒
-    val id = EventParticipants.forInsert.insert(participant)
+  def insert(participant: Participant): Participant = DB.withSession { implicit session: Session ⇒
+    val id = Participants.forInsert.insert(participant)
     participant.copy(id = Some(id))
   }
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventParticipants.where(_.id === id).mutate(_.delete())
+    Participants.where(_.id === id).mutate(_.delete())
   }
 }
 

@@ -109,7 +109,7 @@ object Evaluations extends Controller with Security {
         evaluation ⇒ {
           evaluation.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
-          Redirect(routes.EventParticipants.index()).flashing("success" -> activity.toString)
+          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
   }
 
@@ -121,7 +121,7 @@ object Evaluations extends Controller with Security {
         evaluation ⇒
           evaluation.delete
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
-          Redirect(routes.EventParticipants.index).flashing("success" -> activity.toString)
+          Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -163,7 +163,7 @@ object Evaluations extends Controller with Security {
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-            Redirect(routes.EventParticipants.index).flashing("success" -> activity.toString)
+            Redirect(routes.Participants.index).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
   }

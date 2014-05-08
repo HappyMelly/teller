@@ -24,13 +24,13 @@
 
 package models.database
 
-import models.EventParticipant
+import models.Participant
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `EventParticipant` database table mapping.
+ * `Participant` database table mapping.
  */
-private[models] object EventParticipants extends Table[EventParticipant]("EVENT_PARTICIPANT") {
+private[models] object Participants extends Table[Participant]("EVENT_PARTICIPANT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
@@ -39,6 +39,6 @@ private[models] object EventParticipants extends Table[EventParticipant]("EVENT_
   def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
   def participant = foreignKey("PARTICIPANT_FK", personId, People)(_.id)
 
-  def * = id.? ~ eventId ~ personId <> (EventParticipant.apply _, EventParticipant.unapply _)
+  def * = id.? ~ eventId ~ personId <> (Participant.apply _, Participant.unapply _)
   def forInsert = * returning id
 }
