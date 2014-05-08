@@ -66,7 +66,6 @@ $(document).ready( function() {
     });
     var eventId = $('#eventId').find(':selected').val();
     if (eventId) {
-        console.log("Trying to get participants for event " + eventId);
         getParticipants(eventId);
     }
     var status = $('#status').find(':selected').val();

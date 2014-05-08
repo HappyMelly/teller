@@ -56,7 +56,8 @@ object EventParticipant {
       baseQuery.filter(_._2.brandCode === value)
     }.getOrElse(baseQuery)
     val rawList = brandQuery.mapResult(ParticipantView.tupled).list
-    val withEvaluation = rawList.filter(obj ⇒ obj.evaluationId == obj.secondEvaluationId)
+    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
+      filter(obj ⇒ obj.evaluationId == obj.secondEvaluationId)
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
       map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None, None))
     withEvaluation.union(withoutEvaluation)

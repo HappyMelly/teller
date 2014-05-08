@@ -54,24 +54,31 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
 } );
 
 function renderDropdown(data) {
+    var emptyDropdown = true;
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class=" icon-tasks"></i></a>';
     html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
     if ('edit' in data && data.edit) {
+        emptyDropdown = false;
         html += '<li><a tabindex="-1" href="' + data.edit;
         html += '" title="Edit Evaluation"><i class="icon-pencil"></i> Edit Evaluation</a></li>';
     }
     if ('view' in data && data.view) {
+        emptyDropdown = false;
         html += '<li><a tabindex="-1" href="' + data.view;
         html += '" title="View Evaluation"><i class="icon-eye-open"></i> View Evaluation</a></li>';
     }
     if ('remove' in data && data.remove) {
+        emptyDropdown = false;
         html += '<li><a tabindex="-1" href="' + data.remove;
         html += '" title="Delete Evaluation" onclick="';
         html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
         html += '<i class="icon-trash"></i> Delete Evaluation</a></li>';
     }
     html += '</ul></div>';
+    if (emptyDropdown) {
+        return '';
+    }
     return html;
 }
 
