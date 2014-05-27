@@ -44,6 +44,8 @@ import play.api.Play.current
 import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
+import services.EmailService
+import play.api.i18n.Messages
 
 object Evaluations extends Controller with Security {
 
@@ -107,7 +109,15 @@ object Evaluations extends Controller with Security {
           BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events))
         },
         evaluation ⇒ {
-          evaluation.insert
+          val createdEvaluation = evaluation.insert
+
+          val brand = Brand.find(createdEvaluation.event.brandCode).get
+          val recipients = brand.coordinator :: createdEvaluation.event.facilitators
+          val impression = Messages("evaluation.impression." + createdEvaluation.question6)
+          val subject = s"New evaluation (General impression: ${impression})"
+          EmailService.send(recipients.toSet, subject,
+            mail.html.evaluation(createdEvaluation).toString, true)
+
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
@@ -165,6 +175,46 @@ object Evaluations extends Controller with Security {
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
             Redirect(routes.Participants.index).flashing("success" -> activity.toString)
           })
+      }.getOrElse(NotFound)
+  }
+
+  /** Approve form submits to this action **/
+  def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+    implicit handler ⇒
+      Evaluation.find(id).map { existingEvaluation ⇒
+        existingEvaluation.copy(status = EvaluationStatus.Approved).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
+          existingEvaluation.participant.fullName)
+
+        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val brand = Brand.find(existingEvaluation.event.brandCode).get
+        val participant = existingEvaluation.participant
+        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
+        val subject = s"Your ${brand.brand.name} certificate"
+        EmailService.send(recipients.toSet, subject,
+          mail.html.approved(brand.brand, participant, facilitator).toString, true)
+
+        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /** Reject form submits to this action **/
+  def reject(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+    implicit handler ⇒
+      Evaluation.find(id).map { existingEvaluation ⇒
+        existingEvaluation.copy(status = EvaluationStatus.Rejected).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Rejected,
+          existingEvaluation.participant.fullName)
+
+        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val brand = Brand.find(existingEvaluation.event.brandCode).get
+        val participant = existingEvaluation.participant
+        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
+        val subject = s"Your ${brand.brand.name} certificate"
+        EmailService.send(recipients.toSet, subject,
+          mail.html.rejected(brand.brand, participant, facilitator).toString, true)
+
+        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 

@@ -9,6 +9,7 @@
 
 @main("Evaluation for %s".format(evaluation.participant.fullName), Some(user)) {
 
+  @common.evaluationActions()
   <div class="span8">
     <header>
       <h1>Evaluation for @evaluation.participant.fullName
@@ -20,10 +21,25 @@
   </div>
   @dynamic(handler, "evaluation", "manage") {
     <div class="span2 actions">
-
-      <div class="clearfix"></div>
-      <form class="delete" method="get" text="evaluation" action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit"
+      @if(evaluation.status != EvaluationStatus.Approved) {
+        <a class="approve btn btn-success btn-block" tabindex="-1" href="#approve"
+          data-href="@CSRF(routes.Evaluations.approve(evaluation.id.getOrElse(0)))"
+          data-toggle="modal" type="submit">
+            <i class="icon-white icon-thumbs-up"></i> Approve
+        </a><br/>
+        <div class="clearfix"></div>
+      }
+      @if(evaluation.status != EvaluationStatus.Rejected) {
+        <a class="reject btn btn-warning btn-block" tabindex="-1" href="#reject"
+          data-href="@CSRF(routes.Evaluations.reject(evaluation.id.getOrElse(0)))"
+          data-toggle="modal" type="submit">
+            <i class="icon-white icon-thumbs-down"></i> Reject
+        </a><br/>
+        <div class="clearfix"></div>
+      }
+      <form class="delete" method="get" text="evaluation"
+        action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0)))">
+        <button class="btn btn-danger btn-block" type="submit">
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>
@@ -36,12 +52,8 @@
             <strong>Event</strong><br/>
             <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
         </p>
-        <p>
-            <strong>General Impression</strong><br/>
-            @Messages("evaluation.impression." + evaluation.question6)
-        </p>
     </div>
-    <div class="span3">
+    <div class="span2">
         <p>
             <strong>Status</strong><br/>
             <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
@@ -60,6 +72,12 @@
           }
         }
     </div>
+    <div class="span2">
+        <p>
+            <strong>@Messages("evaluation.question6")</strong><br/>
+            @Messages("evaluation.impression." + evaluation.question6)
+        </p>
+    </div>
   </div>
   <div class="span8">
       <table class="table table-bordered">
@@ -71,35 +89,35 @@
         </thead>
         <tbody>
           <tr>
-            <td>What triggered you to register for this event?</td>
+            <td>@Messages("evaluation.question1")</td>
             <td>@evaluation.question1</td>
           </tr>
           <tr>
-            <td>Which action items did you take away from the event?</td>
+            <td>@Messages("evaluation.question2")</td>
             <td>@evaluation.question2</td>
           </tr>
           <tr>
-            <td>What do you suggest to add or change to the program?</td>
+            <td>@Messages("evaluation.question3")</td>
             <td>@evaluation.question3</td>
           </tr>
           <tr>
-            <td>What were specific qualities of the trainer/facilitator?</td>
+            <td>@Messages("evaluation.question4")</td>
             <td>@evaluation.question4</td>
           </tr>
           <tr>
-            <td>What can be improved about the course/event location?</td>
+            <td>@Messages("evaluation.question5")</td>
             <td>@evaluation.question5</td>
           </tr>
           <tr>
-            <td>How likely are you to recommend this event to others?</td>
-            <td>@Messages("evaluation.impression." + evaluation.question7)</td>
+            <td>@Messages("evaluation.question7")</td>
+            <td>@Messages("evaluation.recommendation." + evaluation.question7)</td>
           </tr>
           <tr>
-            <td>How could the trainer/facilitator have made the event better?</td>
+            <td>@Messages("evaluation.question8")</td>
             <td>@evaluation.question8</td>
           </tr>
         </tbody>
       </table>
   </div>
-  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("evaluation/details.js")" type="text/javascript"></script>
 }

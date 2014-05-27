@@ -58,6 +58,16 @@ function renderDropdown(data) {
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class=" icon-tasks"></i></a>';
     html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
+    if ('approve' in data && data.approve) {
+        emptyDropdown = false;
+        html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + data.approve;
+        html += '" data-toggle="modal" title="Approve Evaluation"><i class="icon-thumbs-up"></i> Approve Evaluation</a></li>';
+    }
+    if ('reject' in data && data.reject) {
+        emptyDropdown = false;
+        html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + data.reject;
+        html += '" data-toggle="modal" title="Reject Evaluation"><i class="icon-thumbs-down"></i> Reject Evaluation</a></li>';
+    }
     if ('edit' in data && data.edit) {
         emptyDropdown = false;
         html += '<li><a tabindex="-1" href="' + data.edit;
@@ -114,7 +124,7 @@ $(document).ready( function() {
                     var style = [
                         { badge: '', icon: 'icon-hand-right' },
                         { badge: 'badge-success', icon: 'icon-thumbs-up' },
-                        { badge: 'badge-important', icon: 'icon-thumbs-down' }
+                        { badge: 'badge-warning', icon: 'icon-thumbs-down' }
                     ];
                     if (data) {
                         var html = '<span class="badge ' + style[data.value].badge + '"';
@@ -187,5 +197,11 @@ $(document).ready( function() {
                     $('#events').append( $('<option value="'+ event.title +'">' + event.title +'</option>') );
                 }
             });
+    });
+    $("#participants").on('click', '.approve', function(){
+        $("#approveLink").attr('href', $(this).data('href'));
+    });
+    $("#participants").on('click', '.reject', function(){
+        $("#rejectLink").attr('href', $(this).data('href'));
     });
 });

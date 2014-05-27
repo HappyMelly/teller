@@ -92,6 +92,8 @@ activity.participant.create = new participant ({1}) to {0}
 activity.participant.delete = a participant ({1}) from {0}
 activity.balance = {0} balanced {1} accounts
 activity.confirm = {0} confirmed {1} event
+activity.approve = {0} approved an evaluation for {1}
+activity.reject = {0} rejected an evaluation for {1}
 
 # Controller error messages
 # {0} Object name
@@ -426,3 +428,12 @@ evaluation.recommendation.7 = quite possibly
 evaluation.recommendation.8 = likely
 evaluation.recommendation.9 = highly likely
 evaluation.recommendation.10 = certainly
+
+evaluation.question1 = What triggered you to register for this event?
+evaluation.question2 = Which action items did you take away from the event?
+evaluation.question3 = What do you suggest to add or change to the program?
+evaluation.question4 = What were specific qualities of the trainer/facilitator?
+evaluation.question5 = What can be improved about the event location?
+evaluation.question6 = General impression
+evaluation.question7 = How likely are you to recommend this event to others?
+evaluation.question8 = How could the trainer/facilitator have made the event better?

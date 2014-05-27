@@ -38,14 +38,14 @@ object EmailService {
   val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
 
-  case class EmailMessage(to: List[String], from: String, subject: String, body: String)
+  case class EmailMessage(to: List[String], from: String, subject: String, body: String, html: Boolean = false)
 
   /**
    * Sends an e-mail message asynchronously using an actor. Does not send to non-active recipients.
    */
-  def send(recipients: Set[Person], subject: String, body: String): Unit = {
+  def send(recipients: Set[Person], subject: String, body: String, html: Boolean = false): Unit = {
     val recipientAddresses = recipients.filter(_.active).map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
-    val message = EmailMessage(recipientAddresses.toList, from, subject, body)
+    val message = EmailMessage(recipientAddresses.toList, from, subject, body, html)
     emailServiceActor ! message
   }
 
@@ -62,7 +62,10 @@ object EmailService {
         mailer.setSubject(message.subject)
         mailer.setFrom(message.from)
         Logger.debug(s"Sending e-mail with subject: ${message.subject}")
-        mailer.send(message.body.trim)
+        if (message.html)
+          mailer.sendHtml(message.body.trim)
+        else
+          mailer.send(message.body.trim)
       }
     }
   }
