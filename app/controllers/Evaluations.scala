@@ -182,7 +182,7 @@ object Evaluations extends Controller with Security {
   def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.copy(status = EvaluationStatus.Approved).update
+        existingEvaluation.approve
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
           existingEvaluation.participant.fullName)
 
@@ -202,7 +202,7 @@ object Evaluations extends Controller with Security {
   def reject(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.copy(status = EvaluationStatus.Rejected).update
+        existingEvaluation.reject
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 

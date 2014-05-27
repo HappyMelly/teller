@@ -118,7 +118,7 @@ object Participants extends Controller with Security {
                   "label" -> Messages("models.EvaluationStatus." + status),
                   "value" -> status.id)),
               "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-              "handled" -> data.handled.map(_.toString),
+              "handled" -> data.handled.map(_.get.toString),
               "certificate" -> data.certificate.map(_.toString),
               "actions" -> {
                 data.evaluationId match {
