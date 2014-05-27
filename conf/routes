@@ -46,10 +46,12 @@ GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id
 
 POST /evaluation                 controllers.Evaluations.create
 GET  /evaluation/new/            controllers.Evaluations.add
-GET  /evaluation/:id/edit         controllers.Evaluations.edit(id: Long)
-GET  /evaluation/:id              controllers.Evaluations.details(id: Long)
-POST /evaluation/:id              controllers.Evaluations.update(id: Long)
-GET  /evaluation/:id/delete       controllers.Evaluations.delete(id: Long)
+GET  /evaluation/:id/approve     controllers.Evaluations.approve(id: Long)
+GET  /evaluation/:id/reject      controllers.Evaluations.reject(id: Long)
+GET  /evaluation/:id/edit        controllers.Evaluations.edit(id: Long)
+GET  /evaluation/:id             controllers.Evaluations.details(id: Long)
+POST /evaluation/:id             controllers.Evaluations.update(id: Long)
+GET  /evaluation/:id/delete      controllers.Evaluations.delete(id: Long)
 
 
 GET  /participants                   controllers.Participants.index

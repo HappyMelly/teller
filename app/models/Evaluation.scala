@@ -82,6 +82,10 @@ case class Evaluation(
     updateQuery.update(updateTuple)
     this
   }
+
+  def approve(): Evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+
+  def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
 }
 
 object Evaluation {

@@ -25,7 +25,7 @@
 package controllers
 
 import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
-import models.{ Brand, ParticipantView }
+import models.{ Brand, ParticipantView, EvaluationStatus }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
@@ -118,11 +118,21 @@ object Participants extends Controller with Security {
                   "label" -> Messages("models.EvaluationStatus." + status),
                   "value" -> status.id)),
               "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-              "handled" -> data.handled.map(_.toString),
+              "handled" -> data.handled.map(_.get.toString),
               "certificate" -> data.certificate.map(_.toString),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
+                    "approve" -> {
+                      if (data.status.get != EvaluationStatus.Approved)
+                        routes.Evaluations.approve(id).url
+                      else ""
+                    },
+                    "reject" -> {
+                      if (data.status.get != EvaluationStatus.Rejected)
+                        routes.Evaluations.reject(id).url
+                      else ""
+                    },
                     "edit" -> {
                       if (account.editor || brand.brand.coordinatorId == account.personId)
                         routes.Evaluations.edit(id).url

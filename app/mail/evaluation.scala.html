@@ -1,0 +1,163 @@
+@(evaluation: Evaluation)(implicit request: RequestHeader)
+@import play.api.Play
+@import play.api.Play.current
+@import templates.Formatters._
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table cellpadding="0" cellspacing="0" border="0"
+    style="margin:0px;padding:0px;width:100%!important;line-height:100%!important">
+      <tbody>
+        <tr>
+          <td valign="top">
+            <table cellpadding="0" cellspacing="0" border="0" align="center"
+            width="550" style="margin-top:10px">
+              <tbody>
+                <tr>
+                  <td width="50%" valign="top"
+                  style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px">A COPY HAS BEEN SENT TO THE BRAND MANAGER</td>
+                  <td width="50%" valign="top"
+                  style="text-align:right;font-size:11px">
+                    <!-- <a href="http://www.management30.com/" target="_blank">Management 3.0</a> -->
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <table cellpadding="15" cellspacing="0" border="0" align="center"
+            width="550" style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204)">
+              <tbody>
+                <tr>
+                  <td valign="top" style="background-color:rgb(0,174,239)">
+                    <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @Messages("evaluation.impression." + evaluation.question6))</h3>
+                    <p>Please accept or reject the certificate</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <h3>Hi everybody</h3>
+                    <p>Here is an evaluation of one of your events. Please check if all is well, and <a href="@Play.configuration.getString("application.baseUrl")@routes.Evaluations.details(evaluation.id.getOrElse(0)).url" target="_blank">accept or reject</a> this evaluation on our website. When you accept the evaluation, we send the certificate directly to the participant. When you reject it, we ask the participant to contact you to learn the reason.</p>
+
+                    <p>When the participant is waiting for courseware materials, we expect you to make those available in the format and method you prefer.</p>
+                    <h3>Course details</h3>
+                    <table cellpadding="0" cellspacing="0" border="0"
+                    align="center" width="100%" style="font-size:12px;line-height:16px">
+                      <tbody>
+                        <tr>
+                          <td width="150">Title</td>
+                          <td>@evaluation.event.title <br> @evaluation.event.schedule.start / @evaluation.event.schedule.end</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <br><br>
+                    <h3>Participant details</h3>
+                      <table cellpadding="0" cellspacing="0" border="0"
+                      align="center" width="100%"
+                      style="font-size:12px;line-height:16px">
+                        <tbody>
+                          <tr>
+                            <td width="150">Date</td>
+                            <td>@evaluation.participant.created.toString("yyyy-MM-dd")</td>
+                          </tr>
+                          <tr>
+                            <td width="150">Name</td>
+                            <td>@evaluation.participant.firstName, @evaluation.participant.lastName </td>
+                          </tr>
+                          <tr>
+                            <td width="150">Birthday</td>
+                            <td>-</td>
+                          </tr>
+                          <tr>
+                            <td width="150">Location</td>
+                            <td>@evaluation.participant.address.city.map { value => @value + "," } @Messages("country." + evaluation.participant.address.countryCode)</td>
+                          </tr>
+                          <tr>
+                            <td width="150">Organisation</td>
+                            <td>-</td>
+                          </tr>
+                          <tr>
+                            <td width="150">E-mail</td>
+                            <td>
+                              <a href="mailto:@evaluation.participant.emailAddress"
+                              target="_blank">@evaluation.participant.emailAddress</a>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td width="150">Comment</td>
+                            <td>-</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <br><br>
+                      <h3>Participant Evaluation</h3>
+                      <table cellpadding="0" cellspacing="0" border="0"
+                        align="center" width="100%"
+                        style="font-size:12px;line-height:16px">
+                        <tbody>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question1")</h4>
+                              <p>@evaluation.question1</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question2")</h4>
+                              <p>@evaluation.question2</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question3")</h4>
+                              <p>@evaluation.question3 </p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question4")</h4>
+                              <p>@evaluation.question4</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question5")</h4>
+                              <p>@evaluation.question5</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question7")</h4>
+                              <p>@Messages("evaluation.impression." + evaluation.question7)</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <h4>@Messages("evaluation.question8")</h4>
+                              <p>@evaluation.question8</p>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table cellpadding="0" cellspacing="0" border="0" align="center"
+              style="margin-top:10px;width:550px">
+                <tbody>
+                  <tr>
+                    <td valign="top"
+                    style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px;width:50%"> THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">HAPPY MELLY TELLER</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <br><br><br><br>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

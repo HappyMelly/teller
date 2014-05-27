@@ -67,6 +67,8 @@ object Activity {
     val Replaced = Value("replace")
     val BalancedAccounts = Value("balance")
     val Confirmed = Value("confirm")
+    val Approved = Value("approve")
+    val Rejected = Value("reject")
   }
 
   import Predicate.Predicate
