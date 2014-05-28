@@ -100,6 +100,7 @@ object People extends Controller with Security {
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
+      "birthday" -> optional(jodaLocalDate),
       "photo" -> of(photoFormatter),
       "address" -> addressMapping,
       "bio" -> optional(text),
@@ -117,15 +118,15 @@ object People extends Controller with Security {
       "createdBy" -> ignored(request.user.fullName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, role,
+        { (id, firstName, lastName, emailAddress, birthday, photo, address, bio, interests, profiles, role,
           webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2,
+          Person(id, firstName, lastName, emailAddress, birthday, photo, address, bio, interests, profiles._1, profiles._2,
             profiles._3, profiles._4, role, webSite, blog, false, active, created,
             createdBy, updated, updatedBy)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.birthday, p.photo, p.address, p.bio, p.interests,
                 (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl), p.role, p.webSite, p.blog, p.active,
                 p.created, p.createdBy, p.updated, p.updatedBy))
           }))

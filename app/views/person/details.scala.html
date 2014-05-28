@@ -99,6 +99,11 @@
   <div class="span4">
     <h3>Personal details</h3>
 
+    @person.birthday.map { birthday =>
+      <p><strong>Birthday</strong>
+      <br>@birthday</p>
+    }
+
     @person.twitterHandle.map { handle =>
       <p><strong>Twitter</strong>
       <br><a href="http://twitter.com/@handle">@@@handle</a></p>

@@ -25,7 +25,7 @@
 package models
 
 import models.database._
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -66,6 +66,7 @@ case class Person(
   firstName: String,
   lastName: String,
   emailAddress: String,
+  birthday: Option[LocalDate],
   photo: Photo,
   address: Address,
   bio: Option[String],
@@ -171,8 +172,8 @@ case class Person(
       addressQuery.update(address.copy(id = Some(addressId)))
 
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests, twitterHandle, facebookUrl,
-        linkedInUrl, googlePlusUrl, role, webSite, blog, virtual, updated, updatedBy)
+      val personUpdateTuple = (firstName, lastName, emailAddress, birthday, photo.url, bio, interests,
+        twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, role, webSite, blog, virtual, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 

@@ -39,7 +39,7 @@ case class ParticipantData(id: Option[Long],
   eventId: Long,
   firstName: String,
   lastName: String,
-  birthDate: Option[LocalDate],
+  birthday: Option[LocalDate],
   emailAddress: String,
   city: String,
   country: String,
@@ -247,8 +247,8 @@ object Participants extends Controller with Security {
           val virtual = true
           val active = false
           val person = Person(None, participant.firstName, participant.lastName, participant.emailAddress,
-            Photo(None, None), address, None, None, None, None, None, None, PersonRole.Stakeholder, None, None, virtual,
-            active, participant.created, participant.createdBy, participant.updated, participant.updatedBy)
+            participant.birthday, Photo(None, None), address, None, None, None, None, None, None, PersonRole.Stakeholder,
+            None, None, virtual, active, participant.created, participant.createdBy, participant.updated, participant.updatedBy)
           val newPerson = person.insert
           val eventParticipant = Participant(None, participant.eventId, newPerson.id.get)
           Participant.insert(eventParticipant)

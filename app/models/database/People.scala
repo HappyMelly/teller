@@ -26,7 +26,7 @@ package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.{ Photo, Address, Person, PersonRole }
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 
 /**
@@ -38,6 +38,7 @@ private[models] object People extends Table[Person]("PERSON") {
   def firstName = column[String]("FIRST_NAME")
   def lastName = column[String]("LAST_NAME")
   def emailAddress = column[String]("EMAIL_ADDRESS")
+  def birthday = column[Option[LocalDate]]("BIRTHDAY")
   def photo = column[Option[String]]("PHOTO")
 
   def addressId = column[Long]("ADDRESS_ID")
@@ -64,21 +65,21 @@ private[models] object People extends Table[Person]("PERSON") {
   def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
 
   // Note that this projection does not include the address, which must be joined in queries.
-  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ photo ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
-    linkedInUrl ~ googlePlusUrl ~ role ~ webSite ~ blog ~
+  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ birthday ~ photo ~ addressId ~ bio ~ interests ~
+    twitterHandle ~ facebookUrl ~ linkedInUrl ~ googlePlusUrl ~ role ~ webSite ~ blog ~
     virtual ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
-        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), Address.find(p._6), p._7, p._8, p._9, p._10,
-          p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18, p._19, p._20, p._21)
+        Person(p._1, p._2, p._3, p._4, p._5, Photo.parse(p._6), Address.find(p._7), p._8, p._9, p._10,
+          p._11, p._12, p._13, p._14, p._15, p._16, p._17, p._18, p._19, p._20, p._21, p._22)
       },
       { (p: Person) ⇒
-        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.photo.url, p.address.id.get, p.bio, p.interests,
+        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.birthday, p.photo.url, p.address.id.get, p.bio, p.interests,
           p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl, p.role, p.webSite,
           p.blog, p.virtual, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
       })
 
   def forInsert = * returning id
 
-  def forUpdate = firstName ~ lastName ~ emailAddress ~ photo ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl ~ role ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
+  def forUpdate = firstName ~ lastName ~ emailAddress ~ birthday ~ photo ~ bio ~ interests ~ twitterHandle ~
+    facebookUrl ~ linkedInUrl ~ googlePlusUrl ~ role ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
 }
