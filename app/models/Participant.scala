@@ -30,9 +30,20 @@ import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.DB
 import play.api.Play.current
 
-case class Participant(id: Option[Long], eventId: Long, participantId: Long) {
+case class Participant(
+  id: Option[Long],
+  eventId: Long,
+  participantId: Long) {
+
   lazy val event: Option[Event] = Event.find(eventId)
   lazy val participant: Option[Person] = Person.find(participantId)
+
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    Evaluation.findByEventAndPerson(this.participantId, this.eventId).map { value ⇒
+      value.delete
+    }
+    Participants.where(_.id === this.id).mutate(_.delete)
+  }
 }
 
 case class ParticipantView(person: Person,
@@ -43,9 +54,30 @@ case class ParticipantView(person: Person,
   status: Option[EvaluationStatus.Value],
   date: Option[DateTime],
   handled: Option[Option[LocalDate]],
-  certificate: Option[Option[String]])
+  certificate: Option[Option[String]]) {
+
+  override def equals(other: Any): Boolean =
+    other match {
+      case that: ParticipantView ⇒
+        (that canEqual this) &&
+          person.id == that.person.id &&
+          event.id == that.event.id
+
+      case _ ⇒ false
+    }
+
+  def canEqual(other: Any): Boolean =
+    other.isInstanceOf[ParticipantView]
+
+  override def hashCode: Int =
+    41 * (41 + person.id.get.toInt) + event.id.get.toInt
+}
 
 object Participant {
+
+  def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession { implicit session: Session ⇒
+    Query(Participants).filter(_.personId === personId).filter(_.eventId === eventId).firstOption
+  }
 
   def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
@@ -60,7 +92,7 @@ object Participant {
       filter(obj ⇒ obj.evaluationId == obj.secondEvaluationId)
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
       map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None, None))
-    withEvaluation.union(withoutEvaluation)
+    withEvaluation.union(withoutEvaluation.distinct)
   }
 
   def insert(participant: Participant): Participant = DB.withSession { implicit session: Session ⇒
@@ -68,8 +100,5 @@ object Participant {
     participant.copy(id = Some(id))
   }
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Participants.where(_.id === id).mutate(_.delete())
-  }
 }
 

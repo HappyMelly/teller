@@ -31,9 +31,7 @@
             <img width="64" src="@photo"/>
         }
         @person.fullName
-        @dynamic(handler, "person", "edit") {
-        <a class="btn-small btn"href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
-      }
+
     </h1>
     <p><small>Added by @person.createdBy on @person.created.format <br> Updated by @person.updatedBy on @person.updated.format</small></p>
     @if(!person.active) {
@@ -42,8 +40,14 @@
     </header>
   </div>
 
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="span2 actions">
+  <div class="span2 actions">
+    @dynamic(handler, "person", "edit") {
+      <form>
+        <a class="btn-block btn" href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
+        <div class="clearfix"></div>
+      </form>
+    }
+    @restrict(handler, List(as(Editor.toString))) {
       <form method="post" action="@CSRF(routes.People.activation(person.id.getOrElse(0)))">
         <input name="active" value="@(!person.active)" type="hidden">
         @if(person.active) {
@@ -53,14 +57,16 @@
         }
       </form>
       <div class="clearfix"></div>
+    }
+    @dynamic(handler, "person", "delete") {
       <form class="delete" method="post" text="person" action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
         <button class="btn btn-danger btn-block" type="submit"
-          @if(!person.deletable) { disabled="disabled" title="You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account" }>
+          @if(!person.deletable) { disabled="disabled" title="@Messages("error.notDeletablePerson")" }>
           <i class="icon-white icon-trash"></i> Delete
         </button>
       </form>
-    </div>
-  }
+    }
+  </div>
 
   <div class="span4">
     @* TODO Extract adress.scala.html template for use here and by organisation/details.scala.html *@

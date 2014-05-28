@@ -123,24 +123,51 @@ object Participants extends Controller with Security {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "approve" -> {
-                      if (data.status.get != EvaluationStatus.Approved)
-                        routes.Evaluations.approve(id).url
-                      else ""
-                    },
-                    "reject" -> {
-                      if (data.status.get != EvaluationStatus.Rejected)
-                        routes.Evaluations.reject(id).url
-                      else ""
-                    },
-                    "edit" -> {
-                      if (account.editor || brand.brand.coordinatorId == account.personId)
-                        routes.Evaluations.edit(id).url
-                      else ""
-                    },
-                    "view" -> routes.Evaluations.details(id).url,
-                    "remove" -> routes.Evaluations.delete(id).url)
-                  case None ⇒ Json.obj()
+                    "evaluation" -> Json.obj(
+                      "approve" -> {
+                        if (data.status.get != EvaluationStatus.Approved)
+                          routes.Evaluations.approve(id).url
+                        else ""
+                      },
+                      "reject" -> {
+                        if (data.status.get != EvaluationStatus.Rejected)
+                          routes.Evaluations.reject(id).url
+                        else ""
+                      },
+                      "edit" -> {
+                        if (account.editor || brand.brand.coordinatorId == account.personId)
+                          routes.Evaluations.edit(id).url
+                        else ""
+                      },
+                      "view" -> routes.Evaluations.details(id).url,
+                      "delete" -> routes.Evaluations.delete(id).url),
+                    "participant" -> Json.obj(
+                      "view" -> routes.People.details(data.person.id.get).url,
+                      "edit" -> {
+                        if (account.editor || data.person.virtual)
+                          routes.People.edit(data.person.id.get).url
+                        else ""
+                      },
+                      "remove" -> {
+                        if (account.editor || data.person.virtual)
+                          routes.People.details(data.person.id.get).url
+                        else ""
+                      },
+                      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url))
+                  case None ⇒ Json.obj(
+                    "participant" -> Json.obj(
+                      "view" -> routes.People.details(data.person.id.get).url,
+                      "edit" -> {
+                        if (account.editor || data.person.virtual)
+                          routes.People.edit(data.person.id.get).url
+                        else ""
+                      },
+                      "remove" -> {
+                        if (account.editor || data.person.virtual)
+                          routes.People.details(data.person.id.get).url
+                        else ""
+                      },
+                      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url))
                 }
               })
           }
@@ -217,9 +244,11 @@ object Participants extends Controller with Security {
         },
         participant ⇒ {
           val address = Address(None, None, None, Some(participant.city), None, None, participant.country)
+          val virtual = true
+          val active = false
           val person = Person(None, participant.firstName, participant.lastName, participant.emailAddress,
-            Photo(None, None), address, None, None, None, None, None, None, false, false, None, None, true,
-            participant.created, participant.createdBy, participant.updated, participant.updatedBy)
+            Photo(None, None), address, None, None, None, None, None, None, false, false, None, None, virtual,
+            active, participant.created, participant.createdBy, participant.updated, participant.updatedBy)
           val newPerson = person.insert
           val eventParticipant = Participant(None, participant.eventId, newPerson.id.get)
           Participant.insert(eventParticipant)
@@ -227,5 +256,17 @@ object Participants extends Controller with Security {
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(routes.Participants.add).flashing("success" -> activity.toString)
         })
+  }
+
+  def delete(eventId: Long, personId: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+    implicit handler ⇒
+      Participant.find(personId, eventId).map { value ⇒
+
+        val activityObject = Messages("activity.participant.delete", value.participant.get.fullName, value.event.get.title)
+        value.delete()
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
   }
 }

@@ -88,8 +88,8 @@ activity.contribution.create = new contributor ({1}) to {0}
 activity.contribution.delete = a contributor ({1}) from {0}
 activity.eventType.create = new event type ({1}) to {0}
 activity.eventType.delete = an event type ({1}) from {0}
-activity.participant.create = new participant ({1}) to {0}
-activity.participant.delete = a participant ({1}) from {0}
+activity.participant.create = new participant ({0}) to {1}
+activity.participant.delete = a participant ({0}) from {1}
 activity.balance = {0} balanced {1} accounts
 activity.confirm = {0} confirmed {1} event
 activity.approve = {0} approved an evaluation for {1}
@@ -111,6 +111,7 @@ error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
 error.person.invalid = A person with such id does not exist
 error.retry = {0}. Please try again.
+error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 
 # Play form validation error overrides
 error.date = Invalid date

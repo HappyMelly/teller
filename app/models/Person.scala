@@ -68,6 +68,7 @@ case class Person(
   stakeholder: Boolean = true,
   webSite: Option[String],
   blog: Option[String],
+  virtual: Boolean = false,
   active: Boolean = true,
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -162,13 +163,31 @@ case class Person(
 
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests, twitterHandle, facebookUrl,
-        linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, updated, updatedBy)
+        linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, virtual, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
       UserAccount.updateSocialNetworkProfiles(this)
       this
     }
+  }
+
+  /**
+   * Find all events which were faciliated by a specified facilitator and
+   *  where the person participated
+   */
+  def participateInEvents(facilitatorId: Long): List[Event] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        facilitation ← EventFacilitators if facilitation.facilitatorId === facilitatorId
+        event ← Events if facilitation.eventId === event.id
+        participation ← Participants if participation.eventId === event.id
+      } yield (event, facilitation, participation)
+
+      query
+        .filter(_._3.personId === this.id)
+        .mapResult(_._1)
+        .list
   }
 
   /**
@@ -200,12 +219,12 @@ object Person {
 
   /**
    * Activates the organisation, if the parameter is true, or deactivates it.
+   * During activization, a person also becomes a real person
    */
   def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      person ← People if person.id === id
-    } yield person.active
-    query.update(active)
+    People.filter(_.id === id)
+      .map(p ⇒ p.active ~ p.virtual)
+      .update((active, false))
   }
 
   /**
@@ -213,6 +232,7 @@ object Person {
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     find(id).map(_.account).map(_.delete)
+    Participants.where(_.personId === id).mutate(_.delete())
     People.where(_.id === id).mutate(_.delete())
   }
 
