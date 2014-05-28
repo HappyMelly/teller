@@ -62,6 +62,24 @@ object People extends Controller with Security {
   }
 
   /**
+   * Formatter used to define a form mapping for the `PersonRole` enumeration.
+   */
+  implicit def personRoleFormat: Formatter[PersonRole.Value] = new Formatter[PersonRole.Value] {
+
+    def bind(key: String, data: Map[String, String]) = {
+      try {
+        data.get(key).map(PersonRole.withName(_)).toRight(Seq.empty)
+      } catch {
+        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
+      }
+    }
+
+    def unbind(key: String, value: PersonRole.Value) = Map(key -> value.toString)
+  }
+
+  val roleMapping = of[PersonRole.Value]
+
+  /**
    * HTML form mapping for a person’s address.
    */
   val addressMapping = mapping(
@@ -91,8 +109,7 @@ object People extends Controller with Security {
         "facebookUrl" -> optional(facebookProfileUrl),
         "linkedInUrl" -> optional(linkedInProfileUrl),
         "googlePlusUrl" -> optional(googlePlusProfileUrl)),
-      "boardMember" -> default(boolean, false),
-      "stakeholder" -> default(boolean, false),
+      "role" -> roleMapping,
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
@@ -100,18 +117,17 @@ object People extends Controller with Security {
       "createdBy" -> ignored(request.user.fullName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder,
+        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, role,
           webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
           Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2,
-            profiles._3, profiles._4, boardMember, stakeholder, webSite, blog, false, active, created,
+            profiles._3, profiles._4, role, webSite, blog, false, active, created,
             createdBy, updated, updatedBy)
         })(
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
-                (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
-                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
-                p.updated, p.updatedBy))
+                (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl), p.role, p.webSite, p.blog, p.active,
+                p.created, p.createdBy, p.updated, p.updatedBy))
           }))
   }
 

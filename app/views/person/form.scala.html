@@ -58,21 +58,32 @@
       @helper.inputText(personForm("profile.linkedInUrl"), '_label -> "LinkedIn public profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
       @helper.inputText(personForm("profile.googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")
 
-      <div class="control-group" id="boardMember_field">
-        <label for="boardMember" class="checkbox">
-          <input type="checkbox" id="boardMember" name="boardMember" value="true"
-					@if(personForm("boardMember").value.exists(_ == "true")){checked}>
-          Board member
-        </label>
-      </div>
-
-      <div class="control-group" id="stakeholder_field">
-        <label for="stakeholder" class="checkbox">
-          <input type="checkbox" id="stakeholder" name="stakeholder" value="true"
-					@if(personForm("stakeholder").value.exists(_ == "true")){checked}>
-          Stakeholder
-        </label>
-      </div>
+      @defining(personForm("role")) { field =>
+        <div class="control-group @if(field.hasErrors) {error}" id="role">
+          @defining(field.value.getOrElse("0")) { value =>
+          <label for="@field.id" >Role</label>
+          <div class="input">
+            <label class="radio">
+              <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
+              No role
+            </label>
+            <label class="radio">
+              <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
+              Stakeholder
+            </label>
+            <label class="radio">
+              <input type="radio" name="@field.name" id="role2" value="2" @if(value == "2") {checked}>
+              Board Member
+            </label>
+          </div>
+          }
+          <span class="help-inline">
+            @if(personForm("role").hasErrors) {
+              @personForm("role").errors.map(error => Messages(error.message)).mkString(", ")
+            }
+          </span>
+        </div>
+      }
 
       @helper.inputText(personForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
       @helper.inputText(personForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")

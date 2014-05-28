@@ -25,7 +25,7 @@
 package controllers
 
 import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
-import models.{ Brand, ParticipantView, EvaluationStatus }
+import models.{ Brand, ParticipantView, EvaluationStatus, PersonRole }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
@@ -247,7 +247,7 @@ object Participants extends Controller with Security {
           val virtual = true
           val active = false
           val person = Person(None, participant.firstName, participant.lastName, participant.emailAddress,
-            Photo(None, None), address, None, None, None, None, None, None, false, false, None, None, virtual,
+            Photo(None, None), address, None, None, None, None, None, None, PersonRole.Stakeholder, None, None, virtual,
             active, participant.created, participant.createdBy, participant.updated, participant.updatedBy)
           val newPerson = person.insert
           val eventParticipant = Participant(None, participant.eventId, newPerson.id.get)

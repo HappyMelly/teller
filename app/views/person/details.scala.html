@@ -121,10 +121,13 @@
       </p>
     }
 
-    @if(person.boardMember || person.stakeholder) {
-      <p><strong>Happy Melly Roles</strong>
-      @if(person.boardMember) { <br>Board member }
-      @if(person.stakeholder) { <br>Stakeholder }
+    @if(person.role != PersonRole.NoRole) {
+      <p><strong>Happy Melly Role</strong>
+      @if(person.role == PersonRole.BoardMember) {
+        <br>Board Member
+      } else {
+        <br>Stakeholder
+      }
       </p>
     }
 

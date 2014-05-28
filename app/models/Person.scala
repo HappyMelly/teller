@@ -46,8 +46,18 @@ object Photo {
       }.getOrElse(Photo(None, None))
     }.getOrElse(Photo(None, None))
   }
-
 }
+
+object PersonRole extends Enumeration {
+  val NoRole = Value("0")
+  val Stakeholder = Value("1")
+  val BoardMember = Value("2")
+
+  implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
+    { role ⇒ role.id },
+    { id ⇒ PersonRole(id) })
+}
+
 /**
  * A person, such as the owner or employee of an organisation.
  */
@@ -64,8 +74,7 @@ case class Person(
   facebookUrl: Option[String],
   linkedInUrl: Option[String],
   googlePlusUrl: Option[String],
-  boardMember: Boolean = false,
-  stakeholder: Boolean = true,
+  role: PersonRole.Value = PersonRole.Stakeholder,
   webSite: Option[String],
   blog: Option[String],
   virtual: Boolean = false,
@@ -163,7 +172,7 @@ case class Person(
 
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests, twitterHandle, facebookUrl,
-        linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, virtual, updated, updatedBy)
+        linkedInUrl, googlePlusUrl, role, webSite, blog, virtual, updated, updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
@@ -247,10 +256,13 @@ object Person {
   /** Finds all active people, filtered by stakeholder and/or board member status **/
   def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
-    val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
-    val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
-
-    boardMembersFilteredQuery.list
+    if (boardMembersOnly) {
+      baseQuery.filter(_.role === PersonRole.BoardMember).list
+    } else if (stakeholdersOnly) {
+      baseQuery.filter(_.role =!= PersonRole.NoRole).list
+    } else {
+      baseQuery.list
+    }
   }
 
   /**
@@ -265,7 +277,7 @@ object Person {
   }
 
   def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
-    Query(People).filter(_.boardMember).list.toSet
+    Query(People).filter(_.role === PersonRole.BoardMember).list.toSet
   }
 
   /** Retrieves a list of all people from the database **/
@@ -282,4 +294,3 @@ object Person {
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 }
-
