@@ -137,8 +137,6 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              import play.Logger
-              Logger.debug(eventId.toString)
               // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
               //   edit it
               existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))

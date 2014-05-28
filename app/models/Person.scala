@@ -225,10 +225,6 @@ object Person {
     People.filter(_.id === id)
       .map(p ⇒ p.active ~ p.virtual)
       .update((active, false))
-    // val query = for {
-    //   person ← People if person.id === id
-    // } yield (person.active, person.virtual)
-    // query.update((active, false))
   }
 
   /**
