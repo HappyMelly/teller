@@ -58,32 +58,65 @@ function renderDropdown(data) {
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class=" icon-tasks"></i></a>';
     html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
-    if ('approve' in data && data.approve) {
-        emptyDropdown = false;
-        html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + data.approve;
-        html += '" data-toggle="modal" title="Approve Evaluation"><i class="icon-thumbs-up"></i> Approve Evaluation</a></li>';
+    if ('evaluation' in data && data.evaluation) {
+        var evaluation = data.evaluation;
+        if ('approve' in evaluation && evaluation.approve) {
+            emptyDropdown = false;
+            html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;
+            html += '" data-toggle="modal" title="Approve Evaluation"><i class="icon-thumbs-up"></i> Approve Evaluation</a></li>';
+        }
+        if ('reject' in evaluation && evaluation.reject) {
+            emptyDropdown = false;
+            html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + evaluation.reject;
+            html += '" data-toggle="modal" title="Reject Evaluation"><i class="icon-thumbs-down"></i> Reject Evaluation</a></li>';
+        }
+        if ('view' in evaluation && evaluation.view) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + evaluation.view;
+            html += '" title="View Evaluation"><i class="icon-eye-open"></i> View Evaluation</a></li>';
+        }
+        if ('edit' in evaluation && evaluation.edit) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + evaluation.edit;
+            html += '" title="Edit Evaluation"><i class="icon-pencil"></i> Edit Evaluation</a></li>';
+        }
+        if ('remove' in evaluation && evaluation.remove) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + evaluation.remove;
+            html += '" title="Delete Evaluation" onclick="';
+            html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
+            html += '<i class="icon-trash"></i> Delete Evaluation</a></li>';
+        }
     }
-    if ('reject' in data && data.reject) {
-        emptyDropdown = false;
-        html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + data.reject;
-        html += '" data-toggle="modal" title="Reject Evaluation"><i class="icon-thumbs-down"></i> Reject Evaluation</a></li>';
-    }
-    if ('edit' in data && data.edit) {
-        emptyDropdown = false;
-        html += '<li><a tabindex="-1" href="' + data.edit;
-        html += '" title="Edit Evaluation"><i class="icon-pencil"></i> Edit Evaluation</a></li>';
-    }
-    if ('view' in data && data.view) {
-        emptyDropdown = false;
-        html += '<li><a tabindex="-1" href="' + data.view;
-        html += '" title="View Evaluation"><i class="icon-eye-open"></i> View Evaluation</a></li>';
-    }
-    if ('remove' in data && data.remove) {
-        emptyDropdown = false;
-        html += '<li><a tabindex="-1" href="' + data.remove;
-        html += '" title="Delete Evaluation" onclick="';
-        html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
-        html += '<i class="icon-trash"></i> Delete Evaluation</a></li>';
+    if ('participant' in data && data.participant) {
+        var participant = data.participant;
+        if ('evaluation' in data && data.evaluation) {
+            html += '<li class="divider"></li>';
+        }
+        if ('view' in participant && participant.view) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + participant.view;
+            html += '" title="View Participant"><i class="icon-eye-open"></i> View Participant</a></li>';
+        }
+        if ('edit' in participant && participant.edit) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + participant.edit;
+            html += '" title="Edit Participant"><i class="icon-pencil"></i> Edit Participant</a></li>';
+        }
+        if ('remove' in participant && participant.remove) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + participant.remove;
+            html += '" title="Delete Person">';
+            html += '<i class="icon-trash"></i> Delete Person</a></li>';
+        }
+        if ('removeParticipation' in participant && participant.removeParticipation) {
+            emptyDropdown = false;
+            html += '<li class="divider"></li>';
+            html += '<li><a tabindex="-1" href="' + participant.removeParticipation;
+            html += '" title="Remove Participation" onclick="';
+            html += "return confirm('Remove this participation? The evaluation (if exists) will also be deleted. You cannot undo this action.')\">";
+            html += '<i class="icon-trash"></i> Remove Participation</a></li>';
+        }
     }
     html += '</ul></div>';
     if (emptyDropdown) {

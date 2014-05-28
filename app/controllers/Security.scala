@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ UserAccount, LoginIdentity, UserRole, Event, Evaluation }
+import models.{ UserAccount, LoginIdentity, UserRole, Event, Evaluation, Person }
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect
@@ -137,6 +137,8 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
+              import play.Logger
+              Logger.debug(eventId.toString)
               // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
               //   edit it
               existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))
@@ -150,8 +152,29 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
           meta match {
             case "edit" ⇒
               val personId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role or it should be her own profile
-              existingAccount.editor || personId.get.toLong == existingAccount.personId
+              // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
+              //   where the person was a participant
+              existingAccount.editor || personId.get.toLong == existingAccount.personId || {
+                Person.find(personId.get.toLong).map { person ⇒
+                  if (person.virtual) {
+                    !person.participateInEvents(existingAccount.personId).isEmpty
+                  } else {
+                    false
+                  }
+                }.getOrElse(false)
+              }
+            case "delete" ⇒
+              val personId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role or he's a facilitator of the event where the person was a participant
+              existingAccount.editor || {
+                Person.find(personId.get.toLong).map { person ⇒
+                  if (person.virtual) {
+                    !person.participateInEvents(existingAccount.personId).isEmpty
+                  } else {
+                    false
+                  }
+                }.getOrElse(false)
+              }
             case _ ⇒ true
           }
         case _ ⇒ false

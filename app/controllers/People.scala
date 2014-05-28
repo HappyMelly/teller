@@ -100,15 +100,18 @@ object People extends Controller with Security {
       "createdBy" -> ignored(request.user.fullName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2, profiles._3,
-            profiles._4, boardMember, stakeholder, webSite, blog, active, created, createdBy, updated, updatedBy)
+        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder,
+          webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
+          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2,
+            profiles._3, profiles._4, boardMember, stakeholder, webSite, blog, false, active, created,
+            createdBy, updated, updatedBy)
         })(
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
                 (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
-                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
+                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
+                p.updated, p.updatedBy))
           }))
   }
 
@@ -187,13 +190,17 @@ object People extends Controller with Security {
   /**
    * Deletes a person.
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
     implicit handler ⇒
 
       Person.find(id).map { person ⇒
-        Person.delete(id)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
-        Redirect(routes.People.index).flashing("success" -> activity.toString)
+        if (!person.deletable) {
+          Redirect(routes.People.index).flashing("error" -> Messages("error.notDeletablePerson"))
+        } else {
+          Person.delete(id)
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
+          Redirect(routes.People.index).flashing("success" -> activity.toString)
+        }
       }.getOrElse(NotFound)
   }
 
