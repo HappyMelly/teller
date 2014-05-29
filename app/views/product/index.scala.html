@@ -5,17 +5,17 @@
 
 @main("Products", Some(user)) {
 
-  <div class="span7">
+  <div class="col-md-7">
   <h1>Products</h1>
   </div>
   @restrict(handler, List(as(Editor.toString))) {
-    <div class="span3">
+    <div class="col-md-3">
       <a class="btn btn-success" href="@routes.Products.add()">
       <i class="icon-plus icon-white"></i>Add Product</a>
     </div>
   }
 
-  <div class="span10">
+  <div class="col-md-10">
     @if(products.isEmpty) {
       <p>There are no products</p>
     } else {

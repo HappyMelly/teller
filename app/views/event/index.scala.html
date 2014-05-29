@@ -5,17 +5,17 @@
 
 @main("Events", Some(user)) {
 
-  <div class="span7">
+  <div class="col-md-7">
   <h1>Events</h1>
   </div>
   @dynamic(handler, "event", "add") {
-    <div class="span3">
+    <div class="col-md-3">
       <a class="btn btn-success" href="@routes.Events.add()">
       <i class="icon-plus icon-white"></i>Add Event</a>
     </div>
   }
 
-  <div class="span10">
+  <div class="col-md-10">
     @if(events.isEmpty) {
       <p>There are no events</p>
     } else {

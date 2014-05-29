@@ -8,14 +8,14 @@
 
   @defining(id.isDefined) { editing =>
 
-    <div class="span8">
+    <div class="col-md-8">
       <header>
         <h1>@(if(editing) "Edit" else "Add") content license</h1>
       </header>
     </div>
 
     @if(editing) {
-      <div class="span2 actions">
+      <div class="col-md-2 actions">
         <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
           <button class="btn btn-danger btn-block" type="submit"><i class="icon-white icon-trash"></i> Delete</button>
         </form>
@@ -31,9 +31,9 @@
       </script>
     }
 
-    <div class="span4">
+    <div class="col-md-4">
       @if(form.hasErrors) {
-        <div class="alert alert-error">
+        <div class="alert alert-danger">
           <button type="button" class="close" data-dismiss="alert">&times;</button>
           Please fix the validation errors.
           @if(!form.globalErrors.isEmpty) {

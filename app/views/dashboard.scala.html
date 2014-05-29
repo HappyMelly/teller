@@ -3,7 +3,7 @@
 
 @main("Home", Some(user)) {
 
-  <div class="offset7 span5">
+  <div class="col-md-offset-7 col-md-5">
 
     <h4>Latest activity</h4>
 
@@ -11,7 +11,7 @@
       @for(activity <- activityStream) {
         <tr>
           <td>
-            <i class="icon-activity-@activity.predicate"></i>
+            <i class="glyphicon glyphicon-activity-@activity.predicate"></i>
             @activity.description
             <br><small>@activity.created.format</small>
           </td>

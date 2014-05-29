@@ -28,7 +28,7 @@ body {
     background-position: left 41px;
 }
 
-.navbar-inverse .brand {
+.navbar-inverse .navbar-brand {
 	color: #EE929F;
 	}
 
@@ -60,29 +60,29 @@ td .btn-link {
 
 /* Activity stream */
 
-.icon-activity-signup {
+.glyphicon-activity-signup {
     background-position: -168px 0;
 }
-.icon-activity-create, .icon-activity-add {
+.glyphicon-activity-create, .glyphicon-activity-add {
     background-position: 0px -96px;
 }
-.icon-activity-update, .icon-activity-replace {
+.glyphicon-activity-update, .glyphicon-activity-replace {
     background-position: -96px -72px;
 }
-.icon-activity-delete {
+.glyphicon-activity-delete {
     background-position: -24px -96px;
 }
-.icon-activity-activate, .icon-activity-deactivate {
+.glyphicon-activity-activate, .glyphicon-activity-deactivate {
     background-position: -384px 0px;
 }
-.icon-activity-balance {
+.glyphicon-activity-balance {
     background-position: -336px -48px;
 }
 
 .inactive, .inactive a {
     color: #bbb;
 }
-.inactive img, .inactive [class^="icon-"], .inactive [class*=" icon-"] {
+.inactive img, .inactive [class^="glyphicon-"], .inactive [class*=" glyphicon-"] {
     -webkit-filter: grayscale();
     opacity: 0.5;
 }

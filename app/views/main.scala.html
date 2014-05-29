@@ -2,81 +2,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>@title - Happy Melly</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="@routes.Assets.at("bootstrap-2.3.2/css/bootstrap.min.css")">
-<link rel="stylesheet" href="@routes.Assets.at("bootstrap-2.3.2/css/bootstrap-responsive.min.css")">
-<link rel="stylesheet" media="screen" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
-<link rel="stylesheet" media="screen" href="//cdn.datatables.net/plug-ins/e9421181788/integration/bootstrap/2/dataTables.bootstrap.css">
-<link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
-<link rel="shortcut icon"href="@routes.Assets.at("images/favicon.ico")">
-<style type="text/css">
-  body { padding-top: 60px; }
-</style>
-<script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("javascripts/date.js")" type="text/javascript"></script>
+  <title>@title - Happy Melly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/28e7751dbec/integration/bootstrap/3/dataTables.bootstrap.css">
+  <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+  <link rel="shortcut icon"href="@routes.Assets.at("images/favicon.ico")">
+  <style type="text/css">
+    body { padding-top: 60px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/date.js")" type="text/javascript"></script>
 </head>
 <body class='@title.split(" ").last.toLowerCase'>
-<div class="navbar navbar-inverse navbar-fixed-top">
-  <div class="navbar-inner">
+  <div class="navbar navbar-inverse navbar-fixed-top" role="nagivation">
     <div class="container">
-      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="brand" href="/">Happy Melly</a>
-      <div class="nav-collapse collapse">
-        <ul class="nav">
-        @if(maybeUser.isDefined) {
-          <li class="active"><a href="@routes.Organisations.index">Organizations</a></li>
-          <li class="active"><a href="@routes.People.index">People</a></li>
-          <li class="active"><a href="@routes.Brands.index">Brands</a></li>
-          <li class="active"><a href="@routes.Products.index">Products</a></li>
-          <li class="active"><a href="@routes.BookingEntries.index">Finance</a></li>
-          <li class="active"><a href="@routes.Events.index">Events</a></li>
-          <li class="active"><a href="@routes.Participants.index">Participants</a></li>
-        }
+      <a class="navbar-brand" href="/">Happy Melly</a>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          @if(maybeUser.isDefined) {
+            <li class="active"><a href="@routes.Organisations.index">Organizations</a></li>
+            <li class="active"><a href="@routes.People.index">People</a></li>
+            <li class="active"><a href="@routes.Brands.index">Brands</a></li>
+            <li class="active"><a href="@routes.Products.index">Products</a></li>
+            <li class="active"><a href="@routes.BookingEntries.index">Finance</a></li>
+            <li class="active"><a href="@routes.Events.index">Events</a></li>
+            <li class="active"><a href="@routes.Participants.index">Participants</a></li>
+          }
         </ul>
         @maybeUser.map{ user =>
-        <ul class="nav pull-right">
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+          <ul class="nav navbar-nav navbar-right">
+              <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                     @user.fullName
                     <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
+                  </a>
+                  <ul class="dropdown-menu">
+                    <li><a href="@routes.Dashboard.profile"><i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
+                    <li class="divider"></li>
                     <li><a href="@routes.Dashboard.about">About</a></li>
                     <li><a href="@routes.Dashboard.api">API</a></li>
-                    <li><a href="@routes.Dashboard.profile">Profile</a></li>
                     <li><a href="@routes.Administration.settings">Settings</a></li>
+                    <li class="divider"></li>
                     <li><a href="@securesocial.controllers.routes.LoginPage.logout">Sign out</a></li>
-                </ul>
-            </li>
-        </ul>
+                  </ul>
+              </li>
+          </ul>
         }
-      </div><!--/.nav-collapse -->
+      </div><!--/.navbar-collapse -->
     </div>
   </div>
-</div>
-<div class="container">
-  @alert(alertType: String) = {
-  @flash.get(alertType).map { message =>
-  <div class="alert alert-@alertType">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    @message
+  <div class="container">
+    @alert(alertType: String) = {
+      @flash.get(alertType).map { message =>
+        @if(alertType == "error") {
+          <div class="alert alert-danger">
+        } else {
+          <div class="alert alert-@alertType">
+        }
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          @message
+        </div>
+      }
+    }
+
+    @alert("error")
+    @alert("success")
+
+  	@* Scripts must be before the content, which can add additional scripts. To do: use Require.js *@
+  	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js" type="text/javascript"></script>
+  	<script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js" type="text/javascript"></script>
+  	<script src="//cdn.datatables.net/plug-ins/28e7751dbec/integration/bootstrap/3/dataTables.bootstrap.js" type="text/javascript"></script>
+    @content
   </div>
-  }
-  }
-
-  @alert("error")
-  @alert("success")
-
-	@* Scripts must be before the content, which can add additional scripts. To do: use Require.js *@
-	<script src="@routes.Assets.at("bootstrap-2.3.2/js/bootstrap.min.js")" type="text/javascript"></script>
-	<script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js" type="text/javascript"></script>
-	<script src="//cdn.datatables.net/plug-ins/e9421181788/integration/bootstrap/2/dataTables.bootstrap.js" type="text/javascript"></script>
-  @content
-</div>
 </body>
 </html>

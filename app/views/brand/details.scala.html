@@ -12,7 +12,7 @@
 
 @main(brand.code + " - Brand", Some(user)) {
 
-  <div class="span8">
+  <div class="col-md-8">
     <header>
 
     <h1>
@@ -26,7 +26,7 @@
   </div>
 
   @restrict(handler, List(as(Editor.toString))) {
-    <div class="span2 actions">
+    <div class="col-md-2 actions">
       <form class="delete" method="post" text="brand" action="@CSRF(routes.Brands.delete(brand.code))">
         <button class="btn btn-danger btn-block" type="submit" @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }>
           <i class="icon-white icon-trash"></i> Delete
@@ -35,7 +35,7 @@
     </div>
   }
 
-  <div class="span4">
+  <div class="col-md-4">
     <h3>Brand details</h3>
 
     <p><strong>Brand code</strong>
@@ -50,7 +50,7 @@
     <p><strong>Status</strong>
     <br/><span class="label @Messages(s"models.BrandStatus." + brand.status + ".label")">@Messages(s"models.BrandStatus." + brand.status)</span>
   </div>
-  <div class="span4">
+  <div class="col-md-4">
     @brand.picture.map { picture =>
       <form class="delete" method="post" text="image" action="@CSRF(routes.Brands.deletePicture(brand.code))">
         <h3>Picture
@@ -71,7 +71,7 @@
       @views.html.product.table(brand.products, true) { product => @None }
     }
   </div>
-  <div class="span8">
+  <div class="col-md-8">
       <h3>Event Types</h3>
       @if(eventTypes.isEmpty) {
         <p>There are no event types.</p>

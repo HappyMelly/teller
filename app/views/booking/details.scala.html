@@ -13,7 +13,7 @@
 @main(booking.summary + " - Booking", Some(user)) {
 
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <header>
         <h1>
           Booking: @booking.summary
@@ -26,7 +26,7 @@
     </div>
 
     @if(booking.editableBy(currentUser)) {
-      <div class="span2 actions">
+      <div class="col-md-2 actions">
         <form class="delete" method="post" text="booking entry" action="@CSRF(routes.BookingEntries.delete(booking.bookingNumber.getOrElse(0)))">
           <button class="btn btn-danger btn-block" type="submit">
           <i class="icon-white icon-trash"></i> Delete Booking Entry
@@ -37,7 +37,7 @@
   </div>
 
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
   @booking.description.map { description =>
     <h3>Description</h3>
     <p>@description</p>
@@ -46,14 +46,14 @@
   </div>
 
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <h3>Booking details</h3>
     </div>
-    <div class="span4">
+    <div class="col-md-4">
       <h3>File attachment</h3>
     </div>
 
-    <div class="span4">
+    <div class="col-md-4">
       <p><strong>Booking number</strong>
       <br>@booking.bookingNumber.get</p>
 
@@ -64,7 +64,7 @@
       <br>@booking.bookingDate.format</p>
     </div>
 
-    <div class="span4">
+    <div class="col-md-4">
       @booking.brand.map { brand =>
         <p><strong>Brand</strong>
         <br><a href="@routes.Brands.details(brand.code)">@brand.name</a></p>
@@ -89,7 +89,7 @@
       }
     </div>
 
-    <div class="span4">
+    <div class="col-md-4">
       @if(booking.attachmentKey.isDefined) {
         <p><i class="icon-file"></i> <a href="@booking.attachmentUrl">@booking.attachmentFilename</a></p>
       }
@@ -118,11 +118,11 @@
   <h3>Transaction details</h3>
 
   <div class="row">
-    <div class="span4">
+    <div class="col-md-4">
       <p><strong>Source amount</strong>
       <br>@booking.source.abs.format</p>
     </div>
-    <div class="span4">
+    <div class="col-md-4">
       <p><strong>Percentage</strong>
       <br>@booking.sourcePercentage%</p>
     </div>
@@ -131,25 +131,25 @@
   <p><strong>Transaction</strong></p>
 
   <div class="row">
-    <div class="span3">
+    <div class="col-md-3">
       @booking.fromAmount.format
     </div>
-    <div class="span1">
+    <div class="col-md-1">
       @if(booking.owes) {
         <span class="label label-inverse">owes <i class="icon-arrow-right icon-white"></i></span>
       } else {
         <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
       }
     </div>
-    <div class="span2">
+    <div class="col-md-2">
       @booking.toAmount.format
     </div>
   </div>
   <div class="row">
-    <div class="span4">
+    <div class="col-md-4">
       <p>@booking.from.accountHolder.name</p>
     </div>
-    <div class="span4">
+    <div class="col-md-4">
       <p>@booking.to.accountHolder.name</p>
     </div>
   </div>
@@ -157,7 +157,7 @@
   <h3>Activity</h3>
 
 <div class="row">
-  <div class="span8">
+  <div class="col-md-8">
     <table class="table table-bordered">
       @for(activity <- activityStream) {
       <tr>

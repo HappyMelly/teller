@@ -10,7 +10,7 @@
 @main("Evaluation for %s".format(evaluation.participant.fullName), Some(user)) {
 
   @common.evaluationActions()
-  <div class="span8">
+  <div class="col-md-8">
     <header>
       <h1>Evaluation for @evaluation.participant.fullName
           @dynamic(handler, "evaluation", "edit") {
@@ -20,7 +20,7 @@
     </header>
   </div>
   @dynamic(handler, "evaluation", "manage") {
-    <div class="span2 actions">
+    <div class="col-md-2 actions">
       @if(evaluation.status != EvaluationStatus.Approved) {
         <a class="approve btn btn-success btn-block" tabindex="-1" href="#approve"
           data-href="@CSRF(routes.Evaluations.approve(evaluation.id.getOrElse(0)))"
@@ -46,14 +46,14 @@
     </div>
   }
 
-  <div class="span8">
-    <div class="span3">
+  <div class="col-md-8">
+    <div class="col-md-3">
         <p>
             <strong>Event</strong><br/>
             <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
         </p>
     </div>
-    <div class="span2">
+    <div class="col-md-2">
         <p>
             <strong>Status</strong><br/>
             <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
@@ -72,14 +72,14 @@
           }
         }
     </div>
-    <div class="span2">
+    <div class="col-md-2">
         <p>
             <strong>@Messages("evaluation.question6")</strong><br/>
             @Messages("evaluation.impression." + evaluation.question6)
         </p>
     </div>
   </div>
-  <div class="span8">
+  <div class="col-md-8">
       <table class="table table-bordered">
         <thead>
           <tr>

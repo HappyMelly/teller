@@ -6,7 +6,7 @@
 
 
 @main("Account details", Some(user)) {
-  <div class="span8">
+  <div class="col-md-8">
     <header>
       <h1>Account for @account.accountHolder.name </h1>
       @if(!account.active) {
@@ -15,12 +15,12 @@
     </header>
   </div>
 
-  <div class="span2">
+  <div class="col-md-2">
     <h3>Balance</h3>
     <p><span class="@if(account.balance.isNegative){text-error} ">@account.balance</span></p>
   </div>
 
-  <div class="span4 actions">
+  <div class="col-md-4 actions">
 
     @if(account.active) {
       <h3>Deactivate account</h3>

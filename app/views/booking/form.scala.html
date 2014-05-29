@@ -10,7 +10,7 @@
 
 @* Returns an HTML select for organisation and person accounts. *@
 @selectAccount(field: Field, accounts:List[AccountSummary]) = {
-  <select name="@field.name" class="span3" id="@field.id">
+  <select name="@field.name" class="col-md-3" id="@field.id">
     @if(accounts.size != 1) {
       <option value="">Choose an account</option>
     }
@@ -68,7 +68,7 @@
       <div class="controls-row control-group @if(form("fromId").hasErrors || form("toId").hasErrors) {error}">
         <label for="fromId">Accounts</label>
         @selectAccount(form("fromId"), fromAccounts)
-        <div class="span2" style="text-align: center">
+        <div class="col-md-2" style="text-align: center">
           <button id="owes_toggle" class="btn btn-inverse" type="button">Owes To <i class="icon-arrow-right icon-white"></i></button>
           <input id="owes_value" type="hidden" name="owes" value="@form("owes").value.getOrElse(true)">
         </div>
@@ -102,19 +102,19 @@
 
       @if(form("fromId").hasErrors || form("toId").hasErrors) {
         <div class="row control-group error">
-          <div class="span3 help-inline">@fieldErrors(form("fromId"))</div>
-          <div class="span2"></div>
-          <div class="span3 help-inline">@fieldErrors(form("toId"))</div>
+          <div class="col-md-3 help-inline">@fieldErrors(form("fromId"))</div>
+          <div class="col-md-2"></div>
+          <div class="col-md-3 help-inline">@fieldErrors(form("toId"))</div>
         </div>
       }
 
       <div class="row control-group" id="conversionInfo">
-        <div class="span3">
+        <div class="col-md-3">
           <span class="fromId converted"><strong class="amount"> </strong> (<span class="direction">credit</span>)</span>
         </div>
-        <div class="span2">
+        <div class="col-md-2">
         </div>
-        <div class="span3"><span class="toId converted"><strong class="amount"> </strong> (<span class="direction">debit</span>)</span>
+        <div class="col-md-3"><span class="toId converted"><strong class="amount"> </strong> (<span class="direction">debit</span>)</span>
         </div>
       </div>
 

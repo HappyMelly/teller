@@ -14,7 +14,7 @@
 
 @main(organisation.name + " - Organization", Some(user)) {
 
-  <div class="span8">
+  <div class="col-md-8">
     <header>
 
     <h1>
@@ -32,7 +32,7 @@
   </div>
 
   @restrict(handler, List(as(Editor.toString))) {
-    <div class="span2 actions">
+    <div class="col-md-2 actions">
       <form method="post" action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
         <input name="active" value="@(!organisation.active)" type="hidden">
         @if(organisation.active) {
@@ -51,7 +51,7 @@
     </div>
   }
 
-  <div class="span4">
+  <div class="col-md-4">
     <h3>Address</h3>
     <address>
       <strong>@organisation.name</strong><br>
@@ -85,7 +85,7 @@
 
   </div>
 
-  <div class="span4">
+  <div class="col-md-4">
     <h3>Accounting details</h3>
 
     @organisation.category.map { name =>
@@ -113,7 +113,7 @@
     }
   </div>
 
-  <div class="span8">
+  <div class="col-md-8">
     <h3>People</h3>
     @if(members.isEmpty) {
       <p>@organisation.name has no members.</p>
@@ -140,7 +140,7 @@
     }
   </div>
 
-  <div class="span8">
+  <div class="col-md-8">
     <h3>Product contributions</h3>
     @if(contributions.isEmpty) {
       <p>@organisation.name has no contributions.</p>

@@ -23,7 +23,7 @@
 
 @main(person.fullName + " - Person", Some(user)) {
 
-  <div class="span8">
+  <div class="col-md-8">
     <header>
 
     <h1>
@@ -40,7 +40,7 @@
     </header>
   </div>
 
-  <div class="span2 actions">
+  <div class="col-md-2 actions">
     @dynamic(handler, "person", "edit") {
       <form>
         <a class="btn-block btn" href="@routes.People.edit(person.id.get)"><i class="icon-pencil"></i> Edit</a>
@@ -68,7 +68,7 @@
     }
   </div>
 
-  <div class="span4">
+  <div class="col-md-4">
     @* TODO Extract adress.scala.html template for use here and by organisation/details.scala.html *@
     <h3>Addresses</h3>
     <address>
@@ -96,7 +96,7 @@
     <br><a href="mailto:@person.emailAddress">@person.emailAddress</a></p>
   </div>
 
-  <div class="span4">
+  <div class="col-md-4">
     <h3>Personal details</h3>
 
     @person.twitterHandle.map { handle =>
@@ -140,11 +140,11 @@
   </div>
 
   @restrict(handler, List(as("admin"))) {
-    <div class="span3">
+    <div class="col-md-3">
       <h3>User role</h3>
       @otherUser.map { account =>
         <p>None (cannot log in)</p>
-        <div class="alert alert-error">
+        <div class="alert alert-danger">
           <p>
             You cannot add a role because <a href="@routes.People.details(account.personId)">another user</a>
             has the same Twitter handle, Facebook URL, Google+ URL or LinkedIn URL.
@@ -172,7 +172,7 @@
     </div>
   }
 
-  <div class="span8">
+  <div class="col-md-8">
     @person.bio.map { text =>
       <h3>Bio</h3>
       <p>@text.markdown</p>
@@ -184,7 +184,7 @@
     }
   </div>
 
-  <div class="span8">
+  <div class="col-md-8">
     <h3>Accounting details</h3>
     <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
     @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
@@ -194,7 +194,7 @@
     <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
   </div>
 
-  <div class="span8">
+  <div class="col-md-8">
     <h3>Organizations</h3>
     @if(organisations.isEmpty) {
       <p>@person.fullName has no organizations.</p>
@@ -221,7 +221,7 @@
     }
   </div>
 
-  <div class="span8">
+  <div class="col-md-8">
     <h3>Product contributions</h3>
     @if(contributions.isEmpty) {
       <p>@person.fullName has no contributions.</p>
@@ -266,7 +266,7 @@
     }
   </div>
 
-  <div class="span10">
+  <div class="col-md-10">
     <h3>Content licenses</h3>
     @if(licenses.isEmpty) {
       <p>@person.fullName has no licenses.</p>

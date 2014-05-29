@@ -11,7 +11,7 @@
 
 @main(event.title + " - Event", Some(user)) {
 
-  <div class="span8">
+  <div class="col-md-8">
     <header>
 
     <h1>
@@ -35,7 +35,7 @@
   </div>
 
   @dynamic(handler, "event", "edit") {
-    <div class="span2 actions">
+    <div class="col-md-2 actions">
       <a href="@CSRF(routes.Events.duplicate(event.id.getOrElse(0)))" class="btn btn-success btn-block" type="submit">
           <i class="icon-white icon-edit"></i> Duplicate
       </a><br/>
@@ -55,7 +55,7 @@
       }
     </div>
   }
-  <div class="span5">
+  <div class="col-md-5">
       <h3>Details</h3>
       <p>
           <strong>Brand</strong><br/>
@@ -126,7 +126,7 @@
         </form>
       }
   </div>
-  <div class="span3">
+  <div class="col-md-3">
     <h3>Who</h3>
     @for(facilitator <- event.facilitators) {
       <a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/>

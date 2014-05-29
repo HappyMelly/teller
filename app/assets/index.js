@@ -28,8 +28,7 @@ $(document).ready( function() {
     } );
     $('.datatables').each(function() {
         $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span5'l><'span5'f>r>t<'row'<'span5'i><'span5'p>>",
+            // "sPaginationType": "bootstrap",
             "iDisplayLength": 25,
             "asStripeClasses":[],
             "aaSorting": [],

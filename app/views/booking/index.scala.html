@@ -13,11 +13,11 @@
   </ul>
 
   <div class="row">
-    <div class="span7">
+    <div class="col-md-7">
       <h1>@account.map(_.accountHolder.name).getOrElse { Booking entries }</h1>
     </div>
     @restrict(handler, List(as(Editor.toString))) {
-      <div class="span3">
+      <div class="col-md-3">
         <a class="btn btn-success" href="@routes.BookingEntries.add()"><i class="icon-plus icon-white"></i>Add Booking Entry</a>
       </div>
     }
@@ -40,7 +40,7 @@
 
   @if(!entries.isEmpty) {
     <div class="row">
-      <div class="span16">
+      <div class="col-md-16">
         <table id="entries" class="datatables table table-bordered">
         <thead>
           <tr>

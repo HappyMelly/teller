@@ -24,7 +24,7 @@
 
 function showError(message) {
     $('#error').append(
-        $('<div class="alert alert-error">')
+        $('<div class="alert alert-danger">')
             .text(message)
             .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
     );

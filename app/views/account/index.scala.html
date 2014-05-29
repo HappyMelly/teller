@@ -12,11 +12,11 @@
   </ul>
 
   <div class="row">
-    <div class="span7">
+    <div class="col-md-7">
       <h1>Accounts overview</h1>
     </div>
     @restrict(handler, List(as(Admin.toString))) {
-    <div class="span3">
+    <div class="col-md-3">
       <a class="btn" href="@routes.Accounts.previewBalance()"><i class="icon-align-justify"></i> Balance Accounts</a>
     </div>
     }
@@ -24,7 +24,7 @@
 
   @if(!accounts.isEmpty) {
       <div class="row">
-        <div class="span16">
+        <div class="col-md-16">
           <table class="datatables table table-bordered">
             <thead>
             <tr>
