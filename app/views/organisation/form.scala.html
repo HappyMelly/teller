@@ -6,9 +6,6 @@
 
 @defining(orgForm.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { orgName =>
     @main("Organizations", Some(user)) {
-
-        <h1>@orgName</h1>
-
         @if(orgForm.hasErrors) {
           <div class="alert alert-danger">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -16,26 +13,32 @@
           </div>
         }
 
-        @helper.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()))) {
-            @helper.inputText(orgForm("name"), '_label -> "Name")
-            @helper.inputText(orgForm("street1"), '_label -> "Address line 1")
-            @helper.inputText(orgForm("street2"), '_label -> "Address line 2")
-            @helper.inputText(orgForm("postCode"), '_label -> "Post code")
-            @helper.inputText(orgForm("city"), '_label -> "City")
-            @helper.inputText(orgForm("province"), '_label -> "Province or state")
-            @helper.select(orgForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
-            @helper.inputText(orgForm("vatNumber"), '_label -> "VAT number")
-            @helper.inputText(orgForm("registrationNumber"), '_label -> "Registration number")
+        <div class="col-md-6">
+            <h1>@orgName</h1>
+            @helper.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create())),
+                'class -> "form-horizontal") {
+                <fieldset>
+                    @helper.inputText(orgForm("name"), '_label -> "Name", 'class -> "form-control")
+                    @helper.select(orgForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country", 'class -> "form-control")
+                </fieldset>
+                @helper.inputText(orgForm("street1"), '_label -> "Address line 1", 'class -> "form-control")
+                @helper.inputText(orgForm("street2"), '_label -> "Address line 2", 'class -> "form-control")
+                @helper.inputText(orgForm("postCode"), '_label -> "Post code", 'class -> "form-control")
+                @helper.inputText(orgForm("city"), '_label -> "City", 'class -> "form-control")
+                @helper.inputText(orgForm("province"), '_label -> "Province or state", 'class -> "form-control")
+                @helper.inputText(orgForm("vatNumber"), '_label -> "VAT number", 'class -> "form-control")
+                @helper.inputText(orgForm("registrationNumber"), '_label -> "Registration number", 'class -> "form-control")
 
-            @helper.select(
-              orgForm("category"),
-              ("", "None") +: models.OrganisationCategory.values.map(value => value.toString -> Messages(s"models.OrganisationCategory.${value.toString}")).toSeq,
-              '_label -> "Category")
+                @helper.select(
+                  orgForm("category"),
+                  ("", "None") +: models.OrganisationCategory.values.map(value => value.toString -> Messages(s"models.OrganisationCategory.${value.toString}")).toSeq,
+                  '_label -> "Category", 'class -> "form-control")
 
-            @helper.inputText(orgForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-            @helper.inputText(orgForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
+                @helper.inputText(orgForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
+                @helper.inputText(orgForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
 
-            <button class="btn btn-primary" type="submit">Save</button>
-        }
+                <button class="btn btn-primary" type="submit">Save</button>
+            }
+        </div>
     }
 }
