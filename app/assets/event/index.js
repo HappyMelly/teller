@@ -84,7 +84,6 @@ $(document).ready( function() {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
     var oTable = $('#events').dataTable( {
-        "sPaginationType": "bootstrap",
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],

@@ -129,7 +129,6 @@ $(document).ready( function() {
     var currentBrand = $('#brands').find(':selected').val();
     var events = [];
     var participantTable = $('#participants').dataTable({
-        "sPaginationType": "bootstrap",
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
