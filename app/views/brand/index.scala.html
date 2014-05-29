@@ -5,17 +5,16 @@
 
 @main("Brands", Some(user)) {
 
-  <div class="col-md-7">
-  <h1>Brands</h1>
-  </div>
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="col-md-3">
-      <a class="btn btn-success" href="@routes.Brands.add()"><i class="icon-plus icon-white"></i>Add Brand</a>
-    </div>
+  @elements.indexPageHeader("Brands") {
+    @restrict(handler, List(as(Editor.toString))) {
+      <a class="btn btn-success pull-right" href="@routes.Brands.add()">
+      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Brand</a>
+    }
   }
+
   @if(!brands.isEmpty) {
 
-  <div class="col-md-10">
+  <div class="col-md-12">
     <table id="brands" class="datatables table table-bordered">
     <thead>
       <tr>

@@ -12,16 +12,14 @@
     <li><a href="@routes.Accounts.index()">Accounts</a></li>
   </ul>
 
-  <div class="row">
-    <div class="col-md-7">
-      <h1>@account.map(_.accountHolder.name).getOrElse { Booking entries }</h1>
-    </div>
-    @restrict(handler, List(as(Editor.toString))) {
-      <div class="col-md-3">
-        <a class="btn btn-success" href="@routes.BookingEntries.add()"><i class="icon-plus icon-white"></i>Add Booking Entry</a>
-      </div>
+  @defining(account.map(_.accountHolder.name).getOrElse { "Booking entries" }) { title =>
+    @elements.indexPageHeader(title) {
+      @restrict(handler, List(as(Editor.toString))) {
+        <a class="btn btn-success pull-right" href="@routes.BookingEntries.add()">
+        <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Booking</a>
+      }
     }
-  </div>
+  }
 
   @account.map { a =>
     <p><strong>Account balance</strong>

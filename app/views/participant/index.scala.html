@@ -8,23 +8,18 @@
 @main("Participants", Some(user)) {
 
   @common.evaluationActions()
-  <div class="col-md-12">
-    <div class="col-md-7">
-      <h1>Participants</h1>
+  @elements.indexPageHeader("Participants") {
+    <div class="pull-right">
+    @dynamic(handler, "event", "add") {
+      <a class="btn btn-success" href="@routes.Participants.add()">
+      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Participant</a>
+    }
+    @dynamic(handler, "evaluation", "add") {
+      <a class="btn btn-success" href="@routes.Evaluations.add()">
+      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Evaluation</a>
+    }
     </div>
-    <div class="col-md-4 pull-right">
-      @dynamic(handler, "event", "add") {
-        <a class="btn btn-success" href="@routes.Participants.add()">
-          <i class="icon-plus icon-white"></i>Add Participant
-        </a>
-      }
-      @dynamic(handler, "evaluation", "add") {
-        <a class="btn btn-success" href="@routes.Evaluations.add()">
-          <i class="icon-plus icon-white"></i>Add Evaluation
-        </a>
-      }
-    </div>
-  </div>
+  }
   <div class="col-md-12">
     <div id="filter-containter">
       <div class="btn-toolbar pull-right">

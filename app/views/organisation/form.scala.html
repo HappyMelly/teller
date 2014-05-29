@@ -1,4 +1,6 @@
-@(user: securesocial.core.Identity, id: Option[Long], orgForm: Form[Organisation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  orgForm: Form[Organisation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
@@ -7,20 +9,17 @@
 @defining(orgForm.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { orgName =>
     @main("Organizations", Some(user)) {
         @if(orgForm.hasErrors) {
-          <div class="alert alert-danger">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            Please fix the validation errors.
-          </div>
+            @elements.error()
         }
 
         <div class="col-md-6">
-            <h1>@orgName</h1>
+            <div class="page-header">
+                <h1>@orgName</h1>
+            </div>
             @helper.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create())),
                 'class -> "form-horizontal") {
-                <fieldset>
-                    @helper.inputText(orgForm("name"), '_label -> "Name", 'class -> "form-control")
-                    @helper.select(orgForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country", 'class -> "form-control")
-                </fieldset>
+                @helper.inputText(orgForm("name"), '_label -> "Name", 'class -> "form-control")
+                @helper.select(orgForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country", 'class -> "form-control")
                 @helper.inputText(orgForm("street1"), '_label -> "Address line 1", 'class -> "form-control")
                 @helper.inputText(orgForm("street2"), '_label -> "Address line 2", 'class -> "form-control")
                 @helper.inputText(orgForm("postCode"), '_label -> "Post code", 'class -> "form-control")
@@ -37,7 +36,12 @@
                 @helper.inputText(orgForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
                 @helper.inputText(orgForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
 
-                <button class="btn btn-primary" type="submit">Save</button>
+                <div clas="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-9">
+                        <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+                    </div>
+                </div>
             }
         </div>
     }

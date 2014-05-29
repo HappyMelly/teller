@@ -29,8 +29,8 @@ body {
 }
 
 .navbar-inverse .navbar-brand {
-	color: #EE929F;
-	}
+    color: #EE929F;
+}
 
 .activity td {
     text-indent: -19px;
@@ -39,6 +39,15 @@ body {
 
 header {
     margin-bottom: 1em;
+}
+
+footer {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    margin-top: 50px;
+    color: #777;
+    text-align: center;
+    border-top: 1px solid #e5e5e5;
 }
 
 td form {
