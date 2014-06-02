@@ -18,7 +18,7 @@
     } else {
       @table(people) { person =>
         @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.People.edit(person.id)"><i class="icon-pencil"></i> Edit</a>
+          <a href="@routes.People.edit(person.id)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }
     }

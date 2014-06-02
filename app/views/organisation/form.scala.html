@@ -1,40 +1,40 @@
 @(user: securesocial.core.Identity,
   id: Option[Long],
-  orgForm: Form[Organisation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Organisation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
 @import views.ViewHelpers._
 
-@defining(orgForm.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { orgName =>
+@defining(form.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { name =>
     @main("Organizations", Some(user)) {
-        @if(orgForm.hasErrors) {
+        @if(form.hasErrors) {
             @elements.error()
         }
 
         <div class="col-md-6">
             <div class="page-header">
-                <h1>@orgName</h1>
+                <h1>@name</h1>
             </div>
             @helper.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create())),
                 'class -> "form-horizontal") {
-                @helper.inputText(orgForm("name"), '_label -> "Name", 'class -> "form-control")
-                @helper.select(orgForm("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country", 'class -> "form-control")
-                @helper.inputText(orgForm("street1"), '_label -> "Address line 1", 'class -> "form-control")
-                @helper.inputText(orgForm("street2"), '_label -> "Address line 2", 'class -> "form-control")
-                @helper.inputText(orgForm("postCode"), '_label -> "Post code", 'class -> "form-control")
-                @helper.inputText(orgForm("city"), '_label -> "City", 'class -> "form-control")
-                @helper.inputText(orgForm("province"), '_label -> "Province or state", 'class -> "form-control")
-                @helper.inputText(orgForm("vatNumber"), '_label -> "VAT number", 'class -> "form-control")
-                @helper.inputText(orgForm("registrationNumber"), '_label -> "Registration number", 'class -> "form-control")
+                @helper.inputText(form("name"), '_label -> "Name", 'class -> "form-control")
+                @helper.select(form("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country", 'class -> "form-control")
+                @helper.inputText(form("street1"), '_label -> "Address line 1", 'class -> "form-control")
+                @helper.inputText(form("street2"), '_label -> "Address line 2", 'class -> "form-control")
+                @helper.inputText(form("postCode"), '_label -> "Post code", 'class -> "form-control")
+                @helper.inputText(form("city"), '_label -> "City", 'class -> "form-control")
+                @helper.inputText(form("province"), '_label -> "Province or state", 'class -> "form-control")
+                @helper.inputText(form("vatNumber"), '_label -> "VAT number", 'class -> "form-control")
+                @helper.inputText(form("registrationNumber"), '_label -> "Registration number", 'class -> "form-control")
 
                 @helper.select(
-                  orgForm("category"),
+                  form("category"),
                   ("", "None") +: models.OrganisationCategory.values.map(value => value.toString -> Messages(s"models.OrganisationCategory.${value.toString}")).toSeq,
                   '_label -> "Category", 'class -> "form-control")
 
-                @helper.inputText(orgForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
-                @helper.inputText(orgForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
+                @helper.inputText(form("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
+                @helper.inputText(form("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL", 'class -> "form-control")
 
                 <div clas="row">
                     <div class="col-sm-3"></div>

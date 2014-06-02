@@ -1,84 +1,122 @@
-@(user: securesocial.core.Identity, id: Option[Long], personForm: Form[Person])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  form: Form[Person])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
 @import views.ViewHelpers._
 
-@main("Person", Some(user)) {
-
-  @defining(personForm.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
-    <h1>@personName</h1>
-
-    @if(personForm.hasErrors) {
-      <div class="alert alert-danger">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Please fix the validation errors.
-      </div>
+@defining(form.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
+  @main("Person", Some(user)) {
+    @if(form.hasErrors) {
+        @elements.error()
     }
 
-	  @helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
-      @helper.inputText(personForm("firstName"), '_label -> "First name")
-      @helper.inputText(personForm("lastName"), '_label -> "Last name")
-      @helper.inputText(personForm("emailAddress"), '_label -> "E-mail address")
-      @helper.inputText(personForm("address.street1"), '_label -> "Address line 1")
-      @helper.inputText(personForm("address.street2"), '_label -> "Address line 2")
-      @helper.inputText(personForm("address.postCode"), '_label -> "Post code")
-      @helper.inputText(personForm("address.city"), '_label -> "City")
-      @helper.inputText(personForm("address.province"), '_label -> "Province or state")
-      @helper.select(personForm("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
-      @helper.textarea(personForm("bio"), '_label -> "Bio", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
-      @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
+    <div class="col-md-6">
+      <div class="page-header">
+        <h1>@personName</h1>
+      </div>
+  	  @helper.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create())),
+        'class -> "form-horizontal") {
+        @helper.inputText(form("firstName"), '_label -> "First name", 'class -> "form-control")
+        @helper.inputText(form("lastName"), '_label -> "Last name", 'class -> "form-control")
+        @helper.inputText(form("emailAddress"), '_label -> "E-mail address", 'class -> "form-control")
+        @helper.inputText(form("address.street1"), '_label -> "Address line 1", 'class -> "form-control")
+        @helper.inputText(form("address.street2"), '_label -> "Address line 2", 'class -> "form-control")
+        @helper.inputText(form("address.postCode"), '_label -> "Post code", 'class -> "form-control")
+        @helper.inputText(form("address.city"), '_label -> "City", 'class -> "form-control")
+        @helper.inputText(form("address.province"), '_label -> "Province or state", 'class -> "form-control")
+        @helper.select(form("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country", 'class -> "form-control")
+        @helper.textarea(form("bio"), '_label -> "Bio", 'class -> "form-control input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
+        @helper.textarea(form("interests"), '_label -> "Interests", 'class -> "form-control input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
 
-      <input type="hidden" value="@personForm("photo").value.getOrElse("")" id="photo" name="photo"/>
-      <div class="control-group @if(personForm("profile.twitterHandle").hasErrors) {error}" id="twitterHandle">
-        <label for="twitterHandle">Twitter user name</label>
-        <div class="input-prepend">
-          <span class="add-on">@@</span>
-          <input type="text" id="twitterHandle" name="profile.twitterHandle" value="@personForm("profile.twitterHandle").value.getOrElse("")" placeholder="MyTwitter">
+        <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
+
+        @defining(form("profile.twitterHandle")) { field =>
+          <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+            <label for="@field.id" class="col-sm-3 control-label">Twitter user name</label>
+            <div class="col-sm-9">
+              <div class="input-group col-sm-9">
+                <span class="input-group-addon">@@</span>
+                <input type="text" id="@field.id" name="@field.name"
+                  value="@field.value.getOrElse("")"
+                  placeholder="MyTwitter"
+                  class="form-control">
+              </div>
+              <span class="help-block">
+                @if(field.hasErrors) {
+                  @field.errors.map(error => Messages(error.message)).mkString(", ")
+                }
+              </span>
+            </div>
+          </div>
+        }
+
+        @defining(form("profile.facebookUrl")) { field =>
+          <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+            <label for="@field.id" class="col-sm-3 control-label">Facebook profile</label>
+            <div class="col-sm-9">
+              <div class="input-group">
+                <input type="text" id="@field.id" class="form-control"
+                  name="@field.name" value="@field.value.getOrElse("")"
+                  placeholder="http://www.facebook.com/my.profile">
+                <span class="input-group-btn">
+                  <button class="btn btn-success photo-button" type="button"
+                    id="facebook">Get Facebook Photo</button>
+                </span>
+              </div>
+              <span class="help-block">
+                @if(field.hasErrors) {
+                  @field.errors.map(error => Messages(error.message)).mkString(", ")
+                }
+              </span>
+            </div>
+          </div>
+        }
+        @helper.inputText(form("profile.linkedInUrl"),
+          '_label -> "LinkedIn profile",
+          'class -> "form-control input-xxlarge",
+          'placeholder -> "https://www.linkedin.com/in/my.profile",
+          '_help -> "")
+        @helper.inputText(form("profile.googlePlusUrl"),
+          '_label -> "Google+ profile",
+          'class -> "form-control input-xxlarge",
+          'placeholder -> "https://plus.google.com/0123456789",
+          '_help -> "")
+
+        <div class="form-group" id="boardMember_field">
+          <label for="boardMember" class="checkbox col-sm-3">Board member</label>
+          <div class="col-sm-9">
+            <input type="checkbox" id="boardMember" name="boardMember"
+              value="true" class="form-control col-sm-9"
+              @if(form("boardMember").value.exists(_ == "true")){checked}>
+          </div>
         </div>
-        <span class="help-inline">
-          @if(personForm("profile.twitterHandle").hasErrors) {
-            @personForm("profile.twitterHandle").errors.map(error => Messages(error.message)).mkString(", ")
-          }
-        </span>
+
+        <div class="form-group" id="stakeholder_field">
+          <label for="stakeholder" class="checkbox col-sm-3">Stakeholder</label>
+          <div class="col-sm-9">
+            <input type="checkbox" id="stakeholder" name="stakeholder"
+              value="true" class="form-control"
+              @if(form("stakeholder").value.exists(_ == "true")){checked}>
+          </div>
+        </div>
+
+        @helper.inputText(form("webSite"), '_label -> "Web site",
+          'placeholder -> "http://", '_help -> "Web site URL",
+          'class -> "form-control")
+        @helper.inputText(form("blog"), '_label -> "Blog",
+          'placeholder -> "http://", '_help -> "Web site URL",
+          'class -> "form-control")
+
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
       </div>
-
-       <div class="control-group @if(personForm("profile.facebookUrl").hasErrors) {error}" id="facebookUrl">
-       <label for="facebookUrl">Facebook profile</label>
-       <div class="input-append">
-         <input type="text" id="facebookUrl" class="input-xxlarge" name="profile.facebookUrl" value="@personForm("profile.facebookUrl").value.getOrElse("")" placeholder="http://www.facebook.com/my.profile">
-         <button class="btn-success photo-button" id="facebook">Get Facebook Photo</button>
-       </div>
-       <span class="help-inline">
-          @if(personForm("profile.facebookUrl").hasErrors) {
-            @personForm("profile.facebookUrl").errors.map(error => Messages(error.message)).mkString(", ")
-          }
-       </span>
-       </div>
-      @helper.inputText(personForm("profile.linkedInUrl"), '_label -> "LinkedIn public profile", 'class -> "input-xxlarge", 'placeholder -> "https://www.linkedin.com/in/my.profile")
-      @helper.inputText(personForm("profile.googlePlusUrl"), '_label -> "Google+ profile", 'class -> "input-xxlarge", 'placeholder -> "https://plus.google.com/0123456789")
-
-      <div class="control-group" id="boardMember_field">
-        <label for="boardMember" class="checkbox">
-          <input type="checkbox" id="boardMember" name="boardMember" value="true"
-					@if(personForm("boardMember").value.exists(_ == "true")){checked}>
-          Board member
-        </label>
-      </div>
-
-      <div class="control-group" id="stakeholder_field">
-        <label for="stakeholder" class="checkbox">
-          <input type="checkbox" id="stakeholder" name="stakeholder" value="true"
-					@if(personForm("stakeholder").value.exists(_ == "true")){checked}>
-          Stakeholder
-        </label>
-      </div>
-
-      @helper.inputText(personForm("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-      @helper.inputText(personForm("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
-
-      <button class="btn btn-primary" type="submit">Save</button>
-    }
   }
   <script src="@routes.Assets.at("person/form.js")" type="text/javascript"></script>
 }
