@@ -25,7 +25,7 @@
 package controllers
 
 import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
-import models.{ Brand, ParticipantView, EvaluationStatus }
+import models.{ Brand, ParticipantView, EvaluationStatus, UserAccount }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.mvc._
 import play.api.data._
@@ -89,7 +89,8 @@ object Participants extends Controller with Security {
     implicit handler ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findForUser(account)
-      Ok(views.html.participant.index(request.user, brands))
+      val brandCode = request.session.get("brandCode").getOrElse("")
+      Ok(views.html.participant.index(request.user, brands, brandCode))
   }
 
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -173,7 +174,7 @@ object Participants extends Controller with Security {
           }
         }
         val participants = Participant.findAll(Some(brandCode))
-        Ok(Json.toJson(participants))
+        Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
       }.getOrElse(NotFound("Unknown brand"))
   }
 
@@ -204,7 +205,7 @@ object Participants extends Controller with Security {
     implicit handler ⇒
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val events = Event.findByUser(account)
+      val events = findEvents(account)
       var people = Person.findActive
       Ok(views.html.participant.form(request.user, None, events, people, newPersonForm(request), existingPersonForm(request)))
   }
@@ -216,7 +217,7 @@ object Participants extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val events = Event.findByUser(account)
+          val events = findEvents(account)
           var people = Person.findActive
           BadRequest(views.html.participant.form(request.user, None, events, people,
             newPersonForm(request), formWithErrors))
@@ -237,7 +238,7 @@ object Participants extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val events = Event.findByUser(account)
+          val events = findEvents(account)
           var people = Person.findActive
           BadRequest(views.html.participant.form(request.user, None, events, people,
             formWithErrors, existingPersonForm(request), false))
@@ -268,5 +269,13 @@ object Participants extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  private def findEvents(account: UserAccount): List[Event] = {
+    if (account.editor) {
+      Event.findAll
+    } else {
+      Event.findByCoordinator(account.personId)
+    }
   }
 }

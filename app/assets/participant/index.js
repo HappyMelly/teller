@@ -96,12 +96,12 @@ function renderDropdown(data) {
         if ('view' in participant && participant.view) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + participant.view;
-            html += '" title="View Participant"><i class="icon-eye-open"></i> View Participant</a></li>';
+            html += '" title="View Participant"><i class="icon-eye-open"></i> View Person</a></li>';
         }
         if ('edit' in participant && participant.edit) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + participant.edit;
-            html += '" title="Edit Participant"><i class="icon-pencil"></i> Edit Participant</a></li>';
+            html += '" title="Edit Participant"><i class="icon-pencil"></i> Edit Person</a></li>';
         }
         if ('remove' in participant && participant.remove) {
             emptyDropdown = false;
@@ -126,7 +126,12 @@ function renderDropdown(data) {
 }
 
 $(document).ready( function() {
-    var currentBrand = $('#brands').find(':selected').val();
+    var currentBrand = $('#brands').val();
+    var brandInSession = $('#participants').attr('brandCode');
+    if (brandInSession) {
+        currentBrand = brandInSession;
+        $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
+    }
     var events = [];
     var participantTable = $('#participants').dataTable({
         "sPaginationType": "bootstrap",
