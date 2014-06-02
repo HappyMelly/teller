@@ -47,13 +47,11 @@
   }
 
   <div class="span8">
-    <div class="span3">
-        <p>
-            <strong>Event</strong><br/>
-            <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
-        </p>
-    </div>
     <div class="span2">
+      <strong>Event</strong><br/>
+      <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
+    </div>
+    <div class="span1">
         <p>
             <strong>Status</strong><br/>
             <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
@@ -73,10 +71,12 @@
         }
     </div>
     <div class="span2">
-        <p>
-            <strong>@Messages("evaluation.question6")</strong><br/>
-            @Messages("evaluation.impression." + evaluation.question6)
-        </p>
+      <strong>@Messages("evaluation.question6")</strong><br/>
+      @Messages("evaluation.impression." + evaluation.question6)
+    </div>
+    <div class="span2">
+      <strong>Recommendation</strong><br/>
+      @Messages("evaluation.recommendation." + evaluation.question7)
     </div>
   </div>
   <div class="span8">
@@ -107,10 +107,6 @@
           <tr>
             <td>@Messages("evaluation.question5")</td>
             <td>@evaluation.question5</td>
-          </tr>
-          <tr>
-            <td>@Messages("evaluation.question7")</td>
-            <td>@Messages("evaluation.recommendation." + evaluation.question7)</td>
           </tr>
           <tr>
             <td>@Messages("evaluation.question8")</td>

@@ -28,29 +28,29 @@ object Evaluations {
 
   val impression =
     List(
-      ("0", "terrible"),
-      ("1", "very bad"),
-      ("2", "bad"),
-      ("3", "disappointing"),
-      ("4", "below average"),
-      ("5", "average"),
-      ("6", "above average"),
-      ("7", "fine"),
-      ("8", "good"),
-      ("9", "very good"),
-      ("10", "excellent"))
+      ("0", "Terrible (0)"),
+      ("1", "Very bad (1)"),
+      ("2", "Bad (2)"),
+      ("3", "Disappointing (3)"),
+      ("4", "Below average (4)"),
+      ("5", "Average (5)"),
+      ("6", "Above average (6)"),
+      ("7", "Fine (7)"),
+      ("8", "Good (8)"),
+      ("9", "Very good (9)"),
+      ("10", "Excellent (10)"))
 
   val recommendation =
     List(
-      ("0", "certainly not"),
-      ("1", "highly unlikely"),
-      ("2", "unlikely"),
-      ("3", "quite unlikely"),
-      ("4", "possibly not"),
-      ("5", "maybe"),
-      ("6", "yes, possibly"),
-      ("7", "quite possibly"),
-      ("8", "likely"),
-      ("9", "highly likely"),
-      ("10", "certainly"))
+      ("0", "Certainly not (0%)"),
+      ("1", "Highly unlikely (10%)"),
+      ("2", "Unlikely (20%)"),
+      ("3", "Quite unlikely (30%)"),
+      ("4", "Possibly not (40%)"),
+      ("5", "Maybe (50%)"),
+      ("6", "Yes, possibly (60%)"),
+      ("7", "Quite possibly (70%)"),
+      ("8", "Likely (80%)"),
+      ("9", "Highly likely (90%)"),
+      ("10", "Certainly (100%)"))
 }
