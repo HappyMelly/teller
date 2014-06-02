@@ -92,6 +92,8 @@ object Evaluations extends Controller with Security {
   /** Add page **/
   def add = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
+      generateCertificate()
+
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val events = findEvents(account)
       Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
@@ -216,6 +218,33 @@ object Evaluations extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  private def generateCertificate() {
+    import com.itextpdf.text.Document
+    import com.itextpdf.text.pdf.PdfWriter
+    import com.itextpdf.text.pdf.PdfReader
+    import com.itextpdf.text.DocumentException;
+    import com.itextpdf.text.Paragraph;
+    import com.itextpdf.tool.xml.XMLWorkerHelper;
+
+    import java.io.File;
+    import java.io.FileInputStream;
+    import java.io.FileOutputStream;
+    import java.io.FileNotFoundException;
+
+    import play.Logger
+
+    val document = new Document();
+    // step 2
+    val writer = PdfWriter.getInstance(document, new FileOutputStream("test.pdf"));
+    // step 3
+    document.open();
+    // step 4
+    XMLWorkerHelper.getInstance().parseXHtml(writer, document,
+      new FileInputStream("test.html"));
+    // step 5
+    document.close();
   }
 
   private def findEvents(account: UserAccount): List[Event] = {
