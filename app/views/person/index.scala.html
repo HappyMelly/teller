@@ -5,7 +5,7 @@
 
 @main("People", Some(user)) {
 
-  @elements.indexPageHeader("People") {
+  @html.indexPageHeader("People") {
     @restrict(handler, List(as(Editor.toString))) {
       <a class="btn btn-success pull-right" href="@routes.People.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Person</a>

@@ -1,0 +1,20 @@
+@**
+ * Generate an HTML input checkbox.
+ *
+ * Example:
+ * {{{
+ * @html.checkbox(field = myForm("done"))
+ * }}}
+ *
+ * @param field The form field.
+ * @param args Set of extra HTML attributes ('''id''' and '''label''' are 2 special arguments).
+ * @param handler The field constructor.
+ *@
+@(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, lang: Lang)
+
+@boxValue = @{ args.toMap.get('value).getOrElse("true") }
+
+@helper.input.f(field, args.toArray) { (id, name, value, args) =>
+    <input type="checkbox" id="@id" name="@name" value="@boxValue" class="form-control"
+      @if(value == Some(boxValue)){checked="checked"} @toHtmlArgs(args.filterKeys(_ != 'value))/>
+}(handler, lang)

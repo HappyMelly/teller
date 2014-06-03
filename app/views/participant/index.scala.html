@@ -8,7 +8,7 @@
 @main("Participants", Some(user)) {
 
   @common.evaluationActions()
-  @elements.indexPageHeader("Participants") {
+  @html.indexPageHeader("Participants") {
     <div class="pull-right">
     @dynamic(handler, "event", "add") {
       <a class="btn btn-success" href="@routes.Participants.add()">

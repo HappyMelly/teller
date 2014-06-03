@@ -11,7 +11,7 @@
     <li class="active"><a href="@routes.Accounts.index()">Accounts</a></li>
   </ul>
 
-  @elements.indexPageHeader("Accounts overview") {
+  @html.indexPageHeader("Accounts overview") {
     @restrict(handler, List(as(Admin.toString))) {
       <a class="btn btn-default pull-right" href="@routes.Accounts.previewBalance()">
       <i class="glyphicon glyphicon-align-justify glyphicon-white"></i> Balance Accounts</a>

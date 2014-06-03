@@ -13,7 +13,7 @@
   </ul>
 
   @defining(account.map(_.accountHolder.name).getOrElse { "Booking entries" }) { title =>
-    @elements.indexPageHeader(title) {
+    @html.indexPageHeader(title) {
       @restrict(handler, List(as(Editor.toString))) {
         <a class="btn btn-success pull-right" href="@routes.BookingEntries.add()">
         <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Booking</a>
