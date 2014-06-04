@@ -41,6 +41,8 @@ POST /brand/:code/delete   controllers.Brands.delete(code)
 GET  /brand/:code/picture          controllers.Brands.picture(code: String)
 POST /brand/:code/picture/delete   controllers.Brands.deletePicture(code: String)
 
+GET  /certificate/:id  controllers.Evaluations.certificate(id: String)
+
 POST /contribution/new         controllers.Contributions.create(page: String)
 GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
 

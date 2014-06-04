@@ -43,7 +43,7 @@ object EmailService {
     subject: String,
     body: String,
     richMessage: Boolean = false,
-    attachment: Option[(java.io.File, String)] = None)
+    attachment: Option[(String, String)] = None)
 
   /**
    * Sends an e-mail message asynchronously using an actor.
@@ -52,7 +52,7 @@ object EmailService {
     subject: String,
     body: String,
     richMessage: Boolean = false,
-    attachment: Option[(java.io.File, String)] = None): Unit = {
+    attachment: Option[(String, String)] = None): Unit = {
     val recipientAddresses = recipients.map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
     val message = EmailMessage(recipientAddresses.toList, from, subject, body, richMessage, attachment)
     emailServiceActor ! message
@@ -67,10 +67,13 @@ object EmailService {
       case message: EmailMessage ⇒ {
         import org.apache.commons.mail._
         import scala.util.Try
+        import java.net.URL
 
         val commonsMail: Email = if (message.attachment.isDefined) {
           val attachment = new EmailAttachment()
-          attachment.setPath(message.attachment.get._1.getAbsolutePath)
+          // ".pdf" -> dirty hack to make Apache Common library handle
+          // urls correctly (it doesn't understand urls without extension)
+          attachment.setURL(new URL(message.attachment.get._1 + ".pdf"))
           attachment.setDisposition(EmailAttachment.ATTACHMENT)
           attachment.setName(message.attachment.get._2)
           new HtmlEmail().attach(attachment).setMsg(message.body.trim)

@@ -24,8 +24,8 @@
 
 package controllers
 
-import java.io.File
 import fly.play.s3.{ BucketFile, S3Exception }
+import java.io.File
 import models._
 import models.UserRole.Role._
 import org.joda.time._
@@ -40,12 +40,10 @@ import play.api.data.FormError
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.i18n.Messages
-import scala.io.Source
 import scala.concurrent.Future
 import scala.Some
 import securesocial.core.SecuredRequest
-import services._
-import services.EmailService
+import services.{ EmailService, S3Bucket }
 
 object Evaluations extends Controller with Security {
 
@@ -181,13 +179,21 @@ object Evaluations extends Controller with Security {
   /** Approve form submits to this action **/
   def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
-      Evaluation.find(id).map { existingEvaluation ⇒
+      Evaluation.find(id).map { ev ⇒
 
         val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
-        existingEvaluation.approve(approver)
+        ev.approve(approver)
+
+        val attachment = routes.Evaluations.certificate(ev.certificateId).absoluteURL()
+        val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
+        val brand = Brand.find(ev.event.brandCode).get
+        val recipients = ev.participant :: brand.coordinator :: ev.event.facilitators
+        val subject = s"Your ${brand.brand.name} certificate"
+        EmailService.send(recipients.toSet, subject,
+          mail.html.approved(brand.brand, ev.participant, approver).toString, true, Some((attachment, name)))
 
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
-          existingEvaluation.participant.fullName)
+          ev.participant.fullName)
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -210,6 +216,36 @@ object Evaluations extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Retrieve and cache a certificate
+   *
+   * Attention: `id` could be `id.pdf`. It's a dirty hack to make Apache Common
+   *       handle urls correctly (it doesn't understand urls without extension)
+   *       See 'EmailService.scala' for additional info
+   */
+  def certificate(id: String) = Action.async {
+    val certificateId = ("""\d+""".r findFirstIn id).get
+
+    val contentType = "application/pdf"
+    val cached = Cache.getAs[Array[Byte]](Evaluation.cacheId(certificateId))
+    if (cached.isDefined) {
+      Future.successful(Ok(cached.get).as(contentType))
+    } else {
+      val empty = Array[Byte]()
+      val result = S3Bucket.get(Evaluation.fullCertificateFileName(certificateId))
+      val pdf: Future[Array[Byte]] = result.map {
+        case BucketFile(name, contentType, content, acl, headers) ⇒ content
+      }.recover {
+        case S3Exception(status, code, message, originalXml) ⇒ empty
+      }
+      pdf.map {
+        case value ⇒
+          Cache.set(Evaluation.cacheId(certificateId), value)
+          Ok(value).as(contentType)
+      }
+    }
   }
 
   private def findEvents(account: UserAccount): List[Event] = {

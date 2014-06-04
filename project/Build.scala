@@ -24,8 +24,7 @@ object ApplicationBuild extends Build {
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
     "securesocial" %% "securesocial" % "2.1.2",
-    "nl.rhinofly" %% "play-s3" % "3.3.3",
-    "com.typesafe" %% "play-plugins-mailer" % "2.1-RC2"
+    "nl.rhinofly" %% "play-s3" % "3.3.3"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(

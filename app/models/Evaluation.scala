@@ -24,14 +24,17 @@
 
 package models
 
+import fly.play.s3.{ BucketFile, S3Exception }
 import models.database.{ Evaluations }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.cache.Cache
 import play.api.Play.current
 import play.api.libs.Crypto
 import scala.util.Random
-import services.EmailService
+import play.api.libs.concurrent.Execution.Implicits._
+import services.{ EmailService, S3Bucket }
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -84,18 +87,22 @@ case class Evaluation(
     this
   }
 
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"${participantId.get}%03d"
+
   def approve(approver: Person): Evaluation = {
     import java.io.File
 
+    val oldEvaluation = this
     val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
-    evaluation.generateCertificate
-    val attachment = new File("test.pdf")
-    val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
-    val brand = Brand.find(event.brandCode).get
-    val recipients = participant :: brand.coordinator :: event.facilitators
-    val subject = s"Your ${brand.brand.name} certificate"
-    EmailService.send(recipients.toSet, subject,
-      mail.html.approved(brand.brand, participant, approver).toString, true, Some((attachment, name)))
+    val pdf = evaluation.generateCertificate
+    val contentType = "application/pdf"
+    S3Bucket.add(BucketFile(Evaluation.fullCertificateFileName(certificateId), contentType, pdf)).map { unit ⇒
+      evaluation.copy(certificate = Some(certificateId)).update
+      Cache.remove(Evaluation.cacheId(certificateId))
+      oldEvaluation.certificate.map(id ⇒ if (certificateId != id) S3Bucket.remove(_))
+    }.recover {
+      case S3Exception(status, code, message, originalXml) ⇒ {}
+    }
 
     evaluation
   }
@@ -103,7 +110,7 @@ case class Evaluation(
   def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
 
   /** Generate a Management 3.0 certificate (the only one supported right now) */
-  def generateCertificate() {
+  def generateCertificate(): Array[Byte] = {
     import com.itextpdf.text.Document
     import com.itextpdf.text.pdf.PdfWriter
     import com.itextpdf.text.pdf.BaseFont
@@ -115,14 +122,15 @@ case class Evaluation(
     import com.itextpdf.text.Image
     import play.api.i18n.Messages
 
-    import java.io.FileOutputStream
+    import java.io.ByteArrayOutputStream
     import play.api._
 
     val document = new Document(PageSize.A4.rotate);
     val baseFont = BaseFont.createFont("reports/MGT30/DejaVuSerif.ttf",
       BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
 
-    val writer = PdfWriter.getInstance(document, new FileOutputStream("test.pdf"))
+    val output = new ByteArrayOutputStream()
+    val writer = PdfWriter.getInstance(document, output)
     document.open
     val facilitators = event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
@@ -141,9 +149,7 @@ case class Evaluation(
     val eventDate = new Phrase(dateString, font)
     val location = new Phrase(event.location.city + ", " + Messages("country." + event.location.countryCode), font)
     val date = new Phrase(handled.map(_.toString("dd MMMM yyyy")).getOrElse(""), font)
-    val participantId = participant.id.get
-    val generatedId = handled.map(_.toString("yyMM")).getOrElse("") + f"$participantId%03d"
-    val certificateId = new Phrase(generatedId, font)
+    val certificateIdBlock = new Phrase(certificateId, font)
 
     val canvas = writer.getDirectContent()
     canvas.saveState
@@ -151,7 +157,7 @@ case class Evaluation(
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, title, PageSize.A4.getHeight / 2, 340, 0)
     font.setSize(12)
     font.setColor(150, 150, 150)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateId, 560, 490, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateIdBlock, 560, 490, 0)
     font.setColor(0, 0, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 190, 275, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 190, 220, 0)
@@ -167,10 +173,16 @@ case class Evaluation(
     }
     canvas.restoreState
     document.close();
+
+    output.toByteArray
   }
 }
 
 object Evaluation {
+
+  def cacheId(id: String): String = "certificate." + id
+  def certificateFileName(id: String): String = id + ".pdf"
+  def fullCertificateFileName(id: String): String = "certificates/" + certificateFileName(id)
 
   def findByEventAndPerson(participantId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).filter(_.participantId === participantId).filter(_.eventId === eventId).firstOption
