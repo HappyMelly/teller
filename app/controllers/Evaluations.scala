@@ -24,28 +24,28 @@
 
 package controllers
 
+import java.io.File
+import fly.play.s3.{ BucketFile, S3Exception }
 import models._
-import play.api.mvc._
+import models.UserRole.Role._
 import org.joda.time._
+import play.api.mvc._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.data.Forms._
-import models.UserRole.Role._
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
-import java.io.File
 import play.api.cache.Cache
-import services._
 import play.api.data.FormError
-import scala.Some
-import securesocial.core.SecuredRequest
-import fly.play.s3.{ BucketFile, S3Exception }
 import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.i18n.Messages
 import scala.io.Source
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
+import scala.Some
+import securesocial.core.SecuredRequest
+import services._
 import services.EmailService
-import play.api.i18n.Messages
 
 object Evaluations extends Controller with Security {
 
@@ -92,8 +92,6 @@ object Evaluations extends Controller with Security {
   /** Add page **/
   def add = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
-      generateCertificate()
-
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val events = findEvents(account)
       Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
@@ -184,18 +182,12 @@ object Evaluations extends Controller with Security {
   def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.approve
+
+        val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        existingEvaluation.approve(approver)
+
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
           existingEvaluation.participant.fullName)
-
-        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
-        val brand = Brand.find(existingEvaluation.event.brandCode).get
-        val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
-        val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
-          mail.html.approved(brand.brand, participant, facilitator).toString, true)
-
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -218,33 +210,6 @@ object Evaluations extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
-  }
-
-  private def generateCertificate() {
-    import com.itextpdf.text.Document
-    import com.itextpdf.text.pdf.PdfWriter
-    import com.itextpdf.text.pdf.PdfReader
-    import com.itextpdf.text.DocumentException;
-    import com.itextpdf.text.Paragraph;
-    import com.itextpdf.tool.xml.XMLWorkerHelper;
-
-    import java.io.File;
-    import java.io.FileInputStream;
-    import java.io.FileOutputStream;
-    import java.io.FileNotFoundException;
-
-    import play.Logger
-
-    val document = new Document();
-    // step 2
-    val writer = PdfWriter.getInstance(document, new FileOutputStream("test.pdf"));
-    // step 3
-    document.open();
-    // step 4
-    XMLWorkerHelper.getInstance().parseXHtml(writer, document,
-      new FileInputStream("test.html"));
-    // step 5
-    document.close();
   }
 
   private def findEvents(account: UserAccount): List[Event] = {

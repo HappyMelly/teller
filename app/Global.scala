@@ -33,7 +33,6 @@ import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import scala.concurrent.duration.Duration;
 import java.util.concurrent.TimeUnit;
 import models.Event
-import play.Logger
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
@@ -43,8 +42,9 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   override def onStart(app: Application) {
+    return
     // turn this feature off on a development machine
-    if (Play.current.configuration.getBoolean("smtp.mock").exists(_ == true)) {
+    if (Play.current.configuration.getBoolean("development").exists(_ == true)) {
       return
     }
     val now = LocalDateTime.now()
