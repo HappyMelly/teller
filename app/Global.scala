@@ -42,7 +42,6 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   override def onStart(app: Application) {
-    return
     // turn this feature off on a development machine
     if (Play.current.configuration.getBoolean("development").exists(_ == true)) {
       return

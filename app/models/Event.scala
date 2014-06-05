@@ -268,15 +268,15 @@ object Event {
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
     if (user.editor)
-      Query(Events).filter(_.archived === true).sortBy(_.start).list
+      Query(Events).filter(_.archived === false).sortBy(_.start).list
     else {
       val brands = Brand.findForUser(user)
       if (brands.length > 0) {
         val brandCodes = brands.map(_.code)
-        val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
+        val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
         events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
       } else {
-        Query(Events).filter(_.archived === true).sortBy(_.start).list
+        Query(Events).filter(_.archived === false).sortBy(_.start).list
       }
     }
   }
@@ -288,7 +288,7 @@ object Event {
     val brands = Brand.findByCoordinator(coordinatorId)
     if (brands.length > 0) {
       val brandCodes = brands.map(_.code)
-      val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
+      val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
       events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
     } else {
       List[Event]()
@@ -329,6 +329,10 @@ object Event {
     query.map { case (code, events) ⇒ (code, events.length) }.list
   }
 
+  def findActive: List[Event] = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.archived === false).sortBy(_.title.toLowerCase).list
+  }
+
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).sortBy(_.title.toLowerCase).list
   }
@@ -337,7 +341,7 @@ object Event {
     Brand.findAll.foreach { brand ⇒
       Event.findByParameters(brand.brand.code, Some(false), None, Some(false), None, None).foreach { event ⇒
         val subject = "Сonfirm your event " + event.title
-        EmailService.send(event.facilitators.toSet, subject, mail.txt.confirm(event).toString)
+        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString)
       }
     }
   }

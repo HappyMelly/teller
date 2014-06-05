@@ -24,7 +24,6 @@
 
 package models
 
-import fly.play.s3.{ BucketFile, S3Exception }
 import models.database.{ Evaluations }
 import models.Certificate
 import org.joda.time.{ DateTime, LocalDate }
@@ -35,7 +34,7 @@ import play.api.Play.current
 import play.api.libs.Crypto
 import scala.util.Random
 import play.api.libs.concurrent.Execution.Implicits._
-import services.{ EmailService, S3Bucket }
+import services.EmailService
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -91,17 +90,26 @@ case class Evaluation(
   def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"${participantId.get}%03d"
 
   def approve(approver: Person): Evaluation = {
-    import java.io.File
 
     val oldEvaluation = this
     val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+
+    val brand = Brand.find(evaluation.event.brandCode).get
     // handled date is the only variable which influences how the certificate
     //   looks like from one generation to another
-    if (oldEvaluation.handled != evaluation.handled) {
-      val cert = new Certificate(certificateId, Some(evaluation))
-      cert.generate
-      cert.upload(oldEvaluation.certificate)
+    if ((evaluation.certificate.isEmpty && brand.brand.generateCert) || oldEvaluation.handled != evaluation.handled) {
+      val cert = new Certificate(evaluation, Some(oldEvaluation))
+      cert.generateAndSend(brand, approver)
+    } else if (evaluation.certificate.isEmpty) {
+      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString
+      val subject = s"Your ${brand.brand.name} event's evaluation approval"
+      EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
+        Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+    } else {
+      val cert = new Certificate(evaluation)
+      cert.send(brand, approver)
     }
+
     evaluation
   }
 

@@ -25,7 +25,8 @@
 package controllers
 
 import fly.play.s3.{ BucketFile, S3Exception }
-import models.Certificate
+import models.{ LoginIdentity, Brand, Certificate, Evaluation }
+import models.UserRole.Role._
 import play.api.mvc._
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
@@ -33,8 +34,23 @@ import play.api.Play.current
 import scala.concurrent.Future
 import scala.Some
 import services.S3Bucket
+import securesocial.core.SecuredRequest
 
-object Certificates extends Controller {
+object Certificates extends Controller with Security {
+
+  /** Generate new certificate **/
+  def create(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+    implicit handler ⇒
+
+      Evaluation.find(id).map {
+        evaluation ⇒
+          val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+          val brand = Brand.find(evaluation.event.brandCode).get
+          val certificate = new Certificate(evaluation)
+          certificate.generateAndSend(brand, approver)
+          Redirect(routes.Participants.index).flashing("success" -> "Certificate was generated")
+      }.getOrElse(NotFound)
+  }
 
   /**
    * Retrieve and cache a certificate

@@ -58,8 +58,18 @@ function renderDropdown(data) {
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class=" icon-tasks"></i></a>';
     html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
+    if ('certificate' in data && data.certificate) {
+        if ('generate' in data.certificate && data.certificate.generate) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + data.certificate.generate;
+            html += '" title="Generate Certificate"><i class="icon-file"></i> Generate Certificate</a></li>';
+        }
+    }
     if ('evaluation' in data && data.evaluation) {
         var evaluation = data.evaluation;
+        if (!emptyDropdown) {
+            html += '<li class="divider"></li>';
+        }
         if ('approve' in evaluation && evaluation.approve) {
             emptyDropdown = false;
             html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;
@@ -90,7 +100,7 @@ function renderDropdown(data) {
     }
     if ('participant' in data && data.participant) {
         var participant = data.participant;
-        if ('evaluation' in data && data.evaluation) {
+        if (!emptyDropdown) {
             html += '<li class="divider"></li>';
         }
         if ('view' in participant && participant.view) {
@@ -207,6 +217,14 @@ $(document).ready( function() {
                     return '';
                 },
                 "targets": 5
+            }, {
+                "render": function(data, type, row) {
+                    if (data && data.url) {
+                        return '<a href="' + data.url + '" target="_blank">' + data.id + '</a>';
+                    }
+                    return '';
+                },
+                "targets": 8
             }, {
                 "render": function(data, type, row) {
                     return renderDropdown(data);

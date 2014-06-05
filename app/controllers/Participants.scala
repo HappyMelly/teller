@@ -93,6 +93,10 @@ object Participants extends Controller with Security {
       Ok(views.html.participant.index(request.user, brands, brandCode))
   }
 
+  /**
+   * Returns JSON data about participants together with their evaluations
+   * and events
+   */
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Brand.find(brandCode).map { brand ⇒
@@ -120,55 +124,21 @@ object Participants extends Controller with Security {
                   "value" -> status.id)),
               "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
               "handled" -> data.handled.map(_.get.toString),
-              "certificate" -> data.certificate.map(_.toString),
+              "certificate" -> data.status.map(status ⇒
+                if (status == EvaluationStatus.Approved) {
+                  data.certificate.map(id ⇒
+                    Json.obj(
+                      "id" -> id.get,
+                      "url" -> routes.Certificates.certificate(id.get).url)).getOrElse(Json.obj())
+                } else Json.obj()),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "evaluation" -> Json.obj(
-                      "approve" -> {
-                        if (data.status.get != EvaluationStatus.Approved)
-                          routes.Evaluations.approve(id).url
-                        else ""
-                      },
-                      "reject" -> {
-                        if (data.status.get != EvaluationStatus.Rejected)
-                          routes.Evaluations.reject(id).url
-                        else ""
-                      },
-                      "edit" -> {
-                        if (account.editor || brand.brand.coordinatorId == account.personId)
-                          routes.Evaluations.edit(id).url
-                        else ""
-                      },
-                      "view" -> routes.Evaluations.details(id).url,
-                      "delete" -> routes.Evaluations.delete(id).url),
-                    "participant" -> Json.obj(
-                      "view" -> routes.People.details(data.person.id.get).url,
-                      "edit" -> {
-                        if (account.editor || data.person.virtual)
-                          routes.People.edit(data.person.id.get).url
-                        else ""
-                      },
-                      "remove" -> {
-                        if (account.editor || data.person.virtual)
-                          routes.People.details(data.person.id.get).url
-                        else ""
-                      },
-                      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url))
+                    "certificate" -> certificateActions(id, brand.brand, data),
+                    "evaluation" -> evaluationActions(id, brand.brand, data, account),
+                    "participant" -> participantActions(data, account))
                   case None ⇒ Json.obj(
-                    "participant" -> Json.obj(
-                      "view" -> routes.People.details(data.person.id.get).url,
-                      "edit" -> {
-                        if (account.editor || data.person.virtual)
-                          routes.People.edit(data.person.id.get).url
-                        else ""
-                      },
-                      "remove" -> {
-                        if (account.editor || data.person.virtual)
-                          routes.People.details(data.person.id.get).url
-                        else ""
-                      },
-                      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url))
+                    "participant" -> participantActions(data, account))
                 }
               })
           }
@@ -271,9 +241,57 @@ object Participants extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
+  /** Return a list of possible actions for a certificate */
+  private def certificateActions(evaluationId: Long, brand: Brand, data: ParticipantView): JsValue = {
+    Json.obj(
+      "generate" -> {
+        if (data.status.get == EvaluationStatus.Approved && brand.generateCert)
+          routes.Certificates.create(evaluationId).url
+        else ""
+      })
+  }
+
+  /** Return a list of possible actions for an evaluation */
+  private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount): JsValue = {
+    Json.obj(
+      "approve" -> {
+        if (data.status.get != EvaluationStatus.Approved)
+          routes.Evaluations.approve(id).url
+        else ""
+      },
+      "reject" -> {
+        if (data.status.get != EvaluationStatus.Rejected)
+          routes.Evaluations.reject(id).url
+        else ""
+      },
+      "edit" -> {
+        if (account.editor || brand.coordinatorId == account.personId)
+          routes.Evaluations.edit(id).url
+        else ""
+      },
+      "view" -> routes.Evaluations.details(id).url,
+      "delete" -> routes.Evaluations.delete(id).url)
+  }
+
+  /** Return a list of possible actions for a participant */
+  private def participantActions(data: ParticipantView, account: UserAccount): JsValue = {
+    Json.obj("view" -> routes.People.details(data.person.id.get).url,
+      "edit" -> {
+        if (account.editor || data.person.virtual)
+          routes.People.edit(data.person.id.get).url
+        else ""
+      },
+      "remove" -> {
+        if (account.editor || data.person.virtual)
+          routes.People.details(data.person.id.get).url
+        else ""
+      },
+      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url)
+  }
+
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findAll
+      Event.findActive
     } else {
       Event.findByCoordinator(account.personId)
     }

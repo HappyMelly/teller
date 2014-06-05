@@ -46,6 +46,7 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def description = column[Option[String]]("DESCRIPTION")
   def status = column[BrandStatus.Value]("STATUS")
   def picture = column[Option[String]]("PICTURE")
+  def generateCert = column[Boolean]("GENERATE_CERT")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
 
@@ -55,11 +56,13 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
   def * = id.? ~ code ~ name ~ coordinatorId ~ description ~ status ~ picture ~
-    created ~ createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
+    generateCert ~ created ~ createdBy ~ updated ~
+    updatedBy <> (Brand.apply _, Brand.unapply _)
 
   def forInsert = * returning id
 
-  def forUpdate = code ~ name ~ coordinatorId ~ description ~ status ~ picture ~ updated ~ updatedBy
+  def forUpdate = code ~ name ~ coordinatorId ~ description ~ status ~ picture ~
+    updated ~ updatedBy
 
   def uniqueCode = index("IDX_CODE", code, unique = true)
 }

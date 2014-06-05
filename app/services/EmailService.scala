@@ -39,6 +39,8 @@ object EmailService {
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
 
   case class EmailMessage(to: List[String],
+    cc: List[String],
+    bcc: List[String],
     from: String,
     subject: String,
     body: String,
@@ -48,13 +50,20 @@ object EmailService {
   /**
    * Sends an e-mail message asynchronously using an actor.
    */
-  def send(recipients: Set[Person],
+  def send(to: Set[Person],
+    cc: Option[Set[Person]] = None,
+    bcc: Option[Set[Person]] = None,
     subject: String,
     body: String,
     richMessage: Boolean = false,
     attachment: Option[(String, String)] = None): Unit = {
-    val recipientAddresses = recipients.map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
-    val message = EmailMessage(recipientAddresses.toList, from, subject, body, richMessage, attachment)
+    val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
+    val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
+    val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
+    val message = EmailMessage(toAddresses.toList,
+      ccAddresses.map(_.toList).getOrElse(List[String]()),
+      bccAddresses.map(_.toList).getOrElse(List[String]()),
+      from, subject, body, richMessage, attachment)
     emailServiceActor ! message
   }
 
@@ -67,13 +76,10 @@ object EmailService {
       case message: EmailMessage ⇒ {
         import org.apache.commons.mail._
         import scala.util.Try
-        import java.net.URL
 
         val commonsMail: Email = if (message.attachment.isDefined) {
           val attachment = new EmailAttachment()
-          // ".pdf" -> dirty hack to make Apache Common library handle
-          // urls correctly (it doesn't understand urls without extension)
-          attachment.setURL(new URL(message.attachment.get._1 + ".pdf"))
+          attachment.setPath(message.attachment.get._1)
           attachment.setDisposition(EmailAttachment.ATTACHMENT)
           attachment.setName(message.attachment.get._2)
           new HtmlEmail().attach(attachment).setMsg(message.body.trim)
@@ -84,8 +90,8 @@ object EmailService {
         }
 
         message.to.foreach(commonsMail.addTo(_))
-        // cc.foreach(commonsMail.addCc(_))
-        // bcc.foreach(commonsMail.addBcc(_))
+        message.cc.foreach(commonsMail.addCc(_))
+        message.bcc.foreach(commonsMail.addBcc(_))
 
         val preparedMail = commonsMail.
           setFrom(message.from).

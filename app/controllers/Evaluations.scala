@@ -24,7 +24,6 @@
 
 package controllers
 
-import fly.play.s3.{ BucketFile, S3Exception }
 import java.io.File
 import models._
 import models.UserRole.Role._
@@ -43,7 +42,7 @@ import play.api.i18n.Messages
 import scala.concurrent.Future
 import scala.Some
 import securesocial.core.SecuredRequest
-import services.{ EmailService, S3Bucket }
+import services.EmailService
 
 object Evaluations extends Controller with Security {
 
@@ -113,7 +112,8 @@ object Evaluations extends Controller with Security {
           val recipients = brand.coordinator :: createdEvaluation.event.facilitators
           val impression = Messages("evaluation.impression." + createdEvaluation.question6)
           val subject = s"New evaluation (General impression: ${impression})"
-          EmailService.send(recipients.toSet, subject,
+          EmailService.send(createdEvaluation.event.facilitators.toSet,
+            Some(Set(brand.coordinator)), None, subject,
             mail.html.evaluation(createdEvaluation).toString, true)
 
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
@@ -139,7 +139,10 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.evaluation.details(request.user, evaluation))
+          {
+            val brand = Brand.find(evaluation.event.brandCode).get
+            Ok(views.html.evaluation.details(request.user, evaluation, brand.brand))
+          }
       }.getOrElse(NotFound)
 
   }
@@ -184,14 +187,6 @@ object Evaluations extends Controller with Security {
         val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         ev.approve(approver)
 
-        val attachment = routes.Certificates.certificate(ev.certificateId).absoluteURL()
-        val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
-        val brand = Brand.find(ev.event.brandCode).get
-        val recipients = ev.participant :: brand.coordinator :: ev.event.facilitators
-        val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
-          mail.html.approved(brand.brand, ev.participant, approver).toString, true, Some((attachment, name)))
-
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
           ev.participant.fullName)
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
@@ -209,9 +204,10 @@ object Evaluations extends Controller with Security {
         val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
         val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
+        EmailService.send(Set(participant),
+          Some(existingEvaluation.event.facilitators.toSet),
+          Some(Set(brand.coordinator)), subject,
           mail.html.rejected(brand.brand, participant, facilitator).toString, true)
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
@@ -220,7 +216,7 @@ object Evaluations extends Controller with Security {
 
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findAll
+      Event.findActive
     } else {
       Event.findByCoordinator(account.personId)
     }
