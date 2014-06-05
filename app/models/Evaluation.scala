@@ -26,6 +26,7 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database.{ Evaluations }
+import models.Certificate
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -94,95 +95,21 @@ case class Evaluation(
 
     val oldEvaluation = this
     val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
-    val pdf = evaluation.generateCertificate
-    val contentType = "application/pdf"
-    S3Bucket.add(BucketFile(Evaluation.fullCertificateFileName(certificateId), contentType, pdf)).map { unit ⇒
-      evaluation.copy(certificate = Some(certificateId)).update
-      Cache.remove(Evaluation.cacheId(certificateId))
-      oldEvaluation.certificate.map(id ⇒ if (certificateId != id) S3Bucket.remove(_))
-    }.recover {
-      case S3Exception(status, code, message, originalXml) ⇒ {}
+    // handled date is the only variable which influences how the certificate
+    //   looks like from one generation to another
+    if (oldEvaluation.handled != evaluation.handled) {
+      val cert = new Certificate(certificateId, Some(evaluation))
+      cert.generate
+      cert.upload(oldEvaluation.certificate)
     }
-
     evaluation
   }
 
   def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
 
-  /** Generate a Management 3.0 certificate (the only one supported right now) */
-  def generateCertificate(): Array[Byte] = {
-    import com.itextpdf.text.Document
-    import com.itextpdf.text.pdf.PdfWriter
-    import com.itextpdf.text.pdf.BaseFont
-    import com.itextpdf.text.Font
-    import com.itextpdf.text.Element
-    import com.itextpdf.text.PageSize
-    import com.itextpdf.text.Phrase
-    import com.itextpdf.text.pdf.ColumnText
-    import com.itextpdf.text.Image
-    import play.api.i18n.Messages
-
-    import java.io.ByteArrayOutputStream
-    import play.api._
-
-    val document = new Document(PageSize.A4.rotate);
-    val baseFont = BaseFont.createFont("reports/MGT30/DejaVuSerif.ttf",
-      BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
-
-    val output = new ByteArrayOutputStream()
-    val writer = PdfWriter.getInstance(document, output)
-    document.open
-    val facilitators = event.facilitators
-    val cofacilitator = if (facilitators.length > 1) true else false
-    val imagePath = if (cofacilitator) "cert-body-new-co.png" else "cert-body-new.png"
-    val img = Image.getInstance(Play.application.resource("reports/MGT30/" + imagePath).get)
-    img.setAbsolutePosition(7, 10)
-    img.scalePercent(55)
-    document.add(img)
-
-    val font = new Font(baseFont, 20)
-    font.setColor(0, 181, 228)
-
-    val name = new Phrase(participant.fullName, font)
-    val title = new Phrase(event.title, font)
-    val dateString = event.schedule.start.toString("d + ") + event.schedule.end.toString("d MMMM yyyy")
-    val eventDate = new Phrase(dateString, font)
-    val location = new Phrase(event.location.city + ", " + Messages("country." + event.location.countryCode), font)
-    val date = new Phrase(handled.map(_.toString("dd MMMM yyyy")).getOrElse(""), font)
-    val certificateIdBlock = new Phrase(certificateId, font)
-
-    val canvas = writer.getDirectContent()
-    canvas.saveState
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 450, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, title, PageSize.A4.getHeight / 2, 340, 0)
-    font.setSize(12)
-    font.setColor(150, 150, 150)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateIdBlock, 560, 490, 0)
-    font.setColor(0, 0, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 190, 275, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 190, 220, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 190, 165, 0)
-    if (cofacilitator) {
-      val firstName = new Phrase(facilitators.head.fullName, font)
-      val secondName = new Phrase(facilitators.last.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 595, 165, 0)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 725, 165, 0)
-    } else {
-      val name = new Phrase(facilitators.head.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 165, 0)
-    }
-    canvas.restoreState
-    document.close();
-
-    output.toByteArray
-  }
 }
 
 object Evaluation {
-
-  def cacheId(id: String): String = "certificate." + id
-  def certificateFileName(id: String): String = id + ".pdf"
-  def fullCertificateFileName(id: String): String = "certificates/" + certificateFileName(id)
 
   def findByEventAndPerson(participantId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).filter(_.participantId === participantId).filter(_.eventId === eventId).firstOption

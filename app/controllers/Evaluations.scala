@@ -184,7 +184,7 @@ object Evaluations extends Controller with Security {
         val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         ev.approve(approver)
 
-        val attachment = routes.Evaluations.certificate(ev.certificateId).absoluteURL()
+        val attachment = routes.Certificates.certificate(ev.certificateId).absoluteURL()
         val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
         val brand = Brand.find(ev.event.brandCode).get
         val recipients = ev.participant :: brand.coordinator :: ev.event.facilitators
@@ -216,36 +216,6 @@ object Evaluations extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
-  }
-
-  /**
-   * Retrieve and cache a certificate
-   *
-   * Attention: `id` could be `id.pdf`. It's a dirty hack to make Apache Common
-   *       handle urls correctly (it doesn't understand urls without extension)
-   *       See 'EmailService.scala' for additional info
-   */
-  def certificate(id: String) = Action.async {
-    val certificateId = ("""\d+""".r findFirstIn id).get
-
-    val contentType = "application/pdf"
-    val cached = Cache.getAs[Array[Byte]](Evaluation.cacheId(certificateId))
-    if (cached.isDefined) {
-      Future.successful(Ok(cached.get).as(contentType))
-    } else {
-      val empty = Array[Byte]()
-      val result = S3Bucket.get(Evaluation.fullCertificateFileName(certificateId))
-      val pdf: Future[Array[Byte]] = result.map {
-        case BucketFile(name, contentType, content, acl, headers) ⇒ content
-      }.recover {
-        case S3Exception(status, code, message, originalXml) ⇒ empty
-      }
-      pdf.map {
-        case value ⇒
-          Cache.set(Evaluation.cacheId(certificateId), value)
-          Ok(value).as(contentType)
-      }
-    }
   }
 
   private def findEvents(account: UserAccount): List[Event] = {
