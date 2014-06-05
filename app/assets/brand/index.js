@@ -31,7 +31,8 @@ $(document).ready( function() {
             "iDisplayLength": 25,
             "asStripeClasses":[],
             "aaSorting": [],
-            "bLengthChange": false
+            "bLengthChange": false,
+            "order": [[ 0, "asc" ]]
         });
     });
 });

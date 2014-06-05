@@ -12,102 +12,113 @@
 
 @main(brand.code + " - Brand", Some(user)) {
 
-  <div class="col-md-8">
-    <header>
-
+  <div class="page-header">
     <h1>
+      @brand.picture.map { picture =>
+        <img width="64" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
+      }
       @brand.name
       @restrict(handler, List(as(Editor.toString))) {
-        <a class="btn-small btn"href="@routes.Brands.edit(brand.code)"><i class="icon-pencil"></i> Edit</a>
+        <div class="actions pull-right">
+          <div class="button">
+            <a class="btn btn-default" href="@routes.Brands.edit(brand.code)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit
+            </a>
+          </div>
+          @brand.picture.map { picture =>
+            <div class="button">
+              <form class="delete form-inline" method="post" text="image"
+                action="@CSRF(routes.Brands.deletePicture(brand.code))">
+                @restrict(handler, List(as(Editor.toString))) {
+                  <button class="btn btn-warning btn-sm" type="submit">
+                    <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete Picture
+                  </button>
+                }
+              </form>
+            </div>
+          }
+          <div class="button">
+            <form class="delete" class="form-inline" method="post" text="brand"
+              action="@CSRF(routes.Brands.delete(brand.code))">
+              <button class="btn btn-danger" type="submit"
+                @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }>
+                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+              </button>
+            </form>
+          </div>
+        </div>
       }
     </h1>
-    <p><small>Added by @brand.createdBy on @brand.created.format <br> Updated by @brand.updatedBy on @brand.updated.format</small></p>
-    </header>
   </div>
 
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="col-md-2 actions">
-      <form class="delete" method="post" text="brand" action="@CSRF(routes.Brands.delete(brand.code))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!brand.deletable) { disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }>
-          <i class="icon-white icon-trash"></i> Delete
-        </button>
-      </form>
-    </div>
-  }
-
   <div class="col-md-4">
-    <h3>Brand details</h3>
-
-    <p><strong>Brand code</strong>
-    <br>@brand.code</p>
-      <p><strong>Brand coordinator</strong>
-    <br><a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a></p>
-    @brand.description.map { desc =>
     <p>
-      <strong>Description</strong><br/>@desc.markdown
+      <strong>Brand code</strong><br>
+      @brand.code
     </p>
+    <p>
+      <strong>Brand coordinator</strong><br>
+      <a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a>
+    </p>
+    @brand.description.map { desc =>
+      <p>
+        <strong>Description</strong><br/>@desc.markdown
+      </p>
     }
-    <p><strong>Status</strong>
-    <br/><span class="label @Messages(s"models.BrandStatus." + brand.status + ".label")">@Messages(s"models.BrandStatus." + brand.status)</span>
+    <p>
+      <strong>Status</strong><br/>
+      <span class="label @Messages(s"models.BrandStatus." + brand.status + ".label")">
+        @Messages(s"models.BrandStatus." + brand.status)</span>
+    </p>
+
   </div>
-  <div class="col-md-4">
-    @brand.picture.map { picture =>
-      <form class="delete" method="post" text="image" action="@CSRF(routes.Brands.deletePicture(brand.code))">
-        <h3>Picture
-          @restrict(handler, List(as(Editor.toString))) {
-            <button class="btn btn-danger" type="submit">
-              <i class="icon-white icon-trash"></i> Delete Picture
-            </button>
-          }
-        </h3>
-      </form>
-      <a href="@routes.Brands.picture(brand.code).url">
-          <img src="@routes.Brands.picture(brand.code).url"/></a>
-    }
-    <h3>Products</h3>
+
+  <div class="col-md-8">
+    <legend>Products</legend>
     @if(brand.products.isEmpty) {
       <p>This brand doesn't have any products.</p>
     } else {
       @views.html.product.table(brand.products, true) { product => @None }
     }
-  </div>
-  <div class="col-md-8">
-      <h3>Event Types</h3>
-      @if(eventTypes.isEmpty) {
-        <p>There are no event types.</p>
-      } else {
-      <table  class="datatables table table-bordered">
-          <thead>
-          <th>Name</th>
-          <th>Default Title</th>
-          <th></th>
-          </thead>
-          <tbody>
-          @for(eventType <- eventTypes) {
-          <tr>
-              <td>@eventType.name</td>
-              <td>@eventType.defaultTitle</td>
-              <td>
-                  @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.EventTypes.delete(eventType.id.get)">
-                  <i class="icon-pencil"></i>Remove event type</a>
-                  }
-              </td>
-          </tr>
-          }
-          </tbody>
-      </table>
-      }
-      @restrict(handler, List(as(Editor.toString))) {
-        <form class="form-inline" method="POST" action="@CSRF(routes.EventTypes.create)" id="eventType">
-          <input type="hidden" name="brandId" value="@brand.id"/>
-          <div class="controls-row control-group">
-              <input name="name" placeholder="Name"/>
-              <input name="defaultTitle" placeholder="Default Title"/>
-              <button class="btn"><i class="icon-plus"></i>Add Event Type</button>
-          </div>
-        </form>
-      }
+    <br/>
+    <legend>Event Types</legend>
+    @if(eventTypes.isEmpty) {
+      <p>There are no event types.</p>
+    } else {
+    <table  class="datatables table table-bordered">
+      <thead>
+        <th>Name</th>
+        <th>Default Title</th>
+        <th></th>
+      </thead>
+      <tbody>
+        @for(eventType <- eventTypes) {
+        <tr>
+          <td>@eventType.name</td>
+          <td>@eventType.defaultTitle</td>
+          <td>
+            @restrict(handler, List(as(Editor.toString))) {
+              <a href="@routes.EventTypes.delete(eventType.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Remove event type</a>
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+    @restrict(handler, List(as(Editor.toString))) {
+      <form class="form-inline pull-right" method="POST" action="@CSRF(routes.EventTypes.create)" id="eventType">
+        <input type="hidden" name="brandId" value="@brand.id"/>
+        <div class="controls-row form-group">
+          <input name="name" class="form-control input-sm" placeholder="Name"/>
+          <input name="defaultTitle" class="form-control input-sm" placeholder="Default Title"/>
+          <button class="btn btn-success btn-sm ">
+            <i class="glyphicon glyphicon-plus"></i>Add Event Type
+          </button>
+        </div>
+      </form>
+    }
   </div>
 	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

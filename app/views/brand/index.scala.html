@@ -12,35 +12,34 @@
     }
   }
 
-  @if(!brands.isEmpty) {
-
   <div class="col-md-12">
-    <table id="brands" class="datatables table table-bordered">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Co-ordinator</th>
-        @restrict(handler, List(as(Editor.toString))) {
-          <th></th>
-        }
-      </tr>
-    </thead>
-    <tbody>
-      @for(brand <- brands) {
+    @if(!brands.isEmpty) {
+      <table id="brands" class="datatables table table-bordered">
+      <thead>
         <tr>
-          <td><a href="@routes.Brands.details(brand.brand.code)">@brand.brand.name</a></td>
-          <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
+          <th>Name</th>
+          <th>Co-ordinator</th>
           @restrict(handler, List(as(Editor.toString))) {
-            <td><a href="@routes.Brands.edit(brand.brand.code)"><i class="icon-pencil"></i> Edit</a></td>
+            <th></th>
           }
         </tr>
-      }
-    </tbody>
-    </table>
-  } else {
-    <p>There are no brands.</p>
-  }
+      </thead>
+      <tbody>
+        @for(brand <- brands) {
+          <tr>
+            <td><a href="@routes.Brands.details(brand.brand.code)">@brand.brand.name</a></td>
+            <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
+            @restrict(handler, List(as(Editor.toString))) {
+              <td><a href="@routes.Brands.edit(brand.brand.code)"><i class="glyphicon glyphicon-pencil"></i> Edit</a></td>
+            }
+          </tr>
+        }
+      </tbody>
+      </table>
+    } else {
+      <p>There are no brands.</p>
+    }
   </div>
 
-	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+	<script src="@routes.Assets.at("brand/index.js")" type="text/javascript"></script>
 }
