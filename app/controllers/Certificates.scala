@@ -52,32 +52,16 @@ object Certificates extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  /**
-   * Retrieve and cache a certificate
-   *
-   * Attention: `id` could be `id.pdf`. It's a dirty hack to make Apache Common
-   *       handle urls correctly (it doesn't understand urls without extension)
-   *       See 'EmailService.scala' for additional info
-   */
-  def certificate(id: String) = Action.async {
-    val certificateId = ("""\d+""".r findFirstIn id).get
-
+  /** Retrieve and cache a certificate */
+  def certificate(certificateId: String) = Action.async {
     val contentType = "application/pdf"
-    val empty = Array[Byte]()
     val cached = Cache.getAs[Array[Byte]](Certificate.cacheId(certificateId))
     if (cached.isDefined) {
       Future.successful(Ok(cached.get).as(contentType))
     } else {
-      val result = S3Bucket.get(Certificate.fullFileName(certificateId))
-      val pdf: Future[Array[Byte]] = result.map {
-        case BucketFile(name, contentType, content, acl, headers) ⇒ content
-      }.recover {
-        case S3Exception(status, code, message, originalXml) ⇒ empty
-      }
+      val pdf = Certificate.downloadFromCloud(certificateId)
       pdf.map {
-        case value ⇒
-          Cache.set(Certificate.cacheId(certificateId), value)
-          Ok(value).as(contentType)
+        case value ⇒ Ok(value).as(contentType)
       }
     }
   }
