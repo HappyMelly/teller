@@ -69,7 +69,8 @@ object UserAccounts extends Controller with Security {
               UserAccount.delete(personId)
             }
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-            person.copy(updated = DateTime.now, updatedBy = request.user.fullName).update
+            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = request.user.fullName)
+            person.copy(dateStamp = dateStamp).update
             Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
           }.getOrElse(BadRequest("invalid form data - person not found"))
         })

@@ -34,6 +34,12 @@ import scala.Some
 import JodaMoney._
 import scala.util.matching.Regex
 
+case class DateStamp(
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String)
+
 case class Photo(id: Option[String], url: Option[String])
 
 object Photo {
@@ -57,6 +63,7 @@ case class Person(
   lastName: String,
   emailAddress: String,
   photo: Photo,
+  signature: Boolean,
   address: Address,
   bio: Option[String],
   interests: Option[String],
@@ -67,10 +74,7 @@ case class Person(
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends AccountHolder {
+  dateStamp: DateStamp) extends AccountHolder {
 
   def fullName: String = firstName + " " + lastName
 
@@ -164,7 +168,7 @@ case class Person(
       socialQuery.update(socialProfile.copy(personId = id.get))
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests,
-        boardMember, stakeholder, webSite, blog, virtual, updated, updatedBy)
+        boardMember, stakeholder, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 

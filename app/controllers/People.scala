@@ -99,6 +99,7 @@ object People extends Controller with Security {
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
       "photo" -> of(photoFormatter),
+      "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
@@ -108,21 +109,20 @@ object People extends Controller with Security {
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(request.user.fullName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profile, boardMember, stakeholder,
-          webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profile,
-            boardMember, stakeholder, webSite, blog, false, active, created,
-            createdBy, updated, updatedBy)
+      "dateStamp" -> mapping(
+        "created" -> ignored(DateTime.now()),
+        "createdBy" -> ignored(request.user.fullName),
+        "updated" -> ignored(DateTime.now()),
+        "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
+        { (id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile, boardMember, stakeholder,
+          webSite, blog, active, dateStamp) ⇒
+          Person(id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile,
+            boardMember, stakeholder, webSite, blog, false, active, dateStamp)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
-                p.socialProfile, p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
-                p.updated, p.updatedBy))
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.signature, p.address, p.bio, p.interests,
+                p.socialProfile, p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
 
