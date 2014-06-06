@@ -76,6 +76,7 @@ object Brands extends Controller with Security {
     "description" -> optional(text),
     "status" -> brandMapping,
     "picture" -> optional(text),
+    "generateCert" -> boolean,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),

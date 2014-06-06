@@ -1,5 +1,6 @@
 @(user: securesocial.core.Identity,
-  evaluation: Evaluation)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  evaluation: Evaluation,
+  brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Evaluations
@@ -21,6 +22,14 @@
   </div>
   @dynamic(handler, "evaluation", "manage") {
     <div class="span2 actions">
+      @if(evaluation.status == EvaluationStatus.Approved && brand.generateCert) {
+        <a class="btn btn-default btn-block" tabindex="-1"
+          href="@CSRF(routes.Certificates.create(evaluation.id.getOrElse(0)))"
+          type="submit">
+            <i class="icon-white icon-file"></i> Generate Certificate
+        </a><br/>
+        <div class="clearfix"></div>
+      }
       @if(evaluation.status != EvaluationStatus.Approved) {
         <a class="approve btn btn-success btn-block" tabindex="-1" href="#approve"
           data-href="@CSRF(routes.Evaluations.approve(evaluation.id.getOrElse(0)))"
@@ -47,28 +56,11 @@
   }
 
   <div class="span8">
-    <div class="span2">
-      <strong>Event</strong><br/>
-      <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
-    </div>
-    <div class="span1">
-        <p>
-            <strong>Status</strong><br/>
-            <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
-              @Messages("models.EvaluationStatus." + evaluation.status)</span>
-        </p>
-        @if(evaluation.status == "2") {
-          @evaluation.handled.map { value =>
-            <p>
-              <strong>Handled Date</strong><br/>@value
-            </p>
-          }
-          @evaluation.certificate.map { value =>
-            <p>
-              <strong>Certificate #</strong><br/>@value
-            </p>
-          }
-        }
+    <div class="span3">
+      <p>
+        <strong>Event</strong><br/>
+        <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
+      </p>
     </div>
     <div class="span2">
       <strong>@Messages("evaluation.question6")</strong><br/>
@@ -77,6 +69,30 @@
     <div class="span2">
       <strong>Recommendation</strong><br/>
       @Messages("evaluation.recommendation." + evaluation.question7)
+    </div>
+  </div>
+  <div class="span8">
+    <div class="span3">
+      <p>
+        <strong>Status</strong><br/>
+        <span class="label @Messages("models.EvaluationStatus." + evaluation.status + ".label")">
+          @Messages("models.EvaluationStatus." + evaluation.status)</span>
+      </p>
+    </div>
+    <div class="span2">
+      @if(evaluation.status != EvaluationStatus.Pending) {
+        @evaluation.handled.map { value =>
+          <strong>Handled Date</strong><br/>@value
+        }
+      }
+    </div>
+    <div class="span2">
+      @if(evaluation.status == EvaluationStatus.Approved) {
+        @evaluation.certificate.map { value =>
+          <strong>Certificate #</strong><br/>
+          <a href="@routes.Certificates.certificate(value)" target="_blank">@value</a>
+        }
+      }
     </div>
   </div>
   <div class="span8">

@@ -142,7 +142,7 @@ object BookingEntries extends Controller with Security {
   }
 
   /**
-   * Sends an e-mail notification for a booking entry to the given recipients.
+   * Sends an e-mail notification for a booking entry to the given recipients (active only).
    *
    * If this becomes more complex, refactor to a new `BookingEntryNotification` actor that handles notifications
    * asynchronously, delegating to concrete notifiers, such as the `EmailServiceActor`.
@@ -150,7 +150,7 @@ object BookingEntries extends Controller with Security {
   def sendEmailNotification(entry: BookingEntry, changes: List[BookingEntry.FieldChange], activity: Activity,
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    EmailService.send(recipients, subject, mail.txt.booking(entry, changes).toString)
+    EmailService.send(recipients.filter(_.active), None, None, subject, mail.txt.booking(entry, changes).toString)
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒

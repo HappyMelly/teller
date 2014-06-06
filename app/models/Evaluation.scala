@@ -25,12 +25,16 @@
 package models
 
 import models.database.{ Evaluations }
+import models.Certificate
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.cache.Cache
 import play.api.Play.current
 import play.api.libs.Crypto
 import scala.util.Random
+import play.api.libs.concurrent.Execution.Implicits._
+import services.EmailService
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -83,9 +87,34 @@ case class Evaluation(
     this
   }
 
-  def approve(): Evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"${participantId.get}%03d"
+
+  def approve(approver: Person): Evaluation = {
+
+    val oldEvaluation = this
+    val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+
+    val brand = Brand.find(evaluation.event.brandCode).get
+    // handled date is the only variable which influences how the certificate
+    //   looks like from one generation to another
+    if ((evaluation.certificate.isEmpty && brand.brand.generateCert) || oldEvaluation.handled != evaluation.handled) {
+      val cert = new Certificate(evaluation, Some(oldEvaluation))
+      cert.generateAndSend(brand, approver)
+    } else if (evaluation.certificate.isEmpty) {
+      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString
+      val subject = s"Your ${brand.brand.name} event's evaluation approval"
+      EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
+        Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+    } else {
+      val cert = new Certificate(evaluation)
+      cert.send(brand, approver)
+    }
+
+    evaluation
+  }
 
   def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
+
 }
 
 object Evaluation {

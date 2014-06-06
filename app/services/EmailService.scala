@@ -38,14 +38,32 @@ object EmailService {
   val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
 
-  case class EmailMessage(to: List[String], from: String, subject: String, body: String, html: Boolean = false)
+  case class EmailMessage(to: List[String],
+    cc: List[String],
+    bcc: List[String],
+    from: String,
+    subject: String,
+    body: String,
+    richMessage: Boolean = false,
+    attachment: Option[(String, String)] = None)
 
   /**
-   * Sends an e-mail message asynchronously using an actor. Does not send to non-active recipients.
+   * Sends an e-mail message asynchronously using an actor.
    */
-  def send(recipients: Set[Person], subject: String, body: String, html: Boolean = false): Unit = {
-    val recipientAddresses = recipients.filter(_.active).map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
-    val message = EmailMessage(recipientAddresses.toList, from, subject, body, html)
+  def send(to: Set[Person],
+    cc: Option[Set[Person]] = None,
+    bcc: Option[Set[Person]] = None,
+    subject: String,
+    body: String,
+    richMessage: Boolean = false,
+    attachment: Option[(String, String)] = None): Unit = {
+    val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
+    val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
+    val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
+    val message = EmailMessage(toAddresses.toList,
+      ccAddresses.map(_.toList).getOrElse(List[String]()),
+      bccAddresses.map(_.toList).getOrElse(List[String]()),
+      from, subject, body, richMessage, attachment)
     emailServiceActor ! message
   }
 
@@ -56,16 +74,42 @@ object EmailService {
 
     def receive = {
       case message: EmailMessage ⇒ {
-        import com.typesafe.plugin._
-        val mailer = use[MailerPlugin].email
-        mailer.setRecipient(message.to: _*)
-        mailer.setSubject(message.subject)
-        mailer.setFrom(message.from)
+        import org.apache.commons.mail._
+        import scala.util.Try
+
+        val commonsMail: Email = if (message.attachment.isDefined) {
+          val attachment = new EmailAttachment()
+          attachment.setPath(message.attachment.get._1)
+          attachment.setDisposition(EmailAttachment.ATTACHMENT)
+          attachment.setName(message.attachment.get._2)
+          new HtmlEmail().attach(attachment).setMsg(message.body.trim)
+        } else if (message.richMessage) {
+          new HtmlEmail().setHtmlMsg(message.body.trim)
+        } else {
+          new SimpleEmail().setMsg(message.body.trim)
+        }
+
+        message.to.foreach(commonsMail.addTo(_))
+        message.cc.foreach(commonsMail.addCc(_))
+        message.bcc.foreach(commonsMail.addBcc(_))
+
+        val preparedMail = commonsMail.
+          setFrom(message.from).
+          setSubject(message.subject)
         Logger.debug(s"Sending e-mail with subject: ${message.subject}")
-        if (message.html)
-          mailer.sendHtml(message.body.trim)
-        else
-          mailer.send(message.body.trim)
+
+        if (Play.configuration.getBoolean("development").exists(_ == true)) {
+          Logger.debug(s"${message.body}")
+          true
+        } else {
+          preparedMail.setSSL(true)
+          preparedMail.setHostName(Play.configuration.getString("smtp.host").get)
+          preparedMail.setAuthenticator(new DefaultAuthenticator(
+            Play.configuration.getString("smtp.user").get,
+            Play.configuration.getString("smtp.password").get));
+          // Send the email and check for exceptions
+          Try(preparedMail.send).isSuccess
+        }
       }
     }
   }

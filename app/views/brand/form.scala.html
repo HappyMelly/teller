@@ -26,6 +26,7 @@
               ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
               '_label -> "Status")
             @helper.inputFile(form("picture"), '_label -> "Picture")
+            <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
 
             <button class="btn btn-primary" type="submit">Save</button>
         }
