@@ -99,23 +99,24 @@
   <div class="span4">
     <h3>Personal details</h3>
 
-    @person.twitterHandle.map { handle =>
+    @person.socialProfile.twitterHandle.map { handle =>
       <p><strong>Twitter</strong>
       <br><a href="http://twitter.com/@handle">@@@handle</a></p>
     }
 
-    @if(person.facebookUrl.isDefined || person.linkedInUrl.isDefined || person.googlePlusUrl.isDefined) {
+    @if(person.socialProfile.facebookUrl.isDefined || person.socialProfile.linkedInUrl.isDefined ||
+      person.socialProfile.googlePlusUrl.isDefined) {
       <p><strong>Social networks</strong>
 
-      @person.facebookUrl.map { url =>
+      @person.socialProfile.facebookUrl.map { url =>
         <br><a href="@url">Facebook</a>
       }
 
-      @person.linkedInUrl.map { url =>
+      @person.socialProfile.linkedInUrl.map { url =>
         <br><a href="@url">LinkedIn</a>
       }
 
-      @person.googlePlusUrl.map { url =>
+      @person.socialProfile.googlePlusUrl.map { url =>
         <br><a href="@url">Google+</a>
       }
       </p>

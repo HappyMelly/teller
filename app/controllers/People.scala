@@ -74,6 +74,22 @@ object People extends Controller with Security {
     "country" -> nonEmptyText)(Address.apply)(Address.unapply)
 
   /**
+   * HTML form mapping for a person’s social profile.
+   */
+  val socialProfileMapping = mapping(
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl)) (
+      {
+        (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+          SocialProfile(0, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
+      })(
+        {
+          (s: SocialProfile) ⇒ Some(s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl)
+        })
+
+  /**
    * HTML form mapping for creating and editing.
    */
   def personForm(request: SecuredRequest[_]) = {
@@ -86,11 +102,7 @@ object People extends Controller with Security {
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
-      "profile" -> tuple(
-        "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-        "facebookUrl" -> optional(facebookProfileUrl),
-        "linkedInUrl" -> optional(linkedInProfileUrl),
-        "googlePlusUrl" -> optional(googlePlusProfileUrl)),
+      "profile" -> socialProfileMapping,
       "boardMember" -> default(boolean, false),
       "stakeholder" -> default(boolean, false),
       "webSite" -> optional(webUrl),
@@ -100,17 +112,16 @@ object People extends Controller with Security {
       "createdBy" -> ignored(request.user.fullName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder,
+        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profile, boardMember, stakeholder,
           webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2,
-            profiles._3, profiles._4, boardMember, stakeholder, webSite, blog, false, active, created,
+          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profile,
+            boardMember, stakeholder, webSite, blog, false, active, created,
             createdBy, updated, updatedBy)
         })(
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
-                (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
-                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
+                p.socialProfile, p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
                 p.updated, p.updatedBy))
           }))
   }
