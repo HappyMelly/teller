@@ -132,14 +132,42 @@ case class Certificate(
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 190, 275, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 190, 220, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 190, 165, 0)
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
     if (cofacilitator) {
-      val firstName = new Phrase(facilitators.head.fullName, font)
-      val secondName = new Phrase(facilitators.last.fullName, font)
+      val firstFacilitator = facilitators.head
+      val secondFacilitator = facilitators.last
+      val firstName = new Phrase(firstFacilitator.fullName, font)
+      val secondName = new Phrase(secondFacilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 595, 165, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 725, 165, 0)
+      if (firstFacilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(firstFacilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.setAbsolutePosition(535, 175)
+        signature.scalePercent(60)
+        document.add(signature)
+      }
+      if (secondFacilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(secondFacilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.setAbsolutePosition(665, 175)
+        signature.scalePercent(60)
+        document.add(signature)
+      }
     } else {
-      val name = new Phrase(facilitators.head.fullName, font)
+      val facilitator = facilitators.head
+      val name = new Phrase(facilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 165, 0)
+      if (facilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(facilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.setAbsolutePosition(550, 175)
+        document.add(signature)
+      }
     }
     canvas.restoreState
     document.close();

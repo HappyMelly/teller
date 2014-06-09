@@ -100,7 +100,6 @@ object EmailService {
 
         if (Play.configuration.getBoolean("development").exists(_ == true)) {
           Logger.debug(s"${message.body}")
-          true
         } else {
           preparedMail.setSSL(true)
           preparedMail.setHostName(Play.configuration.getString("smtp.host").get)

@@ -36,9 +36,17 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
 import scala.util.matching.Regex
+import scala.io.Source
+import play.api.cache.Cache
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
+import fly.play.s3.{ BucketFile, S3Exception }
+import services.S3Bucket
+import play.api.Play.current
 
 object People extends Controller with Security {
 
+  val contentType = "image/jpeg"
   val photoFormatter = new Formatter[Photo] {
 
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
@@ -294,4 +302,71 @@ object People extends Controller with Security {
       Ok(views.html.person.index(request.user, people))
   }
 
+  /**
+   * Upload a new signature to Amazon
+   */
+  def uploadSignature = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+
+      val encoding = "ISO-8859-1"
+      val form = Form(tuple(
+        "personId" -> nonEmptyText,
+        "signature" -> optional(text)))
+      val (personId, signature) = form.bindFromRequest.get
+      Person.find(personId.toLong).map { person ⇒
+        request.body.asMultipartFormData.get.file("signature").map { picture ⇒
+          val filename = Person.fullFileName(person.id.get)
+          val source = Source.fromFile(picture.ref.file.getPath, encoding)
+          val byteArray = source.toArray.map(_.toByte)
+          source.close()
+          S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+            person.copy(signature = true).update
+            Cache.remove(Person.cacheId(personId.toLong))
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
+            Redirect(routes.People.details(person.id.get)).flashing("success" -> activity.toString)
+          }.recover {
+            case S3Exception(status, code, message, originalXml) ⇒
+              Redirect(routes.People.details(person.id.get)).flashing("error" -> "Image cannot be temporary saved")
+          }
+        }.getOrElse {
+          Future.successful(Redirect(routes.People.details(person.id.get)).flashing("error" -> "Please choose an image file"))
+        }
+      }.getOrElse(Future.successful(NotFound))
+  }
+
+  /** Delete signature form submits to this action **/
+  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+      Person.find(personId.toLong).map { person ⇒
+        if (person.signature) {
+          S3Bucket.remove(Person.fullFileName(personId))
+          Cache.remove(Person.cacheId(personId))
+        }
+        person.copy(signature = false).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
+          "signature from the person " + person.fullName)
+        Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Retrieve and cache a person's signature
+   */
+  def signature(personId: Long) = Action.async {
+    val cached = Cache.getAs[Array[Byte]](Person.cacheId(personId))
+    if (cached.isDefined) {
+      Future.successful(Ok(cached.get).as(contentType))
+    } else {
+      val empty = Array[Byte]()
+      val image: Future[Array[Byte]] = Person.find(personId).map { person ⇒
+        if (person.signature) {
+          Person.downloadFromCloud(personId)
+        } else Future.successful(empty)
+      }.getOrElse(Future.successful(empty))
+      image.map {
+        case value ⇒
+          Ok(value).as(contentType)
+      }
+    }
+  }
 }
