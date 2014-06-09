@@ -24,29 +24,35 @@
 
 package models
 
-import org.joda.time.DateTime
+import models.database.SocialProfiles
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** The 'owner' of an account **/
-trait AccountHolder {
-  def name: String
-  def levy: Boolean = false
-  lazy val account: Account = Account.find(this)
+case class SocialProfile(
+  personId: Long = 0,
+  twitterHandle: Option[String] = None,
+  facebookUrl: Option[String] = None,
+  linkedInUrl: Option[String] = None,
+  googlePlusUrl: Option[String] = None) {
 
-  /** Updates the `updatedBy` and `updated` properties, if applicable **/
-  def updated(updatedBy: String): AccountHolder = {
-    this match {
-      case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(updated = DateTime.now(), updatedBy = updatedBy)).update
-      case o: Organisation ⇒ o.copy(updated = DateTime.now(), updatedBy = updatedBy).update
-      case _ ⇒ this
-    }
+  def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
+    googlePlusUrl.isDefined || linkedInUrl.isDefined
+}
+
+object SocialProfile {
+
+  def find(personId: Long): SocialProfile = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.personId === personId).first
+  }
+
+  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
+    SocialProfiles.insert(socialProfile)
+    socialProfile
+  }
+
+  def update(socialProfile: SocialProfile): Unit = DB.withSession { implicit session: Session ⇒
+    SocialProfiles.filter(_.personId === socialProfile.personId).update(socialProfile)
   }
 }
 
-/** Special 'system' account **/
-object Levy extends AccountHolder {
-  def name = "Happy Melly Levy"
-  override def levy = true
-
-  // Nothing to update
-  def update = Levy
-}

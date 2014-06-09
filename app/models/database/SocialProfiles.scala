@@ -22,31 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+package models.database
 
-import org.joda.time.DateTime
+import models.SocialProfile
+import play.api.db.slick.Config.driver.simple._
 
-/** The 'owner' of an account **/
-trait AccountHolder {
-  def name: String
-  def levy: Boolean = false
-  lazy val account: Account = Account.find(this)
+/**
+ * `SocialProfile` table mapping
+ */
+private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
 
-  /** Updates the `updatedBy` and `updated` properties, if applicable **/
-  def updated(updatedBy: String): AccountHolder = {
-    this match {
-      case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(updated = DateTime.now(), updatedBy = updatedBy)).update
-      case o: Organisation ⇒ o.copy(updated = DateTime.now(), updatedBy = updatedBy).update
-      case _ ⇒ this
-    }
-  }
-}
+  def personId = column[Long]("PERSON_ID", O.PrimaryKey)
+  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
+  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
+  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
+  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
 
-/** Special 'system' account **/
-object Levy extends AccountHolder {
-  def name = "Happy Melly Levy"
-  override def levy = true
+  def * = personId ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl <> (SocialProfile.apply _, SocialProfile.unapply _)
 
-  // Nothing to update
-  def update = Levy
 }

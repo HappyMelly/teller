@@ -33,7 +33,7 @@
         @person.fullName
 
     </h1>
-    <p><small>Added by @person.createdBy on @person.created.format <br> Updated by @person.updatedBy on @person.updated.format</small></p>
+    <p><small>Added by @person.dateStamp.createdBy on @person.dateStamp.created.format <br> Updated by @person.dateStamp.updatedBy on @person.dateStamp.updated.format</small></p>
     @if(!person.active) {
       <p><span class="label label-warning">This person is deactivated</span></p>
     }
@@ -99,23 +99,24 @@
   <div class="span4">
     <h3>Personal details</h3>
 
-    @person.twitterHandle.map { handle =>
+    @person.socialProfile.twitterHandle.map { handle =>
       <p><strong>Twitter</strong>
       <br><a href="http://twitter.com/@handle">@@@handle</a></p>
     }
 
-    @if(person.facebookUrl.isDefined || person.linkedInUrl.isDefined || person.googlePlusUrl.isDefined) {
+    @if(person.socialProfile.facebookUrl.isDefined || person.socialProfile.linkedInUrl.isDefined ||
+      person.socialProfile.googlePlusUrl.isDefined) {
       <p><strong>Social networks</strong>
 
-      @person.facebookUrl.map { url =>
+      @person.socialProfile.facebookUrl.map { url =>
         <br><a href="@url">Facebook</a>
       }
 
-      @person.linkedInUrl.map { url =>
+      @person.socialProfile.linkedInUrl.map { url =>
         <br><a href="@url">LinkedIn</a>
       }
 
-      @person.googlePlusUrl.map { url =>
+      @person.socialProfile.googlePlusUrl.map { url =>
         <br><a href="@url">Google+</a>
       }
       </p>
@@ -184,99 +185,125 @@
     }
   </div>
 
-  <div class="span8">
-    <h3>Accounting details</h3>
-    <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
-    @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-        (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p>
-    }
-    <p><strong>Account history</strong>
-    <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
-  </div>
-
-  <div class="span8">
-    <h3>Organizations</h3>
-    @if(organisations.isEmpty) {
-      <p>@person.fullName has no organizations.</p>
-    } else {
-      @views.html.organisation.table(organisations) { organisation =>
-        @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
-        }
-      }
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@CSRF(routes.People.addMembership)">
-        <p>
-          <input type="hidden" name="page" value="person">
-          <input type="hidden" name="personId" value="@person.id.get">
-          <select name="organisationId">
-            @for(organisation <- otherOrganisations) {
-              <option value="@organisation.id">@organisation.name</option>
-            }
-          </select>
-          <button class="btn"><i class="icon-plus"></i>Add Membership</button>
-        </p>
-      </form>
-    }
-  </div>
-
-  <div class="span8">
-    <h3>Product contributions</h3>
-    @if(contributions.isEmpty) {
-      <p>@person.fullName has no contributions.</p>
-    } else {
-      <table  class="datatables table table-bordered">
-        <thead>
-          <th>Product</th>
-          <th>Role</th>
-          <th></th>
-        </thead>
-        <tbody>
-          @for(contribution <- contributions) {
-            <tr>
-              <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
-              <td>@contribution.contribution.role</td>
-              <td>
-                @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.Contributions.delete("person", contribution.contribution.id.get)">
-                  <i class="icon-pencil"></i> Remove contribution</a>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("person"))">
-        <p>
-          <input type="hidden" name="page" value="person">
-          <input type="hidden" name="contributorId" value="@person.id.get">
-          <input type="hidden" name="isPerson" value="true">
-          <select name="productId">
-            @for(product <- products) {
-              <option value="@product.id">@product.title</option>
-            }
-          </select>
-          <input name="role" placeholder="Role">
-          <button class="btn"><i class="icon-plus"></i>Add Contribution</button>
-        </p>
-      </form>
-    }
-  </div>
-
   <div class="span10">
-    <h3>Content licenses</h3>
-    @if(licenses.isEmpty) {
-      <p>@person.fullName has no licenses.</p>
-    } else {
-      @views.html.license.table(licenses)
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn"><i class="icon-plus"></i>Add Content License</a></p>
-    }
+    <ul class="nav nav-tabs" id="activities">
+      <li class="active"><a href="#finance">Accounting details</a></li>
+      <li><a href="#organizations">Organizations</a></li>
+      <li><a href="#contributions">Product Contributions</a></li>
+      <li><a href="#licenses">Licenses</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="finance">
+        <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}
+        @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+            (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active){Deactivate}else{Activate}</a>)</p>
+        }
+        <p><strong>Account history</strong>
+        <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
+      </div>
+      <div class="tab-pane" id="organizations">
+        @if(organisations.isEmpty) {
+          <p>@person.fullName has no organizations.</p>
+        } else {
+          @views.html.organisation.table(organisations) { organisation =>
+            @restrict(handler, List(as(Editor.toString))) {
+              <a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)"><i class="icon-pencil"></i> Remove membership</a>
+            }
+          }
+        }
+        @restrict(handler, List(as(Editor.toString))) {
+          <form class="form-inline" method="POST" action="@CSRF(routes.People.addMembership)">
+            <p>
+              <input type="hidden" name="page" value="person">
+              <input type="hidden" name="personId" value="@person.id.get">
+              <select name="organisationId">
+                @for(organisation <- otherOrganisations) {
+                  <option value="@organisation.id">@organisation.name</option>
+                }
+              </select>
+              <button class="btn"><i class="icon-plus"></i>Add Membership</button>
+            </p>
+          </form>
+        }
+      </div>
+      <div class="tab-pane" id="contributions">
+        @if(contributions.isEmpty) {
+          <p>@person.fullName has no contributions.</p>
+        } else {
+          <table  class="datatables table table-bordered">
+            <thead>
+              <th>Product</th>
+              <th>Role</th>
+              <th></th>
+            </thead>
+            <tbody>
+              @for(contribution <- contributions) {
+                <tr>
+                  <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+                  <td>@contribution.contribution.role</td>
+                  <td>
+                    @restrict(handler, List(as(Editor.toString))) {
+                      <a href="@routes.Contributions.delete("person", contribution.contribution.id.get)">
+                      <i class="icon-pencil"></i> Remove contribution</a>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        @restrict(handler, List(as(Editor.toString))) {
+          <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("person"))">
+            <p>
+              <input type="hidden" name="page" value="person">
+              <input type="hidden" name="contributorId" value="@person.id.get">
+              <input type="hidden" name="isPerson" value="true">
+              <select name="productId">
+                @for(product <- products) {
+                  <option value="@product.id">@product.title</option>
+                }
+              </select>
+              <input name="role" placeholder="Role">
+              <button class="btn"><i class="icon-plus"></i>Add Contribution</button>
+            </p>
+          </form>
+        }
+      </div>
+      <div class="tab-pane" id="licenses">
+        <div class="span7">
+          @if(licenses.isEmpty) {
+            <p>@person.fullName has no licenses.</p>
+          } else {
+            @views.html.license.table(licenses)
+          }
+          @restrict(handler, List(as(Editor.toString))) {
+            <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn"><i class="icon-plus"></i>Add Content License</a></p>
+          }
+        </div>
+        <div class="span2">
+          <h4>Manage Signature</h4>
+          @if(person.signature) {
+            <p><i class="icon-file"></i> <a href="@routes.People.signature(person.id.getOrElse(0))">Signature</a></p>
+          }
+          <form action="@CSRF(routes.People.uploadSignature())"
+            method="post" enctype="multipart/form-data">
+            <input type="hidden" name="personId" value="@person.id"/>
+            <input type="file" id="signature" name="signature"/>
+            <button class="btn btn-primary btn-small" type="submit">
+              @if(person.signature) { Replace File } else { Upload File } </button>
+          </form>
+          @if(person.signature) {
+            <form method="post" action="@CSRF(routes.People.deleteSignature(person.id.getOrElse(0)))">
+              <button class="btn btn-danger btn-small" type="submit">
+                <i class="icon-trash icon-white"></i> Delete File</button>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+    <br/><br/>
   </div>
 
-  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("person/details.js")" type="text/javascript"></script>
 }

@@ -22,31 +22,35 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+$(document).ready( function() {
 
-import org.joda.time.DateTime
+    // Delete links.
+    $('form.delete').submit(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
 
-/** The 'owner' of an account **/
-trait AccountHolder {
-  def name: String
-  def levy: Boolean = false
-  lazy val account: Account = Account.find(this)
+    // Datatables
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+    } );
+    $('.datatables').each(function() {
+        $(this).dataTable( {
+            "sPaginationType": "bootstrap",
+            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
+            "order": [[ 0, "asc" ]],
+            "iDisplayLength": 100,
+            "asStripeClasses":[],
+            "aaSorting": [],
+            "bFilter": false,
+            "bInfo": false,
+            "bLengthChange": false,
+            "bPaginate": false
+        });
+    });
 
-  /** Updates the `updatedBy` and `updated` properties, if applicable **/
-  def updated(updatedBy: String): AccountHolder = {
-    this match {
-      case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(updated = DateTime.now(), updatedBy = updatedBy)).update
-      case o: Organisation ⇒ o.copy(updated = DateTime.now(), updatedBy = updatedBy).update
-      case _ ⇒ this
-    }
-  }
-}
+    $('#activities a').click(function (e) {
+      e.preventDefault();
+      $(this).tab('show');
+    });
+});
 
-/** Special 'system' account **/
-object Levy extends AccountHolder {
-  def name = "Happy Melly Levy"
-  override def levy = true
-
-  // Nothing to update
-  def update = Levy
-}

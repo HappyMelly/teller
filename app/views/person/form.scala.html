@@ -30,6 +30,8 @@
       @helper.textarea(personForm("interests"), '_label -> "Interests", 'class -> "input-xxlarge", 'rows -> "5", '_help -> views.html.markdownHelp())
 
       <input type="hidden" value="@personForm("photo").value.getOrElse("")" id="photo" name="photo"/>
+      <input type="hidden" value="@personForm("signature").value.getOrElse("")" id="signature" name="signature"/>
+
       <div class="control-group @if(personForm("profile.twitterHandle").hasErrors) {error}" id="twitterHandle">
         <label for="twitterHandle">Twitter user name</label>
         <div class="input-prepend">

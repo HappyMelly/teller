@@ -25,7 +25,6 @@
 package models
 
 import models.database.{ Evaluations }
-import models.Certificate
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
