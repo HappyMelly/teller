@@ -5,67 +5,52 @@
 @import models.Person
 
 @main("Add content license", Some(user)) {
-
   @defining(id.isDefined) { editing =>
-
-    <div class="col-md-8">
-      <header>
-        <h1>@(if(editing) "Edit" else "Add") content license</h1>
-      </header>
-    </div>
-
-    @if(editing) {
-      <div class="col-md-2 actions">
-        <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
-          <button class="btn btn-danger btn-block" type="submit"><i class="icon-white icon-trash"></i> Delete</button>
-        </form>
-      </div>
-
-      @* Inline the delete script, which is normally in details.js, because the delete button is on this edit page. *@
-      <script type="text/javascript">
-        $(document).ready( function() {
-          $('form.delete').submit(function() {
-            return confirm('Delete permanently? You cannot undo this action.');
-          });
-        });
-      </script>
+    @if(form.hasErrors) {
+      @html.error()
     }
 
-    <div class="col-md-4">
-      @if(form.hasErrors) {
-        <div class="alert alert-danger">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          Please fix the validation errors.
-          @if(!form.globalErrors.isEmpty) {
-          <ul>
-            @for(error <- form.globalErrors) {
-            <li>@Messages(error.message)</li>
-            }
-          </ul>
-          }
+
+    <div class="col-md-6">
+      <div class="page-header">
+        <h1>@(if(editing) "Edit" else "Add") content license
+        @if(editing) {
+          <div class="actions pull-right">
+            <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
+              <button class="btn btn-danger" type="submit">
+                <i class="glyphicon-white glyphicon-trash glyphicon"></i> Delete</button>
+            </form>
+          </div>
+          @* Inline the delete script, which is normally in details.js, because the delete button is on this edit page. *@
+          <script type="text/javascript">
+            $(document).ready( function() {
+              $('form.delete').submit(function() {
+                return confirm('Delete permanently? You cannot undo this action.');
+              });
+            });
+          </script>
+        }
+        </h1>
+      </div>
+      @html.form(action = CSRF(if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
+        @html.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+        @html.text(form("version"), '_label -> "Version")
+        @html.date(form("signed"), '_label -> "Date signed", '_help -> "Required")
+        @html.date(form("start"), '_label -> "Start date", '_help -> "Required")
+        @html.date(form("end"), '_label -> "End date", '_help -> "Required")
+        @html.checkbox(form("confirmed"), '_label -> "Confirmed", '_help -> "")
+
+        @html.money("fee", form("fee.currency"), form("fee.amount"),
+          '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
+        @html.money("feePaid", form("feePaid.currency"), form("feePaid.amount"),
+          '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
+
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
         </div>
-      }
-
-      @helper.form(action = CSRF(if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
-        @helper.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
-        @helper.inputText(form("version"), '_label -> "Version")
-
-        @helper.inputDate(form("signed"), '_label -> "Date signed", '_help -> "Required")
-        @helper.inputDate(form("start"), '_label -> "Start date", '_help -> "Required")
-        @helper.inputDate(form("end"), '_label -> "End date", '_help -> "Required")
-
-        <div class="control-group" id="confirmed_field">
-          <label for="confirmed" class="checkbox">
-            <input type="checkbox" id="confirmed" name="confirmed" value="true"
-            @if(form("confirmed").value.exists(_ == "true")){checked} >
-            Confirmed
-          </label>
-        </div>
-
-        @helper.inputMoney("fee", form("fee.currency"), form("fee.amount"), '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
-        @helper.inputMoney("feePaid", form("feePaid.currency"), form("feePaid.amount"), '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
-
-        <button class="btn btn-primary" type="submit">Save</button>
       }
     </div>
   }

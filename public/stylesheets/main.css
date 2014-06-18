@@ -72,7 +72,10 @@ td .btn-link {
 .actions form {
     margin-bottom: 1em;
 }
-
+.form-control.short {
+    width: 49%;
+    display: inline;
+}
 /* Activity stream */
 
 .glyphicon-activity-signup {
