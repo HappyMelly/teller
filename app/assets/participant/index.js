@@ -39,7 +39,7 @@ function filterByStatus(oSettings, aData, iDataIndex) {
  * Filter evaluations by an event
  */
 function filterByEvent(oSettings, aData, iDataIndex) {
-    var index = 2;
+    var index = 9;
     var filter = $('#events').find(':selected').val();
     if (filter == '') {
         return true;
@@ -135,6 +135,14 @@ function renderDropdown(data) {
     return html;
 }
 
+function loadEventList(events) {
+    $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
+    for(var i = 0; i < events.length; i++) {
+        var event = events[i];
+        $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
+    }
+}
+
 $(document).ready( function() {
     var currentBrand = $('#brands').val();
     var brandInSession = $('#participants').attr('brandCode');
@@ -165,6 +173,7 @@ $(document).ready( function() {
             { "data": "creation" },
             { "data": "handled" },
             { "data": "certificate" },
+            { "data": "event" },
             { "data": "actions" }
         ],
         "columnDefs": [{
@@ -227,13 +236,25 @@ $(document).ready( function() {
                 "targets": 8
             }, {
                 "render": function(data, type, row) {
+                    return data.id;
+                },
+                "visible": false,
+                "targets": 9
+            },{
+                "render": function(data, type, row) {
                     return renderDropdown(data);
                 },
-                "targets": 9,
+                "targets": 10,
                 "bSortable": false
             }
         ]
     });
+    participantTable
+        .api()
+        .on('init.dt', function (e, settings, data) {
+            loadEventList(events);
+        });
+
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
     $('#status').on('change', function() { participantTable.fnDraw(); } );
@@ -247,11 +268,7 @@ $(document).ready( function() {
             .ajax
             .url("participants/brand/" + brandCode)
             .load(function(){
-                $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
-                for(var i = 0; i < events.length; i++) {
-                    var event = events[i];
-                    $('#events').append( $('<option value="'+ event.title +'">' + event.title +'</option>') );
-                }
+                loadEventList(events);
             });
     });
     $("#participants").on('click', '.approve', function(){

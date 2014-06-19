@@ -109,8 +109,10 @@ object Participants extends Controller with Security {
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName),
               "event" -> Json.obj(
+                "id" -> data.event.id,
                 "url" -> routes.Events.details(data.event.id.get).url,
-                "title" -> data.event.title),
+                "title" -> data.event.title,
+                "longTitle" -> data.event.longTitle),
               "location" -> Json.obj(
                 "country" -> data.event.location.countryCode.toLowerCase,
                 "city" -> data.event.location.city),
@@ -270,7 +272,7 @@ object Participants extends Controller with Security {
         else ""
       },
       "view" -> routes.Evaluations.details(id).url,
-      "delete" -> routes.Evaluations.delete(id).url)
+      "remove" -> routes.Evaluations.delete(id).url)
   }
 
   /** Return a list of possible actions for a participant */

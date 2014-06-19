@@ -62,6 +62,8 @@ case class Event(
   updatedBy: String,
   facilitatorIds: List[Long]) {
 
+  val longTitle: String = title + " / " + location.city + " / " + schedule.start.toString
+
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       facilitation ← EventFacilitators if facilitation.eventId === this.id
