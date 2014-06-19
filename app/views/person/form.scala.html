@@ -9,7 +9,7 @@
 @defining(form.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
   @main("Person", Some(user)) {
     @if(form.hasErrors) {
-        @html.error()
+      @html.error()
     }
 
     <div class="col-md-6">

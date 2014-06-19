@@ -63,7 +63,7 @@ models.EvaluationStatus.3.label = label-warning
 
 # Product category label names and Bootstrap label CSS classes.
 models.ProductCategory.book = Books
-models.ProductCategory.book.label = label-inverse
+models.ProductCategory.book.label = label-default
 models.ProductCategory.game = Games
 models.ProductCategory.game.label = label-info
 models.ProductCategory.apps = Apps
@@ -112,6 +112,7 @@ error.eventType.tooManyEvents = You cannot delete an event type because there're
 error.person.invalid = A person with such id does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
+error.notDeletableProduct = You cannot delete this product because it has contributors or derivative products
 
 # Play form validation error overrides
 error.date = Invalid date
