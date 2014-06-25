@@ -18,8 +18,10 @@
     } else {
       @table(events) { event =>
           @restrict(handler, List(as(Editor.toString))) {
-            <a href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a><br/>
-            <a href="@routes.Events.duplicate(event.id.get)"><i class="icon-edit"></i> Duplicate</a><br/>
+            <a href="@routes.Events.edit(event.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>
+            <a href="@routes.Events.duplicate(event.id.get)">
+              <i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>
           }
       }
     }

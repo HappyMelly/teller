@@ -14,7 +14,22 @@
 
 @boxValue = @{ args.toMap.get('value).getOrElse("true") }
 
-@helper.input.f(field, args.toArray) { (id, name, value, args) =>
-    <input type="checkbox" id="@id" name="@name" value="@boxValue" class="form-control"
-      @if(value == Some(boxValue)){checked="checked"} @toHtmlArgs(args.filterKeys(_ != 'value))/>
-}(handler, lang)
+<div class="form-group @if(field.hasErrors) {has-error}"
+  id="@(field.id + "_field")">
+  <div class="col-sm-3"></div>
+  <div class="col-sm-9 checkbox">
+    <label for="@field.id" class="control-label">
+      <input type="checkbox" id="@field.id" name="@field.name" value="@boxValue"
+        @if(field.value == Some(boxValue)){checked="checked"} @toHtmlArgs(args.toMap.filterKeys(_ != 'value))/>
+      @args.toMap.get('_label)
+    </lable>
+    <span class="help-block">
+      @if(field.hasErrors) {
+        @field.errors.mkString(", ")
+      } else {
+        @args.toMap.get('_help)
+      }
+    </span>
+  </div>
+</div>
+

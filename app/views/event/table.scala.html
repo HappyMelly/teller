@@ -17,21 +17,21 @@
   <div id="filter-containter">
     <div class="btn-toolbar pull-right">
       <div class="btn-group">
-        <select id="past-future" class="input-small">
+        <select id="past-future" class="input-sm form-control">
           <option value="all">All</option>
           <option value="future" selected>Future</option>
           <option value="past">Past</option>
         </select>
       </div>
       <div class="btn-group">
-        <select id="private" class="input-small">
+        <select id="private" class="input-sm form-control">
           <option value="all">All</option>
           <option value="public">Public</option>
           <option value="private">Private</option>
         </select>
       </div>
       <div class="btn-group">
-        <select id="archived" class="input-small">
+        <select id="archived" class="input-sm form-control">
           <option value="all">All</option>
           <option value="current">Current</option>
           <option value="archived">Archived</option>
@@ -77,7 +77,7 @@
             <td>@if(event.confirmed) {
               <span class="label label-success">yes</span>
             } else {
-              <span class="label label-important">no</span>
+              <span class="label label-danger">no</span>
             }</td>
             <td>@actions(event)</td>
         </tr>

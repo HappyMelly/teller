@@ -29,4 +29,5 @@ import views.html.helper.FieldConstructor
 object ViewHelpers {
 
   implicit val fields = FieldConstructor(views.html.fieldConstructor.f)
+  val asIs = FieldConstructor(views.html.html.asIsConstructor.f)
 }

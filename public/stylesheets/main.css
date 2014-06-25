@@ -96,6 +96,10 @@ td .btn-link {
 .glyphicon-activity-balance {
     background-position: -336px -48px;
 }
+.padding-fix {
+    padding-left: 0px;
+    padding-right: 7px;
+}
 
 .inactive, .inactive a {
     color: #bbb;

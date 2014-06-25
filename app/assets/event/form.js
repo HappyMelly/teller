@@ -190,21 +190,31 @@ $(document).ready( function() {
                         organisations[company.id] = company.name;
                     }
                 }
-                var div = $("<div>").append(
+                var parentDiv = $("<div>").append(
                     $("<input readonly type='hidden'>")
                         .attr("value", user.id)
                         .attr("id", "facilitatorIds_" + i)
                         .attr('name', 'facilitatorIds[' + i + ']')
-                ).append(
-                    $("<input readonly type='text'>")
+                );
+                var div = $("<div class='input-group'>").append(
+                    $("<input readonly type='text' class='form-control'>")
                         .attr("value", user.name)
                 );
+                parentDiv.append(div);
+                var trashCan = $('<i>')
+                    .attr('class', 'glyphicon glyphicon-trash');
+                var button = $('<button>').attr('type', 'button');
                 if (!user.isFacilitator(this.userId) || user.isCoordinator()) {
-                    div.append(
-                        $("<a href='#' class='btn btn-mini btn-link deselect'>Remove</a>")
-                    );
+                    button.attr('class', 'btn btn-danger deselect');
+                } else {
+                    button
+                        .attr('class', 'btn btn-danger')
+                        .attr('disabled', 'disabled');
                 }
-                $('#chosenFacilitators').append(div);
+                button.append(trashCan);
+                var span = $('<span class="input-group-btn">').append(button);
+                div.append(span);
+                $('#chosenFacilitators').append(parentDiv);
             }
             updateInvoicingOrganisations(organisations, this.invoiceOrgId);
         },
@@ -244,7 +254,7 @@ $(document).ready( function() {
     });
     $(this).on('click', '.deselect', function(event) {
         event.preventDefault();
-        var id = $(this).parent('div').children('input').first().val();
+        var id = $(this).parent().parent().parent('div').children('input').first().val();
         facilitators.deselect(id);
     });
     var code = $('#brandCode').find(':selected').val();
