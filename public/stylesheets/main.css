@@ -100,6 +100,9 @@ td .btn-link {
     padding-left: 0px;
     padding-right: 7px;
 }
+.toolbar {
+    padding-bottom: 15px;
+}
 
 .inactive, .inactive a {
     color: #bbb;

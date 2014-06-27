@@ -31,6 +31,8 @@
 
       @html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
         <div id="currentUserId" value="@currentUserId"></div>
+        <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
+        <div id="currentInvoiceToId" value="@form("invoice.invoiceTo").value"></div>
         @html.twoInRow(form("brandCode"),
           html.select(form("brandCode"), brands.map(v => v.code -> v.name))(asIs, implicitly[Lang]),
           form("eventTypeId"),

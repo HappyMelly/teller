@@ -27,14 +27,14 @@ function User(data) {
     this.id = data["id"];
     this.coordinator = data["coordinator"];
     this.memberships = data["memberships"];
-}
+};
 
 User.prototype.isFacilitator = function(userId) {
     return this.id == userId;
-}
+};
 User.prototype.isCoordinator = function() {
     return this.coordinator;
-}
+};
 
 function showError(message) {
     $('#error').append(
@@ -46,9 +46,10 @@ function showError(message) {
 
 /**
  * Retrieve a list of event types for the brand
- * @param brandCode String
+ * @param brandCode        String
+ * @param currentEventType String
  */
-function getEventTypes(brandCode) {
+function getEventTypes(brandCode, currentEventType) {
     $.ajax({
         url: '/eventtypes/' + brandCode,
         dataType: "json"
@@ -68,8 +69,12 @@ function getEventTypes(brandCode) {
                 }
                 $(selector).append(option);
             }
+            if (currentEventType) {
+                selector = 'option[value="' + currentEventType + '"]';
+                $('#eventTypeId').find(selector).attr('selected', 'selected');
+            }
         }).fail(function() {
-            showError("Sorry we don't know anything about the brand you try to request")
+            showError("Sorry we don't know anything about the brand you try to request");
         });
 }
 
@@ -139,14 +144,14 @@ $(document).ready( function() {
                 for(var i = 0; i < data.length; i++) {
                     var user = new User(data[i]);
                     if (isChosenOne(user, chosenFacilitators)) {
-                        facilitators.chosen[facilitators.chosen.length] = user
+                        facilitators.chosen[facilitators.chosen.length] = user;
                     } else {
-                        facilitators.retrieved[facilitators.retrieved.length] = user
+                        facilitators.retrieved[facilitators.retrieved.length] = user;
                     }
                 }
                 facilitators.updateState();
             }).fail(function() {
-                showError("Sorry we don't know anything about the brand you try to request")
+                showError("Sorry we don't know anything about the brand you try to request");
             });
     }
 
@@ -157,7 +162,7 @@ $(document).ready( function() {
         invoiceOrgId: 0,
         initialize: function(brandCode) {
             this.userId = parseInt($('#currentUserId').attr('value'));
-            this.invoiceOrgId = parseInt($('#invoice_invoiceTo').attr('value'));
+            this.invoiceOrgId = parseInt($('#currentInvoiceToId').attr('value'));
             var values = $('#chosenFacilitators').attr('value').split(',');
             getFacilitators(brandCode, values);
         },
@@ -171,7 +176,7 @@ $(document).ready( function() {
             $('#facilitatorIds')
                 .empty()
                 .append($("<option></option>").attr("value", 0).text(""));
-            this.retrieved.sort(this.sortByName)
+            this.retrieved.sort(this.sortByName);
             for(var i = 0; i < this.retrieved.length; i++) {
                 var name = this.retrieved[i].name;
                 $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i].id).text(name));
@@ -239,14 +244,14 @@ $(document).ready( function() {
             this.updateState();
         },
         sortByName: function(left, right) {
-            return left.name > right.name
+            return left.name > right.name;
         }
     };
 
     // Binds
     $("#brandCode").change(function() {
         var code = $(this).find(':selected').val();
-        getEventTypes(code);
+        getEventTypes(code, "");
         facilitators.retrieve(code);
     });
     $('#facilitatorIds').change(function() {
@@ -258,7 +263,7 @@ $(document).ready( function() {
         facilitators.deselect(id);
     });
     var code = $('#brandCode').find(':selected').val();
-    getEventTypes(code);
+    getEventTypes(code, $('#currentEventTypeId').attr('value'));
     facilitators.initialize(code);
     if ($("#emptyForm").attr("value") == 'true') {
         $("#schedule_start").val('');
