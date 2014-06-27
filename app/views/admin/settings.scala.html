@@ -3,17 +3,15 @@
 
 @main("Settings", Some(user)) {
 
-  <div class="col-md-8">
-    <header>
-      <h1>Application settings</h1>
-    </header>
+  <div class="page-header">
+    <h1>Application settings</h1>
   </div>
 
   <div class="col-md-8">
-    <h3>Transaction types</h3>
+    <legend>Transaction types</legend>
     @if(!transactionTypes.isEmpty) {
-      <div class="alert">
-        <strong>Warning</strong> Deleting a transaction type will remove it from the corresponding booking entries.
+      <div class="alert alert-warning">
+        <strong>Warning:</strong> Deleting a transaction type will remove it from the corresponding booking entries.
       </div>
       <table id="transactiontypes" class="datatables table table-bordered">
         <thead>
@@ -28,7 +26,7 @@
             <td>@transactionType.name</td>
             <td>
               <form class="delete" method="post" text="transaction type" action="@CSRF(routes.Administration.deleteTransactionType(transactionType.id.get))">
-                <button class="btn btn-link"><i class="icon-trash"></i> Delete</button>
+                <button class="btn btn-link"><i class="glyphicon glyphicon-trash"></i> Delete</button>
               </form>
             </td>
           </tr>
@@ -40,10 +38,11 @@
     }
 
     <form class="form-inline" method="post" action="@CSRF(routes.Administration.createTransactionType)">
-      <div class="control-group @if(form("name").hasErrors) {error}">
-          <input type="text" name="name" placeholder="Transaction type" value="@form("name").value">
-          <button class="btn"><i class="icon-plus"></i>Add Transaction Type</button>
-          <span class="help-inline">
+      <div class="form-group @if(form("name").hasErrors) {error}">
+          <input type="text" class="form-control input-sm"
+            name="name" placeholder="Transaction type" value="@form("name").value">
+          <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Add Transaction Type</button>
+          <span class="help-block">
             @form("name").errors.map(error => Messages(error.message)).mkString(", ")
           </span>
       </div>
