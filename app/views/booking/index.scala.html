@@ -21,69 +21,69 @@
     }
   }
 
-  @account.map { a =>
-    <p><strong>Account balance</strong>
-    <br>@a.balance.format</p>
+  <div class="col-md-12">
+    @account.map { a =>
+      <p><strong>Account balance</strong>
+      <br>@a.balance.format</p>
 
-    <form action="" class="form-inline">
-      <p><strong>Filter</strong><br>
-      <input type="date" name="from" value="@from.getOrElse("")"> to
-      <input type="date" name="to" value="@to.getOrElse("")">
-      <button type="submit" class="btn">Filter</button>
-      <a class="btn" href="@routes.Accounts.bookings(a.id.getOrElse(0))">Clear</a>
-    </form>
-  }.getOrElse {
-    <p>All accounts - an overview of financial booking entries, money owed between people and organisations in the Happy Melly network.</p>
-  }
+      <form action="" class="form-inline">
+        <p><strong>Filter</strong><br>
+        <input type="date" name="from" class="form-control" value="@from.getOrElse("")"> to
+        <input type="date" name="to" class="form-control" value="@to.getOrElse("")">
+        <button type="submit" class="btn"><i class="glyphicon glyphicon-filter"></i> Filter</button>
+        <a class="btn btn-default" href="@routes.Accounts.bookings(a.id.getOrElse(0))">Clear</a>
+      </form>
+    }.getOrElse {
+      <p>All accounts - an overview of financial booking entries, money owed between people and organisations in the Happy Melly network.</p>
+    }
+  </div>
 
   @if(!entries.isEmpty) {
-    <div class="row">
-      <div class="col-md-16">
-        <table id="entries" class="datatables table table-bordered">
-        <thead>
+    <div class="col-md-12">
+      <table id="entries" class="datatables table table-bordered">
+      <thead>
+        <tr>
+          <th>Booking</th>
+          <th>Book date</th>
+          <th colspan="3">Amounts/Accounts</th>
+          <th>Source</th>
+          <th>%</th>
+          <th>Brand</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(entry <- entries) {
           <tr>
-            <th>Booking</th>
-            <th>Book date</th>
-            <th colspan="3">Amounts/Accounts</th>
-            <th>Source</th>
-            <th>%</th>
-            <th>Brand</th>
+            <td>
+              <strong>@entry.summary</strong>
+              <br><a href="@routes.BookingEntries.details(entry.bookingNumber)">@entry.bookingNumber</a>
+            </td>
+            <td>@entry.bookingDate</td>
+            <td>
+              @entry.fromAmount.abs.format
+              <br>@entry.from</td>
+            <td>
+              @if(entry.owes) {
+                <span class="label label-success">owes <i class="icon-arrow-right icon-white"></i></span>
+              } else {
+                <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
+              }
+            </td>
+            <td>
+              @entry.toAmount.abs.format
+              <br>@entry.to
+            </td>
+            <td>@entry.source.abs.format</td>
+            <td>@entry.sourcePercentage%</td>
+            <td>
+              @entry.brandCode.map { brand =>
+                <a href="@routes.Brands.details(brand)">@brand</a>
+              }
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          @for(entry <- entries) {
-            <tr>
-              <td>
-                <strong>@entry.summary</strong>
-                <br><a href="@routes.BookingEntries.details(entry.bookingNumber)">@entry.bookingNumber</a>
-              </td>
-              <td>@entry.bookingDate</td>
-              <td>
-                @entry.fromAmount.abs.format
-                <br>@entry.from</td>
-              <td>
-                @if(entry.owes) {
-                  <span class="label label-success">owes <i class="icon-arrow-right icon-white"></i></span>
-                } else {
-                  <span class="label label-important"><i class="icon-arrow-left icon-white"></i> owed by</span>
-                }
-              </td>
-              <td>
-                @entry.toAmount.abs.format
-                <br>@entry.to
-              </td>
-              <td>@entry.source.abs.format</td>
-              <td>@entry.sourcePercentage%</td>
-              <td>
-                @entry.brandCode.map { brand =>
-                  <a href="@routes.Brands.details(brand)">@brand</a>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-        </table>
-      </div>
+        }
+      </tbody>
+      </table>
     </div>
   } else {
     <p>There are no entries.</p>
