@@ -7,7 +7,7 @@
 
 @main("Participants", Some(user)) {
 
-  @common.evaluationActions()
+  @html.evaluationActions()
   @html.indexPageHeader("Participants") {
     <div class="pull-right">
     @dynamic(handler, "event", "add") {
@@ -22,21 +22,21 @@
   }
   <div class="col-md-12">
     <div id="filter-containter">
-      <div class="btn-toolbar pull-right">
+      <div class="toolbar pull-right">
         <div class="btn-group">
-          <select id="brands" class="input-large">
+          <select id="brands" class="input-sm form-control">
             @for(brand <- brands) {
               <option value="@brand.code">@brand.name</option>
             }
           </select>
         </div>
         <div class="btn-group">
-          <select id="events" class="input-large">
+          <select id="events" class="input-sm form-control">
             <option value="">Select an event</option>
           </select>
         </div>
         <div class="btn-group">
-          <select id="status" class="input-small">
+          <select id="status" class="input-sm form-control">
             <option value="all"></option>
             <option value="0">Pending</option>
             <option value="1">Approved</option>
