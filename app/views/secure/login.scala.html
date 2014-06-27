@@ -7,41 +7,38 @@
 
 
 
-@main("Sign in", None) {
-    <div class="page-header">
-        <h1>Sign in</h1>
+@main("Sign in", "", None) {
+  <div class="page-header">
+    <h1>Sign in</h1>
+  </div>
+
+  @errorMsg.map { msg =>
+    <div class="alert alert-danger">
+      @Messages(msg)
     </div>
+  }
 
-    @errorMsg.map { msg =>
-        <div class="alert alert-danger">
-            @Messages(msg)
+  @defining( Registry.providers.all.values.filter( _.id != UsernamePassword) ) { externalProviders =>
+    @if( externalProviders.size > 0 ) {
+      <div class="clearfix">
+        <p>
+        @for(p <- externalProviders) {
+          @provider(p.id)
+        }
+        </p>
+     </div>
+    }
+    @if(Registry.providers.all().contains(UsernamePassword)) {
+      @Registry.providers.get(UsernamePassword).map { up =>
+        <div class="clearfix">
+          @if( externalProviders.size > 0 ) {
+            <p>@Messages("securesocial.login.useEmailAndPassword")</p>
+          } else {
+            <p>@Messages("securesocial.login.useEmailAndPasswordOnly")</p>
+          }
+          @provider("userpass", Some(loginForm))
         </div>
+      }
     }
-
-    @defining( Registry.providers.all.values.filter( _.id != UsernamePassword) ) { externalProviders =>
-
-        @if( externalProviders.size > 0 ) {
-            <div class="clearfix">
-                <p>
-                @for(p <- externalProviders) {
-                    @provider(p.id)
-                }
-                </p>
-            </div>
-        }
-
-        @if(Registry.providers.all().contains(UsernamePassword)) {
-            @Registry.providers.get(UsernamePassword).map { up =>
-                <div class="clearfix">
-                    @if( externalProviders.size > 0 ) {
-                        <p>@Messages("securesocial.login.useEmailAndPassword")</p>
-                    } else {
-                        <p>@Messages("securesocial.login.useEmailAndPasswordOnly")</p>
-                    }
-
-                    @provider("userpass", Some(loginForm))
-                </div>
-            }
-        }
-    }
+  }
 }

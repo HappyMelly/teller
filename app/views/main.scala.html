@@ -1,4 +1,4 @@
-@(title: String, maybeUser: Option[securesocial.core.Identity])(content: Html)(implicit flash: Flash)
+@(title: String, menu: String, maybeUser: Option[securesocial.core.Identity])(content: Html)(implicit flash: Flash)
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,22 +17,17 @@
 <body class='@title.split(" ").last.toLowerCase'>
   <div class="navbar navbar-inverse navbar-fixed-top" role="nagivation">
     <div class="container">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
       <a class="navbar-brand" href="/">Happy Melly</a>
       <div class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
           @if(maybeUser.isDefined) {
-            <li class="active"><a href="@routes.Organisations.index">Organizations</a></li>
-            <li class="active"><a href="@routes.People.index">People</a></li>
-            <li class="active"><a href="@routes.Brands.index">Brands</a></li>
-            <li class="active"><a href="@routes.Products.index">Products</a></li>
-            <li class="active"><a href="@routes.BookingEntries.index">Finance</a></li>
-            <li class="active"><a href="@routes.Events.index">Events</a></li>
-            <li class="active"><a href="@routes.Participants.index">Participants</a></li>
+            <li @if(menu == "orgs"){class="active"}><a href="@routes.Organisations.index">Organizations</a></li>
+            <li @if(menu == "people"){class="active"}><a href="@routes.People.index">People</a></li>
+            <li @if(menu == "brands"){class="active"}><a href="@routes.Brands.index">Brands</a></li>
+            <li @if(menu == "products"){class="active"}><a href="@routes.Products.index">Products</a></li>
+            <li @if(menu == "finance"){class="active"}><a href="@routes.BookingEntries.index">Finance</a></li>
+            <li @if(menu == "events"){class="active"}><a href="@routes.Events.index">Events</a></li>
+            <li @if(menu == "participants"){class="active"}><a href="@routes.Participants.index">Participants</a></li>
           }
         </ul>
         @maybeUser.map{ user =>

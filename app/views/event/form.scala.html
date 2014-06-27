@@ -17,7 +17,7 @@
 }
 
 @defining(form.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
-  @main("Events", Some(user)) {
+  @main("Events", "events", Some(user)) {
     <div id="error">
       @if(form.hasErrors) {
         @html.error()

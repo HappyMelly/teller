@@ -3,7 +3,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main("Brands", Some(user)) {
+@main("Brands", "brands", Some(user)) {
 
   @html.indexPageHeader("Brands") {
     @restrict(handler, List(as(Editor.toString))) {

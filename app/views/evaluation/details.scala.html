@@ -8,7 +8,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main("Evaluation for %s".format(evaluation.participant.fullName), Some(user)) {
+@main("Evaluation for %s".format(evaluation.participant.fullName), "participants", Some(user)) {
 
   @html.evaluationActions()
   <div class="page-header">

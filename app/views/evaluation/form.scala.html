@@ -7,7 +7,7 @@
 @import views.Evaluations
 @import views.ViewHelpers._
 
-@main("Evaluation", Some(user)) {
+@main("Evaluation", "participants", Some(user)) {
 
   @defining(evaluation.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
     @if(form.hasErrors) {

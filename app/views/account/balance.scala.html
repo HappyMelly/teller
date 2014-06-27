@@ -6,7 +6,7 @@
 @import models.UserRole.Role._
 @import templates.Formatters._
 
-@main("Accounts", Some(user)) {
+@main("Accounts", "finance", Some(user)) {
 
   <ul class="nav nav-tabs">
     <li><a href="@routes.BookingEntries.index()">Booking entries</a></li>

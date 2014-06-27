@@ -4,7 +4,7 @@
 @import views.ViewHelpers._
 @import models.Person
 
-@main("Add content license", Some(user)) {
+@main("Add content license", "people", Some(user)) {
   @defining(id.isDefined) { editing =>
     @if(form.hasErrors) {
       @html.error()

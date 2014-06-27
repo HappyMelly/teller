@@ -29,7 +29,7 @@
 
 @defining(bookingNumber.isDefined) { editing =>
 
-  @main(if(editing) { "Edit booking entry" } else { "Add booking entry" }, Some(user)) {
+  @main(if(editing) { "Edit booking entry" } else { "Add booking entry" }, "finance", Some(user)) {
 
     @successMessage.map { message =>
       <div class="alert alert-success">

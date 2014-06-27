@@ -1,7 +1,7 @@
 @(user: securesocial.core.Identity, transactionTypes: List[TransactionType], form: Form[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 @import helper.CSRF
 
-@main("Settings", Some(user)) {
+@main("Settings", "admin", Some(user)) {
 
   <div class="page-header">
     <h1>Application settings</h1>
