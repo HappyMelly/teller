@@ -104,7 +104,7 @@
       </form>
       <br/>
       <div>
-        <button form="attachmentU`load" class="btn btn-primary btn-sm" type="submit">
+        <button form="attachmentUpload" class="btn btn-primary btn-sm" type="submit">
           @booking.attachmentKey.map(_ => "Replace File").getOrElse("Upload File")
         </button>
         @if(booking.attachmentKey.isDefined) {

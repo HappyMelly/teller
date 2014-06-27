@@ -32,8 +32,7 @@ body {
     color: #EE929F;
 }
 
-.activity td {
-    text-indent: -19px;
+.activity td small {
     padding-left: 19px;
 }
 
@@ -78,23 +77,32 @@ td .btn-link {
 }
 /* Activity stream */
 
-.glyphicon-activity-signup {
-    background-position: -168px 0;
+.glyphicon-activity-signup:before {
+    content: "\e008";
 }
-.glyphicon-activity-create, .glyphicon-activity-add {
-    background-position: 0px -96px;
+.glyphicon-activity-create:before, .glyphicon-activity-add:before {
+    content: "\e081";
 }
-.glyphicon-activity-update, .glyphicon-activity-replace {
-    background-position: -96px -72px;
+.glyphicon-activity-update:before, .glyphicon-activity-replace:before {
+    content: "\e065";
 }
-.glyphicon-activity-delete {
-    background-position: -24px -96px;
+.glyphicon-activity-delete:before {
+    content: "\e082";
 }
-.glyphicon-activity-activate, .glyphicon-activity-deactivate {
-    background-position: -384px 0px;
+.glyphicon-activity-activate:before, .glyphicon-activity-deactivate:before {
+    content: "\e017";
 }
-.glyphicon-activity-balance {
-    background-position: -336px -48px;
+.glyphicon-activity-balance:before {
+    content: "\e032";
+}
+.glyphicon-activity-approve:before {
+    content: "\e125";
+}
+.glyphicon-activity-reject:before {
+    content: "\e126";
+}
+.glyphicon-activity-confirm:before {
+    content: "\e013";
 }
 .padding-fix {
     padding-left: 0px;
