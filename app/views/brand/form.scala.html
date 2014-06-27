@@ -30,6 +30,7 @@
           ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
           '_label -> "Status")
         @html.file(form("picture"), '_label -> "Picture")
+        <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
 
         <div clas="row">
           <div class="col-sm-3"></div>

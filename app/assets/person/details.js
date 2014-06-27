@@ -22,35 +22,35 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package views
+$(document).ready( function() {
 
-object Evaluations {
+    // Delete links.
+    $('form.delete').submit(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
 
-  val impression =
-    List(
-      ("0", "Terrible (0)"),
-      ("1", "Very bad (1)"),
-      ("2", "Bad (2)"),
-      ("3", "Disappointing (3)"),
-      ("4", "Below average (4)"),
-      ("5", "Average (5)"),
-      ("6", "Above average (6)"),
-      ("7", "Fine (7)"),
-      ("8", "Good (8)"),
-      ("9", "Very good (9)"),
-      ("10", "Excellent (10)"))
+    // Datatables
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+    } );
+    $('.datatables').each(function() {
+        $(this).dataTable( {
+            "sPaginationType": "bootstrap",
+            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
+            "order": [[ 0, "asc" ]],
+            "iDisplayLength": 100,
+            "asStripeClasses":[],
+            "aaSorting": [],
+            "bFilter": false,
+            "bInfo": false,
+            "bLengthChange": false,
+            "bPaginate": false
+        });
+    });
 
-  val recommendation =
-    List(
-      ("0", "Certainly not (0%)"),
-      ("1", "Highly unlikely (10%)"),
-      ("2", "Unlikely (20%)"),
-      ("3", "Quite unlikely (30%)"),
-      ("4", "Possibly not (40%)"),
-      ("5", "Maybe (50%)"),
-      ("6", "Yes, possibly (60%)"),
-      ("7", "Quite possibly (70%)"),
-      ("8", "Likely (80%)"),
-      ("9", "Highly likely (90%)"),
-      ("10", "Certainly (100%)"))
-}
+    $('#activities a').click(function (e) {
+      e.preventDefault();
+      $(this).tab('show');
+    });
+});
+

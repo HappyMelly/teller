@@ -39,7 +39,7 @@ function filterByStatus(oSettings, aData, iDataIndex) {
  * Filter evaluations by an event
  */
 function filterByEvent(oSettings, aData, iDataIndex) {
-    var index = 2;
+    var index = 9;
     var filter = $('#events').find(':selected').val();
     if (filter == '') {
         return true;
@@ -58,8 +58,18 @@ function renderDropdown(data) {
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
     html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
+    if ('certificate' in data && data.certificate) {
+        if ('generate' in data.certificate && data.certificate.generate) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + data.certificate.generate;
+            html += '" title="Generate Certificate"><i class="icon-file"></i> Generate Certificate</a></li>';
+        }
+    }
     if ('evaluation' in data && data.evaluation) {
         var evaluation = data.evaluation;
+        if (!emptyDropdown) {
+            html += '<li class="divider"></li>';
+        }
         if ('approve' in evaluation && evaluation.approve) {
             emptyDropdown = false;
             html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;
@@ -90,18 +100,18 @@ function renderDropdown(data) {
     }
     if ('participant' in data && data.participant) {
         var participant = data.participant;
-        if ('evaluation' in data && data.evaluation) {
+        if (!emptyDropdown) {
             html += '<li class="divider"></li>';
         }
         if ('view' in participant && participant.view) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + participant.view;
-            html += '" title="View Participant"><i class="glyphicon glyphicon-eye-open"></i> View Participant</a></li>';
+            html += '" title="View Person"><i class="glyphicon glyphicon-eye-open"></i> View Person</a></li>';
         }
         if ('edit' in participant && participant.edit) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + participant.edit;
-            html += '" title="Edit Participant"><i class="glyphicon glyphicon-pencil"></i> Edit Participant</a></li>';
+            html += '" title="Edit Person"><i class="glyphicon glyphicon-pencil"></i> Edit Person</a></li>';
         }
         if ('remove' in participant && participant.remove) {
             emptyDropdown = false;
@@ -125,8 +135,21 @@ function renderDropdown(data) {
     return html;
 }
 
+function loadEventList(events) {
+    $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
+    for(var i = 0; i < events.length; i++) {
+        var event = events[i];
+        $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
+    }
+}
+
 $(document).ready( function() {
-    var currentBrand = $('#brands').find(':selected').val();
+    var currentBrand = $('#brands').val();
+    var brandInSession = $('#participants').attr('brandCode');
+    if (brandInSession) {
+        currentBrand = brandInSession;
+        $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
+    }
     var events = [];
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
@@ -149,6 +172,7 @@ $(document).ready( function() {
             { "data": "creation" },
             { "data": "handled" },
             { "data": "certificate" },
+            { "data": "event" },
             { "data": "actions" }
         ],
         "columnDefs": [{
@@ -203,13 +227,33 @@ $(document).ready( function() {
                 "targets": 5
             }, {
                 "render": function(data, type, row) {
+                    if (data && data.url) {
+                        return '<a href="' + data.url + '" target="_blank">' + data.id + '</a>';
+                    }
+                    return '';
+                },
+                "targets": 8
+            }, {
+                "render": function(data, type, row) {
+                    return data.id;
+                },
+                "visible": false,
+                "targets": 9
+            },{
+                "render": function(data, type, row) {
                     return renderDropdown(data);
                 },
-                "targets": 9,
+                "targets": 10,
                 "bSortable": false
             }
         ]
     });
+    participantTable
+        .api()
+        .on('init.dt', function (e, settings, data) {
+            loadEventList(events);
+        });
+
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
     $('#status').on('change', function() { participantTable.fnDraw(); } );
@@ -223,11 +267,7 @@ $(document).ready( function() {
             .ajax
             .url("participants/brand/" + brandCode)
             .load(function(){
-                $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
-                for(var i = 0; i < events.length; i++) {
-                    var event = events[i];
-                    $('#events').append( $('<option value="'+ event.title +'">' + event.title +'</option>') );
-                }
+                loadEventList(events);
             });
     });
     $("#participants").on('click', '.approve', function(){

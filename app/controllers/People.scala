@@ -36,9 +36,17 @@ import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
 import scala.util.matching.Regex
+import scala.io.Source
+import play.api.cache.Cache
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
+import fly.play.s3.{ BucketFile, S3Exception }
+import services.S3Bucket
+import play.api.Play.current
 
 object People extends Controller with Security {
 
+  val contentType = "image/jpeg"
   val photoFormatter = new Formatter[Photo] {
 
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
@@ -74,6 +82,22 @@ object People extends Controller with Security {
     "country" -> nonEmptyText)(Address.apply)(Address.unapply)
 
   /**
+   * HTML form mapping for a person’s social profile.
+   */
+  val socialProfileMapping = mapping(
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl)) (
+      {
+        (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+          SocialProfile(0, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
+      })(
+        {
+          (s: SocialProfile) ⇒ Some(s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl)
+        })
+
+  /**
    * HTML form mapping for creating and editing.
    */
   def personForm(request: SecuredRequest[_]) = {
@@ -83,35 +107,30 @@ object People extends Controller with Security {
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
       "photo" -> of(photoFormatter),
+      "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
-      "profile" -> tuple(
-        "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-        "facebookUrl" -> optional(facebookProfileUrl),
-        "linkedInUrl" -> optional(linkedInProfileUrl),
-        "googlePlusUrl" -> optional(googlePlusProfileUrl)),
+      "profile" -> socialProfileMapping,
       "boardMember" -> default(boolean, false),
       "stakeholder" -> default(boolean, false),
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(request.user.fullName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(request.user.fullName)) (
-        { (id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles, boardMember, stakeholder,
-          webSite, blog, active, created, createdBy, updated, updatedBy) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, address, bio, interests, profiles._1, profiles._2,
-            profiles._3, profiles._4, boardMember, stakeholder, webSite, blog, false, active, created,
-            createdBy, updated, updatedBy)
+      "dateStamp" -> mapping(
+        "created" -> ignored(DateTime.now()),
+        "createdBy" -> ignored(request.user.fullName),
+        "updated" -> ignored(DateTime.now()),
+        "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
+        { (id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile, boardMember, stakeholder,
+          webSite, blog, active, dateStamp) ⇒
+          Person(id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile,
+            boardMember, stakeholder, webSite, blog, false, active, dateStamp)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.address, p.bio, p.interests,
-                (p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl),
-                p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.created, p.createdBy,
-                p.updated, p.updatedBy))
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.signature, p.address, p.bio, p.interests,
+                p.socialProfile, p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
 
@@ -283,4 +302,71 @@ object People extends Controller with Security {
       Ok(views.html.person.index(request.user, people))
   }
 
+  /**
+   * Upload a new signature to Amazon
+   */
+  def uploadSignature = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+
+      val encoding = "ISO-8859-1"
+      val form = Form(tuple(
+        "personId" -> nonEmptyText,
+        "signature" -> optional(text)))
+      val (personId, signature) = form.bindFromRequest.get
+      Person.find(personId.toLong).map { person ⇒
+        request.body.asMultipartFormData.get.file("signature").map { picture ⇒
+          val filename = Person.fullFileName(person.id.get)
+          val source = Source.fromFile(picture.ref.file.getPath, encoding)
+          val byteArray = source.toArray.map(_.toByte)
+          source.close()
+          S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+            person.copy(signature = true).update
+            Cache.remove(Person.cacheId(personId.toLong))
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
+            Redirect(routes.People.details(person.id.get)).flashing("success" -> activity.toString)
+          }.recover {
+            case S3Exception(status, code, message, originalXml) ⇒
+              Redirect(routes.People.details(person.id.get)).flashing("error" -> "Image cannot be temporary saved")
+          }
+        }.getOrElse {
+          Future.successful(Redirect(routes.People.details(person.id.get)).flashing("error" -> "Please choose an image file"))
+        }
+      }.getOrElse(Future.successful(NotFound))
+  }
+
+  /** Delete signature form submits to this action **/
+  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+      Person.find(personId.toLong).map { person ⇒
+        if (person.signature) {
+          S3Bucket.remove(Person.fullFileName(personId))
+          Cache.remove(Person.cacheId(personId))
+        }
+        person.copy(signature = false).update
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
+          "signature from the person " + person.fullName)
+        Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Retrieve and cache a person's signature
+   */
+  def signature(personId: Long) = Action.async {
+    val cached = Cache.getAs[Array[Byte]](Person.cacheId(personId))
+    if (cached.isDefined) {
+      Future.successful(Ok(cached.get).as(contentType))
+    } else {
+      val empty = Array[Byte]()
+      val image: Future[Array[Byte]] = Person.find(personId).map { person ⇒
+        if (person.signature) {
+          Person.downloadFromCloud(personId)
+        } else Future.successful(empty)
+      }.getOrElse(Future.successful(empty))
+      image.map {
+        case value ⇒
+          Ok(value).as(contentType)
+      }
+    }
+  }
 }

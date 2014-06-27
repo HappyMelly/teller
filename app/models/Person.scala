@@ -24,15 +24,26 @@
 
 package models
 
+import JodaMoney._
+import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
-import scala.slick.lifted.Query
+import play.api.cache.Cache
+import play.api.libs.concurrent.Execution.Implicits._
 import scala.Some
-import JodaMoney._
+import scala.concurrent.Future
+import scala.slick.lifted.Query
 import scala.util.matching.Regex
+import services.S3Bucket
+
+case class DateStamp(
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String)
 
 case class Photo(id: Option[String], url: Option[String])
 
@@ -57,23 +68,18 @@ case class Person(
   lastName: String,
   emailAddress: String,
   photo: Photo,
+  signature: Boolean,
   address: Address,
   bio: Option[String],
   interests: Option[String],
-  twitterHandle: Option[String],
-  facebookUrl: Option[String],
-  linkedInUrl: Option[String],
-  googlePlusUrl: Option[String],
+  socialProfile: SocialProfile,
   boardMember: Boolean = false,
   stakeholder: Boolean = true,
   webSite: Option[String],
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends AccountHolder {
+  dateStamp: DateStamp) extends AccountHolder {
 
   def fullName: String = firstName + " " + lastName
 
@@ -91,8 +97,7 @@ case class Person(
   /**
    * Returns true if it is possible to grant log in access to this user.
    */
-  def canHaveUserAccount: Boolean = twitterHandle.isDefined || facebookUrl.isDefined || googlePlusUrl.isDefined || linkedInUrl.isDefined
-
+  def canHaveUserAccount: Boolean = socialProfile.defined
   /**
    * Returns true if this person may be deleted.
    */
@@ -144,6 +149,7 @@ case class Person(
   def insert: Person = DB.withSession { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
     val personId = People.forInsert.insert(this.copy(address = newAddress))
+    SocialProfile.insert(socialProfile.copy(personId = personId))
     Accounts.insert(Account(personId = Some(personId)))
     this.copy(id = Some(personId))
   }
@@ -161,9 +167,13 @@ case class Person(
       } yield address
       addressQuery.update(address.copy(id = Some(addressId)))
 
+      val socialQuery = for {
+        socialProfile ← SocialProfiles if socialProfile.personId === id.get
+      } yield socialProfile
+      socialQuery.update(socialProfile.copy(personId = id.get))
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, bio, interests, twitterHandle, facebookUrl,
-        linkedInUrl, googlePlusUrl, boardMember, stakeholder, webSite, blog, virtual, updated, updatedBy)
+      val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, signature, bio, interests,
+        boardMember, stakeholder, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
@@ -211,11 +221,35 @@ case class Person(
   }
 
   def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
+
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)
 
 object Person {
+
+  def cacheId(id: Long): String = s"signatures.${id}"
+  def fullFileName(id: Long): String = s"signatures/${id}"
+
+  def removeFromCloud(id: Long) {
+    Cache.remove(Person.cacheId(id))
+    S3Bucket.remove(Person.fullFileName(id))
+  }
+
+  def downloadFromCloud(id: Long): Future[Array[Byte]] = {
+    val contentType = "image/jpeg"
+    val result = S3Bucket.get(Person.fullFileName(id))
+    val pdf: Future[Array[Byte]] = result.map {
+      case BucketFile(name, contentType, content, acl, headers) ⇒ content
+    }.recover {
+      case S3Exception(status, code, message, originalXml) ⇒ Array[Byte]()
+    }
+    pdf.map {
+      case value ⇒
+        Cache.set(Person.cacheId(id), value)
+        value
+    }
+  }
 
   /**
    * Activates the organisation, if the parameter is true, or deactivates it.

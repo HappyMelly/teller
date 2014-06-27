@@ -1,5 +1,6 @@
 @(user: securesocial.core.Identity,
-  brands: List[Brand])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+  brands: List[Brand],
+  brandCode: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
@@ -45,7 +46,7 @@
         </div>
       </div>
     </div>
-    <table id="participants" class="datatables table table-bordered">
+    <table id="participants" class="datatables table table-bordered" brandCode="@brandCode">
       <thead>
         <tr>
           <th></th>
@@ -57,6 +58,7 @@
           <th>Evaluation Date</th>
           <th>Handled Date</th>
           <th>Certificate Number</th>
+          <th>Event id </th>
           <th></th>
         </tr>
       </thead>

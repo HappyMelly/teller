@@ -22,35 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package views
+package models.database
 
-object Evaluations {
+import models.SocialProfile
+import play.api.db.slick.Config.driver.simple._
 
-  val impression =
-    List(
-      ("0", "Terrible (0)"),
-      ("1", "Very bad (1)"),
-      ("2", "Bad (2)"),
-      ("3", "Disappointing (3)"),
-      ("4", "Below average (4)"),
-      ("5", "Average (5)"),
-      ("6", "Above average (6)"),
-      ("7", "Fine (7)"),
-      ("8", "Good (8)"),
-      ("9", "Very good (9)"),
-      ("10", "Excellent (10)"))
+/**
+ * `SocialProfile` table mapping
+ */
+private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
 
-  val recommendation =
-    List(
-      ("0", "Certainly not (0%)"),
-      ("1", "Highly unlikely (10%)"),
-      ("2", "Unlikely (20%)"),
-      ("3", "Quite unlikely (30%)"),
-      ("4", "Possibly not (40%)"),
-      ("5", "Maybe (50%)"),
-      ("6", "Yes, possibly (60%)"),
-      ("7", "Quite possibly (70%)"),
-      ("8", "Likely (80%)"),
-      ("9", "Highly likely (90%)"),
-      ("10", "Certainly (100%)"))
+  def personId = column[Long]("PERSON_ID", O.PrimaryKey)
+  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
+  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
+  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
+  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
+
+  def * = personId ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl <> (SocialProfile.apply _, SocialProfile.unapply _)
+
 }

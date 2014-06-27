@@ -24,28 +24,25 @@
 
 package controllers
 
+import java.io.File
 import models._
-import play.api.mvc._
+import models.UserRole.Role._
 import org.joda.time._
+import play.api.mvc._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.data.Forms._
-import models.UserRole.Role._
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
-import java.io.File
 import play.api.cache.Cache
-import services._
 import play.api.data.FormError
+import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.i18n.Messages
+import scala.concurrent.Future
 import scala.Some
 import securesocial.core.SecuredRequest
-import fly.play.s3.{ BucketFile, S3Exception }
-import play.api.Play.current
-import scala.io.Source
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
 import services.EmailService
-import play.api.i18n.Messages
 
 object Evaluations extends Controller with Security {
 
@@ -115,7 +112,8 @@ object Evaluations extends Controller with Security {
           val recipients = brand.coordinator :: createdEvaluation.event.facilitators
           val impression = Messages("evaluation.impression." + createdEvaluation.question6)
           val subject = s"New evaluation (General impression: ${impression})"
-          EmailService.send(recipients.toSet, subject,
+          EmailService.send(createdEvaluation.event.facilitators.toSet,
+            Some(Set(brand.coordinator)), None, subject,
             mail.html.evaluation(createdEvaluation).toString, true)
 
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
@@ -141,7 +139,10 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.evaluation.details(request.user, evaluation))
+          {
+            val brand = Brand.find(evaluation.event.brandCode).get
+            Ok(views.html.evaluation.details(request.user, evaluation, brand.brand))
+          }
       }.getOrElse(NotFound)
 
   }
@@ -181,19 +182,13 @@ object Evaluations extends Controller with Security {
   /** Approve form submits to this action **/
   def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
-      Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.approve
+      Evaluation.find(id).map { ev ⇒
+
+        val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        ev.approve(approver)
+
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
-          existingEvaluation.participant.fullName)
-
-        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
-        val brand = Brand.find(existingEvaluation.event.brandCode).get
-        val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
-        val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
-          mail.html.approved(brand.brand, participant, facilitator).toString, true)
-
+          ev.participant.fullName)
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -209,9 +204,10 @@ object Evaluations extends Controller with Security {
         val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
         val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
+        EmailService.send(Set(participant),
+          Some(existingEvaluation.event.facilitators.toSet),
+          Some(Set(brand.coordinator)), subject,
           mail.html.rejected(brand.brand, participant, facilitator).toString, true)
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
@@ -220,7 +216,7 @@ object Evaluations extends Controller with Security {
 
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findAll
+      Event.findActive
     } else {
       Event.findByCoordinator(account.personId)
     }

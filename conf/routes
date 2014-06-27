@@ -41,6 +41,9 @@ POST /brand/:code/delete   controllers.Brands.delete(code)
 GET  /brand/:code/picture          controllers.Brands.picture(code: String)
 POST /brand/:code/picture/delete   controllers.Brands.deletePicture(code: String)
 
+GET  /certificate/:id                controllers.Certificates.certificate(id: String)
+GET  /certificate/new/:evaluationId  controllers.Certificates.create(evaluationId: Long)
+
 POST /contribution/new         controllers.Contributions.create(page: String)
 GET  /contribution/:id/delete  controllers.Contributions.delete(page: String, id: Long)
 
@@ -97,6 +100,10 @@ GET  /participant/:eventId/:personId/delete/  controllers.Participants.delete(ev
 
 GET  /people       controllers.People.index
 
+POST /person/signature                     controllers.People.uploadSignature
+GET  /person/:personId/signature           controllers.People.signature(personId: Long)
+POST /person/:personId/signature/delete    controllers.People.deleteSignature(personId: Long)
+
 GET  /person/new              controllers.People.add
 POST /person/new              controllers.People.create
 GET  /person/:id              controllers.People.details(id: Long)
@@ -104,6 +111,7 @@ POST /person/:id              controllers.People.update(id: Long)
 GET  /person/:id/edit         controllers.People.edit(id: Long)
 POST /person/:id/activation   controllers.People.activation(id: Long)
 POST /person/:id/delete       controllers.People.delete(id: Long)
+
 
 GET  /person/:id/licenses/new   controllers.Licenses.add(id: Long)
 POST /person/:id/licenses/new   controllers.Licenses.create(id: Long)

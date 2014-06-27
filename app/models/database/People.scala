@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Photo, Address, Person }
+import models.{ Photo, Address, Person, SocialProfile, DateStamp }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -39,16 +39,13 @@ private[models] object People extends Table[Person]("PERSON") {
   def lastName = column[String]("LAST_NAME")
   def emailAddress = column[String]("EMAIL_ADDRESS")
   def photo = column[Option[String]]("PHOTO")
+  def signature = column[Boolean]("SIGNATURE")
 
   def addressId = column[Long]("ADDRESS_ID")
 
   def bio = column[Option[String]]("BIO", O.DBType("TEXT"))
   def interests = column[Option[String]]("INTERESTS", O.DBType("TEXT"))
 
-  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
-  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
-  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
-  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
   def boardMember = column[Boolean]("BOARD_MEMBER")
   def stakeholder = column[Boolean]("STAKEHOLDER")
 
@@ -63,23 +60,25 @@ private[models] object People extends Table[Person]("PERSON") {
   def updatedBy = column[String]("UPDATED_BY")
 
   def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
+  def socialProfile = foreignKey("SOCIAL_PROFILE_FK", id, SocialProfiles)(_.personId)
 
-  // Note that this projection does not include the address, which must be joined in queries.
-  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ photo ~ addressId ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~
-    linkedInUrl ~ googlePlusUrl ~ boardMember ~ stakeholder ~ webSite ~ blog ~
+  // Note that this projection does not include the address and social profile, which must be joined in queries.
+  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ photo ~ signature ~ addressId ~ bio ~ interests ~
+    boardMember ~ stakeholder ~ webSite ~ blog ~
     virtual ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
-        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), Address.find(p._6), p._7, p._8, p._9, p._10, p._11,
-          p._12, p._13, p._14, p._15, p._16, p._17, p._18, p._19, p._20, p._21, p._22)
+        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, Address.find(p._7), p._8, p._9,
+          SocialProfile.find(p._1.getOrElse(0)), p._10, p._11, p._12, p._13, p._14, p._15,
+          DateStamp(p._16, p._17, p._18, p._19))
       },
       { (p: Person) ⇒
-        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.photo.url, p.address.id.get, p.bio, p.interests,
-          p.twitterHandle, p.facebookUrl, p.linkedInUrl, p.googlePlusUrl, p.boardMember, p.stakeholder, p.webSite,
-          p.blog, p.virtual, p.active, p.created, p.createdBy, p.updated, p.updatedBy))
+        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.photo.url, p.signature, p.address.id.get, p.bio,
+          p.interests, p.boardMember, p.stakeholder, p.webSite, p.blog, p.virtual, p.active,
+          p.dateStamp.created, p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
       })
 
   def forInsert = * returning id
 
-  def forUpdate = firstName ~ lastName ~ emailAddress ~ photo ~ bio ~ interests ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl ~ boardMember ~ stakeholder ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
+  def forUpdate = firstName ~ lastName ~ emailAddress ~ photo ~ signature ~ bio ~ interests ~
+    boardMember ~ stakeholder ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
 }

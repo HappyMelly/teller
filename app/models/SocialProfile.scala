@@ -22,35 +22,37 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package views
+package models
 
-object Evaluations {
+import models.database.SocialProfiles
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-  val impression =
-    List(
-      ("0", "Terrible (0)"),
-      ("1", "Very bad (1)"),
-      ("2", "Bad (2)"),
-      ("3", "Disappointing (3)"),
-      ("4", "Below average (4)"),
-      ("5", "Average (5)"),
-      ("6", "Above average (6)"),
-      ("7", "Fine (7)"),
-      ("8", "Good (8)"),
-      ("9", "Very good (9)"),
-      ("10", "Excellent (10)"))
+case class SocialProfile(
+  personId: Long = 0,
+  twitterHandle: Option[String] = None,
+  facebookUrl: Option[String] = None,
+  linkedInUrl: Option[String] = None,
+  googlePlusUrl: Option[String] = None) {
 
-  val recommendation =
-    List(
-      ("0", "Certainly not (0%)"),
-      ("1", "Highly unlikely (10%)"),
-      ("2", "Unlikely (20%)"),
-      ("3", "Quite unlikely (30%)"),
-      ("4", "Possibly not (40%)"),
-      ("5", "Maybe (50%)"),
-      ("6", "Yes, possibly (60%)"),
-      ("7", "Quite possibly (70%)"),
-      ("8", "Likely (80%)"),
-      ("9", "Highly likely (90%)"),
-      ("10", "Certainly (100%)"))
+  def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
+    googlePlusUrl.isDefined || linkedInUrl.isDefined
 }
+
+object SocialProfile {
+
+  def find(personId: Long): SocialProfile = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.personId === personId).first
+  }
+
+  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
+    SocialProfiles.insert(socialProfile)
+    socialProfile
+  }
+
+  def update(socialProfile: SocialProfile): Unit = DB.withSession { implicit session: Session ⇒
+    SocialProfiles.filter(_.personId === socialProfile.personId).update(socialProfile)
+  }
+}
+
