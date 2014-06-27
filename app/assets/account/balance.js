@@ -30,7 +30,7 @@ $(document).ready( function() {
             "asStripeClasses":[],
             "aaSorting": [],
             "bLengthChange": false,
-            "sDom": "t<'row'<'span5'i>>"
+            "info": false
         });
     });
 });

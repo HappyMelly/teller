@@ -19,29 +19,27 @@
   }
 
   @if(!accounts.isEmpty) {
-      <div class="row">
-        <div class="col-md-16">
-          <table class="datatables table table-bordered">
-            <thead>
-            <tr>
-              <th>Account</th>
-              <th>Balance</th>
-            </tr>
-            </thead>
-            <tbody>
-            @for(account <- accounts) {
-              <tr>
-                <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
-                <td>@account.balance.format</td>
-              </tr>
-            }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    } else {
-    <p>There are no active accounts.</p>
-    }
+    <div class="col-md-12">
+      <table class="datatables table table-bordered">
+        <thead>
+        <tr>
+          <th>Account</th>
+          <th>Balance</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for(account <- accounts) {
+          <tr>
+            <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
+            <td>@account.balance.format</td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  } else {
+  <p>There are no active accounts.</p>
+  }
 
   <script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
 }
