@@ -21,13 +21,13 @@
       @html.form(action = CSRF(evaluation.map(evaluation => routes.Evaluations.update(evaluation.id.get)).getOrElse(routes.Evaluations.create()))) {
         <!-- Different logic for add and edit forms -->
         @if(evaluation.isEmpty) {
-          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)),
+          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
             '_label -> "Event", '_help -> "")
           @html.select(form("participantId"), ("", "Choose a participant") :: Nil,
             '_label -> "Participant", '_help -> "")
         } else {
           <input type="hidden" name="eventId" value="@form("eventId").value"/>
-          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)),
+          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
             '_label -> "Event", 'disabled -> "true")
           <input type="hidden" name="participantId" value="@form("participantId").value"/>
         }

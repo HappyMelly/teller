@@ -42,7 +42,7 @@
       <div class="existingPerson">
         @html.form(action = CSRF(routes.Participants.create())) {
           @html.select(existingPersonForm("eventId"),
-            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event", '_help ->"")
+            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
           @html.select(existingPersonForm("participantId"),
             ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person", '_help ->"")
           <div class="row">
@@ -56,7 +56,7 @@
       <div class="newPerson">
         @html.form(action = CSRF(routes.Participants.createParticipantAndPerson())) {
           @html.select(newPersonForm("eventId"),
-            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.title)), '_label -> "Event", '_help ->"")
+            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
           @html.text(newPersonForm("firstName"), '_label -> "First name")
           @html.text(newPersonForm("lastName"), '_label -> "Last name")
           @html.date(newPersonForm("birthDate"), '_label -> "Birth date")

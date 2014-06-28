@@ -62,7 +62,7 @@ function renderDropdown(data) {
         if ('generate' in data.certificate && data.certificate.generate) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + data.certificate.generate;
-            html += '" title="Generate Certificate"><i class="icon-file"></i> Generate Certificate</a></li>';
+            html += '" title="Generate Certificate"><i class="glyphicon glyphicon-file"></i> Generate Certificate</a></li>';
         }
     }
     if ('evaluation' in data && data.evaluation) {
@@ -179,8 +179,8 @@ $(document).ready( function() {
                 "render": function(data, type, row) {
                     var style = [
                         { badge: '', icon: 'glyphicon-hand-right' },
-                        { badge: 'badge-success', icon: 'glyphicon-thumbs-up' },
-                        { badge: 'badge-warning', icon: 'glyphicon-thumbs-down' }
+                        { badge: 'alert-success', icon: 'glyphicon-thumbs-up' },
+                        { badge: 'alert-warning', icon: 'glyphicon-thumbs-down' }
                     ];
                     if (data) {
                         var html = '<span class="badge ' + style[data.value].badge + '"';
