@@ -3,25 +3,22 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main("Products", Some(user)) {
+@main("Products", "products", Some(user)) {
 
-  <div class="span7">
-  <h1>Products</h1>
-  </div>
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="span3">
-      <a class="btn btn-success" href="@routes.Products.add()">
-      <i class="icon-plus icon-white"></i>Add Product</a>
-    </div>
+  @html.indexPageHeader("Products") {
+    @restrict(handler, List(as(Editor.toString))) {
+      <a class="btn btn-success pull-right" href="@routes.Products.add()">
+      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Product</a>
+    }
   }
 
-  <div class="span10">
+  <div class="col-md-12">
     @if(products.isEmpty) {
       <p>There are no products</p>
     } else {
       @table(products) { product =>
         @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
+          <a href="@routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }
     }

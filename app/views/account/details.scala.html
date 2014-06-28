@@ -5,8 +5,8 @@
 @import helper.CSRF
 
 
-@main("Account details", Some(user)) {
-  <div class="span8">
+@main("Account details", "finance", Some(user)) {
+  <div class="col-md-8">
     <header>
       <h1>Account for @account.accountHolder.name </h1>
       @if(!account.active) {
@@ -15,12 +15,12 @@
     </header>
   </div>
 
-  <div class="span2">
+  <div class="col-md-2">
     <h3>Balance</h3>
     <p><span class="@if(account.balance.isNegative){text-error} ">@account.balance</span></p>
   </div>
 
-  <div class="span4 actions">
+  <div class="col-md-4 actions">
 
     @if(account.active) {
       <h3>Deactivate account</h3>
@@ -40,18 +40,19 @@
 
       @if(account.active) { @* Deactivate *@
         <button class="btn btn-warning" type="submit" @if(!account.balance.isZero){ disabled title="To deactivate this account, first bring the balance to zero." }>
-        <i class="icon-off icon-white"></i> Deactivate
+        <i class="glyphicon glyphicon-off glyphicon-white"></i> Deactivate
         </button>
       } else {
-        <div class="control-group"> @* Activate *@
+        <div class="form-group"> @* Activate *@
           <label class="control-label" for="currency">Account currency</label>
-          <select name="currency" id="currency">
+          <select name="currency" id="currency" class="form-control">
           @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
             <option value="@currency.getCode" @if(currency.getCode == "EUR") { selected }>@currency.getCode - @currency.toCurrency.getDisplayName</option>
           }
           </select>
         </div>
-        <button class="btn btn-success" type="submit"><i class="icon-off icon-white"></i> Activate</button>
+        <button class="btn btn-success" type="submit">
+          <i class="glyphicon glyphicon-off glyphicon-white"></i> Activate</button>
 
       }
     </form>

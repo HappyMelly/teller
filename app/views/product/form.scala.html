@@ -7,38 +7,45 @@
 @import views.ViewHelpers._
 
 @defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>
-    @main("Product", Some(user)) {
-
-        <h1>@productName</h1>
-
-        @if(form.hasErrors) {
-          <div class="alert alert-error">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            Please fix the validation errors.
-          </div>
-        }
-
-        @helper.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create())), 'enctype -> "multipart/form-data") {
-            @helper.inputText(form("title"), '_label -> "Title")
-            @helper.inputText(form("subtitle"), '_label -> "Subtitle")
-            @helper.inputText(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
-            @helper.textarea(form("description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
-            @helper.inputText(form("callToActionUrl"), '_label -> "Call To Action URL", '_placeholder -> "http://", '_help -> "URL for a Call To Action button")
-            @helper.inputText(form("callToActionText"), '_label -> "Button text", '_placeholder -> "Buy Now", '_help -> "A text for a Call To Action button")
-            @helper.inputFile(form("picture"), '_label -> "Picture")
-            @helper.select(
-              form("category"),
-              ("", "None") +: models.ProductCategory.values.map(value => value.toString -> Messages(s"models.ProductCategory.${value.
-              toString}")).toSeq,
-              '_label -> "Category")
-
-            @helper.select(
-              form("parentId"),
-              ("", "Choose a product parent") :: Product.findAll.map(p => (p.id.get.toString, p.title)),
-              '_label -> "Parent", '_help -> "")
-
-            <button class="btn btn-primary" type="submit">Save</button>
-        }
+  @main("Product", "products", Some(user)) {
+    @if(form.hasErrors) {
+      @html.error()
     }
+    <div class="col-md-6">
+      <div class="page-header">
+        <h1>@productName</h1>
+      </div>
+      @html.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create())),
+        'enctype -> "multipart/form-data") {
+          @html.text(form("title"), '_label -> "Title")
+          @html.text(form("subtitle"), '_label -> "Subtitle")
+          @html.text(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
+          @html.textarea(form("description"), '_label -> "Description", 'rows -> 5,
+            '_help -> views.html.markdownHelp())
+          @html.text(form("callToActionUrl"), '_label -> "Call To Action URL", '_placeholder -> "http://",
+            '_help -> "URL for a Call To Action button")
+          @html.text(form("callToActionText"), '_label -> "Button text", '_placeholder -> "Buy Now",
+            '_help -> "A text for a Call To Action button")
+          @html.file(form("picture"), '_label -> "Picture")
+          @html.select(
+            form("category"),
+            ("", "None") +: models.ProductCategory.values.map(value => value.toString -> Messages(s"models.ProductCategory.${value.
+            toString}")).toSeq,
+            '_label -> "Category")
+
+          @html.select(
+            form("parentId"),
+            ("", "Choose a product parent") :: Product.findAll.map(p => (p.id.get.toString, p.title)),
+            '_label -> "Parent", '_help -> "")
+
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
 }
 

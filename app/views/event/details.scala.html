@@ -9,87 +9,102 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(event.title + " - Event", Some(user)) {
+@main(event.title + " - Event", "events", Some(user)) {
 
-  <div class="span8">
-    <header>
-
+  <div class="page-header">
     <h1>
       @event.title
-      @dynamic(handler, "event", "edit") {
-        <a class="btn-small btn"href="@routes.Events.edit(event.id.get)"><i class="icon-pencil"></i> Edit</a>
-      }
+      <div class="actions pull-right">
+        @dynamic(handler, "event", "edit") {
+          <div class="button">
+            <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit
+            </a>
+          </div>
+          <div class="button">
+            <a class="btn btn-success" href="@routes.Events.duplicate(event.id.get)">
+              <i class="glyphicon glyphicon-edit"></i> Duplicate
+            </a>
+          </div>
+          @if(!event.confirmed) {
+            <div class="button">
+              <form method="post" class="form-inline"
+                action="@CSRF(routes.Events.confirm(event.id.getOrElse(0)))">
+                  <button class="btn btn-warning" type="submit">
+                    <i class="glyphicon-ok glyphicon glyphicon-white"></i> Confirm
+                  </button>
+              </form>
+            </div>
+          }
+          <div class="button">
+            <form class="delete" class="form-inline" method="post" text="event"
+              action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
+              <button class="btn btn-danger" type="submit">
+                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+              </button>
+            </form>
+          </div>
+        }
+      </div>
     </h1>
-        <p>
-            @if(event.notPublic) {
-            <span class="label label-inverse">Private</span>
-            }
-            @if(event.archived) {
-            <span class="label label-info">Archived</span>
-            }
-            @if(event.confirmed) {
-            <span class="label label-success">Confirmed</span>
-            }
-        </p>
-    </header>
   </div>
-
-  @dynamic(handler, "event", "edit") {
-    <div class="span2 actions">
-      <a href="@CSRF(routes.Events.duplicate(event.id.getOrElse(0)))" class="btn btn-success btn-block" type="submit">
-          <i class="icon-white icon-edit"></i> Duplicate
-      </a><br/>
-      <div class="clearfix"></div>
-      <form class="delete" method="post" text="event" action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit">
-          <i class="icon-white icon-trash"></i> Delete
-        </button>
-      </form>
-      <div class="clearfix"></div>
-      @if(!event.confirmed) {
-        <form method="post" text="event" action="@CSRF(routes.Events.confirm(event.id.getOrElse(0)))">
-          <button class="btn btn-info btn-block" type="submit">
-            <i class="icon-white icon-ok"></i> Confirm
-          </button>
-        </form>
-      }
+  @if(event.notPublic || event.archived || event.confirmed) {
+    <div class="alert alert-info">
+      <i class="glyphicon glyphicon-info-sign"></i> This event is
+        @if(event.notPublic){<span class="label label-default">private</span>}
+        @if(event.archived){<span class="label label-info">archived</span>}
+        @if(event.confirmed){<span class="label label-success">confirmed</span>}
     </div>
   }
-  <div class="span5">
-      <h3>Details</h3>
-      <p>
-          <strong>Brand</strong><br/>
-          <a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a>
-      </p>
-      <p>
-          <strong>Spoken Language</strong><br/>
-          @event.spokenLanguage
-      </p>
-      @event.materialsLanguage.map { lang =>
-      <p>
-          <strong>Materials Language</strong><br/>@lang
-      </p>
-      }
-      @event.details.description.map { desc =>
-      <p>
-          <strong>Short description</strong><br/>@desc.markdown
-      </p>
-      }
-      @event.details.specialAttention.map { attention =>
-      <p>
-          <strong>Special attention</strong><br/>@attention.markdown
-      </p>
-      }
-      @event.details.webSite.map { url =>
-      <p><strong>Web site</strong>
-          <br><a href="@url">@url</a></p>
-      }
 
-      @event.details.registrationPage.map { url =>
+  <div class="col-md-4">
+    <p>
+      <strong>Brand</strong><br/>
+      <a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a>
+    </p>
+    <p>
+      <strong>Spoken Language</strong><br/>
+      @event.spokenLanguage
+    </p>
+    @event.materialsLanguage.map { lang =>
+      <p>
+        <strong>Materials Language</strong><br/>@lang
+      </p>
+    }
+    @event.details.webSite.map { url =>
+      <p><strong>Web site</strong>
+        <br><a href="@url">@url</a></p>
+    }
+    @event.details.registrationPage.map { url =>
       <p><strong>Registration page</strong>
-          <br><a href="@url">@url</a></p>
+        <br><a href="@url">@url</a></p>
+    }
+
+  </div>
+  <div class="col-md-4">
+    <p>
+      <strong>Facilitators</strong><br/>
+      @for(facilitator <- event.facilitators) {
+        <i class="glyphicon glyphicon-user"></i><a
+          href="@routes.People.details(facilitator.id.getOrElse(0))"> @facilitator.fullName</a><br/>
       }
-      <h3>Invoice</h3>
+    </p>
+    <p>
+      <strong>Location</strong><br/>
+      <address>
+        <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png"
+          align="baseline"> @event.location.city
+      </address>
+    </p>
+    <p>
+        <strong>Start date / End date</strong><br/>@event.schedule.start - @event.schedule.end
+    </p>
+    <p>
+        <strong>Hours per day / Total hours</strong><br/>@event.schedule.hoursPerDay / @event.schedule.totalHours
+    </p>
+  </div>
+  <div class="col-md-4">
+    <legend>Invoice</legend>
       <p>
         <strong>To:</strong> <a href="@routes.Organisations.details(event.invoice.invoiceTo)">@event.invoice.invoiceToOrg.get.name</a>
         @event.invoice.invoiceBy.map { id =>
@@ -106,48 +121,39 @@
             <input type="hidden" name="id" value="@event.invoice.id">
             <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">
             <input type="hidden" name="eventId" id="eventId" value="@event.id">
-            <div class="controls-row control-group" id="invoiceBy_field">
-              <label for="invoiceBy">Invoiced By</label>
-              <select name="invoiceBy" id="invoiceBy">
+            <div class="form-group" id="invoiceBy_field">
+              <label for="invoiceBy" class="control-label">Invoiced By</label>
+              <select name="invoiceBy" class="form-control" id="invoiceBy">
                 <option value="">Choose an organisation</option>
                 @legalEntities.map { entity =>
                 <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)){selected}>@entity.name</option>
                 }
               </select>
             </div>
-            <div class="controls-row control-group" id="number_field">
-              <label for="number">Invoice Number</label>
-              <input id="number" class="input" type="text" name="number" value="@event.invoice.number">
+            <div class="form-group" id="number_field">
+              <label for="number" class="control-label">Invoice Number</label>
+              <input id="number" class="form-control" type="text" name="number" value="@event.invoice.number">
             </div>
           </p>
           <p>
-            <button class="btn">Update Invoice Info</button>
+            <button class="btn btn-success">Update Invoice Info</button>
           </p>
         </form>
       }
   </div>
-  <div class="span3">
-    <h3>Who</h3>
-    @for(facilitator <- event.facilitators) {
-      <a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/>
+  <div class="col-md-10">
+    @event.details.description.map { desc =>
+      <p>
+        <strong>Short description</strong><br/>@desc.markdown
+      </p>
     }
-    <h3>Where</h3>
-    <address>
-      <img width="32" src="/assets/images/flags/32/@(event.location.countryCode.toLowerCase).png" align="baseline"> @event.location.city
-    </address>
-    <h3>When</h3>
-    <p>
-        <strong>Start date</strong><br/>@event.schedule.start
+    @event.details.specialAttention.map { attention =>
+      <p>
+        <strong>Special attention</strong><br/>@attention.markdown
     </p>
-    <p>
-        <strong>End date</strong><br/>@event.schedule.end
-    </p>
-    <p>
-        <strong>Hours per day / Total hours</strong><br/>@event.schedule.hoursPerDay / @event.schedule.totalHours
-    </p>
-
-
+    }
   </div>
+
 
 	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

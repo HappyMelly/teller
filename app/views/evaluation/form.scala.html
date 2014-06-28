@@ -7,63 +7,52 @@
 @import views.Evaluations
 @import views.ViewHelpers._
 
-@main("Evaluation", Some(user)) {
+@main("Evaluation", "participants", Some(user)) {
 
   @defining(evaluation.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
-    <h1>@title</h1>
-
-    <div id="error">
     @if(form.hasErrors) {
-      <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Please fix the validation errors.
+      @html.error()
+    }
+
+    <div class="col-md-6">
+      <div class="page-header">
+        <h1>@title</h1>
       </div>
-    }
-    </div>
+      @html.form(action = CSRF(evaluation.map(evaluation => routes.Evaluations.update(evaluation.id.get)).getOrElse(routes.Evaluations.create()))) {
+        <!-- Different logic for add and edit forms -->
+        @if(evaluation.isEmpty) {
+          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
+            '_label -> "Event", '_help -> "")
+          @html.select(form("participantId"), ("", "Choose a participant") :: Nil,
+            '_label -> "Participant", '_help -> "")
+        } else {
+          <input type="hidden" name="eventId" value="@form("eventId").value"/>
+          @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
+            '_label -> "Event", 'disabled -> "true")
+          <input type="hidden" name="participantId" value="@form("participantId").value"/>
+        }
+        @html.textarea(form("question1"), '_label -> Messages("evaluation.question1"))
+        @html.textarea(form("question2"), '_label -> Messages("evaluation.question2"))
+        @html.textarea(form("question3"), '_label -> Messages("evaluation.question3"))
+        @html.textarea(form("question4"), '_label -> Messages("evaluation.question4"))
+        @html.textarea(form("question5"), '_label -> Messages("evaluation.question5"))
+        @html.select(form("question6"), Evaluations.impression, '_label -> Messages("evaluation.question6"))
+        @html.select(form("question7"), Evaluations.recommendation, '_label -> Messages("evaluation.question7"))
+        @html.textarea(form("question8"), '_label -> Messages("evaluation.question8"))
+        <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
+        @html.select(form("status"),
+          models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq,
+          '_label -> "Status", 'disabled -> "true")
+        <input type="hidden" id="certificate" name="certificate" readonly="readonly" value="@form("certificate").value"/>
 
-	  @helper.form(action = CSRF(evaluation.map(evaluation => routes.Evaluations.update(evaluation.id.get)).getOrElse(routes.Evaluations.create()))) {
-      <!-- Different logic for add and edit forms -->
-      @if(evaluation.isEmpty) {
-        @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
-          '_label -> "Event", '_help -> "")
-        <div class="controls-row control-group">
-          @defining(form("participantId")) { field =>
-            <label for="participantId">Participant</label>
-            <select name="@field.name" id="@field.id" value="@field.value">
-                <option value="">Choose a participant</option>
-            </select>
-          }
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
         </div>
-      } else {
-        <input type="hidden" name="eventId" value="@form("eventId").value"/>
-        @helper.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
-          '_label -> "Event", 'disabled -> "true")
-        <input type="hidden" name="participantId" value="@form("participantId").value"/>
       }
-      @helper.textarea(form("question1"),
-        '_label -> Messages("evaluation.question1"), 'class -> "input-xxlarge")
-      @helper.textarea(form("question2"),
-        '_label -> Messages("evaluation.question2"), 'class -> "input-xxlarge")
-      @helper.textarea(form("question3"),
-        '_label -> Messages("evaluation.question3"), 'class -> "input-xxlarge")
-      @helper.textarea(form("question4"),
-        '_label -> Messages("evaluation.question4"), 'class -> "input-xxlarge")
-      @helper.textarea(form("question5"),
-        '_label -> Messages("evaluation.question5"), 'class -> "input-xxlarge")
-      @helper.select(form("question6"), Evaluations.impression,
-        '_label -> Messages("evaluation.question6"))
-      @helper.select(form("question7"), Evaluations.recommendation,
-        '_label -> Messages("evaluation.question7"))
-      @helper.textarea(form("question8"),
-        '_label -> Messages("evaluation.question8"), 'class -> "input-xxlarge")
-      <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
-      @helper.select(form("status"),
-        models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq,
-        '_label -> "Status", 'disabled -> "true")
-      <input type="hidden" id="certificate" name="certificate" readonly="readonly" value="@form("certificate").value"/>
-
-      <button class="btn btn-primary" type="submit">Save</button>
-    }
+    </div>
   }
   <script src='@routes.Assets.at("evaluation/form.js")' type="text/javascript"></script>
 }

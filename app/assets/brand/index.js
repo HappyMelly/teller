@@ -22,12 +22,17 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package views
-
-import views.html.helper.FieldConstructor
-
-object ViewHelpers {
-
-  implicit val fields = FieldConstructor(views.html.fieldConstructor.f)
-  val asIs = FieldConstructor(views.html.html.asIsConstructor.f)
-}
+$(document).ready( function() {
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+    } );
+    $('.datatables').each(function() {
+        $(this).dataTable( {
+            "iDisplayLength": 25,
+            "asStripeClasses":[],
+            "aaSorting": [],
+            "bLengthChange": false,
+            "order": [[ 0, "asc" ]]
+        });
+    });
+});

@@ -1,34 +1,44 @@
-@(user: securesocial.core.Identity, code: Option[String], form: Form[Brand])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  code: Option[String],
+  form: Form[Brand])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.ViewHelpers._
 @import models.Person
 
-@defining(form.value.map(org => "Brand %s".format(org.name)).getOrElse("Add brand")) { orgName =>
-    @main("Brand", Some(user)) {
-
-        <h1>@orgName</h1>
-
-        @if(form.hasErrors) {
-          <div class="alert alert-error">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            Please fix the validation errors.
-          </div>
-        }
-
-        @helper.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())), 'enctype -> "multipart/form-data") {
-            @helper.inputText(form("code"), '_label -> "Code")
-            @helper.inputText(form("name"), '_label -> "Name")
-            @helper.select(form("coordinatorId"), ("", "Choose a brand coordinator") :: Person.findActive.map(p=> (p.id.get.toString, p.fullName)), '_label -> "Coordinator")
-            @helper.textarea(form("description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
-            @helper.select(
-              form("status"),
-              ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
-              '_label -> "Status")
-            @helper.inputFile(form("picture"), '_label -> "Picture")
-            <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
-
-            <button class="btn btn-primary" type="submit">Save</button>
-        }
+@defining(form.value.map(brand => "Brand %s".format(brand.name)).getOrElse("Add brand")) { name =>
+  @main("Brand", "brands", Some(user)) {
+    @if(form.hasErrors) {
+      @html.error()
     }
+
+    <div class="col-md-6">
+      <div class="page-header">
+        <h1>@name</h1>
+      </div>
+      @html.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())),
+        'enctype -> "multipart/form-data") {
+        @html.text(form("code"), '_label -> "Code")
+        @html.text(form("name"), '_label -> "Name")
+        @html.select(form("coordinatorId"),
+          ("", "Choose a brand coordinator") :: Person.findActive.map( p=> (p.id.get.toString, p.fullName)),
+          '_label -> "Coordinator")
+        @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
+          '_help -> views.html.markdownHelp())
+        @html.select(
+          form("status"),
+          ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
+          '_label -> "Status")
+        @html.file(form("picture"), '_label -> "Picture")
+        <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
+
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
 }

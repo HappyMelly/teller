@@ -17,158 +17,104 @@
 }
 
 @defining(form.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
-  @main("Events", Some(user)) {
-
-    <h1>@eventTitle</h1>
-
+  @main("Events", "events", Some(user)) {
     <div id="error">
-    @if(form.hasErrors) {
-      <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Please fix the validation errors.
-      </div>
-    }
+      @if(form.hasErrors) {
+        @html.error()
+      }
     </div>
-    <div id="emptyForm" value="@emptyForm"></div>
-    @helper.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-      <div id="currentUserId" value="@currentUserId"></div>
-      @defining(form("brandCode").hasErrors || form("eventTypeId").hasErrors) { hasErrors =>
-          <div class="controls-row control-group @if(hasErrors) {error}">
-              @defining(form("brandCode")) { field =>
-              <label for="@field.id">Brand & Title</label>
-              <select name="@field.name" id="@field.id">
-                  @brands.map { brand =>
-                  <option value="@brand.code" @if(field.value.toSet.contains(brand.code)){selected}>@brand.name</option>
-                  }
-              </select>
-              }
-              @defining(form("eventTypeId")) { field =>
-              <select name="@field.name" id="@field.id" value="@field.value">
-                  <option value="">Choose an event type</option>
-              </select>
-              }
-              <span class="help-inline">
-                  @if(hasErrors) {
-                    @fieldErrors(form("brandCode"), form("eventTypeId"))
-                  } else {
-                    Required
-                  }
-              </span>
-          </div>
-      }
-      @helper.inputText(form("title"), '_label -> "", '_placeholder -> "Title", 'class -> "input-xxlarge")
-
-      <div class="controls-row control-group @if(form("spokenLanguage").hasErrors) {error}">
-          <label for="spokenLanguage">Spoken & Materials Languages</label>
-          <input id="spokenLanguage" class="input-large" name="spokenLanguage" placeholder="Spoken Language" type="text" value="@form("spokenLanguage").value">
-          <input id="materialsLanguage" class="input-large" name="materialsLanguage" type="text" placeholder="Materials Language"
-              value="@form("materialsLanguage").value">
-          <span class="help-inline">
-              @if(form("spokenLanguage").hasErrors) {
-                @fieldErrors(form("spokenLanguage"))
-              } else {
-                Required
-              }
-          </span>
+    <div class="col-md-8">
+      <div class="page-header">
+        <h1>@eventTitle</h1>
       </div>
-      @defining(form("location.city").hasErrors || form("location.country").hasErrors) { hasErrors =>
-          <div class="controls-row control-group @if(hasErrors) {error}">
-              @defining(form("location.country")) { field =>
-              <label for="@field.id">Location</label>
-              <select name="@field.name" id="@field.id">
-                <option value="">Choose a country</option>
-                @Countries.all.map { country =>
-                <option value="@country._1" @if(field.value.toSet.contains(country._1)){selected}>@country._2</option>
+      <div id="emptyForm" value="@emptyForm"></div>
+
+      @html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
+        <div id="currentUserId" value="@currentUserId"></div>
+        <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
+        <div id="currentInvoiceToId" value="@form("invoice.invoiceTo").value"></div>
+        @html.twoInRow(form("brandCode"),
+          html.select(form("brandCode"), brands.map(v => v.code -> v.name))(asIs, implicitly[Lang]),
+          form("eventTypeId"),
+          html.select(form("eventTypeId"), Seq(("", "Choose an event type")))(asIs, implicitly[Lang]),
+          "Brand & Title"
+        )
+        @html.text(form("title"), '_label -> "", '_placeholder -> "Title")
+        @html.twoInRow(form("spokenLanguage"),
+          html.text(form("spokenLanguage"))(asIs, implicitly[Lang]),
+          form("materialsLanguage"),
+          html.text(form("materialsLanguage"))(asIs, implicitly[Lang]),
+          "Spoken & Materials Languages"
+        )
+        @html.twoInRow(form("location.country"),
+          html.select(form("location.country"), ("", "Choose a country") +: Countries.all)(asIs, implicitly[Lang]),
+          form("location.city"),
+          html.text(form("location.city"))(asIs, implicitly[Lang]),
+          "Location"
+        )
+        @html.textarea(form("details.description"), '_label -> "Description",
+          'rows -> 3, '_help -> views.html.markdownHelp())
+        @html.textarea(form("details.specialAttention"), '_label -> "Special attention",
+          'rows -> 3, '_help -> views.html.markdownHelp())
+
+        @if(form.error("facilitatorIds").isDefined) {
+        <div id="facilitatorIds_field" class="form-group has-error">
+        } else {
+        <div id="facilitatorIds_field" class="form-group">
+        }
+          <label for="facilitatorIds" class="control-label col-sm-3">Facilitators</label>
+          <div class="col-sm-9">
+            <div class="input col-xs-5 padding-fix">
+                <select id="facilitatorIds" class="form-control"></select>
+                @if(form.error("facilitatorIds").isDefined) {
+                  <span class="help-block">@form.error("facilitatorIds").get.message</span>
+                } else {
+                  <span class="help-block">Choose at least one facilitator</span>
                 }
-              </select>
-              }
-              <input id="location_city" class="input-large" name="location.city" placeholder="City" type="text" value="@form("location.city").value">
-              <span class="help-inline">
-                  @if(hasErrors) {
-                    @fieldErrors(form("location.country"), form("location.city"))
-                  } else {
-                    Required
-                  }
-              </span>
+            </div>
+            <div id="chosenFacilitators" class="col-xs-5 padding-fix"
+              value="@helper.repeat(form("facilitatorIds"), min=0) { f =>@f.value,}">
+            </div>
           </div>
-      }
-      @helper.textarea(form("details.description"), '_label -> "Description", 'cols -> 50, 'rows -> 3, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
-      @helper.textarea(form("details.specialAttention"), '_label -> "Special attention", 'cols -> 50, 'class -> "input-xxlarge", '_help -> views.html.markdownHelp())
-      @if(form.error("facilitatorIds").isDefined) {
-      <div id="facilitatorIds_field" class="control-group error">
-      } else {
-      <div id="facilitatorIds_field" class="control-group">
-      }
-          <label for="facilitatorIds">Facilitators</label>
-          <div class="input">
-              <select id="facilitatorIds"></select>
-              @if(form.error("facilitatorIds").isDefined) {
-                <span class="help-inline">@form.error("facilitatorIds").get.message</span>
-              } else {
-                <span class="help-inline">Choose at least one facilitator</span>
-              }
-          </div>
-          <div id="chosenFacilitators" value="@helper.repeat(form("facilitatorIds"), min=0) { f =>@f.value,}">
-          </div>
-      </div>
-      <legend>Schedule</legend>
-      @defining(form("schedule.start").hasErrors || form("schedule.end").hasErrors) { hasErrors =>
-      <div class="controls-row control-group @if(hasErrors) {error}">
-          <label for="schedule_start">Start date/End date</label>
-          <input id="schedule_start" class="input" type="date" name="schedule.start" value="@form("schedule.start").value">
-          <input id="schedule_end" class="input" type="date" name="schedule.end" value="@form("schedule.end").value">
-          <span class="help-inline">
-              @if(hasErrors) {
-                @fieldErrors(form("schedule.start"), form("schedule.end"))
-              } else {
-                Required
-              }
-          </span>
-      </div>
-      }
-      @helper.inputText(form("schedule.hoursPerDay"), '_label -> "Hours per day", 'class -> "input-small")
-      @helper.inputText(form("schedule.totalHours"), '_label -> "Total Hours", 'class -> "input-small", '_help -> "Required")
-      <legend>Misc</legend>
-      @helper.inputText(form("details.webSite"), '_label -> "Organizer website", 'placeholder -> "http://", '_help -> "Web site URL")
-      @helper.inputText(form("details.registrationPage"), '_label -> "Registration page", 'placeholder -> "http://", '_help -> "Web site URL")
-      <div class="control-group" id="notPublic_field">
-          <label for="notPublic" class="checkbox">
-              <input type="checkbox" id="notPublic" name="notPublic" value="true"
-              @if(form("notPublic").value.exists(_ == "true")){checked}>
-              Private Event : Private events are not shown on the calendar, but evaluation is still possible
-          </label>
-      </div>
-      <div class="control-group" id="archived_field">
-          <label for="archived" class="checkbox">
-              <input type="checkbox" id="archived" name="archived" value="true"
-              @if(form("archived").value.exists(_ == "true")){checked}>
-              Archived Event : Evaluation is not possible anymore for archived events
-          </label>
-      </div>
-      <div class="control-group" id="confirmed_field">
-          <label for="confirmed" class="checkbox">
-              <input type="checkbox" id="confirmed" name="confirmed" value="true"
-              @if(form("confirmed").value.exists(_ == "true")){checked}>
-              Confirmed Event : Invoicing for licenses only happens for confirmed events
-          </label>
-      </div>
-      <legend>Invoice</legend>
-      @defining(form("invoice.invoiceTo").hasErrors) { hasErrors =>
-      <div class="controls-row control-group @if(hasErrors) {error}">
-        <label for="invoice_invoiceTo">Invoice To</label>
-        <select id="invoice_invoiceTo" name="invoice.invoiceTo" value="@form("invoice.invoiceTo").value"></select>
-        <span class="help-inline">
-          @if(hasErrors) {
-            @fieldErrors(form("invoice.invoiceTo"))
-          } else {
-            Required
-          }
-        </span>
-      </div>
-      }
-      <button class="btn btn-primary" type="submit">Save</button>
-    }
+        </div>
 
+        <legend>Schedule</legend>
+        @html.twoInRow(form("schedule.start"),
+          html.date(form("schedule.start"))(asIs, implicitly[Lang]),
+          form("schedule.end"),
+          html.date(form("schedule.end"))(asIs, implicitly[Lang]),
+          "Start date/End date"
+        )
+        @html.twoInRow(form("schedule.hoursPerDay"),
+          html.number(form("schedule.hoursPerDay"))(asIs, implicitly[Lang]),
+          form("schedule.totalHours"),
+          html.number(form("schedule.totalHours"))(asIs, implicitly[Lang]),
+          "Hours per Day/Total Hours"
+        )
+        <legend>Misc</legend>
+        @html.text(form("details.webSite"), '_label -> "Organizer website",
+          'placeholder -> "http://", '_help -> "Web site URL")
+        @html.text(form("details.registrationPage"), '_label -> "Registration page",
+          'placeholder -> "http://", '_help -> "Web site URL")
+        @html.checkbox(form("notPublic"),
+          '_label -> "Private Event : Private events are not shown on the calendar, but evaluation is still possible",
+          '_help -> "")
+        @html.checkbox(form("archived"),
+          '_label -> "Archived Event : Evaluation is not possible anymore for archived events",
+          '_help -> "")
+        @html.checkbox(form("confirmed"),
+          '_label -> "Confirmed Event : Invoicing for licenses only happens for confirmed events",
+          '_help -> "")
+        <legend>Invoice</legend>
+        @html.select(form("invoice.invoiceTo"), Nil, '_label -> "Invoice To", '_help -> "")
+        <div clas="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
+    </div>
     <script src='@routes.Assets.at("event/form.js")' type="text/javascript"></script>
 
   }

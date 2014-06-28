@@ -22,12 +22,32 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package views
-
-import views.html.helper.FieldConstructor
-
-object ViewHelpers {
-
-  implicit val fields = FieldConstructor(views.html.fieldConstructor.f)
-  val asIs = FieldConstructor(views.html.html.asIsConstructor.f)
+function updateOwesToggle() {
+  var owes = $('#owes_value').val() === 'true';
+  if (owes) {
+    $('#owes_toggle')
+      .addClass('btn-success')
+      .removeClass('btn-danger')
+      .html('Owes To <i class="glyphicon glyphicon-arrow-right glyphicon-white"></i>');
+    $('#conversionInfo').find('.fromId.converted .direction' ).text("credit");
+    $('#conversionInfo').find('.toId.converted .direction' ).text("debit");
+  }
+  else {
+    $('#owes_toggle')
+      .removeClass('btn-success')
+      .addClass('btn-danger')
+      .html('<i class="glyphicon glyphicon-arrow-left glyphicon-white"></i> Is Owed By');
+    $('#conversionInfo').find('.fromId.converted .direction' ).text("debit");
+    $('#conversionInfo').find('.toId.converted .direction' ).text("credit");
+  }
+  $('#owes_value').val(owes);
 }
+
+$(document).ready( function() {
+  $('#owes_toggle').click(function() {
+    var owes = $('#owes_value').val() === 'true';
+    $('#owes_value').val(!owes);
+    updateOwesToggle();
+  });
+  updateOwesToggle();
+});

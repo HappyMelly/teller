@@ -10,48 +10,67 @@
 @import views.Countries
 @import views.ViewHelpers._
 
-@main("Participants", Some(user)) {
-
-  <h1>Add Participant</h1>
-
+@main("Participants", "participants", Some(user)) {
   <div id="error">
-  @if(newPersonForm.hasErrors || existingPersonForm.hasErrors) {
-    <div class="alert alert-error">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-      Please fix the validation errors.
-    </div>
-  }
+    @if(newPersonForm.hasErrors || existingPersonForm.hasErrors) {
+      @html.error()
+    }
   </div>
-  <div id="switcher">
-    <form class="form-inline">
-      <label class="radio inline">
-        <input type="radio" name="participantType" id="existingPerson" value="existing" @if(showExistingPersonForm) {checked }>
-        Existing Person
-      </label>
-      <label class="radio inline">
-        <input type="radio" name="participantType" id="newPerson" value="new" @if(!showExistingPersonForm) {checked}>
-        New Person
-      </label>
-    </form>
 
-    <div class="existingPerson">
-      @helper.form(action = CSRF(routes.Participants.create())) {
-        @helper.select(existingPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event")
-        @helper.select(existingPersonForm("participantId"), ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person")
-        <button class="btn btn-primary" type="submit">Save</button>
-      }
+  <div class="col-md-6">
+    <div class="page-header">
+      <h1>Add Participant</h1>
     </div>
-    <div class="newPerson">
-      @helper.form(action = CSRF(routes.Participants.createParticipantAndPerson())) {
-        @helper.select(newPersonForm("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event")
-        @helper.inputText(newPersonForm("firstName"), '_label -> "First name")
-        @helper.inputText(newPersonForm("lastName"), '_label -> "Last name")
-        @helper.inputDate(newPersonForm("birthDate"), '_label -> "Birth date")
-        @helper.inputText(newPersonForm("emailAddress"), '_label -> "E-mail address")
-        @helper.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
-        @helper.inputText(newPersonForm("city"), '_label -> "City")
-        <button class="btn btn-primary" type="submit">Save</button>
-      }
+    <div id="switcher">
+      <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-9 toolbar">
+          <form>
+            <label class="radio-inline control-label">
+              <input type="radio" name="participantType" id="existingPerson"
+                value="existing" @if(showExistingPersonForm) {checked }>
+              Existing Person
+            </label>
+            <label class="radio-inline control-label">
+              <input type="radio" name="participantType"
+                id="newPerson" value="new" @if(!showExistingPersonForm) {checked}>
+              New Person
+            </label>
+          </form>
+        </div>
+      </div>
+      <div class="existingPerson">
+        @html.form(action = CSRF(routes.Participants.create())) {
+          @html.select(existingPersonForm("eventId"),
+            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
+          @html.select(existingPersonForm("participantId"),
+            ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person", '_help ->"")
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-9">
+              <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="newPerson">
+        @html.form(action = CSRF(routes.Participants.createParticipantAndPerson())) {
+          @html.select(newPersonForm("eventId"),
+            ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
+          @html.text(newPersonForm("firstName"), '_label -> "First name")
+          @html.text(newPersonForm("lastName"), '_label -> "Last name")
+          @html.date(newPersonForm("birthDate"), '_label -> "Birth date")
+          @html.text(newPersonForm("emailAddress"), '_label -> "E-mail address")
+          @html.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+          @html.text(newPersonForm("city"), '_label -> "City")
+          <div clas="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-9">
+              <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+            </div>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
