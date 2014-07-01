@@ -154,6 +154,7 @@ $(document).ready( function() {
     if (brandInSession) {
         currentBrand = brandInSession;
         $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
+        $("#exportLink").attr("href", "evaluations/export/" + currentBrand);
     }
     var events = [];
     var participantTable = $('#participants').dataTable({
@@ -266,6 +267,7 @@ $(document).ready( function() {
 
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
+        $("#exportLink").attr("href", "evaluations/export/" + brandCode);
         events = [];
         participantTable
             .api()

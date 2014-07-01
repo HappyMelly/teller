@@ -232,11 +232,11 @@ object Event {
    * Return a list of events based on several parameters
    */
   def findByParameters(brandCode: String,
-    future: Option[Boolean],
-    public: Option[Boolean],
-    confirmed: Option[Boolean],
-    countryCode: Option[String],
-    eventType: Option[Long]): List[Event] = DB.withSession { implicit session: Session ⇒
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    confirmed: Option[Boolean] = None,
+    countryCode: Option[String] = None,
+    eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(Events).filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
@@ -301,8 +301,8 @@ object Event {
    * Return a list of events for a given facilitator
    */
   def findByFacilitator(facilitatorId: Long, brandCode: String,
-    future: Option[Boolean],
-    public: Option[Boolean]): List[Event] = DB.withSession { implicit session: Session ⇒
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None): List[Event] = DB.withSession { implicit session: Session ⇒
 
     val baseQuery = for {
       (entry, event) ← Query(EventFacilitators).filter(_.facilitatorId === facilitatorId).leftJoin(Events) on (_.eventId === _.id)

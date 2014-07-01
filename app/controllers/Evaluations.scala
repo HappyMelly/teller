@@ -24,7 +24,7 @@
 
 package controllers
 
-import java.io.File
+import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
 import org.joda.time._
@@ -213,6 +213,59 @@ object Evaluations extends Controller with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  def export(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(brandCode).map { brand ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val events = if (account.editor) {
+          Event.findByParameters(brandCode)
+        } else if (brand.brand.coordinatorId == account.personId) {
+          //TODO: refactor for a coordinator
+          Event.findByParameters(brandCode)
+        } else {
+          Event.findByFacilitator(account.personId, brandCode)
+        }
+
+        val evaluations = Evaluation.findByEvents(events.map(e ⇒ e.id.get))
+        val date = LocalDate.now.toString
+        Ok.sendFile(
+          content = createXLSXreport(evaluations),
+          fileName = _ ⇒ s"report-${date}-${brandCode}.xlsx")
+      }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  private def createXLSXreport(evaluations: List[(Event, Person, Evaluation)]): java.io.File = {
+    import org.apache.poi.ss.util._
+    import org.apache.poi.xssf.usermodel._
+    import play.api._
+
+    val wb = new XSSFWorkbook(Play.application.resourceAsStream("reports/evaluations.xlsx").get)
+    val sheet = wb.getSheetAt(0)
+    var rowNumber = 0
+    evaluations.foreach { e ⇒
+      rowNumber += 1
+      val row = sheet.createRow(rowNumber)
+      row.createCell(0).setCellValue(e._1.title)
+      row.createCell(1).setCellValue(e._1.schedule.start + " / " + e._1.schedule.end)
+      row.createCell(2).setCellValue(e._1.location.city)
+      row.createCell(3).setCellValue(e._2.fullName)
+      row.createCell(4).setCellValue(e._3.question6)
+      row.createCell(5).setCellValue(e._3.question7)
+      row.createCell(6).setCellValue(e._3.question1)
+      row.createCell(7).setCellValue(e._3.question2)
+      row.createCell(8).setCellValue(e._3.question3)
+      row.createCell(9).setCellValue(e._3.question4)
+      row.createCell(10).setCellValue(e._3.question5)
+      row.createCell(11).setCellValue(e._3.question8)
+    }
+    val tmpFile = File.createTempFile("report", ".xlsx")
+    tmpFile.deleteOnExit
+    val os = new FileOutputStream(tmpFile);
+    wb.write(os)
+    os.close
+    tmpFile
   }
 
   private def findEvents(account: UserAccount): List[Event] = {

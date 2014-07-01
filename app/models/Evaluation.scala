@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ Evaluations }
+import models.database.{ Evaluations, Participants, Events, People }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -73,6 +73,8 @@ case class Evaluation(
 
   def insert: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
+    val participant = Participant.find(participantId.get, eventId).get
+    participant.copy(evaluationId = Some(id)).update
     this.copy(id = Some(id))
   }
 
@@ -128,6 +130,16 @@ object Evaluation {
 
   def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).filter(_.id === id).firstOption
+  }
+
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    val baseQuery = for {
+      e ← Events if e.id inSet eventIds
+      part ← Participants if part.eventId === e.id
+      p ← People if p.id === part.personId
+      ev ← Evaluations if ev.id === part.evaluationId
+    } yield (e, p, ev)
+    baseQuery.list
   }
 
   def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
