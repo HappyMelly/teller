@@ -1,7 +1,9 @@
 @(user: securesocial.core.Identity,
   evaluation: Option[Evaluation],
   form: Form[Evaluation],
-  events: List[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  events: List[Event],
+  eventId: Option[Long],
+  participantId: Option[Long])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Evaluations
@@ -21,15 +23,26 @@
       @html.form(action = CSRF(evaluation.map(evaluation => routes.Evaluations.update(evaluation.id.get)).getOrElse(routes.Evaluations.create()))) {
         <!-- Different logic for add and edit forms -->
         @if(evaluation.isEmpty) {
+          @if(form("eventId").value) {
+            <input type="hidden" id="currentEventId" value="@form("eventId").value"/>
+          }else{
+            <input type="hidden" id="currentEventId" value="@eventId.getOrElse(0)"/>
+          }
+          @if(form("participantId").value) {
+            <input type="hidden" id="currentParticipantId" value="@form("participantId").value"/>
+          }else{
+            <input type="hidden" id="currentParticipantId" value="@participantId.getOrElse(0)"/>
+          }
           @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
             '_label -> "Event", '_help -> "")
           @html.select(form("participantId"), ("", "Choose a participant") :: Nil,
             '_label -> "Participant", '_help -> "")
+
         } else {
-          <input type="hidden" name="eventId" value="@form("eventId").value"/>
+          <input type="hidden" id="currentEventId" value="@form("eventId").value"/>
           @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
             '_label -> "Event", 'disabled -> "true")
-          <input type="hidden" name="participantId" value="@form("participantId").value"/>
+          <input type="hidden" id="currentParticipantId" value="@form("participantId").value"/>
         }
         @html.textarea(form("question1"), '_label -> Messages("evaluation.question1"))
         @html.textarea(form("question2"), '_label -> Messages("evaluation.question2"))

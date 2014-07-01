@@ -139,8 +139,15 @@ object Participants extends Controller with Security {
                     "certificate" -> certificateActions(id, brand.brand, data),
                     "evaluation" -> evaluationActions(id, brand.brand, data, account),
                     "participant" -> participantActions(data, account))
-                  case None ⇒ Json.obj(
-                    "participant" -> participantActions(data, account))
+                  case None ⇒ if (!data.event.archived) {
+                    Json.obj(
+                      "evaluation" -> Json.obj(
+                        "add" -> routes.Evaluations.add(data.event.id, data.person.id).url),
+                      "participant" -> participantActions(data, account))
+                  } else {
+                    Json.obj(
+                      "participant" -> participantActions(data, account))
+                  }
                 }
               })
           }

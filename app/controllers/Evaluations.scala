@@ -87,11 +87,12 @@ object Evaluations extends Controller with Security {
     "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
 
   /** Add page **/
-  def add = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
-    implicit handler ⇒
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val events = findEvents(account)
-      Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
+  def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
+    implicit request ⇒
+      implicit handler ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val events = findEvents(account)
+        Ok(views.html.evaluation.form(request.user, None, evaluationForm, events, eventId, participantId))
   }
 
   /** Add form submits to this action **/
@@ -103,7 +104,7 @@ object Evaluations extends Controller with Security {
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = findEvents(account)
-          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events))
+          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None))
         },
         evaluation ⇒ {
           val createdEvaluation = evaluation.insert
@@ -154,7 +155,7 @@ object Evaluations extends Controller with Security {
       Evaluation.find(id).map { evaluation ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events))
+        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events, None, None))
       }.getOrElse(NotFound)
 
   }
@@ -169,7 +170,7 @@ object Evaluations extends Controller with Security {
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
             val events = findEvents(account)
-            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events))
+            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update

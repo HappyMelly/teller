@@ -70,6 +70,11 @@ function renderDropdown(data) {
         if (!emptyDropdown) {
             html += '<li class="divider"></li>';
         }
+        if ('add' in evaluation && evaluation.add) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + evaluation.add;
+            html += '" title="Add Evaluation"><i class="glyphicon glyphicon-plus"></i> Add Evaluation</a></li>';
+        }
         if ('approve' in evaluation && evaluation.approve) {
             emptyDropdown = false;
             html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;

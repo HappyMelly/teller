@@ -47,7 +47,7 @@
             }
           </div>
           <div class="button">
-            <form class="delete" class="form-inline" method="post" text="evaluation"
+            <form class="delete" class="form-inline" method="get" text="evaluation"
               action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0)))">
               <button class="btn btn-danger" type="submit">
                 <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
