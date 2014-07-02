@@ -28,6 +28,7 @@ import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.mvc.Controller
+import views.Countries
 
 trait ParticipantsController extends Controller {
 
@@ -42,7 +43,9 @@ trait ParticipantsController extends Controller {
       "birthDate" -> optional(jodaLocalDate),
       "emailAddress" -> email,
       "city" -> nonEmptyText,
-      "country" -> nonEmptyText,
+      "country" -> nonEmptyText.verifying(
+        "Unknown country",
+        (country: String) ⇒ Countries.all.exists(_._1 == country)),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(userName),
       "updated" -> ignored(DateTime.now()),

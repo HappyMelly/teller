@@ -35,7 +35,7 @@ import play.api.libs.json._
 object ParticipantsApi extends ParticipantsController with ApiAuthentication {
 
   /**
-   * Create a participant API.
+   * Create a participant through API call
    */
   def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
     val person = identity.person
@@ -43,7 +43,7 @@ object ParticipantsApi extends ParticipantsController with ApiAuthentication {
 
     form.fold(
       formWithErrors ⇒ {
-        BadRequest(formWithErrors.errorsAsJson)
+        BadRequest(Json.obj("error" -> formWithErrors.errorsAsJson))
       },
       data ⇒ {
         val participant = Participant.create(data)
