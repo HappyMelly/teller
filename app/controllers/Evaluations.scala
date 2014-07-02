@@ -215,17 +215,17 @@ object Evaluations extends Controller with Security {
    * @param brandCode filter events by a brand
    * @param eventId a selected event
    * @param status  filter events by their statuses
-   * @param mine only the events where the user is a facilitator will be retrieved
+   * @param byMe only the events where the user is a facilitator will be retrieved
    * @return
    */
-  def export(brandCode: String, eventId: Long, status: Int, mine: Boolean) = SecuredRestrictedAction(Viewer) {
+  def export(brandCode: String, eventId: Long, status: Int, byMe: Boolean) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒
         Brand.find(brandCode).map { brand ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = if (eventId > 0) {
             Event.find(eventId).map { event ⇒
-              if (mine) {
+              if (byMe) {
                 if (event.facilitatorIds.contains(account.personId)) {
                   event :: Nil
                 } else {
@@ -237,7 +237,7 @@ object Evaluations extends Controller with Security {
               event :: Nil
             }.getOrElse(Nil)
           } else {
-            if (mine) {
+            if (byMe) {
               Event.findByFacilitator(account.personId, brandCode)
             } else {
               Event.findByParameters(brandCode)

@@ -132,6 +132,11 @@ object Evaluation {
     Query(Evaluations).filter(_.id === id).firstOption
   }
 
+  /**
+   * Retrieve the evaluations for a set of events
+   * @param eventIds a list of event ids
+   * @return
+   */
   def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
       e ← Events if e.id inSet eventIds

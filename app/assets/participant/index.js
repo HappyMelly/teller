@@ -163,7 +163,7 @@ function loadEventList(events) {
 }
 
 /**
- * This function creates a new export link, when a user click 'Export to XLSX'.
+ * This function creates a new export link when a user clicks 'Export to XLSX'.
  *  It collects data from all table filters
  */
 function buildExportLink() {
@@ -187,7 +187,6 @@ $(document).ready( function() {
     if (brandInSession) {
         currentBrand = brandInSession;
         $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
-        $("#exportLink").attr("href", "evaluations/export/" + currentBrand);
     }
     var events = [];
     var participantTable = $('#participants').dataTable({
@@ -308,7 +307,6 @@ $(document).ready( function() {
 
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
-        $("#exportLink").attr("href", "evaluations/export/" + brandCode);
         events = [];
         participantTable
             .api()
