@@ -18,6 +18,8 @@ object ApplicationBuild extends Build {
     "com.typesafe.play" %% "play-slick" % "0.5.0.8",
     //"com.typesafe.slick" %% "slick" % "1.0.1",
     "mysql" % "mysql-connector-java" % "5.1.27",
+    "org.apache.poi" % "poi" % "3.9",
+    "org.apache.poi" % "poi-ooxml" % "3.9",
     "org.joda" % "joda-money" % "0.9",
     "org.pegdown" % "pegdown" % "1.4.2",
     "org.jsoup" % "jsoup" % "1.7.3",

@@ -24,23 +24,17 @@
 
 package controllers
 
-import java.io.File
+import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
 import org.joda.time._
 import play.api.mvc._
 import play.api.data._
-import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import play.api.data.format.Formatter
-import play.api.i18n.Messages
-import play.api.cache.Cache
 import play.api.data.FormError
 import play.api.Play.current
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.i18n.Messages
-import scala.concurrent.Future
-import scala.Some
 import securesocial.core.SecuredRequest
 import services.EmailService
 
@@ -128,9 +122,9 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          evaluation.delete
+          evaluation.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
-          Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -175,7 +169,7 @@ object Evaluations extends Controller with Security {
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-            Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+            Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
   }
@@ -190,7 +184,7 @@ object Evaluations extends Controller with Security {
 
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
           ev.participant.fullName)
-        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -198,7 +192,7 @@ object Evaluations extends Controller with Security {
   def reject(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.reject
+        existingEvaluation.reject()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
@@ -209,10 +203,89 @@ object Evaluations extends Controller with Security {
         EmailService.send(Set(participant),
           Some(existingEvaluation.event.facilitators.toSet),
           Some(Set(brand.coordinator)), subject,
-          mail.html.rejected(brand.brand, participant, facilitator).toString, true)
+          mail.html.rejected(brand.brand, participant, facilitator).toString(), richMessage = true)
 
-        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Generate a XLSX report with evaluations
+   *
+   * @param brandCode filter events by a brand
+   * @param eventId a selected event
+   * @param status  filter events by their statuses
+   * @param byMe only the events where the user is a facilitator will be retrieved
+   * @return
+   */
+  def export(brandCode: String, eventId: Long, status: Int, byMe: Boolean) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒
+        Brand.find(brandCode).map { brand ⇒
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val events = if (eventId > 0) {
+            Event.find(eventId).map { event ⇒
+              if (byMe) {
+                if (event.facilitatorIds.contains(account.personId)) {
+                  event :: Nil
+                } else {
+                  Nil
+                }
+              } else {
+                event :: Nil
+              }
+              event :: Nil
+            }.getOrElse(Nil)
+          } else {
+            if (byMe) {
+              Event.findByFacilitator(account.personId, brandCode)
+            } else {
+              Event.findByParameters(brandCode)
+            }
+          }
+          val evaluations = Evaluation.findByEvents(events.map(e ⇒ e.id.get))
+          val filteredEvaluations = if (status >= 0) {
+            evaluations.filter(e ⇒ e._3.status.id == status)
+          } else {
+            evaluations
+          }
+          val date = LocalDate.now.toString
+          Ok.sendFile(
+            content = createXLSXreport(filteredEvaluations),
+            fileName = _ ⇒ s"report-$date-$brandCode.xlsx")
+        }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  private def createXLSXreport(evaluations: List[(Event, Person, Evaluation)]): java.io.File = {
+    import org.apache.poi.ss.util._
+    import org.apache.poi.xssf.usermodel._
+    import play.api._
+
+    val wb = new XSSFWorkbook(Play.application.resourceAsStream("reports/evaluations.xlsx").get)
+    val sheet = wb.getSheetAt(0)
+    var rowNumber = 0
+    evaluations.foreach { e ⇒
+      rowNumber += 1
+      val row = sheet.createRow(rowNumber)
+      row.createCell(0).setCellValue(e._1.title)
+      row.createCell(1).setCellValue(e._1.schedule.start + " / " + e._1.schedule.end)
+      row.createCell(2).setCellValue(e._1.location.city)
+      row.createCell(3).setCellValue(e._2.fullName)
+      row.createCell(4).setCellValue(e._3.question6)
+      row.createCell(5).setCellValue(e._3.question7)
+      row.createCell(6).setCellValue(e._3.question1)
+      row.createCell(7).setCellValue(e._3.question2)
+      row.createCell(8).setCellValue(e._3.question3)
+      row.createCell(9).setCellValue(e._3.question4)
+      row.createCell(10).setCellValue(e._3.question5)
+      row.createCell(11).setCellValue(e._3.question8)
+    }
+    val tmpFile = File.createTempFile("report", ".xlsx")
+    tmpFile.deleteOnExit()
+    val os = new FileOutputStream(tmpFile)
+    wb.write(os)
+    os.close()
+    tmpFile
   }
 
   private def findEvents(account: UserAccount): List[Event] = {

@@ -46,8 +46,22 @@ function filterByEvent(oSettings, aData, iDataIndex) {
     }
     return aData[index] == filter;
 }
+
+/**
+ * Leave the events, facilitated by the user
+ */
+function filterByFacilitator(oSettings, aData, iDataIndex) {
+    var index = 10;
+    var state = $('#facilitatedByMe').is(':checked');
+    if (state == false) {
+        return true;
+    }
+    return aData[index] == 1;
+}
+
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
+$.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
 
 $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
@@ -148,6 +162,25 @@ function loadEventList(events) {
     }
 }
 
+/**
+ * This function creates a new export link when a user clicks 'Export to XLSX'.
+ *  It collects data from all table filters
+ */
+function buildExportLink() {
+    var brandCode = $('#brands').find(':selected').val();
+    var eventId = $('#events').find(':selected').val();
+    if (!eventId) {
+        eventId = 0;
+    }
+    var status = $('#status').find(':selected').val();
+    if (status == 'all') {
+        status = -1;
+    }
+    var facilitatedByMe = $('#facilitatedByMe').is(':checked');
+    var suffix = brandCode + '/event/' + eventId + '/status/' + status + '/mine/' + facilitatedByMe;
+    $("#exportLink").attr("href", "evaluations/export/" + suffix);
+}
+
 $(document).ready( function() {
     var currentBrand = $('#brands').val();
     var brandInSession = $('#participants').attr('brandCode');
@@ -177,6 +210,7 @@ $(document).ready( function() {
             { "data": "creation" },
             { "data": "handled" },
             { "data": "certificate" },
+            { "data": "event" },
             { "data": "event" },
             { "data": "actions" }
         ],
@@ -246,10 +280,16 @@ $(document).ready( function() {
                 "targets": 9
             },{
                 "render": function(data, type, row) {
-                    return renderDropdown(data);
+                    return data.facilitatedByMe ? 1 : 0;
                 },
                 "targets": 10,
-                "bSortable": false
+                "visible": false
+            }, {
+               "render": function(data, type, row) {
+                   return renderDropdown(data);
+               },
+               "targets": 11,
+               "bSortable": false
             }
         ]
     });
@@ -263,6 +303,7 @@ $(document).ready( function() {
     $('#filter-containter').empty();
     $('#status').on('change', function() { participantTable.fnDraw(); } );
     $("#events").on('change', function() { participantTable.fnDraw(); } );
+    $("#facilitatedByMe").on('change', function() { participantTable.fnDraw(); } );
 
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
@@ -275,6 +316,7 @@ $(document).ready( function() {
                 loadEventList(events);
             });
     });
+    $('#exportLink').on('click', buildExportLink);
     $("#participants").on('click', '.approve', function(){
         $("#approveLink").attr('href', $(this).data('href'));
     });

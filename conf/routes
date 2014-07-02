@@ -56,6 +56,8 @@ GET  /evaluation/:id             controllers.Evaluations.details(id: Long)
 POST /evaluation/:id             controllers.Evaluations.update(id: Long)
 GET  /evaluation/:id/delete      controllers.Evaluations.delete(id: Long)
 
+GET  /evaluations/export/:code/event/:eventId/status/:status/byMe/:byMe controllers.Evaluations.export(code: String, eventId: Long, status: Int, byMe: Boolean)
+
 GET  /events                 controllers.Events.index
 POST /event                  controllers.Events.create
 GET  /events/new/            controllers.Events.add

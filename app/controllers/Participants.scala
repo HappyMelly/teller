@@ -79,7 +79,8 @@ object Participants extends Controller with Security {
         (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "participantId" -> longNumber.verifying(
         "error.person.invalid",
-        (participantId: Long) ⇒ !Person.find(participantId).isEmpty))(Participant.apply)(Participant.unapply))
+        (participantId: Long) ⇒ !Person.find(participantId).isEmpty),
+      "evaluationId" -> optional(longNumber))(Participant.apply)(Participant.unapply))
   }
 
   /**
@@ -112,7 +113,8 @@ object Participants extends Controller with Security {
                 "id" -> data.event.id,
                 "url" -> routes.Events.details(data.event.id.get).url,
                 "title" -> data.event.title,
-                "longTitle" -> data.event.longTitle),
+                "longTitle" -> data.event.longTitle,
+                "facilitatedByMe" -> data.event.facilitatorIds.contains(account.personId)),
               "location" -> Json.obj(
                 "country" -> data.event.location.countryCode.toLowerCase,
                 "city" -> data.event.location.city),
@@ -230,7 +232,7 @@ object Participants extends Controller with Security {
             Photo(None, None), false, address, None, None, SocialProfile(personId = 0), false, false, None, None,
             virtual, active, DateStamp(participant.created, participant.createdBy, participant.updated, participant.updatedBy))
           val newPerson = person.insert
-          val eventParticipant = Participant(None, participant.eventId, newPerson.id.get)
+          val eventParticipant = Participant(None, participant.eventId, newPerson.id.get, None)
           Participant.insert(eventParticipant)
           val activityObject = Messages("activity.participant.create", person.fullName, participant.event.get.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)

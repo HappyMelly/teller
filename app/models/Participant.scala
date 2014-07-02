@@ -33,10 +33,19 @@ import play.api.Play.current
 case class Participant(
   id: Option[Long],
   eventId: Long,
-  participantId: Long) {
+  participantId: Long,
+  evaluationId: Option[Long]) {
 
   lazy val event: Option[Event] = Event.find(eventId)
   lazy val participant: Option[Person] = Person.find(participantId)
+  lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
+
+  def update: Participant = DB.withSession { implicit session: Session ⇒
+    val updateTuple = (evaluationId)
+    val updateQuery = Participants.filter(_.id === this.id).map(_.forUpdate)
+    updateQuery.update(updateTuple)
+    this
+  }
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluation.findByEventAndPerson(this.participantId, this.eventId).map { value ⇒
@@ -49,7 +58,6 @@ case class Participant(
 case class ParticipantView(person: Person,
   event: Event,
   evaluationId: Option[Long],
-  secondEvaluationId: Option[Long],
   impression: Option[Int],
   status: Option[EvaluationStatus.Value],
   date: Option[DateTime],
@@ -81,17 +89,16 @@ object Participant {
 
   def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
-      ((((part, p), e), ev), ev2) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.eventId === _.eventId) leftJoin Evaluations on (_._1._1._1.personId === _.participantId)
-    } yield (p, e, ev.id.?, ev2.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+      (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
+    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
 
     val brandQuery = brandCode.map { value ⇒
       baseQuery.filter(_._2.brandCode === value)
     }.getOrElse(baseQuery)
     val rawList = brandQuery.mapResult(ParticipantView.tupled).list
-    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
-      filter(obj ⇒ obj.evaluationId == obj.secondEvaluationId).distinct
-    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty || obj.secondEvaluationId.isEmpty).
-      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None, None))
+    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
     withEvaluation.union(withoutEvaluation.distinct)
   }
 
