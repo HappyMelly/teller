@@ -24,9 +24,9 @@
 
 package controllers
 
-import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity, Address, Photo }
-import models.{ Brand, ParticipantView, EvaluationStatus, UserAccount, SocialProfile, DateStamp }
-import org.joda.time.{ LocalDate, DateTime }
+import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity }
+import models.{ Brand, ParticipantView, EvaluationStatus, UserAccount, ParticipantData }
+import org.joda.time.DateTime
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
@@ -35,30 +35,12 @@ import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json._
 
-case class ParticipantData(id: Option[Long],
-  eventId: Long,
-  firstName: String,
-  lastName: String,
-  birthDate: Option[LocalDate],
-  emailAddress: String,
-  city: String,
-  country: String,
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) {
-
-  lazy val event: Option[Event] = Event.find(eventId)
-}
-
 object Participants extends Controller with Security {
 
   def newPersonForm(implicit request: SecuredRequest[_]) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
-      "eventId" -> longNumber.verifying(
-        "error.event.invalid",
-        (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
+      "eventId" -> longNumber,
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "birthDate" -> optional(jodaLocalDate),
@@ -187,7 +169,7 @@ object Participants extends Controller with Security {
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val events = findEvents(account)
-      var people = Person.findActive
+      val people = Person.findActive
       Ok(views.html.participant.form(request.user, None, events, people, newPersonForm(request), existingPersonForm(request)))
   }
 
@@ -199,7 +181,7 @@ object Participants extends Controller with Security {
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = findEvents(account)
-          var people = Person.findActive
+          val people = Person.findActive
           BadRequest(views.html.participant.form(request.user, None, events, people,
             newPersonForm(request), formWithErrors))
         },
@@ -220,23 +202,24 @@ object Participants extends Controller with Security {
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = findEvents(account)
-          var people = Person.findActive
+          val people = Person.findActive
           BadRequest(views.html.participant.form(request.user, None, events, people,
-            formWithErrors, existingPersonForm(request), false))
+            formWithErrors, existingPersonForm(request), showExistingPersonForm = false))
         },
-        participant ⇒ {
-          val address = Address(None, None, None, Some(participant.city), None, None, participant.country)
-          val virtual = true
-          val active = false
-          val person = Person(None, participant.firstName, participant.lastName, participant.emailAddress,
-            Photo(None, None), false, address, None, None, SocialProfile(personId = 0), false, false, None, None,
-            virtual, active, DateStamp(participant.created, participant.createdBy, participant.updated, participant.updatedBy))
-          val newPerson = person.insert
-          val eventParticipant = Participant(None, participant.eventId, newPerson.id.get, None)
-          Participant.insert(eventParticipant)
-          val activityObject = Messages("activity.participant.create", person.fullName, participant.event.get.title)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.Participants.add).flashing("success" -> activity.toString)
+        data ⇒ {
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          if (Event.canManage(data.event.get.id.get, account)) {
+            Participant.create(data)
+            val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            Redirect(routes.Participants.add()).flashing("success" -> activity.toString)
+          } else {
+            val events = findEvents(account)
+            val people = Person.findActive
+            BadRequest(views.html.participant.form(request.user, None, events, people,
+              form.withError(FormError("eventId", Messages("error.event.invalid"))),
+              existingPersonForm(request), showExistingPersonForm = false))
+          }
         })
   }
 

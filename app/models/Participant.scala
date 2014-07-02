@@ -81,6 +81,23 @@ case class ParticipantView(person: Person,
     41 * (41 + person.id.get.toInt) + event.id.get.toInt
 }
 
+/** This object is used to get data from a form **/
+case class ParticipantData(id: Option[Long],
+  eventId: Long,
+  firstName: String,
+  lastName: String,
+  birthDate: Option[LocalDate],
+  emailAddress: String,
+  city: String,
+  country: String,
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
+
+  lazy val event: Option[Event] = Event.find(eventId)
+}
+
 object Participant {
 
   def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession { implicit session: Session ⇒
@@ -100,6 +117,19 @@ object Participant {
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
       map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
     withEvaluation.union(withoutEvaluation.distinct)
+  }
+
+  def create(data: ParticipantData): Participant = DB.withSession { implicit session: Session ⇒
+    val address = Address(None, None, None, Some(data.city), None, None, data.country)
+    val virtual = true
+    val active = false
+    val person = Person(None, data.firstName, data.lastName, data.emailAddress,
+      Photo(None, None), signature = false, address, None, None, SocialProfile(personId = 0), boardMember = false,
+      stakeholder = false, None, None, virtual, active,
+      DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
+    val newPerson = person.insert
+    val eventParticipant = Participant(None, data.eventId, newPerson.id.get, None)
+    Participant.insert(eventParticipant)
   }
 
   def insert(participant: Participant): Participant = DB.withSession { implicit session: Session ⇒

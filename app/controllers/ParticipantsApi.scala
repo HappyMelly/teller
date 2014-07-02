@@ -21,44 +21,21 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
-import play.api.mvc._
-import models.{ LoginIdentity, Activity }
-import securesocial.core.SecureSocial
+import models.Event
+import play.api.libs.json._
+import play.mvc.Controller
 
-object Dashboard extends Controller with SecureSocial {
-
-  /**
-   * About page - credits.
-   */
-  def about = SecuredAction { implicit request ⇒
-    Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
-  }
+/**
+ * Participants API
+ */
+object ParticipantsApi extends Controller with ApiAuthentication {
 
   /**
-   * API documentation page.
+   * Create a participant API.
    */
-  def api = SecuredAction { implicit request ⇒
-    Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
+  def create(id: Long) = TokenSecuredAction { implicit request ⇒
+    NotFound("Unknown event")
   }
-
-  /**
-   * Dashboard page - logged-in home page.
-   */
-  def index = SecuredAction { implicit request ⇒
-    val activity = Activity.findAll
-    Ok(views.html.dashboard(request.user, activity))
-  }
-
-  /**
-   * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
-   * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
-   */
-  def profile = SecuredAction { implicit request ⇒
-    val currentUser = request.user.asInstanceOf[LoginIdentity].person
-    Redirect(routes.People.details(currentUser.id.getOrElse(0)))
-  }
-
 }

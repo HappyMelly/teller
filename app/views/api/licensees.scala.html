@@ -1,0 +1,51 @@
+@(user: LoginIdentity)
+
+<h3 id="licensees">Licensees</h3>
+
+<p>The <em>licensees</em> resource is a list of licensees for a particular brand, optionally filtered by date.</p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v1/licensees/{brand}</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+      <code>brand</code> a brand code to return licensees for, e.g. <code>mgt30</code>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters (optional)</th>
+    <td><code>date</code> a date to filter licensees for licenses active on that date, in YYYY-MM-DD format, default today</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of licensee objects, with properties:</p>
+      <ul>
+        <li><code>country</code> - ISO 8166-2 country code</li>
+        <li><code>first_name</code></li>
+        <li><code>last_name</code></li>
+        <li><code>photo</code> - URL to the user's photo</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>404 Not Found</code> if the given brand code is not defined</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Examples</th>
+    <td>
+      <a href="/api/v1/licensees/mgt30?api_token=@user.apiToken">GET /api/v1/licensees/mgt30</a>
+      <br><a href="/api/v1/licensees/mgt30?date=2013-01-01&api_token=@user.apiToken">GET /api/v1/licensees/mgt30?date=2013-01-01</a>
+    </td>
+  </tr>
+</table>

@@ -1,0 +1,53 @@
+@(user: LoginIdentity)(implicit flash: Flash)
+
+@main("API", "admin", Some(user)) {
+
+  <div class="page-header">
+    <h1>API</h1>
+  </div>
+  <div class="col-md-3">
+    <ul class="nav nav-pills nav-stacked" role="tablist">
+      <li class="active"><a href="#secutiry" role="tab" data-toggle="tab">Security</a></li>
+      <li><a href="#brand" role="tab" data-toggle="tab">Brand</a></li>
+      <li><a href="#brands" role="tab" data-toggle="tab">Brands</a></li>
+      <li><a href="#brandsByStatus" role="tab" data-toggle="tab">Brands By Status</a></li>
+      <li><a href="#event" role="tab" data-toggle="tab">Event</a></li>
+      <li><a href="#events" role="tab" data-toggle="tab">Events</a></li>
+      <li><a href="#eventtypes" role="tab" data-toggle="tab">Event Types</a></li>
+      <li><a href="#eventsByCountry" role="tab" data-toggle="tab">Events By Country</a></li>
+      <li><a href="#eventsByFacilitator" role="tab" data-toggle="tab">Events By Facilitator</a></li>
+      <li><a href="#facilitators" role="tab" data-toggle="tab">Facilitators</a></li>
+      <li><a href="#licensees" role="tab" data-toggle="tab">Licensees</a></li>
+      <li><a href="#licensee" role="tab" data-toggle="tab">Licensee details</a></li>
+      <li><a href="#organizations" role="tab" data-toggle="tab">Organizations</a></li>
+      <li><a href="#organization" role="tab" data-toggle="tab">Organization details</a></li>
+      <li><a href="#people" role="tab" data-toggle="tab">People</a></li>
+      <li><a href="#person" role="tab" data-toggle="tab">Person details</a></li>
+      <li><a href="#products" role="tab" data-toggle="tab">Products</a></li>
+      <li><a href="#product" role="tab" data-toggle="tab">Product details</a></li>
+    </ul>
+  </div>
+
+  <!-- Tab panes -->
+  <div class="col-md-9 tab-content">
+    <div class="tab-pane active" id="security">@api.security(user)</div>
+    <div class="tab-pane" id="brand">@api.brand(user)</div>
+    <div class="tab-pane" id="brands">@api.brands(user)</div>
+    <div class="tab-pane" id="brandsByStatus">@api.brandsByStatus(user)</div>
+    <div class="tab-pane" id="event">@api.event(user)</div>
+    <div class="tab-pane" id="events">@api.events(user)</div>
+    <div class="tab-pane" id="eventTypes">@api.eventsByCountry(user)</div>
+    <div class="tab-pane" id="eventsByCountry">@api.eventsByFacilitator(user)</div>
+    <div class="tab-pane" id="eventsByFacilitator">@api.eventTypes(user)</div>
+    <div class="tab-pane" id="facilitators">@api.facilitators(user)</div>
+    <div class="tab-pane" id="licensees">@api.licensees(user)</div>
+    <div class="tab-pane" id="licensee">@api.licensee(user)</div>
+    <div class="tab-pane" id="organizations">@api.organizations(user)</div>
+    <div class="tab-pane" id="organization">@api.organization(user)</div>
+    <div class="tab-pane" id="people">@api.people(user)</div>
+    <div class="tab-pane" id="person">@api.person(user)</div>
+    <div class="tab-pane" id="products">@api.products(user)</div>
+    <div class="tab-pane" id="product">@api.product(user)</div>
+  </div>
+
+}
