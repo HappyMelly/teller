@@ -25,8 +25,8 @@
 package models
 
 import models.database.{ Participants, People, Events, Evaluations }
-import play.api.db.slick.Config.driver.simple._
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
@@ -138,4 +138,3 @@ object Participant {
   }
 
 }
-

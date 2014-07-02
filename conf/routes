@@ -156,6 +156,8 @@ GET /api/v1/facilitators/:brandCode                      controllers.Facilitator
 GET /api/v1/licensees/:brandCode                    controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET /api/v1/licensee/:licenseeId/brand/:brandCode   controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
 
+POST /api/v1/participant  controllers.ParticipantsApi.create
+
 GET /api/v1/people       controllers.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean])
 GET /api/v1/person/:id   controllers.PeopleApi.person(id: Long)
 

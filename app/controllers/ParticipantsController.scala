@@ -24,32 +24,29 @@
 package controllers
 
 import models._
-import play.api.mvc._
+import org.joda.time.DateTime
 import play.api.data.Form
-import play.api.i18n.Messages
-import play.api.libs.json._
+import play.api.data.Forms._
+import play.mvc.Controller
 
-/**
- * Participants API
- */
-object ParticipantsApi extends ParticipantsController with ApiAuthentication {
+trait ParticipantsController extends Controller {
 
-  /**
-   * Create a participant API.
-   */
-  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
-    val person = identity.person
-    val form: Form[ParticipantData] = newPersonForm(identity.userAccount, person.fullName).bindFromRequest()(request)
-
-    form.fold(
-      formWithErrors ⇒ {
-        BadRequest(formWithErrors.errorsAsJson)
-      },
-      data ⇒ {
-        val participant = Participant.create(data)
-        val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
-        Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
-        Ok(Json.obj("participantId" -> participant.participantId))
-      })
+  def newPersonForm(account: UserAccount, userName: String) = {
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "eventId" -> longNumber.verifying(
+        "error.event.invalid",
+        (eventId: Long) ⇒ Event.canManage(eventId, account)),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "birthDate" -> optional(jodaLocalDate),
+      "emailAddress" -> email,
+      "city" -> nonEmptyText,
+      "country" -> nonEmptyText,
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(userName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(userName))(ParticipantData.apply)(ParticipantData.unapply))
   }
+
 }
