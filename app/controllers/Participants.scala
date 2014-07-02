@@ -113,7 +113,8 @@ object Participants extends Controller with Security {
                 "id" -> data.event.id,
                 "url" -> routes.Events.details(data.event.id.get).url,
                 "title" -> data.event.title,
-                "longTitle" -> data.event.longTitle),
+                "longTitle" -> data.event.longTitle,
+                "facilitatedByMe" -> data.event.facilitatorIds.contains(account.personId)),
               "location" -> Json.obj(
                 "country" -> data.event.location.countryCode.toLowerCase,
                 "city" -> data.event.location.city),

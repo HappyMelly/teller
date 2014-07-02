@@ -305,16 +305,15 @@ object Event {
     public: Option[Boolean] = None): List[Event] = DB.withSession { implicit session: Session ⇒
 
     val baseQuery = for {
-      (entry, event) ← Query(EventFacilitators).filter(_.facilitatorId === facilitatorId).leftJoin(Events) on (_.eventId === _.id)
+      entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+      event ← Events if event.id === entry.eventId && event.brandCode === brandCode
     } yield event
-
-    val brandQuery = baseQuery.filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) brandQuery.filter(_.end >= today)
-      else brandQuery.filter(_.end <= today)
+      if (value) baseQuery.filter(_.end >= today)
+      else baseQuery.filter(_.end <= today)
     }.getOrElse(baseQuery)
 
     val publicityQuery = public.map { value ⇒
