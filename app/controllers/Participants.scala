@@ -85,7 +85,11 @@ object Participants extends ParticipantsController with Security {
               "schedule" -> Json.obj(
                 "start" -> data.event.schedule.start.toString,
                 "end" -> data.event.schedule.end.toString),
-              "impression" -> data.impression.map(value ⇒ Messages(s"evaluation.impression.${value}")),
+              "impression" -> data.impression.map { value ⇒
+                Json.obj(
+                  "value" -> value,
+                  "caption" -> Messages(s"evaluation.impression.$value"))
+              },
               "status" -> data.status.map(status ⇒
                 Json.obj(
                   "label" -> Messages("models.EvaluationStatus." + status),

@@ -259,7 +259,7 @@ $(document).ready( function() {
             }, {
                 "render": function(data, type, row) {
                     if (data) {
-                        return '<strong>' + data + '</strong>';
+                        return '<strong>' + data.caption + '</strong>';
                     }
                     return '';
                 },
@@ -301,9 +301,15 @@ $(document).ready( function() {
 
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
-    $('#status').on('change', function() { participantTable.fnDraw(); } );
-    $("#events").on('change', function() { participantTable.fnDraw(); } );
-    $("#facilitatedByMe").on('change', function() { participantTable.fnDraw(); } );
+    $('#status').on('change', function() {
+        participantTable.fnDraw();
+    });
+    $("#events").on('change', function() {
+        participantTable.fnDraw();
+    });
+    $("#facilitatedByMe").on('change', function() {
+        participantTable.fnDraw();
+    });
 
     $("#brands").change(function() {
         var brandCode = $(this).find(':selected').val();
@@ -322,5 +328,28 @@ $(document).ready( function() {
     });
     $("#participants").on('click', '.reject', function(){
         $("#rejectLink").attr('href', $(this).data('href'));
+    });
+    $('#participants').on('draw.dt', function() {
+        var impression = 0;
+        var counter = 0;
+        var rows = participantTable._('tr', {"filter":"applied"});
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].impression) {
+                counter++;
+                impression += rows[i].impression.value;
+            }
+        }
+        if (counter) {
+            impression = Math.round((impression/counter) * 100)/100;
+        }
+        var badge = '';
+        if (impression < 5) {
+            badge = '<span class="badge alert-danger">' + impression + '</span>';
+        } else if (impression < 8) {
+            badge = '<span class="badge alert-warning">' + impression + '</span>';
+        } else {
+            badge = '<span class="badge alert-success">' + impression + '</span>';
+        }
+        $("#impression").html("General impr " + badge);
     });
 });

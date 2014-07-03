@@ -82,14 +82,43 @@ trait EvaluationsController extends Controller {
     }
   }
 
+  val participantIdOnEditFormatter = new Formatter[Long] {
+    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
+      // "data" lets you access all form data values
+      if (data.get("eventId").isEmpty || data.get(key).isEmpty) {
+        Left(List(FormError(key, "error.required")))
+      } else {
+        try {
+          val eventId = data.get("eventId").get.toLong
+          val personId = data.get(key).get.toLong
+          if (Person.find(personId).isEmpty) {
+            Left(List(FormError(key, "error.person.invalid")))
+          } else {
+            if (Event.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
+              Left(List(FormError(key, "error.participant.notExist")))
+            } else {
+              Right(personId)
+            }
+          }
+        } catch {
+          case e: NumberFormatException ⇒ Left(List(FormError(key, "Numeric value expected")))
+        }
+      }
+    }
+
+    override def unbind(key: String, value: Long): Map[String, String] = {
+      Map(key -> value.toString)
+    }
+  }
+
   val statusMapping = of[EvaluationStatus.Value]
 
   /** HTML form mapping for creating and editing. */
-  def evaluationForm(userName: String) = Form(mapping(
+  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
       "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> of(participantIdFormatter),
+    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,

@@ -39,10 +39,10 @@
             '_label -> "Participant", '_help -> "")
 
         } else {
-          <input type="hidden" id="currentEventId" value="@form("eventId").value"/>
+          <input type="hidden" id="currentEventId" name="eventId" value="@form("eventId").value"/>
           @html.select(form("eventId"), ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)),
             '_label -> "Event", 'disabled -> "true")
-          <input type="hidden" id="currentParticipantId" value="@form("participantId").value"/>
+          <input type="hidden" id="participantId" name="participantId" value="@form("participantId").value"/>
         }
         @html.textarea(form("question1"), '_label -> Messages("evaluation.question1"))
         @html.textarea(form("question2"), '_label -> Messages("evaluation.question2"))
@@ -58,7 +58,7 @@
           '_label -> "Status", 'disabled -> "true")
         <input type="hidden" id="certificate" name="certificate" readonly="readonly" value="@form("certificate").value"/>
 
-        <div clas="row">
+        <div class="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
             <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
