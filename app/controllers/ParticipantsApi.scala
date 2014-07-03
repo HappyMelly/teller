@@ -43,7 +43,7 @@ object ParticipantsApi extends ParticipantsController with ApiAuthentication {
 
     form.fold(
       formWithErrors ⇒ {
-        BadRequest(Json.obj("error" -> formWithErrors.errorsAsJson))
+        BadRequest(formWithErrors.errorsAsJson)
       },
       data ⇒ {
         val participant = Participant.create(data)

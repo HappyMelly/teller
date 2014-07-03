@@ -1,0 +1,50 @@
+@(user: LoginIdentity)
+
+<h3 id="participant">Participant creation</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>Add new participant to the system </td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>POST /api/v1/participant</code></td>
+  </tr>
+  <tr>
+    <th>Request POST parameters</th>
+    <td>
+      <ul>
+        <li><code>eventId</code> unique identifier for the event, <i>numeric</i></li>
+        <li><code>emailAddress</code> <i>string</i></li>
+        <li><code>lastName</code> <i>string</i></li>
+        <li><code>firstName</code> <i>string</i></li>
+        <li><code>country</code> - ISO 8166-2 country code, <i>string</i></li>
+        <li><code>city</code> <i>string</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON object with properties:</p>
+      <ul>
+        <li><code>participantId</code> - unique identifier for a created participant</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>400 Bad Request</code> if parameters are wrong, with a JSON object, containing errors for all parameters</p>
+    </td>
+  </tr>
+</table>
