@@ -21,28 +21,35 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
-import play.api.mvc._
-import models.LoginIdentity
+import models._
+import org.joda.time.DateTime
+import play.api.data.Form
+import play.api.data.Forms._
+import play.mvc.Controller
+import views.Countries
 
-/**
- * Provides token-based authentication for API actions.
- */
-trait ApiAuthentication extends Controller {
+trait ParticipantsController extends Controller {
 
-  /** Make an action require token authentication **/
-  def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request))).getOrElse(Unauthorized("Unauthorized"))
+  def newPersonForm(account: UserAccount, userName: String) = {
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "eventId" -> longNumber.verifying(
+        "error.event.invalid",
+        (eventId: Long) ⇒ Event.canManage(eventId, account)),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "birthDate" -> optional(jodaLocalDate),
+      "emailAddress" -> email,
+      "city" -> nonEmptyText,
+      "country" -> nonEmptyText.verifying(
+        "Unknown country",
+        (country: String) ⇒ Countries.all.exists(_._1 == country)),
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(userName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(userName))(ParticipantData.apply)(ParticipantData.unapply))
   }
-
-  /** Make an action require token authentication **/
-  def TokenSecuredActionWithIdentity(f: (Request[AnyContent], LoginIdentity) ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request, identity))).getOrElse(Unauthorized("Unauthorized"))
-  }
-  val ApiToken = "api_token"
 
 }

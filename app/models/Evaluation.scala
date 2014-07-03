@@ -30,6 +30,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.cache.Cache
 import play.api.Play.current
+import play.api.i18n.Messages
 import play.api.libs.Crypto
 import scala.util.Random
 import play.api.libs.concurrent.Execution.Implicits._
@@ -50,7 +51,7 @@ object EvaluationStatus extends Enumeration {
 case class Evaluation(
   id: Option[Long],
   eventId: Long,
-  participantId: Option[Long],
+  participantId: Long,
   question1: String,
   question2: String,
   question3: String,
@@ -69,16 +70,29 @@ case class Evaluation(
 
   lazy val event: Event = Event.find(eventId).get
 
-  lazy val participant: Person = Person.find(participantId.get).get
+  lazy val participant: Person = Person.find(participantId).get
 
-  def insert: Evaluation = DB.withSession { implicit session: Session ⇒
+  def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
-    val participant = Participant.find(participantId.get, eventId).get
+    val participant = Participant.find(participantId, eventId).get
     participant.copy(evaluationId = Some(id)).update
-    this.copy(id = Some(id))
+    val created = this.copy(id = Some(id))
+
+    val brand = Brand.find(event.brandCode).get
+    val impression = Messages("evaluation.impression." + question6)
+    val subject = s"New evaluation (General impression: $impression)"
+    EmailService.send(event.facilitators.toSet,
+      Some(Set(brand.coordinator)), None, subject,
+      mail.html.evaluation(created).toString(), richMessage = true)
+
+    created
   }
 
-  def delete(): Unit = Evaluation.delete(this.id.get)
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    Evaluations.where(_.id === id).mutate(_.delete())
+    val participant = Participant.find(participantId, eventId).get
+    participant.copy(evaluationId = None).update
+  }
 
   def update: Evaluation = DB.withSession { implicit session: Session ⇒
     val updateTuple = (eventId, participantId, question1, question2, question3, question4, question5,
@@ -88,7 +102,7 @@ case class Evaluation(
     this
   }
 
-  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"${participantId.get}%03d"
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$participantId%03d"
 
   def approve(approver: Person): Evaluation = {
 
@@ -102,7 +116,7 @@ case class Evaluation(
       val cert = new Certificate(evaluation, Some(oldEvaluation))
       cert.generateAndSend(brand, approver)
     } else if (evaluation.certificate.isEmpty) {
-      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString
+      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
       val subject = s"Your ${brand.brand.name} event's evaluation approval"
       EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
         Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
@@ -149,10 +163,6 @@ object Evaluation {
 
   def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).sortBy(_.created).list
-  }
-
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Evaluations.where(_.id === id).mutate(_.delete())
   }
 
 }

@@ -21,44 +21,35 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
+import models._
 import play.api.mvc._
-import models.{ LoginIdentity, Activity }
-import securesocial.core.SecureSocial
+import play.api.data.Form
+import play.api.i18n.Messages
+import play.api.libs.json._
 
-object Dashboard extends Controller with SecureSocial {
-
-  /**
-   * About page - credits.
-   */
-  def about = SecuredAction { implicit request ⇒
-    Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
-  }
+/**
+ * Participants API
+ */
+object ParticipantsApi extends ParticipantsController with ApiAuthentication {
 
   /**
-   * API documentation page.
+   * Create a participant through API call
    */
-  def api = SecuredAction { implicit request ⇒
-    Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
-  }
+  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
+    val person = identity.person
+    val form: Form[ParticipantData] = newPersonForm(identity.userAccount, person.fullName).bindFromRequest()(request)
 
-  /**
-   * Dashboard page - logged-in home page.
-   */
-  def index = SecuredAction { implicit request ⇒
-    val activity = Activity.findAll
-    Ok(views.html.dashboard(request.user, activity))
+    form.fold(
+      formWithErrors ⇒ {
+        BadRequest(formWithErrors.errorsAsJson)
+      },
+      data ⇒ {
+        val participant = Participant.create(data)
+        val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
+        Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
+        Ok(Json.obj("participantId" -> participant.participantId))
+      })
   }
-
-  /**
-   * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
-   * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
-   */
-  def profile = SecuredAction { implicit request ⇒
-    val currentUser = request.user.asInstanceOf[LoginIdentity].person
-    Redirect(routes.People.details(currentUser.id.getOrElse(0)))
-  }
-
 }

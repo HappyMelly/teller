@@ -25,8 +25,8 @@
 package models
 
 import models.database.{ Participants, People, Events, Evaluations }
-import play.api.db.slick.Config.driver.simple._
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
@@ -81,6 +81,23 @@ case class ParticipantView(person: Person,
     41 * (41 + person.id.get.toInt) + event.id.get.toInt
 }
 
+/** This object is used to get data from a form **/
+case class ParticipantData(id: Option[Long],
+  eventId: Long,
+  firstName: String,
+  lastName: String,
+  birthDate: Option[LocalDate],
+  emailAddress: String,
+  city: String,
+  country: String,
+  created: DateTime = DateTime.now(),
+  createdBy: String,
+  updated: DateTime,
+  updatedBy: String) {
+
+  lazy val event: Option[Event] = Event.find(eventId)
+}
+
 object Participant {
 
   def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession { implicit session: Session ⇒
@@ -102,10 +119,22 @@ object Participant {
     withEvaluation.union(withoutEvaluation.distinct)
   }
 
+  def create(data: ParticipantData): Participant = DB.withSession { implicit session: Session ⇒
+    val address = Address(None, None, None, Some(data.city), None, None, data.country)
+    val virtual = true
+    val active = false
+    val person = Person(None, data.firstName, data.lastName, data.emailAddress,
+      Photo(None, None), signature = false, address, None, None, SocialProfile(personId = 0), boardMember = false,
+      stakeholder = false, None, None, virtual, active,
+      DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
+    val newPerson = person.insert
+    val eventParticipant = Participant(None, data.eventId, newPerson.id.get, None)
+    Participant.insert(eventParticipant)
+  }
+
   def insert(participant: Participant): Participant = DB.withSession { implicit session: Session ⇒
     val id = Participants.forInsert.insert(participant)
     participant.copy(id = Some(id))
   }
 
 }
-
