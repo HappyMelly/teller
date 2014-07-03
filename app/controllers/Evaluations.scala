@@ -111,7 +111,7 @@ object Evaluations extends EvaluationsController with Security {
     implicit handler ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
+        val form: Form[Evaluation] = evaluationForm(request.user.fullName, edit = true).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
