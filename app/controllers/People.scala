@@ -257,13 +257,22 @@ object People extends Controller with Security {
         val contributions = Contribution.contributions(id, true)
         val products = Product.findAll
 
-        Ok(views.html.person.details(request.user, person,
-          memberships, otherOrganisations,
-          contributions, products,
-          licenses, accountRole,
-          UserAccount.findDuplicateIdentity(person)))
+        import play.Logger
+        try {
+          Ok(views.html.person.details(request.user, person,
+            memberships, otherOrganisations,
+            contributions, products,
+            licenses, accountRole,
+            UserAccount.findDuplicateIdentity(person)))
+        } catch {
+          case e: Exception ⇒ {
+            Logger.debug(e.toString)
+            Ok("Error")
+          }
+        }
+
       } getOrElse {
-        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 

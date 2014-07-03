@@ -201,15 +201,15 @@ $(document).ready( function() {
         },
         "order": [[ 6, "desc" ]],
         "columns": [
-            { "data": "status" },
+            { "data": "evaluation.status" },
             { "data": "person" },
             { "data": "event" },
             { "data": "location" },
             { "data": "schedule" },
-            { "data": "impression" },
-            { "data": "creation" },
-            { "data": "handled" },
-            { "data": "certificate" },
+            { "data": "evaluation.impression" },
+            { "data": "evaluation.creation" },
+            { "data": "evaluation.handled" },
+            { "data": "evaluation.certificate" },
             { "data": "event" },
             { "data": "event" },
             { "data": "actions" }
@@ -334,9 +334,9 @@ $(document).ready( function() {
         var counter = 0;
         var rows = participantTable._('tr', {"filter":"applied"});
         for (var i = 0; i < rows.length; i++) {
-            if (rows[i].impression) {
+            if (rows[i].evaluation.impression) {
                 counter++;
-                impression += rows[i].impression.value;
+                impression += rows[i].evaluation.impression.value;
             }
         }
         if (counter) {

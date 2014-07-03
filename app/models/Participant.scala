@@ -104,7 +104,7 @@ object Participant {
     Query(Participants).filter(_.personId === personId).filter(_.eventId === eventId).firstOption
   }
 
-  def findAll(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
+  def findByBrand(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
       (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
     } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
@@ -113,6 +113,19 @@ object Participant {
       baseQuery.filter(_._2.brandCode === value)
     }.getOrElse(baseQuery)
     val rawList = brandQuery.mapResult(ParticipantView.tupled).list
+    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
+    withEvaluation.union(withoutEvaluation.distinct)
+  }
+
+  def findByEvent(eventId: Long): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
+    val baseQuery = for {
+      (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
+    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+
+    val eventQuery = baseQuery.filter(_._2.id === eventId)
+    val rawList = eventQuery.mapResult(ParticipantView.tupled).list
     val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
       map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
