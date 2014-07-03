@@ -143,6 +143,8 @@ GET /api/v1/brands                 controllers.BrandsApi.brands
 GET /api/v1/brands/grouped/status  controllers.BrandsApi.brandsByStatus
 GET /api/v1/brand/:code            controllers.BrandsApi.brand(code: String)
 
+POST /api/v1/evaluation            controllers.EvaluationsApi.create
+
 GET /api/v1/event/:id                                       controllers.EventsApi.event(id: Long)
 GET /api/v1/events/:brandCode                               controllers.EventsApi.events(brandCode: String, future: Option[Boolean], public: Option[Boolean], countryCode: Option[String], eventType: Option[Long])
 GET /api/v1/events/:brandCode/facilitator/:facilitatorId    controllers.EventsApi.eventsByFacilitator(brandCode: String, facilitatorId: Long, future: Option[Boolean], public: Option[Boolean])

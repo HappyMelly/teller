@@ -26,30 +26,29 @@ package controllers
 import models._
 import play.api.mvc._
 import play.api.data.Form
-import play.api.i18n.Messages
 import play.api.libs.json._
 
 /**
  * Evaluations API
  */
-object EvaluationsApi extends ParticipantsController with ApiAuthentication {
+object EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
   /**
    * Create an evaluation through API call
    */
   def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
     val person = identity.person
-    val form: Form[ParticipantData] = newPersonForm(identity.userAccount, person.fullName).bindFromRequest()(request)
+    val form: Form[Evaluation] = evaluationForm(identity.person.fullName).bindFromRequest()(request)
 
     form.fold(
       formWithErrors ⇒ {
-        BadRequest(Json.obj("error" -> formWithErrors.errorsAsJson))
+        BadRequest(formWithErrors.errorsAsJson)
       },
-      data ⇒ {
-        val participant = Participant.create(data)
-        val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
-        Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
-        Ok(Json.obj("participantId" -> participant.participantId))
+      evaluation ⇒ {
+        val createdEvaluation = evaluation.create
+
+        Activity.insert(person.fullName, Activity.Predicate.Created, "new evaluation")
+        Ok(Json.obj("evaluationId" -> createdEvaluation.id.get))
       })
   }
 }

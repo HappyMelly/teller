@@ -139,7 +139,7 @@ object Participants extends ParticipantsController with Security {
       Event.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
-        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(_.participantId == p.id))))
+        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.participantId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }
 

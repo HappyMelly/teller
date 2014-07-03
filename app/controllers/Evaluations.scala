@@ -38,48 +38,7 @@ import play.api.i18n.Messages
 import securesocial.core.SecuredRequest
 import services.EmailService
 
-object Evaluations extends Controller with Security {
-
-  /**
-   * Formatter used to define a form mapping for the `EvaluationStatus` enumeration.
-   */
-  implicit def statusFormat: Formatter[EvaluationStatus.Value] = new Formatter[EvaluationStatus.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(EvaluationStatus.withName(_)).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: EvaluationStatus.Value) = Map(key -> value.toString)
-  }
-
-  val statusMapping = of[EvaluationStatus.Value]
-
-  /** HTML form mapping for creating and editing. */
-  def evaluationForm(implicit request: SecuredRequest[_]) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "eventId" -> longNumber.verifying(
-      "Such event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> longNumber.verifying(
-      "Such person doesn't exist", (personId: Long) ⇒ Person.find(personId).isDefined),
-    "question1" -> nonEmptyText,
-    "question2" -> nonEmptyText,
-    "question3" -> nonEmptyText,
-    "question4" -> nonEmptyText,
-    "question5" -> nonEmptyText,
-    "question6" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
-    "question7" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
-    "question8" -> nonEmptyText,
-    "status" -> statusMapping,
-    "handled" -> optional(jodaLocalDate),
-    "certificate" -> optional(nonEmptyText),
-    "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(request.user.fullName),
-    "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
+object Evaluations extends EvaluationsController with Security {
 
   /** Add page **/
   def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
@@ -87,14 +46,14 @@ object Evaluations extends Controller with Security {
       implicit handler ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, None, evaluationForm, events, eventId, participantId))
+        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId))
   }
 
   /** Add form submits to this action **/
   def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
 
-      val form: Form[Evaluation] = evaluationForm.bindFromRequest
+      val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -102,14 +61,7 @@ object Evaluations extends Controller with Security {
           BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None))
         },
         evaluation ⇒ {
-          val createdEvaluation = evaluation.insert
-
-          val brand = Brand.find(createdEvaluation.event.brandCode).get
-          val impression = Messages("evaluation.impression." + createdEvaluation.question6)
-          val subject = s"New evaluation (General impression: $impression)"
-          EmailService.send(createdEvaluation.event.facilitators.toSet,
-            Some(Set(brand.coordinator)), None, subject,
-            mail.html.evaluation(createdEvaluation).toString, true)
+          evaluation.create
 
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
@@ -149,7 +101,7 @@ object Evaluations extends Controller with Security {
       Evaluation.find(id).map { evaluation ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events, None, None))
+        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm(request.user.fullName).fill(evaluation), events, None, None))
       }.getOrElse(NotFound)
 
   }
@@ -159,7 +111,7 @@ object Evaluations extends Controller with Security {
     implicit handler ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm.bindFromRequest
+        val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
