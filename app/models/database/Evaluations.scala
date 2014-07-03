@@ -40,7 +40,7 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
-  def participantId = column[Option[Long]]("PARTICIPANT_ID")
+  def participantId = column[Long]("PARTICIPANT_ID")
   def question1 = column[String]("QUESTION_1")
   def question2 = column[String]("QUESTION_2")
   def question3 = column[String]("QUESTION_3")

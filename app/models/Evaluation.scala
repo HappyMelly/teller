@@ -50,7 +50,7 @@ object EvaluationStatus extends Enumeration {
 case class Evaluation(
   id: Option[Long],
   eventId: Long,
-  participantId: Option[Long],
+  participantId: Long,
   question1: String,
   question2: String,
   question3: String,
@@ -69,11 +69,11 @@ case class Evaluation(
 
   lazy val event: Event = Event.find(eventId).get
 
-  lazy val participant: Person = Person.find(participantId.get).get
+  lazy val participant: Person = Person.find(participantId).get
 
   def insert: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
-    val participant = Participant.find(participantId.get, eventId).get
+    val participant = Participant.find(participantId, eventId).get
     participant.copy(evaluationId = Some(id)).update
     this.copy(id = Some(id))
   }
@@ -88,7 +88,7 @@ case class Evaluation(
     this
   }
 
-  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"${participantId.get}%03d"
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$participantId%03d"
 
   def approve(approver: Person): Evaluation = {
 
@@ -102,7 +102,7 @@ case class Evaluation(
       val cert = new Certificate(evaluation, Some(oldEvaluation))
       cert.generateAndSend(brand, approver)
     } else if (evaluation.certificate.isEmpty) {
-      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString
+      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
       val subject = s"Your ${brand.brand.name} event's evaluation approval"
       EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
         Some(Set(brand.coordinator)), subject, body, richMessage = true, None)

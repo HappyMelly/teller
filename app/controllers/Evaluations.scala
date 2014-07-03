@@ -63,7 +63,8 @@ object Evaluations extends Controller with Security {
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
       "Such event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> optional(longNumber),
+    "participantId" -> longNumber.verifying(
+      "Such person doesn't exist", (personId: Long) ⇒ Person.find(personId).isDefined),
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
@@ -104,9 +105,8 @@ object Evaluations extends Controller with Security {
           val createdEvaluation = evaluation.insert
 
           val brand = Brand.find(createdEvaluation.event.brandCode).get
-          val recipients = brand.coordinator :: createdEvaluation.event.facilitators
           val impression = Messages("evaluation.impression." + createdEvaluation.question6)
-          val subject = s"New evaluation (General impression: ${impression})"
+          val subject = s"New evaluation (General impression: $impression)"
           EmailService.send(createdEvaluation.event.facilitators.toSet,
             Some(Set(brand.coordinator)), None, subject,
             mail.html.evaluation(createdEvaluation).toString, true)
