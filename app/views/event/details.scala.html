@@ -11,6 +11,7 @@
 
 @main(event.title + " - Event", "events", Some(user)) {
 
+  @html.evaluationActions()
   <div class="page-header">
     <h1>
       @event.title
@@ -141,10 +142,10 @@
         </form>
       }
   </div>
-  <div class="col-md-10">
+  <div class="col-md-12">
     <ul class="nav nav-tabs" id="details">
       <li class="active"><a href="#description">Description</a></li>
-      <li><a href="#participants">Participants</a></li>
+      <li><a href="#participant">Participants</a></li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="description">
@@ -162,12 +163,30 @@
           }
         </div>
       </div>
-      <div class="tab-pane" id="participants">
-        <h1>Test</h1>
+      <div class="tab-pane" id="participant">
+        <div id="filter-containter">
+          <div class="pull-right">
+            <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+              <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+          </div>
+        </div>
+        <table id="participants" class="datatables table table-bordered">
+          <thead>
+          <tr>
+            <th></th>
+            <th>Participant</th>
+            <th align="center" id="impression"></th>
+            <th>Evaluation Date</th>
+            <th>Handled Date</th>
+            <th>Certificate Number</th>
+            <th></th>
+          </tr>
+          </thead>
+        </table>
       </div>
     </div>
   </div>
 
-
+  <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
 	<script src="@routes.Assets.at("event/details.js")" type="text/javascript"></script>
 }

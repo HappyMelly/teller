@@ -29,27 +29,61 @@ $(document).ready( function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
 
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
     $('#details a').click(function (e) {
       e.preventDefault();
       $(this).tab('show');
     });
 
+    // Datatables
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+    } );
+    var participantTable = $('#participants').dataTable({
+        "sDom": '<"toolbar">rtip',
+        "iDisplayLength": 25,
+        "asStripeClasses":[],
+        "aaSorting": [],
+        "bLengthChange": false,
+        "ajax": {
+            "url" : "/participants/event/" + 3,
+            "dataSrc": ""
+        },
+        "order": [[ 1, "asc" ]],
+        "columns": [
+            { "data": "evaluation.status" },
+            { "data": "person" },
+            { "data": "evaluation.impression" },
+            { "data": "evaluation.creation" },
+            { "data": "evaluation.handled" },
+            { "data": "evaluation.certificate" },
+            { "data": "actions" }
+        ],
+        "columnDefs": [{
+                "render": function(data, type, row) { return drawStatus(data); },
+                "targets": 0
+            }, {
+                "render": function(data, type, row) {
+                    return '<a href="' + data.url + '">' + data.name + '</a>';
+                },
+                "targets": 1
+            }, {
+                "render": function(data, type, row) { return drawImpression(data); },
+                "targets": 2
+            }, {
+                "render": function(data, type, row) { return drawCertificate(data); },
+                "targets": 5
+            }, {
+               "render": function(data, type, row) { return renderDropdown(data); },
+               "targets": 6,
+               "bSortable": false
+            }
+        ]
+    });
+
+    $("div.toolbar").html($('#filter-containter').html());
+    $('#filter-containter').empty();
+    $('#participants').on('draw.dt', function() {
+        calculateAverageImpression(participantTable);
+    });
 });
 
