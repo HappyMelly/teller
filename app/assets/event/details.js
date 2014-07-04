@@ -22,6 +22,33 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+/**
+ * Draw a table containing all participants of the event
+ */
+function drawRequestEvaluationTable(table) {
+    var rows = table._('tr', {});
+    var body = $('#participantList').find('tbody');
+    body.empty();
+    var tr = null;
+    for (var i = 0; i < rows.length; i++) {
+        var column = i % 2;
+        if (column == 0) {
+            tr = $('<tr>');
+            body.append(tr);
+        }
+        var label = $('<label>')
+            .text(rows[i].person.name + "  ")
+            .append($('<input type="checkbox">'));
+        var div = $('<div class="checkbox">').append(label);
+        div.append(drawStatus(rows[i].evaluation.status));
+        var td = $('<td>').append(div);
+        tr.append(td);
+    }
+    if (rows.length % 2 > 0) {
+        tr.append($('<td>'));
+    }
+}
+
 $(document).ready( function() {
 
     // Delete links.
@@ -84,6 +111,7 @@ $(document).ready( function() {
     $('#filter-containter').empty();
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
+        drawRequestEvaluationTable(participantTable);
     });
     $('#exportLink').on('click', function() {
         buildExportLink(true)
