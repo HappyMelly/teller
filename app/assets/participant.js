@@ -118,19 +118,28 @@ function renderDropdown(data) {
  * This function creates a new export link when a user clicks 'Export to XLSX'.
  *  It collects data from all table filters
  */
-function buildExportLink() {
-    var brandCode = $('#brands').find(':selected').val();
-    var eventId = $('#events').find(':selected').val();
-    if (!eventId) {
-        eventId = 0;
+function buildExportLink(detailsPage) {
+    var brandCode = '';
+    var eventId = 0;
+    var status = -1;
+    var facilitatedByMe = false;
+    if (detailsPage) {
+        brandCode = $('#brandCode').val();
+        eventId = $('#eventId').val();
+    } else {
+        brandCode = $('#brands').find(':selected').val();
+        eventId = $('#events').find(':selected').val();
+        if (!eventId) {
+            eventId = 0;
+        }
+        status = $('#status').find(':selected').val();
+        if (status == 'all') {
+            status = -1;
+        }
+        facilitatedByMe = $('#facilitatedByMe').is(':checked');
     }
-    var status = $('#status').find(':selected').val();
-    if (status == 'all') {
-        status = -1;
-    }
-    var facilitatedByMe = $('#facilitatedByMe').is(':checked');
     var suffix = brandCode + '/event/' + eventId + '/status/' + status + '/byMe/' + facilitatedByMe;
-    $("#exportLink").attr("href", "evaluations/export/" + suffix);
+    $("#exportLink").attr("href", "/evaluations/export/" + suffix);
 }
 
 /**
@@ -191,7 +200,6 @@ function drawImpression(data) {
 }
 
 $(document).ready( function() {
-    $('#exportLink').on('click', buildExportLink);
     $("#participants").on('click', '.approve', function(){
         $("#approveLink").attr('href', $(this).data('href'));
     });

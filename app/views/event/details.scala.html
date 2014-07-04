@@ -59,6 +59,7 @@
   }
 
   <div class="col-md-4">
+    <input type="hidden" disabled id="brandCode" value="@event.brandCode"/>
     <p>
       <strong>Brand</strong><br/>
       <a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a>
@@ -149,19 +150,17 @@
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="description">
-        <div class="col-xs-9">
-          <br/>
-          @event.details.description.map { desc =>
-          <p>
-            <strong>Short description</strong><br/>@desc.markdown
-          </p>
-          }
-          @event.details.specialAttention.map { attention =>
-          <p>
-            <strong>Special attention</strong><br/>@attention.markdown
-          </p>
-          }
-        </div>
+        <br/>
+        @event.details.description.map { desc =>
+        <p>
+          <strong>Short description</strong><br/>@desc.markdown
+        </p>
+        }
+        @event.details.specialAttention.map { attention =>
+        <p>
+          <strong>Special attention</strong><br/>@attention.markdown
+        </p>
+        }
       </div>
       <div class="tab-pane" id="participant">
         <div id="filter-containter">

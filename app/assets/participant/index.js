@@ -188,4 +188,8 @@ $(document).ready( function() {
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
     });
+    $('#exportLink').on('click', function() {
+        buildExportLink(false)
+    });
+
 });

@@ -109,7 +109,10 @@ td .btn-link {
     padding-right: 7px;
 }
 .toolbar {
-    padding-bottom: 15px;
+    padding-bottom: 25px;
+}
+.tab-pane {
+    padding: 10px 10px 10px 10px;
 }
 
 .inactive, .inactive a {

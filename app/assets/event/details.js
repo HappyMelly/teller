@@ -45,7 +45,7 @@ $(document).ready( function() {
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "/participants/event/" + 3,
+            "url" : "/participants/event/" + $("#eventId").val(),
             "dataSrc": ""
         },
         "order": [[ 1, "asc" ]],
@@ -84,6 +84,9 @@ $(document).ready( function() {
     $('#filter-containter').empty();
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
+    });
+    $('#exportLink').on('click', function() {
+        buildExportLink(true)
     });
 });
 
