@@ -94,6 +94,7 @@ activity.balance = {0} balanced {1} accounts
 activity.confirm = {0} confirmed {1} event
 activity.approve = {0} approved an evaluation for {1}
 activity.reject = {0} rejected an evaluation for {1}
+activity.send = {0} sent a request for evaluation for {1} event
 
 # Controller error messages
 # {0} Object name

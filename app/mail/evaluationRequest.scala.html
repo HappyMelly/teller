@@ -1,0 +1,57 @@
+@(brand: Brand, participant: Person, body: String)
+@import templates.Formatters._
+
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<body>
+<table cellpadding="0" cellspacing="0" border="0"
+       style="margin:0px;padding:0px;width:100%!important;line-height:100%!important">
+  <tbody>
+  <tr>
+    <td valign="top">
+      <table cellpadding="15" cellspacing="0" border="0" align="center"
+             style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204);width:550px">
+        <tbody>
+        <tr>
+          <td valign="top" style="background-color:rgb(0,174,239)">
+            <h3 style="font-size:20px;font-weight:normal"> Evaluation Request </h3>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">
+            <h3> Hi @participant.fullName, </h3>
+            <table cellpadding="0" cellspacing="0" border="0" style="font-size:12px;line-height:16px;width:100%">
+              <tbody>
+              <tr>
+                <td>
+                  <p>@body</p>
+                  <p> Thanks for attending! </p>
+                  <p style="font-weight:bold"> The @brand.name team</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <table cellpadding="0" cellspacing="0" border="0" align="center"
+             style="margin-top:10px;width:550px">
+        <tbody>
+        <tr>
+          <td valign="top"
+              style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px;width:50%"> THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">HAPPY MELLY TELLER</a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
+

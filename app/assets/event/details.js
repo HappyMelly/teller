@@ -36,9 +36,12 @@ function drawRequestEvaluationTable(table) {
             tr = $('<tr>');
             body.append(tr);
         }
+        var input = $('<input type="checkbox">')
+            .attr('name', 'participantIds[' + i + ']')
+            .attr('value', rows[i].person.id);
         var label = $('<label>')
             .text(rows[i].person.name + "  ")
-            .append($('<input type="checkbox">'));
+            .append(input);
         var div = $('<div class="checkbox">').append(label);
         div.append(drawStatus(rows[i].evaluation.status));
         var td = $('<td>').append(div);

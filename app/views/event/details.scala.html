@@ -12,7 +12,7 @@
 @main(event.title + " - Event", "events", Some(user)) {
 
   @html.evaluationActions()
-  @views.html.event.requestEvaluation()
+  @views.html.event.requestEvaluation(event)
   <div class="page-header">
     <h1>
       @event.title

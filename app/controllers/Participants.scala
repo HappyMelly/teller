@@ -123,7 +123,8 @@ object Participants extends ParticipantsController with Security {
             Json.obj(
               "person" -> Json.obj(
                 "url" -> routes.People.details(data.person.id.get).url,
-                "name" -> data.person.fullName),
+                "name" -> data.person.fullName,
+                "id" -> data.person.id.get),
               "evaluation" -> evaluation(data),
               "actions" -> {
                 data.evaluationId match {
