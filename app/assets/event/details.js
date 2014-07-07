@@ -36,7 +36,7 @@ function drawRequestEvaluationTable(table) {
             tr = $('<tr>');
             body.append(tr);
         }
-        var input = $('<input type="checkbox">')
+        var input = $('<input type="checkbox" class="participant">')
             .attr('name', 'participantIds[' + i + ']')
             .attr('value', rows[i].person.id);
         var label = $('<label>')
@@ -49,6 +49,29 @@ function drawRequestEvaluationTable(table) {
     }
     if (rows.length % 2 > 0) {
         tr.append($('<td>'));
+    }
+}
+
+/**
+ * Disable/enable 'Send' button by checking if the participants are selected
+ *  and the letter's body contains an url
+ */
+function toggleSentButton() {
+    var noParticipants = true;
+    $('.participant').each(function() {
+        if (this.checked) {
+            noParticipants = false;
+        }
+    });
+    var wrongBody = true;
+    var body = $('textarea[name=body]').val();
+    if (/https?:/i.test(body)) {
+        wrongBody = false;
+    }
+    if (noParticipants || wrongBody) {
+        $('#requestButton').attr('disabled', 'disabled');
+    } else {
+        $('#requestButton').removeAttr('disabled');
     }
 }
 
@@ -119,5 +142,7 @@ $(document).ready( function() {
     $('#exportLink').on('click', function() {
         buildExportLink(true)
     });
+    $('#participantList').on('change', '.participant', toggleSentButton);
+    $('textarea[name=body]').on('input propertychange', toggleSentButton);
 });
 

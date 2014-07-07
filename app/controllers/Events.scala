@@ -370,11 +370,7 @@ object Events extends Controller with Security {
           requestData ⇒ {
             val participantIds = event.participants.map(_.id.get)
             if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
-              val body = requestData.body.split(" +").map(w ⇒ {
-                if ("""https?:\/\/""".r.findFirstIn(w).isDefined) {
-                  "<a href=" + w + "\">" + w + "</a>"
-                } else { w }
-              }).mkString(" ")
+              val body = requestData.body
               val brand = Brand.find(event.brandCode).get
               requestData.participantIds.foreach { id ⇒
                 val participant = Person.find(id).get
