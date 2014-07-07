@@ -13,9 +13,9 @@ from third-party apps and websites.
 ### Pre-requisites
 
 1. Install Java JDK 1.7
-2. Download and install Play framework 2.2.1
+2. Download and install Play framework 2.2.2
     * [http://www.playframework.com/download](http://www.playframework.com/download)
-    * [http://www.playframework.com/documentation/2.2.1/Installing](http://www.playframework.com/documentation/2.2.1/Installing)
+    * [http://www.playframework.com/documentation/2.2.2/Installing](http://www.playframework.com/documentation/2.2.2/Installing)
 3. Download/install and start MySQL 5.6
 4. Create the database and user:
 
@@ -73,4 +73,5 @@ Check [notes for contributors](https://github.com/HappyMelly/teller/blob/master/
 
 ## License
 
-Happy Melly Teller is licensed under [GNU General Public License v.3](http://www.gnu.org/copyleft/gpl.html)
+Happy Melly Teller is licensed under [GNU General Public License v.3](http://www.gnu.org/copyleft/gpl.html).
+It includes [iText library](http://itextpdf.com) which is licensed under [AGPL](http://www.gnu.org/licenses/agpl-3.0.html).
