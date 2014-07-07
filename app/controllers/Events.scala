@@ -36,7 +36,6 @@ import models.UserRole.Role._
 import play.api.data.format.Formatter
 import models.Location
 import models.Schedule
-import scala.Some
 import services.EmailService
 
 object Events extends Controller with Security {
@@ -343,7 +342,49 @@ object Events extends Controller with Security {
         event ⇒
           event.copy(confirmed = true).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Confirmed, event.title)
-          Redirect(routes.Events.details(event.id.getOrElse(0))).flashing("success" -> activity.toString)
+          Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Send requests for evaluation to participants of the event
+   * @param id Event ID
+   */
+  def sendRequest(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+    implicit handler ⇒
+      case class EvaluationRequestData(participantIds: List[Long], body: String)
+      val form = Form(mapping(
+        "participantIds" -> list(longNumber),
+        "body" -> nonEmptyText.verifying(
+          "The letter's body doesn't contains a link",
+          (b: String) ⇒ {
+            val url = """https?:\/\/""".r findFirstIn b
+            url.isDefined
+          }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
+
+      Event.find(id).map { event ⇒
+        form.fold(
+          formWithErrors ⇒ {
+            Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")
+          },
+          requestData ⇒ {
+            val participantIds = event.participants.map(_.id.get)
+            if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
+              val body = requestData.body
+              val brand = Brand.find(event.brandCode).get
+              requestData.participantIds.foreach { id ⇒
+                val participant = Person.find(id).get
+                val subject = s"Evaluation Request"
+                EmailService.send(Set(participant), None, None, subject,
+                  mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
+              }
+
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Sent, event.title)
+              Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+            } else {
+              Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event.")
+            }
+          })
       }.getOrElse(NotFound)
   }
 }

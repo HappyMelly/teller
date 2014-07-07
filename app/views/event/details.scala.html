@@ -11,6 +11,8 @@
 
 @main(event.title + " - Event", "events", Some(user)) {
 
+  @html.evaluationActions()
+  @views.html.event.requestEvaluation(event)
   <div class="page-header">
     <h1>
       @event.title
@@ -58,6 +60,7 @@
   }
 
   <div class="col-md-4">
+    <input type="hidden" disabled id="brandCode" value="@event.brandCode"/>
     <p>
       <strong>Brand</strong><br/>
       <a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a>
@@ -141,19 +144,51 @@
         </form>
       }
   </div>
-  <div class="col-md-10">
-    @event.details.description.map { desc =>
-      <p>
-        <strong>Short description</strong><br/>@desc.markdown
-      </p>
-    }
-    @event.details.specialAttention.map { attention =>
-      <p>
-        <strong>Special attention</strong><br/>@attention.markdown
-    </p>
-    }
+  <div class="col-md-12">
+    <ul class="nav nav-tabs" id="details">
+      <li class="active"><a href="#description">Description</a></li>
+      <li><a href="#participant">Participants</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="description">
+        <br/>
+        @event.details.description.map { desc =>
+        <p>
+          <strong>Short description</strong><br/>@desc.markdown
+        </p>
+        }
+        @event.details.specialAttention.map { attention =>
+        <p>
+          <strong>Special attention</strong><br/>@attention.markdown
+        </p>
+        }
+      </div>
+      <div class="tab-pane" id="participant">
+        <div id="filter-containter">
+          <div class="pull-right">
+            <a class="input-sm" tabindex="-1" href="#request"  data-toggle="modal" title="Request Evaluation">
+              <i class="glyphicon glyphicon-envelope"></i> Send Evaluation Request</a>
+            <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+              <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+          </div>
+        </div>
+        <table id="participants" class="datatables table table-bordered">
+          <thead>
+          <tr>
+            <th></th>
+            <th>Participant</th>
+            <th align="center" id="impression"></th>
+            <th>Evaluation Date</th>
+            <th>Handled Date</th>
+            <th>Certificate Number</th>
+            <th></th>
+          </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
   </div>
 
-
-	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+	<script src="@routes.Assets.at("event/details.js")" type="text/javascript"></script>
 }

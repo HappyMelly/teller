@@ -85,24 +85,7 @@ object Participants extends ParticipantsController with Security {
               "schedule" -> Json.obj(
                 "start" -> data.event.schedule.start.toString,
                 "end" -> data.event.schedule.end.toString),
-              "impression" -> data.impression.map { value ⇒
-                Json.obj(
-                  "value" -> value,
-                  "caption" -> Messages(s"evaluation.impression.$value"))
-              },
-              "status" -> data.status.map(status ⇒
-                Json.obj(
-                  "label" -> Messages("models.EvaluationStatus." + status),
-                  "value" -> status.id)),
-              "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-              "handled" -> data.handled.map(_.get.toString),
-              "certificate" -> data.status.map(status ⇒
-                if (status == EvaluationStatus.Approved) {
-                  data.certificate.map(id ⇒
-                    Json.obj(
-                      "id" -> id.get,
-                      "url" -> routes.Certificates.certificate(id.get).url)).getOrElse(Json.obj())
-                } else Json.obj()),
+              "evaluation" -> evaluation(data),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -122,8 +105,48 @@ object Participants extends ParticipantsController with Security {
               })
           }
         }
-        val participants = Participant.findAll(Some(brandCode))
+        val participants = Participant.findByBrand(Some(brandCode))
         Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
+      }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  /**
+   * Returns JSON data about participants together with their evaluations
+   */
+  def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Event.find(eventId).map { event ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val brand = Brand.find(event.brandCode).get
+        implicit val participantViewWrites = new Writes[ParticipantView] {
+          def writes(data: ParticipantView): JsValue = {
+            Json.obj(
+              "person" -> Json.obj(
+                "url" -> routes.People.details(data.person.id.get).url,
+                "name" -> data.person.fullName,
+                "id" -> data.person.id.get),
+              "evaluation" -> evaluation(data),
+              "actions" -> {
+                data.evaluationId match {
+                  case Some(id) ⇒ Json.obj(
+                    "certificate" -> certificateActions(id, brand.brand, data),
+                    "evaluation" -> evaluationActions(id, brand.brand, data, account),
+                    "participant" -> participantActions(data, account))
+                  case None ⇒ if (!data.event.archived) {
+                    Json.obj(
+                      "evaluation" -> Json.obj(
+                        "add" -> routes.Evaluations.add(data.event.id, data.person.id).url),
+                      "participant" -> participantActions(data, account))
+                  } else {
+                    Json.obj(
+                      "participant" -> participantActions(data, account))
+                  }
+                }
+              })
+          }
+        }
+        val participants = Participant.findByEvent(eventId)
+        Ok(Json.toJson(participants))
       }.getOrElse(NotFound("Unknown brand"))
   }
 
@@ -211,6 +234,28 @@ object Participants extends ParticipantsController with Security {
 
         Redirect(routes.Participants.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  private def evaluation(data: ParticipantView): JsValue = {
+    Json.obj(
+      "impression" -> data.impression.map { value ⇒
+        Json.obj(
+          "value" -> value,
+          "caption" -> Messages(s"evaluation.impression.$value"))
+      },
+      "status" -> data.status.map(status ⇒
+        Json.obj(
+          "label" -> Messages("models.EvaluationStatus." + status),
+          "value" -> status.id)),
+      "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
+      "handled" -> data.handled.map(_.get.toString),
+      "certificate" -> data.status.map(status ⇒
+        if (status == EvaluationStatus.Approved) {
+          data.certificate.map(id ⇒
+            Json.obj(
+              "id" -> id.get,
+              "url" -> routes.Certificates.certificate(id.get).url)).getOrElse(Json.obj())
+        } else Json.obj()))
   }
 
   /** Return a list of possible actions for a certificate */

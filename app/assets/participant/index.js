@@ -23,19 +23,6 @@
  */
 
 /**
- * Filter evaluations checking if they are pending, approved or rejected
- */
-function filterByStatus(oSettings, aData, iDataIndex) {
-    var index = 0;
-    var filter = $('#status').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    var value = $(aData[index]).attr('value');
-    return value == filter;
-}
-
-/**
  * Filter evaluations by an event
  */
 function filterByEvent(oSettings, aData, iDataIndex) {
@@ -59,100 +46,22 @@ function filterByFacilitator(oSettings, aData, iDataIndex) {
     return aData[index] == 1;
 }
 
+/**
+ * Filter evaluations checking if they are pending, approved or rejected
+ */
+function filterByStatus(oSettings, aData, iDataIndex) {
+    var index = 0;
+    var filter = $('#status').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    var value = $(aData[index]).attr('value');
+    return value == filter;
+}
+
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
 $.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
-
-$.extend( $.fn.dataTableExt.oStdClasses, {
-    "sWrapper": "dataTables_wrapper form-inline"
-} );
-
-function renderDropdown(data) {
-    var emptyDropdown = true;
-    var html = '<div class="dropdown">';
-    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
-    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
-    if ('certificate' in data && data.certificate) {
-        if ('generate' in data.certificate && data.certificate.generate) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.certificate.generate;
-            html += '" title="Generate Certificate"><i class="glyphicon glyphicon-file"></i> Generate Certificate</a></li>';
-        }
-    }
-    if ('evaluation' in data && data.evaluation) {
-        var evaluation = data.evaluation;
-        if (!emptyDropdown) {
-            html += '<li class="divider"></li>';
-        }
-        if ('add' in evaluation && evaluation.add) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.add;
-            html += '" title="Add Evaluation"><i class="glyphicon glyphicon-plus"></i> Add Evaluation</a></li>';
-        }
-        if ('approve' in evaluation && evaluation.approve) {
-            emptyDropdown = false;
-            html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;
-            html += '" data-toggle="modal" title="Approve Evaluation"><i class="glyphicon glyphicon-thumbs-up"></i> Approve Evaluation</a></li>';
-        }
-        if ('reject' in evaluation && evaluation.reject) {
-            emptyDropdown = false;
-            html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + evaluation.reject;
-            html += '" data-toggle="modal" title="Reject Evaluation"><i class="glyphicon glyphicon-thumbs-down"></i> Reject Evaluation</a></li>';
-        }
-        if ('view' in evaluation && evaluation.view) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.view;
-            html += '" title="View Evaluation"><i class="glyphicon glyphicon-eye-open"></i> View Evaluation</a></li>';
-        }
-        if ('edit' in evaluation && evaluation.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.edit;
-            html += '" title="Edit Evaluation"><i class="glyphicon glyphicon-pencil"></i> Edit Evaluation</a></li>';
-        }
-        if ('remove' in evaluation && evaluation.remove) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.remove;
-            html += '" title="Delete Evaluation" onclick="';
-            html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
-            html += '<i class="glyphicon glyphicon-trash"></i> Delete Evaluation</a></li>';
-        }
-    }
-    if ('participant' in data && data.participant) {
-        var participant = data.participant;
-        if (!emptyDropdown) {
-            html += '<li class="divider"></li>';
-        }
-        if ('view' in participant && participant.view) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.view;
-            html += '" title="View Person"><i class="glyphicon glyphicon-eye-open"></i> View Person</a></li>';
-        }
-        if ('edit' in participant && participant.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.edit;
-            html += '" title="Edit Person"><i class="glyphicon glyphicon-pencil"></i> Edit Person</a></li>';
-        }
-        if ('remove' in participant && participant.remove) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.remove;
-            html += '" title="Delete Person">';
-            html += '<i class="glyphicon glyphicon-trash"></i> Delete Person</a></li>';
-        }
-        if ('removeParticipation' in participant && participant.removeParticipation) {
-            emptyDropdown = false;
-            html += '<li class="divider"></li>';
-            html += '<li><a tabindex="-1" href="' + participant.removeParticipation;
-            html += '" title="Remove Participation" onclick="';
-            html += "return confirm('Remove this participation? The evaluation (if exists) will also be deleted. You cannot undo this action.')\">";
-            html += '<i class="glyphicon glyphicon-trash"></i> Remove Participation</a></li>';
-        }
-    }
-    html += '</ul></div>';
-    if (emptyDropdown) {
-        return '';
-    }
-    return html;
-}
 
 function loadEventList(events) {
     $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
@@ -162,24 +71,6 @@ function loadEventList(events) {
     }
 }
 
-/**
- * This function creates a new export link when a user clicks 'Export to XLSX'.
- *  It collects data from all table filters
- */
-function buildExportLink() {
-    var brandCode = $('#brands').find(':selected').val();
-    var eventId = $('#events').find(':selected').val();
-    if (!eventId) {
-        eventId = 0;
-    }
-    var status = $('#status').find(':selected').val();
-    if (status == 'all') {
-        status = -1;
-    }
-    var facilitatedByMe = $('#facilitatedByMe').is(':checked');
-    var suffix = brandCode + '/event/' + eventId + '/status/' + status + '/byMe/' + facilitatedByMe;
-    $("#exportLink").attr("href", "evaluations/export/" + suffix);
-}
 
 $(document).ready( function() {
     var currentBrand = $('#brands').val();
@@ -201,35 +92,21 @@ $(document).ready( function() {
         },
         "order": [[ 6, "desc" ]],
         "columns": [
-            { "data": "status" },
+            { "data": "evaluation.status" },
             { "data": "person" },
             { "data": "event" },
             { "data": "location" },
             { "data": "schedule" },
-            { "data": "impression" },
-            { "data": "creation" },
-            { "data": "handled" },
-            { "data": "certificate" },
+            { "data": "evaluation.impression" },
+            { "data": "evaluation.creation" },
+            { "data": "evaluation.handled" },
+            { "data": "evaluation.certificate" },
             { "data": "event" },
             { "data": "event" },
             { "data": "actions" }
         ],
         "columnDefs": [{
-                "render": function(data, type, row) {
-                    var style = [
-                        { badge: '', icon: 'glyphicon-hand-right' },
-                        { badge: 'alert-success', icon: 'glyphicon-thumbs-up' },
-                        { badge: 'alert-warning', icon: 'glyphicon-thumbs-down' }
-                    ];
-                    if (data) {
-                        var html = '<span class="badge ' + style[data.value].badge + '"';
-                        html += ' value="' + data.value + '" ';
-                        html += 'title="Status: ' + data.label + '">';
-                        html += '<i class="glyphicon-white glyphicon ' + style[data.value].icon + '"></i></span>';
-                        return html;
-                    }
-                    return '';
-                },
+                "render": function(data, type, row) { return drawStatus(data); },
                 "targets": 0
             }, {
                 "render": function(data, type, row) {
@@ -257,25 +134,13 @@ $(document).ready( function() {
                 },
                 "targets": 4
             }, {
-                "render": function(data, type, row) {
-                    if (data) {
-                        return '<strong>' + data.caption + '</strong>';
-                    }
-                    return '';
-                },
+                "render": function(data, type, row) { return drawImpression(data); },
                 "targets": 5
             }, {
-                "render": function(data, type, row) {
-                    if (data && data.url) {
-                        return '<a href="' + data.url + '" target="_blank">' + data.id + '</a>';
-                    }
-                    return '';
-                },
+                "render": function(data, type, row) { return drawCertificate(data); },
                 "targets": 8
             }, {
-                "render": function(data, type, row) {
-                    return data.id;
-                },
+                "render": function(data, type, row) { return data.id; },
                 "visible": false,
                 "targets": 9
             },{
@@ -285,9 +150,7 @@ $(document).ready( function() {
                 "targets": 10,
                 "visible": false
             }, {
-               "render": function(data, type, row) {
-                   return renderDropdown(data);
-               },
+               "render": function(data, type, row) { return renderDropdown(data); },
                "targets": 11,
                "bSortable": false
             }
@@ -322,34 +185,11 @@ $(document).ready( function() {
                 loadEventList(events);
             });
     });
-    $('#exportLink').on('click', buildExportLink);
-    $("#participants").on('click', '.approve', function(){
-        $("#approveLink").attr('href', $(this).data('href'));
-    });
-    $("#participants").on('click', '.reject', function(){
-        $("#rejectLink").attr('href', $(this).data('href'));
-    });
     $('#participants').on('draw.dt', function() {
-        var impression = 0;
-        var counter = 0;
-        var rows = participantTable._('tr', {"filter":"applied"});
-        for (var i = 0; i < rows.length; i++) {
-            if (rows[i].impression) {
-                counter++;
-                impression += rows[i].impression.value;
-            }
-        }
-        if (counter) {
-            impression = Math.round((impression/counter) * 100)/100;
-        }
-        var badge = '';
-        if (impression < 5) {
-            badge = '<span class="badge alert-danger">' + impression + '</span>';
-        } else if (impression < 8) {
-            badge = '<span class="badge alert-warning">' + impression + '</span>';
-        } else {
-            badge = '<span class="badge alert-success">' + impression + '</span>';
-        }
-        $("#impression").html("General impr " + badge);
+        calculateAverageImpression(participantTable);
     });
+    $('#exportLink').on('click', function() {
+        buildExportLink(false)
+    });
+
 });
