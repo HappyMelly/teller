@@ -34,6 +34,7 @@ object PeopleApi extends Controller with ApiAuthentication {
   implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
       Json.obj(
+        "id" -> person.id.get,
         "href" -> routes.PeopleApi.person(person.id.get).url,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
@@ -68,6 +69,7 @@ object PeopleApi extends Controller with ApiAuthentication {
   val personDetailsWrites = new Writes[Person] {
     def writes(person: Person) = {
       Json.obj(
+        "id" -> person.id.get,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "email_address" -> person.emailAddress,

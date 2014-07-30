@@ -35,12 +35,13 @@ function filterByDate(oSettings, aData, iDataIndex) {
     if (dates.length != 2) {
         return true;
     }
+    var start = Date.parse(dates[0]);
     var end = Date.parse(dates[1]);
     var today = Date.today();
     if (filter == 'past') {
         return (today > end);
     } else {
-        return (today <= end);
+        return (today <= start);
     }
 }
 

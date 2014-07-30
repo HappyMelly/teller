@@ -7,7 +7,7 @@
 <table class="table table-bordered">
   <tr>
     <th>Request</th>
-    <td><code>GET /api/v1/events/{brand}</code></td>
+    <td><code>GET /api/v1/brand/{brand}/events</code></td>
   </tr>
   <tr>
     <th>Request path parameters</th>
@@ -21,6 +21,7 @@
       <ul>
         <li><code>future</code> - filter events by time: <code>true</code> for future events and <code>false</code> for past events</li>
         <li><code>public</code> - filter events by publicity: <code>true</code> for public events and <code>false</code> for private events</li>
+        <li><code>archived</code> - filter events by 'Archived' flag</li>
         <li><code>countryCode</code> - filter events by ISO 8166-2 country code, e.g. AT </li>
         <li><code>eventType</code> - filter events by an event type</li>
       </ul>
@@ -35,16 +36,22 @@
     <td>
       <p>A JSON array of events objects, with properties:</p>
       <ul>
+        <li><code>id</code> - an unique identifier for an event</li>
         <li><code>title</code></li>
         <li><code>description</code></li>
+        <li><code>specialAttention</code></li>
         <li><code>spokenLanguage</code></li>
+        <li><code>materialsLanguage</code></li>
         <li><code>start</code></li>
         <li><code>end</code></li>
         <li><code>totalHours</code></li>
+        <li><code>hoursPerDay</code></li>
         <li><code>facilitators</code> - an array of objects
           <ul>
+            <li><code>id</code> - an unique identifier for a person</li>
             <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
-            <li><code>name</code></li>
+            <li><code>first_name</code></li>
+            <li><code>last_name</code></li>
             <li><code>photo</code></li>
             <li><code>city</code></li>
             <li><code>country</code> - ISO 8166-2 country code</li>
@@ -66,8 +73,8 @@
   <tr>
     <th>Examples</th>
     <td>
-      <a href="/api/v1/events/mgt30?api_token=@user.apiToken">GET /api/v1/events/mgt30</a>
-      <br><a href="/api/v1/events/mgt30?future=true&public=true&api_token=@user.apiToken">GET /api/v1/events/mgt30?future=true&public=true</a>
+      <a href="/api/v1/brand/mgt30/events?api_token=@user.apiToken">GET /api/v1/brand/mgt30/events</a>
+      <br><a href="/api/v1/brand/mgt30/events?future=true&public=true&api_token=@user.apiToken">GET /api/v1/brand/mgt30/events?future=true&public=true</a>
     </td>
   </tr>
 </table>
