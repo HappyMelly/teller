@@ -234,6 +234,7 @@ object Event {
   def findByParameters(brandCode: String,
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
+    archived: Option[Boolean] = None,
     confirmed: Option[Boolean] = None,
     countryCode: Option[String] = None,
     eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
@@ -242,17 +243,21 @@ object Event {
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) baseQuery.filter(_.end >= today)
-      else baseQuery.filter(_.end <= today)
+      if (value) baseQuery.filter(_.start >= today)
+      else baseQuery.filter(_.end < today)
     }.getOrElse(baseQuery)
 
     val publicityQuery = public.map { value ⇒
       timeQuery.filter(_.notPublic === !value)
     }.getOrElse(timeQuery)
 
-    val confirmedQuery = confirmed.map { value ⇒
-      publicityQuery.filter(_.confirmed === value)
+    val archivedQuery = archived.map { value ⇒
+      publicityQuery.filter(_.archived === value)
     }.getOrElse(publicityQuery)
+
+    val confirmedQuery = confirmed.map { value ⇒
+      archivedQuery.filter(_.confirmed === value)
+    }.getOrElse(archivedQuery)
 
     val countryQuery = countryCode.map { value ⇒
       confirmedQuery.filter(_.countryCode === value)

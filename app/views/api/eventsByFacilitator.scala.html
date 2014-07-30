@@ -2,7 +2,7 @@
 
 <h3 id="eventsByFacilitator">Events By Facilitator</h3>
 
-<p>The <em>events</em> resource is a list of events for a particular brand and a parcticular facilitator, optionally filtered by several parameters.</p>
+<p>The <em>events</em> resource is a list of events for a particular brand and a particular facilitator, optionally filtered by several parameters.</p>
 
 <table class="table table-bordered">
   <tr>
@@ -36,12 +36,16 @@
     <td>
       <p>A JSON array of events objects, with properties:</p>
       <ul>
+        <li><code>id</code> - an unique identifier for an event</li>
         <li><code>title</code></li>
         <li><code>description</code></li>
+        <li><code>specialAttention</code></li>
         <li><code>spokenLanguage</code></li>
+        <li><code>materialsLanguage</code></li>
         <li><code>start</code></li>
         <li><code>end</code></li>
         <li><code>totalHours</code></li>
+        <li><code>hoursPerDay</code></li>
         <li><code>city</code></li>
         <li><code>country</code> - ISO 8166-2 country code</li>
         <li><code>website</code></li>
