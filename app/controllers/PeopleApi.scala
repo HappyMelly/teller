@@ -83,11 +83,9 @@ object PeopleApi extends Controller with ApiAuthentication {
         "facebook_url" -> person.socialProfile.facebookUrl,
         "linkedin_url" -> person.socialProfile.linkedInUrl,
         "google_plus_url" -> person.socialProfile.googlePlusUrl,
+        "website" -> person.webSite,
+        "blog" -> person.blog,
         "active" -> person.active,
-        "created" -> person.dateStamp.created.toString(),
-        "createdBy" -> person.dateStamp.createdBy,
-        "updated" -> person.dateStamp.updated.toString(),
-        "updatedBy" -> person.dateStamp.updatedBy,
         "organizations" -> person.memberships,
         "licenses" -> person.licenses,
         "contributions" -> person.contributions)

@@ -39,7 +39,8 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "href" -> organisation.id.map(organisationId ⇒ routes.OrganisationsApi.organisation(organisationId).url),
         "name" -> organisation.name,
         "city" -> organisation.city,
-        "country" -> organisation.countryCode)
+        "country" -> organisation.countryCode,
+        "website" -> organisation.webSite)
     }
   }
 
@@ -58,6 +59,7 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
         "category" -> organisation.category.map(_.toString).orNull,
+        "website" -> organisation.webSite,
         "members" -> organisation.members,
         "contributions" -> organisation.contributions)
     }
