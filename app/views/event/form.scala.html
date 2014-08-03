@@ -50,7 +50,7 @@
           html.select(form("location.country"), ("", "Choose a country") +: Countries.all)(asIs, implicitly[Lang]),
           form("location.city"),
           html.text(form("location.city"))(asIs, implicitly[Lang]),
-          "Location"
+          "Country & City"
         )
         @html.textarea(form("details.description"), '_label -> "Description",
           'rows -> 3, '_help -> views.html.markdownHelp())

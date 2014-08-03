@@ -12,7 +12,7 @@
   @html.indexPageHeader("Participants") {
     <div class="pull-right">
     @dynamic(handler, "event", "add") {
-      <a class="btn btn-success" href="@routes.Participants.add()">
+      <a class="btn btn-success" href="@routes.Participants.add(eventId=None, ref=None)">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Participant</a>
     }
     @dynamic(handler, "evaluation", "add") {

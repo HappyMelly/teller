@@ -89,7 +89,8 @@ $(document).ready( function() {
         "iDisplayLength": 25,
         "asStripeClasses":[],
         "aaSorting": [],
-        "bLengthChange": false
+        "bLengthChange": false,
+        "order": [[ 4, "asc" ]]
     });
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();

@@ -4,7 +4,9 @@
   people: List[Person],
   newPersonForm: Form[ParticipantData],
   existingPersonForm: Form[Participant],
-  showExistingPersonForm: Boolean = true)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  showExistingPersonForm: Boolean = true,
+  currentEvent: Option[Long],
+  ref: Option[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
@@ -22,6 +24,9 @@
       <h1>Add Participant</h1>
     </div>
     <div id="switcher">
+      @currentEvent.map { value =>
+        <div id="currentEvent" value="@value"></div>
+      }
       <div class="row">
         <div class="col-sm-3"></div>
         <div class="col-sm-9 toolbar">
@@ -40,7 +45,7 @@
         </div>
       </div>
       <div class="existingPerson">
-        @html.form(action = CSRF(routes.Participants.create())) {
+        @html.form(action = CSRF(routes.Participants.create(currentEvent, ref))) {
           @html.select(existingPersonForm("eventId"),
             ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
           @html.select(existingPersonForm("participantId"),
@@ -54,7 +59,7 @@
         }
       </div>
       <div class="newPerson">
-        @html.form(action = CSRF(routes.Participants.createParticipantAndPerson())) {
+        @html.form(action = CSRF(routes.Participants.createParticipantAndPerson(currentEvent, ref))) {
           @html.select(newPersonForm("eventId"),
             ("", "Choose an event") :: events.map(e => (e.id.get.toString, e.longTitle)), '_label -> "Event", '_help ->"")
           @html.text(newPersonForm("firstName"), '_label -> "First name")
@@ -63,7 +68,7 @@
           @html.text(newPersonForm("emailAddress"), '_label -> "E-mail address")
           @html.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
           @html.text(newPersonForm("city"), '_label -> "City")
-          <div clas="row">
+          <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-9">
               <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
