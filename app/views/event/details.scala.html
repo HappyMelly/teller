@@ -144,13 +144,14 @@
         </form>
       }
   </div>
+  <div id="currentEventId" value="@event.id"></div>
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="details">
-      <li class="active"><a href="#description">Description</a></li>
+      <li><a href="#description">Description</a></li>
       <li><a href="#participant">Participants</a></li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane active" id="description">
+      <div class="tab-pane" id="description">
         <br/>
         @event.details.description.map { desc =>
         <p>
@@ -166,6 +167,8 @@
       <div class="tab-pane" id="participant">
         <div id="filter-containter">
           <div class="pull-right">
+            <a class="input-sm" tabindex="-1" href="@routes.Participants.add(event.id, Some("event")).url"  title="Add Participant">
+              <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
             <a class="input-sm" tabindex="-1" href="#request"  data-toggle="modal" title="Request Evaluation">
               <i class="glyphicon glyphicon-envelope"></i> Send Evaluation Request</a>
             <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">

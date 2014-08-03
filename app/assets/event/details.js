@@ -86,6 +86,11 @@ $(document).ready( function() {
       e.preventDefault();
       $(this).tab('show');
     });
+    var hash = window.location.hash.substring(1);
+    if (!hash) {
+        hash = 'description';
+    }
+    $('#details a[href="#' + hash + '"').tab('show');
 
     // Datatables
     $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -98,7 +103,7 @@ $(document).ready( function() {
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "/participants/event/" + $("#eventId").val(),
+            "url" : "/participants/event/" + $("#currentEventId").attr('value'),
             "dataSrc": ""
         },
         "order": [[ 1, "asc" ]],

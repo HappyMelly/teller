@@ -44,6 +44,8 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   /**
    * Retrieve the (RequestHeader,Handler) to use to serve this request.
    * Default is: route, tag request, then apply filters
+   *
+   * This function was overrided to support POST request through API
    */
   override def onRequestReceived(request: RequestHeader): (RequestHeader, Handler) = {
     val (routedRequest, handler) = onRouteRequest(request) map {

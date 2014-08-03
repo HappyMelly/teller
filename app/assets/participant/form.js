@@ -44,4 +44,10 @@ $(document).ready(function() {
   } else {
     showExistingPersonForm();
   }
+  var eventId = $('#currentEvent').attr('value');
+  if (eventId) {
+    $("[name=eventId]").each(function() {
+        $(this).find('option[value=' + eventId + ']').attr('selected', 'selected');
+    });
+  }
 });

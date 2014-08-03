@@ -132,7 +132,7 @@ object Events extends Controller with Security {
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
       "end" -> of(dateRangeFormatter),
-      "hoursPerDay" -> number(1, 24, true),
+      "hoursPerDay" -> number(1, 24),
       "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
     "notPublic" -> default(boolean, false),
     "archived" -> default(boolean, false),

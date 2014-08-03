@@ -343,13 +343,12 @@ object Event {
     Query(Events).sortBy(_.title.toLowerCase).list
   }
 
-  def sendConfirmationAlert = {
-    Brand.findAll.foreach { brand ⇒
-      Event.findByParameters(brand.brand.code, Some(false), None, Some(false), None, None).foreach { event ⇒
+  def sendConfirmationAlert = Brand.findAll.foreach { brand ⇒
+    Event.findByParameters(brand.brand.code, future = Some(false), public = None, archived = None,
+      confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
         val subject = "Сonfirm your event " + event.title
-        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString)
+        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString())
       }
-    }
   }
 
 }
