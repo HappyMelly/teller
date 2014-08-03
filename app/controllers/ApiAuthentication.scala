@@ -43,6 +43,7 @@ trait ApiAuthentication extends Controller {
     request.getQueryString(ApiToken).flatMap(token ⇒
       LoginIdentity.findBytoken(token).map(identity ⇒ f(request, identity))).getOrElse(Unauthorized("Unauthorized"))
   }
+
   val ApiToken = "api_token"
 
 }

@@ -54,6 +54,7 @@ trait EvaluationsController extends Controller {
   val participantIdFormatter = new Formatter[Long] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
       // "data" lets you access all form data values
+      //TODO: support 'event_id' key
       if (data.get("eventId").isEmpty || data.get(key).isEmpty) {
         Left(List(FormError(key, "error.required")))
       } else {
@@ -112,27 +113,5 @@ trait EvaluationsController extends Controller {
   }
 
   val statusMapping = of[EvaluationStatus.Value]
-
-  /** HTML form mapping for creating and editing. */
-  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "eventId" -> longNumber.verifying(
-      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
-    "question1" -> nonEmptyText,
-    "question2" -> nonEmptyText,
-    "question3" -> nonEmptyText,
-    "question4" -> nonEmptyText,
-    "question5" -> nonEmptyText,
-    "question6" -> number(min = 0, max = 10),
-    "question7" -> number(min = 0, max = 10),
-    "question8" -> nonEmptyText,
-    "status" -> statusMapping,
-    "handled" -> optional(jodaLocalDate),
-    "certificate" -> optional(nonEmptyText),
-    "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(userName),
-    "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
 
 }

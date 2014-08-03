@@ -24,6 +24,8 @@
 package controllers
 
 import models._
+import org.joda.time.DateTime
+import play.api.data.Forms._
 import play.api.mvc._
 import play.api.data.Form
 import play.api.libs.json._
@@ -32,6 +34,30 @@ import play.api.libs.json._
  * Evaluations API
  */
 object EvaluationsApi extends EvaluationsController with ApiAuthentication {
+
+  /** HTML form mapping for creating and editing. */
+  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "event_id" -> longNumber.verifying(
+      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+    "participant_id" -> of(participantIdFormatter),
+    "question1" -> nonEmptyText,
+    "question2" -> nonEmptyText,
+    "question3" -> nonEmptyText,
+    "question4" -> nonEmptyText,
+    "question5" -> nonEmptyText,
+    "question6" -> number(min = 0, max = 10),
+    "question7" -> number(min = 0, max = 10),
+    "question8" -> nonEmptyText)({
+      (id, event_id, participant_id, question1, question2, question3, question4, question5, question6, question7,
+      question8) ⇒
+        Evaluation(id, event_id, participant_id, question1, question2, question3, question4, question5,
+          question6, question7, question8, EvaluationStatus.Pending, None, None, DateTime.now, userName, DateTime.now, userName)
+    })({
+      (e: Evaluation) ⇒
+        Some(e.id, e.eventId, e.participantId, e.question1, e.question2, e.question3, e.question4,
+          e.question5, e.question6, e.question7, e.question8)
+    }))
 
   /**
    * Create an evaluation through API call
@@ -42,13 +68,14 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
     form.fold(
       formWithErrors ⇒ {
-        BadRequest(formWithErrors.errorsAsJson)
+        val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+        BadRequest(Json.prettyPrint(json))
       },
       evaluation ⇒ {
         val createdEvaluation = evaluation.create
 
         Activity.insert(person.fullName, Activity.Predicate.Created, "new evaluation")
-        Ok(Json.obj("evaluationId" -> createdEvaluation.id.get))
+        Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))
       })
   }
 }
