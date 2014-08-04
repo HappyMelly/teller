@@ -39,8 +39,9 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "event_id" -> longNumber.verifying(
-      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participant_id" -> of(participantIdFormatter),
+      "error.event.notExist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+    "participant_id" -> longNumber.verifying(
+      "error.person.invalid", (participantId: Long) ⇒ Person.find(participantId).isDefined),
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
@@ -72,10 +73,18 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
         BadRequest(Json.prettyPrint(json))
       },
       evaluation ⇒ {
-        val createdEvaluation = evaluation.create
+        if (Evaluation.findByEventAndPerson(evaluation.participantId, evaluation.eventId).isDefined) {
+          val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
+          BadRequest(Json.prettyPrint(json))
+        } else if (Event.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.participantId).isEmpty) {
+          val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
+          BadRequest(Json.prettyPrint(json))
+        } else {
+          val createdEvaluation = evaluation.create
 
-        Activity.insert(person.fullName, Activity.Predicate.Created, "new evaluation")
-        Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))
+          Activity.insert(person.fullName, Activity.Predicate.Created, "new evaluation")
+          Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))
+        }
       })
   }
 }

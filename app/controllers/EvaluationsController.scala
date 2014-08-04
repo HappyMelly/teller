@@ -54,12 +54,11 @@ trait EvaluationsController extends Controller {
   val participantIdFormatter = new Formatter[Long] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
       // "data" lets you access all form data values
-      //TODO: support 'event_id' key
-      if (data.get("eventId").isEmpty || data.get(key).isEmpty) {
+      if ((data.get("eventId").isEmpty && data.get("event_id").isEmpty) || data.get(key).isEmpty) {
         Left(List(FormError(key, "error.required")))
       } else {
         try {
-          val eventId = data.get("eventId").get.toLong
+          val eventId = data.get("eventId").map(_.toLong).getOrElse(data.get("event_id").get.toLong)
           val personId = data.get(key).get.toLong
           if (Person.find(personId).isEmpty) {
             Left(List(FormError(key, "error.person.invalid")))
