@@ -1,4 +1,8 @@
-@(user: securesocial.core.Identity, events: List[Event])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: securesocial.core.Identity,
+  events: List[Event],
+  brands: List[(String, String)],
+  userName: String,
+  personalLicense: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -16,7 +20,9 @@
     @if(events.isEmpty) {
       <p>There are no events</p>
     } else {
-      @table(events) { event =>
+      <input type="hidden" id="userName" value="@userName"/>
+      <input type="hidden" id="personalLicense" value="@personalLicense"/>
+      @table(events, brands) { event =>
           @restrict(handler, List(as(Editor.toString))) {
             <a href="@routes.Events.edit(event.id.get)">
               <i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>

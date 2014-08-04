@@ -1,4 +1,4 @@
-@(events: List[Event])(actions: (Event) => Html)
+@(events: List[Event], brands: List[(String, String)])(actions: (Event) => Html)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -16,6 +16,16 @@
   </style>
   <div id="filter-containter">
     <div class="toolbar pull-right">
+      <div class="btn-group">
+        <select id="brands" class="input-sm form-control">
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <select id="facilitators" class="input-sm form-control">
+          <option value="all">All</option>
+        </select>
+      </div>
       <div class="btn-group">
         <select id="past-future" class="input-sm form-control">
           <option value="all">All</option>
@@ -60,7 +70,7 @@
     @for(event <- events) {
         <tr>
             <td><a href="@routes.Events.details(event.id.getOrElse(0))">@event.title</a></td>
-            <td><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></td>
+            <td><a href="@routes.Brands.details(event.brandCode)">@brands.find(_._1 == event.brandCode).map(_._2)</a></td>
             <td>
                 @for(facilitator <- event.facilitators) {
                     <div><a href="@routes.People.details(facilitator.id.getOrElse(0))">@facilitator.fullName</a><br/></div>

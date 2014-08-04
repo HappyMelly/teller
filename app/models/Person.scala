@@ -24,7 +24,6 @@
 
 package models
 
-import JodaMoney._
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
 import org.joda.time.DateTime
@@ -33,7 +32,6 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.Some
 import scala.concurrent.Future
 import scala.slick.lifted.Query
 import scala.util.matching.Regex

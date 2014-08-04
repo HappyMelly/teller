@@ -266,7 +266,7 @@ object Events extends Controller with Security {
 
       Event.find(id).map {
         event ⇒
-          val legalEntities = Organisation.find(true)
+          val legalEntities = Organisation.find(legalEntitiesOnly = true)
           Ok(views.html.event.details(request.user, legalEntities, event))
       }.getOrElse(NotFound)
   }
@@ -282,7 +282,7 @@ object Events extends Controller with Security {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findForUser(account)
-          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, false, eventForm.fill(event)))
+          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
 
@@ -292,8 +292,12 @@ object Events extends Controller with Security {
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
 
+      val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+      val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
-      Ok(views.html.event.index(request.user, events))
+      val brandsOfEvents = events.map(_.brandCode).distinct
+      val brands = Brand.findAll.filter(b ⇒ brandsOfEvents.contains(b.brand.code)).map(b ⇒ (b.brand.code, b.brand.name))
+      Ok(views.html.event.index(request.user, events, brands, person.fullName, personalLicense))
   }
 
   /**
