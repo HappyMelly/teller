@@ -38,13 +38,18 @@ object Participants extends ParticipantsController with Security {
   def existingPersonForm(implicit request: SecuredRequest[_]) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
+      "brandId" -> nonEmptyText,
       "eventId" -> longNumber.verifying(
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "participantId" -> longNumber.verifying(
         "error.person.invalid",
-        (participantId: Long) ⇒ !Person.find(participantId).isEmpty),
-      "evaluationId" -> optional(longNumber))(Participant.apply)(Participant.unapply))
+        (participantId: Long) ⇒ Person.find(participantId).nonEmpty),
+      "evaluationId" -> optional(longNumber))({
+        (id, brandId, eventId, participantId, evaluationId) ⇒ Participant(id, eventId, participantId, evaluationId)
+      })({
+        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.participantId, p.evaluationId)
+      }))
   }
 
   /**
@@ -53,7 +58,7 @@ object Participants extends ParticipantsController with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val brands = Brand.findForUser(account)
+      val brands = Brand.findByUser(account)
       val brandCode = request.session.get("brandCode").getOrElse("")
       Ok(views.html.participant.index(request.user, brands, brandCode))
   }
@@ -64,6 +69,7 @@ object Participants extends ParticipantsController with Security {
    */
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
+      // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
 
@@ -173,29 +179,33 @@ object Participants extends ParticipantsController with Security {
   /**
    * Create page.
    */
-  def add(eventId: Option[Long], ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def add(brandCode: Option[String], eventId: Option[Long], ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val events = findEvents(account)
+      val brands = Brand.findByUser(account)
       val people = Person.findActive
-      Ok(views.html.participant.form(request.user, id = None, events, people,
+      val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
+        request.session.get("brandCode").getOrElse("")
+      }
+      Ok(views.html.participant.form(request.user, id = None, brands, people,
         newPersonForm(account, request.user.fullName), existingPersonForm(request),
-        showExistingPersonForm = true, eventId, ref))
+        showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
   }
 
-  def create(eventId: Option[Long], ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def create(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
       val form: Form[Participant] = existingPersonForm.bindFromRequest
 
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val events = findEvents(account)
+          val brands = Brand.findByUser(account)
           val people = Person.findActive
-          BadRequest(views.html.participant.form(request.user, None, events, people,
+          val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
+          BadRequest(views.html.participant.form(request.user, None, brands, people,
             newPersonForm(account, request.user.fullName), formWithErrors,
-            showExistingPersonForm = true, eventId, ref))
+            showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },
         participant ⇒ {
           Participant.insert(participant)
@@ -203,33 +213,33 @@ object Participants extends ParticipantsController with Security {
             participant.participant.get.fullName, participant.event.get.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           val route = ref match {
-            case Some("event") ⇒ routes.Events.details(eventId.getOrElse(0)).url + "#participant"
+            case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
             case _ ⇒ routes.Participants.index().url
           }
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
 
-  def createParticipantAndPerson(eventId: Option[Long],
-    ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val form: Form[ParticipantData] = newPersonForm(account, request.user.fullName).bindFromRequest
 
       form.fold(
         formWithErrors ⇒ {
-          val events = findEvents(account)
           val people = Person.findActive
-          BadRequest(views.html.participant.form(request.user, None, events, people,
+          val brands = Brand.findByUser(account)
+          val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
+          BadRequest(views.html.participant.form(request.user, None, brands, people,
             formWithErrors, existingPersonForm(request),
-            showExistingPersonForm = false, eventId, ref))
+            showExistingPersonForm = false, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },
         data ⇒ {
           Participant.create(data)
           val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           val route = ref match {
-            case Some("event") ⇒ routes.Events.details(eventId.getOrElse(0)).url + "#participant"
+            case Some("event") ⇒ routes.Events.details(data.eventId).url + "#participant"
             case _ ⇒ routes.Participants.index().url
           }
           Redirect(route).flashing("success" -> activity.toString)
@@ -244,7 +254,7 @@ object Participants extends ParticipantsController with Security {
         value.delete()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
-        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 

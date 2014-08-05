@@ -167,7 +167,7 @@
       <div class="tab-pane" id="participant">
         <div id="filter-containter">
           <div class="pull-right">
-            <a class="input-sm" tabindex="-1" href="@routes.Participants.add(event.id, Some("event")).url"  title="Add Participant">
+            <a class="input-sm" tabindex="-1" href="@routes.Participants.add(Some(event.brandCode), event.id, Some("event")).url"  title="Add Participant">
               <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
             <a class="input-sm" tabindex="-1" href="#request"  data-toggle="modal" title="Request Evaluation">
               <i class="glyphicon glyphicon-envelope"></i> Send Evaluation Request</a>

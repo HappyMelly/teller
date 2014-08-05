@@ -35,6 +35,7 @@ trait ParticipantsController extends Controller {
   def newPersonForm(account: UserAccount, userName: String) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
+      "brandId" -> nonEmptyText,
       "eventId" -> longNumber.verifying(
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
@@ -45,11 +46,15 @@ trait ParticipantsController extends Controller {
       "city" -> nonEmptyText,
       "country" -> nonEmptyText.verifying(
         "Unknown country",
-        (country: String) ⇒ Countries.all.exists(_._1 == country)),
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(userName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(userName))(ParticipantData.apply)(ParticipantData.unapply))
+        (country: String) ⇒ Countries.all.exists(_._1 == country)))({
+        (id, brandId, eventId, firstName, lastName, birthDate, emailAddress, city, country) ⇒
+          ParticipantData(id, eventId, firstName, lastName, birthDate, emailAddress, city, country,
+            DateTime.now, userName, DateTime.now, userName)
+      })({
+        (p: ParticipantData) ⇒
+          Some(p.id, p.event.get.brandCode, p.eventId, p.firstName, p.lastName, p.birthDate, p.emailAddress,
+            p.city, p.country)
+      }))
   }
 
 }

@@ -28,14 +28,8 @@ import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
 import org.joda.time._
-import play.api.mvc._
 import play.api.data._
-import play.api.data.Forms._
-import play.api.data.format.Formatter
-import play.api.data.FormError
 import play.api.Play.current
-import play.api.i18n.Messages
-import securesocial.core.SecuredRequest
 import services.EmailService
 
 object Evaluations extends EvaluationsController with Security {
