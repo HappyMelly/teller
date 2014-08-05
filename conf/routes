@@ -35,6 +35,7 @@ GET  /brand/new            controllers.Brands.add
 POST /brand/new            controllers.Brands.create
 GET  /brand/:code          controllers.Brands.details(code)
 POST /brand/:code          controllers.Brands.update(code)
+GET  /brand/:code/events   controllers.Brands.events(code)
 GET  /brand/:code/edit     controllers.Brands.edit(code)
 POST /brand/:code/delete   controllers.Brands.delete(code)
 
@@ -97,9 +98,9 @@ GET  /participants                            controllers.Participants.index
 GET  /participants/brand/:brandCode           controllers.Participants.participantsByBrand(brandCode: String)
 GET  /participants/event/:eventId             controllers.Participants.participantsByEvent(eventId: Long)
 GET  /participants/:eventId                   controllers.Participants.participants(eventId: Long)
-GET  /participant/new/                        controllers.Participants.add(eventId: Option[Long], ref: Option[String])
-POST /participant                             controllers.Participants.create(eventId: Option[Long], ref: Option[String])
-POST /participant/person                      controllers.Participants.createParticipantAndPerson(eventId: Option[Long], ref: Option[String])
+GET  /participant/new/                        controllers.Participants.add(brandCode: Option[String], eventId: Option[Long], ref: Option[String])
+POST /participant                             controllers.Participants.create(ref: Option[String])
+POST /participant/person                      controllers.Participants.createParticipantAndPerson(ref: Option[String])
 GET  /participant/:eventId/:personId/delete/  controllers.Participants.delete(eventId: Long, personId: Long)
 
 GET  /people       controllers.People.index

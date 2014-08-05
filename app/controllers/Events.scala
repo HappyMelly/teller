@@ -165,9 +165,10 @@ object Events extends Controller with Security {
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule,
-        false, false, false, defaultInvoice, DateTime.now(), "", DateTime.now(), "", List[Long]())
+        notPublic = false, archived = false, confirmed = false, defaultInvoice,
+        DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val brands = Brand.findForUser(account)
+      val brands = Brand.findByUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))
   }
 
@@ -182,7 +183,7 @@ object Events extends Controller with Security {
       Event.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findForUser(account)
+          val brands = Brand.findByUser(account)
           Ok(views.html.event.form(request.user, None, brands, account.personId, false, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
@@ -197,7 +198,7 @@ object Events extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findForUser(account)
+          val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(request.user, None, brands, account.personId, false, formWithErrors))
         },
         event ⇒ {
@@ -211,7 +212,7 @@ object Events extends Controller with Security {
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val brands = Brand.findForUser(account)
+            val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(request.user, None, brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
@@ -266,7 +267,7 @@ object Events extends Controller with Security {
 
       Event.find(id).map {
         event ⇒
-          val legalEntities = Organisation.find(true)
+          val legalEntities = Organisation.find(legalEntitiesOnly = true)
           Ok(views.html.event.details(request.user, legalEntities, event))
       }.getOrElse(NotFound)
   }
@@ -281,8 +282,8 @@ object Events extends Controller with Security {
       Event.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findForUser(account)
-          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, false, eventForm.fill(event)))
+          val brands = Brand.findByUser(account)
+          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
 
@@ -292,8 +293,12 @@ object Events extends Controller with Security {
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
 
+      val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+      val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
-      Ok(views.html.event.index(request.user, events))
+      val brandsOfEvents = events.map(_.brandCode).distinct
+      val brands = Brand.findAll.filter(b ⇒ brandsOfEvents.contains(b.brand.code)).map(b ⇒ (b.brand.code, b.brand.name))
+      Ok(views.html.event.index(request.user, events, brands, person.fullName, personalLicense))
   }
 
   /**
@@ -307,7 +312,7 @@ object Events extends Controller with Security {
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
-          val brands = Brand.findForUser(account)
+          val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false, formWithErrors))
         },
         updatedEvent ⇒ {
@@ -325,7 +330,7 @@ object Events extends Controller with Security {
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val brands = Brand.findForUser(account)
+            val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }

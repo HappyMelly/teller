@@ -80,12 +80,24 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  def canEdit(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    facilitatorIds.exists(_ == account.personId) || canAdministrate(account)
+  /**
+   * To facilitate the event = to edit the event, to approve/reject evaluations, to delete evaluations
+   *
+   * @param personId A person's unique identifier
+   * @return
+   */
+  def canFacilitate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    facilitatorIds.contains(personId) || canAdministrate(personId)
   }
 
-  def canAdministrate(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    account.editor || Brand.find(brandCode).get.coordinator.id.get == account.personId
+  /**
+   * To administrate the event = to add and edit evaluations for the event
+   *
+   * @param personId A person unique identifier
+   * @return
+   */
+  def canAdministrate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    Brand.find(brandCode).get.coordinator.id.get == personId
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
@@ -271,19 +283,19 @@ object Event {
   }
 
   /**
-   * Returns a list of all events for a specified user
+   * Returns a list of all events for a specified user which he could manage
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
     if (user.editor)
       Query(Events).filter(_.archived === false).sortBy(_.start).list
     else {
-      val brands = Brand.findForUser(user)
+      val brands = Brand.findByUser(user)
       if (brands.length > 0) {
         val brandCodes = brands.map(_.code)
         val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
-        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+        events.filter(e ⇒ brandCodes.contains(e.brandCode))
       } else {
-        Query(Events).filter(_.archived === false).sortBy(_.start).list
+        List[Event]()
       }
     }
   }
@@ -343,7 +355,7 @@ object Event {
     Query(Events).sortBy(_.title.toLowerCase).list
   }
 
-  def sendConfirmationAlert = Brand.findAll.foreach { brand ⇒
+  def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
     Event.findByParameters(brand.brand.code, future = Some(false), public = None, archived = None,
       confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
         val subject = "Сonfirm your event " + event.title
