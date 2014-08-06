@@ -12,7 +12,7 @@
     <td><code>POST /api/v1/participant</code></td>
   </tr>
   <tr>
-    <th>Request POST parameters</th>
+    <th>Request POST parameters (not member)</th>
     <td>
       <ul>
         <li><code>event_id</code> unique identifier for the event, <i>numeric</i></li>
@@ -21,6 +21,19 @@
         <li><code>first_name</code> <i>string</i></li>
         <li><code>country</code> - ISO 8166-2 country code, <i>string</i></li>
         <li><code>city</code> <i>string</i></li>
+        <li><code>street_1</code> <i>string</i></li>
+        <li><code>street_2</code> <i>string</i></li>
+        <li><code>province</code> <i>string</i></li>
+        <li><code>postcode</code> <i>string</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request POST parameters (member)</th>
+    <td>
+      <ul>
+        <li><code>event_id</code> unique identifier for the event, <i>numeric</i></li>
+        <li><code>person_id</code> unique identifier for the person, <i>numeric</i></li>
       </ul>
     </td>
   </tr>

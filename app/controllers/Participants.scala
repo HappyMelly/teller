@@ -24,8 +24,7 @@
 
 package controllers
 
-import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity }
-import models.{ Brand, ParticipantView, EvaluationStatus, UserAccount, ParticipantData }
+import models._
 import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
@@ -51,11 +50,16 @@ object Participants extends Controller with Security {
       "city" -> nonEmptyText,
       "country" -> nonEmptyText.verifying(
         "Unknown country",
-        (country: String) ⇒ Countries.all.exists(_._1 == country)),
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(userName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(userName))(ParticipantData.apply)(ParticipantData.unapply))
+        (country: String) ⇒ Countries.all.exists(_._1 == country)))({
+        (id, eventId, firstName, lastName, birthDate, email, city, country) ⇒
+          ParticipantData(id, eventId, firstName, lastName, birthDate, email,
+            Address(None, None, None, Some(city), None, None, country),
+            DateTime.now(), userName, DateTime.now(), userName)
+      }) ({
+        (p: ParticipantData) ⇒
+          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthDate, p.emailAddress,
+            p.address.city.getOrElse(""), p.address.countryCode))
+      }))
   }
 
   def existingPersonForm(implicit request: SecuredRequest[_]) = {
@@ -65,7 +69,7 @@ object Participants extends Controller with Security {
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "participantId" -> longNumber.verifying(
-        "error.person.invalid",
+        "error.person.notExist",
         (participantId: Long) ⇒ !Person.find(participantId).isEmpty),
       "evaluationId" -> optional(longNumber))(Participant.apply)(Participant.unapply))
   }

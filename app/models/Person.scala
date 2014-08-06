@@ -24,7 +24,6 @@
 
 package models
 
-import JodaMoney._
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
 import org.joda.time.DateTime
@@ -33,7 +32,6 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.Some
 import scala.concurrent.Future
 import scala.slick.lifted.Query
 import scala.util.matching.Regex
@@ -276,6 +274,21 @@ object Person {
     } yield person
 
     query.firstOption
+  }
+
+  /** Finds people, filtered by stakeholder, board member status and/or first/last name query **/
+  def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean], query: Option[String]): List[Person] = DB.withSession {
+    implicit session: Session ⇒
+      val baseQuery = query.map { q ⇒
+        Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
+      }.getOrElse(Query(People))
+      baseQuery.sortBy(_.firstName.toLowerCase)
+      val activeQuery = active.map { value ⇒
+        baseQuery.filter(_.active === value)
+      }.getOrElse(baseQuery)
+      val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
+      val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
+      boardMembersFilteredQuery.list
   }
 
   /** Finds all active people, filtered by stakeholder and/or board member status **/

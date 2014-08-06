@@ -61,7 +61,7 @@ trait EvaluationsController extends Controller {
           val eventId = data.get("eventId").map(_.toLong).getOrElse(data.get("event_id").get.toLong)
           val personId = data.get(key).get.toLong
           if (Person.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.invalid")))
+            Left(List(FormError(key, "error.person.notExist")))
           } else {
             if (Evaluation.findByEventAndPerson(personId, eventId).isDefined) {
               Left(List(FormError(key, "error.evaluation.exist")))
@@ -92,7 +92,7 @@ trait EvaluationsController extends Controller {
           val eventId = data.get("eventId").get.toLong
           val personId = data.get(key).get.toLong
           if (Person.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.invalid")))
+            Left(List(FormError(key, "error.person.notExist")))
           } else {
             if (Event.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
               Left(List(FormError(key, "error.participant.notExist")))

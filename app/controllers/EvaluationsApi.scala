@@ -41,7 +41,7 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
     "event_id" -> longNumber.verifying(
       "error.event.notExist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
     "participant_id" -> longNumber.verifying(
-      "error.person.invalid", (participantId: Long) ⇒ Person.find(participantId).isDefined),
+      "error.person.notExist", (participantId: Long) ⇒ Person.find(participantId).isDefined),
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,

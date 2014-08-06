@@ -88,8 +88,7 @@ case class ParticipantData(id: Option[Long],
   lastName: String,
   birthDate: Option[LocalDate],
   emailAddress: String,
-  city: String,
-  country: String,
+  address: Address,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -133,11 +132,10 @@ object Participant {
   }
 
   def create(data: ParticipantData): Participant = DB.withSession { implicit session: Session ⇒
-    val address = Address(None, None, None, Some(data.city), None, None, data.country)
     val virtual = true
     val active = false
     val person = Person(None, data.firstName, data.lastName, data.emailAddress,
-      Photo(None, None), signature = false, address, None, None, SocialProfile(personId = 0), boardMember = false,
+      Photo(None, None), signature = false, data.address, None, None, SocialProfile(personId = 0), boardMember = false,
       stakeholder = false, None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
     val newPerson = person.insert

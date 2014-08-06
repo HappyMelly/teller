@@ -106,6 +106,8 @@ error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
 error.api.validation = Validation Failed
+error.api.required = Required field
+
 error.brand.invalid = You are not allowed to create events for this brand
 error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
 error.event.invalid = You are not allowed to manage this event
@@ -113,10 +115,11 @@ error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
 error.participant.notExist = The person is not a participant of the event
-error.person.invalid = The person does not exist
+error.person.notExist = The person does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 error.notDeletableProduct = You cannot delete this product because it has contributors or derivative products
+error.unknown_country = Please choose a country
 
 # Play form validation error overrides
 error.date = Invalid date
