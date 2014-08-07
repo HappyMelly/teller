@@ -83,7 +83,7 @@ case class Evaluation(
     val subject = s"New evaluation (General impression: $impression)"
     EmailService.send(event.facilitators.toSet,
       Some(Set(brand.coordinator)), None, subject,
-      mail.html.evaluation(created).toString(), richMessage = true)
+      mail.html.evaluation(created, participant).toString(), richMessage = true)
 
     created
   }

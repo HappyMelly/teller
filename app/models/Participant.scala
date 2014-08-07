@@ -34,14 +34,16 @@ case class Participant(
   id: Option[Long],
   eventId: Long,
   participantId: Long,
-  evaluationId: Option[Long]) {
+  evaluationId: Option[Long],
+  organisation: Option[String],
+  comment: Option[String]) {
 
   lazy val event: Option[Event] = Event.find(eventId)
   lazy val participant: Option[Person] = Person.find(participantId)
   lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
 
   def update: Participant = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (evaluationId)
+    val updateTuple = evaluationId
     val updateQuery = Participants.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
@@ -49,9 +51,9 @@ case class Participant(
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluation.findByEventAndPerson(this.participantId, this.eventId).map { value ⇒
-      value.delete
+      value.delete()
     }
-    Participants.where(_.id === this.id).mutate(_.delete)
+    Participants.where(_.id === this.id).mutate(_.delete())
   }
 }
 
@@ -86,9 +88,11 @@ case class ParticipantData(id: Option[Long],
   eventId: Long,
   firstName: String,
   lastName: String,
-  birthDate: Option[LocalDate],
+  birthday: Option[LocalDate],
   emailAddress: String,
   address: Address,
+  organisation: Option[String],
+  comment: Option[String],
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -134,12 +138,13 @@ object Participant {
   def create(data: ParticipantData): Participant = DB.withSession { implicit session: Session ⇒
     val virtual = true
     val active = false
-    val person = Person(None, data.firstName, data.lastName, data.emailAddress, data.birthDate,
+    val person = Person(None, data.firstName, data.lastName, data.emailAddress, data.birthday,
       Photo(None, None), signature = false, data.address, None, None, PersonRole.NoRole, SocialProfile(personId = 0),
       None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
     val newPerson = person.insert
-    val eventParticipant = Participant(None, data.eventId, newPerson.id.get, None)
+    val eventParticipant = Participant(None, data.eventId, newPerson.id.get, evaluationId = None, data.organisation,
+      data.comment)
     Participant.insert(eventParticipant)
   }
 

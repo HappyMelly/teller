@@ -45,19 +45,19 @@ object Participants extends Controller with Security {
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
-      "birthDate" -> optional(jodaLocalDate),
+      "birthday" -> optional(jodaLocalDate),
       "emailAddress" -> email,
       "city" -> nonEmptyText,
       "country" -> nonEmptyText.verifying(
         "Unknown country",
         (country: String) ⇒ Countries.all.exists(_._1 == country)))({
-        (id, eventId, firstName, lastName, birthDate, email, city, country) ⇒
-          ParticipantData(id, eventId, firstName, lastName, birthDate, email,
-            Address(None, None, None, Some(city), None, None, country),
+        (id, eventId, firstName, lastName, birthday, email, city, country) ⇒
+          ParticipantData(id, eventId, firstName, lastName, birthday, email,
+            Address(None, None, None, Some(city), None, None, country), organisation = None, comment = None,
             DateTime.now(), userName, DateTime.now(), userName)
       }) ({
         (p: ParticipantData) ⇒
-          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthDate, p.emailAddress,
+          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode))
       }))
   }
@@ -73,7 +73,8 @@ object Participants extends Controller with Security {
         "error.person.notExist",
         (participantId: Long) ⇒ Person.find(participantId).nonEmpty),
       "evaluationId" -> optional(longNumber))({
-        (id, brandId, eventId, participantId, evaluationId) ⇒ Participant(id, eventId, participantId, evaluationId)
+        (id, brandId, eventId, participantId, evaluationId) ⇒
+          Participant(id, eventId, participantId, evaluationId, organisation = None, comment = None)
       })({
         (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.participantId, p.evaluationId)
       }))

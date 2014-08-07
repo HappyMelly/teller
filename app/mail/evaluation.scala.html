@@ -1,4 +1,4 @@
-@(evaluation: Evaluation)
+@(evaluation: Evaluation, participant: Participant)
 @import play.api.Play
 @import play.api.Play.current
 @import templates.Formatters._
@@ -67,7 +67,7 @@
                           </tr>
                           <tr>
                             <td width="150">Birthday</td>
-                            <td>-</td>
+                            <td>@evaluation.participant.birthday</td>
                           </tr>
                           <tr>
                             <td width="150">Location</td>
@@ -75,7 +75,7 @@
                           </tr>
                           <tr>
                             <td width="150">Organisation</td>
-                            <td>-</td>
+                            <td>@participant.organisation</td>
                           </tr>
                           <tr>
                             <td width="150">E-mail</td>
@@ -86,7 +86,7 @@
                           </tr>
                           <tr>
                             <td width="150">Comment</td>
-                            <td>-</td>
+                            <td>@participant.comment</td>
                           </tr>
                         </tbody>
                       </table>

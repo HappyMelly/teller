@@ -36,11 +36,13 @@ private[models] object Participants extends Table[Participant]("EVENT_PARTICIPAN
   def eventId = column[Long]("EVENT_ID")
   def personId = column[Long]("PERSON_ID")
   def evaluationId = column[Option[Long]]("EVALUATION_ID")
+  def organisation = column[Option[String]]("ORGANISATION")
+  def comment = column[Option[String]]("COMMENT")
 
   def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
   def participant = foreignKey("PARTICIPANT_FK", personId, People)(_.id)
 
-  def * = id.? ~ eventId ~ personId ~ evaluationId <> (Participant.apply _, Participant.unapply _)
+  def * = id.? ~ eventId ~ personId ~ evaluationId ~ organisation ~ comment <> (Participant.apply _, Participant.unapply _)
   def forInsert = * returning id
   def forUpdate = evaluationId
 }
