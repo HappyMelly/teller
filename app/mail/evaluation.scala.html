@@ -1,4 +1,4 @@
-@(evaluation: Evaluation)(implicit request: RequestHeader)
+@(evaluation: Evaluation)
 @import play.api.Play
 @import play.api.Play.current
 @import templates.Formatters._
@@ -59,7 +59,7 @@
                         <tbody>
                           <tr>
                             <td width="150">Date</td>
-                            <td>@evaluation.participant.created.toString("yyyy-MM-dd")</td>
+                            <td>@evaluation.participant.dateStamp.created.toString("yyyy-MM-dd")</td>
                           </tr>
                           <tr>
                             <td width="150">Name</td>

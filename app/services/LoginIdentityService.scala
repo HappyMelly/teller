@@ -52,11 +52,17 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       case li: LoginIdentity ⇒ li
     }
 
-    if (loginIdentity.userAccount.viewer) {
-      LoginIdentity.save(loginIdentity)
-    } else {
-      Logger.info(s"Denying authentication to user (@${loginIdentity.name}}) without Viewer role")
-      throw new AuthenticationException
+    try {
+      if (loginIdentity.userAccount.viewer) {
+        LoginIdentity.save(loginIdentity)
+      } else {
+        Logger.info(s"Denying authentication to user (@${loginIdentity.name}}) without Viewer role")
+        throw new AccessDeniedException
+      }
+    } catch {
+      case e: NoSuchElementException ⇒ {
+        throw new AccessDeniedException
+      }
     }
   }
 
@@ -157,7 +163,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
     assert(identity.identityId.providerId == TwitterProvider.Twitter, "Twitter identity required")
     val info = identity.oAuth1Info.get
     val calculator = OAuthCalculator(SecureSocial.serviceInfoFor(identity).get.key, RequestToken(info.token, info.secret))
-    val call = WS.url(TwitterSettings).sign(calculator).get()
+    val call = WS.url(TwitterSettings).sign(calculator).get
     Logger.debug(s"GET $TwitterSettings")
 
     try {

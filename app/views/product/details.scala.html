@@ -13,34 +13,43 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(product.title + " - Product", Some(user)) {
+@main(product.title + " - Product", "products", Some(user)) {
 
-  <div class="span8">
-    <header>
-
+  <div class="page-header">
     <h1>
-      @product.title
-      @restrict(handler, List(as(Editor.toString))) {
-        <a class="btn-small btn" href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
+      @product.picture.map { picture =>
+        <a href="@routes.Products.picture(product.id.get).url">
+          <img width="64" class="img-rounded" src="@routes.Products.picture(product.id.get).url"/></a>
       }
+      @product.title
+      <div class="actions pull-right">
+        @restrict(handler, List(as(Editor.toString))) {
+          <div class="button">
+            <a class="btn btn-default" href="@routes.Products.edit(product.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit
+            </a>
+          </div>
+          <div class="button">
+            <button class="btn btn-warning" type="submit">
+              <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete Picture
+            </button>
+          </div>
+          <div class="button">
+            <form class="delete" class="form-inline" method="post" text="product"
+              action="@CSRF(routes.Products.delete(product.id.getOrElse(0)))">
+              <button class="btn btn-danger" type="submit"
+                @if(!derivatives.isEmpty && !contributors.isEmpty) { disabled="disabled"
+                  title="@Messages("error.notDeletableProduct")" }>
+                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+              </button>
+            </form>
+          </div>
+        }
+      </div>
     </h1>
-    <p><small>Added by @product.createdBy on @product.created.format <br> Updated by @product.updatedBy on @product.updated.format</small></p>
-    </header>
   </div>
 
-  @restrict(handler, List(as(Editor.toString))) {
-    <div class="span2 actions">
-      <form class="delete" method="post" text="product" action="@CSRF(routes.Products.delete(product.id.getOrElse(0)))">
-        <button class="btn btn-danger btn-block" type="submit" @if(!derivatives.isEmpty && !contributors.isEmpty) { disabled="disabled" title="You cannot delete this product because it has contributors or derivative products" }>
-          <i class="icon-white icon-trash"></i> Delete
-        </button>
-      </form>
-    </div>
-  }
-
-  <div class="span4">
-    <h3>Product details</h3>
-
+  <div class="col-md-4">
     @product.subtitle.map { subtitle =>
     <p><strong>Subtitle</strong>
         <br>@subtitle</p>
@@ -72,129 +81,116 @@
 
     }
     <br/><br/>
-    <h3>Derivative Products</h3>
-    @if(derivatives.isEmpty) {
-      <p>There are no derivative products.</p>
-    } else {
-      @views.html.product.table(derivatives) { product =>
-        @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.Products.edit(product.id.get)"><i class="icon-pencil"></i> Edit</a>
-        }
-      }
-    }
   </div>
-  <div class="span4">
-    @product.picture.map { picture =>
+  <div class="col-md-8">
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#contributors" data-toggle="tab">Contributors</a></li>
+      <li><a href="#products" data-toggle="tab">Derivative Products</a></li>
+      <li><a href="#brands" data-toggle="tab">Brands</a></li>
+    </ul>
 
-      <form class="delete" method="post" text="image" action="@CSRF(routes.Products.deletePicture(product.id.getOrElse(0)))">
-        <h3>Picture
-          @restrict(handler, List(as(Editor.toString))) {
-            <button class="btn btn-danger" type="submit">
-              <i class="icon-white icon-trash"></i> Delete Picture
-            </button>
-          }
-        </h3>
-      </form>
-      <a href="@routes.Products.picture(product.id.get).url">
-          <img src="@routes.Products.picture(product.id.get).url"/></a>
-    }
-    <h3>Brands</h3>
-    @if(product.brands.isEmpty) {
-      <p>This product doesn't belong to any brand.</p>
-    } else {
-      <table class="datatables table table-bordered">
-        <thead>
-          <tr>
-            <th>Title</th>
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div class="tab-pane active" id="contributors">
+        <table  class="datatables table table-bordered">
+          <thead>
+            <th>Contributor</th>
+            <th>Role</th>
             <th></th>
-          </tr>
-        </thead>
-        <tbody>
-        @for(brand <- product.brands) {
-          <tr>
-            <td><a href="@routes.Brands.details(brand.code)">@brand.name</a></td>
-            <td>
-              @restrict(handler, List(as(Editor.toString))) {
-                <a href="@routes.Products.deleteBrand("product", product.id.get, brand.id.get)"><i class="icon-pencil"></i> Unassign brand</a>
-              }
-            </td>
-          </tr>
-        }
-        </tbody>
-      </table>
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@CSRF(routes.Products.addBrand)">
-        <p>
-          <input type="hidden" name="page" value="product">
-          <input type="hidden" name="productId" value="@product.id.get">
-          <select name="brandId">
-            @for(brandView <- brands) {
-              <option value="@brandView.brand.id.get">@brandView.brand.name</option>
+          </thead>
+          <tbody>
+            @for(contributor <- contributors) {
+              <tr>
+                <td>
+                  @if(contributor.contribution.isPerson) {
+                    <i class="glyphicon glyphicon-user"></i>
+                    <a href="@routes.People.details(contributor.id)">@contributor.name</a>
+                  } else {
+                    <i class="glyphicon glyphicon-home"></i>
+                    <a href="@routes.Organisations.details(contributor.id)">@contributor.name</a>
+                  }
+                </td>
+                <td>@contributor.contribution.role</td>
+                <td>
+                  @restrict(handler, List(as(Editor.toString))) {
+                    <a href="@routes.Contributions.delete("product", contributor.contribution.id.get)">
+                      <i class="glyphicon glyphicon-pencil"></i> Remove contributor</a>
+                  }
+                </td>
+              </tr>
             }
-          </select>
-          <button class="btn"><i class="icon-plus"></i>Assign Brand</button>
-        </p>
-      </form>
-    }
-  </div>
-  <div class="span8">
-    <h3>Contributors</h3>
-    @if(contributors.isEmpty) {
-      <p>There are no contributors.</p>
-    } else {
-      <table  class="datatables table table-bordered">
-        <thead>
-          <th>Contributor</th>
-          <th>Role</th>
-          <th></th>
-        </thead>
-        <tbody>
-          @for(contributor <- contributors) {
-            <tr>
-              <td>
-                @if(contributor.contribution.isPerson) {
-                  <i class="icon-user"></i>
-                  <a href="@routes.People.details(contributor.id)">@contributor.name</a>
-                } else {
-                  <i class="icon-home"></i>
-                  <a href="@routes.Organisations.details(contributor.id)">@contributor.name</a>
+          </tbody>
+        </table>
+        @restrict(handler, List(as(Editor.toString))) {
+          <form class="form-inline pull-right" method="POST"
+            action="@CSRF(routes.Contributions.create("contributor"))" id="contributor">
+              <input type="hidden" name="page" value="product">
+              <input type="hidden" name="productId" value="@product.id">
+              <input type="hidden" name="isPerson" value="true">
+              <select name="contributorId" id="contributorSelector" class="form-control input-sm">
+                <optgroup label="People">
+                @for(person <- people) {
+                  <option value="@person.id" isPerson="true">@(person.firstName + " " + person.lastName)</option>
                 }
-              </td>
-              <td>@contributor.contribution.role</td>
+                </optgroup>
+                <optgroup label="Organisations">
+                @for(organisation <- organisations) {
+                  <option value="@organisation.id" isPerson="false">@organisation.name</option>
+                }
+                </optgroup>
+              </select>
+              <input name="role" placeholder="Role" class="form-control input-sm">
+              <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Add Contribution</button>
+          </form>
+        }
+      </div>
+      <div class="tab-pane" id="products">
+        @views.html.product.table(derivatives) { product =>
+          @restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.Products.edit(product.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          }
+        }
+      </div>
+      <div class="tab-pane" id="brands">
+        <table class="datatables table table-bordered">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          @for(brand <- product.brands) {
+            <tr>
+              <td><a href="@routes.Brands.details(brand.code)">@brand.name</a></td>
               <td>
                 @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.Contributions.delete("product", contributor.contribution.id.get)">
-                  <i class="icon-pencil"></i> Remove contributor</a>
+                  <a href="@routes.Products.deleteBrand("product", product.id.get, brand.id.get)">
+                    <i class="glyphicon glyphicon-pencil"></i> Unassign brand</a>
                 }
               </td>
             </tr>
           }
-        </tbody>
-      </table>
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline" method="POST" action="@CSRF(routes.Contributions.create("contributor"))" id="contributor">
-          <input type="hidden" name="page" value="product">
-          <input type="hidden" name="productId" value="@product.id">
-          <input type="hidden" name="isPerson" value="true">
-          <select name="contributorId" id="contributorSelector">
-            <optgroup label="People">
-            @for(person <- people) {
-              <option value="@person.id" isPerson="true">@(person.firstName + " " + person.lastName)</option>
-            }
-            </optgroup>
-            <optgroup label="Organisations">
-            @for(organisation <- organisations) {
-              <option value="@organisation.id" isPerson="false">@organisation.name</option>
-            }
-            </optgroup>
-          </select>
-          <input name="role" placeholder="Role">
-          <button class="btn"><i class="icon-plus"></i>Add Contribution</button>
-      </form>
-    }
-
+          </tbody>
+        </table>
+        @restrict(handler, List(as(Editor.toString))) {
+          <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Products.addBrand)">
+            <p>
+              <input type="hidden" name="page" value="product">
+              <input type="hidden" name="productId" value="@product.id.get">
+              <select name="brandId" class="form-control input-sm">
+                @for(brandView <- brands) {
+                  <option value="@brandView.brand.id.get">@brandView.brand.name</option>
+                }
+              </select>
+              <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Assign Brand</button>
+            </p>
+          </form>
+        }
+      </div>
+    </div>
   </div>
   <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

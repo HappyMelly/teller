@@ -24,99 +24,61 @@
 
 package controllers
 
+import java.io.{ File, FileOutputStream }
 import models._
-import play.api.mvc._
+import models.UserRole.Role._
 import org.joda.time._
 import play.api.data._
-import play.api.data.validation.Constraints._
 import play.api.data.Forms._
-import models.UserRole.Role._
-import play.api.data.format.Formatter
-import play.api.i18n.Messages
-import java.io.File
-import play.api.cache.Cache
-import services._
-import play.api.data.FormError
-import scala.Some
-import securesocial.core.SecuredRequest
-import fly.play.s3.{ BucketFile, S3Exception }
 import play.api.Play.current
-import scala.io.Source
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
 import services.EmailService
-import play.api.i18n.Messages
 
-object Evaluations extends Controller with Security {
-
-  /**
-   * Formatter used to define a form mapping for the `EvaluationStatus` enumeration.
-   */
-  implicit def statusFormat: Formatter[EvaluationStatus.Value] = new Formatter[EvaluationStatus.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(EvaluationStatus.withName(_)).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: EvaluationStatus.Value) = Map(key -> value.toString)
-  }
-
-  val statusMapping = of[EvaluationStatus.Value]
+object Evaluations extends EvaluationsController with Security {
 
   /** HTML form mapping for creating and editing. */
-  def evaluationForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
-      "Such event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> optional(longNumber),
+      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
     "question4" -> nonEmptyText,
     "question5" -> nonEmptyText,
-    "question6" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
-    "question7" -> nonEmptyText.transform(_.toInt, (l: Int) ⇒ l.toString),
+    "question6" -> number(min = 0, max = 10),
+    "question7" -> number(min = 0, max = 10),
     "question8" -> nonEmptyText,
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
     "certificate" -> optional(nonEmptyText),
     "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(request.user.fullName))(Evaluation.apply)(Evaluation.unapply))
+    "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
 
   /** Add page **/
-  def add = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
-    implicit handler ⇒
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val events = findEvents(account)
-      Ok(views.html.evaluation.form(request.user, None, evaluationForm, events))
+  def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
+    implicit request ⇒
+      implicit handler ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val events = findEvents(account)
+        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId))
   }
 
   /** Add form submits to this action **/
   def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
 
-      val form: Form[Evaluation] = evaluationForm.bindFromRequest
+      val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
       form.fold(
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = findEvents(account)
-          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events))
+          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None))
         },
         evaluation ⇒ {
-          val createdEvaluation = evaluation.insert
-
-          val brand = Brand.find(createdEvaluation.event.brandCode).get
-          val recipients = brand.coordinator :: createdEvaluation.event.facilitators
-          val impression = Messages("evaluation.impression." + createdEvaluation.question6)
-          val subject = s"New evaluation (General impression: ${impression})"
-          EmailService.send(recipients.toSet, subject,
-            mail.html.evaluation(createdEvaluation).toString, true)
+          evaluation.create
 
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
@@ -129,9 +91,9 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          evaluation.delete
+          evaluation.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
-          Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -141,7 +103,10 @@ object Evaluations extends Controller with Security {
 
       Evaluation.find(id).map {
         evaluation ⇒
-          Ok(views.html.evaluation.details(request.user, evaluation))
+          {
+            val brand = Brand.find(evaluation.event.brandCode).get
+            Ok(views.html.evaluation.details(request.user, evaluation, brand.brand))
+          }
       }.getOrElse(NotFound)
 
   }
@@ -153,7 +118,7 @@ object Evaluations extends Controller with Security {
       Evaluation.find(id).map { evaluation ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm.fill(evaluation), events))
+        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm(request.user.fullName).fill(evaluation), events, None, None))
       }.getOrElse(NotFound)
 
   }
@@ -163,17 +128,17 @@ object Evaluations extends Controller with Security {
     implicit handler ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm.bindFromRequest
+        val form: Form[Evaluation] = evaluationForm(request.user.fullName, edit = true).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
             val events = findEvents(account)
-            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events))
+            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-            Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+            Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
   }
@@ -181,20 +146,14 @@ object Evaluations extends Controller with Security {
   /** Approve form submits to this action **/
   def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
-      Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.approve
+      Evaluation.find(id).map { ev ⇒
+
+        val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        ev.approve(approver)
+
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
-          existingEvaluation.participant.fullName)
-
-        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
-        val brand = Brand.find(existingEvaluation.event.brandCode).get
-        val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
-        val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
-          mail.html.approved(brand.brand, participant, facilitator).toString, true)
-
-        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+          ev.participant.fullName)
+        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -202,25 +161,105 @@ object Evaluations extends Controller with Security {
   def reject(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.reject
+        existingEvaluation.reject()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
         val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
-        val recipients = participant :: brand.coordinator :: existingEvaluation.event.facilitators
         val subject = s"Your ${brand.brand.name} certificate"
-        EmailService.send(recipients.toSet, subject,
-          mail.html.rejected(brand.brand, participant, facilitator).toString, true)
+        EmailService.send(Set(participant),
+          Some(existingEvaluation.event.facilitators.toSet),
+          Some(Set(brand.coordinator)), subject,
+          mail.html.rejected(brand.brand, participant, facilitator).toString(), richMessage = true)
 
-        Redirect(routes.Participants.index).flashing("success" -> activity.toString)
+        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Generate a XLSX report with evaluations
+   *
+   * @param brandCode filter events by a brand
+   * @param eventId a selected event
+   * @param status  filter events by their statuses
+   * @param byMe only the events where the user is a facilitator will be retrieved
+   * @return
+   */
+  def export(brandCode: String, eventId: Long, status: Int, byMe: Boolean) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒
+        Brand.find(brandCode).map { brand ⇒
+          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val events = if (eventId > 0) {
+            Event.find(eventId).map { event ⇒
+              if (byMe) {
+                if (event.facilitatorIds.contains(account.personId)) {
+                  event :: Nil
+                } else {
+                  Nil
+                }
+              } else {
+                event :: Nil
+              }
+              event :: Nil
+            }.getOrElse(Nil)
+          } else {
+            if (byMe) {
+              Event.findByFacilitator(account.personId, brandCode)
+            } else {
+              Event.findByParameters(brandCode)
+            }
+          }
+          val evaluations = Evaluation.findByEvents(events.map(e ⇒ e.id.get))
+          val filteredEvaluations = if (status >= 0) {
+            evaluations.filter(e ⇒ e._3.status.id == status)
+          } else {
+            evaluations
+          }
+          val date = LocalDate.now.toString
+          Ok.sendFile(
+            content = createXLSXreport(filteredEvaluations),
+            fileName = _ ⇒ s"report-$date-$brandCode.xlsx")
+        }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  private def createXLSXreport(evaluations: List[(Event, Person, Evaluation)]): java.io.File = {
+    import org.apache.poi.ss.util._
+    import org.apache.poi.xssf.usermodel._
+    import play.api._
+
+    val wb = new XSSFWorkbook(Play.application.resourceAsStream("reports/evaluations.xlsx").get)
+    val sheet = wb.getSheetAt(0)
+    var rowNumber = 0
+    evaluations.foreach { e ⇒
+      rowNumber += 1
+      val row = sheet.createRow(rowNumber)
+      row.createCell(0).setCellValue(e._1.title)
+      row.createCell(1).setCellValue(e._1.schedule.start + " / " + e._1.schedule.end)
+      row.createCell(2).setCellValue(e._1.location.city)
+      row.createCell(3).setCellValue(e._2.fullName)
+      row.createCell(4).setCellValue(e._3.question6)
+      row.createCell(5).setCellValue(e._3.question7)
+      row.createCell(6).setCellValue(e._3.question1)
+      row.createCell(7).setCellValue(e._3.question2)
+      row.createCell(8).setCellValue(e._3.question3)
+      row.createCell(9).setCellValue(e._3.question4)
+      row.createCell(10).setCellValue(e._3.question5)
+      row.createCell(11).setCellValue(e._3.question8)
+    }
+    val tmpFile = File.createTempFile("report", ".xlsx")
+    tmpFile.deleteOnExit()
+    val os = new FileOutputStream(tmpFile)
+    wb.write(os)
+    os.close()
+    tmpFile
   }
 
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findAll
+      Event.findActive
     } else {
       Event.findByCoordinator(account.personId)
     }

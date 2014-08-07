@@ -34,6 +34,7 @@ object PeopleApi extends Controller with ApiAuthentication {
   implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
       Json.obj(
+        "id" -> person.id.get,
         "href" -> routes.PeopleApi.person(person.id.get).url,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
@@ -68,6 +69,7 @@ object PeopleApi extends Controller with ApiAuthentication {
   val personDetailsWrites = new Writes[Person] {
     def writes(person: Person) = {
       Json.obj(
+        "id" -> person.id.get,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "email_address" -> person.emailAddress,
@@ -77,23 +79,26 @@ object PeopleApi extends Controller with ApiAuthentication {
         "board_member" -> (person.role == PersonRole.BoardMember),
         "bio" -> person.bio,
         "interests" -> person.interests,
-        "twitter_handle" -> person.twitterHandle,
-        "facebook_url" -> person.facebookUrl,
-        "linkedin_url" -> person.linkedInUrl,
-        "google_plus_url" -> person.googlePlusUrl,
+        "twitter_handle" -> person.socialProfile.twitterHandle,
+        "facebook_url" -> person.socialProfile.facebookUrl,
+        "linkedin_url" -> person.socialProfile.linkedInUrl,
+        "google_plus_url" -> person.socialProfile.googlePlusUrl,
+        "website" -> person.webSite,
+        "blog" -> person.blog,
         "active" -> person.active,
-        "created" -> person.created.toString(),
-        "createdBy" -> person.createdBy,
-        "updated" -> person.updated.toString(),
-        "updatedBy" -> person.updatedBy,
         "organizations" -> person.memberships,
         "licenses" -> person.licenses,
         "contributions" -> person.contributions)
     }
   }
 
-  def people(stakeholdersOnly: Option[Boolean], boardmembersOnly: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    val people: List[Person] = Person.findActive(stakeholdersOnly.getOrElse(false), boardmembersOnly.getOrElse(false))
+  def people(stakeholdersOnly: Option[Boolean],
+    boardmembersOnly: Option[Boolean],
+    active: Option[Boolean],
+    query: Option[String]) = TokenSecuredAction { implicit request ⇒
+
+    val people: List[Person] = Person.findByParameters(stakeholdersOnly.getOrElse(false),
+      boardmembersOnly.getOrElse(false), active, query)
     Ok(Json.toJson(people))
   }
 

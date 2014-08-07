@@ -28,17 +28,31 @@ body {
     background-position: left 41px;
 }
 
-.navbar-inverse .brand {
-	color: #EE929F;
-	}
+.navbar-inverse .navbar-brand {
+    color: #EE929F;
+}
 
-.activity td {
-    text-indent: -19px;
+.activity td small {
     padding-left: 19px;
 }
 
 header {
     margin-bottom: 1em;
+}
+
+footer {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    margin-top: 50px;
+    color: #777;
+    text-align: center;
+    border-top: 1px solid #e5e5e5;
+}
+
+h1 .button {
+    float: left!important;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 td form {
@@ -57,32 +71,57 @@ td .btn-link {
 .actions form {
     margin-bottom: 1em;
 }
-
+.form-control.short {
+    width: 49%;
+    display: inline;
+}
 /* Activity stream */
 
-.icon-activity-signup {
-    background-position: -168px 0;
+.glyphicon-activity-signup:before {
+    content: "\e008";
 }
-.icon-activity-create, .icon-activity-add {
-    background-position: 0px -96px;
+.glyphicon-activity-create:before, .glyphicon-activity-add:before {
+    content: "\e081";
 }
-.icon-activity-update, .icon-activity-replace {
-    background-position: -96px -72px;
+.glyphicon-activity-update:before, .glyphicon-activity-replace:before {
+    content: "\e065";
 }
-.icon-activity-delete {
-    background-position: -24px -96px;
+.glyphicon-activity-delete:before {
+    content: "\e082";
 }
-.icon-activity-activate, .icon-activity-deactivate {
-    background-position: -384px 0px;
+.glyphicon-activity-activate:before, .glyphicon-activity-deactivate:before {
+    content: "\e017";
 }
-.icon-activity-balance {
-    background-position: -336px -48px;
+.glyphicon-activity-balance:before {
+    content: "\e032";
+}
+.glyphicon-activity-approve:before {
+    content: "\e125";
+}
+.glyphicon-activity-reject:before {
+    content: "\e126";
+}
+.glyphicon-activity-confirm:before {
+    content: "\e013";
+}
+.glyphicon-activity-sent:before {
+    content: "\2709";
+}
+.padding-fix {
+    padding-left: 0px;
+    padding-right: 7px;
+}
+.toolbar {
+    padding-bottom: 25px;
+}
+.tab-pane {
+    padding: 10px 10px 10px 10px;
 }
 
 .inactive, .inactive a {
     color: #bbb;
 }
-.inactive img, .inactive [class^="icon-"], .inactive [class*=" icon-"] {
+.inactive img, .inactive [class^="glyphicon-"], .inactive [class*=" glyphicon-"] {
     -webkit-filter: grayscale();
     opacity: 0.5;
 }
@@ -99,4 +138,8 @@ body.api h2 {
 body.api h3 {
  margin-top: -21px;
  padding-top: 41px;
+}
+
+.cloudbees {
+    padding-top: 20%;
 }

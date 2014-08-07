@@ -23,6 +23,38 @@
  */
 
 /**
+ * Filter events by brand
+ */
+function filterByBrand(oSettings, aData, iDataIndex) {
+    var index = 1;
+    var filter = $('#brands').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    if (aData[index].indexOf(filter) < 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/**
+ * Filter events by facilitators
+ */
+function filterByFacilitator(oSettings, aData, iDataIndex) {
+    var index = 2;
+    var filter = $('#facilitators').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    if (aData[index].indexOf(filter) < 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/**
  * Filter events checking if they are future or past
  */
 function filterByDate(oSettings, aData, iDataIndex) {
@@ -35,12 +67,13 @@ function filterByDate(oSettings, aData, iDataIndex) {
     if (dates.length != 2) {
         return true;
     }
+    var start = Date.parse(dates[0]);
     var end = Date.parse(dates[1]);
     var today = Date.today();
     if (filter == 'past') {
         return (today > end);
     } else {
-        return (today <= end);
+        return (today <= start);
     }
 }
 
@@ -75,25 +108,88 @@ function filterArchived(oSettings, aData, iDataIndex) {
         return aData[index] == 'false';
     }
 }
+$.fn.dataTableExt.afnFiltering.push(filterByBrand);
+$.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
 $.fn.dataTableExt.afnFiltering.push(filterByDate);
 $.fn.dataTableExt.afnFiltering.push(filterByPublicity);
 $.fn.dataTableExt.afnFiltering.push(filterArchived);
+
+/**
+ * Initialize a facilitator filter
+ * @param events {DataTable}
+ */
+function initFacilitatorsFilter(events) {
+    var facilitators = [];
+    events.api().column(2).data().unique().each(function(d, j) {
+        var regexp = /<a.*>(.*)<\/a>/img;
+        while ( (result = regexp.exec(d)) ) {
+            var value = result[1];
+            if (facilitators.indexOf(value) < 0) {
+                facilitators.push(value);
+            }
+        }
+    });
+    facilitators.sort();
+    var name = $('#userName').val();
+    for (var i = 0; i < facilitators.length; i++) {
+        var option = $("<option></option>").attr("value", facilitators[i]).text(facilitators[i]);
+        if (name == facilitators[i]) {
+            option.attr('selected', 'selected');
+        }
+        $('#facilitators').append(option);
+    }
+}
+
+/**
+ * Initialize a brand filter
+ * @param events {DataTable}
+ */
+function initBrandsFilter(events) {
+    var brands = [];
+    events.api().column(1).data().unique().each(function(d, j) {
+        var regexp = /<a.*brand\/([a-zA-Z0-9_]{1,5}).*>(.*)<\/a>/img;
+        while ( (result = regexp.exec(d)) ) {
+            var code = result[1];
+            var name = result[2];
+            if (!(code in brands)) {
+                brands[code] = name;
+            }
+        }
+    });
+    brands.sort();
+    var personalLicense = $('#personalLicense').val();
+    for (var key in brands) {
+        var option = $("<option></option>").attr("value", brands[key]).text(brands[key]);
+        if (personalLicense == key) {
+            option.attr('selected', 'selected');
+        }
+        $('#brands').append(option);
+    }
+}
 
 $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
-    var oTable = $('#events').dataTable( {
-        "sPaginationType": "bootstrap",
+    var events = $('#events').dataTable( {
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
         "aaSorting": [],
-        "bLengthChange": false
+        "bLengthChange": false,
+        "order": [[ 4, "asc" ]]
     });
+    initFacilitatorsFilter(events);
+    initBrandsFilter(events);
+
+
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
-    $('#past-future').on('change', function() { oTable.fnDraw(); } );
-    $('#private').on('change', function() { oTable.fnDraw(); } );
-    $('#archived').on('change', function() { oTable.fnDraw(); } );
+    $('#past-future').on('change', function() { events.fnDraw(); } );
+    $('#private').on('change', function() { events.fnDraw(); } );
+    $('#archived').on('change', function() { events.fnDraw(); } );
+    $('#facilitators').on('change', function() { events.fnDraw(); } );
+    $('#brands').on('change', function() { events.fnDraw(); } );
+
+    events.fnDraw();
 });

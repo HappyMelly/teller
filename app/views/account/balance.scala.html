@@ -6,60 +6,55 @@
 @import models.UserRole.Role._
 @import templates.Formatters._
 
-@main("Accounts", Some(user)) {
+@main("Accounts", "finance", Some(user)) {
 
   <ul class="nav nav-tabs">
     <li><a href="@routes.BookingEntries.index()">Booking entries</a></li>
     <li class="active"><a href="@routes.Accounts.index()">Accounts</a></li>
   </ul>
 
-  <div class="row">
-    <div class="span7">
-      <h1>Balance accounts</h1>
-    </div>
-  </div>
+  @html.indexPageHeader("Balance accounts") {
+  }
 
-  <p><strong>Total balance</strong>
-  <br>@balance.format</p>
-
+  <div class="col-md-12">
+    <p><strong>Total balance</strong>
+    <br>@balance.format</p>
   @if(!accounts.isEmpty) {
-    <div class="row">
-      <div class="span16">
-        <table class="datatables table table-bordered">
-          <thead>
-          <tr>
-            <th>Account</th>
-            <th>Balance</th>
-            <th>Balance in @balance.getCurrencyUnit.getCode</th>
-            <th>Adjustment</th>
-          </tr>
-          </thead>
-          <tbody>
-          @for(account <- accounts) {
-            <tr>
-              <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
-              <td>@account.balance.format</td>
-              <td>@account.balanceConverted.format</td>
-              <td>@account.adjustment.format</td>
-            </tr>
-          }
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <table class="datatables table table-bordered">
+      <thead>
+      <tr>
+        <th>Account</th>
+        <th>Balance</th>
+        <th>Balance in @balance.getCurrencyUnit.getCode</th>
+        <th>Adjustment</th>
+      </tr>
+      </thead>
+      <tbody>
+      @for(account <- accounts) {
+        <tr>
+          <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
+          <td>@account.balance.format</td>
+          <td>@account.balanceConverted.format</td>
+          <td>@account.adjustment.format</td>
+        </tr>
+      }
+      </tbody>
+    </table>
   } else {
     <p>There are no active accounts to balance.</p>
   }
 
-  <form method="post" action="@CSRF(routes.Accounts.balanceAccounts)">
-    <div class="control-group">
-    </div>
-    <div class="control-group">
-      <button class="btn btn-warning"@if(!canBalanceAccounts) { disabled="disabled" title="Cannot balance accounts with zero adjustment"}>
-        <i class="icon-align-justify icon-white"></i> Balance Accounts
-      </button>
-    </div>
-  </form>
+    <form method="post" action="@CSRF(routes.Accounts.balanceAccounts)">
+      <div class="form-group">
+      </div>
+      <div class="form-group">
+        <button class="btn btn-warning"@if(!canBalanceAccounts) { disabled="disabled"
+          title="Cannot balance accounts with zero adjustment"}>
+          <i class="glyphicon glyphicon-align-justify glyphicon-white"></i> Balance Accounts
+        </button>
+      </div>
+    </form>
 
+  </div>
   <script src="@routes.Assets.at("account/balance.js")" type="text/javascript"></script>
 }

@@ -42,10 +42,21 @@ import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInP
 /**
  * Contains profile and authentication info for a SecureSocial Identity.
  */
-case class LoginIdentity(uid: Option[Long], identityId: IdentityId, firstName: String, lastName: String,
-  fullName: String, email: Option[String], avatarUrl: Option[String], authMethod: AuthenticationMethod,
-  oAuth1Info: Option[OAuth1Info], oAuth2Info: Option[OAuth2Info], passwordInfo: Option[PasswordInfo] = None,
-  apiToken: String, twitterHandle: Option[String], facebookUrl: Option[String], googlePlusUrl: Option[String],
+case class LoginIdentity(uid: Option[Long],
+  identityId: IdentityId,
+  firstName: String,
+  lastName: String,
+  fullName: String,
+  email: Option[String],
+  avatarUrl: Option[String],
+  authMethod: AuthenticationMethod,
+  oAuth1Info: Option[OAuth1Info],
+  oAuth2Info: Option[OAuth2Info],
+  passwordInfo: Option[PasswordInfo] = None,
+  apiToken: String,
+  twitterHandle: Option[String],
+  facebookUrl: Option[String],
+  googlePlusUrl: Option[String],
   linkedInUrl: Option[String]) extends Identity {
 
   /**
@@ -121,7 +132,9 @@ object LoginIdentity {
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
     generateApiToken(i), None, None, None, Some(linkedInUrl))
 
-  private def generateApiToken(i: Identity) = { Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt())) }
+  private def generateApiToken(i: Identity) = {
+    Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt()))
+  }
 
   def findBytoken(token: String): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
     Query(LoginIdentities).filter(_.apiToken === token).list.headOption

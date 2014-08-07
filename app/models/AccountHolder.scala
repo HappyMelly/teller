@@ -35,7 +35,7 @@ trait AccountHolder {
   /** Updates the `updatedBy` and `updated` properties, if applicable **/
   def updated(updatedBy: String): AccountHolder = {
     this match {
-      case p: Person ⇒ p.copy(updated = DateTime.now(), updatedBy = updatedBy).update
+      case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(updated = DateTime.now(), updatedBy = updatedBy)).update
       case o: Organisation ⇒ o.copy(updated = DateTime.now(), updatedBy = updatedBy).update
       case _ ⇒ this
     }

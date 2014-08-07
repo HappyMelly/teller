@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ EventType, BrandView, Activity, Brand, BrandStatus }
+import models._
 import org.joda.time._
 import play.api.mvc._
 import play.api.data.Form
@@ -32,11 +32,10 @@ import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
-import scala.Some
+import play.api.cache.Cache
 import play.api.data.FormError
 import play.api.data.format.Formatter
-import java.io.File
-import play.api.cache.Cache
+import play.api.libs.json.{ JsValue, Writes, Json }
 import services._
 import fly.play.s3.{ BucketFile, S3Exception }
 import play.api.Play.current
@@ -76,6 +75,7 @@ object Brands extends Controller with Security {
     "description" -> optional(text),
     "status" -> brandMapping,
     "picture" -> optional(text),
+    "generateCert" -> boolean,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
@@ -239,6 +239,30 @@ object Brands extends Controller with Security {
           Ok(value).as(contentType)
       }
     }
+  }
+
+  implicit val eventWrites = new Writes[Event] {
+    def writes(data: Event): JsValue = {
+      Json.obj(
+        "id" -> data.id.get,
+        "title" -> s"${data.title} / ${data.location.city} / ${data.schedule.start}")
+    }
+  }
+
+  /**
+   * Returns a list of managed events for the given brand and current user
+   */
+  def events(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      Brand.find(brandCode).map { brand ⇒
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
+          Event.findByParameters(brandCode)
+        } else {
+          Event.findByFacilitator(account.personId, brandCode)
+        }
+        Ok(Json.toJson(events))
+      }.getOrElse(NotFound("Unknown brand"))
   }
 
 }

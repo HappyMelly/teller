@@ -3,11 +3,12 @@
 @import play.api.i18n._
 @import views.html.helper._
 
-<div class="control-group @elements.args.get('_class) @if(elements.hasErrors) {error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
-  <label for="@elements.id">@elements.label(elements.lang)</label>
-  <div class="input">
+<div class="form-group @elements.args.get('_class) @if(elements.hasErrors) {has-error}"
+  id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+  <label for="@elements.id" class="control-label col-sm-3">@elements.label(elements.lang)</label>
+  <div class="col-sm-9">
     @elements.input
-    <span class="help-inline">
+    <span class="help-block">
       @if(elements.hasErrors) {
         @elements.errors(elements.lang).mkString(", ")
       } else {

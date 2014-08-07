@@ -41,7 +41,7 @@ object Dashboard extends Controller with SecureSocial {
    * API documentation page.
    */
   def api = SecuredAction { implicit request ⇒
-    Ok(views.html.api(request.user.asInstanceOf[LoginIdentity]))
+    Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
   }
 
   /**

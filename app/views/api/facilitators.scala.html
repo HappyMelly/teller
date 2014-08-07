@@ -1,0 +1,50 @@
+@(user: LoginIdentity)
+
+<h3 id="facilitators">Facilitators</h3>
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>A list of facilitators for a particular brand</td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v1/brand/{brand}/facilitators</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+      <code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of person objects, with properties:</p>
+      <ul>
+        <li><code>id</code> - an unique identified for a person </li>
+        <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+        <li><code>first_name</code></li>
+        <li><code>last_name</code></li>
+        <li><code>photo</code></li>
+        <li><code>city</code></li>
+        <li><code>country</code> - ISO 8166-2 country code</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Examples</th>
+    <td><a href="/api/v1/brand/mgt30/facilitators?api_token=@user.apiToken">GET /api/v1/brand/mgt30/facilitators</a><br>
+  </tr>
+</table>

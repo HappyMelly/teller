@@ -26,7 +26,6 @@ package controllers
 import play.mvc.Controller
 import play.api.libs.json._
 import models.{ Brand, Event }
-import play.api.i18n.Messages
 
 /**
  * Events API
@@ -38,12 +37,16 @@ object EventsApi extends Controller with ApiAuthentication {
   implicit val eventWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
       Json.obj(
+        "id" -> event.id.get,
         "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
         "title" -> event.title,
         "description" -> event.details.description,
         "spokenLanguage" -> event.spokenLanguage,
+        "materialsLanguage" -> event.materialsLanguage,
+        "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
+        "hoursPerDay" -> event.schedule.hoursPerDay,
         "totalHours" -> event.schedule.totalHours,
         "facilitators" -> event.facilitators,
         "city" -> event.location.city,
@@ -57,12 +60,16 @@ object EventsApi extends Controller with ApiAuthentication {
     def writes(events: List[Event]): JsValue = {
       val serializedEvents = events.map { event ⇒
         Json.obj(
+          "id" -> event.id.get,
           "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
           "title" -> event.title,
           "description" -> event.details.description,
           "spokenLanguage" -> event.spokenLanguage,
+          "materialsLanguage" -> event.materialsLanguage,
+          "specialAttention" -> event.details.specialAttention,
           "start" -> event.schedule.start,
           "end" -> event.schedule.end,
+          "hoursPerDay" -> event.schedule.hoursPerDay,
           "totalHours" -> event.schedule.totalHours,
           "city" -> event.location.city,
           "country" -> event.location.countryCode,
@@ -126,20 +133,18 @@ object EventsApi extends Controller with ApiAuthentication {
   /**
    * Events list
    */
-  def events(brandCode: String,
+  def events(code: String,
     future: Option[Boolean],
     public: Option[Boolean],
+    archived: Option[Boolean],
+    facilitatorId: Option[Long],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = Event.findByParameters(brandCode, future, public, None, countryCode, eventType)
+    val events: List[Event] = facilitatorId.map { value ⇒
+      Event.findByFacilitator(value, code, future, public)
+    }.getOrElse {
+      Event.findByParameters(code, future, public, archived, None, countryCode, eventType)
+    }
     Ok(Json.toJson(events))
-  }
-
-  /**
-   * Events list for a given facilitator
-   */
-  def eventsByFacilitator(brandCode: String, facilitatorId: Long, future: Option[Boolean], public: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = Event.findByFacilitator(facilitatorId, brandCode, future, public)
-    Ok(Json.toJson(events)(noFacilitatorsEventsWrites))
   }
 }

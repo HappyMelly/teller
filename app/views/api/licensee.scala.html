@@ -1,0 +1,61 @@
+@(user: LoginIdentity)
+
+<h3 id="licensee">Licensee details</h3>
+
+<p>The <em>licensee details</em> resource provides more details about an entry in the <a href="#licensees">list</a>.</p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v1/licensee/{licenseeId}/brand/{brand}</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+      <p><code>licenseeId</code> unique identifier for the person with the content license, e.g. <code>42</code></p>
+      <p><code>brand</code> a brand code to return licensees for, e.g. <code>mgt30</code></p>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON object, with licensee properties:</p>
+      <ul>
+        <li><code>country</code> - ISO 8166-2 country code</li>
+        <li><code>first_name</code></li>
+        <li><code>last_name</code></li>
+        <li><code>email_address</code></li>
+        <li><code>photo</code> - URL to the user's photo</li>
+        <li><code>twitter_handle</code> - Twitter user name, without the leading <code>@@</code></li>
+        <li><code>facebook_url</code></li>
+        <li><code>linkedin_url</code></li>
+        <li><code>google_plus_url</code></li>
+        <li><code>bio</code> - Markdown format</li>
+        <li><code>interests</code> - Markdown format</li>
+        <li><code>valid</code> <code>true</code> - when there is a current license for this person and brand</li>
+        <li><code>licensed_since</code> - earliest start date for a current license for this person and brand</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>404 Not Found</code> if the specified licensee is not found or if given brand code is not defined</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Examples</th>
+    <td>
+      <a href="/api/v1/licensee/20/brand/BXLXS?api_token=@user.apiToken">GET /api/v1/licensee/20/brand/BXLXS</a>
+      <br><a href="/api/v1/licensee/1/brand/mgt30?api_token=@user.apiToken">GET /api/v1/licensee/1/brand/mgt30</a>
+    </td>
+  </tr>
+</table>

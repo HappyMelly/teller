@@ -53,6 +53,7 @@ case class Brand(id: Option[Long],
   description: Option[String],
   status: BrandStatus.Value,
   picture: Option[String],
+  generateCert: Boolean = false,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -121,16 +122,16 @@ object Brand {
     if (!exists(code))
       false
     else
-      findForUser(user).exists(_.code == code)
+      findByUser(user).exists(_.code == code)
   }
 
   /**
-   * Returns a list of all brands for a specified user
+   * Returns a list of all brands for a specified user which he could facilitate
    * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
    */
-  def findForUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
+  def findByUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
     if (user.editor)
       Query(Brands).list.sortBy(_.name)
     else {

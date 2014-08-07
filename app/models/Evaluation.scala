@@ -24,13 +24,17 @@
 
 package models
 
-import models.database.{ Evaluations }
+import models.database.{ Evaluations, Participants, Events, People }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.cache.Cache
 import play.api.Play.current
+import play.api.i18n.Messages
 import play.api.libs.Crypto
 import scala.util.Random
+import play.api.libs.concurrent.Execution.Implicits._
+import services.EmailService
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -47,7 +51,7 @@ object EvaluationStatus extends Enumeration {
 case class Evaluation(
   id: Option[Long],
   eventId: Long,
-  participantId: Option[Long],
+  participantId: Long,
   question1: String,
   question2: String,
   question3: String,
@@ -66,14 +70,29 @@ case class Evaluation(
 
   lazy val event: Event = Event.find(eventId).get
 
-  lazy val participant: Person = Person.find(participantId.get).get
+  lazy val participant: Person = Person.find(participantId).get
 
-  def insert: Evaluation = DB.withSession { implicit session: Session ⇒
+  def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
-    this.copy(id = Some(id))
+    val participant = Participant.find(participantId, eventId).get
+    participant.copy(evaluationId = Some(id)).update
+    val created = this.copy(id = Some(id))
+
+    val brand = Brand.find(event.brandCode).get
+    val impression = Messages("evaluation.impression." + question6)
+    val subject = s"New evaluation (General impression: $impression)"
+    EmailService.send(event.facilitators.toSet,
+      Some(Set(brand.coordinator)), None, subject,
+      mail.html.evaluation(created).toString(), richMessage = true)
+
+    created
   }
 
-  def delete(): Unit = Evaluation.delete(this.id.get)
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    Evaluations.where(_.id === id).mutate(_.delete())
+    val participant = Participant.find(participantId, eventId).get
+    participant.copy(evaluationId = None).update
+  }
 
   def update: Evaluation = DB.withSession { implicit session: Session ⇒
     val updateTuple = (eventId, participantId, question1, question2, question3, question4, question5,
@@ -83,9 +102,34 @@ case class Evaluation(
     this
   }
 
-  def approve(): Evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$participantId%03d"
+
+  def approve(approver: Person): Evaluation = {
+
+    val oldEvaluation = this
+    val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+
+    val brand = Brand.find(evaluation.event.brandCode).get
+    // handled date is the only variable which influences how the certificate
+    //   looks like from one generation to another
+    if ((evaluation.certificate.isEmpty && brand.brand.generateCert) || oldEvaluation.handled != evaluation.handled) {
+      val cert = new Certificate(evaluation, Some(oldEvaluation))
+      cert.generateAndSend(brand, approver)
+    } else if (evaluation.certificate.isEmpty) {
+      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
+      val subject = s"Your ${brand.brand.name} event's evaluation approval"
+      EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
+        Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+    } else {
+      val cert = new Certificate(evaluation)
+      cert.send(brand, approver)
+    }
+
+    evaluation
+  }
 
   def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
+
 }
 
 object Evaluation {
@@ -102,12 +146,23 @@ object Evaluation {
     Query(Evaluations).filter(_.id === id).firstOption
   }
 
-  def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).sortBy(_.created).list
+  /**
+   * Retrieve the evaluations for a set of events
+   * @param eventIds a list of event ids
+   * @return
+   */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    val baseQuery = for {
+      e ← Events if e.id inSet eventIds
+      part ← Participants if part.eventId === e.id
+      p ← People if p.id === part.personId
+      ev ← Evaluations if ev.id === part.evaluationId
+    } yield (e, p, ev)
+    baseQuery.list
   }
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Evaluations.where(_.id === id).mutate(_.delete())
+  def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
+    Query(Evaluations).sortBy(_.created).list
   }
 
 }

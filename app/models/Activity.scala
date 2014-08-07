@@ -69,6 +69,7 @@ object Activity {
     val Confirmed = Value("confirm")
     val Approved = Value("approve")
     val Rejected = Value("reject")
+    val Sent = Value("send")
   }
 
   import Predicate.Predicate

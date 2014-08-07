@@ -37,9 +37,9 @@ object FacilitatorsApi extends Controller with ApiAuthentication {
   /**
    * Facilitators list for a given brand
    */
-  def facilitators(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(brandCode).map { brand ⇒
-      Ok(Json.toJson(Brand.findFacilitators(brandCode, brand.coordinator)))
+  def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
+    Brand.find(code).map { brand ⇒
+      Ok(Json.toJson(Brand.findFacilitators(code, brand.coordinator)))
     }.getOrElse(NotFound("Unknown brand"))
   }
 

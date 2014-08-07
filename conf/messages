@@ -22,6 +22,9 @@
 # in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
 #
 
+# SecureSocial
+securesocial.login.accessDenied = Sorry, your social network account is not granted the right privileges to access this application. Please contact the person who added your account to this system and ask that person to assign the Viewer role to your account.
+
 # Models
 models.BookingEntry.name = booking entry {0}
 models.BookingEntry.attachment = booking entry {0}’s attachment
@@ -37,17 +40,17 @@ object.UserAccount = {0} role
 
 # Organisation category label names and Bootstrap label CSS classes.
 models.OrganisationCategory.brandentity = Brand Entity
-models.OrganisationCategory.brandentity.label = label-inverse
+models.OrganisationCategory.brandentity.label = label label-default
 models.OrganisationCategory.legalentity = Legal Entity
-models.OrganisationCategory.legalentity.label = label-info
+models.OrganisationCategory.legalentity.label = label label-info
 
 # Brand status label names and Bootstrap label CSS classes.
 models.BrandStatus.accepted = Accepted
 models.BrandStatus.accepted.label = label-success
 models.BrandStatus.huddlegathering = Accepted in a Huddle, must be ratified in a Gathering
-models.BrandStatus.huddlegathering.label = label-inverse
+models.BrandStatus.huddlegathering.label = label-default
 models.BrandStatus.gatheringhuddle = Accepted in a Gathering, must be ratified in a Huddle
-models.BrandStatus.gatheringhuddle.label = label-inverse
+models.BrandStatus.gatheringhuddle.label = label-default
 models.BrandStatus.provisionallyaccepted = Provisionally Accepted
 models.BrandStatus.provisionallyaccepted.label = label-primary
 models.BrandStatus.experimental = In Experimental Phase
@@ -63,7 +66,7 @@ models.EvaluationStatus.3.label = label-warning
 
 # Product category label names and Bootstrap label CSS classes.
 models.ProductCategory.book = Books
-models.ProductCategory.book.label = label-inverse
+models.ProductCategory.book.label = label-default
 models.ProductCategory.game = Games
 models.ProductCategory.game.label = label-info
 models.ProductCategory.apps = Apps
@@ -94,6 +97,7 @@ activity.balance = {0} balanced {1} accounts
 activity.confirm = {0} confirmed {1} event
 activity.approve = {0} approved an evaluation for {1}
 activity.reject = {0} rejected an evaluation for {1}
+activity.send = {0} sent a request for evaluation for {1} event
 
 # Controller error messages
 # {0} Object name
@@ -104,14 +108,21 @@ error.money.negativeOrZero = Amount greater than zero required
 error.real.precision = The amount has more than two decimal places
 error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
+error.api.validation = Validation Failed
+error.api.required = Required field
+
 error.brand.invalid = You are not allowed to create events for this brand
+error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
 error.event.invalid = You are not allowed to manage this event
 error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
-error.person.invalid = A person with such id does not exist
+error.participant.notExist = The person is not a participant of the event
+error.person.notExist = The person does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
+error.notDeletableProduct = You cannot delete this product because it has contributors or derivative products
+error.unknown_country = Please choose a country
 
 # Play form validation error overrides
 error.date = Invalid date
@@ -406,29 +417,29 @@ country.ZW = Zimbabwe
 country.AX = Åland Islands]
 
 # Evaluations
-evaluation.impression.0 = terrible
-evaluation.impression.1 = very bad
-evaluation.impression.2 = bad
-evaluation.impression.3 = disappointing
-evaluation.impression.4 = below average
-evaluation.impression.5 = average
-evaluation.impression.6 = above average
-evaluation.impression.7 = fine
-evaluation.impression.8 = good
-evaluation.impression.9 = very good
-evaluation.impression.10 = excellent
+evaluation.impression.0 = Terrible (0)
+evaluation.impression.1 = Very bad (1)
+evaluation.impression.2 = Bad (2)
+evaluation.impression.3 = Disappointing (3)
+evaluation.impression.4 = Below average (4)
+evaluation.impression.5 = Average (5)
+evaluation.impression.6 = Above average (6)
+evaluation.impression.7 = Fine (7)
+evaluation.impression.8 = Good (8)
+evaluation.impression.9 = Very good (9)
+evaluation.impression.10 = Excellent (10)
 
-evaluation.recommendation.0 = certainly not
-evaluation.recommendation.1 = highly unlikely
-evaluation.recommendation.2 = unlikely
-evaluation.recommendation.3 = quite unlikely
-evaluation.recommendation.4 = possibly not
-evaluation.recommendation.5 = maybe
-evaluation.recommendation.6 = yes, possibly
-evaluation.recommendation.7 = quite possibly
-evaluation.recommendation.8 = likely
-evaluation.recommendation.9 = highly likely
-evaluation.recommendation.10 = certainly
+evaluation.recommendation.0 = Certainly not (0%)
+evaluation.recommendation.1 = Highly unlikely (10%)
+evaluation.recommendation.2 = Unlikely (20%)
+evaluation.recommendation.3 = Quite unlikely (30%)
+evaluation.recommendation.4 = Possibly not (40%)
+evaluation.recommendation.5 = Maybe (50%)
+evaluation.recommendation.6 = Yes, possibly (60%)
+evaluation.recommendation.7 = Quite possibly (70%)
+evaluation.recommendation.8 = Likely (80%)
+evaluation.recommendation.9 = Highly likely (90%)
+evaluation.recommendation.10 = Certainly (100%)
 
 evaluation.question1 = What triggered you to register for this event?
 evaluation.question2 = Which action items did you take away from the event?

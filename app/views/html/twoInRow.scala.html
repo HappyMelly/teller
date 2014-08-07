@@ -1,0 +1,44 @@
+@**
+ * Generate an HTML for two fields in a row.
+ *
+ * Example:
+ * {{{
+ * @html.twoInRow(myForm("done"), myForm("ready"), label)
+ * }}}
+ *
+ * @param left The form field.
+ * @param right The form field.
+ * @param label String
+ * @param args Set of extra attributes ('''_default''' is a special argument).
+ * @param handler The field constructor.
+ *@
+@(left: Field, leftData: play.api.templates.Html,
+  right: Field, rightData: play.api.templates.Html,
+  label: String)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+
+@fieldErrors(fields: Field*) = {
+  @if(fields.exists(_.hasErrors)) {
+    @fields.map(_.errors.map(error => Messages(error.message, error.args: _*))).flatten.toSet.mkString(", ")
+  }
+}
+
+@defining(left.hasErrors || right.hasErrors) { hasErrors =>
+  <div class="form-group @if(hasErrors) {has-error}">
+    <label for="@left.name" class="control-label col-sm-3">@label</label>
+    <div class="col-sm-9">
+      <div class="col-xs-5 padding-fix">
+        @leftData
+      </div>
+      <div class="col-xs-5 padding-fix">
+        @rightData
+      </div>
+      <span class="help-block">
+        @if(hasErrors) {
+          @fieldErrors(left, right)
+        } else {
+          Required
+        }
+      </span>
+    </div>
+  </div>
+}

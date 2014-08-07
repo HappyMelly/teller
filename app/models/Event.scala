@@ -62,6 +62,8 @@ case class Event(
   updatedBy: String,
   facilitatorIds: List[Long]) {
 
+  val longTitle: String = title + " / " + location.city + " / " + schedule.start.toString
+
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       facilitation ← EventFacilitators if facilitation.eventId === this.id
@@ -78,12 +80,24 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  def canEdit(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    facilitatorIds.exists(_ == account.personId) || canAdministrate(account)
+  /**
+   * To facilitate the event = to edit the event, to approve/reject evaluations, to delete evaluations
+   *
+   * @param personId A person's unique identifier
+   * @return
+   */
+  def canFacilitate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    facilitatorIds.contains(personId) || canAdministrate(personId)
   }
 
-  def canAdministrate(account: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    account.editor || Brand.find(brandCode).get.coordinator.id.get == account.personId
+  /**
+   * To administrate the event = to add and edit evaluations for the event
+   *
+   * @param personId A person unique identifier
+   * @return
+   */
+  def canAdministrate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    Brand.find(brandCode).get.coordinator.id.get == personId
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
@@ -230,27 +244,32 @@ object Event {
    * Return a list of events based on several parameters
    */
   def findByParameters(brandCode: String,
-    future: Option[Boolean],
-    public: Option[Boolean],
-    confirmed: Option[Boolean],
-    countryCode: Option[String],
-    eventType: Option[Long]): List[Event] = DB.withSession { implicit session: Session ⇒
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None,
+    confirmed: Option[Boolean] = None,
+    countryCode: Option[String] = None,
+    eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(Events).filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) baseQuery.filter(_.end >= today)
-      else baseQuery.filter(_.end <= today)
+      if (value) baseQuery.filter(_.start >= today)
+      else baseQuery.filter(_.end < today)
     }.getOrElse(baseQuery)
 
     val publicityQuery = public.map { value ⇒
       timeQuery.filter(_.notPublic === !value)
     }.getOrElse(timeQuery)
 
-    val confirmedQuery = confirmed.map { value ⇒
-      publicityQuery.filter(_.confirmed === value)
+    val archivedQuery = archived.map { value ⇒
+      publicityQuery.filter(_.archived === value)
     }.getOrElse(publicityQuery)
+
+    val confirmedQuery = confirmed.map { value ⇒
+      archivedQuery.filter(_.confirmed === value)
+    }.getOrElse(archivedQuery)
 
     val countryQuery = countryCode.map { value ⇒
       confirmedQuery.filter(_.countryCode === value)
@@ -264,19 +283,19 @@ object Event {
   }
 
   /**
-   * Returns a list of all events for a specified user
+   * Returns a list of all events for a specified user which he could manage
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
     if (user.editor)
-      Query(Events).filter(_.archived === true).sortBy(_.start).list
+      Query(Events).filter(_.archived === false).sortBy(_.start).list
     else {
-      val brands = Brand.findForUser(user)
+      val brands = Brand.findByUser(user)
       if (brands.length > 0) {
         val brandCodes = brands.map(_.code)
-        val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
-        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+        val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
+        events.filter(e ⇒ brandCodes.contains(e.brandCode))
       } else {
-        Query(Events).filter(_.archived === true).sortBy(_.start).list
+        List[Event]()
       }
     }
   }
@@ -288,7 +307,7 @@ object Event {
     val brands = Brand.findByCoordinator(coordinatorId)
     if (brands.length > 0) {
       val brandCodes = brands.map(_.code)
-      val events = Query(Events).filter(_.archived === true).sortBy(_.start).list
+      val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
       events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
     } else {
       List[Event]()
@@ -299,20 +318,19 @@ object Event {
    * Return a list of events for a given facilitator
    */
   def findByFacilitator(facilitatorId: Long, brandCode: String,
-    future: Option[Boolean],
-    public: Option[Boolean]): List[Event] = DB.withSession { implicit session: Session ⇒
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None): List[Event] = DB.withSession { implicit session: Session ⇒
 
     val baseQuery = for {
-      (entry, event) ← Query(EventFacilitators).filter(_.facilitatorId === facilitatorId).leftJoin(Events) on (_.eventId === _.id)
+      entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+      event ← Events if event.id === entry.eventId && event.brandCode === brandCode
     } yield event
-
-    val brandQuery = baseQuery.filter(_.brandCode === brandCode)
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) brandQuery.filter(_.end >= today)
-      else brandQuery.filter(_.end <= today)
+      if (value) baseQuery.filter(_.end >= today)
+      else baseQuery.filter(_.end <= today)
     }.getOrElse(baseQuery)
 
     val publicityQuery = public.map { value ⇒
@@ -329,17 +347,20 @@ object Event {
     query.map { case (code, events) ⇒ (code, events.length) }.list
   }
 
+  def findActive: List[Event] = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.archived === false).sortBy(_.title.toLowerCase).list
+  }
+
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).sortBy(_.title.toLowerCase).list
   }
 
-  def sendConfirmationAlert = {
-    Brand.findAll.foreach { brand ⇒
-      Event.findByParameters(brand.brand.code, Some(false), None, Some(false), None, None).foreach { event ⇒
+  def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
+    Event.findByParameters(brand.brand.code, future = Some(false), public = None, archived = None,
+      confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
         val subject = "Сonfirm your event " + event.title
-        EmailService.send(event.facilitators.toSet, subject, mail.txt.confirm(event).toString)
+        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString())
       }
-    }
   }
 
 }

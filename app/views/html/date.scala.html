@@ -1,0 +1,17 @@
+@**
+ * Generate an HTML input date.
+ *
+ * Example:
+ * {{{
+ * @html.date(field = myForm("date"), args = 'size -> 10)
+ * }}}
+ *
+ * @param field The form field.
+ * @param args Set of extra attributes.
+ * @param handler The field constructor.
+ *@
+@(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+
+@helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
+    <input type="date" id="@id" value="@value" class="form-control" name="@name" @toHtmlArgs(htmlArgs)/>
+}(handler, lang)

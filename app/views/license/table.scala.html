@@ -32,7 +32,8 @@
         <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmountMajor</td>
         <td>@license.license.feePaid.map(_.format)</td>
         @restrict(handler, List(as(Editor.toString))) {
-          <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))"><i class="icon-pencil"></i> Edit</a></td>
+          <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))">
+            <i class="glyphicon glyphicon-pencil"></i> Edit</a></td>
         }
       </tr>
     }

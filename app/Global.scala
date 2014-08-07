@@ -33,7 +33,6 @@ import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import scala.concurrent.duration.Duration;
 import java.util.concurrent.TimeUnit;
 import models.Event
-import play.Logger
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
@@ -42,15 +41,36 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       views.html.notFoundPage(request.path)))
   }
 
+  /**
+   * Retrieve the (RequestHeader,Handler) to use to serve this request.
+   * Default is: route, tag request, then apply filters
+   *
+   * This function was overrided to support POST request through API
+   */
+  override def onRequestReceived(request: RequestHeader): (RequestHeader, Handler) = {
+    val (routedRequest, handler) = onRouteRequest(request) map {
+      case handler: RequestTaggingHandler ⇒ (handler.tagRequest(request), handler)
+      case otherHandler ⇒ (request, otherHandler)
+    } getOrElse {
+      (request, Action.async(BodyParsers.parse.empty)(_ ⇒ this.onHandlerNotFound(request)))
+    }
+    val api = """/api/v1""".r findPrefixOf request.path
+    if (api.isEmpty) {
+      (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
+    } else {
+      (routedRequest, handler)
+    }
+  }
+
   override def onStart(app: Application) {
     // turn this feature off on a development machine
-    if (Play.current.configuration.getBoolean("smtp.mock").exists(_ == true)) {
+    if (Play.current.configuration.getBoolean("development").exists(_ == true)) {
       return
     }
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
-    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds() * 1000
+    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
     Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
       Event.sendConfirmationAlert
     }

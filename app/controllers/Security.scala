@@ -115,21 +115,17 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     account.map { existingAccount ⇒
+      val userId = existingAccount.personId
       name match {
         case "evaluation" ⇒
           meta match {
             case "add" ⇒ existingAccount.coordinator || existingAccount.editor
             case "edit" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role or a Brand Coordinator to be able to edit the evaluation
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong)
-                .exists(_.event.canAdministrate(existingAccount))
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canAdministrate(userId))
             case "manage" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role, a Brand Coordinator or a Facilitator to be able
-              // to manage (delete, approve and reject) the evaluation
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong)
-                .exists(_.event.canEdit(existingAccount))
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canFacilitate(userId))
             case _ ⇒ true
           }
         case "event" ⇒
@@ -137,13 +133,10 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role, be a Brand Coordinator or a Facilitator of the event to be able to
-              //   edit it
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canEdit(existingAccount))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canFacilitate(userId))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role or be a Brand Coordinator to admin it
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(existingAccount))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(userId))
             case _ ⇒ true
           }
         case "person" ⇒
@@ -155,7 +148,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               existingAccount.editor || personId.get.toLong == existingAccount.personId || {
                 Person.find(personId.get.toLong).map { person ⇒
                   if (person.virtual) {
-                    !person.participateInEvents(existingAccount.personId).isEmpty
+                    !person.participateInEvents(userId).isEmpty
                   } else {
                     false
                   }

@@ -38,6 +38,12 @@ trait ApiAuthentication extends Controller {
       LoginIdentity.findBytoken(token).map(identity ⇒ f(request))).getOrElse(Unauthorized("Unauthorized"))
   }
 
+  /** Make an action require token authentication **/
+  def TokenSecuredActionWithIdentity(f: (Request[AnyContent], LoginIdentity) ⇒ Result) = Action { implicit request ⇒
+    request.getQueryString(ApiToken).flatMap(token ⇒
+      LoginIdentity.findBytoken(token).map(identity ⇒ f(request, identity))).getOrElse(Unauthorized("Unauthorized"))
+  }
+
   val ApiToken = "api_token"
 
 }

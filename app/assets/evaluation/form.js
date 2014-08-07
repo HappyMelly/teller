@@ -24,7 +24,7 @@
 
 function showError(message) {
     $('#error').append(
-        $('<div class="alert alert-error">')
+        $('<div class="alert alert-danger">')
             .text(message)
             .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
     );
@@ -40,7 +40,7 @@ function getParticipants(eventId) {
         dataType: "json"
     }).done(function(data) {
             var selector = "#participantId";
-            var value = parseInt($(selector).attr('value'));
+            var value = parseInt($("#currentParticipantId").val());
             $(selector)
                 .empty()
                 .append($("<option></option>").attr("value", 0).text("Choose a participant"));
@@ -64,8 +64,9 @@ $(document).ready( function() {
         var eventId = $(this).find(':selected').val();
         getParticipants(eventId);
     });
-    var eventId = $('#eventId').find(':selected').val();
+    var eventId = $('#currentEventId').val();
     if (eventId) {
+        $("#eventId").find('option[value=' + eventId + ']').attr('selected', 'selected');
         getParticipants(eventId);
     }
     var status = $('#status').find(':selected').val();
