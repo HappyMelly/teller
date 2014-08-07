@@ -56,7 +56,7 @@
         }
         @dynamic(handler, "person", "delete") {
           <div class="button">
-            <form class="delete" class="form-inline" method="post" text="person"
+            <form class="delete form-inline" method="post" text="person"
               action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
               <button class="btn btn-danger" type="submit"
                 @if(!person.deletable) { disabled="disabled" title="@Messages("error.notDeletablePerson")" }>
@@ -110,6 +110,11 @@
   </div>
 
   <div class="col-md-4">
+    @person.birthday.map { birthday =>
+    <p><strong>Birthday</strong>
+      <br>@birthday</p>
+    }
+
     @person.socialProfile.twitterHandle.map { handle =>
     <p><strong>Twitter</strong>
       <br><a href="http://twitter.com/@handle">@@@handle</a></p>
@@ -133,11 +138,15 @@
     </p>
     }
 
-    @if(person.boardMember || person.stakeholder) {
-    <p><strong>Happy Melly Roles</strong>
-      @if(person.boardMember) { <br>Board member }
-      @if(person.stakeholder) { <br>Stakeholder }
-    </p>
+    @if(person.role != PersonRole.NoRole) {
+      <p><strong>Happy Melly Role</strong>
+      @if(person.role == PersonRole.BoardMember) {
+        <br>Board Member
+      } else {
+        <br>Stakeholder
+      }
+      </p>
+
     }
 
     <p><strong>Financial account</strong><br>@if(person.account.active){Active}else{Inactive}

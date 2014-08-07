@@ -26,7 +26,7 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -55,8 +55,18 @@ object Photo {
       }.getOrElse(Photo(None, None))
     }.getOrElse(Photo(None, None))
   }
-
 }
+
+object PersonRole extends Enumeration {
+  val NoRole = Value("0")
+  val Stakeholder = Value("1")
+  val BoardMember = Value("2")
+
+  implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
+    { role ⇒ role.id },
+    { id ⇒ PersonRole(id) })
+}
+
 /**
  * A person, such as the owner or employee of an organisation.
  */
@@ -65,14 +75,14 @@ case class Person(
   firstName: String,
   lastName: String,
   emailAddress: String,
+  birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
   address: Address,
   bio: Option[String],
   interests: Option[String],
+  role: PersonRole.Value = PersonRole.Stakeholder,
   socialProfile: SocialProfile,
-  boardMember: Boolean = false,
-  stakeholder: Boolean = true,
   webSite: Option[String],
   blog: Option[String],
   virtual: Boolean = false,
@@ -170,8 +180,8 @@ case class Person(
       } yield socialProfile
       socialQuery.update(socialProfile.copy(personId = id.get))
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, emailAddress, photo.url, signature, bio, interests,
-        boardMember, stakeholder, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
+      val personUpdateTuple = (firstName, lastName, emailAddress, birthday, photo.url, signature, bio, interests,
+        role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
@@ -286,18 +296,21 @@ object Person {
       val activeQuery = active.map { value ⇒
         baseQuery.filter(_.active === value)
       }.getOrElse(baseQuery)
-      val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
-      val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
+      val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.role === PersonRole.Stakeholder) else baseQuery
+      val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.role === PersonRole.BoardMember) else stakeholderFilteredQuery
       boardMembersFilteredQuery.list
   }
 
   /** Finds all active people, filtered by stakeholder and/or board member status **/
   def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
-    val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
-    val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
-
-    boardMembersFilteredQuery.list
+    if (boardMembersOnly) {
+      baseQuery.filter(_.role === PersonRole.BoardMember).list
+    } else if (stakeholdersOnly) {
+      baseQuery.filter(_.role =!= PersonRole.NoRole).list
+    } else {
+      baseQuery.list
+    }
   }
 
   /**
@@ -312,7 +325,7 @@ object Person {
   }
 
   def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
-    Query(People).filter(_.boardMember).list.toSet
+    Query(People).filter(_.role === PersonRole.BoardMember).list.toSet
   }
 
   /** Retrieves a list of all people from the database **/
@@ -329,4 +342,3 @@ object Person {
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 }
-

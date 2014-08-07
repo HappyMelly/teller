@@ -72,7 +72,7 @@
             ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
           @html.text(newPersonForm("firstName"), '_label -> "First name")
           @html.text(newPersonForm("lastName"), '_label -> "Last name")
-          @html.date(newPersonForm("birthDate"), '_label -> "Birth date")
+          @html.date(newPersonForm("birthday"), '_label -> "Birth date")
           @html.text(newPersonForm("emailAddress"), '_label -> "E-mail address")
           @html.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
           @html.text(newPersonForm("city"), '_label -> "City")

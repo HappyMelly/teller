@@ -20,6 +20,7 @@
         @html.text(form("firstName"), '_label -> "First name")
         @html.text(form("lastName"), '_label -> "Last name")
         @html.email(form("emailAddress"), '_label -> "E-mail address")
+        @html.date(form("birthday"), '_label -> "Birthday")
         @html.text(form("address.street1"), '_label -> "Address line 1")
         @html.text(form("address.street2"), '_label -> "Address line 2")
         @html.text(form("address.postCode"), '_label -> "Post code")
@@ -38,9 +39,9 @@
               <div class="input-group">
                 <span class="input-group-addon">@@</span>
                 <input type="text" id="@field.id" name="@field.name"
-                  value="@field.value.getOrElse("")"
-                  placeholder="MyTwitter"
-                  class="form-control">
+                       value="@field.value.getOrElse("")"
+                placeholder="MyTwitter"
+                class="form-control">
               </div>
               <span class="help-block">
                 @if(field.hasErrors) {
@@ -57,11 +58,11 @@
             <div class="col-sm-9">
               <div class="input-group">
                 <input type="text" id="@field.id" class="form-control"
-                  name="@field.name" value="@field.value.getOrElse("")"
-                  placeholder="http://www.facebook.com/my.profile">
+                       name="@field.name" value="@field.value.getOrElse("")"
+                placeholder="http://www.facebook.com/my.profile">
                 <span class="input-group-btn">
                   <button class="btn btn-success photo-button" type="button"
-                    id="facebook">Get Facebook Photo</button>
+                          id="facebook">Get Facebook Photo</button>
                 </span>
               </div>
               <span class="help-block">
@@ -73,19 +74,43 @@
           </div>
         }
         @html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn profile",
-          'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
+        'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
         @html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
-          'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+        'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
 
-        @html.checkbox(form("boardMember"), '_label -> "Board Member", '_help -> "")
-        @html.checkbox(form("stakeholder"), '_label -> "Stakeholder", '_help -> "")
+        @defining(form("role")) { field =>
+          <div class="form-group @if(field.hasErrors) {has-error}" id="role">
+            @defining(field.value.getOrElse("0")) { value =>
+            <label class="control-label col-sm-3" for="@field.id" >Role</label>
+            <div class="input col-sm-9">
+              <label class="radio">
+                <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
+                No role
+              </label>
+              <label class="radio">
+                <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
+                Stakeholder
+              </label>
+              <label class="radio">
+                <input type="radio" name="@field.name" id="role2" value="2" @if(value == "2") {checked}>
+                Board Member
+              </label>
+            </div>
+            }
+            <span class="help-block">
+              @if(form("role").hasErrors) {
+                @form("role").errors.map(error => Messages(error.message)).mkString(", ")
+              }
+            </span>
+          </div>
+        }
 
         @html.text(form("webSite"), '_label -> "Web site",
           'placeholder -> "http://", '_help -> "Web site URL")
         @html.text(form("blog"), '_label -> "Blog",
           'placeholder -> "http://", '_help -> "Web site URL")
 
-        <div clas="row">
+        <div class="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
             <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>

@@ -45,7 +45,7 @@ object ParticipantsApi extends ApiAuthentication {
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "first_name" -> nonEmptyText,
       "last_name" -> nonEmptyText,
-      "birth_date" -> optional(jodaLocalDate),
+      "birthday" -> optional(jodaLocalDate),
       "email" -> email,
       "city" -> nonEmptyText,
       "country" -> nonEmptyText.verifying(
@@ -54,16 +54,19 @@ object ParticipantsApi extends ApiAuthentication {
       "street_1" -> optional(nonEmptyText),
       "street_2" -> optional(nonEmptyText),
       "postcode" -> optional(nonEmptyText),
-      "province" -> optional(nonEmptyText)) ({
-        (id, event_id, first_name, last_name, birth_date, email, city, country, street_1, street_2, postcode, province) ⇒
-          ParticipantData(id, event_id, first_name, last_name, birth_date, email,
-            Address(None, street_1, street_2, Some(city), province, postcode, country),
+      "province" -> optional(nonEmptyText),
+      "organisation" -> optional(nonEmptyText),
+      "comment" -> optional(nonEmptyText)) ({
+        (id, event_id, first_name, last_name, birthday, email, city, country, street_1, street_2, postcode, province,
+        organisation, comment) ⇒
+          ParticipantData(id, event_id, first_name, last_name, birthday, email,
+            Address(None, street_1, street_2, Some(city), province, postcode, country), organisation, comment,
             DateTime.now(), userName, DateTime.now(), userName)
       }) ({
         (p: ParticipantData) ⇒
-          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthDate, p.emailAddress,
+          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode, p.address.street1, p.address.street2,
-            p.address.postCode, p.address.province))
+            p.address.postCode, p.address.province, p.organisation, p.comment))
       }))
   }
 
@@ -76,7 +79,8 @@ object ParticipantsApi extends ApiAuthentication {
       "person_id" -> longNumber.verifying(
         "error.person.notExist",
         (participantId: Long) ⇒ Person.find(participantId).nonEmpty))({
-        (id, event_id, person_id) ⇒ Participant(id = None, event_id, person_id, evaluationId = None)
+        (id, event_id, person_id) ⇒
+          Participant(id = None, event_id, person_id, evaluationId = None, organisation = None, comment = None)
       })({
         (p: Participant) ⇒ Some(p.id, p.eventId, p.participantId)
       }))

@@ -35,7 +35,6 @@ import play.api.i18n.Messages
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
-import scala.util.matching.Regex
 import scala.io.Source
 import play.api.cache.Cache
 import scala.concurrent.Future
@@ -68,6 +67,24 @@ object People extends Controller with Security {
       Map(key -> value.id.getOrElse(""))
     }
   }
+
+  /**
+   * Formatter used to define a form mapping for the `PersonRole` enumeration.
+   */
+  implicit def personRoleFormat: Formatter[PersonRole.Value] = new Formatter[PersonRole.Value] {
+
+    def bind(key: String, data: Map[String, String]) = {
+      try {
+        data.get(key).map(PersonRole.withName(_)).toRight(Seq.empty)
+      } catch {
+        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
+      }
+    }
+
+    def unbind(key: String, value: PersonRole.Value) = Map(key -> value.toString)
+  }
+
+  val roleMapping = of[PersonRole.Value]
 
   /**
    * HTML form mapping for a person’s address.
@@ -106,14 +123,14 @@ object People extends Controller with Security {
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
+      "birthday" -> optional(jodaLocalDate),
       "photo" -> of(photoFormatter),
       "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
       "profile" -> socialProfileMapping,
-      "boardMember" -> default(boolean, false),
-      "stakeholder" -> default(boolean, false),
+      "role" -> roleMapping,
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
@@ -122,15 +139,15 @@ object People extends Controller with Security {
         "createdBy" -> ignored(request.user.fullName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
-        { (id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile, boardMember, stakeholder,
+        { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
-          Person(id, firstName, lastName, emailAddress, photo, signature, address, bio, interests, profile,
-            boardMember, stakeholder, webSite, blog, false, active, dateStamp)
+          Person(id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, role,
+            profile, webSite, blog, virtual = false, active, dateStamp)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.photo, p.signature, p.address, p.bio, p.interests,
-                p.socialProfile, p.boardMember, p.stakeholder, p.webSite, p.blog, p.active, p.dateStamp))
+              (p.id, p.firstName, p.lastName, p.emailAddress, p.birthday, p.photo, p.signature, p.address, p.bio, p.interests,
+                p.socialProfile, p.role, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
 
@@ -197,8 +214,9 @@ object People extends Controller with Security {
     implicit handler ⇒
 
       personForm(request).bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.person.form(request.user, None, formWithErrors)),
+        formWithErrors ⇒ {
+          BadRequest(views.html.person.form(request.user, None, formWithErrors))
+        },
         person ⇒ {
           val updatedPerson = person.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
@@ -288,8 +306,9 @@ object People extends Controller with Security {
     implicit handler ⇒
 
       personForm(request).bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
+        formWithErrors ⇒ {
+          BadRequest(views.html.person.form(request.user, Some(id), formWithErrors))
+        },
         person ⇒ {
           person.copy(id = Some(id)).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
