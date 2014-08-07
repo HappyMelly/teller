@@ -276,6 +276,21 @@ object Person {
     query.firstOption
   }
 
+  /** Finds people, filtered by stakeholder, board member status and/or first/last name query **/
+  def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean], query: Option[String]): List[Person] = DB.withSession {
+    implicit session: Session ⇒
+      val baseQuery = query.map { q ⇒
+        Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
+      }.getOrElse(Query(People))
+      baseQuery.sortBy(_.firstName.toLowerCase)
+      val activeQuery = active.map { value ⇒
+        baseQuery.filter(_.active === value)
+      }.getOrElse(baseQuery)
+      val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.stakeholder) else baseQuery
+      val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.boardMember) else stakeholderFilteredQuery
+      boardMembersFilteredQuery.list
+  }
+
   /** Finds all active people, filtered by stakeholder and/or board member status **/
   def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)

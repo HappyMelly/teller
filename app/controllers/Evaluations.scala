@@ -29,10 +29,33 @@ import models._
 import models.UserRole.Role._
 import org.joda.time._
 import play.api.data._
+import play.api.data.Forms._
 import play.api.Play.current
 import services.EmailService
 
 object Evaluations extends EvaluationsController with Security {
+
+  /** HTML form mapping for creating and editing. */
+  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "eventId" -> longNumber.verifying(
+      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
+    "question1" -> nonEmptyText,
+    "question2" -> nonEmptyText,
+    "question3" -> nonEmptyText,
+    "question4" -> nonEmptyText,
+    "question5" -> nonEmptyText,
+    "question6" -> number(min = 0, max = 10),
+    "question7" -> number(min = 0, max = 10),
+    "question8" -> nonEmptyText,
+    "status" -> statusMapping,
+    "handled" -> optional(jodaLocalDate),
+    "certificate" -> optional(nonEmptyText),
+    "created" -> ignored(DateTime.now),
+    "createdBy" -> ignored(userName),
+    "updated" -> ignored(DateTime.now),
+    "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
 
   /** Add page **/
   def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {

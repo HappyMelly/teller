@@ -92,8 +92,13 @@ object PeopleApi extends Controller with ApiAuthentication {
     }
   }
 
-  def people(stakeholdersOnly: Option[Boolean], boardmembersOnly: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    val people: List[Person] = Person.findActive(stakeholdersOnly.getOrElse(false), boardmembersOnly.getOrElse(false))
+  def people(stakeholdersOnly: Option[Boolean],
+    boardmembersOnly: Option[Boolean],
+    active: Option[Boolean],
+    query: Option[String]) = TokenSecuredAction { implicit request ⇒
+
+    val people: List[Person] = Person.findByParameters(stakeholdersOnly.getOrElse(false),
+      boardmembersOnly.getOrElse(false), active, query)
     Ok(Json.toJson(people))
   }
 

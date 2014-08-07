@@ -61,7 +61,7 @@ trait EvaluationsController extends Controller {
           val eventId = data.get("eventId").get.toLong
           val personId = data.get(key).get.toLong
           if (Person.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.invalid")))
+            Left(List(FormError(key, "error.person.notExist")))
           } else {
             if (Evaluation.findByEventAndPerson(personId, eventId).isDefined) {
               Left(List(FormError(key, "error.evaluation.exist")))
@@ -92,7 +92,7 @@ trait EvaluationsController extends Controller {
           val eventId = data.get("eventId").get.toLong
           val personId = data.get(key).get.toLong
           if (Person.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.invalid")))
+            Left(List(FormError(key, "error.person.notExist")))
           } else {
             if (Event.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
               Left(List(FormError(key, "error.participant.notExist")))
@@ -112,27 +112,5 @@ trait EvaluationsController extends Controller {
   }
 
   val statusMapping = of[EvaluationStatus.Value]
-
-  /** HTML form mapping for creating and editing. */
-  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "eventId" -> longNumber.verifying(
-      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
-    "question1" -> nonEmptyText,
-    "question2" -> nonEmptyText,
-    "question3" -> nonEmptyText,
-    "question4" -> nonEmptyText,
-    "question5" -> nonEmptyText,
-    "question6" -> number(min = 0, max = 10),
-    "question7" -> number(min = 0, max = 10),
-    "question8" -> nonEmptyText,
-    "status" -> statusMapping,
-    "handled" -> optional(jodaLocalDate),
-    "certificate" -> optional(nonEmptyText),
-    "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(userName),
-    "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
 
 }

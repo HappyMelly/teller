@@ -24,16 +24,43 @@
 
 package controllers
 
-import models.{ Participant, Evaluation, Person, Event, LoginIdentity, Activity }
-import models.{ Brand, ParticipantView, EvaluationStatus, UserAccount, ParticipantData }
+import models._
+import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json._
+import play.mvc.Controller
+import views.Countries
 
-object Participants extends ParticipantsController with Security {
+object Participants extends Controller with Security {
+
+  def newPersonForm(account: UserAccount, userName: String) = {
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "eventId" -> longNumber.verifying(
+        "error.event.invalid",
+        (eventId: Long) ⇒ Event.canManage(eventId, account)),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "birthDate" -> optional(jodaLocalDate),
+      "emailAddress" -> email,
+      "city" -> nonEmptyText,
+      "country" -> nonEmptyText.verifying(
+        "Unknown country",
+        (country: String) ⇒ Countries.all.exists(_._1 == country)))({
+        (id, eventId, firstName, lastName, birthDate, email, city, country) ⇒
+          ParticipantData(id, eventId, firstName, lastName, birthDate, email,
+            Address(None, None, None, Some(city), None, None, country),
+            DateTime.now(), userName, DateTime.now(), userName)
+      }) ({
+        (p: ParticipantData) ⇒
+          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthDate, p.emailAddress,
+            p.address.city.getOrElse(""), p.address.countryCode))
+      }))
+  }
 
   def existingPersonForm(implicit request: SecuredRequest[_]) = {
     Form(mapping(
@@ -43,7 +70,7 @@ object Participants extends ParticipantsController with Security {
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "participantId" -> longNumber.verifying(
-        "error.person.invalid",
+        "error.person.notExist",
         (participantId: Long) ⇒ Person.find(participantId).nonEmpty),
       "evaluationId" -> optional(longNumber))({
         (id, brandId, eventId, participantId, evaluationId) ⇒ Participant(id, eventId, participantId, evaluationId)

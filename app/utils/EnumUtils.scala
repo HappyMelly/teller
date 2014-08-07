@@ -21,29 +21,35 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package utils
 
-package controllers
-
-import play.api.mvc._
-import models.LoginIdentity
+import play.api.libs.json._
 
 /**
- * Provides token-based authentication for API actions.
+ * This object provides generic Read, Writes and Format methods to be used lately in enumerations
  */
-trait ApiAuthentication extends Controller {
+object EnumUtils {
+  def enumReads[E <: Enumeration](enum: E): Reads[E#Value] =
+    new Reads[E#Value] {
+      def reads(json: JsValue): JsResult[E#Value] = json match {
+        case JsString(s) ⇒ {
+          try {
+            JsSuccess(enum.withName(s))
+          } catch {
+            case _: NoSuchElementException ⇒
+              JsError(s"Enumeration expected of type: '${enum.getClass}', but it does not appear to contain the value: '$s ' ")
+          }
+        }
+        case _ ⇒ JsError("String value expected")
+      }
+    }
 
-  /** Make an action require token authentication **/
-  def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request))).getOrElse(Unauthorized("Unauthorized"))
+  implicit def enumWrites[E <: Enumeration]: Writes[E#Value] =
+    new Writes[E#Value] {
+      def writes(v: E#Value): JsValue = JsString(v.toString)
+    }
+
+  implicit def enumFormat[E <: Enumeration](enum: E): Format[E#Value] = {
+    Format(enumReads(enum), enumWrites)
   }
-
-  /** Make an action require token authentication **/
-  def TokenSecuredActionWithIdentity(f: (Request[AnyContent], LoginIdentity) ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request, identity))).getOrElse(Unauthorized("Unauthorized"))
-  }
-
-  val ApiToken = "api_token"
-
 }
