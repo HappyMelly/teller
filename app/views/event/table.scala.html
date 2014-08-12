@@ -2,6 +2,7 @@
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import views.Languages
 
 @if(!events.isEmpty) {
 
@@ -80,7 +81,7 @@
                 @event.location.city</td>
             <td style="white-space: nowrap;">@event.schedule.start / @event.schedule.end</td>
             <td>@event.schedule.totalHours</td>
-            <td>@event.materialsLanguage</td>
+            <td>@Languages.all.get(event.materialsLanguage.getOrElse(""))</td>
             <td>@event.invoice.invoiceBy.map{ v => Yes }.getOrElse("No")</td>
             <td>@event.notPublic</td>
             <td>@event.archived</td>
