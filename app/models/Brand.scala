@@ -63,14 +63,14 @@ case class Brand(id: Option[Long],
    * Returns true if this brand may be deleted.
    */
   lazy val deletable: Boolean = DB.withSession { implicit session: Session ⇒
-    val hasLicences = id.map { brandId ⇒
+    val hasLicences = id.exists { brandId ⇒
       val query = Query(Licenses).filter(l ⇒ l.brandId === brandId)
       Query(query.exists).first
-    }.getOrElse(false)
-    val hasBookings = id.map { brandId ⇒
+    }
+    val hasBookings = id.exists { brandId ⇒
       val query = Query(BookingEntries).filter(e ⇒ e.brandId === brandId)
       Query(query.exists).first
-    }.getOrElse(false)
+    }
     !hasLicences && !hasBookings && products.isEmpty
   }
 
@@ -81,6 +81,8 @@ case class Brand(id: Option[Long],
     } yield product
     query.sortBy(_.title.toLowerCase).list
   }
+
+  lazy val certificates: List[CertificateTemplate] = CertificateTemplate.findByBrand(code)
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)

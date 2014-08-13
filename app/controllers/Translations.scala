@@ -25,18 +25,16 @@
 package controllers
 
 import models._
-import org.joda.time._
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.data.Form
-import play.api.data.validation.Constraints._
 import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.cache.Cache
 import play.api.data.FormError
 import play.api.data.format.Formatter
-import play.api.libs.json.{ JsValue, Writes, Json }
+
 import services._
 import play.api.Play.current
 import scala.io.Source
@@ -112,7 +110,12 @@ object Translations extends Controller with Security {
         }.getOrElse(InternalServerError)
   }
 
-  /** Add form submits to this action **/
+  /**
+   * Add form submits to this action
+   *
+   * @param lang Two-letters unique language identifier
+   * @return
+   */
   def create(lang: String) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
@@ -177,7 +180,7 @@ object Translations extends Controller with Security {
   /**
    * Edit form submits to this action
    *
-   * @param lang Two-letter unique language identifier
+   * @param lang Two-letters unique language identifier
    * @return
    */
   def update(lang: String) = SecuredDynamicAction("event", "edit") { implicit request ⇒
@@ -204,7 +207,12 @@ object Translations extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  /** Delete an evaluation **/
+  /**
+   * Delete a translation
+   *
+   * @param lang Two-letters unique language identifier
+   * @return
+   */
   def delete(lang: String) = SecuredDynamicAction("event", "manage") { implicit request ⇒
     implicit handler ⇒
 
