@@ -1,0 +1,73 @@
+@(user: securesocial.core.Identity,
+  translation: Option[Translation],
+  language: String,
+  en: Translation,
+  form: Form[Translation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.Languages
+@import views.ViewHelpers._
+
+@main("Translation", "admin", Some(user)) {
+
+  @defining(Languages.all.getOrElse(language, "")) { lang =>
+    @defining(translation.map(translation =>
+      "Translation for %s language".format(lang)).getOrElse("Add translation for %s language".format(lang))) { title =>
+      @if(form.hasErrors) {
+        @html.error()
+      }
+
+      <div class="col-md-9">
+        <div class="page-header">
+          <h1>@title</h1>
+        </div>
+        @html.form(action = CSRF(translation.map(t => routes.Translations.update(language)).getOrElse(routes.Translations.create(language)))) {
+          <input type="hidden" name="language" value="@language"/>
+          <input type="hidden" name="questions.language" value="@language"/>
+          <input type="hidden" name="recommendations.language" value="@language"/>
+          <input type="hidden" name="impressions.language" value="@language"/>
+          <legend>Questions</legend>
+            @html.text(form("questions.question1"), '_label -> en.questions.question1)
+            @html.text(form("questions.question2"), '_label -> en.questions.question2)
+            @html.text(form("questions.question3"), '_label -> en.questions.question3)
+            @html.text(form("questions.question4"), '_label -> en.questions.question4)
+            @html.text(form("questions.question5"), '_label -> en.questions.question5)
+            @html.text(form("questions.question6"), '_label -> en.questions.question6)
+            @html.text(form("questions.question7"), '_label -> en.questions.question7)
+            @html.text(form("questions.question8"), '_label -> en.questions.question8)
+          <legend>Recommendations</legend>
+            @html.text(form("recommendations.score0"), '_label -> en.recommendations.score0)
+            @html.text(form("recommendations.score1"), '_label -> en.recommendations.score1)
+            @html.text(form("recommendations.score2"), '_label -> en.recommendations.score2)
+            @html.text(form("recommendations.score3"), '_label -> en.recommendations.score3)
+            @html.text(form("recommendations.score4"), '_label -> en.recommendations.score4)
+            @html.text(form("recommendations.score5"), '_label -> en.recommendations.score5)
+            @html.text(form("recommendations.score6"), '_label -> en.recommendations.score6)
+            @html.text(form("recommendations.score7"), '_label -> en.recommendations.score7)
+            @html.text(form("recommendations.score8"), '_label -> en.recommendations.score8)
+            @html.text(form("recommendations.score9"), '_label -> en.recommendations.score9)
+            @html.text(form("recommendations.score10"), '_label -> en.recommendations.score10)
+          <legend>Impressions</legend>
+            @html.text(form("impressions.score0"), '_label -> en.impressions.score0)
+            @html.text(form("impressions.score1"), '_label -> en.impressions.score1)
+            @html.text(form("impressions.score2"), '_label -> en.impressions.score2)
+            @html.text(form("impressions.score3"), '_label -> en.impressions.score3)
+            @html.text(form("impressions.score4"), '_label -> en.impressions.score4)
+            @html.text(form("impressions.score5"), '_label -> en.impressions.score5)
+            @html.text(form("impressions.score6"), '_label -> en.impressions.score6)
+            @html.text(form("impressions.score7"), '_label -> en.impressions.score7)
+            @html.text(form("impressions.score8"), '_label -> en.impressions.score8)
+            @html.text(form("impressions.score9"), '_label -> en.impressions.score9)
+            @html.text(form("impressions.score10"), '_label -> en.impressions.score10)
+
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-9">
+              <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+}

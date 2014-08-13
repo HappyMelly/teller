@@ -17,6 +17,7 @@ POST /account/:id/deactivate controllers.Accounts.deactivate(id: Long)
 GET  /admin/settings                     controllers.Administration.settings
 POST /admin/transactiontype/new          controllers.Administration.createTransactionType
 POST /admin/transactiontype/:id/delete   controllers.Administration.deleteTransactionType(id: Long)
+GET  /admin/translations                 controllers.Translations.index
 
 GET  /bookings                        controllers.BookingEntries.index
 GET  /booking/new                     controllers.BookingEntries.add
@@ -137,6 +138,13 @@ POST /product/:id/picture/delete   controllers.Products.deletePicture(id: Long)
 
 POST /product/brand/new                         controllers.Products.addBrand
 GET  /product/:productId/brand/:brandId/delete  controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+
+GET   /translation/new          controllers.Translations.add(lang: String)
+POST  /translation/new          controllers.Translations.create(lang: String)
+GET   /translation/:lang        controllers.Translations.details(lang: String)
+GET   /translation/:lang/edit   controllers.Translations.edit(lang: String)
+POST  /translation/:lang        controllers.Translations.update(lang: String)
+POST  /translation/:lang/delete controllers.Translations.delete(lang: String)
 
 POST /user    controllers.UserAccounts.update
 

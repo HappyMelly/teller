@@ -117,11 +117,14 @@ error.event.invalid = You are not allowed to manage this event
 error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
+error.language.unknown = Unknown language
 error.participant.notExist = The person is not a participant of the event
 error.person.notExist = The person does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 error.notDeletableProduct = You cannot delete this product because it has contributors or derivative products
+error.translation.exist = The translation for this language already exists
+error.translation.notChangeable = You are not allowed to change this translation
 error.unknown_country = Please choose a country
 
 # Play form validation error overrides
