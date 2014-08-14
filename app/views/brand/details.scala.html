@@ -39,7 +39,7 @@
                         </div>
                     }
                     <div class="button">
-                        <form class="delete" class="form-inline" method="post" text="brand"
+                        <form class="delete form-inline" method="post" text="brand"
                         action="@CSRF(routes.Brands.delete(brand.code))">
                             <button class="btn btn-danger" type="submit"
                                 @if(!brand.deletable) {
@@ -136,7 +136,8 @@
                     <td>@Languages.all.get(file.language)</td>
                     <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
                     <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
-                    <td><a href="@routes.CertificateTemplates.delete(file.id.get)"><i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
+                    <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
+                        <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
                 </tr>
             }
             </tbody>

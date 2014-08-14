@@ -31,6 +31,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
 import services.{ S3Bucket, EmailService }
+import com.itextpdf.text.Image
 
 /**
  * An certificate which a participant gets after an event
@@ -77,6 +78,26 @@ case class Certificate(
       Some((file.getPath, name)))
   }
 
+  /**
+   * Get a raw certificate template
+   *
+   * @param evaluation Target evaluation
+   * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
+   * @return
+   */
+  private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
+    val event = Event.find(evaluation.eventId).get
+    val templates = CertificateTemplate.findByBrand(event.brandCode)
+    val data = templates.find(_.language == event.spokenLanguage).map { template ⇒
+      if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+    }.getOrElse {
+      templates.find(_.language == "EN").map { template ⇒
+        if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+      }.getOrElse(Array[Byte]())
+    }
+    Image.getInstance(data)
+  }
+
   /** Generate a Management 3.0 certificate (the only one supported right now) */
   private def generate(ev: Evaluation): Array[Byte] = {
     import com.itextpdf.text.Document
@@ -104,8 +125,7 @@ case class Certificate(
     document.open()
     val facilitators = ev.event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
-    val imagePath = if (cofacilitator) "cert-body-new-co.png" else "cert-body-new.png"
-    val img = Image.getInstance(Play.application.resource("reports/MGT30/" + imagePath).get)
+    val img = template(ev, cofacilitator)
     img.setAbsolutePosition(7, 10)
     img.scalePercent(55)
     document.add(img)

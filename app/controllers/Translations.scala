@@ -30,16 +30,6 @@ import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import play.api.cache.Cache
-import play.api.data.FormError
-import play.api.data.format.Formatter
-
-import services._
-import play.api.Play.current
-import scala.io.Source
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
 import views.Languages
 
 object Translations extends Controller with Security {
@@ -101,7 +91,7 @@ object Translations extends Controller with Security {
    * @param lang Two-letter unique language identifier
    * @return
    */
-  def add(lang: String) = SecuredDynamicAction("event", "add") {
+  def add(lang: String) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
         val en = Translation.find("EN")
@@ -116,7 +106,7 @@ object Translations extends Controller with Security {
    * @param lang Two-letters unique language identifier
    * @return
    */
-  def create(lang: String) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def create(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       val form: Form[Translation] = translationForm.bindFromRequest
@@ -166,7 +156,7 @@ object Translations extends Controller with Security {
    * @param lang Two-letter unique language identifier
    * @return
    */
-  def edit(lang: String) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def edit(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Translation.find(lang).map { translation ⇒
@@ -183,7 +173,7 @@ object Translations extends Controller with Security {
    * @param lang Two-letters unique language identifier
    * @return
    */
-  def update(lang: String) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def update(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Translation.find(lang).map { existingTranslation ⇒
@@ -213,7 +203,7 @@ object Translations extends Controller with Security {
    * @param lang Two-letters unique language identifier
    * @return
    */
-  def delete(lang: String) = SecuredDynamicAction("event", "manage") { implicit request ⇒
+  def delete(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Translation.find(lang).map { translation ⇒

@@ -28,6 +28,10 @@ $(document).ready( function() {
     $('form.delete').submit(function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
+    // Delete links.
+    $('.delete').click(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
 
     // Datatables
     $.extend( $.fn.dataTableExt.oStdClasses, {

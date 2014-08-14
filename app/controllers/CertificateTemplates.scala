@@ -33,6 +33,9 @@ import scala.io.Source
 import securesocial.core.SecuredRequest
 import views.Languages
 
+/**
+ * This class was created to simplify form handling and generation
+ */
 case class FakeCertificateTemplate(language: String, template: Option[String], templateNoFacilitator: Option[String])
 
 object CertificateTemplates extends Controller with Security {
@@ -51,7 +54,7 @@ object CertificateTemplates extends Controller with Security {
    * @param code Unique text brand identifier
    * @return
    */
-  def add(code: String) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def add(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Brand.find(code).map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
@@ -66,7 +69,7 @@ object CertificateTemplates extends Controller with Security {
    * @param code Unique text brand identifier
    * @return
    */
-  def create(code: String) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def create(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Brand.find(code).map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
@@ -122,7 +125,7 @@ object CertificateTemplates extends Controller with Security {
    * @param id Unique template identifier
    * @return
    */
-  def delete(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       CertificateTemplate.find(id).map { template ⇒
