@@ -33,6 +33,7 @@ import models.database.{ EventFacilitators, Participants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
+import views.Languages
 
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
 case class Details(description: Option[String], specialAttention: Option[String],
@@ -182,8 +183,10 @@ object Event {
       new BrandChange("Brand", was.brandCode, now.brandCode),
       new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
       new SimpleFieldChange("Title", was.title, now.title),
-      new SimpleFieldChange("Spoken Language", was.spokenLanguage, now.spokenLanguage),
-      new SimpleFieldChange("Materials Language", was.materialsLanguage.getOrElse(""), now.materialsLanguage.getOrElse("")),
+      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.spokenLanguage, ""),
+        Languages.all.getOrElse(now.spokenLanguage, "")),
+      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.materialsLanguage.getOrElse(""), ""),
+        Languages.all.getOrElse(now.materialsLanguage.getOrElse(""), "")),
       new SimpleFieldChange("City", was.location.city, now.location.city),
       new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
       new SimpleFieldChange("Description", was.details.description.getOrElse(""), now.details.description.getOrElse("")),

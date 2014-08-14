@@ -1,0 +1,34 @@
+@(user: securesocial.core.Identity,
+        brand: Brand,
+        languages: Map[String, String],
+        form: Form[FakeCertificateTemplate])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpers._
+
+@defining("Add Certificate Templates for %s brand".format(brand.name)) { title =>
+    @main("Certificate Template", "brand", Some(user)) {
+        @if(form.hasErrors) {
+            @html.error()
+        }
+        <div class="col-md-6">
+            <div class="page-header">
+                <h1>@title</h1>
+            </div>
+            @html.form(action = CSRF(routes.CertificateTemplates.create(brand.code)), 'enctype -> "multipart/form-data") {
+                @html.select(form("language"), ("", "Choose a language") +: languages.toList.sortBy(_._2),
+                    '_label -> "Language"),
+                @html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_help -> "Required")
+                @html.file(form("twoFacilitators"), '_label -> "Two Facilitators", '_help -> "Required")
+
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-9">
+                        <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+

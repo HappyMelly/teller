@@ -1,4 +1,4 @@
-@(evaluation: Evaluation, participant: Participant)
+@(evaluation: Evaluation, participant: Participant, en: Translation)
 @import play.api.Play
 @import play.api.Play.current
 @import templates.Formatters._
@@ -31,7 +31,7 @@
               <tbody>
                 <tr>
                   <td valign="top" style="background-color:rgb(0,174,239)">
-                    <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @Messages("evaluation.impression." + evaluation.question6))</h3>
+                    <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @en.impressions.value(evaluation.question6))</h3>
                     <p>Please accept or reject the certificate</p>
                   </td>
                 </tr>
@@ -98,43 +98,43 @@
                         <tbody>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question1")</h4>
+                              <h4>@en.questions.question1</h4>
                               <p>@evaluation.question1</p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question2")</h4>
+                              <h4>@en.questions.question2</h4>
                               <p>@evaluation.question2</p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question3")</h4>
+                              <h4>@en.questions.question3</h4>
                               <p>@evaluation.question3 </p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question4")</h4>
+                              <h4>@en.questions.question4</h4>
                               <p>@evaluation.question4</p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question5")</h4>
+                              <h4>@en.questions.question5</h4>
                               <p>@evaluation.question5</p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question7")</h4>
-                              <p>@Messages("evaluation.impression." + evaluation.question7)</p>
+                              <h4>@en.questions.question7</h4>
+                              <p>@en.recommendations.value(evaluation.question7)</p>
                             </td>
                           </tr>
                           <tr>
                             <td>
-                              <h4>@Messages("evaluation.question8")</h4>
+                              <h4>@en.questions.question8</h4>
                               <p>@evaluation.question8</p>
                             </td>
                           </tr>

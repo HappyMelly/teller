@@ -8,6 +8,7 @@
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import views.Languages
 
 @main(event.title + " - Event", "events", Some(user)) {
 
@@ -67,11 +68,11 @@
     </p>
     <p>
       <strong>Spoken Language</strong><br/>
-      @event.spokenLanguage
+      @Languages.all.get(event.spokenLanguage)
     </p>
     @event.materialsLanguage.map { lang =>
       <p>
-        <strong>Materials Language</strong><br/>@lang
+        <strong>Materials Language</strong><br/>@Languages.all.get(lang)
       </p>
     }
     @event.details.webSite.map { url =>

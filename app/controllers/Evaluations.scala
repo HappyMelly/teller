@@ -40,7 +40,9 @@ object Evaluations extends EvaluationsController with Security {
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
       "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
-    "participantId" -> { if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter) },
+    "participantId" -> {
+      if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter)
+    },
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
@@ -63,7 +65,8 @@ object Evaluations extends EvaluationsController with Security {
       implicit handler ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId))
+        val en = Translation.find("EN").get
+        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
   }
 
   /** Add form submits to this action **/
@@ -75,7 +78,8 @@ object Evaluations extends EvaluationsController with Security {
         formWithErrors ⇒ {
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = findEvents(account)
-          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None))
+          val en = Translation.find("EN").get
+          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
           evaluation.create
@@ -101,12 +105,10 @@ object Evaluations extends EvaluationsController with Security {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      Evaluation.find(id).map {
-        evaluation ⇒
-          {
-            val brand = Brand.find(evaluation.event.brandCode).get
-            Ok(views.html.evaluation.details(request.user, evaluation, brand.brand))
-          }
+      Evaluation.find(id).map { evaluation ⇒
+        val brand = Brand.find(evaluation.event.brandCode).get
+        val en = Translation.find("EN").get
+        Ok(views.html.evaluation.details(request.user, evaluation, en, brand.brand))
       }.getOrElse(NotFound)
 
   }
@@ -118,7 +120,10 @@ object Evaluations extends EvaluationsController with Security {
       Evaluation.find(id).map { evaluation ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = findEvents(account)
-        Ok(views.html.evaluation.form(request.user, Some(evaluation), evaluationForm(request.user.fullName).fill(evaluation), events, None, None))
+        val en = Translation.find("EN").get
+
+        Ok(views.html.evaluation.form(request.user, Some(evaluation),
+          evaluationForm(request.user.fullName).fill(evaluation), events, None, None, en))
       }.getOrElse(NotFound)
 
   }
@@ -133,7 +138,9 @@ object Evaluations extends EvaluationsController with Security {
           formWithErrors ⇒ {
             val account = request.user.asInstanceOf[LoginIdentity].userAccount
             val events = findEvents(account)
-            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None))
+            val en = Translation.find("EN").get
+
+            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update

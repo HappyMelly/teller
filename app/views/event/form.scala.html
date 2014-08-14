@@ -7,6 +7,7 @@
 
 @import helper.CSRF
 @import views.Countries
+@import views.Languages
 @import views.ViewHelpers._
 
 @* Returns a comma-separated list of validation error messages, for one or more fields. *@
@@ -41,9 +42,9 @@
         )
         @html.text(form("title"), '_label -> "", '_placeholder -> "Title")
         @html.twoInRow(form("spokenLanguage"),
-          html.text(form("spokenLanguage"))(asIs, implicitly[Lang]),
+          html.select(form("spokenLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
           form("materialsLanguage"),
-          html.text(form("materialsLanguage"))(asIs, implicitly[Lang]),
+          html.select(form("materialsLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
           "Spoken & Materials Languages"
         )
         @html.twoInRow(form("location.country"),

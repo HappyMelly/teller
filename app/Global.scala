@@ -72,7 +72,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
     Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
-      Event.sendConfirmationAlert
+      Event.sendConfirmationAlert()
     }
   }
 }

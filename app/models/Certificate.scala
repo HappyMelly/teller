@@ -31,6 +31,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
 import services.{ S3Bucket, EmailService }
+import com.itextpdf.text.Image
 
 /**
  * An certificate which a participant gets after an event
@@ -66,7 +67,7 @@ case class Certificate(
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
     val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
-    val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString
+    val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
     EmailService.send(Set(evaluation.participant),
       Some(evaluation.event.facilitators.toSet),
@@ -75,6 +76,26 @@ case class Certificate(
       body,
       richMessage = true,
       Some((file.getPath, name)))
+  }
+
+  /**
+   * Get a raw certificate template
+   *
+   * @param evaluation Target evaluation
+   * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
+   * @return
+   */
+  private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
+    val event = Event.find(evaluation.eventId).get
+    val templates = CertificateTemplate.findByBrand(event.brandCode)
+    val data = templates.find(_.language == event.spokenLanguage).map { template ⇒
+      if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+    }.getOrElse {
+      templates.find(_.language == "EN").map { template ⇒
+        if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+      }.getOrElse(Array[Byte]())
+    }
+    Image.getInstance(data)
   }
 
   /** Generate a Management 3.0 certificate (the only one supported right now) */
@@ -89,21 +110,22 @@ case class Certificate(
     import com.itextpdf.text.pdf.ColumnText
     import com.itextpdf.text.Image
     import play.api.i18n.Messages
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
 
     import java.io.ByteArrayOutputStream
     import play.api._
 
-    val document = new Document(PageSize.A4.rotate);
+    val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/MGT30/DejaVuSerif.ttf",
       BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
 
     val output = new ByteArrayOutputStream()
     val writer = PdfWriter.getInstance(document, output)
-    document.open
+    document.open()
     val facilitators = ev.event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
-    val imagePath = if (cofacilitator) "cert-body-new-co.png" else "cert-body-new.png"
-    val img = Image.getInstance(Play.application.resource("reports/MGT30/" + imagePath).get)
+    val img = template(ev, cofacilitator)
     img.setAbsolutePosition(7, 10)
     img.scalePercent(55)
     document.add(img)
@@ -121,8 +143,8 @@ case class Certificate(
     val date = new Phrase(ev.handled.map(_.toString("dd MMMM yyyy")).getOrElse(""), font)
     val certificateIdBlock = new Phrase(ev.certificateId, font)
 
-    val canvas = writer.getDirectContent()
-    canvas.saveState
+    val canvas = writer.getDirectContent
+    canvas.saveState()
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 450, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, title, PageSize.A4.getHeight / 2, 340, 0)
     font.setSize(12)
@@ -132,8 +154,7 @@ case class Certificate(
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 190, 275, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 190, 220, 0)
     ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 190, 165, 0)
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
+
     if (cofacilitator) {
       val firstFacilitator = facilitators.head
       val secondFacilitator = facilitators.last

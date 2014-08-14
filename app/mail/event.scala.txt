@@ -1,5 +1,7 @@
 @(event: Event, changes: List[Event.FieldChange])(implicit request: RequestHeader)
 @import templates.Formatters._
+@import views.Languages
+
 Title: @event.title@event.details.description.map { description =>
 Description: @description }
 @routes.Events.details(event.id.getOrElse(0)).absoluteURL(false)
@@ -14,8 +16,8 @@ EVENT DETAILS
 
 Brand: @Brand.find(event.brandCode).get.brand.name
 Event Type: @EventType.find(event.eventTypeId).get.name
-Spoken Language: @event.spokenLanguage
-Materials Language: @event.materialsLanguage
+Spoken Language: @Languages.all.get(event.spokenLanguage)
+Materials Language: @Languages.all.get(event.materialsLanguage.getOrElse(""))
 City: @event.location.city
 Country: @Messages("country." + event.location.countryCode)
 @event.details.specialAttention.map { text =>

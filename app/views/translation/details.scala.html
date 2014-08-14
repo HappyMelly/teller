@@ -1,0 +1,197 @@
+@(user: securesocial.core.Identity,
+  translation: Translation,
+  en: Translation)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.Languages
+@import be.objectify.deadbolt.scala.views.html._
+
+@defining("Translation for %s language".format(Languages.all.get(translation.language).get)) { title =>
+  @main(title, "admin", Some(user)) {
+
+    <div class="page-header">
+      <h1>
+        @title
+        <div class="actions pull-right">
+          @dynamic(handler, "event", "add") {
+            <div class="button">
+              <a class="btn btn-default" href="@routes.Translations.edit(translation.language)">
+                <i class="glyphicon glyphicon-pencil"></i> Edit
+              </a>
+            </div>
+            @if(translation.changeable) {
+              <div class="button">
+                <form class="delete form-inline" method="post" text="translation"
+                  action="@CSRF(routes.Translations.delete(translation.language))">
+                  <button class="btn btn-danger" type="submit">
+                    <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                  </button>
+                </form>
+              </div>
+            }
+          }
+        </div>
+      </h1>
+    </div>
+    <div class="col-md-12">
+      <legend>Questions</legend>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Translation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>@en.questions.question1</td>
+            <td>@translation.questions.question1</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question2</td>
+            <td>@translation.questions.question2</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question3</td>
+            <td>@translation.questions.question3</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question4</td>
+            <td>@translation.questions.question4</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question5</td>
+            <td>@translation.questions.question5</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question6</td>
+            <td>@translation.questions.question6</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question7</td>
+            <td>@translation.questions.question7</td>
+          </tr>
+          <tr>
+            <td>@en.questions.question8</td>
+            <td>@translation.questions.question8</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-12">
+      <legend>Recommendations</legend>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Recommendation Score</th>
+            <th>Translation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>@en.recommendations.score0</td>
+            <td>@translation.recommendations.score0</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score1</td>
+            <td>@translation.recommendations.score1</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score2</td>
+            <td>@translation.recommendations.score2</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score3</td>
+            <td>@translation.recommendations.score3</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score4</td>
+            <td>@translation.recommendations.score4</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score5</td>
+            <td>@translation.recommendations.score5</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score6</td>
+            <td>@translation.recommendations.score6</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score7</td>
+            <td>@translation.recommendations.score7</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score8</td>
+            <td>@translation.recommendations.score8</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score9</td>
+            <td>@translation.recommendations.score9</td>
+          </tr>
+          <tr>
+            <td>@en.recommendations.score10</td>
+            <td>@translation.recommendations.score10</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-12">
+      <legend>Recommendations</legend>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Recommendation Score</th>
+            <th>Translation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>@en.impressions.score0</td>
+            <td>@translation.impressions.score0</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score1</td>
+            <td>@translation.impressions.score1</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score2</td>
+            <td>@translation.impressions.score2</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score3</td>
+            <td>@translation.impressions.score3</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score4</td>
+            <td>@translation.impressions.score4</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score5</td>
+            <td>@translation.impressions.score5</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score6</td>
+            <td>@translation.impressions.score6</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score7</td>
+            <td>@translation.impressions.score7</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score8</td>
+            <td>@translation.impressions.score8</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score9</td>
+            <td>@translation.impressions.score9</td>
+          </tr>
+          <tr>
+            <td>@en.impressions.score10</td>
+            <td>@translation.impressions.score10</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  }
+  <script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
+}
