@@ -72,7 +72,7 @@ object PeopleApi extends Controller with ApiAuthentication {
         "id" -> person.id.get,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
-        "email_address" -> person.emailAddress,
+        "email_address" -> person.socialProfile.email,
         "photo" -> person.photo.url,
         "address" -> person.address,
         "stakeholder" -> (person.role == PersonRole.Stakeholder),

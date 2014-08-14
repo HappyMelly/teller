@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.SocialProfile
+import models.{ ProfileType, SocialProfile }
 import play.api.db.slick.Config.driver.simple._
 
 /**
@@ -32,13 +32,17 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
 
-  def personId = column[Long]("PERSON_ID", O.PrimaryKey)
+  def objectId = column[Long]("OBJECT_ID")
+  def objectType = column[ProfileType.Value]("OBJECT_TYPE")
+  def email = column[String]("EMAIL")
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
   def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
+  def skype = column[Option[String]]("SKYPE")
+  def phone = column[Option[String]]("PHONE")
 
-  def * = personId ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl <> (SocialProfile.apply _, SocialProfile.unapply _)
+  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl ~ skype ~ phone <> (SocialProfile.apply _, SocialProfile.unapply _)
 
 }
