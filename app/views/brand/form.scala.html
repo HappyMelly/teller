@@ -1,40 +1,69 @@
 @(user: securesocial.core.Identity,
-  code: Option[String],
-  form: Form[Brand])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+        code: Option[String],
+        form: Form[Brand])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
-@import views.ViewHelpers._
-@import models.Person
+    @import helper.CSRF
+    @import views.ViewHelpers._
+    @import models.Person
 
-@defining(form.value.map(brand => "Brand %s".format(brand.name)).getOrElse("Add brand")) { name =>
-  @main("Brand", "brands", Some(user)) {
-    @if(form.hasErrors) {
-      @html.error()
+    @defining(form.value.map(brand => "Brand %s".format(brand.name)).getOrElse("Add brand")) { name =>
+        @main("Brand", "brands", Some(user)) {
+            @if(form.hasErrors) {
+                @html.error()
+            }
+
+            <div class="col-md-6">
+                <div class="page-header">
+                    <h1>@name</h1>
+                </div>
+                @html.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())),
+                    'enctype -> "multipart/form-data") {
+                    @html.text(form("code"), '_label -> "Code")
+                    @html.text(form("name"), '_label -> "Name")
+                    @html.select(form("coordinatorId"),
+                        ("", "Choose a brand coordinator") :: Person.findActive.map(p => (p.id.get.toString, p.fullName)),
+                        '_label -> "Coordinator")
+                    @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
+                        '_help -> views.html.markdownHelp())
+                    @html.file(form("picture"), '_label -> "Picture")
+                    <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
+
+                    @html.email(form("profile.email"), '_label -> "E-mail address")
+                    @defining(form("profile.twitterHandle")) { field =>
+                        <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+                            <label for="@field.id" class="col-sm-3 control-label">Twitter user name</label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <span class="input-group-addon">@@</span>
+                                    <input type="text" id="@field.id" name="@field.name"
+                                    value="@field.value.getOrElse("")"
+                                    placeholder="MyTwitter"
+                                    class="form-control">
+                                </div>
+                                <span class="help-block">
+                                @if(field.hasErrors) {
+                                    @field.errors.map(error => Messages(error.message)).mkString(", ")
+                                }
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    @html.text(form("profile.facebookUrl"), '_label -> "Facebook Page",
+                        'placeholder -> "http://www.facebook.com/brand.page", '_help -> "")
+                    @html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn Page",
+                        'placeholder -> "https://www.linkedin.com/in/brand.page", '_help -> "")
+                    @html.text(form("profile.googlePlusUrl"), '_label -> "Google+ Page",
+                        'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+                    @html.text(form("profile.skype"), '_label -> "Skype", '_help -> "")
+                    @html.text(form("profile.phone"), '_label -> "Phone", '_help -> "")
+
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-9">
+                            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     }
-
-    <div class="col-md-6">
-      <div class="page-header">
-        <h1>@name</h1>
-      </div>
-      @html.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())),
-        'enctype -> "multipart/form-data") {
-        @html.text(form("code"), '_label -> "Code")
-        @html.text(form("name"), '_label -> "Name")
-        @html.select(form("coordinatorId"),
-          ("", "Choose a brand coordinator") :: Person.findActive.map( p=> (p.id.get.toString, p.fullName)),
-          '_label -> "Coordinator")
-        @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
-          '_help -> views.html.markdownHelp())
-        @html.file(form("picture"), '_label -> "Picture")
-        <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
-
-        <div clas="row">
-          <div class="col-sm-3"></div>
-          <div class="col-sm-9">
-            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
-          </div>
-        </div>
-      }
-    </div>
-  }
-}

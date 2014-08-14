@@ -24,8 +24,10 @@
 
 package controllers
 
+import controllers.Forms._
 import models._
 import org.joda.time._
+import play.api.data.validation.Constraints
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.validation.Constraints._
@@ -48,6 +50,25 @@ object Brands extends Controller with Security {
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 
+  /**
+   * HTML form mapping for a brand’s social profile.
+   */
+  val socialProfileMapping = mapping(
+    "email" -> nonEmptyText,
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl),
+    "skype" -> optional(nonEmptyText),
+    "phone" -> optional(nonEmptyText)) (
+      {
+        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone) ⇒
+          SocialProfile(0, ProfileType.Brand, email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone)
+      })(
+        {
+          (s: SocialProfile) ⇒ Some(s.email, s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone)
+        })
+
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -57,10 +78,17 @@ object Brands extends Controller with Security {
     "description" -> optional(text),
     "picture" -> optional(text),
     "generateCert" -> boolean,
+    "profile" -> socialProfileMapping,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))(Brand.apply)(Brand.unapply))
+    "updatedBy" -> ignored(request.user.fullName))({
+      (id, code, name, coordinatorId, description, picture, generateCert, profile, created, createdBy, updated, updatedBy) ⇒
+        Brand(id, code, name, coordinatorId, description, picture, generateCert, profile, created, createdBy, updated, updatedBy)
+    })({ (b: Brand) ⇒
+      Some((b.id, b.code, b.name, b.coordinatorId, b.description, b.picture, b.generateCert, b.socialProfile, b.created, b.createdBy,
+        b.updated, b.updatedBy))
+    }))
 
   /** Shows all brands **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒

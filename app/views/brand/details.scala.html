@@ -68,7 +68,28 @@
                 <strong>Description</strong><br/>@desc.markdown
             </p>
         }
+        <p><strong>Social networks</strong>
+            <p><strong>E-mail address</strong>
+                <br><a href="mailto:@brand.socialProfile.email"><i class="glyphicon glyphicon-google_plus"></i>@brand.socialProfile.email</a>
+            </p>
 
+            @brand.socialProfile.facebookUrl.map { url =>
+                <br><a href="@url">Facebook</a>
+            }
+
+            @brand.socialProfile.linkedInUrl.map { url =>
+                <br><a href="@url">LinkedIn</a>
+            }
+
+            @brand.socialProfile.googlePlusUrl.map { url =>
+                <br><a href="@url">Google+</a>
+            }
+            @brand.socialProfile.skype.map { skype =>
+                <br><a href="skype:@skype">Skype</a>
+            }
+            @brand.socialProfile.phone.map { phone =>
+                <br>@phone
+            }
     </div>
 
     <div class="col-md-8">

@@ -177,7 +177,7 @@ case class Person(
       val socialQuery = for {
         socialProfile ← SocialProfiles if socialProfile.objectId === id.get
       } yield socialProfile
-      socialQuery.update(socialProfile.copy(objectId = id.get))
+      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature, bio, interests,
         role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)

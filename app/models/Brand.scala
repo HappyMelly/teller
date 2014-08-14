@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ BookingEntries, Licenses, Brands, ProductBrandAssociations }
+import models.database._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -42,6 +42,7 @@ case class Brand(id: Option[Long],
   description: Option[String],
   picture: Option[String],
   generateCert: Boolean = false,
+  socialProfile: SocialProfile,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -74,16 +75,23 @@ case class Brand(id: Option[Long],
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
+    SocialProfile.insert(socialProfile.copy(objectId = id))
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = Brand.delete(this.id.get)
 
   def update = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (code, name, coordinatorId, description, picture, updated, updatedBy)
-    val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-    this
+    session.withTransaction {
+      val socialQuery = for {
+        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
+      } yield socialProfile
+      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
+      val updateTuple = (code, name, coordinatorId, description, picture, updated, updatedBy)
+      val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      this
+    }
   }
 }
 

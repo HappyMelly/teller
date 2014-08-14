@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.Brand
+import models.{ ProfileType, SocialProfile, Brand }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -52,7 +52,13 @@ private[models] object Brands extends Table[Brand]("BRAND") {
 
   def * = id.? ~ code ~ name ~ coordinatorId ~ description ~ picture ~
     generateCert ~ created ~ createdBy ~ updated ~
-    updatedBy <> (Brand.apply _, Brand.unapply _)
+    updatedBy <> ({ b ⇒
+      Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7, SocialProfile.find(b._1.getOrElse(0), ProfileType.Brand),
+        b._8, b._9, b._10, b._11)
+    }, { (b: Brand) ⇒
+      Some((b.id, b.code, b.name, b.coordinatorId, b.description, b.picture, b.generateCert, b.created, b.createdBy,
+        b.updated, b.updatedBy))
+    })
 
   def forInsert = * returning id
 
