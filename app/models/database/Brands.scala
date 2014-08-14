@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Brand, BrandStatus }
+import models.Brand
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -34,17 +34,12 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object Brands extends Table[Brand]("BRAND") {
 
-  implicit val brandStatusTypeMapper = MappedTypeMapper.base[BrandStatus.Value, String](
-    { status ⇒ status.toString },
-    { status ⇒ BrandStatus.withName(status) })
-
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def code = column[String]("CODE")
   def name = column[String]("NAME")
   def coordinatorId = column[Long]("COORDINATOR_ID")
 
   def description = column[Option[String]]("DESCRIPTION")
-  def status = column[BrandStatus.Value]("STATUS")
   def picture = column[Option[String]]("PICTURE")
   def generateCert = column[Boolean]("GENERATE_CERT")
   def created = column[DateTime]("CREATED")
@@ -55,13 +50,13 @@ private[models] object Brands extends Table[Brand]("BRAND") {
 
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
-  def * = id.? ~ code ~ name ~ coordinatorId ~ description ~ status ~ picture ~
+  def * = id.? ~ code ~ name ~ coordinatorId ~ description ~ picture ~
     generateCert ~ created ~ createdBy ~ updated ~
     updatedBy <> (Brand.apply _, Brand.unapply _)
 
   def forInsert = * returning id
 
-  def forUpdate = code ~ name ~ coordinatorId ~ description ~ status ~ picture ~
+  def forUpdate = code ~ name ~ coordinatorId ~ description ~ picture ~
     updated ~ updatedBy
 
   def uniqueCode = index("IDX_CODE", code, unique = true)

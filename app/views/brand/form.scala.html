@@ -25,10 +25,6 @@
           '_label -> "Coordinator")
         @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
           '_help -> views.html.markdownHelp())
-        @html.select(
-          form("status"),
-          ("", "None") +: models.BrandStatus.values.map(value => value.toString -> Messages(s"models.BrandStatus.${value.toString}")).toSeq,
-          '_label -> "Status")
         @html.file(form("picture"), '_label -> "Picture")
         <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
 

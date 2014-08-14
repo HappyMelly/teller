@@ -33,17 +33,6 @@ import play.api.libs.Crypto
 import scala.util.Random
 
 /**
- * Brand classifications that a brand has one of.
- */
-object BrandStatus extends Enumeration {
-  val Accepted = Value("accepted")
-  val HuddleGathering = Value("huddlegathering")
-  val GatheringHuddle = Value("gatheringhuddle")
-  val ProvisionallyAccepted = Value("provisionallyaccepted")
-  val Experimental = Value("experimental")
-}
-
-/**
  * A person, such as the owner or employee of an organisation.
  */
 case class Brand(id: Option[Long],
@@ -51,7 +40,6 @@ case class Brand(id: Option[Long],
   name: String,
   coordinatorId: Long,
   description: Option[String],
-  status: BrandStatus.Value,
   picture: Option[String],
   generateCert: Boolean = false,
   created: DateTime,
@@ -92,7 +80,7 @@ case class Brand(id: Option[Long],
   def delete(): Unit = Brand.delete(this.id.get)
 
   def update = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (code, name, coordinatorId, description, status, picture, updated, updatedBy)
+    val updateTuple = (code, name, coordinatorId, description, picture, updated, updatedBy)
     val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this

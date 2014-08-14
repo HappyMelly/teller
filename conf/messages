@@ -44,17 +44,6 @@ models.OrganisationCategory.brandentity.label = label label-default
 models.OrganisationCategory.legalentity = Legal Entity
 models.OrganisationCategory.legalentity.label = label label-info
 
-# Brand status label names and Bootstrap label CSS classes.
-models.BrandStatus.accepted = Accepted
-models.BrandStatus.accepted.label = label-success
-models.BrandStatus.huddlegathering = Accepted in a Huddle, must be ratified in a Gathering
-models.BrandStatus.huddlegathering.label = label-default
-models.BrandStatus.gatheringhuddle = Accepted in a Gathering, must be ratified in a Huddle
-models.BrandStatus.gatheringhuddle.label = label-default
-models.BrandStatus.provisionallyaccepted = Provisionally Accepted
-models.BrandStatus.provisionallyaccepted.label = label-primary
-models.BrandStatus.experimental = In Experimental Phase
-models.BrandStatus.experimental.label = label-warning
 
 # Evaluation status label names and Bootstrap label CSS classes.
 models.EvaluationStatus.1 = Pending

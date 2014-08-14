@@ -48,24 +48,6 @@ object Brands extends Controller with Security {
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 
-  /**
-   * Formatter used to define a form mapping for the `BrandStatus` enumeration.
-   */
-  implicit def brandStatus: Formatter[BrandStatus.Value] = new Formatter[BrandStatus.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(BrandStatus.withName(_)).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: BrandStatus.Value) = Map(key -> value.toString)
-  }
-
-  val brandMapping = of[BrandStatus.Value]
-
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -73,7 +55,6 @@ object Brands extends Controller with Security {
     "name" -> nonEmptyText,
     "coordinatorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "description" -> optional(text),
-    "status" -> brandMapping,
     "picture" -> optional(text),
     "generateCert" -> boolean,
     "created" -> ignored(DateTime.now()),
