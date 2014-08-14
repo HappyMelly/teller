@@ -1,5 +1,6 @@
 @(user: securesocial.core.Identity,
   evaluation: Evaluation,
+  en: Translation,
   brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
@@ -76,12 +77,12 @@
     </div>
     <div class="col-xs-2">
       <p>
-        <strong>@Messages("evaluation.question6")</strong><br/>
-        @Messages("evaluation.impression." + evaluation.question6)
+        <strong>@en.questions.question6</strong><br/>
+          @en.impressions.value(evaluation.question6)
       </p>
       <p>
         <strong>Recommendation</strong><br/>
-        @Messages("evaluation.recommendation." + evaluation.question7)
+          @en.recommendations.value(evaluation.question7)
       </p>
     </div>
     <div class="col-xs-2">
@@ -110,27 +111,27 @@
         </thead>
         <tbody>
           <tr>
-            <td>@Messages("evaluation.question1")</td>
+            <td>@en.questions.question1</td>
             <td>@evaluation.question1</td>
           </tr>
           <tr>
-            <td>@Messages("evaluation.question2")</td>
+            <td>@en.questions.question2</td>
             <td>@evaluation.question2</td>
           </tr>
           <tr>
-            <td>@Messages("evaluation.question3")</td>
+            <td>@en.questions.question3</td>
             <td>@evaluation.question3</td>
           </tr>
           <tr>
-            <td>@Messages("evaluation.question4")</td>
+            <td>@en.questions.question4</td>
             <td>@evaluation.question4</td>
           </tr>
           <tr>
-            <td>@Messages("evaluation.question5")</td>
+            <td>@en.questions.question5</td>
             <td>@evaluation.question5</td>
           </tr>
           <tr>
-            <td>@Messages("evaluation.question8")</td>
+            <td>@en.questions.question8</td>
             <td>@evaluation.question8</td>
           </tr>
         </tbody>

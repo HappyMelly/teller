@@ -50,7 +50,23 @@ case class EvaluationRecommendation(language: String,
   score7: String,
   score8: String,
   score9: String,
-  score10: String)
+  score10: String) {
+
+  def value(index: Long): String = index match {
+    case 0 ⇒ this.score0 + " (0%)"
+    case 1 ⇒ this.score1 + " (10%)"
+    case 2 ⇒ this.score2 + " (20%)"
+    case 3 ⇒ this.score3 + " (30%)"
+    case 4 ⇒ this.score4 + " (40%)"
+    case 5 ⇒ this.score5 + " (50%)"
+    case 6 ⇒ this.score6 + " (60%)"
+    case 7 ⇒ this.score7 + " (70%)"
+    case 8 ⇒ this.score8 + " (80%)"
+    case 9 ⇒ this.score9 + " (90%)"
+    case 10 ⇒ this.score10 + " (100%)"
+    case _ ⇒ ""
+  }
+}
 
 case class EvaluationImpression(language: String,
   score0: String,
@@ -63,7 +79,24 @@ case class EvaluationImpression(language: String,
   score7: String,
   score8: String,
   score9: String,
-  score10: String)
+  score10: String) {
+
+  def value(index: Long): String = index match {
+    case 0 ⇒ this.score0 + " (0)"
+    case 1 ⇒ this.score1 + " (1)"
+    case 2 ⇒ this.score2 + " (2)"
+    case 3 ⇒ this.score3 + " (3)"
+    case 4 ⇒ this.score4 + " (4)"
+    case 5 ⇒ this.score5 + " (5)"
+    case 6 ⇒ this.score6 + " (6)"
+    case 7 ⇒ this.score7 + " (7)"
+    case 8 ⇒ this.score8 + " (8)"
+    case 9 ⇒ this.score9 + " (9)"
+    case 10 ⇒ this.score10 + " (10)"
+    case _ ⇒ ""
+  }
+
+}
 
 case class Translation(language: String,
   questions: EvaluationQuestion,

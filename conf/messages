@@ -420,36 +420,3 @@ country.ZM = Zambia
 country.ZW = Zimbabwe
 country.AX = Åland Islands]
 
-# Evaluations
-evaluation.impression.0 = Terrible (0)
-evaluation.impression.1 = Very bad (1)
-evaluation.impression.2 = Bad (2)
-evaluation.impression.3 = Disappointing (3)
-evaluation.impression.4 = Below average (4)
-evaluation.impression.5 = Average (5)
-evaluation.impression.6 = Above average (6)
-evaluation.impression.7 = Fine (7)
-evaluation.impression.8 = Good (8)
-evaluation.impression.9 = Very good (9)
-evaluation.impression.10 = Excellent (10)
-
-evaluation.recommendation.0 = Certainly not (0%)
-evaluation.recommendation.1 = Highly unlikely (10%)
-evaluation.recommendation.2 = Unlikely (20%)
-evaluation.recommendation.3 = Quite unlikely (30%)
-evaluation.recommendation.4 = Possibly not (40%)
-evaluation.recommendation.5 = Maybe (50%)
-evaluation.recommendation.6 = Yes, possibly (60%)
-evaluation.recommendation.7 = Quite possibly (70%)
-evaluation.recommendation.8 = Likely (80%)
-evaluation.recommendation.9 = Highly likely (90%)
-evaluation.recommendation.10 = Certainly (100%)
-
-evaluation.question1 = What triggered you to register for this event?
-evaluation.question2 = Which action items did you take away from the event?
-evaluation.question3 = What do you suggest to add or change to the program?
-evaluation.question4 = What were specific qualities of the trainer/facilitator?
-evaluation.question5 = What can be improved about the event location?
-evaluation.question6 = General impression
-evaluation.question7 = How likely are you to recommend this event to others?
-evaluation.question8 = How could the trainer/facilitator have made the event better?

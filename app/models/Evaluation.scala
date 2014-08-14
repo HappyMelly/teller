@@ -79,11 +79,12 @@ case class Evaluation(
     val created = this.copy(id = Some(id))
 
     val brand = Brand.find(event.brandCode).get
-    val impression = Messages("evaluation.impression." + question6)
+    val en = Translation.find("EN").get
+    val impression = en.impressions.value(question6)
     val subject = s"New evaluation (General impression: $impression)"
     EmailService.send(event.facilitators.toSet,
       Some(Set(brand.coordinator)), None, subject,
-      mail.html.evaluation(created, participant).toString(), richMessage = true)
+      mail.html.evaluation(created, participant, en).toString(), richMessage = true)
 
     created
   }

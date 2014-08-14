@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
@@ -100,7 +100,7 @@ object Participants extends Controller with Security {
       // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
-
+        val en = Translation.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -119,7 +119,7 @@ object Participants extends Controller with Security {
               "schedule" -> Json.obj(
                 "start" -> data.event.schedule.start.toString,
                 "end" -> data.event.schedule.end.toString),
-              "evaluation" -> evaluation(data),
+              "evaluation" -> evaluation(data, en),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -152,6 +152,7 @@ object Participants extends Controller with Security {
       Event.find(eventId).map { event ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val brand = Brand.find(event.brandCode).get
+        val en = Translation.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -159,7 +160,7 @@ object Participants extends Controller with Security {
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName,
                 "id" -> data.person.id.get),
-              "evaluation" -> evaluation(data),
+              "evaluation" -> evaluation(data, en),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -286,12 +287,18 @@ object Participants extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  private def evaluation(data: ParticipantView): JsValue = {
+  /**
+   * Get JSON with evaluation data
+   * @param data Data to convert to JSON
+   * @param en English translation of Evaluation module
+   * @return
+   */
+  private def evaluation(data: ParticipantView, en: Translation): JsValue = {
     Json.obj(
       "impression" -> data.impression.map { value ⇒
         Json.obj(
           "value" -> value,
-          "caption" -> Messages(s"evaluation.impression.$value"))
+          "caption" -> en.impressions.value(value))
       },
       "status" -> data.status.map(status ⇒
         Json.obj(
