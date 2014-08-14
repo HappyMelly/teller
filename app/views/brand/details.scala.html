@@ -9,6 +9,7 @@
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import views.Languages
 
 @main(brand.code + " - Brand", "brands", Some(user)) {
 
@@ -125,13 +126,17 @@
         <table class="datatables table table-bordered">
             <thead>
                 <th>Language</th>
+                <th>One Facilitator</th>
+                <th>Two Facilitators</th>
                 <th></th>
             </thead>
             <tbody>
             @for(file <- brand.certificates) {
                 <tr>
-                    <td>Languages.all.get(@file.language)</td>
-                    <td></td>
+                    <td>@Languages.all.get(file.language)</td>
+                    <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
+                    <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
+                    <td><a href="@routes.CertificateTemplates.delete(file.id.get)"><i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
                 </tr>
             }
             </tbody>

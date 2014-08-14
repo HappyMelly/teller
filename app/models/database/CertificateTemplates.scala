@@ -35,10 +35,10 @@ private[models] object CertificateTemplates extends Table[CertificateTemplate]("
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandCode = column[String]("BRAND_CODE")
   def language = column[String]("LANGUAGE")
-  def template = column[Array[Byte]]("TEMPLATE")
-  def templateNoFacilitator = column[Array[Byte]]("TEMPLATE_NO_FACILITATOR")
+  def oneFacilitator = column[Array[Byte]]("ONE_FACILITATOR")
+  def twoFacilitators = column[Array[Byte]]("TWO_FACILITATORS")
 
-  def * = id.? ~ brandCode ~ language ~ template ~ templateNoFacilitator <> (CertificateTemplate.apply _, CertificateTemplate.unapply _)
+  def * = id.? ~ brandCode ~ language ~ oneFacilitator ~ twoFacilitators <> (CertificateTemplate.apply _, CertificateTemplate.unapply _)
 
   def forInsert = * returning id
 

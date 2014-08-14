@@ -123,6 +123,7 @@ error.person.notExist = The person does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 error.notDeletableProduct = You cannot delete this product because it has contributors or derivative products
+error.template.exist = The template for this language already exists
 error.translation.exist = The translation for this language already exists
 error.translation.notChangeable = You are not allowed to change this translation
 error.unknown_country = Please choose a country

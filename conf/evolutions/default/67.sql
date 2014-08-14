@@ -1,10 +1,10 @@
 # --- !Ups
 create table if not exists CERTIFICATE_TEMPLATE(
-    ID bigint not null primary key,
+    ID bigint not null auto_increment primary key,
     BRAND_CODE varchar(5) not null,
     LANGUAGE char(2) not null,
-    TEMPLATE blob,
-    TEMPLATE_NO_FACILITATOR blob
+    ONE_FACILITATOR longblob,
+    TWO_FACILITATORS longblob
 );
 
 # --- !Downs

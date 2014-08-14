@@ -39,17 +39,17 @@ case class CertificateTemplate(
   id: Option[Long],
   brandCode: String,
   language: String,
-  template: Array[Byte],
-  templateNoFacilitator: Array[Byte]) {
+  oneFacilitator: Array[Byte],
+  twoFacilitators: Array[Byte]) {
 
   lazy val brand: Brand = DB.withSession { implicit session: Session ⇒
     Brand.find(brandCode).get.brand
   }
 
-  //  def insert: Product = DB.withSession { implicit session: Session ⇒
-  //    val id = Products.forInsert.insert(this)
-  //    this.copy(id = Some(id))
-  //  }
+  def insert: CertificateTemplate = DB.withSession { implicit session: Session ⇒
+    val id = CertificateTemplates.forInsert.insert(this)
+    this.copy(id = Some(id))
+  }
   //
   //  def delete(): Unit = Product.delete(this.id.get)
   //
@@ -59,6 +59,9 @@ case class CertificateTemplate(
   //    updateQuery.update(updateTuple)
   //    this
   //  }
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    CertificateTemplates.where(_.id === this.id).mutate(_.delete())
+  }
 }
 
 object CertificateTemplate {
@@ -95,6 +98,16 @@ object CertificateTemplate {
    */
   def findByBrand(code: String): List[CertificateTemplate] = DB.withSession { implicit session: Session ⇒
     Query(CertificateTemplates).filter(_.brandCode === code).sortBy(_.language).list
+  }
+
+  /**
+   * Find a certificate file
+   *
+   * @param id Unique identifier
+   * @return
+   */
+  def find(id: Long): Option[CertificateTemplate] = DB.withSession { implicit session: Session ⇒
+    Query(CertificateTemplates).filter(_.id === id).firstOption
   }
 
   //
