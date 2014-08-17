@@ -37,11 +37,15 @@ import scala.util.Random
  */
 case class Brand(id: Option[Long],
   code: String,
+  uniqueName: String,
   name: String,
   coordinatorId: Long,
   description: Option[String],
   picture: Option[String],
   generateCert: Boolean = false,
+  tagLine: Option[String],
+  webSite: Option[String],
+  blog: Option[String],
   socialProfile: SocialProfile,
   created: DateTime,
   createdBy: String,
@@ -87,7 +91,7 @@ case class Brand(id: Option[Long],
         socialProfile ← SocialProfiles if socialProfile.objectId === id.get
       } yield socialProfile
       socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
-      val updateTuple = (code, name, coordinatorId, description, picture, updated, updatedBy)
+      val updateTuple = (code, uniqueName, name, coordinatorId, description, picture, tagLine, webSite, blog, updated, updatedBy)
       val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
       updateQuery.update(updateTuple)
       this
@@ -106,8 +110,27 @@ object Brand {
   /**
    * Returns true if and only if there is a brand with the given code.
    */
-  def exists(code: String): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(Brands).filter(_.code === code).exists).first
+  def exists(code: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
+    id.map { value ⇒
+      Query(Query(Brands).filter(_.code === code).filter(_.id =!= value).exists).first
+    }.getOrElse {
+      Query(Query(Brands).filter(_.code === code).exists).first
+    }
+  }
+
+  /**
+   * Returns true if and only if there is a brand with the given unique name.
+   *
+   * @param uniqueName An unique name of the brand
+   * @param id An unique number identifier of the brand
+   * @return
+   */
+  def nameExists(uniqueName: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
+    id.map { value ⇒
+      Query(Query(Brands).filter(_.uniqueName === uniqueName).filter(_.id =!= value).exists).first
+    }.getOrElse {
+      Query(Query(Brands).filter(_.uniqueName === uniqueName).exists).first
+    }
   }
 
   /**

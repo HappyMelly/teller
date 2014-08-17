@@ -29,6 +29,10 @@ $(document).ready( function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
 
+    // Delete links.
+    $('.delete').click(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
 
     // Datatables
     $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -38,6 +42,7 @@ $(document).ready( function() {
         $(this).dataTable( {
             "sPaginationType": "bootstrap",
             "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
+            "order": [[ 0, "asc" ]],
             "iDisplayLength": 100,
             "asStripeClasses":[],
             "aaSorting": [],
@@ -48,12 +53,9 @@ $(document).ready( function() {
         });
     });
 
-    // Select functionality for product details page
-    $("#contributor > select").change(function(){
-        $("#contributor > select option:selected").each(function() {
-            $("#contributor > input[name=isPerson]").attr("value", $(this).attr("isPerson"));
-        })
+    $('#activities a').click(function (e) {
+      e.preventDefault();
+      $(this).tab('show');
     });
-
 });
 
