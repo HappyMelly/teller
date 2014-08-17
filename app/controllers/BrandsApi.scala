@@ -25,8 +25,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.{ Brand, BrandView, BrandStatus }
-import play.api.i18n.Messages
+import models.{ Brand, BrandView }
 
 /**
  * Brands API
@@ -37,6 +36,7 @@ object BrandsApi extends Controller with ApiAuthentication {
     def writes(brand: Brand): JsValue = {
       Json.obj(
         "code" -> brand.code,
+        "unique_name" -> brand.uniqueName,
         "name" -> brand.name)
     }
   }
@@ -45,18 +45,10 @@ object BrandsApi extends Controller with ApiAuthentication {
     def writes(brandView: BrandView): JsValue = {
       Json.obj(
         "href" -> routes.BrandsApi.brand(brandView.brand.code).url,
+        "unique_name" -> brandView.brand.uniqueName,
         "name" -> brandView.brand.name,
         "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
-        "description" -> brandView.brand.description,
-        "status" -> Messages("models.BrandStatus." + brandView.brand.status))
-    }
-  }
-
-  implicit val brandByStatusViewWrites = new Writes[(BrandStatus.Value, List[BrandView])] {
-    def writes(data: (BrandStatus.Value, List[BrandView])): JsValue = {
-      Json.obj(
-        "status" -> Messages("models.BrandStatus." + data._1),
-        "brands" -> data._2)
+        "description" -> brandView.brand.description)
     }
   }
 
@@ -67,11 +59,23 @@ object BrandsApi extends Controller with ApiAuthentication {
     def writes(brandView: BrandView): JsValue = {
       Json.obj(
         "code" -> brandView.brand.code,
+        "unique_name" -> brandView.brand.uniqueName,
         "name" -> brandView.brand.name,
-        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
+        "tagline" -> brandView.brand.tagLine,
         "description" -> brandView.brand.description,
-        "status" -> Messages("models.BrandStatus." + brandView.brand.status),
+        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
         "coordinator" -> brandView.coordinator,
+        "contact_info" -> Json.obj(
+          "email" -> brandView.brand.socialProfile.email,
+          "skype" -> brandView.brand.socialProfile.skype,
+          "phone" -> brandView.brand.socialProfile.phone),
+        "social_profile" -> Json.obj(
+          "facebook" -> brandView.brand.socialProfile.facebookUrl,
+          "twitter" -> brandView.brand.socialProfile.twitterHandle,
+          "google_plus" -> brandView.brand.socialProfile.googlePlusUrl,
+          "linkedin" -> brandView.brand.socialProfile.linkedInUrl),
+        "website" -> brandView.brand.webSite,
+        "blog" -> brandView.brand.blog,
         "products" -> brandView.brand.products)
     }
   }
@@ -81,21 +85,19 @@ object BrandsApi extends Controller with ApiAuthentication {
    */
   def brand(code: String) = TokenSecuredAction { implicit request ⇒
     Brand.find(code).map { brandView ⇒
-      Ok(Json.toJson(brandView)(brandViewDetailsWrites))
-    }.getOrElse(NotFound("Unknown brand"))
+      Ok(Json.prettyPrint(Json.toJson(brandView)(brandViewDetailsWrites)))
+    }.getOrElse {
+      Brand.findByName(code).map { brandView ⇒
+        Ok(Json.prettyPrint(Json.toJson(brandView)(brandViewDetailsWrites)))
+      }.getOrElse(NotFound("Unknown brand"))
+    }
   }
 
   /**
    * Brand list API.
    */
   def brands = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Brand.findAll))
+    Ok(Json.prettyPrint(Json.toJson(Brand.findAll)))
   }
 
-  /**
-   * A list of brands grouped by status
-   */
-  def brandsByStatus = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Brand.findAll.groupBy(_.brand.status)))
-  }
 }

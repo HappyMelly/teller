@@ -29,12 +29,29 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
+/**
+ * A type of social profile
+ */
+object ProfileType extends Enumeration {
+  type ProfileType = Value
+  val Person = Value("0")
+  val Brand = Value("1")
+  val Organisation = Value("2")
+
+  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
+    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
+}
+
 case class SocialProfile(
-  personId: Long = 0,
+  objectId: Long = 0,
+  objectType: ProfileType.Value = ProfileType.Person,
+  email: String,
   twitterHandle: Option[String] = None,
   facebookUrl: Option[String] = None,
   linkedInUrl: Option[String] = None,
-  googlePlusUrl: Option[String] = None) {
+  googlePlusUrl: Option[String] = None,
+  skype: Option[String] = None,
+  phone: Option[String] = None) {
 
   def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
     googlePlusUrl.isDefined || linkedInUrl.isDefined
@@ -42,8 +59,8 @@ case class SocialProfile(
 
 object SocialProfile {
 
-  def find(personId: Long): SocialProfile = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.personId === personId).first
+  def find(objectId: Long, objectType: ProfileType.Value): SocialProfile = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first
   }
 
   def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
@@ -51,8 +68,8 @@ object SocialProfile {
     socialProfile
   }
 
-  def update(socialProfile: SocialProfile): Unit = DB.withSession { implicit session: Session ⇒
-    SocialProfiles.filter(_.personId === socialProfile.personId).update(socialProfile)
+  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = DB.withSession { implicit session: Session ⇒
+    SocialProfiles.filter(_.objectId === socialProfile.objectId).filter(_.objectType === objectType).update(socialProfile)
   }
 }
 

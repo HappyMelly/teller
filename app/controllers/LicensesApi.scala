@@ -55,7 +55,7 @@ object LicensesApi extends Controller with ApiAuthentication {
         "first_name" -> view.licensee.firstName,
         "last_name" -> view.licensee.lastName,
         "country" -> view.licensee.address.countryCode,
-        "email_address" -> view.licensee.emailAddress,
+        "email_address" -> view.licensee.socialProfile.email,
         "twitter_handle" -> view.licensee.socialProfile.twitterHandle,
         "facebook_url" -> view.licensee.socialProfile.facebookUrl,
         "linkedin_url" -> view.licensee.socialProfile.linkedInUrl,

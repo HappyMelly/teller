@@ -57,9 +57,9 @@ object EmailService {
     body: String,
     richMessage: Boolean = false,
     attachment: Option[(String, String)] = None): Unit = {
-    val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.emailAddress}>")
-    val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
-    val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.emailAddress}>"))
+    val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>")
+    val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>"))
+    val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>"))
     val message = EmailMessage(toAddresses.toList,
       ccAddresses.map(_.toList).getOrElse(List[String]()),
       bccAddresses.map(_.toList).getOrElse(List[String]()),

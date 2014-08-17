@@ -74,7 +74,6 @@ case class Person(
   id: Option[Long],
   firstName: String,
   lastName: String,
-  emailAddress: String,
   birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
@@ -157,7 +156,7 @@ case class Person(
   def insert: Person = DB.withSession { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
     val personId = People.forInsert.insert(this.copy(address = newAddress))
-    SocialProfile.insert(socialProfile.copy(personId = personId))
+    SocialProfile.insert(socialProfile.copy(objectId = personId))
     Accounts.insert(Account(personId = Some(personId)))
     this.copy(id = Some(personId))
   }
@@ -176,11 +175,11 @@ case class Person(
       addressQuery.update(address.copy(id = Some(addressId)))
 
       val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.personId === id.get
+        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
       } yield socialProfile
-      socialQuery.update(socialProfile.copy(personId = id.get))
+      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, emailAddress, birthday, photo.url, signature, bio, interests,
+      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature, bio, interests,
         role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)

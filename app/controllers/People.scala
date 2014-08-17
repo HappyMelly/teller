@@ -108,7 +108,7 @@ object People extends Controller with Security {
     "googlePlusUrl" -> optional(googlePlusProfileUrl)) (
       {
         (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-          SocialProfile(0, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
+          SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
       })(
         {
           (s: SocialProfile) ⇒ Some(s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl)
@@ -141,12 +141,12 @@ object People extends Controller with Security {
         "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
-          Person(id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, role,
-            profile, webSite, blog, virtual = false, active, dateStamp)
+          Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
+            profile.copy(email = emailAddress), webSite, blog, virtual = false, active, dateStamp)
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.emailAddress, p.birthday, p.photo, p.signature, p.address, p.bio, p.interests,
+              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday, p.photo, p.signature, p.address, p.bio, p.interests,
                 p.socialProfile, p.role, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }

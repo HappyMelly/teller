@@ -24,8 +24,10 @@
 
 package controllers
 
+import controllers.Forms._
 import models._
 import org.joda.time._
+import play.api.data.validation.Constraints
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.validation.Constraints._
@@ -33,8 +35,6 @@ import play.api.data.Forms._
 import models.UserRole.Role._
 import securesocial.core.SecuredRequest
 import play.api.cache.Cache
-import play.api.data.FormError
-import play.api.data.format.Formatter
 import play.api.libs.json.{ JsValue, Writes, Json }
 import services._
 import fly.play.s3.{ BucketFile, S3Exception }
@@ -49,37 +49,50 @@ object Brands extends Controller with Security {
   val encoding = "ISO-8859-1"
 
   /**
-   * Formatter used to define a form mapping for the `BrandStatus` enumeration.
+   * HTML form mapping for a brand’s social profile.
    */
-  implicit def brandStatus: Formatter[BrandStatus.Value] = new Formatter[BrandStatus.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(BrandStatus.withName(_)).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: BrandStatus.Value) = Map(key -> value.toString)
-  }
-
-  val brandMapping = of[BrandStatus.Value]
+  val socialProfileMapping = mapping(
+    "email" -> nonEmptyText,
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl),
+    "skype" -> optional(nonEmptyText),
+    "phone" -> optional(nonEmptyText)) (
+      {
+        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone) ⇒
+          SocialProfile(0, ProfileType.Brand, email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone)
+      })(
+        {
+          (s: SocialProfile) ⇒ Some(s.email, s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone)
+        })
 
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "code" -> nonEmptyText.verifying(pattern("[A-Z0-9]*".r, "constraint.brand.code", "constraint.brand.code.error"), maxLength(5)),
+    "uniqueName" -> nonEmptyText.verifying(pattern("[A-Za-z0-9._]*".r, "constraint.brand.code", "constraint.brand.uniqueName.error"), maxLength(25)),
     "name" -> nonEmptyText,
     "coordinatorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "description" -> optional(text),
-    "status" -> brandMapping,
     "picture" -> optional(text),
     "generateCert" -> boolean,
+    "tagLine" -> optional(text),
+    "webSite" -> optional(webUrl),
+    "blog" -> optional(webUrl),
+    "profile" -> socialProfileMapping,
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(request.user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))(Brand.apply)(Brand.unapply))
+    "updatedBy" -> ignored(request.user.fullName))({
+      (id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
+      profile, created, createdBy, updated, updatedBy) ⇒
+        Brand(id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
+          profile, created, createdBy, updated, updatedBy)
+    })({ (b: Brand) ⇒
+      Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description, b.picture, b.generateCert, b.tagLine,
+        b.webSite, b.blog, b.socialProfile, b.created, b.createdBy, b.updated, b.updatedBy))
+    }))
 
   /** Shows all brands **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -105,6 +118,9 @@ object Brands extends Controller with Security {
           if (Brand.exists(brand.code))
             Future.successful(BadRequest(views.html.brand.form(request.user, None,
               form.withError("code", "constraint.brand.code.exists", brand.code))))
+          else if (Brand.nameExists(brand.uniqueName))
+            Future.successful(BadRequest(views.html.brand.form(request.user, None,
+              form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
               val filename = Brand.generateImageName(picture.filename)
@@ -178,7 +194,12 @@ object Brands extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  /** Edit form submits to this action **/
+  /**
+   * Edit form submits to this action
+   *
+   * @param code Unique text identifier of a brand
+   * @return
+   */
   def update(code: String) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
@@ -187,28 +208,36 @@ object Brands extends Controller with Security {
         form.fold(
           formWithErrors ⇒ Future.successful(BadRequest(views.html.brand.form(request.user, Some(code), form))),
           brand ⇒ {
-            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-              val filename = Brand.generateImageName(picture.filename)
-              val source = Source.fromFile(picture.ref.file.getPath, encoding)
-              val byteArray = source.toArray.map(_.toByte)
-              source.close()
-              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                brand.copy(id = existingBrandView.brand.id).copy(picture = Some(filename)).update
-                Cache.remove(Brand.cacheId(code))
-                existingBrandView.brand.picture.map { oldPicture ⇒
-                  S3Bucket.remove(oldPicture)
+            if (Brand.exists(brand.code, existingBrandView.brand.id))
+              Future.successful(BadRequest(views.html.brand.form(request.user, Some(code),
+                form.withError("code", "constraint.brand.code.exists", brand.code))))
+            else if (Brand.nameExists(brand.uniqueName, existingBrandView.brand.id))
+              Future.successful(BadRequest(views.html.brand.form(request.user, Some(code),
+                form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
+            else {
+              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                val filename = Brand.generateImageName(picture.filename)
+                val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                val byteArray = source.toArray.map(_.toByte)
+                source.close()
+                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                  brand.copy(id = existingBrandView.brand.id).copy(picture = Some(filename)).update
+                  Cache.remove(Brand.cacheId(code))
+                  existingBrandView.brand.picture.map { oldPicture ⇒
+                    S3Bucket.remove(oldPicture)
+                  }
+                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+                  Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
+                }.recover {
+                  case S3Exception(status, code, message, originalXml) ⇒
+                    BadRequest(views.html.brand.form(request.user, Some(brand.code),
+                      form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                 }
+              }.getOrElse {
+                brand.copy(id = existingBrandView.brand.id).copy(picture = existingBrandView.brand.picture).update
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
-                Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
-              }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒
-                  BadRequest(views.html.brand.form(request.user, Some(brand.code),
-                    form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
+                Future.successful(Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString))
               }
-            }.getOrElse {
-              brand.copy(id = existingBrandView.brand.id).copy(picture = existingBrandView.brand.picture).update
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
-              Future.successful(Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString))
             }
           })
       }.getOrElse(Future.successful(NotFound))

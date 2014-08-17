@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ BookingEntries, Licenses, Brands, ProductBrandAssociations }
+import models.database._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -33,27 +33,20 @@ import play.api.libs.Crypto
 import scala.util.Random
 
 /**
- * Brand classifications that a brand has one of.
- */
-object BrandStatus extends Enumeration {
-  val Accepted = Value("accepted")
-  val HuddleGathering = Value("huddlegathering")
-  val GatheringHuddle = Value("gatheringhuddle")
-  val ProvisionallyAccepted = Value("provisionallyaccepted")
-  val Experimental = Value("experimental")
-}
-
-/**
  * A person, such as the owner or employee of an organisation.
  */
 case class Brand(id: Option[Long],
   code: String,
+  uniqueName: String,
   name: String,
   coordinatorId: Long,
   description: Option[String],
-  status: BrandStatus.Value,
   picture: Option[String],
   generateCert: Boolean = false,
+  tagLine: Option[String],
+  webSite: Option[String],
+  blog: Option[String],
+  socialProfile: SocialProfile,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -86,16 +79,23 @@ case class Brand(id: Option[Long],
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
+    SocialProfile.insert(socialProfile.copy(objectId = id))
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = Brand.delete(this.id.get)
 
   def update = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (code, name, coordinatorId, description, status, picture, updated, updatedBy)
-    val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-    this
+    session.withTransaction {
+      val socialQuery = for {
+        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
+      } yield socialProfile
+      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
+      val updateTuple = (code, uniqueName, name, coordinatorId, description, picture, tagLine, webSite, blog, updated, updatedBy)
+      val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      this
+    }
   }
 }
 
@@ -110,8 +110,27 @@ object Brand {
   /**
    * Returns true if and only if there is a brand with the given code.
    */
-  def exists(code: String): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(Brands).filter(_.code === code).exists).first
+  def exists(code: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
+    id.map { value ⇒
+      Query(Query(Brands).filter(_.code === code).filter(_.id =!= value).exists).first
+    }.getOrElse {
+      Query(Query(Brands).filter(_.code === code).exists).first
+    }
+  }
+
+  /**
+   * Returns true if and only if there is a brand with the given unique name.
+   *
+   * @param uniqueName An unique name of the brand
+   * @param id An unique number identifier of the brand
+   * @return
+   */
+  def nameExists(uniqueName: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
+    id.map { value ⇒
+      Query(Query(Brands).filter(_.uniqueName === uniqueName).filter(_.id =!= value).exists).first
+    }.getOrElse {
+      Query(Query(Brands).filter(_.uniqueName === uniqueName).exists).first
+    }
   }
 
   /**
@@ -145,6 +164,24 @@ object Brand {
   def find(code: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
+      coordinator ← brand.coordinator
+    } yield (brand, coordinator, license.id.?)
+
+    query.list.groupBy { case (brand, coordinator, _) ⇒ brand -> coordinator }
+      .mapValues(_.flatMap(_._3)).map {
+        case ((brand, coordinator), licenses) ⇒
+          BrandView(brand, coordinator, licenses)
+      }.toList.headOption
+
+  }
+
+  /**
+   * @param uniqueName Unique identifier of the brand
+   * @return
+   */
+  def findByName(uniqueName: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.uniqueName === uniqueName
       coordinator ← brand.coordinator
     } yield (brand, coordinator, license.id.?)
 

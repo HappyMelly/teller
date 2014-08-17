@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Photo, Address, Person, SocialProfile, DateStamp, PersonRole }
+import models._
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 
@@ -37,7 +37,6 @@ private[models] object People extends Table[Person]("PERSON") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def firstName = column[String]("FIRST_NAME")
   def lastName = column[String]("LAST_NAME")
-  def emailAddress = column[String]("EMAIL_ADDRESS")
   def birthday = column[Option[LocalDate]]("BIRTHDAY")
   def photo = column[Option[String]]("PHOTO")
   def signature = column[Boolean]("SIGNATURE")
@@ -60,24 +59,23 @@ private[models] object People extends Table[Person]("PERSON") {
   def updatedBy = column[String]("UPDATED_BY")
 
   def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
-  def socialProfile = foreignKey("SOCIAL_PROFILE_FK", id, SocialProfiles)(_.personId)
 
   // Note that this projection does not include the address and social profile, which must be joined in queries.
-  def * = id.? ~ firstName ~ lastName ~ emailAddress ~ birthday ~ photo ~ signature ~ addressId ~ bio ~ interests ~
+  def * = id.? ~ firstName ~ lastName ~ birthday ~ photo ~ signature ~ addressId ~ bio ~ interests ~
     role ~ webSite ~ blog ~ virtual ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
-        Person(p._1, p._2, p._3, p._4, p._5, Photo.parse(p._6), p._7, Address.find(p._8), p._9, p._10, p._11,
-          SocialProfile.find(p._1.getOrElse(0)), p._12, p._13, p._14, p._15,
-          DateStamp(p._16, p._17, p._18, p._19))
+        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, Address.find(p._7), p._8, p._9, p._10,
+          SocialProfile.find(p._1.getOrElse(0), ProfileType.Person), p._11, p._12, p._13, p._14,
+          DateStamp(p._15, p._16, p._17, p._18))
       },
       { (p: Person) ⇒
-        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.birthday, p.photo.url, p.signature, p.address.id.get, p.bio,
+        Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url, p.signature, p.address.id.get, p.bio,
           p.interests, p.role, p.webSite, p.blog, p.virtual, p.active,
           p.dateStamp.created, p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
       })
 
   def forInsert = * returning id
 
-  def forUpdate = firstName ~ lastName ~ emailAddress ~ birthday ~ photo ~ signature ~ bio ~ interests ~
+  def forUpdate = firstName ~ lastName ~ birthday ~ photo ~ signature ~ bio ~ interests ~
     role ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
 }
