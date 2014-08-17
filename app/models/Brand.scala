@@ -176,6 +176,24 @@ object Brand {
   }
 
   /**
+   * @param uniqueName Unique identifier of the brand
+   * @return
+   */
+  def findByName(uniqueName: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.uniqueName === uniqueName
+      coordinator ← brand.coordinator
+    } yield (brand, coordinator, license.id.?)
+
+    query.list.groupBy { case (brand, coordinator, _) ⇒ brand -> coordinator }
+      .mapValues(_.flatMap(_._3)).map {
+        case ((brand, coordinator), licenses) ⇒
+          BrandView(brand, coordinator, licenses)
+      }.toList.headOption
+
+  }
+
+  /**
    * Return a list of facilitators for a given brand
    */
   def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
