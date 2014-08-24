@@ -103,11 +103,23 @@ function updateEndDate(dateString, locator) {
 /**
  * Update a list of organisations for invoicing
  * @param organisations Array
+ * @param selectedId Int
  */
 function updateInvoicingOrganisations(organisations, selectedId) {
     $('#invoice_invoiceTo')
         .empty()
         .append($("<option></option>").attr("value", 0).text("Choose an organisation"));
+    if (organisations.length == 0) {
+        var message = "Warning: You are not able to save any event information because there is no organization ";
+        message += "connected to the accounts of the chosen facilitators. Please ask the person who added ";
+        message += "your account also connect it to an organization that will be used for invoicing.";
+        $('#no_org_warning').empty().append(
+            $('<div class="alert alert-danger">')
+                .text(message)
+        );
+    } else {
+        $('#no_org_warning').empty();
+    }
     for(var key in organisations) {
         var option = $("<option></option>").attr("value", key).text(organisations[key]);
         if (key == selectedId) {

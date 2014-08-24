@@ -77,7 +77,8 @@
               value="@helper.repeat(form("facilitatorIds"), min=0) { f =>@f.value,}">
             </div>
           </div>
-        </div>
+          <div id="no_org_warning" class="col-sm-9 col-sm-offset-3"></div>
+      </div>
 
         <legend>Schedule</legend>
         @html.twoInRow(form("schedule.start"),

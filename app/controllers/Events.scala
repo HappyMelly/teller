@@ -374,7 +374,9 @@ object Events extends Controller with Security {
           requestData ⇒ {
             val participantIds = event.participants.map(_.id.get)
             if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
-              val body = requestData.body
+              import scala.util.matching.Regex
+              val urlPattern = new Regex("""(https?:\/\/\S+)""", "url")
+              val body = urlPattern replaceAllIn (requestData.body, m ⇒ "<a href=\"" + m.group("url") + "\">" + m.group("url") + "</a>")
               val brand = Brand.find(event.brandCode).get
               requestData.participantIds.foreach { id ⇒
                 val participant = Person.find(id).get
