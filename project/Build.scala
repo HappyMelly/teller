@@ -22,11 +22,13 @@ object ApplicationBuild extends Build {
     "org.apache.poi" % "poi-ooxml" % "3.9",
     "org.joda" % "joda-money" % "0.9",
     "org.pegdown" % "pegdown" % "1.4.2",
+    "org.planet42" %% "laika-core" % "0.5.0",
     "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
     "ws.securesocial" %% "securesocial" % "2.1.3",
     "nl.rhinofly" %% "play-s3" % "3.3.3"
+
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(

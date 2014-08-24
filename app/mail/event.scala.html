@@ -1,4 +1,7 @@
 @(event: Event, changes: List[Event.FieldChange])(implicit request: RequestHeader)
+@import laika.api._
+@import laika.parse.markdown.Markdown
+@import laika.render.HTML
 @import views.Languages
 
 <html>
@@ -31,7 +34,7 @@
                                 </tr>
                                 <tr>
                                     <td valign="top">
-                                        @event.details.description.map { description => <p>@description</p>}
+                                        @event.details.description.map { description => @Html(Transform.from(Markdown).to(HTML).fromString(description).toString) }
                                         <p>
                                             <a href="@routes.Events.details(event.id.getOrElse(0)).absoluteURL(false)">
                                                 Click to review
@@ -39,7 +42,7 @@
 
                                         @if(changes.nonEmpty) {
                                             <h2>Changes</h2>
-                                            <table cellpadding="0" cellspacing="0" border="1" align="center" width="100%"
+                                            <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
                                             style="font-size: 12px ; line-height:16 px">
                                                 <thead>
                                                     <tr>
@@ -51,11 +54,20 @@
                                                 <tbody>
                                                 @for(field <- changes) {
                                                     @defining(field.printable()) { value =>
-                                                        <tr>
-                                                            <td width="150"><strong>@value._1</strong></td>
-                                                            <td>@value._2</td>
-                                                            <td>@value._3</td>
-                                                        </tr>
+                                                        @if(value._1 == "Description" || value._1 == "Special Attention") {
+                                                            <tr>
+                                                                <td width="150"><strong>@value._1</strong></td>
+                                                                <td>@Html(value._2)</td>
+                                                                <td>@Html(value._3)</td>
+                                                            </tr>
+                                                        } else {
+                                                            <tr>
+                                                                <td width="150"><strong>@value._1</strong></td>
+                                                                <td>@value._2</td>
+                                                                <td>@value._3</td>
+                                                            </tr>
+                                                        }
+
                                                     }
                                                 }
                                                 </tbody>
@@ -64,7 +76,7 @@
                                         }
 
                                         <h2>Event details</h2>
-                                        <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%"
+                                        <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
                                             style="font-size: 12px ; line-height:16 px">
                                             <tbody>
                                                 <tr>
@@ -94,7 +106,7 @@
                                                 @event.details.specialAttention.map { text =>
                                                     <tr>
                                                         <td width="150"><strong>Special Attention</strong></td>
-                                                        <td>@text</td>
+                                                        <td>@Html(Transform.from(Markdown).to(HTML).fromString(text).toString)</td>
                                                     </tr>
                                                 }
                                                 <tr>

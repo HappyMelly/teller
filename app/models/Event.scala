@@ -24,6 +24,10 @@
 
 package models
 
+import laika.api._
+import laika.parse.markdown.Markdown
+import laika.render.HTML
+
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -214,8 +218,12 @@ object Event {
         Languages.all.getOrElse(now.materialsLanguage.getOrElse(""), "")),
       new SimpleFieldChange("City", was.location.city, now.location.city),
       new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
-      new SimpleFieldChange("Description", was.details.description.getOrElse(""), now.details.description.getOrElse("")),
-      new SimpleFieldChange("Special Attention", was.details.specialAttention.getOrElse(""), now.details.specialAttention.getOrElse("")),
+      new SimpleFieldChange("Description",
+        Transform from Markdown to HTML fromString was.details.description.getOrElse("") toString,
+        Transform from Markdown to HTML fromString now.details.description.getOrElse("") toString),
+      new SimpleFieldChange("Special Attention",
+        Transform from Markdown to HTML fromString was.details.specialAttention.getOrElse("") toString,
+        Transform from Markdown to HTML fromString now.details.specialAttention.getOrElse("") toString),
       new SimpleFieldChange("Start Date", was.schedule.start.toString, now.schedule.start.toString),
       new SimpleFieldChange("End Date", was.schedule.end.toString, now.schedule.end.toString),
       new SimpleFieldChange("Hours Per Day", was.schedule.hoursPerDay.toString, now.schedule.hoursPerDay.toString),
