@@ -150,7 +150,8 @@ object BookingEntries extends Controller with Security {
   def sendEmailNotification(entry: BookingEntry, changes: List[BookingEntry.FieldChange], activity: Activity,
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    EmailService.send(recipients.filter(_.active), None, None, subject, mail.txt.booking(entry, changes).toString)
+    EmailService.send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
+      richMessage = true)
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒

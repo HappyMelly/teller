@@ -1,0 +1,151 @@
+@(booking: BookingEntry, changes: List[BookingEntry.FieldChange])(implicit request: RequestHeader)
+@import templates.Formatters._
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head>
+    <body>
+        <table cellpadding="0" cellspacing="0" border="0" style="margin: 0; padding: 0; width: 100% !important; line-height: 100% !important">
+            <tbody>
+                <tr>
+                    <td valign="top">
+                        <table cellpadding="0" cellspacing="0" border="0" align="center"
+                        width="550" style="margin-top: 10px">
+                            <tbody>
+                                <tr>
+                                    <td valign="top"
+                                    style="text-transform: uppercase; color: rgb(153, 153, 153); font-size: 11px">
+                                        A COPY HAS BEEN SENT TO THE SYSTEM ADMINISTRATORS</td>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table cellpadding="15" cellspacing="0" border="0" align="center"
+                        width="550" style="margin-top: 10px; background-color: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204)">
+                            <tbody>
+                                <tr>
+                                    <td valign="top" style="background-color: rgb(72, 177, 112); color: #ffffff;">
+                                        <h3 style="font-size: 20px ; font-weight: normal">Booking "@booking.summary"</h3>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top">
+                                        @booking.description.map { description => <p>@description</p>}
+                                        <p>
+                                            <a href="@routes.BookingEntries.details(booking.bookingNumber.getOrElse(0)).absoluteURL(false)">
+                                                Click to review
+                                            </a></p>
+
+                                        @if(changes.nonEmpty) {
+                                            <h2>Changes</h2>
+                                            <table cellpadding="0" cellspacing="0" border="1" align="center" width="100%"
+                                            style="font-size: 12px ; line-height:16 px">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Field</th>
+                                                        <th>Now</th>
+                                                        <th>Was</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @for(field <- changes) {
+                                                    @defining(field.printable()) { value =>
+                                                        <tr>
+                                                            <td width="150"><strong>@value._1</strong></td>
+                                                            <td>@value._2</td>
+                                                            <td>@value._3</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                </tbody>
+                                            </table>
+                                            <br/><br/>
+                                        }
+
+                                        <h2>Booking details</h2>
+                                        <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%"
+                                            style="font-size: 12px ; line-height:16 px">
+                                            <tbody>
+                                                <tr>
+                                                    <td width="150"><strong>Booking number</strong></td>
+                                                    <td>@booking.bookingNumber.get</td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="150"><strong>Booking owner</strong></td>
+                                                    <td>@booking.owner.fullName</td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="150"><strong>Booking date</strong></td>
+                                                    <td>@booking.bookingDate.format</td>
+                                                </tr>
+                                                @booking.brand.map { brand =>
+                                                    <tr>
+                                                        <td width="150"><strong>Brand</strong></td>
+                                                        <td>@brand.name</td>
+                                                    </tr>
+                                                }
+                                                @booking.reference.map { reference =>
+                                                    <tr>
+                                                        <td width="150"><strong>Reference number</strong></td>
+                                                        <td>@reference</td>
+                                                    </tr>
+                                                }
+                                                <tr>
+                                                    <td width="150"><strong>Reference date</strong></td>
+                                                    <td>@booking.referenceDate.format</td>
+                                                </tr>
+                                                @booking.url.map { url =>
+                                                    <tr>
+                                                        <td width="150"><strong>URL</strong></td>
+                                                        <td>@url</td>
+                                                    </tr>
+                                                }
+                                                @booking.transactionType.map { transactionType =>
+                                                    <tr>
+                                                        <td width="150"><strong>Transaction Type</strong></td>
+                                                        <td>@transactionType.name</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                        <h2>Transaction details</h2>
+                                        <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%"
+                                        style="font-size: 12px ; line-height:16 px">
+                                            <tbody>
+                                                <tr>
+                                                    <td width="150"><strong>Source amount</strong></td>
+                                                    <td>@booking.source.abs.formatText</td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="150"><strong>Percentage</strong></td>
+                                                    <td>@booking.sourcePercentage%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="150"><strong>Transaction</strong></td>
+                                                    <td>@booking.from.accountHolder.name (@booking.fromAmount.abs.formatText) @if(booking.owes) { owes } else { owed by } @booking.to.accountHolder.name (@booking.toAmount.abs.formatText)</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table cellpadding="0" cellspacing="0" border="0" align="center"
+                        style="margin-top: 10px ; width: 550px">
+                            <tbody>
+                                <tr>
+                                    <td valign="top"
+                                    style="text-transform: uppercase; color: rgb( 153, 153, 153 ); font-size: 11px ; width: 50%">
+                                        THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">
+                                        HAPPY MELLY TELLER</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br><br><br><br>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>

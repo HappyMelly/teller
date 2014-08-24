@@ -167,6 +167,8 @@ object BookingEntry {
    */
   case class FieldChange(label: String, oldValue: String, newValue: String) {
     override def toString = s"$label: $newValue (was: $oldValue)"
+
+    def printable(): (String, String, String) = (label, newValue, oldValue)
   }
 
   /**

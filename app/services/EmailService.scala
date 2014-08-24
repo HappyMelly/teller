@@ -105,7 +105,7 @@ object EmailService {
           preparedMail.setHostName(Play.configuration.getString("smtp.host").get)
           preparedMail.setAuthenticator(new DefaultAuthenticator(
             Play.configuration.getString("smtp.user").get,
-            Play.configuration.getString("smtp.password").get));
+            Play.configuration.getString("smtp.password").get))
           // Send the email and check for exceptions
           Try(preparedMail.send).isSuccess
         }

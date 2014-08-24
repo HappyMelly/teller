@@ -30,7 +30,7 @@
             width="550" style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204)">
               <tbody>
                 <tr>
-                  <td valign="top" style="background-color:rgb(0,174,239)">
+                  <td valign="top" style="background-color:rgb(72, 177, 112); color: #ffffff;">
                     <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @en.impressions.value(evaluation.question6))</h3>
                     <p>Please accept or reject the certificate</p>
                   </td>
@@ -58,34 +58,34 @@
                       style="font-size:12px;line-height:16px">
                         <tbody>
                           <tr>
-                            <td width="150">Date</td>
+                            <td width="150"><strong>Date</strong></td>
                             <td>@evaluation.participant.dateStamp.created.toString("yyyy-MM-dd")</td>
                           </tr>
                           <tr>
-                            <td width="150">Name</td>
+                            <td width="150"><strong>Name</strong></td>
                             <td>@evaluation.participant.firstName, @evaluation.participant.lastName </td>
                           </tr>
                           <tr>
-                            <td width="150">Birthday</td>
+                            <td width="150"><strong>Birthday</strong></td>
                             <td>@evaluation.participant.birthday</td>
                           </tr>
                           <tr>
-                            <td width="150">Location</td>
+                            <td width="150"><strong>Location</strong></td>
                             <td>@evaluation.participant.address.city.map { value => @value + "," } @Messages("country." + evaluation.participant.address.countryCode)</td>
                           </tr>
                           <tr>
-                            <td width="150">Organisation</td>
+                            <td width="150"><strong>Organisation</strong></td>
                             <td>@participant.organisation</td>
                           </tr>
                           <tr>
-                            <td width="150">E-mail</td>
+                            <td width="150"><strong>E-mail</strong></td>
                             <td>
                               <a href="mailto:@evaluation.participant.socialProfile.email"
                               target="_blank">@evaluation.participant.socialProfile.email</a>
                             </td>
                           </tr>
                           <tr>
-                            <td width="150">Comment</td>
+                            <td width="150"><strong>Comment</strong></td>
                             <td>@participant.comment</td>
                           </tr>
                         </tbody>

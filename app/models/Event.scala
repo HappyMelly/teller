@@ -135,6 +135,7 @@ object Event {
 
   abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
     def changed() = oldValue != newValue
+    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
   }
 
   class SimpleFieldChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
@@ -147,13 +148,24 @@ object Event {
       val newBrand = Brand.find(newValue).get.brand.name
       s"$label: $newBrand (was: $oldBrand)"
     }
+
+    override def printable(): (String, String, String) = {
+      val oldBrand = Brand.find(oldValue).get.brand.name
+      val newBrand = Brand.find(newValue).get.brand.name
+      (label, newBrand, oldBrand)
+    }
   }
 
   class EventTypeChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
     override def toString = {
+      val label, newEventType, oldEventType = printable()
+      s"$label: $newEventType (was: $oldEventType)"
+    }
+
+    override def printable(): (String, String, String) = {
       val oldEventType = EventType.find(oldValue).get.name
       val newEventType = EventType.find(newValue).get.name
-      s"$label: $newEventType (was: $oldEventType)"
+      (label, newEventType, oldEventType)
     }
   }
 
@@ -163,6 +175,13 @@ object Event {
       val newInvoiceToOrg = Organisation.find(newValue).get.name
       s"$label: $newInvoiceToOrg (was: $oldInvoiceToOrg)"
     }
+
+    override def printable(): (String, String, String) = {
+      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
+      val newInvoiceToOrg = Organisation.find(newValue).get.name
+      (label, newInvoiceToOrg, oldInvoiceToOrg)
+    }
+
   }
 
   class FacilitatorChange(label: String, oldValue: List[Long], newValue: List[Long]) extends FieldChange(label, oldValue, newValue) {
@@ -170,6 +189,12 @@ object Event {
       val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
       val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
       s"Removed $label: $removedFacilitators / Added $label: $newFacilitators"
+    }
+
+    override def printable(): (String, String, String) = {
+      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
+      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
+      (label, newFacilitators, removedFacilitators)
     }
   }
 
