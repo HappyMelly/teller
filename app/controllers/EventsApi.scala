@@ -26,6 +26,7 @@ package controllers
 import play.mvc.Controller
 import play.api.libs.json._
 import models.{ Brand, Event }
+import views.Languages
 
 /**
  * Events API
@@ -38,11 +39,11 @@ object EventsApi extends Controller with ApiAuthentication {
     def writes(event: Event): JsValue = {
       Json.obj(
         "id" -> event.id.get,
-        "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
         "title" -> event.title,
+        "type" -> event.eventTypeId,
         "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
-        "materialsLanguage" -> event.materialsLanguage,
+        "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
+        "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
@@ -61,11 +62,11 @@ object EventsApi extends Controller with ApiAuthentication {
       val serializedEvents = events.map { event ⇒
         Json.obj(
           "id" -> event.id.get,
-          "href" -> event.id.map(id ⇒ routes.EventsApi.event(id).url),
           "title" -> event.title,
+          "type" -> event.eventTypeId,
           "description" -> event.details.description,
-          "spokenLanguage" -> event.spokenLanguage,
-          "materialsLanguage" -> event.materialsLanguage,
+          "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
+          "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
           "specialAttention" -> event.details.specialAttention,
           "start" -> event.schedule.start,
           "end" -> event.schedule.end,
@@ -84,11 +85,11 @@ object EventsApi extends Controller with ApiAuthentication {
     def writes(event: Event): JsValue = {
       Json.obj(
         "brand" -> event.brandCode,
-        "eventType" -> event.eventTypeId,
+        "type" -> event.eventTypeId,
         "title" -> event.title,
         "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
-        "materialsLanguage" -> event.materialsLanguage,
+        "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
+        "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
