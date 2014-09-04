@@ -34,6 +34,7 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Countries
+import views.html.helper.CSRF
 
 object Participants extends Controller with Security {
 
@@ -338,6 +339,7 @@ object Participants extends Controller with Security {
           routes.Evaluations.reject(id).url
         else ""
       },
+      "move" -> routes.Evaluations.move(id).url,
       "edit" -> {
         if (account.editor || brand.coordinatorId == account.personId)
           routes.Evaluations.edit(id).url

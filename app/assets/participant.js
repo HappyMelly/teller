@@ -59,6 +59,11 @@ function renderDropdown(data) {
             html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + evaluation.reject;
             html += '" data-toggle="modal" title="Reject Evaluation"><i class="glyphicon glyphicon-thumbs-down"></i> Reject Evaluation</a></li>';
         }
+        if ('move' in evaluation && evaluation.move) {
+            emptyDropdown = false;
+            html += '<li><a class="move" tabindex="-1" href="#move" data-href="' + evaluation.move;
+            html += '" data-toggle="modal" title="Move Evaluation"><i class="glyphicon glyphicon-random"></i> Move Evaluation</a></li>';
+        }
         if ('view' in evaluation && evaluation.view) {
             emptyDropdown = false;
             html += '<li><a tabindex="-1" href="' + evaluation.view;

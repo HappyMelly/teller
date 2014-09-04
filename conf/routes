@@ -55,6 +55,7 @@ POST        /evaluation/                                                        
 GET         /evaluation/new/                                                          controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 GET         /evaluation/:id/approve                                                   controllers.Evaluations.approve(id: Long)
 GET         /evaluation/:id/reject                                                    controllers.Evaluations.reject(id: Long)
+POST        /evaluation/:id/move                                                      controllers.Evaluations.move(id: Long)
 GET         /evaluation/:id/edit                                                      controllers.Evaluations.edit(id: Long)
 GET         /evaluation/:id                                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                                           controllers.Evaluations.update(id: Long)
