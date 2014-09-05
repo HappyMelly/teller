@@ -106,15 +106,15 @@ $(document).ready( function() {
             { "data": "actions" }
         ],
         "columnDefs": [{
-                "render": function(data, type, row) { return drawStatus(data); },
+                "render": function(data) { return drawStatus(data); },
                 "targets": 0
             }, {
-                "render": function(data, type, row) {
+                "render": function(data) {
                     return '<a href="' + data.url + '">' + data.name + '</a>';
                 },
                 "targets": 1
             }, {
-                "render": function(data, type, row) {
+                "render": function(data) {
                     var result = $.grep(events, function(e){ return e.url == data.url; });
                     if (result.length == 0) {
                         events.push(data);
@@ -123,34 +123,34 @@ $(document).ready( function() {
                 },
                 "targets": 2
             }, {
-                "render": function(data, type, row) {
+                "render": function(data) {
                     return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
                         data.country + '.png"/> ' + data.city;
                 },
                 "targets": 3
             }, {
-                "render": function(data, type, row) {
+                "render": function(data) {
                     return data.start + ' / ' + data.end;
                 },
                 "targets": 4
             }, {
-                "render": function(data, type, row) { return drawImpression(data); },
+                "render": function(data) { return drawImpression(data); },
                 "targets": 5
             }, {
-                "render": function(data, type, row) { return drawCertificate(data); },
+                "render": function(data) { return drawCertificate(data); },
                 "targets": 8
             }, {
-                "render": function(data, type, row) { return data.id; },
+                "render": function(data) { return data.id; },
                 "visible": false,
                 "targets": 9
             },{
-                "render": function(data, type, row) {
+                "render": function(data) {
                     return data.facilitatedByMe ? 1 : 0;
                 },
                 "targets": 10,
                 "visible": false
             }, {
-               "render": function(data, type, row) { return renderDropdown(data); },
+               "render": function(data) { return renderDropdown(data, $("#brands").find(':selected').val()); },
                "targets": 11,
                "bSortable": false
             }

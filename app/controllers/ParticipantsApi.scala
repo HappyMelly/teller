@@ -78,11 +78,11 @@ object ParticipantsApi extends ApiAuthentication {
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "person_id" -> longNumber.verifying(
         "error.person.notExist",
-        (participantId: Long) ⇒ Person.find(participantId).nonEmpty))({
+        (personId: Long) ⇒ Person.find(personId).nonEmpty))({
         (id, event_id, person_id) ⇒
           Participant(id = None, event_id, person_id, evaluationId = None, organisation = None, comment = None)
       })({
-        (p: Participant) ⇒ Some(p.id, p.eventId, p.participantId)
+        (p: Participant) ⇒ Some(p.id, p.eventId, p.personId)
       }))
   }
 
@@ -105,7 +105,7 @@ object ParticipantsApi extends ApiAuthentication {
           val activityObject = Messages("activity.participant.create",
             participant.participant.get.fullName, participant.event.get.title)
           Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
-          Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.participantId)))
+          Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })
     } else {
       val form: Form[ParticipantData] = participantForm(identity.userAccount, person.fullName).bindFromRequest()(request)
@@ -119,7 +119,7 @@ object ParticipantsApi extends ApiAuthentication {
           val participant = Participant.create(data)
           val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
           Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
-          Ok(Json.prettyPrint(Json.obj("participant_id" -> participant.participantId)))
+          Ok(Json.prettyPrint(Json.obj("participant_id" -> participant.personId)))
         })
     }
 

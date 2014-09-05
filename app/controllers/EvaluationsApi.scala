@@ -36,6 +36,7 @@ import play.api.libs.json._
 object EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
+  //TODO: rename 'participant_id' to 'person_id'
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "event_id" -> longNumber.verifying(
@@ -56,7 +57,7 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
           question6, question7, question8, EvaluationStatus.Pending, None, None, DateTime.now, userName, DateTime.now, userName)
     })({
       (e: Evaluation) ⇒
-        Some(e.id, e.eventId, e.participantId, e.question1, e.question2, e.question3, e.question4,
+        Some(e.id, e.eventId, e.personId, e.question1, e.question2, e.question3, e.question4,
           e.question5, e.question6, e.question7, e.question8)
     }))
 
@@ -73,10 +74,10 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
         BadRequest(Json.prettyPrint(json))
       },
       evaluation ⇒ {
-        if (Evaluation.findByEventAndPerson(evaluation.participantId, evaluation.eventId).isDefined) {
+        if (Evaluation.findByEventAndPerson(evaluation.personId, evaluation.eventId).isDefined) {
           val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
           BadRequest(Json.prettyPrint(json))
-        } else if (Event.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.participantId).isEmpty) {
+        } else if (Event.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
           val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
           BadRequest(Json.prettyPrint(json))
         } else {

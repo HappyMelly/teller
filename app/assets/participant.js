@@ -27,7 +27,14 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
-function renderDropdown(data) {
+/**
+ * Render a dropdown with actions for a participant/event/evaluation
+ *
+ * @param data {object}
+ * @param brand {string}
+ * @returns {string}
+ */
+function renderDropdown(data, brand) {
     var emptyDropdown = true;
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
@@ -62,7 +69,8 @@ function renderDropdown(data) {
         if ('move' in evaluation && evaluation.move) {
             emptyDropdown = false;
             html += '<li><a class="move" tabindex="-1" href="#move" data-href="' + evaluation.move;
-            html += '" data-toggle="modal" title="Move Evaluation"><i class="glyphicon glyphicon-random"></i> Move Evaluation</a></li>';
+            html += '" data-brand="' + brand + '" data-toggle="modal" title="Move Evaluation">';
+            html += '<i class="glyphicon glyphicon-random"></i> Move Evaluation</a></li>';
         }
         if ('view' in evaluation && evaluation.view) {
             emptyDropdown = false;
@@ -204,11 +212,46 @@ function drawImpression(data) {
     return '';
 }
 
+function showError(message) {
+    $('#error').append(
+        $('<div class="alert alert-danger">')
+            .text(message)
+            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+    );
+}
+
 $(document).ready( function() {
     $("#participants").on('click', '.approve', function(){
         $("#approveLink").attr('href', $(this).data('href'));
     });
     $("#participants").on('click', '.reject', function(){
         $("#rejectLink").attr('href', $(this).data('href'));
+    });
+    $("#participants").on('click', '.move', function(){
+        var href = $(this).data('href');
+        $.ajax({
+            url: '/brand/' + $(this).data('brand') + '/events?future=false',
+            dataType: "json"
+        }).done(function(data) {
+            var selector = "#eventId";
+            $(selector)
+                .empty()
+                .append($("<option></option>").attr("value", 0).text(""));
+            for(var i = 0; i < data.length; i++) {
+                var option = $("<option></option>")
+                    .attr("value", data[i].id)
+                    .text(data[i].title);
+                $(selector).append(option);
+            }
+        }).fail(function() {
+            showError("Sorry we don't know anything about the brand you try to request");
+        });
+        $("#moveButton").on('click', function(e) {
+            e.preventDefault();
+            $.post(href, { eventId: $("#eventId").find(':selected').val() }, function() {
+                $('#move').modal('hide');
+                $('#participants').DataTable().ajax.reload();
+            });
+        });
     });
 });

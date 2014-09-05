@@ -33,24 +33,24 @@ import play.api.Play.current
 case class Participant(
   id: Option[Long],
   eventId: Long,
-  participantId: Long,
+  personId: Long,
   evaluationId: Option[Long],
   organisation: Option[String],
   comment: Option[String]) {
 
   lazy val event: Option[Event] = Event.find(eventId)
-  lazy val participant: Option[Person] = Person.find(participantId)
+  lazy val participant: Option[Person] = Person.find(personId)
   lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
 
   def update: Participant = DB.withSession { implicit session: Session ⇒
-    val updateTuple = evaluationId
+    val updateTuple = (eventId, evaluationId)
     val updateQuery = Participants.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
   }
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    Evaluation.findByEventAndPerson(this.participantId, this.eventId).map { value ⇒
+    Evaluation.findByEventAndPerson(this.personId, this.eventId).map { value ⇒
       value.delete()
     }
     Participants.where(_.id === this.id).mutate(_.delete())

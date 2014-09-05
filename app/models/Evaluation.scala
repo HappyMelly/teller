@@ -51,7 +51,7 @@ object EvaluationStatus extends Enumeration {
 case class Evaluation(
   id: Option[Long],
   eventId: Long,
-  participantId: Long,
+  personId: Long,
   question1: String,
   question2: String,
   question3: String,
@@ -70,11 +70,11 @@ case class Evaluation(
 
   lazy val event: Event = Event.find(eventId).get
 
-  lazy val participant: Person = Person.find(participantId).get
+  lazy val participant: Person = Person.find(personId).get
 
   def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
-    val participant = Participant.find(participantId, eventId).get
+    val participant = Participant.find(personId, eventId).get
     participant.copy(evaluationId = Some(id)).update
     val created = this.copy(id = Some(id))
 
@@ -91,19 +91,19 @@ case class Evaluation(
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluations.where(_.id === id).mutate(_.delete())
-    val participant = Participant.find(participantId, eventId).get
+    val participant = Participant.find(personId, eventId).get
     participant.copy(evaluationId = None).update
   }
 
   def update: Evaluation = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventId, participantId, question1, question2, question3, question4, question5,
+    val updateTuple = (eventId, personId, question1, question2, question3, question4, question5,
       question6, question7, question8, status, handled, certificate, updated, updatedBy)
     val updateQuery = Evaluations.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
   }
 
-  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$participantId%03d"
+  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$personId%03d"
 
   def approve(approver: Person): Evaluation = {
 
@@ -135,8 +135,8 @@ case class Evaluation(
 
 object Evaluation {
 
-  def findByEventAndPerson(participantId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).filter(_.participantId === participantId).filter(_.eventId === eventId).firstOption
+  def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
+    Query(Evaluations).filter(_.personId === personId).filter(_.eventId === eventId).firstOption
   }
 
   def findByEvent(eventId: Long): List[Evaluation] = DB.withSession { implicit session: Session ⇒

@@ -29,12 +29,12 @@ import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
+import play.api.mvc.RequestHeader
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Countries
-import views.html.helper.CSRF
 
 object Participants extends Controller with Security {
 
@@ -77,7 +77,7 @@ object Participants extends Controller with Security {
         (id, brandId, eventId, participantId, evaluationId) ⇒
           Participant(id, eventId, participantId, evaluationId, organisation = None, comment = None)
       })({
-        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.participantId, p.evaluationId)
+        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.personId, p.evaluationId)
       }))
   }
 
@@ -105,6 +105,7 @@ object Participants extends Controller with Security {
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
+              "brand" -> data.event.brandCode,
               "person" -> Json.obj(
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName),
@@ -157,6 +158,7 @@ object Participants extends Controller with Security {
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
+              "brand" -> data.event.brandCode,
               "person" -> Json.obj(
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName,
@@ -202,7 +204,7 @@ object Participants extends Controller with Security {
       Event.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
-        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.participantId) == p.id))))
+        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }
 

@@ -36,7 +36,7 @@ GET         /brand/new                                                          
 POST        /brand/new                                                                controllers.Brands.create
 GET         /brand/:code                                                              controllers.Brands.details(code)
 POST        /brand/:code                                                              controllers.Brands.update(code)
-GET         /brand/:code/events                                                       controllers.Brands.events(code)
+GET         /brand/:code/events                                                       controllers.Brands.events(code, future: Option[Boolean])
 GET         /brand/:code/edit                                                         controllers.Brands.edit(code)
 POST        /brand/:code/delete                                                       controllers.Brands.delete(code)
 GET         /brand/:code/picture                                                      controllers.Brands.picture(code: String)

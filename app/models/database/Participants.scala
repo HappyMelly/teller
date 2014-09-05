@@ -44,5 +44,5 @@ private[models] object Participants extends Table[Participant]("EVENT_PARTICIPAN
 
   def * = id.? ~ eventId ~ personId ~ evaluationId ~ organisation ~ comment <> (Participant.apply _, Participant.unapply _)
   def forInsert = * returning id
-  def forUpdate = evaluationId
+  def forUpdate = eventId ~ evaluationId
 }
