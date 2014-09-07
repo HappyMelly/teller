@@ -67,7 +67,10 @@ case class Event(
   updatedBy: String,
   facilitatorIds: List[Long]) {
 
-  val longTitle: String = title + " / " + location.city + " / " + schedule.start.toString
+  val longTitle: String = {
+    val printableTitle = if (title.length <= 70) { title } else { title.substring(0, 70) }
+    printableTitle + " / " + location.city + " / " + schedule.start.toString
+  }
 
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
