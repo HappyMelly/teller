@@ -27,7 +27,14 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
-function renderDropdown(data) {
+/**
+ * Render a dropdown with actions for a participant/event/evaluation
+ *
+ * @param data {object}
+ * @param brand {string}
+ * @returns {string}
+ */
+function renderDropdown(data, brand) {
     var emptyDropdown = true;
     var html = '<div class="dropdown">';
     html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
@@ -58,6 +65,12 @@ function renderDropdown(data) {
             emptyDropdown = false;
             html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + evaluation.reject;
             html += '" data-toggle="modal" title="Reject Evaluation"><i class="glyphicon glyphicon-thumbs-down"></i> Reject Evaluation</a></li>';
+        }
+        if ('move' in evaluation && evaluation.move) {
+            emptyDropdown = false;
+            html += '<li><a class="move" tabindex="-1" href="#move" data-href="' + evaluation.move;
+            html += '" data-brand="' + brand + '" data-toggle="modal" title="Move Evaluation">';
+            html += '<i class="glyphicon glyphicon-random"></i> Move Evaluation</a></li>';
         }
         if ('view' in evaluation && evaluation.view) {
             emptyDropdown = false;
@@ -199,11 +212,23 @@ function drawImpression(data) {
     return '';
 }
 
+
 $(document).ready( function() {
     $("#participants").on('click', '.approve', function(){
         $("#approveLink").attr('href', $(this).data('href'));
     });
     $("#participants").on('click', '.reject', function(){
         $("#rejectLink").attr('href', $(this).data('href'));
+    });
+    $("#participants").on('click', '.move', function(){
+        var href = $(this).data('href');
+        getPastEvents($(this).data('brand'));
+        $("#moveButton").on('click', function(e) {
+            e.preventDefault();
+            $.post(href, { eventId: $("#eventId").find(':selected').val() }, function() {
+                $('#move').modal('hide');
+                $('#participants').DataTable().ajax.reload();
+            });
+        });
     });
 });

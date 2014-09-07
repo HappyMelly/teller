@@ -36,7 +36,7 @@ GET         /brand/new                                                          
 POST        /brand/new                                                                controllers.Brands.create
 GET         /brand/:code                                                              controllers.Brands.details(code)
 POST        /brand/:code                                                              controllers.Brands.update(code)
-GET         /brand/:code/events                                                       controllers.Brands.events(code)
+GET         /brand/:code/events                                                       controllers.Brands.events(code, future: Option[Boolean])
 GET         /brand/:code/edit                                                         controllers.Brands.edit(code)
 POST        /brand/:code/delete                                                       controllers.Brands.delete(code)
 GET         /brand/:code/picture                                                      controllers.Brands.picture(code: String)
@@ -55,6 +55,7 @@ POST        /evaluation/                                                        
 GET         /evaluation/new/                                                          controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 GET         /evaluation/:id/approve                                                   controllers.Evaluations.approve(id: Long)
 GET         /evaluation/:id/reject                                                    controllers.Evaluations.reject(id: Long)
+POST        /evaluation/:id/move                                                      controllers.Evaluations.move(id: Long)
 GET         /evaluation/:id/edit                                                      controllers.Evaluations.edit(id: Long)
 GET         /evaluation/:id                                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                                           controllers.Evaluations.update(id: Long)

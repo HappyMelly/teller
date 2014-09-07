@@ -76,7 +76,7 @@ object Participants extends Controller with Security {
         (id, brandId, eventId, participantId, evaluationId) ⇒
           Participant(id, eventId, participantId, evaluationId, organisation = None, comment = None)
       })({
-        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.participantId, p.evaluationId)
+        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.personId, p.evaluationId)
       }))
   }
 
@@ -201,7 +201,7 @@ object Participants extends Controller with Security {
       Event.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
-        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.participantId) == p.id))))
+        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }
 
@@ -239,7 +239,7 @@ object Participants extends Controller with Security {
         participant ⇒ {
           Participant.insert(participant)
           val activityObject = Messages("activity.participant.create",
-            participant.participant.get.fullName, participant.event.get.title)
+            participant.person.get.fullName, participant.event.get.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           val route = ref match {
             case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
@@ -279,7 +279,7 @@ object Participants extends Controller with Security {
     implicit handler ⇒
       Participant.find(personId, eventId).map { value ⇒
 
-        val activityObject = Messages("activity.participant.delete", value.participant.get.fullName, value.event.get.title)
+        val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
         value.delete()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
@@ -338,6 +338,7 @@ object Participants extends Controller with Security {
           routes.Evaluations.reject(id).url
         else ""
       },
+      "move" -> routes.Evaluations.move(id).url,
       "edit" -> {
         if (account.editor || brand.coordinatorId == account.personId)
           routes.Evaluations.edit(id).url

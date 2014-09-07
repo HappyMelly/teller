@@ -49,7 +49,6 @@ trait Security extends SecureSocial with DeadboltActions {
    */
   def SecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
-
       try {
         // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
         val account = request.user.asInstanceOf[LoginIdentity].userAccount

@@ -59,7 +59,13 @@ object Evaluations extends EvaluationsController with Security {
     "updated" -> ignored(DateTime.now),
     "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
 
-  /** Add page **/
+  /**
+   * Show add page
+   *
+   * @param eventId Optional unique event identifier to create evaluation for
+   * @param participantId Optional unique person identifier to create evaluation for
+   * @return
+   */
   def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
     implicit request ⇒
       implicit handler ⇒
@@ -69,7 +75,10 @@ object Evaluations extends EvaluationsController with Security {
         Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
   }
 
-  /** Add form submits to this action **/
+  /**
+   * Add form submits to this action
+   * @return
+   */
   def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒
 
@@ -89,7 +98,11 @@ object Evaluations extends EvaluationsController with Security {
         })
   }
 
-  /** Delete an evaluation **/
+  /**
+   * Delete an evaluation
+   * @param id Unique evaluation identifier
+   * @return
+   */
   def delete(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
 
@@ -98,6 +111,42 @@ object Evaluations extends EvaluationsController with Security {
           evaluation.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Move an evaluation to another event
+   * @param id Unique evaluation identifier
+   * @return
+   */
+  def move(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+    implicit handler ⇒
+
+      Evaluation.find(id).map { evaluation ⇒
+        val form = Form(single(
+          "eventId" -> longNumber))
+        val (eventId) = form.bindFromRequest.get
+        if (eventId == evaluation.eventId) {
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+        } else {
+          Event.find(eventId).map { event ⇒
+            Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
+              // first we need to check if this event has already the participant
+              Participant.find(evaluation.personId, eventId).map { participant ⇒
+                // if yes, we reassign an evaluation
+                participant.copy(evaluationId = Some(id)).update
+                oldParticipant.copy(evaluationId = None).update
+              }.getOrElse {
+                // if no, we move a participant
+                oldParticipant.copy(eventId = eventId).update
+              }
+              evaluation.copy(eventId = eventId).update
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+              Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+            }.getOrElse(NotFound)
+          }.getOrElse(NotFound)
+        }
       }.getOrElse(NotFound)
   }
 
@@ -232,6 +281,11 @@ object Evaluations extends EvaluationsController with Security {
         }.getOrElse(NotFound("Unknown brand"))
   }
 
+  /**
+   * Create XSLX report file for a set of evaluations
+   * @param evaluations A set of evaluations to be included into the report
+   * @return
+   */
   private def createXLSXreport(evaluations: List[(Event, Person, Evaluation)]): java.io.File = {
     import org.apache.poi.ss.util._
     import org.apache.poi.xssf.usermodel._

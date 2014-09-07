@@ -281,14 +281,14 @@ object Brands extends Controller with Security {
   /**
    * Returns a list of managed events for the given brand and current user
    */
-  def events(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def events(brandCode: String, future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
-          Event.findByParameters(brandCode)
+          Event.findByParameters(brandCode, future)
         } else {
-          Event.findByFacilitator(account.personId, brandCode)
+          Event.findByFacilitator(account.personId, brandCode, future)
         }
         Ok(Json.toJson(events))
       }.getOrElse(NotFound("Unknown brand"))
