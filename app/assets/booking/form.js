@@ -36,7 +36,7 @@ function updateOwesToggle() {
     $('#owes_toggle')
       .removeClass('btn-success')
       .addClass('btn-danger')
-      .html('<i class="glyphicon glyphicon-arrow-left glyphicon-white"></i> Is Owed By');
+      .html('Pays To <i class="glyphicon glyphicon-arrow-right glyphicon-white"></i>');
     $('#conversionInfo').find('.fromId.converted .direction' ).text("debit");
     $('#conversionInfo').find('.toId.converted .direction' ).text("credit");
   }
