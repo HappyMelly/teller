@@ -29,7 +29,6 @@ import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
 import models.UserRole.Role._
-import play.api.mvc.RequestHeader
 import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json._
@@ -105,7 +104,6 @@ object Participants extends Controller with Security {
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
-              "brand" -> data.event.brandCode,
               "person" -> Json.obj(
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName),
@@ -158,7 +156,6 @@ object Participants extends Controller with Security {
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
-              "brand" -> data.event.brandCode,
               "person" -> Json.obj(
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName,
