@@ -36,7 +36,6 @@ import play.api.libs.json._
 object EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
-  //TODO: rename 'participant_id' to 'person_id'
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "event_id" -> longNumber.verifying(

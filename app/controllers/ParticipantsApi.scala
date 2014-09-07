@@ -103,7 +103,7 @@ object ParticipantsApi extends ApiAuthentication {
         participant ⇒ {
           val createdParticipant = Participant.insert(participant)
           val activityObject = Messages("activity.participant.create",
-            participant.participant.get.fullName, participant.event.get.title)
+            participant.person.get.fullName, participant.event.get.title)
           Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
           Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })

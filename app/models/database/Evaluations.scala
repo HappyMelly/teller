@@ -40,8 +40,7 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
-  //TODO: rename to PERSON_ID
-  def personId = column[Long]("PARTICIPANT_ID")
+  def personId = column[Long]("PERSON_ID")
   def question1 = column[String]("QUESTION_1")
   def question2 = column[String]("QUESTION_2")
   def question3 = column[String]("QUESTION_3")

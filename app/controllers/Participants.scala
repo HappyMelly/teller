@@ -242,7 +242,7 @@ object Participants extends Controller with Security {
         participant ⇒ {
           Participant.insert(participant)
           val activityObject = Messages("activity.participant.create",
-            participant.participant.get.fullName, participant.event.get.title)
+            participant.person.get.fullName, participant.event.get.title)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
           val route = ref match {
             case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
@@ -282,7 +282,7 @@ object Participants extends Controller with Security {
     implicit handler ⇒
       Participant.find(personId, eventId).map { value ⇒
 
-        val activityObject = Messages("activity.participant.delete", value.participant.get.fullName, value.event.get.title)
+        val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
         value.delete()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 

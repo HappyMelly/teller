@@ -50,7 +50,7 @@ case class Participant(
   comment: Option[String]) {
 
   lazy val event: Option[Event] = Event.find(eventId)
-  lazy val participant: Option[Person] = Person.find(personId)
+  lazy val person: Option[Person] = Person.find(personId)
   lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
 
   /**

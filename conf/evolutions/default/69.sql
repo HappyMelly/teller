@@ -1,0 +1,4 @@
+# --- !Ups
+alter table EVALUATION change PARTICIPANT_ID PERSON_ID BIGINT NOT NULL;
+# --- !Downs
+alter table EVALUATION change PERSON_ID PARTICIPANT_ID BIGINT NOT NULL;
