@@ -212,13 +212,6 @@ function drawImpression(data) {
     return '';
 }
 
-function showError(message) {
-    $('#error').append(
-        $('<div class="alert alert-danger">')
-            .text(message)
-            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-    );
-}
 
 $(document).ready( function() {
     $("#participants").on('click', '.approve', function(){
@@ -229,23 +222,7 @@ $(document).ready( function() {
     });
     $("#participants").on('click', '.move', function(){
         var href = $(this).data('href');
-        $.ajax({
-            url: '/brand/' + $(this).data('brand') + '/events?future=false',
-            dataType: "json"
-        }).done(function(data) {
-            var selector = "#eventId";
-            $(selector)
-                .empty()
-                .append($("<option></option>").attr("value", 0).text(""));
-            for(var i = 0; i < data.length; i++) {
-                var option = $("<option></option>")
-                    .attr("value", data[i].id)
-                    .text(data[i].title);
-                $(selector).append(option);
-            }
-        }).fail(function() {
-            showError("Sorry we don't know anything about the brand you try to request");
-        });
+        getPastEvents($(this).data('brand'));
         $("#moveButton").on('click', function(e) {
             e.preventDefault();
             $.post(href, { eventId: $("#eventId").find(':selected').val() }, function() {

@@ -132,7 +132,7 @@ object Evaluations extends EvaluationsController with Security {
         } else {
           Event.find(eventId).map { event ⇒
             Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
-              // first we need to check if this event has already this participant
+              // first we need to check if this event has already the participant
               Participant.find(evaluation.personId, eventId).map { participant ⇒
                 // if yes, we reassign an evaluation
                 participant.copy(evaluationId = Some(id)).update

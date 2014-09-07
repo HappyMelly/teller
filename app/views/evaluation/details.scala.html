@@ -4,10 +4,7 @@
         brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import views.Evaluations
-@import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @main("Evaluation for %s".format(evaluation.participant.fullName), "participants", Some(user)) {
 
@@ -33,7 +30,8 @@
                             </button>
                         }
                         <button class="move btn btn-success" tabindex="-1" href="#move"
-                        data-href="routes.Evaluations.move(evaluation.id.getOrElse(0))"
+                        data-href="@routes.Evaluations.move(evaluation.id.getOrElse(0))"
+                        data-brand="@evaluation.event.brandCode"
                         data-toggle="modal" type="submit">
                             <i class="glyphicon glyphicon-white glyphicon-random"></i> Move
                         </button>

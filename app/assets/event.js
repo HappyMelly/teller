@@ -22,30 +22,38 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
+/**
+ * Show an error
+ * @param message {string}
+ */
+function showError(message) {
+    $('#error').append(
+        $('<div class="alert alert-danger">')
+            .text(message)
+            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+    );
+}
 
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+/**
+ * Retrieve all events for a specified brand and fill in the selector
+ * @param brand {string}
+ */
+function getPastEvents(brand) {
+    $.ajax({
+        url: '/brand/' + brand + '/events?future=false',
+        dataType: "json"
+    }).done(function(data) {
+        var selector = "#eventId";
+        $(selector)
+            .empty()
+            .append($("<option></option>").attr("value", 0).text(""));
+        for(var i = 0; i < data.length; i++) {
+            var option = $("<option></option>")
+                .attr("value", data[i].id)
+                .text(data[i].title);
+            $(selector).append(option);
+        }
+    }).fail(function() {
+        showError("Sorry we don't know anything about the brand you try to request");
     });
-
-    $(".approve").on('click', function(){
-        $("#approveLink").attr('href', $(this).data('href'));
-    });
-    $(".reject").on('click', function(){
-        $("#rejectLink").attr('href', $(this).data('href'));
-    });
-    $(".move").on('click', function(){
-        var href = $(this).data('href');
-        getPastEvents($(this).data('brand'));
-        $("#moveButton").on('click', function(e) {
-            e.preventDefault();
-            $.post(href, { eventId: $("#eventId").find(':selected').val() }, function() {
-                $('#move').modal('hide');
-                location.reload();
-            });
-        });
-    });
-
-});
-
+}
