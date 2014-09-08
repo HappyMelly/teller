@@ -1,5 +1,7 @@
 @(brand: Brand, participant: Person, body: String)
-@import templates.Formatters._
+@import laika.api._
+@import laika.parse.markdown.Markdown
+@import laika.render.HTML
 
 <html>
 <head>
@@ -21,18 +23,8 @@
         </tr>
         <tr>
           <td valign="top">
-            <h3> Hi @participant.fullName, </h3>
-            <table cellpadding="0" cellspacing="0" border="0" style="font-size:12px;line-height:16px;width:100%">
-              <tbody>
-              <tr>
-                <td>
-                  <p>@Html(body)</p>
-                  <p> Thanks for attending! </p>
-                  <p style="font-weight:bold"> The @brand.name team</p>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+              @Html(Transform.from(Markdown).to(HTML).fromString(body).toString)
+              <p style="font-weight:bold"> The @brand.name team</p>
           </td>
         </tr>
         </tbody>

@@ -375,11 +375,11 @@ object Events extends Controller with Security {
             val participantIds = event.participants.map(_.id.get)
             if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
               import scala.util.matching.Regex
-              val urlPattern = new Regex("""(https?:\/\/\S+)""", "url")
-              val body = urlPattern replaceAllIn (requestData.body, m ⇒ "<a href=\"" + m.group("url") + "\">" + m.group("url") + "</a>")
+              val namePattern = new Regex("""(PARTICIPANT_NAME_TOKEN)""", "name")
               val brand = Brand.find(event.brandCode).get
               requestData.participantIds.foreach { id ⇒
                 val participant = Person.find(id).get
+                val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
                 EmailService.send(Set(participant), None, None, subject,
                   mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
