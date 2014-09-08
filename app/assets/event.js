@@ -43,7 +43,7 @@ function getPastEvents(brand) {
         url: '/brand/' + brand + '/events?future=false',
         dataType: "json"
     }).done(function(data) {
-        var selector = "#eventId";
+        var selector = "#eventIdMoveForm";
         $(selector)
             .empty()
             .append($("<option></option>").attr("value", 0).text(""));

@@ -3,31 +3,43 @@
 @import helper.CSRF
 
 <div id="request" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3>Request Evaluations</h3>
-      </div>
-      <div class="modal-body">
-        <form class="form-horizontal" id="requestForm"
-              action="@CSRF(routes.Events.sendRequest(event.id.get))" method="post">
-          <h4>Choose participants</h4>
-          <table id="participantList" class="table table-bordered">
-            <tbody>
-            </tbody>
-          </table>
-          <h4>Write a request body</h4>
-          <div class="alert alert-warning">
-            <i class="glyphicon glyphicon-warning-sign"></i> Your letter should contain a link to an evaluation form.</div>
-          <textarea name="body" class="form-control" rows="5">Thanks for attending a "@event.title" event in @event.location.city. Please follow the link [INSERT AN EVALUATION LINK HERE] and evaluate your experience during the event.</textarea>
-          <span class="help-block">The letter will have "Hi [participant name]," in its header and "Thank for attending! The [brand] team" in its footer</span>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button id="requestButton" class="btn btn-primary" type="submit" form="requestForm" disabled>Send</button>
-        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h3>Request Evaluations</h3>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="requestForm"
+                action="@CSRF(routes.Events.sendRequest(event.id.get))" method="post">
+                    <h4>Choose participants</h4>
+                    <table id="participantList" class="table table-bordered">
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <h4>Write a request body</h4>
+                    <div class="alert alert-info">
+                        <i class="glyphicon glyphicon-info-sign"></i> Use <a href="http://daringfireball.net/projects/markdown/syntax"
+                    target="_blank">Markdown</a> for formating.
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="glyphicon glyphicon-warning-sign"></i>
+                        Your letter should contain a link to an evaluation form.
+                    </div>
+
+                    <textarea name="body" class="form-control" rows="5">###Hi PARTICIPANT_NAME_TOKEN,###
+
+Thanks for attending a **@event.title** event in @event.location.city. Please follow [this link](http://www.management30.com/evaluation) and evaluate your experience during the event.
+
+Thanks for attending!
+                    </textarea>
+                    <span class="help-block">The letter will have "The [brand] team" in its footer</span>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="requestButton" class="btn btn-primary" type="submit" form="requestForm" disabled>Send</button>
+                <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
