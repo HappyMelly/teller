@@ -31,6 +31,7 @@ import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.Play.current
+import play.api.libs.json.Json
 import services.EmailService
 
 object Evaluations extends EvaluationsController with Security {
@@ -125,28 +126,32 @@ object Evaluations extends EvaluationsController with Security {
       Evaluation.find(id).map { evaluation ⇒
         val form = Form(single(
           "eventId" -> longNumber))
-        val (eventId) = form.bindFromRequest.get
-        if (eventId == evaluation.eventId) {
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
-        } else {
-          Event.find(eventId).map { event ⇒
-            Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
-              // first we need to check if this event has already the participant
-              Participant.find(evaluation.personId, eventId).map { participant ⇒
-                // if yes, we reassign an evaluation
-                participant.copy(evaluationId = Some(id)).update
-                oldParticipant.copy(evaluationId = None).update
-              }.getOrElse {
-                // if no, we move a participant
-                oldParticipant.copy(eventId = eventId).update
-              }
-              evaluation.copy(eventId = eventId).update
+        val (eventId) = form.bindFromRequest
+        form.bindFromRequest.fold (
+          f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
+          eventId ⇒ {
+            if (eventId == evaluation.eventId) {
               val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
-              Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
-            }.getOrElse(NotFound)
-          }.getOrElse(NotFound)
-        }
+              Ok(Json.obj("success" -> activity.toString))
+            } else {
+              Event.find(eventId).map { event ⇒
+                Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
+                  // first we need to check if this event has already the participant
+                  Participant.find(evaluation.personId, eventId).map { participant ⇒
+                    // if yes, we reassign an evaluation
+                    participant.copy(evaluationId = Some(id)).update
+                    oldParticipant.copy(evaluationId = None).update
+                  }.getOrElse {
+                    // if no, we move a participant
+                    oldParticipant.copy(eventId = eventId).update
+                  }
+                  evaluation.copy(eventId = eventId).update
+                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+                  Ok(Json.obj("success" -> activity.toString))
+                }.getOrElse(NotFound)
+              }.getOrElse(NotFound)
+            }
+          })
       }.getOrElse(NotFound)
   }
 

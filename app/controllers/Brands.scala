@@ -274,7 +274,7 @@ object Brands extends Controller with Security {
     def writes(data: Event): JsValue = {
       Json.obj(
         "id" -> data.id.get,
-        "title" -> s"${data.title} / ${data.location.city} / ${data.schedule.start}")
+        "title" -> data.longTitle)
     }
   }
 

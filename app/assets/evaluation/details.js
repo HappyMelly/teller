@@ -40,7 +40,7 @@ $(document).ready( function() {
         getPastEvents($(this).data('brand'));
         $("#moveButton").on('click', function(e) {
             e.preventDefault();
-            $.post(href, { eventId: $("#eventId").find(':selected').val() }, function() {
+            $.post(href, { eventId: $("#eventIdMoveForm").find(':selected').val() }, function() {
                 $('#move').modal('hide');
                 location.reload();
             });

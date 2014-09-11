@@ -129,7 +129,11 @@ object Participants extends Controller with Security {
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "evaluation" -> Json.obj(
-                        "add" -> routes.Evaluations.add(data.event.id, data.person.id).url),
+                        "add" -> {
+                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                            routes.Evaluations.add(data.event.id, data.person.id).url
+                          } else ""
+                        }),
                       "participant" -> participantActions(data, account))
                   } else {
                     Json.obj(
@@ -170,7 +174,11 @@ object Participants extends Controller with Security {
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "evaluation" -> Json.obj(
-                        "add" -> routes.Evaluations.add(data.event.id, data.person.id).url),
+                        "add" -> {
+                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                            routes.Evaluations.add(data.event.id, data.person.id).url
+                          } else ""
+                        }),
                       "participant" -> participantActions(data, account))
                   } else {
                     Json.obj(
