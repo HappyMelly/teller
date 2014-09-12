@@ -346,7 +346,7 @@
                                     <tr>
                                         <td>@Languages.all.get(language.language)</td>
                                         <td>
-                                        @restrict(handler, List(as(Editor.toString))) {
+                                        @dynamic(handler, "person", "edit") {
                                             <a href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">
                                                 <i class="glyphicon glyphicon-trash"></i> Delete</a>
                                         }
@@ -355,7 +355,7 @@
                                 }
                                 </tbody>
                             </table>
-                            @restrict(handler, List(as(Editor.toString))) {
+                            @dynamic(handler, "person", "edit") {
                                 <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
                                     <p>
                                         <select name="language" class="form-control input-sm">
@@ -382,7 +382,7 @@
                                     <tr>
                                         <td>@Messages("country." + country.country)</td>
                                         <td>
-                                        @restrict(handler, List(as(Editor.toString))) {
+                                        @dynamic(handler, "person", "edit") {
                                             <a href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">
                                                 <i class="glyphicon glyphicon-trash"></i> Delete</a>
                                         }
@@ -392,7 +392,7 @@
                                 }
                                 </tbody>
                             </table>
-                            @restrict(handler, List(as(Editor.toString))) {
+                            @dynamic(handler, "person", "edit") {
                                 <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
                                     <p>
                                         <select name="country" class="form-control input-sm">
