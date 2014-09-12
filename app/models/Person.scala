@@ -37,6 +37,13 @@ import scala.slick.lifted.Query
 import scala.util.matching.Regex
 import services.S3Bucket
 
+/**
+ * Represents a date stamp to track when an object was changed/created
+ * @param created Date and time when the object was created
+ * @param createdBy Name of a person who created the object
+ * @param updated Date and time when the object was updated
+ * @param updatedBy Name of a person who updated the object
+ */
 case class DateStamp(
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -57,14 +64,16 @@ object Photo {
   }
 }
 
+/**
+ * Currently there're two roles for a person: stakeholer or board member
+ */
 object PersonRole extends Enumeration {
   val NoRole = Value("0")
   val Stakeholder = Value("1")
   val BoardMember = Value("2")
 
   implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
-    { role ⇒ role.id },
-    { id ⇒ PersonRole(id) })
+    { role ⇒ role.id }, { id ⇒ PersonRole(id) })
 }
 
 /**
@@ -105,13 +114,16 @@ case class Person(
    * Returns true if it is possible to grant log in access to this user.
    */
   def canHaveUserAccount: Boolean = socialProfile.defined
+
   /**
    * Returns true if this person may be deleted.
    */
   lazy val deletable: Boolean = account.deletable && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
 
   /**
-   * Removes this person’s membership in the given organisation.
+   * Removes this person’s membership in the given organisation
+   *
+   * @param organisationId Organisation identifier
    */
   def deleteMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
     OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
@@ -136,7 +148,7 @@ case class Person(
    * Returns a list of this person's contributions.
    */
   lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
-    Contribution.contributions(this.id.get, true)
+    Contribution.contributions(this.id.get, isPerson = true)
   }
 
   /**
@@ -148,6 +160,20 @@ case class Person(
       organisation ← membership.organisation
     } yield organisation
     query.sortBy(_.name.toLowerCase).list
+  }
+
+  /**
+   * A list of languages a facilitator speaks
+   */
+  lazy val languages: List[FacilitatorLanguage] = DB.withSession { implicit session: Session ⇒
+    FacilitatorLanguage.findByFacilitator(id.get)
+  }
+
+  /**
+   * A list of countries where a facilitator is ready to run events
+   */
+  lazy val countries: List[FacilitatorCountry] = DB.withSession { implicit session: Session ⇒
+    FacilitatorCountry.findByFacilitator(id.get)
   }
 
   /**
@@ -191,7 +217,9 @@ case class Person(
 
   /**
    * Find all events which were faciliated by a specified facilitator and
-   *  where the person participated
+   * where the person participated
+   *
+   * @param facilitatorId Facilitator identifier
    */
   def participateInEvents(facilitatorId: Long): List[Event] = DB.withSession {
     implicit session: Session ⇒
@@ -211,8 +239,8 @@ case class Person(
    * Finds the active `Account`s that this `Person` has access rights to.
    *
    * Currently, ‘having access rights to an account’ means that:
-   *  - This person is the account‘s holder
-   *  - This person is a member of the organisation that is the account’s holder
+   * - This person is the account‘s holder
+   * - This person is a member of the organisation that is the account’s holder
    *
    * @return The list of accounts that this person has access to
    */
@@ -235,14 +263,24 @@ case class PersonSummary(id: Long, firstName: String, lastName: String, active: 
 
 object Person {
 
-  def cacheId(id: Long): String = s"signatures.${id}"
-  def fullFileName(id: Long): String = s"signatures/${id}"
+  def cacheId(id: Long): String = s"signatures.$id"
 
+  def fullFileName(id: Long): String = s"signatures/$id"
+
+  /**
+   * Removes a person's signature from the cloud
+   * @param id Person identifier
+   */
   def removeFromCloud(id: Long) {
     Cache.remove(Person.cacheId(id))
     S3Bucket.remove(Person.fullFileName(id))
   }
 
+  /**
+   * Downloads a person's signature form the cloud and puts it into cache
+   * @param id Person identifier
+   * @return
+   */
   def downloadFromCloud(id: Long): Future[Array[Byte]] = {
     val contentType = "image/jpeg"
     val result = S3Bucket.get(Person.fullFileName(id))
@@ -261,6 +299,9 @@ object Person {
   /**
    * Activates the organisation, if the parameter is true, or deactivates it.
    * During activization, a person also becomes a real person
+   *
+   * @param id Person identifier
+   * @param active True if we activate a person, False if otherwise
    */
   def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
     People.filter(_.id === id)
@@ -270,6 +311,8 @@ object Person {
 
   /**
    * Deletes the person with the given ID and their account.
+   *
+   * @param id Person Identifier
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     find(id).map(_.account).map(_.delete)
@@ -277,6 +320,11 @@ object Person {
     People.where(_.id === id).mutate(_.delete())
   }
 
+  /**
+   * Find a specified person
+   * @param id Person Identifier
+   * @return
+   */
   def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       person ← People if person.id === id
@@ -285,8 +333,17 @@ object Person {
     query.firstOption
   }
 
-  /** Finds people, filtered by stakeholder, board member status and/or first/last name query **/
-  def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean], query: Option[String]): List[Person] = DB.withSession {
+  /**
+   * Finds people, filtered by stakeholder, board member status and/or first/last name query
+   *
+   * @param stakeholdersOnly Only stakeholders will be returned
+   * @param boardMembersOnly Only board members will be returned
+   * @param active Only active members will be returned
+   * @param query Only members with suitable name will be returned
+   * @return
+   */
+  def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean],
+    query: Option[String]): List[Person] = DB.withSession {
     implicit session: Session ⇒
       val baseQuery = query.map { q ⇒
         Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
@@ -299,7 +356,13 @@ object Person {
       boardMembersFilteredQuery.sortBy(_.firstName.toLowerCase).list
   }
 
-  /** Finds all active people, filtered by stakeholder and/or board member status **/
+  /**
+   * Finds all active people, filtered by stakeholder and/or board member status
+   *
+   * @param stakeholdersOnly Only active stakeholders will be returned
+   * @param boardMembersOnly Only active board members will be returned
+   * @return
+   */
   def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
     if (boardMembersOnly) {
@@ -322,11 +385,17 @@ object Person {
     query.list.toSet
   }
 
+  /**
+   * Find all board members
+   * @return
+   */
   def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.role === PersonRole.BoardMember).list.toSet
   }
 
-  /** Retrieves a list of all people from the database **/
+  /**
+   * Retrieves a list of all people from the database
+   */
   def findAll: List[PersonSummary] = DB.withSession { implicit session: Session ⇒
     (for {
       person ← People
@@ -336,6 +405,10 @@ object Person {
       .mapResult(PersonSummary.tupled).list
   }
 
+  /**
+   * Find all active people
+   * @return
+   */
   def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }

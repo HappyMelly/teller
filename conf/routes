@@ -84,6 +84,10 @@ GET         /exchangerate/:target/:amount                                       
 GET         /exchangerates/:base                                                      controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
 
 GET         /facilitators/:brandCode                                                  controllers.Facilitators.index(brandCode: String)
+POST        /facilitator/:id/country                                                  controllers.Facilitators.addCountry(id: Long)
+POST        /facilitator/:id/language                                                 controllers.Facilitators.addLanguage(id: Long)
+GET         /facilitator/:id/country/:country/delete                                  controllers.Facilitators.deleteCountry(id: Long, country: String)
+GET         /facilitator/:id/language/:lang/delete                                    controllers.Facilitators.deleteLanguage(id: Long, lang: String)
 
 GET         /license/:id/edit                                                         controllers.Licenses.edit(id: Long)
 POST        /license/:id                                                              controllers.Licenses.update(id: Long)

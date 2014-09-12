@@ -25,10 +25,13 @@
 package controllers
 
 import models._
-import org.joda.time.LocalDate
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
 import models.UserRole.Role._
+import views.Languages
 
 /**
  * Facilitators pages
@@ -65,4 +68,96 @@ object Facilitators extends Controller with Security {
       }.getOrElse(NotFound("Unknown brand"))
   }
 
+  /**
+   * Add a new language to a facilitator
+   *
+   * @param id Person identifier
+   */
+  def addLanguage(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      val membershipForm = Form(single("language" -> nonEmptyText))
+
+      membershipForm.bindFromRequest.fold(
+        errors ⇒ BadRequest("Language is not chosen"),
+        {
+          case (language) ⇒
+            Person.find(id).map { person ⇒
+              if (!FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
+                FacilitatorLanguage(id, language).insert
+              }
+              val languageName = Languages.all.getOrElse(language, "")
+              val activityObject = Messages("activity.relationship.create", languageName, person.fullName)
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+
+              Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+            }.getOrElse(NotFound)
+        })
+  }
+
+  /**
+   * Remove a language from a facilitator
+   *
+   * @param id Person identifier
+   * @param language Two-letters language identifier
+   */
+  def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+      Person.find(id).map { person ⇒
+        if (FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
+          FacilitatorLanguage(id, language).delete()
+        }
+        val languageName = Languages.all.getOrElse(language, "")
+        val activityObject = Messages("activity.relationship.delete", languageName, person.fullName)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+        Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Add a new country to a facilitator
+   *
+   * @param id Person identifier
+   */
+  def addCountry(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      val membershipForm = Form(single("country" -> nonEmptyText))
+
+      membershipForm.bindFromRequest.fold(
+        errors ⇒ BadRequest("Country is not chosen"),
+        {
+          case (country) ⇒
+            Person.find(id).map { person ⇒
+              if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
+                FacilitatorCountry(id, country).insert
+              }
+              val activityObject = Messages("activity.relationship.create", Messages("country." + country), person.fullName)
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+
+              Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+            }.getOrElse(NotFound)
+        })
+  }
+
+  /**
+   * Remove a country from a facilitator
+   *
+   * @param id Person identifier
+   * @param country Two-letters country identifier
+   */
+  def deleteCountry(id: Long, country: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒
+
+      Person.find(id).map { person ⇒
+        if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
+          FacilitatorCountry(id, country).delete()
+        }
+        val activityObject = Messages("activity.relationship.delete", Messages("country." + country), person.fullName)
+        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+
+        Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
+  }
 }

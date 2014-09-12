@@ -48,7 +48,8 @@ object BrandsApi extends Controller with ApiAuthentication {
         "unique_name" -> brandView.brand.uniqueName,
         "name" -> brandView.brand.name,
         "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
-        "tagline" -> brandView.brand.tagLine)
+        "tagline" -> brandView.brand.tagLine,
+        "products" -> brandView.brand.products.length)
     }
   }
 
