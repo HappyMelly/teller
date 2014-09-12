@@ -291,13 +291,12 @@ object Person {
       val baseQuery = query.map { q ⇒
         Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
       }.getOrElse(Query(People))
-      baseQuery.sortBy(_.firstName.toLowerCase)
       val activeQuery = active.map { value ⇒
         baseQuery.filter(_.active === value)
       }.getOrElse(baseQuery)
       val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.role === PersonRole.Stakeholder) else baseQuery
       val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.role === PersonRole.BoardMember) else stakeholderFilteredQuery
-      boardMembersFilteredQuery.list
+      boardMembersFilteredQuery.sortBy(_.firstName.toLowerCase).list
   }
 
   /** Finds all active people, filtered by stakeholder and/or board member status **/

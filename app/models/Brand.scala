@@ -221,13 +221,12 @@ object Brand {
     } yield (brand, coordinator, license.id.?)
 
     // Transform results to BrandView
-    // TODO Preserve query order, currently lost by the groupBy
-    query.sortBy(_._1.name).list.groupBy {
+    query.list.groupBy {
       case (brand, coordinator, _) ⇒ brand -> coordinator
     }.mapValues(_.flatMap(_._3)).map {
       case ((brand, coordinator), licenseIDs) ⇒
         BrandView(brand, coordinator, licenseIDs)
-    }.toList
+    }.toList.sortBy(_.brand.name)
   }
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
