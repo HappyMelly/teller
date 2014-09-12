@@ -181,9 +181,9 @@ object People extends Controller with Security {
   }
 
   /**
-   * Deletes an person’s organisation membership.
+   * Assign a person to an organisation
    */
-  def addMembership = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addMembership = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
@@ -244,7 +244,7 @@ object People extends Controller with Security {
   /**
    * Deletes an person’s organisation membership.
    */
-  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       Person.find(personId).map { person ⇒

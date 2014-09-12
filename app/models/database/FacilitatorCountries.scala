@@ -21,40 +21,20 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
 
-import play.mvc.Controller
-import play.api.libs.json._
-import models.{ Person, Brand }
-import views.Languages
+package models.database
+
+import models.FacilitatorCountry
+import play.api.db.slick.Config.driver.simple._
 
 /**
- * Facilitators API
+ * `FacilitatorCountries` database table mapping.
  */
-object FacilitatorsApi extends Controller with ApiAuthentication {
+private[models] object FacilitatorCountries extends Table[FacilitatorCountry]("FACILITATOR_COUNTRY") {
+  def personId = column[Long]("PERSON_ID")
+  def country = column[String]("COUNTRY")
 
-  implicit val facilitatorWrites = new Writes[Person] {
-    def writes(person: Person): JsValue = {
-      Json.obj(
-        "id" -> person.id.get,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "photo" -> person.photo.url,
-        "country" -> person.address.countryCode,
-        "languages" -> person.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
-        "countries" -> person.countries.map(_.country).toList)
-    }
-  }
+  def * = personId ~ country <> (FacilitatorCountry.apply _, FacilitatorCountry.unapply _)
 
-  /**
-   * Facilitators list for a given brand
-   *
-   * @param code Brand code
-   */
-  def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(code).map { brand ⇒
-      Ok(Json.prettyPrint(Json.toJson(Brand.findFacilitators(code, brand.coordinator))))
-    }.getOrElse(NotFound("Unknown brand"))
-  }
-
+  def forInsert = *
 }

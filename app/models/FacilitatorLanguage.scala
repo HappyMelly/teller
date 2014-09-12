@@ -21,40 +21,45 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
 
-import play.mvc.Controller
-import play.api.libs.json._
-import models.{ Person, Brand }
-import views.Languages
+package models
+
+import models.database.FacilitatorLanguages
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
 /**
- * Facilitators API
+ * This class represents a language which a facilitator speaks
+ * @param personId Facilitator identifier
+ * @param language Two-letter language identifier
  */
-object FacilitatorsApi extends Controller with ApiAuthentication {
+case class FacilitatorLanguage(personId: Long, language: String) {
 
-  implicit val facilitatorWrites = new Writes[Person] {
-    def writes(person: Person): JsValue = {
-      Json.obj(
-        "id" -> person.id.get,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "photo" -> person.photo.url,
-        "country" -> person.address.countryCode,
-        "languages" -> person.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
-        "countries" -> person.countries.map(_.country).toList)
-    }
+  /**
+   * Insert a new language to DB
+   * @return
+   */
+  def insert: FacilitatorLanguage = DB.withSession { implicit session: Session ⇒
+    FacilitatorLanguages.forInsert.insert(this)
+    this
   }
 
   /**
-   * Facilitators list for a given brand
-   *
-   * @param code Brand code
+   * Delete a language-facilitator connection
    */
-  def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(code).map { brand ⇒
-      Ok(Json.prettyPrint(Json.toJson(Brand.findFacilitators(code, brand.coordinator))))
-    }.getOrElse(NotFound("Unknown brand"))
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    FacilitatorLanguages.filter(_.personId === personId).filter(_.language === language).mutate(_.delete())
+  }
+}
+
+object FacilitatorLanguage {
+
+  /**
+   * Finds all languages for a particular facilitator
+   */
+  def findByFacilitator(personId: Long): List[FacilitatorLanguage] = DB.withSession { implicit session: Session ⇒
+    Query(FacilitatorLanguages).filter(_.personId === personId).list
   }
 
 }
