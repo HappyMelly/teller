@@ -359,7 +359,7 @@
                                 <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
                                     <p>
                                         <select name="language" class="form-control input-sm">
-                                        @for(language <- Languages.all.toList) {
+                                        @for(language <- Languages.all.toList.sortBy(_._2)) {
                                             <option value="@language._1">@language._2</option>
                                         }
                                         </select>
