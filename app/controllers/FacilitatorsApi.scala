@@ -25,21 +25,35 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.Brand
+import models.{ Person, Brand }
+import views.Languages
 
 /**
  * Facilitators API
  */
 object FacilitatorsApi extends Controller with ApiAuthentication {
 
-  import PeopleApi.personWrites
+  implicit val facilitatorWrites = new Writes[Person] {
+    def writes(person: Person): JsValue = {
+      Json.obj(
+        "id" -> person.id.get,
+        "first_name" -> person.firstName,
+        "last_name" -> person.lastName,
+        "photo" -> person.photo.url,
+        "country" -> person.address.countryCode,
+        "languages" -> person.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
+        "countries" -> person.countries.map(_.country).toList)
+    }
+  }
 
   /**
    * Facilitators list for a given brand
+   *
+   * @param code Brand code
    */
   def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
     Brand.find(code).map { brand ⇒
-      Ok(Json.toJson(Brand.findFacilitators(code, brand.coordinator)))
+      Ok(Json.prettyPrint(Json.toJson(Brand.findFacilitators(code, brand.coordinator))))
     }.getOrElse(NotFound("Unknown brand"))
   }
 
