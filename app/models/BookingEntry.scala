@@ -156,7 +156,10 @@ case class BookingEntrySummary(
   toAmount: Money,
 
   brandCode: Option[String],
-  summary: String)
+  summary: String,
+
+  fromId: Long,
+  toId: Long)
 
 object BookingEntry {
 
@@ -227,7 +230,8 @@ object BookingEntry {
       val from = Account.accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
       val to = Account.accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
       val owes = source.isPositiveOrZero
-      BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode, summary)
+      BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode,
+        summary, fromId, toId)
     }
   }
 

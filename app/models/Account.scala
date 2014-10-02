@@ -240,24 +240,35 @@ object Account {
     val bookingEntriesQuery = BookingEntries.filter(_.deleted === false)
 
     // Sum booking entries’ credits and debits, grouped by account ID.
-    val creditQuery = bookingEntriesQuery.groupBy(_.fromId).map {
-      case (accountId, entry) ⇒
-        accountId -> entry.map(_.fromAmount).sum
-    }
-    val debitQuery = bookingEntriesQuery.groupBy(_.toId).map {
+    val creditQuery = bookingEntriesQuery.filter(_.sourceAmount > BigDecimal(0)).groupBy(_.toId).map {
       case (accountId, entry) ⇒
         accountId -> entry.map(_.toAmount).sum
     }
-
+    val debitBackwardQuery = bookingEntriesQuery.filter(_.sourceAmount < BigDecimal(0)).groupBy(_.toId).map {
+      case (accountId, entry) ⇒
+        accountId -> entry.map(_.toAmount).sum
+    }
+    val debitQuery = bookingEntriesQuery.filter(_.sourceAmount > BigDecimal(0)).groupBy(_.fromId).map {
+      case (accountId, entry) ⇒
+        accountId -> entry.map(_.fromAmount).sum
+    }
+    val creditBackwardQuery = bookingEntriesQuery.filter(_.sourceAmount < BigDecimal(0)).groupBy(_.fromId).map {
+      case (accountId, entry) ⇒
+        accountId -> entry.map(_.fromAmount).sum
+    }
     // Transform each query result to a Map, for looking-up credit/debit by account ID.
     val credits = creditQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
+    val creditsBackward = creditBackwardQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
     val debits = debitQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
+    val debitsBackward = debitBackwardQuery.list.toMap.mapValues(_.getOrElse(BigDecimal(0)))
 
     // Add the balances to the account summaries.
     findAllActive.map { account ⇒
       val accountDebit = debits.getOrElse(account.id, BigDecimal(0))
+      val accountDebitBackward = debitsBackward.getOrElse(account.id, BigDecimal(0))
       val accountCredit = credits.getOrElse(account.id, BigDecimal(0))
-      val balance = (accountDebit - accountCredit).setScale(account.currency.getDecimalPlaces, RoundingMode.DOWN)
+      val accountCreditBackward = creditsBackward.getOrElse(account.id, BigDecimal(0))
+      val balance = (accountDebit - accountDebitBackward - accountCredit + accountCreditBackward).setScale(account.currency.getDecimalPlaces, RoundingMode.DOWN)
       AccountSummaryWithBalance(account.id, account.name, Money.of(account.currency, balance.bigDecimal))
     }
   }
@@ -289,18 +300,26 @@ object Account {
    * @return The current balance for the account.
    */
   def findBalance(accountId: Long, currency: CurrencyUnit): Money = DB.withSession { implicit session: Session ⇒
-    val creditQuery = for {
-      entry ← BookingEntries.filtered if entry.fromId === accountId
+    val creditBackwardQuery = for {
+      entry ← BookingEntries.filtered if entry.fromId === accountId && entry.sourceAmount < BigDecimal(0)
+    } yield entry.fromAmount
+    val debitQuery = for {
+      entry ← BookingEntries.filtered if entry.fromId === accountId && entry.sourceAmount > BigDecimal(0)
     } yield entry.fromAmount
 
-    val debitQuery = for {
-      entry ← BookingEntries.filtered if entry.toId === accountId
+    val debitBackwardQuery = for {
+      entry ← BookingEntries.filtered if entry.toId === accountId && entry.sourceAmount < BigDecimal(0)
+    } yield entry.toAmount
+    val creditQuery = for {
+      entry ← BookingEntries.filtered if entry.toId === accountId && entry.sourceAmount > BigDecimal(0)
     } yield entry.toAmount
 
     val credit = Query(creditQuery.sum).first.getOrElse(BigDecimal(0))
+    val creditBackward = Query(creditBackwardQuery.sum).first.getOrElse(BigDecimal(0))
     val debit = Query(debitQuery.sum).first.getOrElse(BigDecimal(0))
+    val debitBackward = Query(debitBackwardQuery.sum).first.getOrElse(BigDecimal(0))
 
-    val balance = (debit - credit).setScale(currency.getDecimalPlaces, RoundingMode.DOWN)
+    val balance = (debit - debitBackward - credit + creditBackward).setScale(currency.getDecimalPlaces, RoundingMode.DOWN)
     Money.of(currency, balance.bigDecimal)
   }
 }
