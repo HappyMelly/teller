@@ -28,10 +28,10 @@ import play.api.mvc._
 import play.api.mvc.Results._
 import play.filters.csrf._
 import scala.concurrent.Future
-import play.libs.Akka;
+import play.libs.Akka
 import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
-import scala.concurrent.duration.Duration;
-import java.util.concurrent.TimeUnit;
+import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
 import models.Event
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
