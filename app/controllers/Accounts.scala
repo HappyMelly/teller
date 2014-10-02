@@ -60,7 +60,21 @@ object Accounts extends Controller with Security {
   def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val entries = BookingEntry.findByAccountId(id, from, to)
-      Ok(views.html.booking.index(request.user, Account.find(id), entries, from, to))
+      val account = Account.find(id)
+      var balance = account.get.balance
+      import play.Logger
+      val entriesWithBalance = entries.map { e ⇒
+        if (e.fromId == id) {
+          balance = balance.minus(e.fromAmount)
+          (e, Some(balance))
+        } else if (e.toId == id) {
+          balance = balance.plus(e.toAmount)
+          (e, Some(balance))
+        } else {
+          (e, None)
+        }
+      }.toList
+      Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Viewer) {

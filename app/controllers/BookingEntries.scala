@@ -122,7 +122,9 @@ object BookingEntries extends Controller with Security {
       }
 
       form.fold(
-        formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
+        formWithErrors ⇒ Future.successful {
+          handleFormWithErrors(formWithErrors)
+        },
         entry ⇒ {
           entry.withSourceConverted.map { entry ⇒
             // Create booking entry.
@@ -253,7 +255,7 @@ object BookingEntries extends Controller with Security {
 
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.booking.index(request.user, None, BookingEntry.findAll))
+      Ok(views.html.booking.index(request.user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
 
   private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
@@ -298,11 +300,15 @@ object BookingEntries extends Controller with Security {
           }
 
           form.fold(
-            formWithErrors ⇒ Future.successful { handleFormWithErrors(formWithErrors) },
+            formWithErrors ⇒ Future.successful {
+              handleFormWithErrors(formWithErrors)
+            },
             editedEntry ⇒ {
               // Update the entry with or without currency conversion, depending on whether the source amount changed,
               // to avoid applying a new exchange rate when only the direction changed.
-              val sourceChanged = editedEntry.source.abs != existingEntry.source.abs
+              val sourceChanged = {
+                editedEntry.source.abs != existingEntry.source.abs || editedEntry.fromId != existingEntry.fromId || editedEntry.toId != existingEntry.toId
+              }
               val futureUpdatedEntry = if (sourceChanged) {
                 editedEntry.withSourceConverted.map { editedEntry ⇒
                   val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey)
