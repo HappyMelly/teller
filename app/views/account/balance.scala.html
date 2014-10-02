@@ -35,7 +35,7 @@
           <td><a href="@routes.Accounts.bookings(account.id)">@account.name</a></td>
           <td>@account.balance.format</td>
           <td>@account.balanceConverted.format</td>
-          <td>@account.adjustment.format</td>
+          <td>@account.adjustment.multipliedBy(-1L).format</td>
         </tr>
       }
       </tbody>

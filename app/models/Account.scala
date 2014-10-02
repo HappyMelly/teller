@@ -32,7 +32,7 @@ import play.api.db.slick.DB
 import play.api.i18n.Messages
 import play.api.Play.current
 import services.CurrencyConverter
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.BigDecimal.RoundingMode
 
@@ -161,17 +161,19 @@ object Account {
   def balanceAccounts(ownerId: Long): Future[List[BookingEntry]] = {
     val levy = find(Levy)
     assert(levy.id.isDefined, "Levy must have an ID")
+    import scala.concurrent.duration.Duration
     findAllForAdjustment(levy.currency).flatMap { accounts ⇒
       // Don’t create any booking entries for zero adjustments.
       val accountsToAdjust = accounts.filter(!_.adjustment.isZero)
       val futureBookingEntries = accountsToAdjust.map { account ⇒
         val sourceAmount = account.adjustment
-        CurrencyConverter.convert(sourceAmount, account.balance.getCurrencyUnit).map { toAmount ⇒
+        val bookingEntry = CurrencyConverter.convert(sourceAmount, account.balance.getCurrencyUnit).map { toAmount ⇒
           val entry = adjustmentBookingEntry(ownerId, account.id, levy, account.adjustment, toAmount)
           entry.insert
         }
+        Await.result(bookingEntry, Duration.create(2, "seconds"))
       }
-      Future.sequence(futureBookingEntries)
+      Future.successful(futureBookingEntries)
     }
   }
 
@@ -195,11 +197,10 @@ object Account {
 
   /**
    * Calculates the adjustment per account, for balancing the accounts. For the initial implementation, this is just
-   * the equal share of the total balance. The amount is multiplied by -1 because a positive network balance is
-   * conversion residue that must be corrected.
+   * the equal share of the total balance.
    */
   def calculateAdjustment(totalBalance: Money, accounts: List[AccountSummaryWithAdjustment]): Money = {
-    totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN).multipliedBy(-1L)
+    totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN)
   }
 
   def find(holder: AccountHolder): Account = DB.withSession { implicit session: Session ⇒
