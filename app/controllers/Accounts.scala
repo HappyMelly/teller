@@ -62,7 +62,6 @@ object Accounts extends Controller with Security {
       val entries = BookingEntry.findByAccountId(id, from, to)
       val account = Account.find(id)
       var balance = account.get.balance
-      import play.Logger
       val entriesWithBalance = entries.map { e ⇒
         if (e.fromId == id) {
           balance = balance.minus(e.fromAmount)
