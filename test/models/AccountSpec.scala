@@ -45,7 +45,7 @@ class AccountSpec extends Specification {
       Account.calculateTotalBalance(EUR, accounts) must be equalTo eur10
     }
     "equally divide the adjustment across accounts (rounding down)" in {
-      Account.calculateAdjustment(eur10, accounts) must be equalTo Money.of(EUR, -3.33)
+      Account.calculateAdjustment(eur10, accounts) must be equalTo Money.of(EUR, 3.33)
     }
     "generate booking entries with a zero from amount" in {
       val levy = Account(id = Some(0), currency = EUR)
