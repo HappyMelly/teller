@@ -27,7 +27,7 @@ package controllers
 import play.api.mvc.Controller
 import models._
 import models.UserRole.Role._
-import org.joda.money.CurrencyUnit
+import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
@@ -61,18 +61,18 @@ object Accounts extends Controller with Security {
     implicit handler ⇒
       val entries = BookingEntry.findByAccountId(id, from, to)
       val account = Account.find(id)
-      var balance = account.get.balance
-      val entriesWithBalance = entries.map { e ⇒
+      var balance = Money.zero(account.get.balance.getCurrencyUnit)
+      val entriesWithBalance = entries.reverse.map { e ⇒
         if (e.fromId == id) {
-          balance = balance.minus(e.fromAmount)
+          balance = balance.plus(e.fromAmount)
           (e, Some(balance))
         } else if (e.toId == id) {
-          balance = balance.plus(e.toAmount)
+          balance = balance.minus(e.toAmount)
           (e, Some(balance))
         } else {
           (e, None)
         }
-      }.toList
+      }.toList.reverse
       Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
   }
 
