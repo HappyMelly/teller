@@ -35,7 +35,8 @@ object PeopleApi extends Controller with ApiAuthentication {
     def writes(person: Person): JsValue = {
       Json.obj(
         "id" -> person.id.get,
-        "href" -> routes.PeopleApi.person(person.id.get).url,
+        "unique_name" -> person.uniqueName,
+        "href" -> routes.PeopleApi.person(person.id.get.toString).url,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "photo" -> person.photo.url,
@@ -70,6 +71,7 @@ object PeopleApi extends Controller with ApiAuthentication {
     def writes(person: Person) = {
       Json.obj(
         "id" -> person.id.get,
+        "unique_name" -> person.uniqueName,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
         "email_address" -> person.socialProfile.email,
@@ -92,6 +94,14 @@ object PeopleApi extends Controller with ApiAuthentication {
     }
   }
 
+  /**
+   * Get a list of people
+   * @param stakeholdersOnly If true only stakeholders are retrieved
+   * @param boardmembersOnly If true only board members are retrieved
+   * @param active If true only active members are retrieved
+   * @param query Retrieve only people whose name meets the pattern
+   * @return
+   */
   def people(stakeholdersOnly: Option[Boolean],
     boardmembersOnly: Option[Boolean],
     active: Option[Boolean],
@@ -99,12 +109,21 @@ object PeopleApi extends Controller with ApiAuthentication {
 
     val people: List[Person] = Person.findByParameters(stakeholdersOnly.getOrElse(false),
       boardmembersOnly.getOrElse(false), active, query)
-    Ok(Json.toJson(people))
+    Ok(Json.prettyPrint(Json.toJson(people)))
   }
 
-  def person(id: Long) = TokenSecuredAction { implicit request ⇒
-    val person = Person.find(id)
-    person.map(person ⇒ Ok(Json.toJson(person)(personDetailsWrites))).getOrElse(NotFound)
+  /**
+   * Get a person
+   * @param identifier Person identifier
+   * @return
+   */
+  def person(identifier: String) = TokenSecuredAction { implicit request ⇒
+    val person = try {
+      val id = identifier.toLong
+      Person.find(id)
+    } catch {
+      case e: NumberFormatException ⇒ Person.find(identifier)
+    }
+    person.map(person ⇒ Ok(Json.prettyPrint(Json.toJson(person)(personDetailsWrites)))).getOrElse(NotFound)
   }
-
 }

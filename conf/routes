@@ -179,7 +179,7 @@ GET         /api/v1/licensee/:licenseeId/brand/:brandCode                       
 POST        /api/v1/participant                                                       controllers.ParticipantsApi.create
 
 GET         /api/v1/people                                                            controllers.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean], active: Option[Boolean], q: Option[String])
-GET         /api/v1/person/:id                                                        controllers.PeopleApi.person(id: Long)
+GET         /api/v1/person/:identifier                                                controllers.PeopleApi.person(identifier: String)
 
 GET         /api/v1/organizations                                                     controllers.OrganisationsApi.organisations(legal_entities_only: Option[Boolean])
 GET         /api/v1/organization/:id                                                  controllers.OrganisationsApi.organisation(id: Long)

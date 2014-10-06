@@ -99,6 +99,8 @@ case class Person(
 
   def fullName: String = firstName + " " + lastName
 
+  def uniqueName: String = fullName.toLowerCase.replace(" ", ".")
+
   def name = fullName
 
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
@@ -328,6 +330,20 @@ object Person {
   def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       person ← People if person.id === id
+    } yield person
+
+    query.firstOption
+  }
+
+  /**
+   * Find a person
+   * @param name Person Identifier
+   * @return
+   */
+  def find(name: String): Option[Person] = DB.withSession { implicit session: Session ⇒
+    val transformed = name.replace(".", " ")
+    val query = for {
+      person ← People if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
     } yield person
 
     query.firstOption

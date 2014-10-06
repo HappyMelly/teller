@@ -41,7 +41,7 @@ object ContributionsApi extends Controller with ApiAuthentication {
   implicit val contributorWrites = new Writes[ContributorView] {
     def writes(contributor: ContributorView) = Json.obj(
       "name" -> contributor.name,
-      "href" -> routes.PeopleApi.person(contributor.id).url,
+      "href" -> routes.PeopleApi.person(contributor.id.toString).url,
       "photo" -> contributor.photo,
       "role" -> contributor.contribution.role)
   }
