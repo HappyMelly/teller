@@ -25,42 +25,46 @@
 package controllers
 
 import Forms._
+import fly.play.s3.{ BucketFile, S3Exception }
 import models._
+import models.UserRole.Role._
 import org.joda.time.DateTime
-import play.api.mvc._
+import play.api.cache.Cache
 import play.api.data.{ FormError, Form }
+import play.api.data.format.Formatter
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.i18n.Messages
-import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import play.api.data.format.Formatter
-import scala.io.Source
-import play.api.cache.Cache
-import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import fly.play.s3.{ BucketFile, S3Exception }
-import services.S3Bucket
+import play.api.mvc._
 import play.api.Play.current
+import scala.concurrent.Future
+import scala.io.Source
+import scravatar.Gravatar
+import securesocial.core.SecuredRequest
+import services.S3Bucket
 
 object People extends Controller with Security {
 
   val contentType = "image/jpeg"
+
+  /**
+   * This formatter is used to create a photo object based on its type
+   */
   val photoFormatter = new Formatter[Photo] {
 
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
-      // "data" lets you access all form data values
-      data.get("photo").map { socialId ⇒
-        socialId match {
-          case "facebook" ⇒
-            data.get("profile.facebookUrl").map { url ⇒
-              ("""[\w\.]+$""".r findFirstIn url).map { userId ⇒
-                Right(Photo(Some(socialId), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
-              }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
-            }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
-          case _ ⇒ Right(Photo(None, None))
-        }
-      }.getOrElse(Right(Photo(None, None)))
+      data.getOrElse("photo", "") match {
+        case "facebook" ⇒
+          ("""[\w\.]+$""".r findFirstIn data.getOrElse("profile.facebookUrl", "")).map { userId ⇒
+            Right(Photo(Some("facebook"), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
+          }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
+        case "gravatar" ⇒
+          data.get("emailAddress").map { email ⇒
+            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).avatarUrl)))
+          }.getOrElse(Right(Photo(None, None)))
+        case _ ⇒ Right(Photo(None, None))
+      }
     }
 
     override def unbind(key: String, value: Photo): Map[String, String] = {
@@ -75,7 +79,7 @@ object People extends Controller with Security {
 
     def bind(key: String, data: Map[String, String]) = {
       try {
-        data.get(key).map(PersonRole.withName(_)).toRight(Seq.empty)
+        data.get(key).map(PersonRole.withName).toRight(Seq.empty)
       } catch {
         case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
       }
@@ -152,28 +156,28 @@ object People extends Controller with Security {
   }
 
   /**
-   * Form target for toggling whether a person is active.
+   * Form target for toggling whether a person is active
+   *
+   * @param id Person identifier
    */
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Person.find(id).map { person ⇒
         Form("active" -> boolean).bindFromRequest.fold(
-          form ⇒ {
-            BadRequest("invalid form data")
-          },
+          form ⇒ BadRequest("invalid form data"),
           active ⇒ {
             Person.activate(id, active)
             val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
             Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
-        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
   /**
-   * Create page.
+   * Render a Create page
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -183,7 +187,7 @@ object People extends Controller with Security {
   /**
    * Assign a person to an organisation
    */
-  def addMembership = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def addMembership() = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
@@ -191,7 +195,7 @@ object People extends Controller with Security {
       membershipForm.bindFromRequest.fold(
         errors ⇒ BadRequest("organisationId missing"),
         {
-          case (page, personId, organisationId) ⇒ {
+          case (page, personId, organisationId) ⇒
             Person.find(personId).map { person ⇒
               Organisation.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
@@ -203,7 +207,6 @@ object People extends Controller with Security {
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
-          }
         })
   }
 
@@ -225,24 +228,30 @@ object People extends Controller with Security {
   }
 
   /**
-   * Deletes a person.
+   * Delete a person
+   *
+   * @param id Person identifier
    */
   def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
     implicit handler ⇒
 
       Person.find(id).map { person ⇒
         if (!person.deletable) {
-          Redirect(routes.People.index).flashing("error" -> Messages("error.notDeletablePerson"))
+          Redirect(routes.People.index()).flashing("error" -> Messages("error.notDeletablePerson"))
         } else {
           Person.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
-          Redirect(routes.People.index).flashing("success" -> activity.toString)
+          Redirect(routes.People.index()).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
   }
 
   /**
-   * Deletes an person’s organisation membership.
+   * Delete a membership of a person in an organisation
+   *
+   * @param page Page identifier where the action was requested from
+   * @param personId Person identifier
+   * @param organisationId Org identifier
    */
   def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
@@ -261,8 +270,9 @@ object People extends Controller with Security {
   }
 
   /**
-   * Details page.
-   * @param id Person ID
+   * Render a Detail page
+   *
+   * @param id Person identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
@@ -280,15 +290,15 @@ object People extends Controller with Security {
           contributions, products,
           licenses, accountRole,
           UserAccount.findDuplicateIdentity(person)))
-
-      } getOrElse {
+      }.getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
   /**
-   * Edit page.
-   * @param id Person ID
+   * Render an Edit page
+   *
+   * @param id Person identifier
    */
   def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
@@ -299,16 +309,15 @@ object People extends Controller with Security {
   }
 
   /**
-   * Edit form submits to this action.
-   * @param id Person ID
+   * Edit form submits to this action
+   *
+   * @param id Person identifier
    */
   def update(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       personForm(request).bindFromRequest.fold(
-        formWithErrors ⇒ {
-          BadRequest(views.html.person.form(request.user, Some(id), formWithErrors))
-        },
+        formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
         person ⇒ {
           person.copy(id = Some(id)).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
@@ -316,6 +325,11 @@ object People extends Controller with Security {
         })
   }
 
+  /**
+   * Render a list of people in the network
+   *
+   * @return
+   */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       val people = models.Person.findAll
@@ -354,7 +368,11 @@ object People extends Controller with Security {
       }.getOrElse(Future.successful(NotFound))
   }
 
-  /** Delete signature form submits to this action **/
+  /**
+   * Delete signature form submits to this action
+   *
+   * @param personId Person identifier
+   */
   def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
       Person.find(personId.toLong).map { person ⇒
@@ -370,7 +388,9 @@ object People extends Controller with Security {
   }
 
   /**
-   * Retrieve and cache a person's signature
+   * Retrieve and cache a signature of a person
+   *
+   * @param personId Person identifier
    */
   def signature(personId: Long) = Action.async {
     val cached = Cache.getAs[Array[Byte]](Person.cacheId(personId))

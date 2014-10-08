@@ -24,10 +24,10 @@
 
 package controllers
 
-import play.mvc.Controller
+import java.net.URLDecoder
 import models._
+import play.mvc.Controller
 import play.api.libs.json._
-import models.LicenseView
 
 object PeopleApi extends Controller with ApiAuthentication {
 
@@ -122,7 +122,7 @@ object PeopleApi extends Controller with ApiAuthentication {
       val id = identifier.toLong
       Person.find(id)
     } catch {
-      case e: NumberFormatException ⇒ Person.find(identifier)
+      case e: NumberFormatException ⇒ Person.find(URLDecoder.decode(identifier, "ASCII"))
     }
     person.map(person ⇒ Ok(Json.prettyPrint(Json.toJson(person)(personDetailsWrites)))).getOrElse(NotFound)
   }

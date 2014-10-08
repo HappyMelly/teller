@@ -55,11 +55,10 @@ case class Photo(id: Option[String], url: Option[String])
 object Photo {
 
   def parse(url: Option[String]): Photo = {
-    url.map { photoUrl ⇒
-      val pattern = new Regex("facebook")
-      (pattern findFirstIn photoUrl).map { substr ⇒
-        Photo(Some("facebook"), url)
-      }.getOrElse(Photo(None, None))
+    url.map {
+      case s if s.contains("facebook") ⇒ Photo(Some("facebook"), url)
+      case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
+      case _ ⇒ Photo(None, None)
     }.getOrElse(Photo(None, None))
   }
 }
