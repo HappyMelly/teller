@@ -61,7 +61,7 @@ object People extends Controller with Security {
           }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
         case "gravatar" ⇒
           data.get("emailAddress").map { email ⇒
-            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).avatarUrl)))
+            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).size(300).avatarUrl)))
           }.getOrElse(Right(Photo(None, None)))
         case _ ⇒ Right(Photo(None, None))
       }
