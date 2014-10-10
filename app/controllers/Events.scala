@@ -257,6 +257,7 @@ object Events extends Controller with Security {
           })
       }.getOrElse(NotFound)
   }
+
   /**
    * Details page.
    * @param id Event ID

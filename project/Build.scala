@@ -31,6 +31,8 @@ object ApplicationBuild extends Build {
     "nl.rhinofly" %% "play-s3" % "3.3.3"
   )
 
+  javaOptions in Test += "-Dconfig.file=conf/application-test.conf"
+
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings: _*).settings(
     resolvers += Resolver.url("sbt-plugin-releases", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns),
