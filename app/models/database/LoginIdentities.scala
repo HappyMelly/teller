@@ -26,6 +26,7 @@ package models.database
 
 import models.LoginIdentity
 import play.api.db.slick.Config.driver.simple._
+import scala.language.implicitConversions
 import securesocial.core.{ IdentityId, OAuth2Info, OAuth1Info, AuthenticationMethod }
 
 /**

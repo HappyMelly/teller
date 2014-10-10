@@ -34,6 +34,7 @@ import play.api.Play.current
 import services.CurrencyConverter
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 import scala.math.BigDecimal.RoundingMode
 
 /**

@@ -30,6 +30,7 @@ import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
+import scala.language.postfixOps
 import services.{ S3Bucket, EmailService }
 import com.itextpdf.text.Image
 

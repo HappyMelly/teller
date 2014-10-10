@@ -31,7 +31,7 @@
                     @html.file(form("picture"), '_label -> "Picture")
                     @html.text(form("webSite"), '_label -> "Web site")
                     @html.text(form("blog"), '_label -> "Blog")
-                    <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value">
+                    <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value.exists(_.toBoolean)">
 
                     @html.email(form("profile.email"), '_label -> "E-mail address")
                     @defining(form("profile.twitterHandle")) { field =>

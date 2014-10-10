@@ -29,6 +29,7 @@ import java.math.RoundingMode
 import play.api.data.Mapping
 import play.api.data.Forms._
 import scala.Predef._
+import scala.language.implicitConversions
 import scala.slick.lifted.MappedTypeMapper
 
 /**

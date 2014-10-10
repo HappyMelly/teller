@@ -6,8 +6,8 @@ import scalariform.formatter.preferences._
 
 object ApplicationBuild extends Build {
 
-  val appName         = "happymelly-teller"
-  val appVersion      = "1.0-SNAPSHOT"
+  val appName = "happymelly-teller"
+  val appVersion = "1.0-SNAPSHOT"
 
   val appDependencies = Seq(
     jdbc,
@@ -31,7 +31,7 @@ object ApplicationBuild extends Build {
     "nl.rhinofly" %% "play-s3" % "3.3.3"
   )
 
-  val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings :_*).settings(
+  val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings: _*).settings(
     resolvers += Resolver.url("sbt-plugin-releases", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.com/releases/"))(Resolver.ivyStylePatterns),
@@ -39,14 +39,15 @@ object ApplicationBuild extends Build {
     resolvers += Resolver.sonatypeRepo("releases"),
     routesImport += "binders._"
   ).settings(
-    /* Scalariform: override default settings - no spaces within pattern binders is the only option in IntelliJ IDEA,
-      preserve spaces before arguments is needed for infix function syntax (unconfirmed).*/
-    ScalariformKeys.preferences := FormattingPreferences().
-      setPreference(SpacesWithinPatternBinders, false).
-      setPreference(RewriteArrowSymbols, true).
-      setPreference(PreserveSpaceBeforeArguments, true)
-  // Avoid building Scaladocs and sources to reduce build time.
-  ).settings(sources in (Compile,doc) := Seq.empty
-  ).settings(publishArtifact in (Compile, packageDoc) := false
-  ).settings(publishArtifact in (Compile, packageSrc) := false)
+      /* Scalariform: override default settings - no spaces within pattern binders is the only option in IntelliJ IDEA,
+        preserve spaces before arguments is needed for infix function syntax (unconfirmed).*/
+      ScalariformKeys.preferences := FormattingPreferences().
+        setPreference(SpacesWithinPatternBinders, false).
+        setPreference(RewriteArrowSymbols, true).
+        setPreference(PreserveSpaceBeforeArguments, true)
+      // Avoid building Scaladocs and sources to reduce build time.
+    ).settings(sources in(Compile, doc) := Seq.empty
+    ).settings(publishArtifact in(Compile, packageDoc) := false
+    ).settings(publishArtifact in(Compile, packageSrc) := false)
+
 }

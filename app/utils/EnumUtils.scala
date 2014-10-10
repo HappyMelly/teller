@@ -24,6 +24,7 @@
 package utils
 
 import play.api.libs.json._
+import scala.language.implicitConversions
 
 /**
  * This object provides generic Read, Writes and Format methods to be used lately in enumerations
