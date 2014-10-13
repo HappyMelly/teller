@@ -39,8 +39,8 @@ object EventTypes extends Controller with Security {
   def eventTypeForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
-    "name" -> nonEmptyText,
-    "defaultTitle" -> optional(text))(EventType.apply)(EventType.unapply))
+    "name" -> nonEmptyText(maxLength = 254),
+    "defaultTitle" -> optional(text(maxLength = 254)))(EventType.apply)(EventType.unapply))
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(data: EventType): JsValue = {
@@ -71,13 +71,14 @@ object EventTypes extends Controller with Security {
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
       val brand = Brand.find(boundForm.data("brandId").toLong).get
+      val route = routes.Brands.details(brand.code).url + "#eventTypes"
       boundForm.bindFromRequest.fold(
-        formWithErrors ⇒ Redirect(routes.Brands.details(brand.code)).flashing("error" -> "A name of an event type cannot be empty"),
+        formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
         eventType ⇒ {
           eventType.insert
           val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.Brands.details(brand.code).url + "#eventTypes").flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> activity.toString)
         })
   }
 
@@ -91,13 +92,14 @@ object EventTypes extends Controller with Security {
 
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
+        val route = routes.Brands.details(brand.code).url + "#eventTypes"
         if (Event.getNumberByEventType(eventType.id.get) > 0) {
-          Redirect(routes.Brands.details(brand.code)).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
+          Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
         } else {
           EventType.delete(id)
           val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-          Redirect(routes.Brands.details(brand.code).url + "#eventTypes").flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
   }

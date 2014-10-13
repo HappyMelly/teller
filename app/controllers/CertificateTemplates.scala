@@ -83,7 +83,10 @@ object CertificateTemplates extends Controller with Security {
             }.getOrElse {
               val template = request.body.asMultipartFormData.get.file("oneFacilitator")
               val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
-              if (template.isEmpty || templateOneFacilitator.isEmpty) {
+              val validMimeTypes = List("image/jpeg", "image/pjpeg", "image/gif", "image/png")
+              if (template.isEmpty || templateOneFacilitator.isEmpty
+                || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
+                || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
                 BadRequest(views.html.certificateTemplate.form(request.user, brand.brand, languages,
                   form.withError("oneFacilitator", "error.required").withError("twoFacilitators", "error.required")))
               } else {
