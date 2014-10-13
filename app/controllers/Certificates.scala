@@ -33,7 +33,11 @@ import scala.concurrent.Future
 
 object Certificates extends Controller with Security {
 
-  /** Generate new certificate **/
+  /**
+   * Generate new certificate
+   *
+   * @param id Certificate identifier
+   */
   def create(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
 
@@ -47,7 +51,11 @@ object Certificates extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  /** Retrieve and cache a certificate */
+  /**
+   * Retrieve and cache a certificate
+   *
+   * @param certificateId Certificate identifier
+   */
   def certificate(certificateId: String) = Action.async {
     val contentType = "application/pdf"
     val cached = Cache.getAs[Array[Byte]](Certificate.cacheId(certificateId))

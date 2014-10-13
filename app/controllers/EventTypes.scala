@@ -53,6 +53,8 @@ object EventTypes extends Controller with Security {
 
   /**
    * Returns a list of event types for the given brand
+   *
+   * @param brandCode Brand code
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
@@ -61,7 +63,9 @@ object EventTypes extends Controller with Security {
       }.getOrElse(NotFound("Unknown brand"))
   }
 
-  /** Creates an event type **/
+  /**
+   * Creates a new event type
+   */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
@@ -73,11 +77,15 @@ object EventTypes extends Controller with Security {
           eventType.insert
           val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+          Redirect(routes.Brands.details(brand.code).url + "#eventTypes").flashing("success" -> activity.toString)
         })
   }
 
-  /** Deletes an event type **/
+  /**
+   * Deletes an event type
+   *
+   * @param id Type identifier
+   */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
@@ -89,7 +97,7 @@ object EventTypes extends Controller with Security {
           EventType.delete(id)
           val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-          Redirect(routes.Brands.details(brand.code)).flashing("success" -> activity.toString)
+          Redirect(routes.Brands.details(brand.code).url + "#eventTypes").flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
   }
