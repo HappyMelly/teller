@@ -1,0 +1,26 @@
+@(brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import views.Languages
+
+<table class="datatables table table-bordered">
+    <thead>
+        <th>Language</th>
+        <th>One Facilitator</th>
+        <th>Two Facilitators</th>
+        <th></th>
+    </thead>
+    <tbody>
+    @for(file <- brand.certificates) {
+        <tr>
+            <td>@Languages.all.get(file.language)</td>
+            <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
+            <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
+            <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
+                <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
+        </tr>
+    }
+    </tbody>
+</table>
+<a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(brand.code)">
+    <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
+</a>

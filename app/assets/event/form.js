@@ -27,7 +27,7 @@ function User(data) {
     this.id = data["id"];
     this.coordinator = data["coordinator"];
     this.memberships = data["memberships"];
-};
+}
 
 User.prototype.isFacilitator = function(userId) {
     return this.id == userId;
@@ -84,20 +84,6 @@ function getEventTypes(brandCode, currentEventType) {
  */
 function updateTitle(title) {
     $("#title").val(title);
-}
-
-/**
- * Automatically set an end date to a start date + 1 day
- * @param dateString String
- * @param locator String
- */
-function updateEndDate(dateString, locator) {
-    try {
-        var endDate = Date.parse(dateString).addDays(1);
-        $(locator).val(endDate.toString("yyyy-MM-dd"));
-    } catch (RangeError) {
-        // empty body
-    }
 }
 
 /**
@@ -274,19 +260,16 @@ $(document).ready( function() {
         var id = $(this).parent().parent().parent('div').children('input').first().val();
         facilitators.deselect(id);
     });
+    $("#schedule_start").on("dp.change", function (e) {
+        $('#schedule_end').data("DateTimePicker").setMinDate(e.date);
+    });
     var code = $('#brandCode').find(':selected').val();
     getEventTypes(code, $('#currentEventTypeId').attr('value'));
     facilitators.initialize(code);
     if ($("#emptyForm").attr("value") == 'true') {
-        $("#schedule_start").val('');
-        $("#schedule_end").val('');
-        $("#schedule_start").on('input', function() {
-            updateEndDate($(this).val(), "#schedule_end");
+        $("#schedule_start").on("dp.change", function (e) {
+            $('#schedule_end').data("DateTimePicker").setDate(e.date.add(1, 'days'))
         });
-        $('#schedule_end').on('input', function() {
-           $('#schedule_start').unbind('input');
-        });
-
         $("#eventTypeId").change(function() {
             var option = $(this).find(':selected');
             if (option.attr('defaultTitle')) {

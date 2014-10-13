@@ -57,5 +57,10 @@ $(document).ready( function() {
       e.preventDefault();
       $(this).tab('show');
     });
+    var hash = window.location.hash.substring(1);
+    if (!hash) {
+        hash = 'products';
+    }
+    $('#activities a[href="#' + hash + '"').tab('show');
 });
 

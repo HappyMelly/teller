@@ -151,7 +151,7 @@
                 id="reference" value="@form("reference").value">
             </div>
             <div class="col-xs-3">
-              <input class="form-control" type="date" name="referenceDate" value="@form("referenceDate").value">
+              @html.date(form("referenceDate"))(asIs, implicitly[Lang])
             </div>
             <span class="help-block">
               @if(form("reference").hasErrors || form("referenceDate").hasErrors) {

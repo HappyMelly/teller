@@ -1,0 +1,52 @@
+@(person: Person,
+  contributions: List[ContributionView],
+  products: List[Product]
+    )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.Role._
+
+@if(contributions.isEmpty) {
+    <p>@person.fullName has no contributions.</p>
+} else {
+    <table class="datatables table table-bordered">
+        <thead>
+            <th>Product</th>
+            <th>Role</th>
+            <th></th>
+        </thead>
+        <tbody>
+        @for(contribution <- contributions) {
+            <tr>
+                <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+                <td>@contribution.contribution.role</td>
+                <td>
+                @restrict(handler, List(as(Editor.toString))) {
+                    <a href="@routes.Contributions.delete(contribution.contribution.id.get, "person")">
+                        <i class="glyphicon glyphicon-pencil"></i> Remove contribution</a>
+                }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+@restrict(handler, List(as(Editor.toString))) {
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("person"))">
+        <p>
+            <input type="hidden" name="page" value="person">
+            <input type="hidden" name="contributorId" value="@person.id.get">
+            <input type="hidden" name="isPerson" value="true">
+            <select name="productId" class="form-control input-sm">
+            @for(product <- products) {
+                <option value="@product.id">@product.title</option>
+            }
+            </select>
+            <input name="role" placeholder="Role" class="form-control input-sm">
+            <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
+                Add Contribution</button>
+        </p>
+    </form>
+}

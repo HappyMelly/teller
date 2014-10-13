@@ -23,39 +23,5 @@
  */
 
 $(document).ready( function() {
-
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
-
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "order": [[ 0, "asc" ]],
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
-
-    $('#activities a').click(function (e) {
-      e.preventDefault();
-      $(this).tab('show');
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'finance';
-    }
-    $('#activities a[href="#' + hash + '"').tab('show');
+    $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
 });
-

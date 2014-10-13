@@ -10,6 +10,7 @@
 @import views.Languages
 @import views.ViewHelpers._
 
+
 @* Returns a comma-separated list of validation error messages, for one or more fields. *@
 @fieldErrors(fields: Field*) = {
   @if(fields.exists(_.hasErrors)) {

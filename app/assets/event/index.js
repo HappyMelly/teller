@@ -67,13 +67,13 @@ function filterByDate(oSettings, aData, iDataIndex) {
     if (dates.length != 2) {
         return true;
     }
-    var start = Date.parse(dates[0]);
-    var end = Date.parse(dates[1]);
-    var today = Date.today();
+    var start = moment(dates[0]);
+    var end = moment(dates[1]);
+    var today = moment();
     if (filter == 'past') {
-        return (today > end);
+        return (today.isAfter(end, 'day'));
     } else {
-        return (today <= start);
+        return (today.isBefore(start, 'day') || today.isSame(start, 'day'));
     }
 }
 

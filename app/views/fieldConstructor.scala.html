@@ -1,8 +1,5 @@
 @(elements: views.html.helper.FieldElements)
 
-@import play.api.i18n._
-@import views.html.helper._
-
 <div class="form-group @elements.args.get('_class) @if(elements.hasErrors) {has-error}"
   id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
   <label for="@elements.id" class="control-label col-sm-3">@elements.label(elements.lang)</label>

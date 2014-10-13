@@ -9,7 +9,6 @@
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import views.Languages
 
 @main(brand.code + " - Brand", "brands", Some(user)) {
 
@@ -119,63 +118,10 @@
                 }
             </div>
             <div class="tab-pane" id="eventTypes">
-                <table class="datatables table table-bordered">
-                    <thead>
-                        <th>Name</th>
-                        <th>Default Title</th>
-                        <th></th>
-                    </thead>
-                    <tbody>
-                    @for(eventType <- eventTypes) {
-                        <tr>
-                            <td>@eventType.name</td>
-                            <td>@eventType.defaultTitle</td>
-                            <td>
-                            @restrict(handler, List(as(Editor.toString))) {
-                                <a href="@routes.EventTypes.delete(eventType.id.get)">
-                                    <i class="glyphicon glyphicon-pencil"></i> Remove event type</a>
-                            }
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                @restrict(handler, List(as(Editor.toString))) {
-                    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.EventTypes.create)" id="eventType">
-                        <input type="hidden" name="brandId" value="@brand.id"/>
-                        <div class="controls-row form-group">
-                            <input name="name" class="form-control input-sm" placeholder="Name"/>
-                            <input name="defaultTitle" class="form-control input-sm" placeholder="Default Title"/>
-                            <button class="btn btn-success btn-sm ">
-                                <i class="glyphicon glyphicon-plus"></i>Add Event Type
-                            </button>
-                        </div>
-                    </form>
-                }
+                @views.html.brand.tabs.eventTypes(brand, eventTypes)
             </div>
             <div class="tab-pane" id="templates">
-                <table class="datatables table table-bordered">
-                    <thead>
-                        <th>Language</th>
-                        <th>One Facilitator</th>
-                        <th>Two Facilitators</th>
-                        <th></th>
-                    </thead>
-                    <tbody>
-                    @for(file <- brand.certificates) {
-                        <tr>
-                            <td>@Languages.all.get(file.language)</td>
-                            <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
-                            <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
-                            <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
-                                <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(brand.code)">
-                    <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
-                </a>
+                @views.html.brand.tabs.templates(brand)
             </div>
         </div>
     </div>

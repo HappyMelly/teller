@@ -49,7 +49,7 @@ GET         /certificate/:id                                                    
 GET         /certificate/new/:evaluationId                                            controllers.Certificates.create(evaluationId: Long)
 
 POST        /contribution/new                                                         controllers.Contributions.create(page: String)
-GET         /contribution/:id/delete                                                  controllers.Contributions.delete(page: String, id: Long)
+GET         /contribution/:id/delete                                                  controllers.Contributions.delete(id: Long, page: String)
 
 POST        /evaluation/                                                              controllers.Evaluations.create
 GET         /evaluation/new/                                                          controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])

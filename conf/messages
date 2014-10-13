@@ -106,6 +106,7 @@ error.event.invalid = You are not allowed to manage this event
 error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete an event type because there're several events of this type
+error.eventType.nameWrongLength = A name of an event type should not be empty or more than 254 characters long
 error.language.unknown = Unknown language
 error.participant.notExist = The person is not a participant of the event
 error.person.notExist = The person does not exist
