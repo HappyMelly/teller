@@ -203,7 +203,8 @@ object People extends Controller with Security {
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the person or organisation details page.
-                val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+                val action = if (page == "person") routes.People.details(personId).url + "#organizations"
+                else routes.Organisations.details(organisationId).url
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
@@ -263,7 +264,8 @@ object People extends Controller with Security {
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the person or organisation details page.
-          val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+          val action = if (page == "person") routes.People.details(personId).url + "#organizations"
+          else routes.Organisations.details(organisationId).url
           Redirect(action).flashing("success" -> activity.toString)
         }
       }.flatten.getOrElse(NotFound)
@@ -348,6 +350,8 @@ object People extends Controller with Security {
         "signature" -> optional(text)))
       val (personId, signature) = form.bindFromRequest.get
       Person.find(personId.toLong).map { person ⇒
+        val route = routes.People.details(person.id.get).url + "#licenses"
+
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
           val filename = Person.fullFileName(person.id.get)
           val source = Source.fromFile(picture.ref.file.getPath, encoding)
@@ -357,13 +361,13 @@ object People extends Controller with Security {
             person.copy(signature = true).update
             Cache.remove(Person.cacheId(personId.toLong))
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
-            Redirect(routes.People.details(person.id.get)).flashing("success" -> activity.toString)
+            Redirect(route).flashing("success" -> activity.toString)
           }.recover {
             case S3Exception(status, code, message, originalXml) ⇒
-              Redirect(routes.People.details(person.id.get)).flashing("error" -> "Image cannot be temporary saved")
+              Redirect(route).flashing("error" -> "Image cannot be temporary saved")
           }
         }.getOrElse {
-          Future.successful(Redirect(routes.People.details(person.id.get)).flashing("error" -> "Please choose an image file"))
+          Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
         }
       }.getOrElse(Future.successful(NotFound))
   }
@@ -383,7 +387,8 @@ object People extends Controller with Security {
         person.copy(signature = false).update
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
           "signature from the person " + person.fullName)
-        Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+        val route = routes.People.details(personId).url + "#licenses"
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 

@@ -115,7 +115,7 @@
                                 <td>@contributor.contribution.role</td>
                                 <td>
                                 @restrict(handler, List(as(Editor.toString))) {
-                                    <a href="@routes.Contributions.delete("product", contributor.contribution.id.get)">
+                                    <a href="@routes.Contributions.delete(contributor.contribution.id.get, "product")">
                                         <i class="glyphicon glyphicon-pencil"></i> Remove contributor</a>
                                 }
                                 </td>

@@ -14,8 +14,6 @@
     @import templates.Formatters._
     @import be.objectify.deadbolt.scala.views.html._
     @import be.objectify.deadbolt.core.utils.TemplateUtils._
-    @import views.Languages
-    @import views.Countries
 
     @roleInput(accountRole: Option[models.UserRole.Role.Role], inputRole: models.UserRole.Role.Role, label: String) = {
         <label class="radio">
@@ -202,7 +200,7 @@
 
         <div class="col-md-10">
             <ul class="nav nav-tabs" id="activities">
-                <li class="active"><a href="#finance">Accounting details</a></li>
+                <li><a href="#finance">Accounting details</a></li>
                 <li><a href="#organizations">Organizations</a></li>
                 <li><a href="#contributions">Product Contributions</a></li>
                 <li><a href="#licenses">Licenses</a></li>
@@ -223,190 +221,16 @@
                     </div>
                 </div>
                 <div class="tab-pane" id="organizations">
-                    @if(organisations.isEmpty) {
-                        <p>@person.fullName has no organizations.</p>
-                    } else {
-                        @views.html.organisation.table(organisations) { organisation =>
-                            @restrict(handler, List(as(Editor.toString))) {
-                                <a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)">
-                                    <i class="glyphicon glyphicon-pencil"></i> Remove membership</a>
-                            }
-                        }
-                    }
-                    @restrict(handler, List(as(Editor.toString))) {
-                        <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addMembership)">
-                            <p>
-                                <input type="hidden" name="page" value="person">
-                                <input type="hidden" name="personId" value="@person.id.get">
-                                <select name="organisationId" class="form-control input-sm">
-                                @for(organisation <- otherOrganisations) {
-                                    <option value="@organisation.id">@organisation.name</option>
-                                }
-                                </select>
-                                <button class="btn btn-success btn-sm">
-                                    <i class="glyphicon glyphicon-plus"></i>Add Membership</button>
-                            </p>
-                        </form>
-                    }
+                    @views.html.person.tabs.organisations(person, organisations, otherOrganisations)
                 </div>
                 <div class="tab-pane" id="contributions">
-                    @if(contributions.isEmpty) {
-                        <p>@person.fullName has no contributions.</p>
-                    } else {
-                        <table class="datatables table table-bordered">
-                            <thead>
-                                <th>Product</th>
-                                <th>Role</th>
-                                <th></th>
-                            </thead>
-                            <tbody>
-                            @for(contribution <- contributions) {
-                                <tr>
-                                    <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
-                                    <td>@contribution.contribution.role</td>
-                                    <td>
-                                    @restrict(handler, List(as(Editor.toString))) {
-                                        <a href="@routes.Contributions.delete("person", contribution.contribution.id.get)">
-                                            <i class="glyphicon glyphicon-pencil"></i> Remove contribution</a>
-                                    }
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    }
-                    @restrict(handler, List(as(Editor.toString))) {
-                        <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("person"))">
-                            <p>
-                                <input type="hidden" name="page" value="person">
-                                <input type="hidden" name="contributorId" value="@person.id.get">
-                                <input type="hidden" name="isPerson" value="true">
-                                <select name="productId" class="form-control input-sm">
-                                @for(product <- products) {
-                                    <option value="@product.id">@product.title</option>
-                                }
-                                </select>
-                                <input name="role" placeholder="Role" class="form-control input-sm">
-                                <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
-                                    Add Contribution</button>
-                            </p>
-                        </form>
-                    }
+                    @views.html.person.tabs.contributions(person, contributions, products)
                 </div>
                 <div class="tab-pane" id="licenses">
-                    <div class="col-xs-9">
-                        @if(licenses.isEmpty) {
-                            <p>@person.fullName has no licenses.</p>
-                        } else {
-                            @views.html.license.table(licenses)
-                        }
-                        @restrict(handler, List(as(Editor.toString))) {
-                            <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success btn-sm">
-                                <i class="glyphicon glyphicon-plus"></i>Add Content License</a></p>
-                        }
-                    </div>
-                    <div class="col-xs-3">
-                        <h4>Manage Signature</h4>
-                        @if(person.signature) {
-                            <p><i class="glyphicon glyphicon-file"></i> <a href="@routes.People.signature(person.id.getOrElse(0))">
-                                Signature</a></p>
-                        }
-                        <form action="@CSRF(routes.People.uploadSignature())"
-                        method="post" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <input type="hidden" name="personId" value="@person.id"/>
-                                <input type="file" id="signature" class="form-control input-sm" name="signature"/>
-                            </div>
-                            <button class="btn btn-primary btn-sm" type="submit">
-                            @if(person.signature) { Replace File } else { Upload File } </button>
-                            @if(person.signature) {
-                                <button class="btn btn-danger btn-sm" type="submit" form="deleteSig">
-                                    <i class="glyphicon glyphicon-trash glyphicon-white"></i> Delete File</button>
-                            }
-                        </form>
-                        @if(person.signature) {
-                            <form method="post" action="@CSRF(routes.People.deleteSignature(person.id.getOrElse(0)))" id="deleteSig">
-                            </form>
-                        }
-                    </div>
-
+                    @views.html.person.tabs.licenses(person, licenses)
                 </div>
                 <div class="tab-pane" id="events">
-                    <div class="col-xs-12">
-                        <div class="col-xs-6">
-                            <table class="datatables table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Languages you facilitate events in</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @for(language <- person.languages) {
-                                    <tr>
-                                        <td>@Languages.all.get(language.language)</td>
-                                        <td>
-                                        @dynamic(handler, "person", "edit") {
-                                            <a href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">
-                                                <i class="glyphicon glyphicon-trash"></i> Delete</a>
-                                        }
-                                        </td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                            @dynamic(handler, "person", "edit") {
-                                <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
-                                    <p>
-                                        <select name="language" class="form-control input-sm">
-                                        @for(language <- Languages.all.toList.sortBy(_._2)) {
-                                            <option value="@language._1">@language._2</option>
-                                        }
-                                        </select>
-                                        <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
-                                            Add Language</button>
-                                    </p>
-                                </form>
-                            }
-                        </div>
-                        <div class="col-xs-6">
-                            <table class="datatables table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Countries you work in</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @for(country <- person.countries) {
-                                    <tr>
-                                        <td>@Messages("country." + country.country)</td>
-                                        <td>
-                                        @dynamic(handler, "person", "edit") {
-                                            <a href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">
-                                                <i class="glyphicon glyphicon-trash"></i> Delete</a>
-                                        }
-
-                                        </td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                            @dynamic(handler, "person", "edit") {
-                                <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
-                                    <p>
-                                        <select name="country" class="form-control input-sm">
-                                        @for(country <- Countries.all.toList) {
-                                            <option value="@country._1">@country._2</option>
-                                        }
-                                        </select>
-                                        <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
-                                            Add Country</button>
-                                    </p>
-                                </form>
-                            }
-                        </div>
-                    </div>
+                    @views.html.person.tabs.eventSettings(person)
                 </div>
             </div>
         </div>
