@@ -29,12 +29,12 @@
     </tbody>
 </table>
 @restrict(handler, List(as(Editor.toString))) {
-    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.EventTypes.create())" id="eventType">
+    <form class="form-inline pull-right col-sm-8" method="POST" action="@CSRF(routes.EventTypes.create())" id="eventType">
         <input type="hidden" name="brandId" value="@brand.id"/>
-        <div class="controls-row form-group">
-            <input name="name" class="form-control input-sm" placeholder="Name"/>
-            <input name="defaultTitle" class="form-control input-sm" placeholder="Default Title"/>
-            <button class="btn btn-success btn-sm ">
+        <div>
+            <input name="name" class="form-control input-sm" style="width: 28%;" placeholder="Ex: Regular 2-Day course"/>
+            <input name="defaultTitle" class="form-control input-sm" style="width: 49%;" placeholder="Ex: Regular Management 3.0 Course"/>
+            <button class="btn btn-success btn-sm pull-right">
                 <i class="glyphicon glyphicon-plus"></i>Add Event Type
             </button>
         </div>
