@@ -25,12 +25,13 @@ package models
  */
 
 import helpers.{ BrandHelper, EventHelper }
-import integration.WithTestApp
+import integration.{ WithTestApp }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
-import org.specs2.execute.Result
+import org.specs2.execute.{ Success, Result, Failure }
 import play.api.test.Helpers._
 import play.api.test.FakeApplication
+import play.api.test.WithApplication
 
 class EventSpec extends Specification with WithTestApp {
 
@@ -54,23 +55,12 @@ class EventSpec extends Specification with WithTestApp {
   "A facilitator" should {
     val facilitatedEvent = event.copy(facilitatorIds = List(2L, 3L, 4L, 6L))
     val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
-    "be able to facilitate events" in {
-      running(FakeApplication(additionalConfiguration = testDb)) {
-        Result.unit { List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue } }
-      }
+    "be able to facilitate events" in new WithApplication(FakeApplication(additionalConfiguration = testDb)) {
+      List(2, 4, 7) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
     }
-    //    examplesBlock { List(2, 4, 7) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue } }
-    //    //      facilitatedEvent.canFacilitate(2) must beTrue
-    //    //      facilitatedEvent.canFacilitate(7) must beTrue
-    //    //      facilitatedEvent.canFacilitate(4) must beTrue
-    //    "not facilitate an event" in new WithTestApp {
-    //      facilitatedEvent.canFacilitate(5) must beFalse
-    //    }
+    "not facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
+      facilitatedEvent.canFacilitate(5) must beTrue
+    }
   }
 
 }
-
-trait test extends After {
-  def after = println("Yay")
-}
-

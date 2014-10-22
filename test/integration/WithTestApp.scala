@@ -36,4 +36,3 @@ trait WithTestApp extends Around {
     AsResult(t)
   }
 }
-
