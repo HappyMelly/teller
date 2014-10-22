@@ -106,7 +106,7 @@ case class Event(
    * @return
    */
   def canAdministrate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
-    Brand.find(brandCode).get.coordinator.id.get == personId
+    Brand.find(brandCode).exists(_.coordinator.id.get == personId)
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒

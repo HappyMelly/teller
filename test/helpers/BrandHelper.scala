@@ -21,19 +21,19 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package integration
+package helpers
 
-import org.specs2.execute.AsResult
-import org.specs2.mutable.Around
-import play.api.test.FakeApplication
-import play.api.test.Helpers._
+import models.{ SocialProfile, Brand, ProfileType }
+import org.joda.time.DateTime
 
-trait WithTestApp extends Around {
+object BrandHelper {
 
-  val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
+  def defaultBrand: Brand = {
+    val brandCode = "TEST"
+    val brandUniqueName = "test.brand"
+    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
 
-  def around[T: AsResult](t: ⇒ T) = running(FakeApplication(additionalConfiguration = testDb)) {
-    AsResult(t)
+    new Brand(None, brandCode, brandUniqueName, "Test Brand", 1, None, None, generateCert = false, None, None, None,
+      socialProfile, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
   }
 }
-

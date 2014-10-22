@@ -24,51 +24,53 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import org.joda.time.{ DateTime, LocalDate }
-import org.specs2.mutable.Specification
+import helpers.{ BrandHelper, EventHelper }
+import integration.WithTestApp
+import org.joda.time.LocalDate
+import org.specs2.mutable._
+import org.specs2.execute.Result
+import play.api.test.Helpers._
+import play.api.test.FakeApplication
 
 class EventSpec extends Specification with WithTestApp {
 
-  val event = makeEvent(title = Some("Daily Workshop"), city = Some("spb"), startDate = Some(LocalDate.parse("2014-05-12")))
+  val event = EventHelper.makeEvent(title = Some("Daily Workshop"), city = Some("spb"), startDate = Some(LocalDate.parse("2014-05-12")))
   val tooLongTitle = "This title is just too long and should be truncated by the system to 70 characters"
 
   "Long title of an event" should {
     "contain a title, a city and a start date" in {
       event.longTitle mustEqual "Daily Workshop / spb / 2014-05-12"
-      event.longTitle mustNotEqual "Daily Workshop / msk / 2014-05-12"
     }
-    "truncate a title if the title > 70 characters" in {
+  }
+  "If a title is > 70 characters long it" should {
+    "be truncated and has a length = 70" in {
       event.copy(title = tooLongTitle).longTitle.length mustEqual (70 + " / spb / 2014-05-12".length)
+    }
+    "not be contained fully in a long title" in {
       event.copy(title = tooLongTitle).longTitle mustNotEqual tooLongTitle + " / spb / 2014-05-12"
     }
   }
 
   "A facilitator" should {
-    val facilitatedEvent = event.copy(facilitatorIds = List(1L, 2L, 3L, 4L))
-    "facilitate events" in new WithTestApp {
-      facilitatedEvent.canFacilitate(2) must beTrue
-      facilitatedEvent.canFacilitate(1) must beTrue
-      facilitatedEvent.canFacilitate(4) must beTrue
+    val facilitatedEvent = event.copy(facilitatorIds = List(2L, 3L, 4L, 6L))
+    val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
+    "be able to facilitate events" in {
+      running(FakeApplication(additionalConfiguration = testDb)) {
+        Result.unit { List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue } }
+      }
     }
-    "not facilitate an event" in new WithTestApp {
-      facilitatedEvent.canFacilitate(5) must beFalse
-    }
+    //    examplesBlock { List(2, 4, 7) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue } }
+    //    //      facilitatedEvent.canFacilitate(2) must beTrue
+    //    //      facilitatedEvent.canFacilitate(7) must beTrue
+    //    //      facilitatedEvent.canFacilitate(4) must beTrue
+    //    "not facilitate an event" in new WithTestApp {
+    //      facilitatedEvent.canFacilitate(5) must beFalse
+    //    }
   }
 
-  def makeEvent(id: Option[Long] = None, eventTypeId: Option[Long] = None, brandCode: Option[String] = None,
-    title: Option[String] = None, spokenLanguage: Option[String] = None, materialsLanguage: Option[String] = None,
-    city: Option[String] = None, country: Option[String] = None, startDate: Option[LocalDate] = None,
-    endDate: Option[LocalDate] = None, notPublic: Option[Boolean] = None, archived: Option[Boolean] = None,
-    confirmed: Option[Boolean] = None, invoice: Option[EventInvoice] = None,
-    facilitatorIds: Option[List[Long]] = None): Event = {
-    new Event(id, eventTypeId.getOrElse(1), brandCode.getOrElse("MGT30"), title.getOrElse("Test event"),
-      spokenLanguage.getOrElse("EN"), materialsLanguage, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
-      new Details(None, None, None, None),
-      new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())), endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
-      notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
-      invoice.getOrElse(new EventInvoice(None, None, 1, None, None)), DateTime.now(), "Sergey Kotlov",
-      DateTime.now(), "Sergey Kotlov", facilitatorIds.getOrElse(1 :: Nil))
-  }
+}
 
+trait test extends After {
+  def after = println("Yay")
 }
 

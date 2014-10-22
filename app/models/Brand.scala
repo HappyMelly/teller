@@ -172,7 +172,6 @@ object Brand {
         case ((brand, coordinator), licenses) ⇒
           BrandView(brand, coordinator, licenses)
       }.toList.headOption
-
   }
 
   /**
