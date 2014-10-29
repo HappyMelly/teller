@@ -36,6 +36,7 @@ function showError(message) {
  * @param currentEvent  String
  */
 function getEvents(brandCode, currentEvent) {
+    //TODO it should retrieve archived events only
     $.ajax({
         url: '/brand/' + brandCode + '/events',
         dataType: "json"

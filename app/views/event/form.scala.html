@@ -35,13 +35,13 @@
         <div id="currentUserId" value="@currentUserId"></div>
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
         <div id="currentInvoiceToId" value="@form("invoice.invoiceTo").value"></div>
-        @html.twoInRow(form("brandCode"),
-          html.select(form("brandCode"), brands.map(v => v.code -> v.name))(asIs, implicitly[Lang]),
-          form("eventTypeId"),
+        @html.select(form("brandCode"), brands.map(v => v.code -> v.name), '_label -> "Brand")
+        @html.twoInRow(form("eventTypeId"),
           html.select(form("eventTypeId"), Seq(("", "Choose an event type")))(asIs, implicitly[Lang]),
-          "Brand & Title"
+          form("title"),
+          html.text(form("title"), '_label -> "", '_placeholder -> "Title")(asIs, implicitly[Lang]),
+          "Event Type & Title", required = false
         )
-        @html.text(form("title"), '_label -> "", '_placeholder -> "Title")
         @html.twoInRow(form("spokenLanguage"),
           html.select(form("spokenLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
           form("materialsLanguage"),

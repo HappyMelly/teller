@@ -341,7 +341,7 @@ object People extends Controller with Security {
   /**
    * Upload a new signature to Amazon
    */
-  def uploadSignature = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def uploadSignature = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val encoding = "ISO-8859-1"
