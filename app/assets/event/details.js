@@ -90,7 +90,7 @@ $(document).ready( function() {
     if (!hash) {
         hash = 'description';
     }
-    $('#details a[href="#' + hash + '"').tab('show');
+    $('#details a[href="#' + hash + '"]').tab('show');
 
     // Datatables
     $.extend( $.fn.dataTableExt.oStdClasses, {

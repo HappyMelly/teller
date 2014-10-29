@@ -56,6 +56,6 @@ $(document).ready( function() {
     if (!hash) {
         hash = 'finance';
     }
-    $('#activities a[href="#' + hash + '"').tab('show');
+    $('#activities a[href="#' + hash + '"]').tab('show');
 });
 

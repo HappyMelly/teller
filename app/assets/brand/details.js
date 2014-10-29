@@ -61,6 +61,6 @@ $(document).ready( function() {
     if (!hash) {
         hash = 'products';
     }
-    $('#activities a[href="#' + hash + '"').tab('show');
+    $('#activities a[href="#' + hash + '"]').tab('show');
 });
 
