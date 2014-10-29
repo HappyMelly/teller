@@ -56,7 +56,7 @@ class EventSpec extends Specification with WithTestApp {
     val facilitatedEvent = event.copy(facilitatorIds = List(2L, 3L, 4L, 6L))
     val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
     "be able to facilitate events" in new WithApplication(FakeApplication(additionalConfiguration = testDb)) {
-      List(2, 4, 7) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
+      List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
     }
     "not facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
       facilitatedEvent.canFacilitate(5) must beTrue
