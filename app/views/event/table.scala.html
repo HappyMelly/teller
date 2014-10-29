@@ -1,10 +1,7 @@
 @(events: List[Event], brands: List[(String, String)])(actions: (Event) => Html)
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import views.Languages
 
-@if(!events.isEmpty) {
+@if(events.nonEmpty) {
 
   <style>
       #events tr *:nth-child(9) {

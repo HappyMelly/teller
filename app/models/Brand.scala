@@ -233,5 +233,33 @@ object Brand {
     Brands.where(_.id === id).mutate(_.delete())
   }
 
+  /**
+   * Update brand
+   * @param existingData Brand data before update
+   * @param updatedData Brand data including updated fields from the from
+   * @param picture New brand picture
+   * @return
+   */
+  def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
+    session.withTransaction {
+      val u = updatedData.copy(id = existingData.id).copy(picture = picture)
+
+      val socialQuery = for {
+        socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get
+      } yield socialProfile
+      socialQuery.filter(_.objectType === u.socialProfile.objectType).update(u.socialProfile.copy(objectId = u.id.get))
+
+      val eventQuery = for {
+        event ← Events if event.brandCode === existingData.code
+      } yield event.brandCode
+      eventQuery.update(u.code)
+
+      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId, u.description, u.picture, u.tagLine,
+        u.webSite, u.blog, u.updated, u.updatedBy)
+      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      u
+    }
+  }
 }
 
