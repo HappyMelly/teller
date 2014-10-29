@@ -84,19 +84,6 @@ case class Brand(id: Option[Long],
   }
 
   def delete(): Unit = Brand.delete(this.id.get)
-
-  def update = DB.withSession { implicit session: Session ⇒
-    session.withTransaction {
-      val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
-      } yield socialProfile
-      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
-      val updateTuple = (code, uniqueName, name, coordinatorId, description, picture, tagLine, webSite, blog, updated, updatedBy)
-      val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
-      updateQuery.update(updateTuple)
-      this
-    }
-  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
@@ -249,10 +236,12 @@ object Brand {
       } yield socialProfile
       socialQuery.filter(_.objectType === u.socialProfile.objectType).update(u.socialProfile.copy(objectId = u.id.get))
 
-      val eventQuery = for {
-        event ← Events if event.brandCode === existingData.code
-      } yield event.brandCode
-      eventQuery.update(u.code)
+      if (existingData.code != u.code) {
+        val eventQuery = for {
+          event ← Events if event.brandCode === existingData.code
+        } yield event.brandCode
+        eventQuery.update(u.code)
+      }
 
       val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId, u.description, u.picture, u.tagLine,
         u.webSite, u.blog, u.updated, u.updatedBy)

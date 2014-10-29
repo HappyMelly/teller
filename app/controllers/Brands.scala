@@ -186,7 +186,7 @@ object Brands extends Controller with Security {
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brandView.brand.code))
         }
-        brandView.brand.copy(picture = None).update
+        Brand.update(brandView.brand, brandView.brand, None)
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
           "image from the brand " + brandView.brand.name)
         Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
