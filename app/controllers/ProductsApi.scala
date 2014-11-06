@@ -41,6 +41,7 @@ object ProductsApi extends Controller with ApiAuthentication {
       Json.obj(
         "href" -> product.id.map(productId ⇒ routes.ProductsApi.product(productId).url),
         "title" -> product.title,
+        "subtitle" -> product.subtitle,
         "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
         "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
