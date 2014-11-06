@@ -99,12 +99,12 @@
 
             @person.webSite.map { url =>
                 <p><strong>Web site</strong>
-                    <br><a href="@url">@url</a></p>
+                    <br><a href="@url" target="_blank">@url</a></p>
             }
 
             @person.blog.map { url =>
                 <p><strong>Blog</strong>
-                    <br><a href="@url">@url</a></p>
+                    <br><a href="@url" target="_blank">@url</a></p>
             }
             <p><strong>E-mail address</strong>
                 <br><a href="mailto:@person.socialProfile.email"><i class="glyphicon glyphicon-google_plus"></i>
@@ -119,16 +119,16 @@
 
             @person.socialProfile.twitterHandle.map { handle =>
                 <p><strong>Twitter</strong>
-                    <br><a href="http://twitter.com/@handle">@@@handle</a></p>
+                    <br><a href="http://twitter.com/@handle" target="_blank">@@@handle</a></p>
             }
 
             @if(person.socialProfile.facebookUrl.isDefined || person.socialProfile.linkedInUrl.isDefined ||
                     person.socialProfile.googlePlusUrl.isDefined) {
                 <p>
                     <strong>Social networks</strong>
-                    @person.socialProfile.facebookUrl.map { url => <br> <a href="@url">Facebook</a>}
-                    @person.socialProfile.linkedInUrl.map { url => <br> <a href="@url">LinkedIn</a>}
-                    @person.socialProfile.googlePlusUrl.map { url => <br> <a href="@url">Google+</a> }
+                    @person.socialProfile.facebookUrl.map { url => <br> <a href="@url" target="_blank">Facebook</a>}
+                    @person.socialProfile.linkedInUrl.map { url => <br> <a href="@url" target="_blank">LinkedIn</a>}
+                    @person.socialProfile.googlePlusUrl.map { url => <br> <a href="@url" target="_blank">Google+</a> }
                 </p>
             }
 

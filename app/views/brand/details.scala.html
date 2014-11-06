@@ -74,23 +74,23 @@
     </div>
     <div class="col-md-4">
         <p><strong>E-mail address</strong>
-            <br><a href="mailto:@brand.socialProfile.email">@brand.socialProfile.email</a>
+            <br><a href="mailto:@brand.socialProfile.email" target="_blank">@brand.socialProfile.email</a>
         </p>
 
         <p><strong>Social Accounts</strong>
             @brand.socialProfile.facebookUrl.map { url =>
-                <br><a href="@url">Facebook</a>
+                <br><a href="@url" target="_blank">Facebook</a>
             }
 
             @brand.socialProfile.linkedInUrl.map { url =>
-                <br><a href="@url">LinkedIn</a>
+                <br><a href="@url" target="_blank">LinkedIn</a>
             }
 
             @brand.socialProfile.googlePlusUrl.map { url =>
-                <br><a href="@url">Google+</a>
+                <br><a href="@url" target="_blank">Google+</a>
             }
             @brand.socialProfile.skype.map { skype =>
-                <br><a href="skype:@skype">Skype</a>
+                <br><a href="skype:@skype" target="_blank">Skype</a>
             }
         </p>
         @brand.socialProfile.phone.map { phone =>

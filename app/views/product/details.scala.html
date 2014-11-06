@@ -57,7 +57,7 @@
             }
             @product.url.map { url =>
                 <p><strong>Web site</strong>
-                    <br><a href="@url">@url</a></p>
+                    <br><a href="@url" target="_blank">@url</a></p>
             }
             @product.description.map { desc =>
                 <p>
@@ -66,7 +66,7 @@
             }
             @product.callToActionUrl.map { url =>
                 <p><strong>Call To Action URL</strong>
-                    <br><a href="@url">@url</a></p>
+                    <br><a href="@url" target="_blank">@url</a></p>
             }
             @product.callToActionText.map { text =>
                 <p><strong>Call To Action button text</strong>
