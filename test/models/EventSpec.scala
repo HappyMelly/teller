@@ -25,13 +25,9 @@ package models
  */
 
 import helpers.{ BrandHelper, EventHelper }
-import integration.{ WithTestApp }
+import integration.{ WithDb, WithTestApp }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
-import org.specs2.execute.{ Success, Result, Failure }
-import play.api.test.Helpers._
-import play.api.test.FakeApplication
-import play.api.test.WithApplication
 
 class EventSpec extends Specification with WithTestApp {
 
@@ -54,13 +50,18 @@ class EventSpec extends Specification with WithTestApp {
 
   "A facilitator" should {
     val facilitatedEvent = event.copy(facilitatorIds = List(2L, 3L, 4L, 6L))
-    val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
-    "be able to facilitate events" in new WithApplication(FakeApplication(additionalConfiguration = testDb)) {
+    "be able to facilitate events" in new WithTestApp {
       List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
     }
-    "not facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
-      facilitatedEvent.canFacilitate(5) must beTrue
+
+    "not be able to facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
+      List(1, 5) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beFalse }
+    }
+    "be able to facilitate an event if she is an Editor" in new WithDb {
+      BrandHelper.defaultBrand.insert
+      facilitatedEvent.canFacilitate(1) must beTrue
     }
   }
 
 }
+

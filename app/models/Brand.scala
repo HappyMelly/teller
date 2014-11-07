@@ -229,6 +229,7 @@ object Brand {
   }
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    //TODO delete social profile
     Brands.where(_.id === id).mutate(_.delete())
   }
 

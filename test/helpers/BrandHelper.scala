@@ -33,7 +33,7 @@ object BrandHelper {
     val brandUniqueName = "test.brand"
     val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
 
-    new Brand(None, brandCode, brandUniqueName, "Test Brand", 1, None, None, generateCert = false, None, None, None,
-      socialProfile, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+    new Brand(None, brandCode, brandUniqueName, "Test Brand", coordinatorId = 1, None, None, generateCert = false, None,
+      None, None, socialProfile, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
   }
 }

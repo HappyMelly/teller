@@ -23,16 +23,38 @@
  */
 package integration
 
-import org.specs2.execute.AsResult
-import org.specs2.mutable.Around
+import helpers.BrandHelper
+import models.Brand
+import org.specs2.execute._
+import org.specs2.mutable._
+import org.specs2.specification.Scope
 import play.api.test.FakeApplication
 import play.api.test.Helpers._
 
-trait WithTestApp extends Around {
+trait WithTestApp extends Around with Scope {
 
   val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
 
-  def around[T: AsResult](t: ⇒ T) = running(FakeApplication(additionalConfiguration = testDb)) {
-    AsResult(t)
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb)) {
+    AsResult.effectively(t)
+  }
+}
+
+trait WithDb extends Around with Scope {
+
+  val testDb = Map(
+    "db.default.url" -> "jdbc:mysql://localhost/mellytest",
+    "logger.application" -> "DEBUG")
+
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb)) {
+    try {
+      AsResult.effectively(t)
+    } finally {
+      cleanDb()
+    }
+  }
+
+  def cleanDb(): Unit = {
+    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
   }
 }
