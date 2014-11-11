@@ -22,23 +22,38 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+import java.util.concurrent.TimeUnit
+import models.Event
+import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import play.api._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 import play.api.mvc.Results._
+import play.api.Play.current
 import play.filters.csrf._
-import scala.concurrent.Future
 import play.libs.Akka
-import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import scala.concurrent.duration.Duration
-import java.util.concurrent.TimeUnit
-import models.Event
+import scala.concurrent.Future
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
     Future.successful(NotFound(
       views.html.notFoundPage(request.path)))
+  }
+
+  /**
+   * Force using HTTPS on production
+   * @param request Request object
+   * @return
+   */
+  override def onRouteRequest(request: RequestHeader): Option[Handler] = {
+    if (Play.isProd && Play.configuration.getBoolean("stage").isEmpty
+      && !request.headers.get("x-forwarded-proto").getOrElse("").contains("https")) {
+      Some(controllers.HttpsController.redirect)
+    } else {
+      super.onRouteRequest(request)
+    }
   }
 
   /**
@@ -64,7 +79,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   override def onStart(app: Application) {
     // turn this feature off on a development machine
-    if (Play.current.configuration.getBoolean("development").exists(_ == true)) {
+    if (Play.isDev) {
       return
     }
     val now = LocalDateTime.now()
