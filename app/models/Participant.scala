@@ -181,6 +181,20 @@ object Participant {
   }
 
   /**
+   * Retrieve the participants for a set of events
+   * @param eventIds a list of event ids
+   * @return
+   */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    val baseQuery = for {
+      e ← Events if e.id inSet eventIds
+      part ← Participants if part.eventId === e.id
+      p ← People if p.id === part.personId
+    } yield (e, p)
+    baseQuery.list
+  }
+
+  /**
    * Create a new person and a participant record
    * @param data Data containing records about a person and an event
    * @return
