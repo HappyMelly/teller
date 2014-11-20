@@ -118,7 +118,7 @@ object Events extends Controller with Security {
     "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
-    "title" -> nonEmptyText,
+    "title" -> nonEmptyText(1, 254),
     "spokenLanguage" -> nonEmptyText,
     "materialsLanguage" -> optional(text),
     "location" -> mapping(

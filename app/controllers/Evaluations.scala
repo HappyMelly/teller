@@ -292,7 +292,6 @@ object Evaluations extends EvaluationsController with Security {
    * @return
    */
   private def createXLSXreport(evaluations: List[(Event, Person, Evaluation)]): java.io.File = {
-    import org.apache.poi.ss.util._
     import org.apache.poi.xssf.usermodel._
     import play.api._
 
