@@ -69,6 +69,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     } getOrElse {
       (request, Action.async(BodyParsers.parse.empty)(_ ⇒ this.onHandlerNotFound(request)))
     }
+
     val api = """/api/v1""".r findPrefixOf request.path
     if (api.isEmpty) {
       (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
@@ -78,10 +79,6 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   override def onStart(app: Application) {
-    // turn this feature off on a development machine
-    if (Play.isDev) {
-      return
-    }
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
@@ -90,4 +87,5 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       Event.sendConfirmationAlert()
     }
   }
+
 }

@@ -23,9 +23,9 @@
  */
 package services
 
+import akka.actor.{ Props, Actor }
 import models.Person
 import play.api.{ Logger, Play }
-import akka.actor.{ Props, Actor }
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
 
