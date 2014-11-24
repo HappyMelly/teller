@@ -102,16 +102,21 @@ object Evaluations extends EvaluationsController with Security {
   /**
    * Delete an evaluation
    * @param id Unique evaluation identifier
+   * @param ref Identifier of a page where a user should be redirected
    * @return
    */
-  def delete(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
 
       Evaluation.find(id).map {
         evaluation ⇒
           evaluation.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
-          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -155,7 +160,12 @@ object Evaluations extends EvaluationsController with Security {
       }.getOrElse(NotFound)
   }
 
-  /** Details page **/
+  /**
+   * Redner a Details page
+   *
+   * @param id Unique evaluation identifier
+   * @return
+   */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
@@ -167,7 +177,12 @@ object Evaluations extends EvaluationsController with Security {
 
   }
 
-  /** Edit page **/
+  /**
+   * Redner an Edit page
+   *
+   * @param id Unique evaluation identifier
+   * @return
+   */
   def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
     implicit handler ⇒
 
@@ -182,7 +197,12 @@ object Evaluations extends EvaluationsController with Security {
 
   }
 
-  /** Edit form submits to this action **/
+  /**
+   * Update an evaluation
+   *
+   * @param id Unique evaluation identifier
+   * @return
+   */
   def update(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
     implicit handler ⇒
 
@@ -204,8 +224,13 @@ object Evaluations extends EvaluationsController with Security {
       }.getOrElse(NotFound)
   }
 
-  /** Approve form submits to this action **/
-  def approve(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  /**
+   * Approve form submits to this action
+   *
+   * @param id Evaluation identifier
+   * @param ref Identifier of a page where a user should be redirected
+   */
+  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { ev ⇒
 
@@ -214,12 +239,22 @@ object Evaluations extends EvaluationsController with Security {
 
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
           ev.participant.fullName)
-        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+        val route = ref match {
+          case Some("index") ⇒ routes.Participants.index().url
+          case Some("evaluation") ⇒ routes.Evaluations.details(id).url
+          case _ ⇒ routes.Events.details(ev.eventId).url + "#participant"
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
-  /** Reject form submits to this action **/
-  def reject(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  /**
+   * Reject form submits to this action
+   *
+   * @param id Evaluation identifier
+   * @param ref Identifier of a page where a user should be redirected
+   */
+  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
         existingEvaluation.reject()
@@ -235,10 +270,21 @@ object Evaluations extends EvaluationsController with Security {
           Some(Set(brand.coordinator)), subject,
           mail.html.rejected(brand.brand, participant, facilitator).toString(), richMessage = true)
 
-        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+        val route = ref match {
+          case Some("index") ⇒ routes.Participants.index().url
+          case Some("evaluation") ⇒ routes.Evaluations.details(id).url
+          case _ ⇒ routes.Events.details(existingEvaluation.eventId).url + "#participant"
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
+  /**
+   * Retrieve active events which a user is able to see
+   *
+   * @param account User object
+   * @return
+   */
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
       Event.findActive

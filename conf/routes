@@ -53,13 +53,13 @@ GET         /contribution/:id/delete                                            
 
 POST        /evaluation/                                                              controllers.Evaluations.create
 GET         /evaluation/new/                                                          controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
-GET         /evaluation/:id/approve                                                   controllers.Evaluations.approve(id: Long)
-GET         /evaluation/:id/reject                                                    controllers.Evaluations.reject(id: Long)
+GET         /evaluation/:id/approve                                                   controllers.Evaluations.approve(id: Long, ref: Option[String])
+GET         /evaluation/:id/reject                                                    controllers.Evaluations.reject(id: Long, ref: Option[String])
 POST        /evaluation/:id/move                                                      controllers.Evaluations.move(id: Long)
 GET         /evaluation/:id/edit                                                      controllers.Evaluations.edit(id: Long)
 GET         /evaluation/:id                                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                                           controllers.Evaluations.update(id: Long)
-GET         /evaluation/:id/delete                                                    controllers.Evaluations.delete(id: Long)
+GET         /evaluation/:id/delete                                                    controllers.Evaluations.delete(id: Long, ref: Option[String])
 
 GET         /report/create/:code/event/:eventId/status/:status/byMe/:byMe             controllers.Reports.create(code: String, eventId: Long, status: Int, byMe: Boolean)
 

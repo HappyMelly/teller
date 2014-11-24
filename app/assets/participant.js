@@ -152,7 +152,7 @@ function buildExportLink(detailsPage) {
         facilitatedByMe = $('#facilitatedByMe').is(':checked');
     }
     var suffix = brandCode + '/event/' + eventId + '/status/' + status + '/byMe/' + facilitatedByMe;
-    $("#exportLink").attr("href", "/evaluations/export/" + suffix);
+    $("#exportLink").attr("href", "/report/create/" + suffix);
 }
 
 /**
