@@ -29,6 +29,7 @@ from third-party apps and websites.
     * Set checkbox **Allow this application to be used to Sign in with Twitter**
 
 6. Set up Memcache (you can use any Memcache service like [Memcachier](http://memcachier.com)
+
 ### Application
 
 1. Clone the repo
