@@ -28,6 +28,7 @@ from third-party apps and websites.
     * Add callback URL `http://127.0.0.1:9000/authenticate/twitter`
     * Set checkbox **Allow this application to be used to Sign in with Twitter**
 
+6. Set up Memcache (you can use any Memcache service like [Memcachier](http://memcachier.com)
 ### Application
 
 1. Clone the repo
@@ -47,7 +48,10 @@ from third-party apps and websites.
         export LINKEDIN_SECRET=[App secret]
         export GOOGLE_ID=[App ID]
         export GOOGLE_SECRET=[App secret]
-        export play run
+        export MEMCACHIER_SERVERS=[url]
+        export MEMCACHIER_USERNAME=[username]
+        export MEMCACHIER_PASSWORD=[password]
+        play run
 
 3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
