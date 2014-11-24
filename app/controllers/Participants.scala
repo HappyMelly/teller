@@ -124,7 +124,7 @@ object Participants extends Controller with Security {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(id, brand.brand, data),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account),
+                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "index"),
                     "participant" -> participantActions(data, account))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
@@ -169,7 +169,7 @@ object Participants extends Controller with Security {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(id, brand.brand, data),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account),
+                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "event"),
                     "participant" -> participantActions(data, account))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
@@ -334,16 +334,16 @@ object Participants extends Controller with Security {
   }
 
   /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount): JsValue = {
+  private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount, page: String): JsValue = {
     Json.obj(
       "approve" -> {
         if (data.status.get != EvaluationStatus.Approved)
-          routes.Evaluations.approve(id).url
+          routes.Evaluations.approve(id, Some(page)).url
         else ""
       },
       "reject" -> {
         if (data.status.get != EvaluationStatus.Rejected)
-          routes.Evaluations.reject(id).url
+          routes.Evaluations.reject(id, Some(page)).url
         else ""
       },
       "move" -> routes.Evaluations.move(id).url,
@@ -353,7 +353,7 @@ object Participants extends Controller with Security {
         else ""
       },
       "view" -> routes.Evaluations.details(id).url,
-      "remove" -> routes.Evaluations.delete(id).url)
+      "remove" -> routes.Evaluations.delete(id, Some(page)).url)
   }
 
   /** Return a list of possible actions for a participant */
