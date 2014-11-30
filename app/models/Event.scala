@@ -115,7 +115,7 @@ case class Event(
       schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
       notPublic, archived, confirmed, created, createdBy)
     val id = Events.forInsert.insert(insertTuple)
-    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
+    this.facilitatorIds.distinct.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
     EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
     this.copy(id = Some(id))
   }
@@ -131,7 +131,7 @@ case class Event(
     updateQuery.update(updateTuple)
 
     EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
-    this.facilitatorIds.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
+    this.facilitatorIds.distinct.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
 
     EventInvoice.update(this.invoice)
 

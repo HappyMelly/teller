@@ -63,6 +63,42 @@ object SocialProfile {
     Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first
   }
 
+  /**
+   * Find a profile associated with Twitter
+   * @param twitterHandle Twitter name
+   * @return
+   */
+  def findByTwitter(twitterHandle: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.twitterHandle === twitterHandle).firstOption
+  }
+
+  /**
+   * Find a profile associated with Facebook
+   * @param facebookUrl Facebook profile
+   * @return
+   */
+  def findByFacebook(facebookUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.facebookUrl === facebookUrl).firstOption
+  }
+
+  /**
+   * Find a profile associated with LinkedIn
+   * @param linkedInUrl LinkedIn profile
+   * @return
+   */
+  def findByLinkedin(linkedInUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.linkedInUrl === linkedInUrl).firstOption
+  }
+
+  /**
+   * Find a profile associated with Google+
+   * @param googlePlusUrl Google+ profile
+   * @return
+   */
+  def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
+  }
+
   def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
     SocialProfiles.insert(socialProfile)
     socialProfile

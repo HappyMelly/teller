@@ -184,7 +184,7 @@ object Brand {
    * Return a list of facilitators for a given brand
    */
   def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
-    val licensees = License.licensees(code, LocalDate.now())
+    val licensees = License.licensees(code, LocalDate.now()).distinct
     if (licensees.exists(_.id == coordinator.id))
       licensees
     else

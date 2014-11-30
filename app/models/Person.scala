@@ -180,7 +180,7 @@ case class Person(
   /**
    * Inserts this person into the database and returns the saved Person, with the ID added.
    */
-  def insert: Person = DB.withSession { implicit session: Session ⇒
+  def insert: Person = DB.withTransaction { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
     val personId = People.forInsert.insert(this.copy(address = newAddress))
     SocialProfile.insert(socialProfile.copy(objectId = personId))

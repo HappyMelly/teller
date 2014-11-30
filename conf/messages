@@ -109,6 +109,7 @@ error.eventType.tooManyEvents = You cannot delete an event type because there're
 error.eventType.nameWrongLength = A name of an event type should not be empty or more than 254 characters long
 error.language.unknown = Unknown language
 error.participant.notExist = The person is not a participant of the event
+error.socialProfile.exist = This social profile is already in use
 error.person.notExist = The person does not exist
 error.retry = {0}. Please try again.
 error.notDeletablePerson = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
