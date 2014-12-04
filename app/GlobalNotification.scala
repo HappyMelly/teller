@@ -22,14 +22,20 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+import java.util.concurrent.TimeUnit
+import models.Event
+import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import play.api._
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 import play.api.mvc.Results._
 import play.api.Play.current
 import play.filters.csrf._
+import play.libs.Akka
+import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 
-object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
+object GlobalNotification extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
     Future.successful(NotFound(
@@ -69,6 +75,16 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
     } else {
       (routedRequest, handler)
+    }
+  }
+
+  override def onStart(app: Application) {
+    val now = LocalDateTime.now()
+    val targetDate = LocalDate.now.plusDays(1)
+    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
+    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
+    Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
+      Event.sendConfirmationAlert()
     }
   }
 
