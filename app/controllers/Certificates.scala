@@ -37,8 +37,9 @@ object Certificates extends Controller with Security {
    * Generate new certificate
    *
    * @param id Certificate identifier
+   * @param ref Identifier of a page where a user should be redirected
    */
-  def create(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def create(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒
 
       Evaluation.find(id).map {
@@ -47,7 +48,12 @@ object Certificates extends Controller with Security {
           val brand = Brand.find(evaluation.event.brandCode).get
           val certificate = new Certificate(evaluation)
           certificate.generateAndSend(brand, approver)
-          Redirect(routes.Participants.index()).flashing("success" -> "Certificate was generated")
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.id.get).url
+            case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> "Certificate was generated")
       }.getOrElse(NotFound)
   }
 

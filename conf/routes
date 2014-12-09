@@ -46,7 +46,7 @@ GET         /brand/:code/template                                               
 POST        /brand/:code/template                                                     controllers.CertificateTemplates.create(code: String)
 
 GET         /certificate/:id                                                          controllers.Certificates.certificate(id: String)
-GET         /certificate/new/:evaluationId                                            controllers.Certificates.create(evaluationId: Long)
+GET         /certificate/new/:evaluationId                                            controllers.Certificates.create(evaluationId: Long, ref: Option[String])
 
 POST        /contribution/new                                                         controllers.Contributions.create(page: String)
 GET         /contribution/:id/delete                                                  controllers.Contributions.delete(id: Long, page: String)
@@ -109,7 +109,7 @@ GET         /participants/:eventId                                              
 GET         /participant/new/                                                         controllers.Participants.add(brandCode: Option[String], eventId: Option[Long], ref: Option[String])
 POST        /participant                                                              controllers.Participants.create(ref: Option[String])
 POST        /participant/person                                                       controllers.Participants.createParticipantAndPerson(ref: Option[String])
-GET         /participant/:eventId/:personId/delete/                                   controllers.Participants.delete(eventId: Long, personId: Long)
+GET         /participant/:eventId/:personId/delete/                                   controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
 
 GET         /people                                                                   controllers.People.index
 

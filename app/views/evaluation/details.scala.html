@@ -24,7 +24,7 @@
                     <div class="button">
                         @if(evaluation.status == EvaluationStatus.Approved && brand.generateCert) {
                             <button class="btn btn-default" tabindex="-1"
-                            href="@CSRF(routes.Certificates.create(evaluation.id.getOrElse(0)))"
+                            href="@CSRF(routes.Certificates.create(evaluation.id.getOrElse(0), Some("evaluation")))"
                             type="submit">
                                 <i class="glyphicon glyphicon-white glyphicon-file"></i> Generate Certificate
                             </button>
