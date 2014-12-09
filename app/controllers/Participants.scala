@@ -123,9 +123,9 @@ object Participants extends Controller with Security {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(id, brand.brand, data),
+                    "certificate" -> certificateActions(id, brand.brand, data, "index"),
                     "evaluation" -> evaluationActions(id, brand.brand, data, account, "index"),
-                    "participant" -> participantActions(data, account))
+                    "participant" -> participantActions(data, account, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "evaluation" -> Json.obj(
@@ -134,10 +134,10 @@ object Participants extends Controller with Security {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
-                      "participant" -> participantActions(data, account))
+                      "participant" -> participantActions(data, account, "index"))
                   } else {
                     Json.obj(
-                      "participant" -> participantActions(data, account))
+                      "participant" -> participantActions(data, account, "index"))
                   }
                 }
               })
@@ -168,9 +168,9 @@ object Participants extends Controller with Security {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(id, brand.brand, data),
+                    "certificate" -> certificateActions(id, brand.brand, data, "event"),
                     "evaluation" -> evaluationActions(id, brand.brand, data, account, "event"),
-                    "participant" -> participantActions(data, account))
+                    "participant" -> participantActions(data, account, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "evaluation" -> Json.obj(
@@ -179,10 +179,10 @@ object Participants extends Controller with Security {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
-                      "participant" -> participantActions(data, account))
+                      "participant" -> participantActions(data, account, "event"))
                   } else {
                     Json.obj(
-                      "participant" -> participantActions(data, account))
+                      "participant" -> participantActions(data, account, "event"))
                   }
                 }
               })
@@ -195,6 +195,9 @@ object Participants extends Controller with Security {
 
   /**
    * Returns a list of participants without evaluations for a particular event
+   *
+   * @param eventId Event identifier
+   * @return
    */
   def participants(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit val personWrites = new Writes[Person] {
@@ -214,7 +217,12 @@ object Participants extends Controller with Security {
   }
 
   /**
-   * Create page.
+   * Render a Create page
+   *
+   * @param brandCode A code of the brand to add participant to
+   * @param eventId An identifier of the event to add participant to
+   * @param ref An identifier of a page where a user should be redirected
+   * @return
    */
   def add(brandCode: Option[String], eventId: Option[Long], ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
@@ -230,6 +238,12 @@ object Participants extends Controller with Security {
         showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
   }
 
+  /**
+   * Add a new participant to the event from a list of people inside the Teller
+   *
+   * @param ref An identifier of a page where a user should be redirected
+   * @return
+   */
   def create(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
       val form: Form[Participant] = existingPersonForm.bindFromRequest
@@ -245,18 +259,37 @@ object Participants extends Controller with Security {
             showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },
         participant ⇒ {
-          Participant.insert(participant)
-          val activityObject = Messages("activity.participant.create",
-            participant.person.get.fullName, participant.event.get.title)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-          val route = ref match {
-            case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
-            case _ ⇒ routes.Participants.index().url
+          Participant.find(participant.personId, participant.eventId) match {
+            case Some(p) ⇒ {
+              val account = request.user.asInstanceOf[LoginIdentity].userAccount
+              val brands = Brand.findByUser(account)
+              val people = Person.findActive
+              val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
+              BadRequest(views.html.participant.form(request.user, None, brands, people,
+                newPersonForm(account, request.user.fullName), form.withError("participantId", "error.participant.exist"),
+                showExistingPersonForm = true, form("brandId").value, Some(chosenEventId), ref))
+            }
+            case _ ⇒ {
+              Participant.insert(participant)
+              val activityObject = Messages("activity.participant.create",
+                participant.person.get.fullName, participant.event.get.title)
+              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val route = ref match {
+                case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
+                case _ ⇒ routes.Participants.index().url
+              }
+              Redirect(route).flashing("success" -> activity.toString)
+            }
           }
-          Redirect(route).flashing("success" -> activity.toString)
         })
   }
 
+  /**
+   * Add a new person to the system and a new participant to the event
+   *
+   * @param ref An identifier of a page where a user should be redirected
+   * @return
+   */
   def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -283,15 +316,25 @@ object Participants extends Controller with Security {
         })
   }
 
-  def delete(eventId: Long, personId: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  /**
+   * Delete a participant from the event
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   * @param ref An identifier of a page where a user should be redirected
+   * @return
+   */
+  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
       Participant.find(personId, eventId).map { value ⇒
 
         val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
         value.delete()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-
-        Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+        val route = ref match {
+          case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
+          case _ ⇒ routes.Participants.index().url
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -324,11 +367,11 @@ object Participants extends Controller with Security {
   }
 
   /** Return a list of possible actions for a certificate */
-  private def certificateActions(evaluationId: Long, brand: Brand, data: ParticipantView): JsValue = {
+  private def certificateActions(evaluationId: Long, brand: Brand, data: ParticipantView, page: String): JsValue = {
     Json.obj(
       "generate" -> {
         if (data.status.get == EvaluationStatus.Approved && brand.generateCert)
-          routes.Certificates.create(evaluationId).url
+          routes.Certificates.create(evaluationId, Some(page)).url
         else ""
       })
   }
@@ -357,7 +400,7 @@ object Participants extends Controller with Security {
   }
 
   /** Return a list of possible actions for a participant */
-  private def participantActions(data: ParticipantView, account: UserAccount): JsValue = {
+  private def participantActions(data: ParticipantView, account: UserAccount, page: String): JsValue = {
     Json.obj("view" -> routes.People.details(data.person.id.get).url,
       "edit" -> {
         if (account.editor || data.person.virtual)
@@ -369,7 +412,7 @@ object Participants extends Controller with Security {
           routes.People.details(data.person.id.get).url
         else ""
       },
-      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get).url)
+      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get, Some(page)).url)
   }
 
   private def findEvents(account: UserAccount): List[Event] = {
