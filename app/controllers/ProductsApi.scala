@@ -72,7 +72,7 @@ object ProductsApi extends Controller with ApiAuthentication {
    */
   def product(id: Long) = TokenSecuredAction { implicit request ⇒
     Product.find(id).map { product ⇒
-      Ok(Json.toJson(product)(productDetailsWrites))
+      Ok(Json.prettyPrint(Json.toJson(product)(productDetailsWrites)))
     }.getOrElse(NotFound("Unknown product"))
   }
 
@@ -80,6 +80,6 @@ object ProductsApi extends Controller with ApiAuthentication {
    * Product list API.
    */
   def products = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Product.findAll))
+    Ok(Json.prettyPrint(Json.toJson(Product.findAll)))
   }
 }
