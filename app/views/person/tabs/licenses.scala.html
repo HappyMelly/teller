@@ -25,10 +25,9 @@
             Signature</a></p>
     }
     @dynamic(handler, "person", "edit") {
-        <form action="@CSRF(routes.People.uploadSignature())"
+        <form action="@CSRF(routes.People.uploadSignature(person.id.getOrElse(0)))"
         method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <input type="hidden" name="personId" value="@person.id"/>
                 <input type="file" id="signature" class="form-control input-sm" name="signature"/>
             </div>
             <button class="btn btn-primary btn-sm" type="submit">
