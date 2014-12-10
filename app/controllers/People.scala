@@ -340,16 +340,14 @@ object People extends Controller with Security {
 
   /**
    * Upload a new signature to Amazon
+   *
+   * @param id Person identifier
    */
-  def uploadSignature = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
+  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val encoding = "ISO-8859-1"
-      val form = Form(tuple(
-        "personId" -> nonEmptyText,
-        "signature" -> optional(text)))
-      val (personId, signature) = form.bindFromRequest.get
-      Person.find(personId.toLong).map { person ⇒
+      Person.find(id).map { person ⇒
         val route = routes.People.details(person.id.get).url + "#licenses"
 
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
@@ -359,7 +357,7 @@ object People extends Controller with Security {
           source.close()
           S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
             person.copy(signature = true).update
-            Cache.remove(Person.cacheId(personId.toLong))
+            Cache.remove(Person.cacheId(id))
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
             Redirect(route).flashing("success" -> activity.toString)
           }.recover {

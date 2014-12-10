@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ UserAccount, LoginIdentity, UserRole, Event, Evaluation, Person }
+import models._
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect
@@ -134,7 +134,7 @@ trait Security extends SecureSocial with DeadboltActions {
 class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    account.map { existingAccount ⇒
+    account.exists { existingAccount ⇒
       val userId = existingAccount.personId
       name match {
         case "evaluation" ⇒
@@ -166,31 +166,42 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
               //   where the person was a participant
               existingAccount.editor || personId.get.toLong == existingAccount.personId || {
-                Person.find(personId.get.toLong).map { person ⇒
+                Person.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
-                    !person.participateInEvents(userId).isEmpty
+                    person.participateInEvents(userId).nonEmpty
                   } else {
                     false
                   }
-                }.getOrElse(false)
+                }
               }
             case "delete" ⇒
               val personId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or he's a facilitator of the event where the person was a participant
               existingAccount.editor || {
-                Person.find(personId.get.toLong).map { person ⇒
+                Person.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
-                    !person.participateInEvents(existingAccount.personId).isEmpty
+                    person.participateInEvents(existingAccount.personId).nonEmpty
                   } else {
                     false
                   }
-                }.getOrElse(false)
+                }
               }
+            case _ ⇒ true
+          }
+        case "organisation" ⇒
+          meta match {
+            case "edit" ⇒
+              val organisationId = """\d+""".r findFirstIn request.uri
+              // A User should have an Editor role or should be a member of the organisation
+              existingAccount.editor ||
+                (organisationId.nonEmpty && Organisation.find(organisationId.get.toLong).exists {
+                  _.members.find(_.id == Some(existingAccount.personId)).nonEmpty
+                })
             case _ ⇒ true
           }
         case _ ⇒ false
       }
-    }.getOrElse(false)
+    }
   }
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
