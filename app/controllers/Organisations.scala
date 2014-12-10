@@ -128,7 +128,7 @@ object Organisations extends Controller with Security {
   }
 
   /**
-   * Deletes an organisation.
+   * Delete an organisation
    * @param id Organisation ID
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
@@ -138,12 +138,12 @@ object Organisations extends Controller with Security {
         organisation ⇒
           Organisation.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, organisation.name)
-          Redirect(routes.Organisations.index).flashing("success" -> activity.toString)
+          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
   /**
-   * Details page.
+   * Render a Details page
    * @param id Organisation ID
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -153,7 +153,7 @@ object Organisations extends Controller with Security {
         organisation ⇒
           val members = organisation.members
           val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-          val contributions = Contribution.contributions(id, false)
+          val contributions = Contribution.contributions(id, isPerson = false)
           val products = Product.findAll
 
           Ok(views.html.organisation.details(request.user, organisation,
@@ -163,10 +163,10 @@ object Organisations extends Controller with Security {
   }
 
   /**
-   * Edit page.
+   * Render an Edit page
    * @param id Organisation ID
    */
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒
 
       Organisation.find(id).map {
@@ -186,10 +186,10 @@ object Organisations extends Controller with Security {
   }
 
   /**
-   * Edit form submits to this action.
+   * Update an organisation
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒
 
       organisationForm.bindFromRequest.fold(
