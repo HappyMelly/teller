@@ -44,7 +44,7 @@
                 @html.checkbox(form("confirmed"), '_label -> "Confirmed", '_help -> "")
 
                 @html.money("fee", form("fee.currency"), form("fee.amount"),
-                    '_label -> "Fee", '_step -> "1.0", '_help -> "Required")
+                    '_label -> "Fee", '_help -> "Required")
                 @html.money("feePaid", form("feePaid.currency"), form("feePaid.amount"),
                     '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
 

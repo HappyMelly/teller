@@ -29,7 +29,7 @@
         <td>@license.license.signed.format</td>
         <td>@license.license.start.format</td>
         <td>@license.license.end.format</td>
-        <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmountMajor</td>
+        <td>@license.license.fee.getCurrencyUnit.getCode&nbsp;@license.license.fee.getAmount</td>
         <td>@license.license.feePaid.map(_.format)</td>
         @restrict(handler, List(as(Editor.toString))) {
           <td><a href="@routes.Licenses.edit(license.license.id.getOrElse(0))">

@@ -13,7 +13,7 @@
         <span class="input-group-addon">@CurrencyUnit.of(args.toMap.get('_currency).getOrElse("").toString).getCode</span>
         <input type="hidden" name="@codeField.name" value="@args.toMap.get('_currency)">
         <input class="form-control" name="@amountField.name"
-          type="number" min="0" step="@args.toMap.get('_step).getOrElse("0.01")" value="@amountField.value">
+          type="number" min="0.00" step="@args.toMap.get('_step).getOrElse("0.01")" value="@amountField.value">
       </div>
     } else {
       <div class="input">
@@ -24,7 +24,7 @@
           }
         </select>
         <input class="form-control short" name="@amountField.name"
-          type="number" min="0" step="@args.toMap.get('_step).getOrElse("0.01")" value="@amountField.value">
+          type="number" min="0.00" step="@args.toMap.get('_step).getOrElse("0.01")" value="@amountField.value">
       </div>
     }
     <span class="help-block">
