@@ -58,11 +58,13 @@
                         <div class="button">
                             <form class="delete form-inline" method="post" text="person"
                             action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
-                                <button class="btn btn-danger" type="submit"
-                                    @if(!person.deletable) {
-                                        disabled="disabled" title="@Messages("error.notDeletablePerson")" }>
-                                    <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                                </button>
+                                <div data-toggle="tooltip" data-placement="bottom"
+                                    @if(!person.deletable) { title="@Messages("error.person.nonDeletable")" }>
+                                    <button class="btn btn-danger" type="submit"
+                                        @if(!person.deletable) { disabled="disabled" } >
+                                        <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     }

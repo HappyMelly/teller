@@ -149,5 +149,6 @@ $(document).ready( function() {
     });
     $('#participantList').on('change', '.participant', toggleSentButton);
     $('textarea[name=body]').on('input propertychange', toggleSentButton);
+    $('[data-toggle="tooltip"]').tooltip();
 });
 

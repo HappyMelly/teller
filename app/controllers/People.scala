@@ -238,7 +238,7 @@ object People extends Controller with Security {
 
       Person.find(id).map { person ⇒
         if (!person.deletable) {
-          Redirect(routes.People.index()).flashing("error" -> Messages("error.notDeletablePerson"))
+          Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
           Person.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)

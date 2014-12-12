@@ -57,5 +57,6 @@ $(document).ready( function() {
         hash = 'finance';
     }
     $('#activities a[href="#' + hash + '"]').tab('show');
+    $('[data-toggle="tooltip"]').tooltip();
 });
 
