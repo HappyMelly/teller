@@ -225,13 +225,15 @@ object Events extends Controller with Security {
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
-        deletedEvent ⇒
+      Event.find(id).map { event ⇒
+        if (event.deletable) {
           Event.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, deletedEvent.title)
-          sendEmailNotification(deletedEvent, List.empty, activity, Brand.find(deletedEvent.brandCode).get.coordinator)
-
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
+          sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+        } else {
+          Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
+        }
       }.getOrElse(NotFound)
   }
 

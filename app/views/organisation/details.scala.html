@@ -45,10 +45,13 @@
             <div class="button">
               <form class="delete form-inline" method="post" text="organisation"
                 action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
-                <button class="btn btn-danger" type="submit"
-                  @if(!organisation.deletable) { disabled="disabled" title="You cannot delete this organisation because it has members, booking entries or an active account" }>
-                  <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                </button>
+                <div data-toggle="tooltip" data-placement="bottom"
+                  @if(!organisation.deletable) { title="@Messages("error.organisation.nonDeletable")" }>
+                    <button class="btn btn-danger" type="submit"
+                      @if(!organisation.deletable) { disabled="disabled" }>
+                      <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                    </button>
+                </div>
               </form>
             </div>
           }

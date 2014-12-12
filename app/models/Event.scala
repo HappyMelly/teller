@@ -89,6 +89,8 @@ case class Event(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
+  lazy val deletable: Boolean = participants.isEmpty
+
   /**
    * To facilitate the event = to edit the event, to approve/reject evaluations, to delete evaluations
    *

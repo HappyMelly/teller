@@ -40,11 +40,14 @@
                     </div>
                 }
                 <div class="button">
-                    <form class="delete" class="form-inline" method="post" text="event"
+                    <form class="delete form-inline" method="post" text="event"
                     action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
-                        <button class="btn btn-danger" type="submit">
-                            <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                        </button>
+                        <div data-toggle="tooltip" data-placement="bottom"
+                            @if(!event.deletable) { title="@Messages("error.event.nonDeletable")" }>
+                            <button class="btn btn-danger" type="submit" @if(!event.deletable) { disabled="disabled"} >
+                                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                            </button>
+                        </div>
                     </form>
                 </div>
             }
