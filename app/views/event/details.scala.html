@@ -4,11 +4,8 @@
         )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import views.Languages
 
 @main(event.title + " - Event", "events", Some(user)) {
 
@@ -77,11 +74,11 @@
         </p>
         <p>
             <strong>Spoken Language</strong><br/>
-            @Languages.all.get(event.spokenLanguage)
+            @event.spokenLanguage
         </p>
-        @event.materialsLanguage.map { lang =>
+        @event.language.spoken.map { lang =>
             <p>
-                <strong>Materials Language</strong><br/>@Languages.all.get(lang)
+                <strong>Materials Language</strong><br/>@event.materialsLanguage
             </p>
         }
         @event.details.webSite.map { url =>

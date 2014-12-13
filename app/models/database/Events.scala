@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ Details, Location, Schedule, Event, EventInvoice }
+import models._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 
@@ -40,6 +40,7 @@ private[models] object Events extends Table[Event]("EVENT") {
   def title = column[String]("TITLE")
 
   def spokenLanguage = column[String]("SPOKEN_LANGUAGE")
+  def secondSpokenLanguage = column[Option[String]]("SECOND_SPOKEN_LANGUAGE")
   def materialsLanguage = column[Option[String]]("MATERIALS_LANGUAGE")
   def city = column[String]("CITY")
   def countryCode = column[String]("COUNTRY_CODE")
@@ -65,19 +66,22 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def brand = foreignKey("BRAND_FK", brandCode, Brands)(_.code)
 
-  def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
-    description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
+  def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
+    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
     notPublic ~ archived ~ confirmed <> (
-      e ⇒ Event(e._1, e._2, e._3, e._4, e._5, e._6, Location(e._7, e._8), Details(e._9, e._10, e._11, e._12),
-        Schedule(e._13, e._14, e._15, e._16), e._17, e._18, e._19, EventInvoice.findByEvent(e._1.get),
+      e ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7), Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
+        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, EventInvoice.findByEvent(e._1.get),
         DateTime.now(), "", DateTime.now(), "", Event.getFacilitatorIds(e._1.getOrElse(0))),
-      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.spokenLanguage, e.materialsLanguage, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention, e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay, e.schedule.totalHours, e.notPublic, e.archived, e.confirmed)))
+      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language.spoken, e.language.secondSpoken,
+        e.language.materials, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention,
+        e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,
+        e.schedule.totalHours, e.notPublic, e.archived, e.confirmed)))
 
-  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
-    description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
+  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
+    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
     notPublic ~ archived ~ confirmed ~ created ~ createdBy returning id
 
-  def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ materialsLanguage ~ city ~ countryCode ~
-    description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
+  def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
+    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
     notPublic ~ archived ~ confirmed ~ updated ~ updatedBy
 }

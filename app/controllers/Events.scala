@@ -119,8 +119,10 @@ object Events extends Controller with Security {
     "brandCode" -> nonEmptyText.verifying(
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText(1, 254),
-    "spokenLanguage" -> nonEmptyText,
-    "materialsLanguage" -> optional(text),
+    "language" -> mapping(
+      "spoken" -> nonEmptyText,
+      "secondSpoken" -> optional(text),
+      "materials" -> optional(text))(Language.apply)(Language.unapply),
     "location" -> mapping(
       "city" -> nonEmptyText,
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
@@ -128,7 +130,7 @@ object Events extends Controller with Security {
       "description" -> optional(text),
       "specialAttention" -> optional(text),
       "webSite" -> optional(webUrl),
-      "registrationPage" -> optional(webUrl))(Details.apply)(Details.unapply),
+      "registrationPage" -> optional(text))(Details.apply)(Details.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
       "end" -> of(dateRangeFormatter),
@@ -164,7 +166,7 @@ object Events extends Controller with Security {
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
-      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule,
+      val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, defaultInvoice,
         DateTime.now(), "", DateTime.now(), "", List[Long]())
       val account = request.user.asInstanceOf[LoginIdentity].userAccount

@@ -42,12 +42,14 @@
           html.text(form("title"), '_label -> "", '_placeholder -> "Title")(asIs, implicitly[Lang]),
           "Event Type & Title", required = false
         )
-        @html.twoInRow(form("spokenLanguage"),
-          html.select(form("spokenLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
-          form("materialsLanguage"),
-          html.select(form("materialsLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
-          "Spoken & Materials Languages"
+        @html.twoInRow(form("language.spoken"),
+          html.select(form("language.spoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+          form("language.secondSpoken"),
+          html.select(form("language.secondSpoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+          "Spoken Languages"
         )
+        @html.select(form("language.materials"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
+          '_label -> "Materials Language")
         @html.twoInRow(form("location.country"),
           html.select(form("location.country"), ("", "Choose a country") +: Countries.all)(asIs, implicitly[Lang]),
           form("location.city"),
@@ -98,7 +100,7 @@
         @html.text(form("details.webSite"), '_label -> "Organizer website",
           'placeholder -> "http://", '_help -> "Web site URL")
         @html.text(form("details.registrationPage"), '_label -> "Registration page",
-          'placeholder -> "http://", '_help -> "Web site URL")
+          'placeholder -> "http:// or mailto:", '_help -> "Web site URL or email address")
         @html.checkbox(form("notPublic"),
           '_label -> "Private Event : Private events are not shown on the calendar, but evaluation is still possible",
           '_help -> "")
