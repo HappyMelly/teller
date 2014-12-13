@@ -120,9 +120,9 @@ object Events extends Controller with Security {
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
     "title" -> nonEmptyText(1, 254),
     "language" -> mapping(
-      "spoken" -> nonEmptyText,
-      "secondSpoken" -> optional(text),
-      "materials" -> optional(text))(Language.apply)(Language.unapply),
+      "spoken" -> language,
+      "secondSpoken" -> optional(language),
+      "materials" -> optional(language))(Language.apply)(Language.unapply),
     "location" -> mapping(
       "city" -> nonEmptyText,
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
