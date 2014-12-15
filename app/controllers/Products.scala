@@ -217,7 +217,7 @@ object Products extends Controller with Security {
         product ⇒
           val derivatives = Product.findDerivatives(id)
           val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
-          val brands = Brand.findAll
+          val brands = Brand.findAllWithCoordinator
           val contributors = Contribution.contributors(id)
           val people = Person.findAll
           val organisations = Organisation.findAll

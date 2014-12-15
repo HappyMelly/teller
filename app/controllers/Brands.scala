@@ -98,7 +98,7 @@ object Brands extends Controller with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      val brands = models.Brand.findAll
+      val brands = models.Brand.findAllWithCoordinator
       Ok(views.html.brand.index(request.user, brands))
   }
 
