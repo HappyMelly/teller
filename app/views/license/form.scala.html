@@ -36,7 +36,7 @@
                 </h1>
             </div>
             @html.form(action = CSRF(if(editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
-                @html.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+                @html.select(form("brandId"), Brand.findAllWithCoordinator.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
                 @html.text(form("version"), '_label -> "Version")
                 @html.date(form("signed"), '_label -> "Date signed", '_help -> "Required")
                 @html.date(form("start"), '_label -> "Start date", '_help -> "Required")

@@ -100,7 +100,7 @@ object BookingEntries extends Controller with Security {
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
 
-      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll))
+      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
   }
 
   /**
@@ -116,7 +116,7 @@ object BookingEntries extends Controller with Security {
       // by redisplaying the edit page with error messages.
       val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
         val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-        val brands = Brand.findAll
+        val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
       }
@@ -225,7 +225,7 @@ object BookingEntries extends Controller with Security {
           val form = bookingEntryForm.fill(bookingEntry)
           val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAll, TransactionType.findAll, None, Some(bookingNumber)))
+          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
           Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
         }
@@ -294,7 +294,7 @@ object BookingEntries extends Controller with Security {
           // by redisplaying the edit page with error messages.
           val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
             val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-            val brands = Brand.findAll
+            val brands = Brand.findAllWithCoordinator
             val transactionTypes = TransactionType.findAll
             BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
           }
@@ -364,7 +364,7 @@ object BookingEntries extends Controller with Security {
       case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
       case Some("copy") ⇒ {
         val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-        val brands = Brand.findAll
+        val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))
       }
