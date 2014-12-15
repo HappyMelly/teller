@@ -37,6 +37,7 @@ object Languages {
       "FR" -> "French",
       "DE" -> "German",
       "IT" -> "Italian",
+      "SL" -> "Slovenian",
       "JA" -> "Japanese",
       "NO" -> "Norwegian",
       "PL" -> "Polish",
