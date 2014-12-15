@@ -68,6 +68,24 @@ case class Event(
   updatedBy: String,
   facilitatorIds: List[Long]) {
 
+  private var _facilitators: Option[List[Person]] = None
+
+  def facilitators: List[Person] = if (_facilitators.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      val query = for {
+        facilitation ← EventFacilitators if facilitation.eventId === this.id
+        person ← facilitation.facilitator
+      } yield person
+      query.sortBy(_.lastName.toLowerCase).list
+    }
+  } else {
+    _facilitators.get
+  }
+
+  def facilitators_=(facilitators: List[Person]): Unit = {
+    _facilitators = Some(facilitators)
+  }
+
   val longTitle: String = {
     val printableTitle = if (title.length <= 70) { title } else { title.substring(0, 70) }
     printableTitle + " / " + location.city + " / " + schedule.start.toString
@@ -79,14 +97,6 @@ case class Event(
     Languages.all.getOrElse(language.spoken, "")
   } else {
     Languages.all.getOrElse(language.spoken, "") + " / " + Languages.all.getOrElse(language.secondSpoken.get, "")
-  }
-
-  lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      facilitation ← EventFacilitators if facilitation.eventId === this.id
-      person ← facilitation.facilitator
-    } yield person
-    query.sortBy(_.lastName.toLowerCase).list
   }
 
   lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
@@ -405,6 +415,21 @@ object Event {
 
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
     Query(Events).sortBy(_.title.toLowerCase).list
+  }
+
+  /**
+   * Fill events with facilitators (using only one query to database)
+   * @param events List of events
+   * @return
+   */
+  def fillFacilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = events.map(_.id.get).distinct.toList
+    val query = for {
+      facilitation ← EventFacilitators if facilitation.eventId inSet ids
+      person ← facilitation.facilitator
+    } yield (facilitation.eventId, person)
+    val facilitators = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+    events.foreach(e ⇒ e.facilitators_=(facilitators.getOrElse(e.id.get, List())))
   }
 
   def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒

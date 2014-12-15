@@ -301,8 +301,8 @@ object Events extends Controller with Security {
       val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
       val brandsOfEvents = events.map(_.brandCode).distinct
       val brands = Brand.findAll.filter(b ⇒ brandsOfEvents.contains(b.code)).map(b ⇒ (b.code, b.name))
-      val view = views.html.event.index(request.user, events, brands, person.fullName, personalLicense)
-      Ok(view)
+      Event.fillFacilitators(events)
+      Ok(views.html.event.index(request.user, events, brands, person.fullName, personalLicense))
   }
 
   /**
