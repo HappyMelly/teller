@@ -31,6 +31,7 @@ object Languages {
       "ZH" -> "Chinese",
       "HR" -> "Croatian",
       "CS" -> "Czech",
+      "DA" -> "Danish",
       "NL" -> "Dutch",
       "EN" -> "English",
       "FI" -> "Finnish",

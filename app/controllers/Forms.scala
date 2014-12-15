@@ -1,6 +1,7 @@
 package controllers
 
 import play.api.data.Forms._
+import views.Languages
 
 /**
  * Form helpers.
@@ -34,6 +35,8 @@ object Forms {
    * Web site URL form mapping.
    */
   val webUrl = text(maxLength = 1024) verifying ("error.url.web", validateWebUrl(_))
+
+  val language = text(maxLength = 254) verifying ("error.language.unknown", Languages.all.get(_).nonEmpty)
 
   // URL schemes and domains, in lower-case, for validation.
   private val FacebookDomain = "facebook.com"

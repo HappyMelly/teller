@@ -44,6 +44,7 @@ case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHou
 case class Details(description: Option[String], specialAttention: Option[String],
   webSite: Option[String], registrationPage: Option[String])
 case class Location(city: String, countryCode: String)
+case class Language(spoken: String, secondSpoken: Option[String], materials: Option[String])
 
 /**
  * An event such as a Management 3.0 course or a DARE Festival.
@@ -53,8 +54,7 @@ case class Event(
   eventTypeId: Long,
   brandCode: String,
   title: String,
-  spokenLanguage: String,
-  materialsLanguage: Option[String],
+  language: Language,
   location: Location,
   details: Details,
   schedule: Schedule,
@@ -71,6 +71,14 @@ case class Event(
   val longTitle: String = {
     val printableTitle = if (title.length <= 70) { title } else { title.substring(0, 70) }
     printableTitle + " / " + location.city + " / " + schedule.start.toString
+  }
+
+  val materialsLanguage = Languages.all.get(language.materials.getOrElse(""))
+
+  lazy val spokenLanguage = if (language.secondSpoken.isEmpty) {
+    Languages.all.getOrElse(language.spoken, "")
+  } else {
+    Languages.all.getOrElse(language.spoken, "") + " / " + Languages.all.getOrElse(language.secondSpoken.get, "")
   }
 
   lazy val facilitators: List[Person] = DB.withSession { implicit session: Session ⇒
@@ -112,8 +120,8 @@ case class Event(
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
-    val insertTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
-      details.description, details.specialAttention, details.webSite, details.registrationPage,
+    val insertTuple = (eventTypeId, brandCode, title, language.spoken, language.secondSpoken, language.materials, location.city,
+      location.countryCode, details.description, details.specialAttention, details.webSite, details.registrationPage,
       schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
       notPublic, archived, confirmed, created, createdBy)
     val id = Events.forInsert.insert(insertTuple)
@@ -125,9 +133,9 @@ case class Event(
   def delete(): Unit = Event.delete(this.id.get)
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventTypeId, brandCode, title, spokenLanguage, materialsLanguage, location.city, location.countryCode,
-      details.description, details.specialAttention, details.webSite, details.registrationPage,
-      schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
+    val updateTuple = (eventTypeId, brandCode, title, language.spoken, language.secondSpoken, language.materials,
+      location.city, location.countryCode, details.description, details.specialAttention, details.webSite,
+      details.registrationPage, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
       notPublic, archived, confirmed, updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
@@ -218,10 +226,12 @@ object Event {
       new BrandChange("Brand", was.brandCode, now.brandCode),
       new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
       new SimpleFieldChange("Title", was.title, now.title),
-      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.spokenLanguage, ""),
-        Languages.all.getOrElse(now.spokenLanguage, "")),
-      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.materialsLanguage.getOrElse(""), ""),
-        Languages.all.getOrElse(now.materialsLanguage.getOrElse(""), "")),
+      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.language.spoken, ""),
+        Languages.all.getOrElse(now.language.spoken, "")),
+      new SimpleFieldChange("Second Spoken Language", Languages.all.getOrElse(was.language.secondSpoken.getOrElse(""), ""),
+        Languages.all.getOrElse(now.language.secondSpoken.getOrElse(""), "")),
+      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.language.materials.getOrElse(""), ""),
+        Languages.all.getOrElse(now.language.materials.getOrElse(""), "")),
       new SimpleFieldChange("City", was.location.city, now.location.city),
       new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
       new SimpleFieldChange("Description",

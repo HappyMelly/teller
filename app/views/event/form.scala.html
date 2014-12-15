@@ -40,30 +40,28 @@
           html.select(form("eventTypeId"), Seq(("", "Choose an event type")))(asIs, implicitly[Lang]),
           form("title"),
           html.text(form("title"), '_label -> "", '_placeholder -> "Title")(asIs, implicitly[Lang]),
-          "Event Type & Title", required = false
+          "Event Type & Title", help = ""
         )
-        @html.twoInRow(form("spokenLanguage"),
-          html.select(form("spokenLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
-          form("materialsLanguage"),
-          html.select(form("materialsLanguage"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
-          "Spoken & Materials Languages"
+        @html.twoInRow(form("language.spoken"),
+          html.select(form("language.spoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+          form("language.secondSpoken"),
+          html.select(form("language.secondSpoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+          "Spoken Languages", help = "First language is required, second one is optional. Ex: English / Norwegian"
         )
+        @html.select(form("language.materials"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
+          '_label -> "Materials Language", '_help -> "Optional")
         @html.twoInRow(form("location.country"),
           html.select(form("location.country"), ("", "Choose a country") +: Countries.all)(asIs, implicitly[Lang]),
           form("location.city"),
           html.text(form("location.city"))(asIs, implicitly[Lang]),
-          "Country & City"
+          "Country & City", help = ""
         )
         @html.textarea(form("details.description"), '_label -> "Description",
           'rows -> 3, '_help -> views.html.markdownHelp())
         @html.textarea(form("details.specialAttention"), '_label -> "Special attention",
           'rows -> 3, '_help -> views.html.markdownHelp())
 
-        @if(form.error("facilitatorIds").isDefined) {
-        <div id="facilitatorIds_field" class="form-group has-error">
-        } else {
-        <div id="facilitatorIds_field" class="form-group">
-        }
+        <div id="facilitatorIds_field" class="form-group @if(form.error("facilitatorIds").isDefined) {has-error} ">
           <label for="facilitatorIds" class="control-label col-sm-3">Facilitators</label>
           <div class="col-sm-9">
             <div class="input col-xs-5 padding-fix">
@@ -79,7 +77,7 @@
             </div>
           </div>
           <div id="no_org_warning" class="col-sm-9 col-sm-offset-3"></div>
-      </div>
+        </div>
 
         <legend>Schedule</legend>
         @html.twoInRow(form("schedule.start"),
@@ -98,7 +96,7 @@
         @html.text(form("details.webSite"), '_label -> "Organizer website",
           'placeholder -> "http://", '_help -> "Web site URL")
         @html.text(form("details.registrationPage"), '_label -> "Registration page",
-          'placeholder -> "http://", '_help -> "Web site URL")
+          'placeholder -> "http:// or mailto:", '_help -> "Web site URL or email address")
         @html.checkbox(form("notPublic"),
           '_label -> "Private Event : Private events are not shown on the calendar, but evaluation is still possible",
           '_help -> "")

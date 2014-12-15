@@ -14,7 +14,7 @@
  *@
 @(left: Field, leftData: play.api.templates.Html,
   right: Field, rightData: play.api.templates.Html,
-  label: String, required: Boolean = true)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+  label: String, help: String = "Required")(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
 
 @fieldErrors(fields: Field*) = {
   @if(fields.exists(_.hasErrors)) {
@@ -29,15 +29,15 @@
       <div class="col-xs-5 padding-fix">
         @leftData
       </div>
-      <div class="@if(hasErrors || required) {col-xs-5} else {col-xs-7} padding-fix">
+      <div class="col-xs-7 padding-fix">
         @rightData
       </div>
-      @if(hasErrors || required) {
-        <span class="help-block">
+      @if(hasErrors || help.nonEmpty) {
+        <span class="help-block pull-left">
         @if(hasErrors) {
           @fieldErrors(left, right)
         } else {
-          Required
+          @help
         }
         </span>
       }
