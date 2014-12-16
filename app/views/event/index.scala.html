@@ -1,7 +1,7 @@
 @(user: securesocial.core.Identity,
   brands: List[Brand],
   facilitators: play.api.libs.json.JsValue,
-  userName: String,
+  userId: Long,
   personalLicense: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
@@ -16,7 +16,7 @@
   }
 
   <div class="col-md-12">
-    <input type="hidden" id="userName" value="@userName"/>
+    <input type="hidden" id="userId" value="@userId"/>
     <input type="hidden" id="personalLicense" value="@personalLicense"/>
     <div id="filter-containter">
       <div class="toolbar pull-right">

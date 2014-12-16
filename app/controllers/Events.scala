@@ -317,7 +317,7 @@ object Events extends Controller with Security {
             "facilitators" -> data._2)
         }
       }
-      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.fullName, personalLicense))
+      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
   }
 
   /**

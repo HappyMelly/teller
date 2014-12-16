@@ -23,55 +23,22 @@
  */
 
 /**
- * Initialize a facilitator filter
- * @param events {DataTable}
+ * Set a facilitator filter to current user (if exists)
  */
-function initFacilitatorsFilter(events) {
-    var facilitators = [];
-    events.api().column(2).data().unique().each(function(d, j) {
-        var regexp = /<a.*>(.*)<\/a>/img;
-        while ( (result = regexp.exec(d)) ) {
-            var value = result[1];
-            if (facilitators.indexOf(value) < 0) {
-                facilitators.push(value);
-            }
-        }
-    });
-    facilitators.sort();
-    var name = $('#userName').val();
-    for (var i = 0; i < facilitators.length; i++) {
-        var option = $("<option></option>").attr("value", facilitators[i]).text(facilitators[i]);
-        if (name == facilitators[i]) {
-            option.attr('selected', 'selected');
-        }
-        $('#facilitators').append(option);
+function initFacilitatorsFilter() {
+    var id = $('#userId').val();
+    if (id) {
+        $('#facilitators').find('[value=' + id + ']').attr('selected', 'selected');
     }
 }
 
 /**
- * Initialize a brand filter
- * @param events {DataTable}
+ * Initialize a brand filter with the brand which license the user helds
  */
-function initBrandsFilter(events) {
-    var brands = [];
-    events.api().column(1).data().unique().each(function(d, j) {
-        var regexp = /<a.*brand\/([a-zA-Z0-9_]{1,5}).*>(.*)<\/a>/img;
-        while ( (result = regexp.exec(d)) ) {
-            var code = result[1];
-            var name = result[2];
-            if (!(code in brands)) {
-                brands[code] = name;
-            }
-        }
-    });
-    brands.sort();
+function initBrandsFilter() {
     var personalLicense = $('#personalLicense').val();
-    for (var key in brands) {
-        var option = $("<option></option>").attr("value", brands[key]).text(brands[key]);
-        if (personalLicense == key) {
-            option.attr('selected', 'selected');
-        }
-        $('#brands').append(option);
+    if (personalLicense) {
+        $('#brands').find('[value=' + personalLicense + ']').attr('selected', 'selected');
     }
 }
 
@@ -80,7 +47,7 @@ function initBrandsFilter(events) {
  *
  * @param brand Brand to filter
  */
-function updateFacilitatorFilter(brand) {
+function updateFacilitatorsFilter(brand) {
     var records = [];
     if (brand && brand != 'all') {
         var data = $.grep(facilitators, function (f) {
@@ -88,24 +55,21 @@ function updateFacilitatorFilter(brand) {
         })[0].facilitators;
         records = data;
     } else {
+        var ids = [];
         for (var i = 0; i < facilitators.length; i++) {
             var data = facilitators[i].facilitators;
-            var allRecords = [];
             for (var j = 0; j < data.length; j++) {
-                allRecords[data[j].id] = data[j].name;
+                if (ids.indexOf(data[j].id) < 0) {
+                    records.push(data[j]);
+                    ids.push(data[j].id);
+                }
             }
-            $.each(allRecords, function(index, value) {
-                records.push({id: index, name: value});
-            });
         }
     }
-    $('#facilitators').empty();
-    $('#facilitators').append('<option value="all">All</option>');
+    $('#facilitators').empty().append('<option value="all">All</option>');
     records.sort(function(a, b) {
-        a = a.name;
-        b = b.name;
-        return a < b ? -1 : (a > b ? 1 : 0);
-    });
+        return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
+    })
     for(var i = 0; i < records.length; i++) {
         if (records[i].name) {
             var option = $("<option></option>").attr("value", records[i].id).text(records[i].name);
@@ -114,6 +78,10 @@ function updateFacilitatorFilter(brand) {
     }
 }
 
+/**
+ * This function collects data from all filters and provides a requests based on their values
+ * @returns {string}
+ */
 function makeRequestUrl() {
     var request = 'events/filtered?';
     var filter = $('#past-future').find(':selected').val();
@@ -141,12 +109,13 @@ function makeRequestUrl() {
     if (filter != 'all') {
         request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
     }
-    console.log(request);
     return request;
 }
 
 $(document).ready( function() {
-    updateFacilitatorFilter(null);
+    updateFacilitatorsFilter(null);
+    initBrandsFilter();
+    initFacilitatorsFilter();
 
     var events = $('#events').dataTable({
         "sDom": '<"toolbar">rtip',
@@ -238,7 +207,7 @@ $(document).ready( function() {
     }
     $("#brands").change(function() {
         var brand = $(this).find(':selected').val();
-        updateFacilitatorFilter(brand);
+        updateFacilitatorsFilter(brand);
         updateTable(); });
     $('#past-future').on('change', function() { updateTable(); });
     $('#private').on('change', function() { updateTable(); });
