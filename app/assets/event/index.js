@@ -125,7 +125,8 @@ $(document).ready( function() {
         "bLengthChange": false,
         "ajax": {
             "url" : makeRequestUrl(),
-            "dataSrc": ""
+            "dataSrc": "",
+            "deferRender": true
         },
         "order": [[ 4, "asc" ]],
         "columns": [
@@ -190,6 +191,10 @@ $(document).ready( function() {
             },
             "targets": 9
         }]
+    });
+    $("body").css("cursor", "progress");
+    events.on( 'xhr.dt', function () {
+        $("body").css("cursor", "default");
     });
 
     $("div.toolbar").html($('#filter-containter').html());
