@@ -305,21 +305,23 @@ object Event {
   /**
    * Return a list of events based on several parameters
    */
-  def findByParameters(brandCode: String,
+  def findByParameters(brandCode: Option[String],
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None,
     confirmed: Option[Boolean] = None,
     countryCode: Option[String] = None,
     eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
-    val baseQuery = Query(Events).filter(_.brandCode === brandCode)
+    val baseQuery = Query(Events)
+
+    val brandQuery = brandCode map { v ⇒ baseQuery.filter(_.brandCode === v) } getOrElse { baseQuery }
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
       val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) baseQuery.filter(_.start >= today)
-      else baseQuery.filter(_.end < today)
-    }.getOrElse(baseQuery)
+      if (value) brandQuery.filter(_.start >= today)
+      else brandQuery.filter(_.end < today)
+    }.getOrElse(brandQuery)
 
     val publicityQuery = public.map { value ⇒
       timeQuery.filter(_.notPublic === !value)
@@ -433,7 +435,7 @@ object Event {
   }
 
   def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
-    Event.findByParameters(brand.code, future = Some(false), public = None, archived = None,
+    Event.findByParameters(Some(brand.code), future = Some(false), public = None, archived = None,
       confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
         val subject = "Сonfirm your event " + event.title
         EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString())

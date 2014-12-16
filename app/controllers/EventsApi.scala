@@ -144,7 +144,7 @@ object EventsApi extends Controller with ApiAuthentication {
     val events: List[Event] = facilitatorId.map { value ⇒
       Event.findByFacilitator(value, code, future, public)
     }.getOrElse {
-      Event.findByParameters(code, future, public, archived, None, countryCode, eventType)
+      Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }
     Ok(Json.toJson(events))
   }

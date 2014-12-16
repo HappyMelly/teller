@@ -23,98 +23,6 @@
  */
 
 /**
- * Filter events by brand
- */
-function filterByBrand(oSettings, aData, iDataIndex) {
-    var index = 1;
-    var filter = $('#brands').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (aData[index].indexOf(filter) < 0) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-/**
- * Filter events by facilitators
- */
-function filterByFacilitator(oSettings, aData, iDataIndex) {
-    var index = 2;
-    var filter = $('#facilitators').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (aData[index].indexOf(filter) < 0) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-/**
- * Filter events checking if they are future or past
- */
-function filterByDate(oSettings, aData, iDataIndex) {
-    var index = 4;
-    var filter = $('#past-future').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    var dates = aData[index].split('/')
-    if (dates.length != 2) {
-        return true;
-    }
-    var start = moment(dates[0]);
-    var end = moment(dates[1]);
-    var today = moment();
-    if (filter == 'past') {
-        return (today.isAfter(end, 'day'));
-    } else {
-        return (today.isBefore(start, 'day') || today.isSame(start, 'day'));
-    }
-}
-
-/**
- * Filter events checking if they are public or private
- */
-function filterByPublicity(oSettings, aData, iDataIndex) {
-    var index = 8;
-    var filter = $('#private').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (filter == 'private') {
-        return aData[index] == 'true';
-    } else {
-        return aData[index] == 'false';
-    }
-}
-
-/**
- * Filter events checking if they are archived or not
- */
-function filterArchived(oSettings, aData, iDataIndex) {
-    var index = 9;
-    var filter = $('#archived').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (filter == 'archived') {
-        return aData[index] == 'true';
-    } else {
-        return aData[index] == 'false';
-    }
-}
-$.fn.dataTableExt.afnFiltering.push(filterByBrand);
-$.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
-$.fn.dataTableExt.afnFiltering.push(filterByDate);
-$.fn.dataTableExt.afnFiltering.push(filterByPublicity);
-$.fn.dataTableExt.afnFiltering.push(filterArchived);
-
-/**
  * Initialize a facilitator filter
  * @param events {DataTable}
  */
@@ -167,29 +75,118 @@ function initBrandsFilter(events) {
     }
 }
 
+
+function makeRequestUrl() {
+    var request = 'events/filtered?';
+    var filter = $('#past-future').find(':selected').val();
+    var counter = 0;
+    if (filter != 'all') {
+        request += 'future=' + ((filter == 'past') ? 'false' : 'true');
+        counter += 1;
+    }
+    filter = $('#private').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'private=' + ((filter == 'private') ? 'true' : 'false');
+        counter += 1;
+    }
+    filter = $('#archived').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'archived=' + ((filter == 'archived') ? 'true' : 'false');
+        counter += 1;
+    }
+    filter = $('#brands').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'brandCode=' + filter;
+        counter += 1;
+    }
+    console.log(request);
+    return request;
+}
+
 $(document).ready( function() {
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    var events = $('#events').dataTable( {
+    var events = $('#events').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
         "aaSorting": [],
         "bLengthChange": false,
-        "order": [[ 4, "asc" ]]
+        "ajax": {
+            "url" : makeRequestUrl(),
+            "dataSrc": ""
+        },
+        "order": [[ 4, "asc" ]],
+        "columns": [
+            { "data": "event" },
+            { "data": "brand" },
+            { "data": "event" },
+            { "data": "location" },
+            { "data": "schedule" },
+            { "data": "totalHours" },
+            { "data": "materialsLanguage" },
+            { "data": "invoice" },
+            { "data": "confirmed" },
+            { "data": "actions" }
+        ],
+        "columnDefs": [{
+            "render": function(data) {
+                return '<a href="' + data.url + '">' + data.title + '</a>';
+            },
+            "targets": 0
+        }, {
+            "render": function(data) {
+                return '<a href="' + data.url + '">' + data.code + '</a>';
+            },
+            "targets": 1
+        }, {
+            "render": function(data) {
+                return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
+                    data.country + '.png"/> ' + data.city;
+            },
+            "targets": 3
+        }, {
+            "render": function(data) {
+                return data.start + ' / ' + data.end;
+            },
+            "targets": 4
+        }, {
+            "render": function(data) {
+                var html = '';
+                if ('edit' in data) {
+                    html += '<a href="' + data.edit + '"><i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>';
+                    html += '<a href="' + data.duplicate + '"><i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>';
+                }
+                return html;
+            },
+            "targets": 9
+        }]
     });
-    initFacilitatorsFilter(events);
-    initBrandsFilter(events);
 
+    initFacilitatorsFilter(events);
 
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
-    $('#past-future').on('change', function() { events.fnDraw(); } );
-    $('#private').on('change', function() { events.fnDraw(); } );
-    $('#archived').on('change', function() { events.fnDraw(); } );
+
+    function updateTable() {
+        $("body").css("cursor", "progress");
+        events
+            .api()
+            .ajax
+            .url(makeRequestUrl())
+            .load(function(){
+                $("body").css("cursor", "default");
+            });
+    }
+    $("#brands").change(function() {
+        updateTable();
+    });
+    $('#past-future').on('change', function() {
+        updateTable();
+    });
+    $('#private').on('change', function() {
+        updateTable();
+    });
+    $('#archived').on('change', function() {  updateTable(); } );
     $('#facilitators').on('change', function() { events.fnDraw(); } );
-    $('#brands').on('change', function() { events.fnDraw(); } );
 
     events.fnDraw();
 });
