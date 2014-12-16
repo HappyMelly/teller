@@ -62,7 +62,7 @@ object Reports extends Controller with Security {
             }.getOrElse(Nil)
           } else {
             if (byMe) {
-              Event.findByFacilitator(account.personId, brandCode)
+              Event.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
             } else {
               Event.findByParameters(Some(brandCode))
             }

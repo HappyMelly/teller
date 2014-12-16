@@ -381,14 +381,22 @@ object Event {
   /**
    * Return a list of events for a given facilitator
    */
-  def findByFacilitator(facilitatorId: Long, brandCode: String,
+  def findByFacilitator(facilitatorId: Long, brandCode: Option[String],
     future: Option[Boolean] = None,
-    public: Option[Boolean] = None): List[Event] = DB.withSession { implicit session: Session ⇒
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None): List[Event] = DB.withSession { implicit session: Session ⇒
 
-    val baseQuery = for {
-      entry ← EventFacilitators if entry.facilitatorId === facilitatorId
-      event ← Events if event.id === entry.eventId && event.brandCode === brandCode
-    } yield event
+    val baseQuery = brandCode map { value ⇒
+      for {
+        entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+        event ← Events if event.id === entry.eventId && event.brandCode === value
+      } yield event
+    } getOrElse {
+      for {
+        entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+        event ← Events if event.id === entry.eventId
+      } yield event
+    }
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()
@@ -401,7 +409,11 @@ object Event {
       timeQuery.filter(_.notPublic === !value)
     }.getOrElse(timeQuery)
 
-    publicityQuery.sortBy(_.start).list
+    val archivedQuery = archived.map { value ⇒
+      publicityQuery.filter(_.archived === value)
+    }.getOrElse(publicityQuery)
+
+    archivedQuery.sortBy(_.start).list
   }
 
   def findByBrandGroupByCountry(brandCode: String): List[(String, Int)] = DB.withSession { implicit session: Session ⇒

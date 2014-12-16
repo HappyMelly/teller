@@ -75,6 +75,44 @@ function initBrandsFilter(events) {
     }
 }
 
+/**
+ * Update a facilitators filter according to user actions
+ *
+ * @param brand Brand to filter
+ */
+function updateFacilitatorFilter(brand) {
+    var records = [];
+    if (brand && brand != 'all') {
+        var data = $.grep(facilitators, function (f) {
+            return f.code === brand
+        })[0].facilitators;
+        records = data;
+    } else {
+        for (var i = 0; i < facilitators.length; i++) {
+            var data = facilitators[i].facilitators;
+            var allRecords = [];
+            for (var j = 0; j < data.length; j++) {
+                allRecords[data[j].id] = data[j].name;
+            }
+            $.each(allRecords, function(index, value) {
+                records.push({id: index, name: value});
+            });
+        }
+    }
+    $('#facilitators').empty();
+    $('#facilitators').append('<option value="all">All</option>');
+    records.sort(function(a, b) {
+        a = a.name;
+        b = b.name;
+        return a < b ? -1 : (a > b ? 1 : 0);
+    });
+    for(var i = 0; i < records.length; i++) {
+        if (records[i].name) {
+            var option = $("<option></option>").attr("value", records[i].id).text(records[i].name);
+            $('#facilitators').append(option);
+        }
+    }
+}
 
 function makeRequestUrl() {
     var request = 'events/filtered?';
@@ -86,7 +124,7 @@ function makeRequestUrl() {
     }
     filter = $('#private').find(':selected').val();
     if (filter != 'all') {
-        request += ((counter > 0) ? '&' : '') + 'private=' + ((filter == 'private') ? 'true' : 'false');
+        request += ((counter > 0) ? '&' : '') + 'public=' + ((filter == 'private') ? 'false' : 'true');
         counter += 1;
     }
     filter = $('#archived').find(':selected').val();
@@ -99,11 +137,17 @@ function makeRequestUrl() {
         request += ((counter > 0) ? '&' : '') + 'brandCode=' + filter;
         counter += 1;
     }
+    filter = $('#facilitators').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
+    }
     console.log(request);
     return request;
 }
 
 $(document).ready( function() {
+    updateFacilitatorFilter(null);
+
     var events = $('#events').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
@@ -161,8 +205,6 @@ $(document).ready( function() {
         }]
     });
 
-    initFacilitatorsFilter(events);
-
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
 
@@ -177,16 +219,13 @@ $(document).ready( function() {
             });
     }
     $("#brands").change(function() {
-        updateTable();
-    });
-    $('#past-future').on('change', function() {
-        updateTable();
-    });
-    $('#private').on('change', function() {
-        updateTable();
-    });
-    $('#archived').on('change', function() {  updateTable(); } );
-    $('#facilitators').on('change', function() { events.fnDraw(); } );
+        var brand = $(this).find(':selected').val();
+        updateFacilitatorFilter(brand);
+        updateTable(); });
+    $('#past-future').on('change', function() { updateTable(); });
+    $('#private').on('change', function() { updateTable(); });
+    $('#archived').on('change', function() {  updateTable(); });
+    $('#facilitators').on('change', function() { updateTable(); });
 
     events.fnDraw();
 });

@@ -1,10 +1,11 @@
 @(user: securesocial.core.Identity,
-  brands: List[(String, String)],
+  brands: List[Brand],
+  facilitators: play.api.libs.json.JsValue,
   userName: String,
   personalLicense: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
-@import models.UserRole.Role._
+
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import play.api.libs.json._
 
 @main("Events", "events", Some(user)) {
 
@@ -24,7 +25,7 @@
           <select id="brands" class="input-sm form-control">
             <option value="all">All</option>
             @brands.map { v =>
-              <option value="@v._1">@v._2</option>
+              <option value="@v.code">@v.name</option>
             }
           </select>
         </div>
@@ -74,5 +75,9 @@
     </table>
   </div>
 
-	<script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
+  <script type="text/javascript">
+    var facilitators = @Html(facilitators.toString()) ;
+    console.log(facilitators);
+  </script>
+  <script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
 }

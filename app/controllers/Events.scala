@@ -299,9 +299,25 @@ object Events extends Controller with Security {
 
       val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-      val brands = Brand.findAll.map(b ⇒ (b.code, b.name))
-      //      Event.fillFacilitators(events)
-      Ok(views.html.event.index(request.user, brands, person.fullName, personalLicense))
+      val brands = Brand.findAll.sortBy(_.name)
+      val facilitators = brands.map(b ⇒
+        (b.code, License.allLicensees(b.code).map(l ⇒ (l.id.get, l.fullName))))
+
+      implicit val facilitatorWrites = new Writes[(Long, String)] {
+        def writes(data: (Long, String)): JsValue = {
+          Json.obj(
+            "id" -> data._1,
+            "name" -> data._2)
+        }
+      }
+      implicit val facilitatorsWrites = new Writes[(String, List[(Long, String)])] {
+        def writes(data: (String, List[(Long, String)])): JsValue = {
+          Json.obj(
+            "code" -> data._1,
+            "facilitators" -> data._2)
+        }
+      }
+      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.fullName, personalLicense))
   }
 
   /**
@@ -313,11 +329,16 @@ object Events extends Controller with Security {
    * @return
    */
   def events(brandCode: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None) = SecuredDynamicAction("event", "view") { implicit request ⇒
+    facilitator: Option[Long],
+    future: Option[Boolean],
+    public: Option[Boolean],
+    archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
-      val events = Event.findByParameters(brandCode, future, public, archived)
+      val events = facilitator map {
+        Event.findByFacilitator(_, brandCode, future, public, archived)
+      } getOrElse {
+        Event.findByParameters(brandCode, future, public, archived)
+      }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       Event.fillFacilitators(events)
       implicit val eventWrites = new Writes[Event] {
