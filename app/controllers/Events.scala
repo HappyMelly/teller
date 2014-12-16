@@ -341,6 +341,14 @@ object Events extends Controller with Security {
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       Event.fillFacilitators(events)
+
+      implicit val personWrites = new Writes[Person] {
+        def writes(data: Person): JsValue = {
+          Json.obj(
+            "name" -> data.fullName,
+            "url" -> routes.People.details(data.id.get).url)
+        }
+      }
       implicit val eventWrites = new Writes[Event] {
         def writes(data: Event): JsValue = {
           Json.obj(
@@ -354,13 +362,14 @@ object Events extends Controller with Security {
             "location" -> Json.obj(
               "country" -> data.location.countryCode.toLowerCase,
               "city" -> data.location.city),
+            "facilitators" -> data.facilitators,
             "schedule" -> Json.obj(
               "start" -> data.schedule.start.toString,
               "end" -> data.schedule.end.toString),
             "totalHours" -> data.schedule.totalHours,
             "materialsLanguage" -> data.materialsLanguage,
             "confirmed" -> data.confirmed,
-            "invoice" -> "Yes", //data.invoice.invoiceBy.map(v ⇒ "Yes").getOrElse("No"),
+            "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" }),
             "actions" -> {
               Json.obj(
                 "edit" -> {

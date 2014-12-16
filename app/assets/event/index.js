@@ -162,7 +162,7 @@ $(document).ready( function() {
         "columns": [
             { "data": "event" },
             { "data": "brand" },
-            { "data": "event" },
+            { "data": "facilitators" },
             { "data": "location" },
             { "data": "schedule" },
             { "data": "totalHours" },
@@ -183,6 +183,15 @@ $(document).ready( function() {
             "targets": 1
         }, {
             "render": function(data) {
+                var html = '';
+                for (var i = 0; i < data.length; i++) {
+                    html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
+                }
+                return html;
+            },
+            "targets": 2
+        },{
+            "render": function(data) {
                 return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
                     data.country + '.png"/> ' + data.city;
             },
@@ -193,6 +202,15 @@ $(document).ready( function() {
             },
             "targets": 4
         }, {
+            "render": function(data) {
+                if(data) {
+                    return '<span class="label label-success">yes</span>';
+                } else {
+                    return '<span class="label label-danger">no</span>';
+                }
+            },
+            "targets": 8
+        },{
             "render": function(data) {
                 var html = '';
                 if ('edit' in data) {
