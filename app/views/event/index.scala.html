@@ -1,11 +1,10 @@
 @(user: securesocial.core.Identity,
-  events: List[Event],
-  brands: List[(String, String)],
-  userName: String,
+  brands: List[Brand],
+  facilitators: play.api.libs.json.JsValue,
+  userId: Long,
   personalLicense: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
-@import models.UserRole.Role._
+
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @main("Events", "events", Some(user)) {
 
@@ -17,21 +16,66 @@
   }
 
   <div class="col-md-12">
-    @if(events.isEmpty) {
-      <p>There are no events</p>
-    } else {
-      <input type="hidden" id="userName" value="@userName"/>
-      <input type="hidden" id="personalLicense" value="@personalLicense"/>
-      @table(events, brands) { event =>
-          @restrict(handler, List(as(Editor.toString))) {
-            <a href="@routes.Events.edit(event.id.get)">
-              <i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>
-            <a href="@routes.Events.duplicate(event.id.get)">
-              <i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>
-          }
-      }
-    }
+    <input type="hidden" id="userId" value="@userId"/>
+    <input type="hidden" id="personalLicense" value="@personalLicense"/>
+    <div id="filter-containter">
+      <div class="toolbar pull-right">
+        <div class="btn-group">
+          <select id="brands" class="input-sm form-control">
+            <option value="all">All</option>
+            @brands.map { v =>
+              <option value="@v.code">@v.name</option>
+            }
+          </select>
+        </div>
+        <div class="btn-group">
+          <select id="facilitators" class="input-sm form-control">
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div class="btn-group">
+          <select id="past-future" class="input-sm form-control">
+            <option value="all">All</option>
+            <option value="future" selected>Future</option>
+            <option value="past">Past</option>
+          </select>
+        </div>
+        <div class="btn-group">
+          <select id="private" class="input-sm form-control">
+            <option value="all">All</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+        </div>
+        <div class="btn-group">
+          <select id="archived" class="input-sm form-control">
+            <option value="all">All</option>
+            <option value="current">Current</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <table id="events" class="datatables table table-bordered">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Brand</th>
+          <th>Facilitators</th>
+          <th>Location</th>
+          <th>Dates</th>
+          <th>Total hours</th>
+          <th>Materials</th>
+          <th>Invoice</th>
+          <th>Confirmed</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
   </div>
 
-	<script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
+  <script type="text/javascript">
+    var facilitators = @Html(facilitators.toString()) ;
+  </script>
+  <script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
 }

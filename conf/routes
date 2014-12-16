@@ -64,6 +64,7 @@ GET         /evaluation/:id/delete                                              
 GET         /report/create/:code/event/:eventId/status/:status/byMe/:byMe             controllers.Reports.create(code: String, eventId: Long, status: Int, byMe: Boolean)
 
 GET         /events                                                                   controllers.Events.index
+GET         /events/filtered                                                          controllers.Events.events(brandCode: Option[String], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
 POST        /event                                                                    controllers.Events.create
 GET         /events/new/                                                              controllers.Events.add
 GET         /event/:id/duplicate                                                      controllers.Events.duplicate(id: Long)

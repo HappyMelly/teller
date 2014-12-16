@@ -27,6 +27,7 @@ package controllers
 import Forms._
 import models._
 import play.api.mvc._
+import play.api.libs.json._
 import securesocial.core.SecuredRequest
 import play.api.data._
 import play.api.data.Forms._
@@ -298,13 +299,94 @@ object Events extends Controller with Security {
 
       val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-      val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
-      val brandsOfEvents = events.map(_.brandCode).distinct
-      val brands = Brand.findAll.filter(b ⇒ brandsOfEvents.contains(b.code)).map(b ⇒ (b.code, b.name))
-      Event.fillFacilitators(events)
-      Ok(views.html.event.index(request.user, events, brands, person.fullName, personalLicense))
+      val brands = Brand.findAll.sortBy(_.name)
+      val facilitators = brands.map(b ⇒
+        (b.code, License.allLicensees(b.code).map(l ⇒ (l.id.get, l.fullName))))
+
+      implicit val facilitatorWrites = new Writes[(Long, String)] {
+        def writes(data: (Long, String)): JsValue = {
+          Json.obj(
+            "id" -> data._1,
+            "name" -> data._2)
+        }
+      }
+      implicit val facilitatorsWrites = new Writes[(String, List[(Long, String)])] {
+        def writes(data: (String, List[(Long, String)])): JsValue = {
+          Json.obj(
+            "code" -> data._1,
+            "facilitators" -> data._2)
+        }
+      }
+      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
   }
 
+  /**
+   * Get a list of events in JSON format, filtered by parameters
+   * @param brandCode Brand string identifier
+   * @param future This flag defines if we want to get future/past events
+   * @param public This flag defines if we want to get public/private events
+   * @param archived This flag defines if we want to get archived/current events
+   * @return
+   */
+  def events(brandCode: Option[String],
+    facilitator: Option[Long],
+    future: Option[Boolean],
+    public: Option[Boolean],
+    archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
+    implicit handler ⇒
+      val events = facilitator map {
+        Event.findByFacilitator(_, brandCode, future, public, archived)
+      } getOrElse {
+        Event.findByParameters(brandCode, future, public, archived)
+      }
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      Event.fillFacilitators(events)
+
+      implicit val personWrites = new Writes[Person] {
+        def writes(data: Person): JsValue = {
+          Json.obj(
+            "name" -> data.fullName,
+            "url" -> routes.People.details(data.id.get).url)
+        }
+      }
+      implicit val eventWrites = new Writes[Event] {
+        def writes(data: Event): JsValue = {
+          Json.obj(
+            "event" -> Json.obj(
+              "id" -> data.id,
+              "url" -> routes.Events.details(data.id.get).url,
+              "title" -> data.title),
+            "brand" -> Json.obj(
+              "code" -> data.brandCode,
+              "url" -> routes.Brands.details(data.brandCode).url),
+            "location" -> Json.obj(
+              "country" -> data.location.countryCode.toLowerCase,
+              "city" -> data.location.city),
+            "facilitators" -> data.facilitators,
+            "schedule" -> Json.obj(
+              "start" -> data.schedule.start.toString,
+              "end" -> data.schedule.end.toString),
+            "totalHours" -> data.schedule.totalHours,
+            "materialsLanguage" -> data.materialsLanguage,
+            "confirmed" -> data.confirmed,
+            "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" }),
+            "actions" -> {
+              Json.obj(
+                "edit" -> {
+                  if (account.editor) {
+                    routes.Events.edit(data.id.get).url
+                  } else ""
+                },
+                "duplicate" -> {
+                  if (account.editor) {
+                    routes.Events.duplicate(data.id.get).url
+                  } else ""
+                })
+            })
+        }
+      }
+      Ok(Json.toJson(events))
+  }
   /**
    * Edit form submits to this action.
    * @param id Event ID

@@ -62,9 +62,9 @@ object Reports extends Controller with Security {
             }.getOrElse(Nil)
           } else {
             if (byMe) {
-              Event.findByFacilitator(account.personId, brandCode)
+              Event.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
             } else {
-              Event.findByParameters(brandCode)
+              Event.findByParameters(Some(brandCode))
             }
           }
           val eventIds = events.map(e ⇒ e.id.get)
