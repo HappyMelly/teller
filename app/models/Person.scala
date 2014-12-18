@@ -94,7 +94,7 @@ case class Person(
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder {
+  dateStamp: DateStamp) extends AccountHolder with Serializable {
 
   def fullName: String = firstName + " " + lastName
 
