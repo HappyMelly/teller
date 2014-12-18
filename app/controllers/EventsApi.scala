@@ -24,9 +24,10 @@
 package controllers
 
 import play.mvc.Controller
+import play.api.Play.current
+import play.api.cache.Cache
 import play.api.libs.json._
 import models.{ Brand, Event }
-import views.Languages
 
 /**
  * Events API
@@ -117,11 +118,19 @@ object EventsApi extends Controller with ApiAuthentication {
     facilitatorId: Option[Long],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
-    val events: List[Event] = facilitatorId.map { value ⇒
-      Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
+
+    val key = "events." + code + future.toString + public.toString + archived.toString + facilitatorId.toString + countryCode.toString + eventType.toString
+    Cache.getAs[List[Event]](key).map { events ⇒
+      Ok(Json.prettyPrint(Json.toJson(events)))
     }.getOrElse {
-      Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
+      val events: List[Event] = facilitatorId.map { value ⇒
+        Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
+      }.getOrElse {
+        Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
+      }
+      Cache.set(key, events, 60)
+      Ok(Json.prettyPrint(Json.toJson(events)))
     }
-    Ok(Json.prettyPrint(Json.toJson(events)))
+
   }
 }
