@@ -373,12 +373,12 @@ object Events extends Controller with Security {
             "actions" -> {
               Json.obj(
                 "edit" -> {
-                  if (account.editor) {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
                     routes.Events.edit(data.id.get).url
                   } else ""
                 },
                 "duplicate" -> {
-                  if (account.editor) {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
                     routes.Events.duplicate(data.id.get).url
                   } else ""
                 })

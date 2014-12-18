@@ -183,7 +183,7 @@ $(document).ready( function() {
         },{
             "render": function(data) {
                 var html = '';
-                if ('edit' in data) {
+                if ('edit' in data && data.edit.length > 0) {
                     html += '<a href="' + data.edit + '"><i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>';
                     html += '<a href="' + data.duplicate + '"><i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>';
                 }
