@@ -42,7 +42,7 @@ object EventsApi extends Controller with ApiAuthentication {
         "title" -> event.title,
         "type" -> event.eventTypeId,
         "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
+        "spokenLanguages" -> event.spokenLanguages,
         "materialsLanguage" -> event.materialsLanguage,
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
@@ -57,30 +57,6 @@ object EventsApi extends Controller with ApiAuthentication {
     }
   }
 
-  val noFacilitatorsEventsWrites = new Writes[List[Event]] {
-    def writes(events: List[Event]): JsValue = {
-      val serializedEvents = events.map { event ⇒
-        Json.obj(
-          "id" -> event.id.get,
-          "title" -> event.title,
-          "type" -> event.eventTypeId,
-          "description" -> event.details.description,
-          "spokenLanguage" -> event.spokenLanguage,
-          "materialsLanguage" -> event.materialsLanguage,
-          "specialAttention" -> event.details.specialAttention,
-          "start" -> event.schedule.start,
-          "end" -> event.schedule.end,
-          "hoursPerDay" -> event.schedule.hoursPerDay,
-          "totalHours" -> event.schedule.totalHours,
-          "city" -> event.location.city,
-          "country" -> event.location.countryCode,
-          "website" -> event.details.webSite,
-          "registrationPage" -> event.details.registrationPage)
-      }
-      JsArray(serializedEvents)
-    }
-  }
-
   val eventDetailsWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
       Json.obj(
@@ -88,7 +64,7 @@ object EventsApi extends Controller with ApiAuthentication {
         "type" -> event.eventTypeId,
         "title" -> event.title,
         "description" -> event.details.description,
-        "spokenLanguage" -> event.spokenLanguage,
+        "spokenLanguages" -> event.spokenLanguages,
         "materialsLanguage" -> event.materialsLanguage,
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
@@ -127,7 +103,7 @@ object EventsApi extends Controller with ApiAuthentication {
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
     Event.find(id).map { event ⇒
-      Ok(Json.toJson(event)(eventDetailsWrites))
+      Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
     }.getOrElse(NotFound("Unknown event"))
   }
 
@@ -146,6 +122,6 @@ object EventsApi extends Controller with ApiAuthentication {
     }.getOrElse {
       Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }
-    Ok(Json.toJson(events))
+    Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }

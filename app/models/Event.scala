@@ -99,6 +99,12 @@ case class Event(
     Languages.all.getOrElse(language.spoken, "") + " / " + Languages.all.getOrElse(language.secondSpoken.get, "")
   }
 
+  lazy val spokenLanguages = if (language.secondSpoken.isEmpty) {
+    List(Languages.all.getOrElse(language.spoken, ""))
+  } else {
+    List(Languages.all.getOrElse(language.spoken, ""), Languages.all.getOrElse(language.secondSpoken.get, ""))
+  }
+
   lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
       participation ← Participants if participation.eventId === this.id
