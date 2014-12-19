@@ -64,11 +64,11 @@ case class Event(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String,
-  facilitatorIds: List[Long]) {
+  updatedBy: String) {
 
   private var _facilitators: Option[List[Person]] = None
   private var _invoice: Option[EventInvoice] = None
+  private var _facilitatorIds: Option[List[Long]] = None
 
   def facilitators: List[Person] = if (_facilitators.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -95,6 +95,17 @@ case class Event(
 
   def invoice_=(invoice: EventInvoice): Unit = {
     _invoice = Some(invoice)
+  }
+
+  def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {
+    facilitatorIds_=(Event.getFacilitatorIds(id.getOrElse(0)))
+    _facilitatorIds.get
+  } else {
+    _facilitatorIds.get
+  }
+
+  def facilitatorIds_=(facilitatorIds: List[Long]): Unit = {
+    _facilitatorIds = Some(facilitatorIds)
   }
 
   val longTitle: String = {

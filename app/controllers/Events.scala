@@ -151,8 +151,9 @@ object Events extends Controller with Security {
         invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic,
-            archived, confirmed, created, createdBy, updated, updatedBy, facilitatorIds)
+            archived, confirmed, created, createdBy, updated, updatedBy)
           event.invoice_=(invoice)
+          event.facilitatorIds_=(facilitatorIds)
           event
         }
       })({ (e: Event) ⇒
@@ -181,7 +182,7 @@ object Events extends Controller with Security {
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "", List[Long]())
+        notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findByUser(account)
@@ -419,12 +420,17 @@ object Events extends Controller with Security {
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val existingEvent = Event.find(id).get
+
             val updatedEvent = event.copy(id = Some(id))
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
-            updatedEvent.update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
+            updatedEvent.facilitatorIds_=(event.facilitatorIds)
 
+            // it's important to compare before updating as with lazy initialization invoice and facilitators data
+            // for an old event will be destroyed
             val changes = Event.compare(existingEvent, updatedEvent)
+            updatedEvent.update
+
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
             sendEmailNotification(updatedEvent, changes, activity, Brand.find(event.brandCode).get.coordinator)
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
