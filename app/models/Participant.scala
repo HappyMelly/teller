@@ -204,8 +204,9 @@ object Participant {
     val active = false
     val person = Person(None, data.firstName, data.lastName, data.birthday,
       Photo(None, None), signature = false, data.address, None, None, PersonRole.NoRole,
-      SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress), None, None, virtual, active,
+      None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
+    person.socialProfile_=(SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress))
     val newPerson = person.insert
     val eventParticipant = Participant(None, data.eventId, newPerson.id.get, evaluationId = None, data.organisation,
       data.comment)

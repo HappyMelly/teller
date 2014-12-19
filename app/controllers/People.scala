@@ -145,8 +145,12 @@ object People extends Controller with Security {
         "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
-          Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
-            profile.copy(email = emailAddress), webSite, blog, virtual = false, active, dateStamp)
+          {
+            val person = Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
+              webSite, blog, virtual = false, active, dateStamp)
+            person.socialProfile_=(profile.copy(email = emailAddress))
+            person
+          }
         })(
           { (p: Person) ⇒
             Some(

@@ -65,8 +65,7 @@ private[models] object People extends Table[Person]("PERSON") {
     role ~ webSite ~ blog ~ virtual ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
         Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, Address.find(p._7), p._8, p._9, p._10,
-          SocialProfile.find(p._1.getOrElse(0), ProfileType.Person), p._11, p._12, p._13, p._14,
-          DateStamp(p._15, p._16, p._17, p._18))
+          p._11, p._12, p._13, p._14, DateStamp(p._15, p._16, p._17, p._18))
       },
       { (p: Person) ⇒
         Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url, p.signature, p.address.id.get, p.bio,

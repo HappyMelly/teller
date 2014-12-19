@@ -89,12 +89,26 @@ case class Person(
   bio: Option[String],
   interests: Option[String],
   role: PersonRole.Value = PersonRole.Stakeholder,
-  socialProfile: SocialProfile,
   webSite: Option[String],
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder with Serializable {
+  dateStamp: DateStamp) extends AccountHolder {
+
+  private var _socialProfile: Option[SocialProfile] = None
+
+  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      socialProfile_=(SocialProfile.find(id.getOrElse(0), ProfileType.Person))
+      _socialProfile.get
+    }
+  } else {
+    _socialProfile.get
+  }
+
+  def socialProfile_=(socialProfile: SocialProfile): Unit = {
+    _socialProfile = Some(socialProfile)
+  }
 
   def fullName: String = firstName + " " + lastName
 

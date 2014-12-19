@@ -252,6 +252,7 @@ object Brand {
   def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
+      u.socialProfile_=(updatedData.socialProfile)
 
       val socialQuery = for {
         socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get

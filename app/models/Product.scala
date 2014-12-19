@@ -70,7 +70,8 @@ case class Product(
         relation ← ProductBrandAssociations if relation.productId === this.id
         brand ← relation.brand
       } yield brand
-      query.sortBy(_.name.toLowerCase).list
+      brands_=(query.sortBy(_.name.toLowerCase).list)
+      _brands.get
     }
   } else {
     _brands.get
