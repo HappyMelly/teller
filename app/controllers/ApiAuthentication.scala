@@ -25,6 +25,8 @@
 package controllers
 
 import play.api.mvc._
+import play.api.cache.Cache
+import play.api.Play.current
 import models.LoginIdentity
 
 /**
@@ -34,14 +36,30 @@ trait ApiAuthentication extends Controller {
 
   /** Make an action require token authentication **/
   def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request))).getOrElse(Unauthorized("Unauthorized"))
+    request.getQueryString(ApiToken).flatMap { token ⇒
+      Cache.getAs[LoginIdentity]("identity." + token).map { identity ⇒
+        Some(f(request))
+      }.getOrElse {
+        LoginIdentity.findBytoken(token).map { identity ⇒
+          Cache.set("identity." + token, identity)
+          f(request)
+        }
+      }
+    }.getOrElse(Unauthorized("Unauthorized"))
   }
 
   /** Make an action require token authentication **/
   def TokenSecuredActionWithIdentity(f: (Request[AnyContent], LoginIdentity) ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap(token ⇒
-      LoginIdentity.findBytoken(token).map(identity ⇒ f(request, identity))).getOrElse(Unauthorized("Unauthorized"))
+    request.getQueryString(ApiToken).flatMap { token ⇒
+      Cache.getAs[LoginIdentity]("identity." + token).map { identity ⇒
+        Some(f(request, identity))
+      }.getOrElse {
+        LoginIdentity.findBytoken(token).map { identity ⇒
+          Cache.set("identity." + token, identity)
+          f(request, identity)
+        }
+      }
+    }.getOrElse(Unauthorized("Unauthorized"))
   }
 
   val ApiToken = "api_token"

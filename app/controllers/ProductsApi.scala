@@ -80,6 +80,8 @@ object ProductsApi extends Controller with ApiAuthentication {
    * Product list API.
    */
   def products = TokenSecuredAction { implicit request ⇒
-    Ok(Json.prettyPrint(Json.toJson(Product.findAll)))
+    val products = Product.findAll
+    Product.fillBrands(products)
+    Ok(Json.prettyPrint(Json.toJson(products)))
   }
 }

@@ -62,15 +62,22 @@ case class Product(
   updated: DateTime,
   updatedBy: String) {
 
-  /**
-   * Get all brands associated with this product
-   */
-  def brands: List[Brand] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      relation ← ProductBrandAssociations if relation.productId === this.id
-      brand ← relation.brand
-    } yield brand
-    query.sortBy(_.name.toLowerCase).list
+  private var _brands: Option[List[Brand]] = None
+
+  def brands: List[Brand] = if (_brands.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      val query = for {
+        relation ← ProductBrandAssociations if relation.productId === this.id
+        brand ← relation.brand
+      } yield brand
+      query.sortBy(_.name.toLowerCase).list
+    }
+  } else {
+    _brands.get
+  }
+
+  def brands_=(brands: List[Brand]): Unit = {
+    _brands = Some(brands)
   }
 
   def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
@@ -135,6 +142,21 @@ object Product {
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Products.where(_.id === id).mutate(_.delete())
+  }
+
+  /**
+   * Fill products with brands (using only one query to database)
+   * @param products List of products
+   * @return
+   */
+  def fillBrands(products: List[Product]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = products.map(_.id.get).distinct.toList
+    val query = for {
+      relation ← ProductBrandAssociations if relation.productId inSet ids
+      brand ← relation.brand
+    } yield (relation.productId, brand)
+    val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+    products.foreach(e ⇒ e.brands_=(brands.getOrElse(e.id.get, List())))
   }
 
 }

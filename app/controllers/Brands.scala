@@ -87,8 +87,12 @@ object Brands extends Controller with Security {
     "updatedBy" -> ignored(request.user.fullName))({
       (id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
       profile, created, createdBy, updated, updatedBy) ⇒
-        Brand(id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
-          profile, created, createdBy, updated, updatedBy)
+        {
+          val brand = Brand(id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine,
+            webSite, blog, created, createdBy, updated, updatedBy)
+          brand.socialProfile_=(profile)
+          brand
+        }
     })({ (b: Brand) ⇒
       Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description, b.picture, b.generateCert, b.tagLine,
         b.webSite, b.blog, b.socialProfile, b.created, b.createdBy, b.updated, b.updatedBy))
