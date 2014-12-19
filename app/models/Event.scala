@@ -34,7 +34,7 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import scala.language.postfixOps
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitators, Participants, Events }
+import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
@@ -459,12 +459,24 @@ object Event {
     Query(Events).sortBy(_.title.toLowerCase).list
   }
 
+  def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
+    Event.findByParameters(Some(brand.code), future = Some(false), public = None, archived = None,
+      confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
+        val subject = "Сonfirm your event " + event.title
+        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString())
+      }
+  }
+
+}
+
+object EventsCollection {
+
   /**
    * Fill events with facilitators (using only one query to database)
    * @param events List of events
    * @return
    */
-  def fillFacilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
+  def facilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
     val ids = events.map(_.id.get).distinct.toList
     val query = for {
       facilitation ← EventFacilitators if facilitation.eventId inSet ids
@@ -474,13 +486,18 @@ object Event {
     events.foreach(e ⇒ e.facilitators_=(facilitators.getOrElse(e.id.get, List())))
   }
 
-  def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
-    Event.findByParameters(Some(brand.code), future = Some(false), public = None, archived = None,
-      confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
-        val subject = "Сonfirm your event " + event.title
-        EmailService.send(event.facilitators.toSet, None, None, subject, mail.txt.confirm(event).toString())
-      }
+  /**
+   * Fill events with invoices (using only one query to database)
+   * @param events List of events
+   * @return
+   */
+  def invoices(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = events.map(_.id.get).distinct.toList
+    val query = for {
+      invoice ← EventInvoices if invoice.eventId inSet ids
+    } yield invoice
+    val invoices = query.list
+    events.foreach(e ⇒ e.invoice_=(invoices.find(_.eventId == e.id).getOrElse(EventInvoice(None, None, 0, None, None))))
   }
-
 }
 

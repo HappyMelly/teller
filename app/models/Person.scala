@@ -97,6 +97,8 @@ case class Person(
 
   private var _socialProfile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
+  private var _languages: Option[List[FacilitatorLanguage]] = None
+  private var _countries: Option[List[FacilitatorCountry]] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -120,6 +122,34 @@ case class Person(
 
   def address_=(address: Address): Unit = {
     _address = Some(address)
+  }
+
+  /**
+   * A list of languages a facilitator speaks
+   */
+  def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
+    languages_=(FacilitatorLanguage.findByFacilitator(id.get))
+    _languages.get
+  } else {
+    _languages.get
+  }
+
+  def languages_=(languages: List[FacilitatorLanguage]): Unit = {
+    _languages = Some(languages)
+  }
+
+  /**
+   * A list of countries a facilitator speaks
+   */
+  def countries: List[FacilitatorCountry] = if (_countries.isEmpty) {
+    countries_=(FacilitatorCountry.findByFacilitator(id.get))
+    _countries.get
+  } else {
+    _countries.get
+  }
+
+  def countries_=(countries: List[FacilitatorCountry]): Unit = {
+    _countries = Some(countries)
   }
 
   def fullName: String = firstName + " " + lastName
@@ -187,20 +217,6 @@ case class Person(
       organisation ← membership.organisation
     } yield organisation
     query.sortBy(_.name.toLowerCase).list
-  }
-
-  /**
-   * A list of languages a facilitator speaks
-   */
-  lazy val languages: List[FacilitatorLanguage] = DB.withSession { implicit session: Session ⇒
-    FacilitatorLanguage.findByFacilitator(id.get)
-  }
-
-  /**
-   * A list of countries where a facilitator is ready to run events
-   */
-  lazy val countries: List[FacilitatorCountry] = DB.withSession { implicit session: Session ⇒
-    FacilitatorCountry.findByFacilitator(id.get)
   }
 
   /**
@@ -452,5 +468,50 @@ object Person {
    */
   def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+  }
+}
+
+object PeopleCollection {
+
+  /**
+   * Fill person objects with addresses (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def addresses(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.addressId).distinct.toList
+    val query = for {
+      address ← Addresses if address.id inSet ids
+    } yield address
+    val addresses = query.list
+    people.foreach(p ⇒ p.address_=(addresses.find(_.id.get == p.addressId).get))
+  }
+
+  /**
+   * Fill person objects with languages (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def languages(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      language ← FacilitatorLanguages if language.personId inSet ids
+    } yield language
+    val lanuages = query.list.groupBy(_.personId)
+    people.foreach(p ⇒ p.languages_=(lanuages.getOrElse(p.id.get, List())))
+  }
+
+  /**
+   * Fill person objects with countries (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def countries(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      country ← FacilitatorCountries if country.personId inSet ids
+    } yield country
+    val countries = query.list.groupBy(_.personId)
+    people.foreach(p ⇒ p.countries_=(countries.getOrElse(p.id.get, List())))
   }
 }

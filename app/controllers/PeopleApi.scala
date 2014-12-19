@@ -109,6 +109,7 @@ object PeopleApi extends Controller with ApiAuthentication {
 
     val people: List[Person] = Person.findByParameters(stakeholdersOnly.getOrElse(false),
       boardmembersOnly.getOrElse(false), active, query)
+    PeopleCollection.addresses(people)
     Ok(Json.prettyPrint(Json.toJson(people)))
   }
 
