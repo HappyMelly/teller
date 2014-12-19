@@ -85,7 +85,7 @@ case class Person(
   birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
-  address: Address,
+  addressId: Long,
   bio: Option[String],
   interests: Option[String],
   role: PersonRole.Value = PersonRole.Stakeholder,
@@ -96,6 +96,7 @@ case class Person(
   dateStamp: DateStamp) extends AccountHolder {
 
   private var _socialProfile: Option[SocialProfile] = None
+  private var _address: Option[Address] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -108,6 +109,17 @@ case class Person(
 
   def socialProfile_=(socialProfile: SocialProfile): Unit = {
     _socialProfile = Some(socialProfile)
+  }
+
+  def address: Address = if (_address.isEmpty) {
+    address_=(Address.find(addressId))
+    _address.get
+  } else {
+    _address.get
+  }
+
+  def address_=(address: Address): Unit = {
+    _address = Some(address)
   }
 
   def fullName: String = firstName + " " + lastName
@@ -196,7 +208,7 @@ case class Person(
    */
   def insert: Person = DB.withTransaction { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
-    val personId = People.forInsert.insert(this.copy(address = newAddress))
+    val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
     SocialProfile.insert(socialProfile.copy(objectId = personId))
     Accounts.insert(Account(personId = Some(personId)))
     this.copy(id = Some(personId))

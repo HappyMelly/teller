@@ -146,9 +146,10 @@ object People extends Controller with Security {
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
           {
-            val person = Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
+            val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
               webSite, blog, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
+            person.address_=(address)
             person
           }
         })(
@@ -327,6 +328,7 @@ object People extends Controller with Security {
         person ⇒ {
           val updatedPerson = person.copy(id = Some(id))
           updatedPerson.socialProfile_=(person.socialProfile)
+          updatedPerson.address_=(person.address)
           updatedPerson.update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
           Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
