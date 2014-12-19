@@ -61,7 +61,6 @@ case class Event(
   notPublic: Boolean = false,
   archived: Boolean = false,
   confirmed: Boolean = false,
-  invoice: EventInvoice,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -69,6 +68,7 @@ case class Event(
   facilitatorIds: List[Long]) {
 
   private var _facilitators: Option[List[Person]] = None
+  private var _invoice: Option[EventInvoice] = None
 
   def facilitators: List[Person] = if (_facilitators.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -84,6 +84,17 @@ case class Event(
 
   def facilitators_=(facilitators: List[Person]): Unit = {
     _facilitators = Some(facilitators)
+  }
+
+  def invoice: EventInvoice = if (_invoice.isEmpty) {
+    invoice_=(EventInvoice.findByEvent(id.get))
+    _invoice.get
+  } else {
+    _invoice.get
+  }
+
+  def invoice_=(invoice: EventInvoice): Unit = {
+    _invoice = Some(invoice)
   }
 
   val longTitle: String = {
