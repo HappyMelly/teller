@@ -325,7 +325,9 @@ object People extends Controller with Security {
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
         person ⇒ {
-          person.copy(id = Some(id)).update
+          val updatedPerson = person.copy(id = Some(id))
+          updatedPerson.socialProfile_=(person.socialProfile)
+          updatedPerson.update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
           Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
         })
