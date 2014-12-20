@@ -24,8 +24,6 @@
 package controllers
 
 import play.mvc.Controller
-import play.api.Play.current
-import play.api.cache.Cache
 import play.api.libs.json._
 import models.{ PeopleCollection, Person, Brand }
 import views.Languages

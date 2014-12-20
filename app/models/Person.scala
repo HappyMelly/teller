@@ -99,6 +99,7 @@ case class Person(
   private var _address: Option[Address] = None
   private var _languages: Option[List[FacilitatorLanguage]] = None
   private var _countries: Option[List[FacilitatorCountry]] = None
+  private var _memberships: Option[List[Organisation]] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -150,6 +151,26 @@ case class Person(
 
   def countries_=(countries: List[FacilitatorCountry]): Unit = {
     _countries = Some(countries)
+  }
+
+  /**
+   * Returns a list of the organisations this person is a member of.
+   */
+  def memberships: List[Organisation] = if (_memberships.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      val query = for {
+        membership ← OrganisationMemberships if membership.personId === this.id
+        organisation ← membership.organisation
+      } yield organisation
+      memberships_=(query.sortBy(_.name.toLowerCase).list)
+      _memberships.get
+    }
+  } else {
+    _memberships.get
+  }
+
+  def memberships_=(memberships: List[Organisation]): Unit = {
+    _memberships = Some(memberships)
   }
 
   def fullName: String = firstName + " " + lastName
@@ -206,17 +227,6 @@ case class Person(
    */
   lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
     Contribution.contributions(this.id.get, isPerson = true)
-  }
-
-  /**
-   * Returns a list of the organisations this person is a member of.
-   */
-  lazy val memberships: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      membership ← OrganisationMemberships if membership.personId === this.id
-      organisation ← membership.organisation
-    } yield organisation
-    query.sortBy(_.name.toLowerCase).list
   }
 
   /**
@@ -513,5 +523,20 @@ object PeopleCollection {
     } yield country
     val countries = query.list.groupBy(_.personId)
     people.foreach(p ⇒ p.countries_=(countries.getOrElse(p.id.get, List())))
+  }
+
+  /**
+   * Fill person objects with organisations data (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def organisations(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      membership ← OrganisationMemberships if membership.personId inSet ids
+      organisation ← membership.organisation
+    } yield (membership.personId, organisation)
+    val organisations = query.list.groupBy(_._1).map(o ⇒ (o._1, o._2.map(_._2)))
+    people.foreach(p ⇒ p.memberships_=(organisations.getOrElse(p.id.get, List())))
   }
 }
