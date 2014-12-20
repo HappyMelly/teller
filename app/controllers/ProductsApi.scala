@@ -26,7 +26,7 @@ package controllers
 
 import play.api.mvc.Controller
 import play.api.libs.json._
-import models.Product
+import models.{ ProductsCollection, Product }
 import play.api.i18n.Messages
 
 /**
@@ -81,7 +81,7 @@ object ProductsApi extends Controller with ApiAuthentication {
    */
   def products = TokenSecuredAction { implicit request ⇒
     val products = Product.findAll
-    Product.fillBrands(products)
+    ProductsCollection.brands(products)
     Ok(Json.prettyPrint(Json.toJson(products)))
   }
 }

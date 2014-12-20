@@ -145,12 +145,16 @@ object Product {
     Products.where(_.id === id).mutate(_.delete())
   }
 
+}
+
+object ProductsCollection {
+
   /**
    * Fill products with brands (using only one query to database)
    * @param products List of products
    * @return
    */
-  def fillBrands(products: List[Product]): Unit = DB.withSession { implicit session: Session ⇒
+  def brands(products: List[Product]): Unit = DB.withSession { implicit session: Session ⇒
     val ids = products.map(_.id.get).distinct.toList
     val query = for {
       relation ← ProductBrandAssociations if relation.productId inSet ids
@@ -159,5 +163,4 @@ object Product {
     val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
     products.foreach(e ⇒ e.brands_=(brands.getOrElse(e.id.get, List())))
   }
-
 }
