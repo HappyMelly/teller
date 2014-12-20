@@ -64,6 +64,7 @@ object Facilitators extends Controller with Security {
     implicit handler ⇒
       Brand.find(brandCode).map { brand ⇒
         val facilitators = Brand.findFacilitators(brandCode, brand.coordinator)
+        PeopleCollection.organisations(facilitators)
         Ok(Json.toJson(facilitators.map(person ⇒ (person, person.id == brand.coordinator.id))))
       }.getOrElse(NotFound("Unknown brand"))
   }

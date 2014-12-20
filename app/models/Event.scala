@@ -34,7 +34,7 @@ import play.api.db.slick.DB
 import play.api.Play.current
 import scala.language.postfixOps
 import scala.slick.lifted.Query
-import models.database.{ EventFacilitators, Participants, Events }
+import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
 import play.api.i18n.Messages
 import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
@@ -61,14 +61,14 @@ case class Event(
   notPublic: Boolean = false,
   archived: Boolean = false,
   confirmed: Boolean = false,
-  invoice: EventInvoice,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String,
-  facilitatorIds: List[Long]) {
+  updatedBy: String) {
 
   private var _facilitators: Option[List[Person]] = None
+  private var _invoice: Option[EventInvoice] = None
+  private var _facilitatorIds: Option[List[Long]] = None
 
   def facilitators: List[Person] = if (_facilitators.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -84,6 +84,28 @@ case class Event(
 
   def facilitators_=(facilitators: List[Person]): Unit = {
     _facilitators = Some(facilitators)
+  }
+
+  def invoice: EventInvoice = if (_invoice.isEmpty) {
+    invoice_=(EventInvoice.findByEvent(id.get))
+    _invoice.get
+  } else {
+    _invoice.get
+  }
+
+  def invoice_=(invoice: EventInvoice): Unit = {
+    _invoice = Some(invoice)
+  }
+
+  def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {
+    facilitatorIds_=(Event.getFacilitatorIds(id.getOrElse(0)))
+    _facilitatorIds.get
+  } else {
+    _facilitatorIds.get
+  }
+
+  def facilitatorIds_=(facilitatorIds: List[Long]): Unit = {
+    _facilitatorIds = Some(facilitatorIds)
   }
 
   val longTitle: String = {
@@ -437,21 +459,6 @@ object Event {
     Query(Events).sortBy(_.title.toLowerCase).list
   }
 
-  /**
-   * Fill events with facilitators (using only one query to database)
-   * @param events List of events
-   * @return
-   */
-  def fillFacilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = events.map(_.id.get).distinct.toList
-    val query = for {
-      facilitation ← EventFacilitators if facilitation.eventId inSet ids
-      person ← facilitation.facilitator
-    } yield (facilitation.eventId, person)
-    val facilitators = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    events.foreach(e ⇒ e.facilitators_=(facilitators.getOrElse(e.id.get, List())))
-  }
-
   def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
     Event.findByParameters(Some(brand.code), future = Some(false), public = None, archived = None,
       confirmed = Some(false), countryCode = None, eventType = None).foreach { event ⇒
@@ -460,5 +467,41 @@ object Event {
       }
   }
 
+}
+
+object EventsCollection {
+
+  /**
+   * Fill events with facilitators (using only one query to database)
+   * @param events List of events
+   * @return
+   */
+  def facilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = events.map(_.id.get).distinct.toList
+    val query = for {
+      facilitation ← EventFacilitators if facilitation.eventId inSet ids
+      person ← facilitation.facilitator
+    } yield (facilitation.eventId, person)
+    val facilitationData = query.list
+    val facilitators = facilitationData.map(_._2).distinct
+    PeopleCollection.addresses(facilitators)
+    facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
+    val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+    events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+  }
+
+  /**
+   * Fill events with invoices (using only one query to database)
+   * @param events List of events
+   * @return
+   */
+  def invoices(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = events.map(_.id.get).distinct.toList
+    val query = for {
+      invoice ← EventInvoices if invoice.eventId inSet ids
+    } yield invoice
+    val invoices = query.list
+    events.foreach(e ⇒ e.invoice_=(invoices.find(_.eventId == e.id).getOrElse(EventInvoice(None, None, 0, None, None))))
+  }
 }
 

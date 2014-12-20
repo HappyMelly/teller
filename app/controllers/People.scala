@@ -145,8 +145,13 @@ object People extends Controller with Security {
         "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
-          Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
-            profile.copy(email = emailAddress), webSite, blog, virtual = false, active, dateStamp)
+          {
+            val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
+              webSite, blog, virtual = false, active, dateStamp)
+            person.socialProfile_=(profile.copy(email = emailAddress))
+            person.address_=(address)
+            person
+          }
         })(
           { (p: Person) ⇒
             Some(
@@ -321,7 +326,10 @@ object People extends Controller with Security {
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
         person ⇒ {
-          person.copy(id = Some(id)).update
+          val updatedPerson = person.copy(id = Some(id))
+          updatedPerson.socialProfile_=(person.socialProfile)
+          updatedPerson.address_=(person.address)
+          updatedPerson.update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
           Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
         })

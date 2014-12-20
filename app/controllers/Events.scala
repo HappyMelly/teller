@@ -146,7 +146,21 @@ object Events extends Controller with Security {
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(request.user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
+      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(
+      { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
+        invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
+        {
+          val event = Event(id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic,
+            archived, confirmed, created, createdBy, updated, updatedBy)
+          event.invoice_=(invoice)
+          event.facilitatorIds_=(facilitatorIds)
+          event
+        }
+      })({ (e: Event) ⇒
+        Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language, e.location, e.details, e.schedule, e.notPublic,
+          e.archived, e.confirmed, e.invoice, e.created, e.createdBy, e.updated, e.updatedBy, e.facilitatorIds))
+
+      }))
 
   /**
    * Sends an e-mail notification for an event to the given recipients.
@@ -168,8 +182,8 @@ object Events extends Controller with Security {
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false, defaultInvoice,
-        DateTime.now(), "", DateTime.now(), "", List[Long]())
+        notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
+      default.invoice_=(defaultInvoice)
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findByUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))
@@ -340,7 +354,8 @@ object Events extends Controller with Security {
         Event.findByParameters(brandCode, future, public, archived)
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      Event.fillFacilitators(events)
+      EventsCollection.facilitators(events)
+      EventsCollection.invoices(events)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -406,11 +421,17 @@ object Events extends Controller with Security {
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val existingEvent = Event.find(id).get
-            val updatedInvoice = event.invoice.copy(id = existingEvent.invoice.id)
-            val updatedEvent = event.copy(id = Some(id)).copy(invoice = updatedInvoice).update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
 
+            val updatedEvent = event.copy(id = Some(id))
+            updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
+            updatedEvent.facilitatorIds_=(event.facilitatorIds)
+
+            // it's important to compare before updating as with lazy initialization invoice and facilitators data
+            // for an old event will be destroyed
             val changes = Event.compare(existingEvent, updatedEvent)
+            updatedEvent.update
+
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
             sendEmailNotification(updatedEvent, changes, activity, Brand.find(event.brandCode).get.coordinator)
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)

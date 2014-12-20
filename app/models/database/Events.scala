@@ -70,8 +70,7 @@ private[models] object Events extends Table[Event]("EVENT") {
     countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
     notPublic ~ archived ~ confirmed <> (
       e ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7), Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
-        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, EventInvoice.findByEvent(e._1.get),
-        DateTime.now(), "", DateTime.now(), "", Event.getFacilitatorIds(e._1.getOrElse(0))),
+        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, DateTime.now(), "", DateTime.now(), ""),
       (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language.spoken, e.language.secondSpoken,
         e.language.materials, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention,
         e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,

@@ -46,11 +46,24 @@ case class Brand(id: Option[Long],
   tagLine: Option[String],
   webSite: Option[String],
   blog: Option[String],
-  socialProfile: SocialProfile,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
   updatedBy: String) {
+
+  private var _socialProfile: Option[SocialProfile] = None
+
+  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      SocialProfile.find(id.getOrElse(0), ProfileType.Brand)
+    }
+  } else {
+    _socialProfile.get
+  }
+
+  def socialProfile_=(socialProfile: SocialProfile): Unit = {
+    _socialProfile = Some(socialProfile)
+  }
 
   /**
    * Returns true if this brand may be deleted.
@@ -239,6 +252,7 @@ object Brand {
   def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
+      u.socialProfile_=(updatedData.socialProfile)
 
       val socialQuery = for {
         socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get

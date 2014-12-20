@@ -29,6 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.Crypto
 import play.api.Play.current
+import play.api.cache.Cache
 import scala.slick.lifted.Query
 import scala.util.Random
 import securesocial.core._
@@ -163,7 +164,9 @@ object LoginIdentity {
       case None ⇒ {
         Activity.insert(user.fullName, Activity.Predicate.SignedUp)
         val uid = LoginIdentities.forInsert.insert(user)
-        user.copy(uid = Some(uid))
+        val updatedUser = user.copy(uid = Some(uid))
+        Cache.set("identity." + updatedUser.apiToken, updatedUser)
+        updatedUser
       }
       case Some(existingUser) ⇒ {
         val userRow = for {
@@ -173,6 +176,9 @@ object LoginIdentity {
 
         val updatedUser = user.copy(uid = existingUser.uid, apiToken = existingUser.apiToken)
         userRow.update(updatedUser)
+        val cacheKey = "identity." + updatedUser.apiToken
+        Cache.remove(cacheKey)
+        Cache.set(cacheKey, updatedUser)
         updatedUser
       }
     }

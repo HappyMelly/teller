@@ -85,16 +85,93 @@ case class Person(
   birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
-  address: Address,
+  addressId: Long,
   bio: Option[String],
   interests: Option[String],
   role: PersonRole.Value = PersonRole.Stakeholder,
-  socialProfile: SocialProfile,
   webSite: Option[String],
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder with Serializable {
+  dateStamp: DateStamp) extends AccountHolder {
+
+  private var _socialProfile: Option[SocialProfile] = None
+  private var _address: Option[Address] = None
+  private var _languages: Option[List[FacilitatorLanguage]] = None
+  private var _countries: Option[List[FacilitatorCountry]] = None
+  private var _memberships: Option[List[Organisation]] = None
+
+  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      socialProfile_=(SocialProfile.find(id.getOrElse(0), ProfileType.Person))
+      _socialProfile.get
+    }
+  } else {
+    _socialProfile.get
+  }
+
+  def socialProfile_=(socialProfile: SocialProfile): Unit = {
+    _socialProfile = Some(socialProfile)
+  }
+
+  def address: Address = if (_address.isEmpty) {
+    address_=(Address.find(addressId))
+    _address.get
+  } else {
+    _address.get
+  }
+
+  def address_=(address: Address): Unit = {
+    _address = Some(address)
+  }
+
+  /**
+   * A list of languages a facilitator speaks
+   */
+  def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
+    languages_=(FacilitatorLanguage.findByFacilitator(id.get))
+    _languages.get
+  } else {
+    _languages.get
+  }
+
+  def languages_=(languages: List[FacilitatorLanguage]): Unit = {
+    _languages = Some(languages)
+  }
+
+  /**
+   * A list of countries a facilitator speaks
+   */
+  def countries: List[FacilitatorCountry] = if (_countries.isEmpty) {
+    countries_=(FacilitatorCountry.findByFacilitator(id.get))
+    _countries.get
+  } else {
+    _countries.get
+  }
+
+  def countries_=(countries: List[FacilitatorCountry]): Unit = {
+    _countries = Some(countries)
+  }
+
+  /**
+   * Returns a list of the organisations this person is a member of.
+   */
+  def memberships: List[Organisation] = if (_memberships.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      val query = for {
+        membership ← OrganisationMemberships if membership.personId === this.id
+        organisation ← membership.organisation
+      } yield organisation
+      memberships_=(query.sortBy(_.name.toLowerCase).list)
+      _memberships.get
+    }
+  } else {
+    _memberships.get
+  }
+
+  def memberships_=(memberships: List[Organisation]): Unit = {
+    _memberships = Some(memberships)
+  }
 
   def fullName: String = firstName + " " + lastName
 
@@ -153,36 +230,11 @@ case class Person(
   }
 
   /**
-   * Returns a list of the organisations this person is a member of.
-   */
-  lazy val memberships: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      membership ← OrganisationMemberships if membership.personId === this.id
-      organisation ← membership.organisation
-    } yield organisation
-    query.sortBy(_.name.toLowerCase).list
-  }
-
-  /**
-   * A list of languages a facilitator speaks
-   */
-  lazy val languages: List[FacilitatorLanguage] = DB.withSession { implicit session: Session ⇒
-    FacilitatorLanguage.findByFacilitator(id.get)
-  }
-
-  /**
-   * A list of countries where a facilitator is ready to run events
-   */
-  lazy val countries: List[FacilitatorCountry] = DB.withSession { implicit session: Session ⇒
-    FacilitatorCountry.findByFacilitator(id.get)
-  }
-
-  /**
    * Inserts this person into the database and returns the saved Person, with the ID added.
    */
   def insert: Person = DB.withTransaction { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
-    val personId = People.forInsert.insert(this.copy(address = newAddress))
+    val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
     SocialProfile.insert(socialProfile.copy(objectId = personId))
     Accounts.insert(Account(personId = Some(personId)))
     this.copy(id = Some(personId))
@@ -426,5 +478,65 @@ object Person {
    */
   def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
     Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+  }
+}
+
+object PeopleCollection {
+
+  /**
+   * Fill person objects with addresses (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def addresses(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.addressId).distinct.toList
+    val query = for {
+      address ← Addresses if address.id inSet ids
+    } yield address
+    val addresses = query.list
+    people.foreach(p ⇒ p.address_=(addresses.find(_.id.get == p.addressId).get))
+  }
+
+  /**
+   * Fill person objects with languages (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def languages(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      language ← FacilitatorLanguages if language.personId inSet ids
+    } yield language
+    val lanuages = query.list.groupBy(_.personId)
+    people.foreach(p ⇒ p.languages_=(lanuages.getOrElse(p.id.get, List())))
+  }
+
+  /**
+   * Fill person objects with countries (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def countries(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      country ← FacilitatorCountries if country.personId inSet ids
+    } yield country
+    val countries = query.list.groupBy(_.personId)
+    people.foreach(p ⇒ p.countries_=(countries.getOrElse(p.id.get, List())))
+  }
+
+  /**
+   * Fill person objects with organisations data (using only one query to database)
+   * @param people List of people
+   * @return
+   */
+  def organisations(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
+    val ids = people.map(_.id.get).distinct.toList
+    val query = for {
+      membership ← OrganisationMemberships if membership.personId inSet ids
+      organisation ← membership.organisation
+    } yield (membership.personId, organisation)
+    val organisations = query.list.groupBy(_._1).map(o ⇒ (o._1, o._2.map(_._2)))
+    people.foreach(p ⇒ p.memberships_=(organisations.getOrElse(p.id.get, List())))
   }
 }
