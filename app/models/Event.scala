@@ -482,8 +482,12 @@ object EventsCollection {
       facilitation ← EventFacilitators if facilitation.eventId inSet ids
       person ← facilitation.facilitator
     } yield (facilitation.eventId, person)
-    val facilitators = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    events.foreach(e ⇒ e.facilitators_=(facilitators.getOrElse(e.id.get, List())))
+    val facilitationData = query.list
+    val facilitators = facilitationData.map(_._2).distinct
+    PeopleCollection.addresses(facilitators)
+    facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
+    val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+    events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
   }
 
   /**
