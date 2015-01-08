@@ -39,17 +39,18 @@ import com.itextpdf.text.Image
  */
 case class Certificate(
   evaluation: Evaluation,
-  oldEvaluation: Option[Evaluation] = None) {
+  renew: Boolean = false) {
 
   val id = evaluation.certificateId
 
   def generateAndSend(brand: BrandView, approver: Person) {
     val contentType = "application/pdf"
     val pdf = generate(evaluation)
+    if (renew) {
+      Certificate.removeFromCloud(id)
+    }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
       evaluation.copy(certificate = Some(id)).update
-      oldEvaluation.map(oldEv ⇒ oldEv.certificate.map(
-        oldId ⇒ if (oldId != id) Certificate.removeFromCloud(oldId)))
       sendEmail(brand, approver, pdf)
     }.recover {
       case S3Exception(status, code, message, originalXml) ⇒ {}
