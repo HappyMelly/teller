@@ -122,6 +122,16 @@ object ParticipantsApi extends ApiAuthentication {
           Ok(Json.prettyPrint(Json.obj("participant_id" -> participant.personId)))
         })
     }
-
   }
+
+  import PeopleApi.personWrites
+  /**
+   * Participants list for a given event
+   *
+   * @param eventId Event identifier
+   */
+  def participants(eventId: Long) = TokenSecuredAction { implicit request ⇒
+    Ok(Json.prettyPrint(Json.toJson(Participant.findByEvent(eventId).map(_.person))))
+  }
+
 }

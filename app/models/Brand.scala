@@ -24,6 +24,8 @@
 
 package models
 
+import java.text.Collator
+import java.util.Locale
 import models.database._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
@@ -201,7 +203,9 @@ object Brand {
    * @return
    */
   def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
-    (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName)
+    val collator = Collator.getInstance(Locale.ENGLISH)
+    val ord = new Ordering[String] { def compare(x: String, y: String) = collator.compare(x, y) }
+    (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds a brand by ID **/
