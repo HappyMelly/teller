@@ -107,14 +107,11 @@ case class Evaluation(
 
   def approve(approver: Person): Evaluation = {
 
-    val oldEvaluation = this
     val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
 
     val brand = Brand.find(evaluation.event.brandCode).get
-    // handled date is the only variable which influences how the certificate
-    //   looks like from one generation to another
-    if ((evaluation.certificate.isEmpty && brand.brand.generateCert) || oldEvaluation.handled != evaluation.handled) {
-      val cert = new Certificate(evaluation, Some(oldEvaluation))
+    if ((evaluation.certificate.isEmpty && brand.brand.generateCert)) {
+      val cert = new Certificate(evaluation)
       cert.generateAndSend(brand, approver)
     } else if (evaluation.certificate.isEmpty) {
       val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
@@ -122,14 +119,17 @@ case class Evaluation(
       EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
         Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
     } else {
-      val cert = new Certificate(evaluation)
+      val cert = new Certificate(evaluation, renew = true)
       cert.send(brand, approver)
     }
 
     evaluation
   }
 
-  def reject(): Evaluation = this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).update
+  def reject(): Evaluation = {
+    Certificate.removeFromCloud(this.certificateId)
+    this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).copy(certificate = None).update
+  }
 
 }
 

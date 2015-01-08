@@ -46,7 +46,7 @@ object Certificates extends Controller with Security {
         evaluation ⇒
           val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
           val brand = Brand.find(evaluation.event.brandCode).get
-          val certificate = new Certificate(evaluation)
+          val certificate = new Certificate(evaluation, renew = true)
           certificate.generateAndSend(brand, approver)
           val route = ref match {
             case Some("index") ⇒ routes.Participants.index().url
