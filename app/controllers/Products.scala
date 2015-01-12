@@ -33,7 +33,6 @@ import play.api.data.Forms._
 import models.UserRole.Role._
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
-import java.io.File
 import play.api.cache.Cache
 import services._
 import play.api.data.FormError
@@ -56,7 +55,7 @@ object Products extends Controller with Security {
 
     def bind(key: String, data: Map[String, String]) = {
       try {
-        data.get(key).map(ProductCategory.withName(_)).toRight(Seq.empty)
+        data.get(key).map(ProductCategory.withName).toRight(Seq.empty)
       } catch {
         case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
       }
@@ -218,7 +217,7 @@ object Products extends Controller with Security {
         product ⇒
           val derivatives = Product.findDerivatives(id)
           val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
-          val brands = Brand.findAll
+          val brands = Brand.findAllWithCoordinator
           val contributors = Contribution.contributors(id)
           val people = Person.findAll
           val organisations = Organisation.findAll

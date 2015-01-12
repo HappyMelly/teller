@@ -18,8 +18,10 @@
             @html.form(action = CSRF(routes.CertificateTemplates.create(brand.code)), 'enctype -> "multipart/form-data") {
                 @html.select(form("language"), ("", "Choose a language") +: languages.toList.sortBy(_._2),
                     '_label -> "Language"),
-                @html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_help -> "Required")
-                @html.file(form("twoFacilitators"), '_label -> "Two Facilitators", '_help -> "Required")
+                @html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_help -> "Required",
+                    'accept -> "image/jpeg, image/pjpeg, image/gif, image/png")
+                @html.file(form("twoFacilitators"), '_label -> "Two Facilitators", '_help -> "Required",
+                    'accept -> "image/jpeg, image/pjpeg, image/gif, image/png")
 
                 <div class="row">
                     <div class="col-sm-3"></div>

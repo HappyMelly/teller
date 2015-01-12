@@ -1,11 +1,7 @@
 @(loginForm: Form[(String,String)], errorMsg: Option[String] = None)(implicit request: RequestHeader, flash: Flash)
 
-@import helper._
 @import securesocial.core.Registry
-@import securesocial.core.AuthenticationMethod._
 @import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
-
-
 
 @main("Sign in", "", None) {
   <div class="page-header">
@@ -42,6 +38,6 @@
     }
   }
   <div class="cloudbees pull-right">
-    <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
+   <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
   </div>
 }

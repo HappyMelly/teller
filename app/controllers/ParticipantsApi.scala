@@ -38,6 +38,7 @@ import views.Countries
 object ParticipantsApi extends ApiAuthentication {
 
   def participantForm(account: UserAccount, userName: String) = {
+
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "event_id" -> longNumber.verifying(
@@ -109,7 +110,6 @@ object ParticipantsApi extends ApiAuthentication {
         })
     } else {
       val form: Form[ParticipantData] = participantForm(identity.userAccount, person.fullName).bindFromRequest()(request)
-
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
@@ -122,6 +122,17 @@ object ParticipantsApi extends ApiAuthentication {
           Ok(Json.prettyPrint(Json.obj("participant_id" -> participant.personId)))
         })
     }
-
   }
+
+  import PeopleApi.personWrites
+
+  /**
+   * Participants list for a given event
+   *
+   * @param eventId Event identifier
+   */
+  def participants(eventId: Long) = TokenSecuredAction { implicit request ⇒
+    Ok(Json.prettyPrint(Json.toJson(Participant.findByEvent(eventId).map(_.person))))
+  }
+
 }

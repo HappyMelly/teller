@@ -25,7 +25,7 @@ package controllers
 
 import play.mvc.Controller
 import play.api.libs.json._
-import models.{ Person, Brand }
+import models.{ PeopleCollection, Person, Brand }
 import views.Languages
 
 /**
@@ -53,7 +53,11 @@ object FacilitatorsApi extends Controller with ApiAuthentication {
    */
   def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
     Brand.find(code).map { brand ⇒
-      Ok(Json.prettyPrint(Json.toJson(Brand.findFacilitators(code, brand.coordinator))))
+      val facilitators = Brand.findFacilitators(code, brand.coordinator)
+      PeopleCollection.countries(facilitators)
+      PeopleCollection.languages(facilitators)
+      PeopleCollection.addresses(facilitators)
+      Ok(Json.prettyPrint(Json.toJson(facilitators)))
     }.getOrElse(NotFound("Unknown brand"))
   }
 

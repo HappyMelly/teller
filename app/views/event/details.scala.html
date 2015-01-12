@@ -4,11 +4,8 @@
         )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import models.UserRole.Role._
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import views.Languages
 
 @main(event.title + " - Event", "events", Some(user)) {
 
@@ -40,11 +37,14 @@
                     </div>
                 }
                 <div class="button">
-                    <form class="delete" class="form-inline" method="post" text="event"
+                    <form class="delete form-inline" method="post" text="event"
                     action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
-                        <button class="btn btn-danger" type="submit">
-                            <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                        </button>
+                        <div data-toggle="tooltip" data-placement="bottom"
+                            @if(!event.deletable) { title="@Messages("error.event.nonDeletable")" }>
+                            <button class="btn btn-danger" type="submit" @if(!event.deletable) { disabled="disabled"} >
+                                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                            </button>
+                        </div>
                     </form>
                 </div>
             }
@@ -74,20 +74,20 @@
         </p>
         <p>
             <strong>Spoken Language</strong><br/>
-            @Languages.all.get(event.spokenLanguage)
+            @event.spokenLanguage
         </p>
-        @event.materialsLanguage.map { lang =>
+        @event.language.spoken.map { lang =>
             <p>
-                <strong>Materials Language</strong><br/>@Languages.all.get(lang)
+                <strong>Materials Language</strong><br/>@event.materialsLanguage
             </p>
         }
         @event.details.webSite.map { url =>
             <p><strong>Web site</strong>
-                <br><a href="@url">@url</a></p>
+                <br><a href="@url" target="_blank">@url</a></p>
         }
         @event.details.registrationPage.map { url =>
             <p><strong>Registration page</strong>
-                <br><a href="@url">@url</a></p>
+                <br><a href="@url" target="_blank">@url</a></p>
         }
 
     </div>

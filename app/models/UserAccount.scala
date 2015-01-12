@@ -37,17 +37,26 @@ import play.libs.Scala
 case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
   facebookUrl: Option[String], linkedInUrl: Option[String], googlePlusUrl: Option[String]) extends Subject {
 
-  lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
-  lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
-  lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
+  private var _roles: Option[java.util.List[UserRole]] = None
+
+  def roles_=(roles: java.util.List[UserRole]): Unit = {
+    _roles = Some(roles)
+  }
 
   /**
    * Returns a string list of role names, for the Subject interface.
    */
-  def getRoles: java.util.List[UserRole] = {
+  def getRoles: java.util.List[UserRole] = if (_roles.isEmpty) {
     val accountRole = UserAccount.findRole(personId).map(role ⇒ UserRole(role))
-    accountRole.map(_.list).getOrElse(java.util.Collections.emptyList())
+    roles_=(accountRole.map(_.list).getOrElse(java.util.Collections.emptyList()))
+    _roles.get
+  } else {
+    _roles.get
   }
+
+  lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
+  lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
+  lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])

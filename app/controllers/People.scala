@@ -61,7 +61,7 @@ object People extends Controller with Security {
           }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
         case "gravatar" ⇒
           data.get("emailAddress").map { email ⇒
-            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).avatarUrl)))
+            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).size(300).avatarUrl)))
           }.getOrElse(Right(Photo(None, None)))
         case _ ⇒ Right(Photo(None, None))
       }
@@ -145,8 +145,13 @@ object People extends Controller with Security {
         "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
-          Person(id, firstName, lastName, birthday, photo, signature, address, bio, interests, role,
-            profile.copy(email = emailAddress), webSite, blog, virtual = false, active, dateStamp)
+          {
+            val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
+              webSite, blog, virtual = false, active, dateStamp)
+            person.socialProfile_=(profile.copy(email = emailAddress))
+            person.address_=(address)
+            person
+          }
         })(
           { (p: Person) ⇒
             Some(
@@ -203,7 +208,8 @@ object People extends Controller with Security {
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the person or organisation details page.
-                val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+                val action = if (page == "person") routes.People.details(personId).url + "#organizations"
+                else routes.Organisations.details(organisationId).url
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
@@ -237,7 +243,7 @@ object People extends Controller with Security {
 
       Person.find(id).map { person ⇒
         if (!person.deletable) {
-          Redirect(routes.People.index()).flashing("error" -> Messages("error.notDeletablePerson"))
+          Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
           Person.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
@@ -263,7 +269,8 @@ object People extends Controller with Security {
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the person or organisation details page.
-          val action = if (page == "person") routes.People.details(personId) else routes.Organisations.details(organisationId)
+          val action = if (page == "person") routes.People.details(personId).url + "#organizations"
+          else routes.Organisations.details(organisationId).url
           Redirect(action).flashing("success" -> activity.toString)
         }
       }.flatten.getOrElse(NotFound)
@@ -319,7 +326,10 @@ object People extends Controller with Security {
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
         person ⇒ {
-          person.copy(id = Some(id)).update
+          val updatedPerson = person.copy(id = Some(id))
+          updatedPerson.socialProfile_=(person.socialProfile)
+          updatedPerson.address_=(person.address)
+          updatedPerson.update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
           Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
         })
@@ -338,16 +348,16 @@ object People extends Controller with Security {
 
   /**
    * Upload a new signature to Amazon
+   *
+   * @param id Person identifier
    */
-  def uploadSignature = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
       val encoding = "ISO-8859-1"
-      val form = Form(tuple(
-        "personId" -> nonEmptyText,
-        "signature" -> optional(text)))
-      val (personId, signature) = form.bindFromRequest.get
-      Person.find(personId.toLong).map { person ⇒
+      Person.find(id).map { person ⇒
+        val route = routes.People.details(person.id.get).url + "#licenses"
+
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
           val filename = Person.fullFileName(person.id.get)
           val source = Source.fromFile(picture.ref.file.getPath, encoding)
@@ -355,15 +365,15 @@ object People extends Controller with Security {
           source.close()
           S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
             person.copy(signature = true).update
-            Cache.remove(Person.cacheId(personId.toLong))
+            Cache.remove(Person.cacheId(id))
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
-            Redirect(routes.People.details(person.id.get)).flashing("success" -> activity.toString)
+            Redirect(route).flashing("success" -> activity.toString)
           }.recover {
             case S3Exception(status, code, message, originalXml) ⇒
-              Redirect(routes.People.details(person.id.get)).flashing("error" -> "Image cannot be temporary saved")
+              Redirect(route).flashing("error" -> "Image cannot be temporary saved")
           }
         }.getOrElse {
-          Future.successful(Redirect(routes.People.details(person.id.get)).flashing("error" -> "Please choose an image file"))
+          Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
         }
       }.getOrElse(Future.successful(NotFound))
   }
@@ -383,7 +393,8 @@ object People extends Controller with Security {
         person.copy(signature = false).update
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
           "signature from the person " + person.fullName)
-        Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+        val route = routes.People.details(personId).url + "#licenses"
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 

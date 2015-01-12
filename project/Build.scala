@@ -15,6 +15,7 @@ object ApplicationBuild extends Build {
     filters,
     "be.objectify" %% "deadbolt-scala" % "2.2-RC2",
     "com.andersen-gott" %% "scravatar" % "1.0.3",
+    "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
     "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0",
     "com.typesafe.play" %% "play-slick" % "0.5.0.8",
     //"com.typesafe.slick" %% "slick" % "1.0.1",
@@ -27,7 +28,7 @@ object ApplicationBuild extends Build {
     "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
-    "ws.securesocial" %% "securesocial" % "2.1.3",
+    "ws.securesocial" %% "securesocial" % "2.1.4",
     "nl.rhinofly" %% "play-s3" % "3.3.3"
   )
 
@@ -38,6 +39,7 @@ object ApplicationBuild extends Build {
     resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns),
     resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.com/releases/"))(Resolver.ivyStylePatterns),
     resolvers += "Rhinofly Internal Repository" at "http://maven-repository.rhinofly.net:8081/artifactory/libs-release-local",
+    resolvers += "Spy Repository" at "http://files.couchbase.com/maven2",
     resolvers += Resolver.sonatypeRepo("releases"),
     routesImport += "binders._"
   ).settings(

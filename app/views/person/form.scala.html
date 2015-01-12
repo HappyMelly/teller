@@ -33,6 +33,7 @@
                     @html.textarea(form("interests"), '_label -> "Interests", 'rows -> "5", '_help -> views.html.markdownHelp())
 
                     <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
+                    <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
                     @defining(form("profile.twitterHandle")) { field =>
                         <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">

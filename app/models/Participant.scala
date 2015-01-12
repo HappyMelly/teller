@@ -181,6 +181,20 @@ object Participant {
   }
 
   /**
+   * Retrieve the participants for a set of events
+   * @param eventIds a list of event ids
+   * @return
+   */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    val baseQuery = for {
+      e ← Events if e.id inSet eventIds
+      part ← Participants if part.eventId === e.id
+      p ← People if p.id === part.personId
+    } yield (e, p)
+    baseQuery.list
+  }
+
+  /**
    * Create a new person and a participant record
    * @param data Data containing records about a person and an event
    * @return
@@ -189,9 +203,11 @@ object Participant {
     val virtual = true
     val active = false
     val person = Person(None, data.firstName, data.lastName, data.birthday,
-      Photo(None, None), signature = false, data.address, None, None, PersonRole.NoRole,
-      SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress), None, None, virtual, active,
+      Photo(None, None), signature = false, 0, None, None, PersonRole.NoRole,
+      None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
+    person.socialProfile_=(SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress))
+    person.address_=(data.address)
     val newPerson = person.insert
     val eventParticipant = Participant(None, data.eventId, newPerson.id.get, evaluationId = None, data.organisation,
       data.comment)

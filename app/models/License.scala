@@ -137,6 +137,18 @@ object License {
   }
 
   /**
+   * Returns a list of all people who have ever been licensed for the given brand
+   */
+  def allLicensees(brandCode: String): List[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      license ← Licenses
+      brand ← license.brand if brand.code === brandCode
+      licensee ← license.licensee
+    } yield licensee
+    query.sortBy(_.lastName.toLowerCase).list
+  }
+
+  /**
    * Returns a list of content licenses for the given person.
    */
   def licenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒

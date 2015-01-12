@@ -24,9 +24,10 @@
 package controllers
 
 import play.mvc.Controller
+import play.api.Play.current
+import play.api.cache.Cache
 import play.api.libs.json._
-import models.{ Brand, Event }
-import views.Languages
+import models.{ EventsCollection, Brand, Event }
 
 /**
  * Events API
@@ -42,8 +43,8 @@ object EventsApi extends Controller with ApiAuthentication {
         "title" -> event.title,
         "type" -> event.eventTypeId,
         "description" -> event.details.description,
-        "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
-        "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
+        "spokenLanguages" -> event.spokenLanguages,
+        "materialsLanguage" -> event.materialsLanguage,
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
@@ -57,30 +58,6 @@ object EventsApi extends Controller with ApiAuthentication {
     }
   }
 
-  val noFacilitatorsEventsWrites = new Writes[List[Event]] {
-    def writes(events: List[Event]): JsValue = {
-      val serializedEvents = events.map { event ⇒
-        Json.obj(
-          "id" -> event.id.get,
-          "title" -> event.title,
-          "type" -> event.eventTypeId,
-          "description" -> event.details.description,
-          "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
-          "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
-          "specialAttention" -> event.details.specialAttention,
-          "start" -> event.schedule.start,
-          "end" -> event.schedule.end,
-          "hoursPerDay" -> event.schedule.hoursPerDay,
-          "totalHours" -> event.schedule.totalHours,
-          "city" -> event.location.city,
-          "country" -> event.location.countryCode,
-          "website" -> event.details.webSite,
-          "registrationPage" -> event.details.registrationPage)
-      }
-      JsArray(serializedEvents)
-    }
-  }
-
   val eventDetailsWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
       Json.obj(
@@ -88,8 +65,8 @@ object EventsApi extends Controller with ApiAuthentication {
         "type" -> event.eventTypeId,
         "title" -> event.title,
         "description" -> event.details.description,
-        "spokenLanguage" -> Languages.all.get(event.spokenLanguage),
-        "materialsLanguage" -> Languages.all.get(event.materialsLanguage.getOrElse("")),
+        "spokenLanguages" -> event.spokenLanguages,
+        "materialsLanguage" -> event.materialsLanguage,
         "specialAttention" -> event.details.specialAttention,
         "start" -> event.schedule.start,
         "end" -> event.schedule.end,
@@ -127,7 +104,7 @@ object EventsApi extends Controller with ApiAuthentication {
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
     Event.find(id).map { event ⇒
-      Ok(Json.toJson(event)(eventDetailsWrites))
+      Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
     }.getOrElse(NotFound("Unknown event"))
   }
 
@@ -141,11 +118,13 @@ object EventsApi extends Controller with ApiAuthentication {
     facilitatorId: Option[Long],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
+
     val events: List[Event] = facilitatorId.map { value ⇒
-      Event.findByFacilitator(value, code, future, public)
+      Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
     }.getOrElse {
-      Event.findByParameters(code, future, public, archived, None, countryCode, eventType)
+      Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }
-    Ok(Json.toJson(events))
+    EventsCollection.facilitators(events)
+    Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }

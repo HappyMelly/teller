@@ -5,3 +5,5 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.5")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.2.1")
+
+addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "0.1.4")

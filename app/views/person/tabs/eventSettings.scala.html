@@ -1,0 +1,82 @@
+@(person: Person)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import views.Languages
+@import views.Countries
+
+<div class="col-xs-12">
+    <div class="col-xs-6">
+        <table class="datatables table table-bordered">
+            <thead>
+                <tr>
+                    <th>Languages you facilitate events in</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(language <- person.languages) {
+                <tr>
+                    <td>@Languages.all.get(language.language)</td>
+                    <td>
+                    @dynamic(handler, "person", "edit") {
+                        <a href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">
+                            <i class="glyphicon glyphicon-trash"></i> Delete</a>
+                    }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @dynamic(handler, "person", "edit") {
+            <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
+                <p>
+                    <select name="language" class="form-control input-sm">
+                    @for(language <- Languages.all.toList.sortBy(_._2)) {
+                        <option value="@language._1">@language._2</option>
+                    }
+                    </select>
+                    <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
+                        Add Language</button>
+                </p>
+            </form>
+        }
+    </div>
+    <div class="col-xs-6">
+        <table class="datatables table table-bordered">
+            <thead>
+                <tr>
+                    <th>Countries you work in</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(country <- person.countries) {
+                <tr>
+                    <td>@Messages("country." + country.country)</td>
+                    <td>
+                    @dynamic(handler, "person", "edit") {
+                        <a href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">
+                            <i class="glyphicon glyphicon-trash"></i> Delete</a>
+                    }
+
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @dynamic(handler, "person", "edit") {
+            <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
+                <p>
+                    <select name="country" class="form-control input-sm">
+                    @for(country <- Countries.all.toList) {
+                        <option value="@country._1">@country._2</option>
+                    }
+                    </select>
+                    <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
+                        Add Country</button>
+                </p>
+            </form>
+        }
+    </div>
+</div>

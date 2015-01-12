@@ -13,5 +13,6 @@
 @(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
 
 @helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
-    <input type="date" id="@id" value="@value" class="form-control" name="@name" @toHtmlArgs(htmlArgs)/>
+    <input id="@id" value="@value" class="form-control" name="@name" data-type="date"
+        data-date-format="YYYY-MM-DD" @toHtmlArgs(htmlArgs)/>
 }(handler, lang)

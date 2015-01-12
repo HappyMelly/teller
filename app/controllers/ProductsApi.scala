@@ -26,7 +26,7 @@ package controllers
 
 import play.api.mvc.Controller
 import play.api.libs.json._
-import models.Product
+import models.{ ProductsCollection, Product }
 import play.api.i18n.Messages
 
 /**
@@ -41,6 +41,7 @@ object ProductsApi extends Controller with ApiAuthentication {
       Json.obj(
         "href" -> product.id.map(productId ⇒ routes.ProductsApi.product(productId).url),
         "title" -> product.title,
+        "subtitle" -> product.subtitle,
         "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
         "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
@@ -71,7 +72,7 @@ object ProductsApi extends Controller with ApiAuthentication {
    */
   def product(id: Long) = TokenSecuredAction { implicit request ⇒
     Product.find(id).map { product ⇒
-      Ok(Json.toJson(product)(productDetailsWrites))
+      Ok(Json.prettyPrint(Json.toJson(product)(productDetailsWrites)))
     }.getOrElse(NotFound("Unknown product"))
   }
 
@@ -79,6 +80,8 @@ object ProductsApi extends Controller with ApiAuthentication {
    * Product list API.
    */
   def products = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Product.findAll))
+    val products = Product.findAll
+    ProductsCollection.brands(products)
+    Ok(Json.prettyPrint(Json.toJson(products)))
   }
 }

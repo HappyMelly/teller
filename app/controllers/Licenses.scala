@@ -53,7 +53,7 @@ object Licenses extends Controller with Security {
     "start" -> jodaLocalDate,
     "end" -> jodaLocalDate,
     "confirmed" -> default(boolean, false),
-    "fee" -> jodaMoney(13, 0), // Set scale to zero to force whole numbers.
+    "fee" -> jodaMoney(),
     "feePaid" -> optional(jodaMoney()))(License.apply)(License.unapply).verifying(
       "error.date.range", (license: License) ⇒ !license.start.isAfter(license.end)))
 
@@ -67,7 +67,10 @@ object Licenses extends Controller with Security {
   }
 
   /**
-   * Page for adding a new content license.
+   * Page for adding a new content license
+   *
+   * @param personId Person identifier
+   * @return
    */
   def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -76,12 +79,14 @@ object Licenses extends Controller with Security {
         val form = licenseForm.fill(License.blank(personId))
         Ok(views.html.license.form(request.user, None, form, person))
       } getOrElse {
-        Redirect(routes.People.index).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
   /**
-   * POST handler for adding a new content license.
+   * A handler for adding a new content license
+   *
+   * @param personId Person identifier
    */
   def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -95,7 +100,8 @@ object Licenses extends Controller with Security {
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
-            Redirect(routes.People.details(personId)).flashing("success" -> activity.toString)
+            val route = routes.People.details(personId).url + "#licenses"
+            Redirect(route).flashing("success" -> activity.toString)
           })
       } getOrElse {
         Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
@@ -103,7 +109,9 @@ object Licenses extends Controller with Security {
   }
 
   /**
-   * Deletes a license.
+   * Deletes a license
+   *
+   * @param id License identifier
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -112,12 +120,15 @@ object Licenses extends Controller with Security {
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
-        Redirect(routes.People.details(view.licensee.id.getOrElse(0))).flashing("success" -> activity.toString)
+        val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#licenses"
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
   /**
-   * POST handler for updating an existing content license.
+   * A handler for updating an existing content license
+   *
+   * @param id License identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
@@ -130,7 +141,8 @@ object Licenses extends Controller with Security {
 
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-            Redirect(routes.People.details(view.licensee.id.get)).flashing("success" -> activity.toString)
+            val route = routes.People.details(view.licensee.id.get).url + "#licenses"
+            Redirect(route).flashing("success" -> activity.toString)
           })
       } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
@@ -138,7 +150,9 @@ object Licenses extends Controller with Security {
   }
 
   /**
-   * Edit page.
+   * Draw a License edit page
+   *
+   * @param id License identifier
    */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒

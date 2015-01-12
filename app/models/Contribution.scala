@@ -51,7 +51,7 @@ case class Contribution(
 
 }
 
-case class ContributorView(name: String, id: Long, photo: Option[String], contribution: Contribution)
+case class ContributorView(name: String, uniqueName: String, id: Long, photo: Option[String], contribution: Contribution)
 
 case class ContributionView(product: Product, contribution: Contribution)
 
@@ -82,7 +82,8 @@ object Contribution {
     } yield (contribution, person)
 
     val people = peopleQuery.list.map {
-      case (contribution, person) ⇒ ContributorView(person.firstName + " " + person.lastName, person.id.get, person.photo.url, contribution)
+      case (contribution, person) ⇒
+        ContributorView(person.firstName + " " + person.lastName, person.uniqueName, person.id.get, person.photo.url, contribution)
     }
 
     val orgQuery = for {
@@ -91,7 +92,7 @@ object Contribution {
     } yield (contribution, organisation)
 
     val organisations = orgQuery.list.map {
-      case (contribution, organisation) ⇒ ContributorView(organisation.name, organisation.id.get, Some(""), contribution)
+      case (contribution, organisation) ⇒ ContributorView(organisation.name, "", organisation.id.get, Some(""), contribution)
     }
 
     List.concat(people, organisations).sortBy(_.name)

@@ -26,6 +26,7 @@ body {
     background-image: url(../images/melly.png);
     background-repeat: no-repeat;
     background-position: left 41px;
+    padding-top : 60px;
 }
 
 .navbar-inverse .navbar-brand {

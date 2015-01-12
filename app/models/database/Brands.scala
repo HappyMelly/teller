@@ -57,8 +57,7 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def * = id.? ~ code ~ uniqueName ~ name ~ coordinatorId ~ description ~ picture ~
     generateCert ~ tagLine ~ webSite ~ blog ~ created ~ createdBy ~ updated ~
     updatedBy <> ({ b ⇒
-      Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7, b._8, b._9, b._10, b._11,
-        SocialProfile.find(b._1.getOrElse(0), ProfileType.Brand), b._12, b._13, b._14, b._15)
+      Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7, b._8, b._9, b._10, b._11, b._12, b._13, b._14, b._15)
     }, { (b: Brand) ⇒
       Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description, b.picture, b.generateCert,
         b.tagLine, b.webSite, b.blog, b.created, b.createdBy, b.updated, b.updatedBy))

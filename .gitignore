@@ -16,3 +16,6 @@ dist
 .DS_Store
 *.iml
 run-server.sh
+.tags*
+.ensime
+.ensime_lucene/

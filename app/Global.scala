@@ -22,17 +22,18 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+import java.util.concurrent.TimeUnit
+import models.Event
+import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import play.api._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 import play.api.mvc.Results._
+import play.api.Play.current
 import play.filters.csrf._
-import scala.concurrent.Future
 import play.libs.Akka
-import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import scala.concurrent.duration.Duration
-import java.util.concurrent.TimeUnit
-import models.Event
+import scala.concurrent.Future
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
@@ -42,10 +43,24 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   /**
+   * Force using HTTPS on production
+   * @param request Request object
+   * @return
+   */
+  override def onRouteRequest(request: RequestHeader): Option[Handler] = {
+    if (Play.isProd && Play.configuration.getBoolean("stage").isEmpty
+      && !request.headers.get("x-forwarded-proto").getOrElse("").contains("https")) {
+      Some(controllers.HttpsController.redirect)
+    } else {
+      super.onRouteRequest(request)
+    }
+  }
+
+  /**
    * Retrieve the (RequestHeader,Handler) to use to serve this request.
    * Default is: route, tag request, then apply filters
    *
-   * This function was overrided to support POST request through API
+   * This function was overided to support POST request through API
    */
   override def onRequestReceived(request: RequestHeader): (RequestHeader, Handler) = {
     val (routedRequest, handler) = onRouteRequest(request) map {
@@ -54,6 +69,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     } getOrElse {
       (request, Action.async(BodyParsers.parse.empty)(_ ⇒ this.onHandlerNotFound(request)))
     }
+
     val api = """/api/v1""".r findPrefixOf request.path
     if (api.isEmpty) {
       (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
@@ -63,16 +79,18 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   override def onStart(app: Application) {
-    // turn this feature off on a development machine
-    if (Play.current.configuration.getBoolean("development").exists(_ == true)) {
-      return
-    }
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
-      Event.sendConfirmationAlert()
+    // this is a dirty hack as I don't want to pay Heroku additional $30 for only sending notifications through
+    //  a separate process
+    if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.1")) {
+      Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
+        Event.sendConfirmationAlert()
+      }
     }
+
   }
+
 }

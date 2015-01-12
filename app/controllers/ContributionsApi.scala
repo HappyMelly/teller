@@ -42,6 +42,7 @@ object ContributionsApi extends Controller with ApiAuthentication {
     def writes(contributor: ContributorView) = Json.obj(
       "name" -> contributor.name,
       "href" -> routes.PeopleApi.person(contributor.id.toString).url,
+      "unique_name" -> contributor.uniqueName,
       "photo" -> contributor.photo,
       "role" -> contributor.contribution.role)
   }

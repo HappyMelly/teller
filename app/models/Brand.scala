@@ -24,6 +24,8 @@
 
 package models
 
+import java.text.Collator
+import java.util.Locale
 import models.database._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
@@ -46,11 +48,24 @@ case class Brand(id: Option[Long],
   tagLine: Option[String],
   webSite: Option[String],
   blog: Option[String],
-  socialProfile: SocialProfile,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
   updatedBy: String) {
+
+  private var _socialProfile: Option[SocialProfile] = None
+
+  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
+    DB.withSession { implicit session: Session ⇒
+      SocialProfile.find(id.getOrElse(0), ProfileType.Brand)
+    }
+  } else {
+    _socialProfile.get
+  }
+
+  def socialProfile_=(socialProfile: SocialProfile): Unit = {
+    _socialProfile = Some(socialProfile)
+  }
 
   /**
    * Returns true if this brand may be deleted.
@@ -84,19 +99,6 @@ case class Brand(id: Option[Long],
   }
 
   def delete(): Unit = Brand.delete(this.id.get)
-
-  def update = DB.withSession { implicit session: Session ⇒
-    session.withTransaction {
-      val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
-      } yield socialProfile
-      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
-      val updateTuple = (code, uniqueName, name, coordinatorId, description, picture, tagLine, webSite, blog, updated, updatedBy)
-      val updateQuery = Brands.filter(_.id === this.id).map(_.forUpdate)
-      updateQuery.update(updateTuple)
-      this
-    }
-  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
@@ -193,14 +195,16 @@ object Brand {
   }
 
   /**
-   * Return a list of facilitators for a given brand
+   * Get a list of facilitators for a given brand
+   *
+   * @param code Brand string identifier
+   * @param coordinator Brand coordinator
+   * @return
    */
   def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
-    val licensees = License.licensees(code, LocalDate.now())
-    if (licensees.exists(_.id == coordinator.id))
-      licensees
-    else
-      coordinator :: licensees
+    val collator = Collator.getInstance(Locale.ENGLISH)
+    val ord = new Ordering[String] { def compare(x: String, y: String) = collator.compare(x, y) }
+    (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds a brand by ID **/
@@ -213,7 +217,16 @@ object Brand {
     Query(Brands).filter(_.coordinatorId === coordinatorId).list
   }
 
-  def findAll: List[BrandView] = DB.withSession { implicit session: Session ⇒
+  /**
+   * Get a list of all brands
+   *
+   * @return
+   */
+  def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
+    Query(Brands).sortBy(_.name.toLowerCase).list
+  }
+
+  def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId)
       coordinator ← brand.coordinator
@@ -233,5 +246,36 @@ object Brand {
     Brands.where(_.id === id).mutate(_.delete())
   }
 
+  /**
+   * Update brand
+   * @param existingData Brand data before update
+   * @param updatedData Brand data including updated fields from the from
+   * @param picture New brand picture
+   * @return
+   */
+  def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
+    session.withTransaction {
+      val u = updatedData.copy(id = existingData.id).copy(picture = picture)
+      u.socialProfile_=(updatedData.socialProfile)
+
+      val socialQuery = for {
+        socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get
+      } yield socialProfile
+      socialQuery.filter(_.objectType === u.socialProfile.objectType).update(u.socialProfile.copy(objectId = u.id.get))
+
+      if (existingData.code != u.code) {
+        val eventQuery = for {
+          event ← Events if event.brandCode === existingData.code
+        } yield event.brandCode
+        eventQuery.update(u.code)
+      }
+
+      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId, u.description, u.picture, u.tagLine,
+        u.webSite, u.blog, u.updated, u.updatedBy)
+      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      u
+    }
+  }
 }
 

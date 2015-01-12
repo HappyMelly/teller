@@ -23,10 +23,9 @@
  */
 package services
 
-import models.Person
-import play.api.mvc.RequestHeader
-import play.api.{ Logger, Play }
 import akka.actor.{ Props, Actor }
+import models.Person
+import play.api.{ Logger, Play }
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
 
@@ -98,7 +97,7 @@ object EmailService {
           setSubject(message.subject)
         Logger.debug(s"Sending e-mail with subject: ${message.subject}")
 
-        if (Play.configuration.getBoolean("development").exists(_ == true)) {
+        if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
           Logger.debug(s"${message.body}")
         } else {
           preparedMail.setSSL(true)

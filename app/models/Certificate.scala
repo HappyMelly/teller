@@ -39,17 +39,18 @@ import com.itextpdf.text.Image
  */
 case class Certificate(
   evaluation: Evaluation,
-  oldEvaluation: Option[Evaluation] = None) {
+  renew: Boolean = false) {
 
   val id = evaluation.certificateId
 
   def generateAndSend(brand: BrandView, approver: Person) {
     val contentType = "application/pdf"
     val pdf = generate(evaluation)
+    if (renew) {
+      Certificate.removeFromCloud(id)
+    }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
       evaluation.copy(certificate = Some(id)).update
-      oldEvaluation.map(oldEv ⇒ oldEv.certificate.map(
-        oldId ⇒ if (oldId != id) Certificate.removeFromCloud(oldId)))
       sendEmail(brand, approver, pdf)
     }.recover {
       case S3Exception(status, code, message, originalXml) ⇒ {}
@@ -89,7 +90,7 @@ case class Certificate(
   private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
     val event = Event.find(evaluation.eventId).get
     val templates = CertificateTemplate.findByBrand(event.brandCode)
-    val data = templates.find(_.language == event.spokenLanguage).map { template ⇒
+    val data = templates.find(_.language == event.language.spoken).map { template ⇒
       if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
     }.getOrElse {
       templates.find(_.language == "EN").map { template ⇒
@@ -136,8 +137,11 @@ case class Certificate(
 
     val name = new Phrase(ev.participant.fullName, font)
     val title = new Phrase(ev.event.title, font)
-    val dateString = ev.event.schedule.start.toString("d + ") +
+    val dateString = if (ev.event.schedule.start == ev.event.schedule.end) {
       ev.event.schedule.end.toString("d MMMM yyyy")
+    } else {
+      ev.event.schedule.start.toString("d + ") + ev.event.schedule.end.toString("d MMMM yyyy")
+    }
     val eventDate = new Phrase(dateString, font)
     val location = new Phrase(ev.event.location.city + ", " +
       Messages("country." + ev.event.location.countryCode), font)

@@ -43,17 +43,22 @@ object Contributions extends Controller with Security {
     "isPerson" -> text.transform(_.toBoolean, (b: Boolean) ⇒ b.toString),
     "role" -> nonEmptyText)(Contribution.apply)(Contribution.unapply))
 
+  /**
+   * Add new contribution to a product
+   * @param page Label of a page where the action happened
+   * @return
+   */
   def create(page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
       val route = if (page == "organisation") {
-        routes.Organisations.details(contributorId)
+        routes.Organisations.details(contributorId).url
       } else if (page == "person") {
-        routes.People.details(contributorId)
+        routes.People.details(contributorId).url + "#contributions"
       } else {
-        routes.Products.details(boundForm.data("productId").toLong)
+        routes.Products.details(boundForm.data("productId").toLong).url
       }
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contributor cannot be empty"),
@@ -65,8 +70,14 @@ object Contributions extends Controller with Security {
         })
   }
 
-  /** Delete a contribution **/
-  def delete(page: String, id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  /**
+   * Delete a contribution
+   *
+   * @param id Contribution identifier
+   * @param page Label of a page where the action happened
+   * @return
+   */
+  def delete(id: Long, page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
       Contribution.find(id).map {
@@ -75,11 +86,11 @@ object Contributions extends Controller with Security {
           val activityObject = Messages("activity.contribution.delete", contribution.product.title, contribution.role)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
           val route = if (page == "organisation") {
-            routes.Organisations.details(contribution.contributorId)
+            routes.Organisations.details(contribution.contributorId).url
           } else if (page == "product") {
-            routes.Products.details(contribution.productId)
+            routes.Products.details(contribution.productId).url
           } else {
-            routes.People.details(contribution.contributorId)
+            routes.People.details(contribution.contributorId).url + "#contributions"
           }
           Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)

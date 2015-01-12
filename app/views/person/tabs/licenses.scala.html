@@ -1,0 +1,45 @@
+@(person: Person,
+  licenses: List[LicenseView]
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+<div class="col-xs-9">
+    @if(licenses.isEmpty) {
+        <p>@person.fullName has no licenses.</p>
+    } else {
+        @views.html.license.table(licenses)
+    }
+    @restrict(handler, List(as(Editor.toString))) {
+        <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success btn-sm">
+            <i class="glyphicon glyphicon-plus"></i>Add Content License</a></p>
+    }
+</div>
+<div class="col-xs-3">
+    <h4>Manage Signature</h4>
+    @if(person.signature) {
+        <p><i class="glyphicon glyphicon-file"></i> <a href="@routes.People.signature(person.id.getOrElse(0))">
+            Signature</a></p>
+    }
+    @dynamic(handler, "person", "edit") {
+        <form action="@CSRF(routes.People.uploadSignature(person.id.getOrElse(0)))"
+        method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="file" id="signature" class="form-control input-sm" name="signature"/>
+            </div>
+            <button class="btn btn-primary btn-sm" type="submit">
+            @if(person.signature) { Replace File } else { Upload File } </button>
+            @if(person.signature) {
+                <button class="btn btn-danger btn-sm" type="submit" form="deleteSig">
+                    <i class="glyphicon glyphicon-trash glyphicon-white"></i> Delete File</button>
+            }
+        </form>
+        @if(person.signature) {
+            <form method="post" action="@CSRF(routes.People.deleteSignature(person.id.getOrElse(0)))" id="deleteSig">
+            </form>
+        }
+    }
+</div>

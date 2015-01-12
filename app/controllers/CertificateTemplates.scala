@@ -83,7 +83,10 @@ object CertificateTemplates extends Controller with Security {
             }.getOrElse {
               val template = request.body.asMultipartFormData.get.file("oneFacilitator")
               val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
-              if (template.isEmpty || templateOneFacilitator.isEmpty) {
+              val validMimeTypes = List("image/jpeg", "image/pjpeg", "image/gif", "image/png")
+              if (template.isEmpty || templateOneFacilitator.isEmpty
+                || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
+                || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
                 BadRequest(views.html.certificateTemplate.form(request.user, brand.brand, languages,
                   form.withError("oneFacilitator", "error.required").withError("twoFacilitators", "error.required")))
               } else {
@@ -93,7 +96,7 @@ object CertificateTemplates extends Controller with Security {
                 firstSource.close()
                 secondSource.close()
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new certificate template")
-                Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
+                Redirect(routes.Brands.details(code).url + "#templates").flashing("success" -> activity.toString)
               }
             }
           })
@@ -131,7 +134,7 @@ object CertificateTemplates extends Controller with Security {
       CertificateTemplate.find(id).map { template ⇒
         template.delete()
         val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "certificate template")
-        Redirect(routes.Brands.details(template.brandCode)).flashing("success" -> activity.toString)
+        Redirect(routes.Brands.details(template.brandCode).url + "#templates").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 }

@@ -18,14 +18,16 @@
     <h1>
       <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
       @organisation.name
-      @restrict(handler, List(as(Editor.toString))) {
         <div class="actions pull-right">
-          <div class="button">
-            <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">
-              <i class="glyphicon glyphicon-pencil"></i> Edit
-            </a>
-          </div>
-          <div class="button">
+          @dynamic(handler, "organisation", "edit") {
+            <div class="button">
+              <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">
+                <i class="glyphicon glyphicon-pencil"></i> Edit
+              </a>
+            </div>
+          }
+          @restrict(handler, List(as(Editor.toString))) {
+            <div class="button">
             <form method="post" class="form-inline"
               action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
               <input name="active" value="@(!organisation.active)" type="hidden">
@@ -39,18 +41,21 @@
                 </button>
               }
             </form>
-          </div>
-          <div class="button">
-            <form class="delete" class="form-inline" method="post" text="organisation"
-              action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
-              <button class="btn btn-danger" type="submit"
-                @if(!organisation.deletable) { disabled="disabled" title="You cannot delete this organisation because it has members, booking entries or an active account" }>
-                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-              </button>
-            </form>
-          </div>
+            </div>
+            <div class="button">
+              <form class="delete form-inline" method="post" text="organisation"
+                action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
+                <div data-toggle="tooltip" data-placement="bottom"
+                  @if(!organisation.deletable) { title="@Messages("error.organisation.nonDeletable")" }>
+                    <button class="btn btn-danger" type="submit"
+                      @if(!organisation.deletable) { disabled="disabled" }>
+                      <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                    </button>
+                </div>
+              </form>
+            </div>
+          }
         </div>
-      }
     </h1>
   </div>
   @if(!organisation.active) {
@@ -83,12 +88,12 @@
 
     @organisation.webSite.map { url =>
     <p><strong>Web site</strong>
-        <br><a href="@url">@url</a></p>
+        <br><a href="@url" target="_blank">@url</a></p>
     }
 
     @organisation.blog.map { url =>
     <p><strong>Blog</strong>
-        <br><a href="@url">@url</a></p>
+        <br><a href="@url" target="_blank">@url</a></p>
     }
   </div>
 
@@ -163,7 +168,7 @@
               <td>@contribution.contribution.role</td>
               <td>
                 @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.Contributions.delete("organisation", contribution.contribution.id.get)">
+                  <a href="@routes.Contributions.delete(contribution.contribution.id.get, "organisation")">
                   <i class="glyphicon glyphicon-trash"></i> Delete contribution</a>
                 }
               </td>

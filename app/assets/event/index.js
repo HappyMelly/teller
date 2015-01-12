@@ -23,173 +23,201 @@
  */
 
 /**
- * Filter events by brand
+ * Set a facilitator filter to current user (if exists)
  */
-function filterByBrand(oSettings, aData, iDataIndex) {
-    var index = 1;
-    var filter = $('#brands').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (aData[index].indexOf(filter) < 0) {
-        return false;
-    } else {
-        return true;
+function initFacilitatorsFilter() {
+    var id = $('#userId').val();
+    if (id) {
+        $('#facilitators').find('[value=' + id + ']').attr('selected', 'selected');
     }
 }
 
 /**
- * Filter events by facilitators
+ * Initialize a brand filter with the brand which license the user helds
  */
-function filterByFacilitator(oSettings, aData, iDataIndex) {
-    var index = 2;
-    var filter = $('#facilitators').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (aData[index].indexOf(filter) < 0) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-/**
- * Filter events checking if they are future or past
- */
-function filterByDate(oSettings, aData, iDataIndex) {
-    var index = 4;
-    var filter = $('#past-future').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    var dates = aData[index].split('/')
-    if (dates.length != 2) {
-        return true;
-    }
-    var start = Date.parse(dates[0]);
-    var end = Date.parse(dates[1]);
-    var today = Date.today();
-    if (filter == 'past') {
-        return (today > end);
-    } else {
-        return (today <= start);
-    }
-}
-
-/**
- * Filter events checking if they are public or private
- */
-function filterByPublicity(oSettings, aData, iDataIndex) {
-    var index = 8;
-    var filter = $('#private').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (filter == 'private') {
-        return aData[index] == 'true';
-    } else {
-        return aData[index] == 'false';
-    }
-}
-
-/**
- * Filter events checking if they are archived or not
- */
-function filterArchived(oSettings, aData, iDataIndex) {
-    var index = 9;
-    var filter = $('#archived').find(':selected').val();
-    if (filter == 'all') {
-        return true;
-    }
-    if (filter == 'archived') {
-        return aData[index] == 'true';
-    } else {
-        return aData[index] == 'false';
-    }
-}
-$.fn.dataTableExt.afnFiltering.push(filterByBrand);
-$.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
-$.fn.dataTableExt.afnFiltering.push(filterByDate);
-$.fn.dataTableExt.afnFiltering.push(filterByPublicity);
-$.fn.dataTableExt.afnFiltering.push(filterArchived);
-
-/**
- * Initialize a facilitator filter
- * @param events {DataTable}
- */
-function initFacilitatorsFilter(events) {
-    var facilitators = [];
-    events.api().column(2).data().unique().each(function(d, j) {
-        var regexp = /<a.*>(.*)<\/a>/img;
-        while ( (result = regexp.exec(d)) ) {
-            var value = result[1];
-            if (facilitators.indexOf(value) < 0) {
-                facilitators.push(value);
-            }
-        }
-    });
-    facilitators.sort();
-    var name = $('#userName').val();
-    for (var i = 0; i < facilitators.length; i++) {
-        var option = $("<option></option>").attr("value", facilitators[i]).text(facilitators[i]);
-        if (name == facilitators[i]) {
-            option.attr('selected', 'selected');
-        }
-        $('#facilitators').append(option);
-    }
-}
-
-/**
- * Initialize a brand filter
- * @param events {DataTable}
- */
-function initBrandsFilter(events) {
-    var brands = [];
-    events.api().column(1).data().unique().each(function(d, j) {
-        var regexp = /<a.*brand\/([a-zA-Z0-9_]{1,5}).*>(.*)<\/a>/img;
-        while ( (result = regexp.exec(d)) ) {
-            var code = result[1];
-            var name = result[2];
-            if (!(code in brands)) {
-                brands[code] = name;
-            }
-        }
-    });
-    brands.sort();
+function initBrandsFilter() {
     var personalLicense = $('#personalLicense').val();
-    for (var key in brands) {
-        var option = $("<option></option>").attr("value", brands[key]).text(brands[key]);
-        if (personalLicense == key) {
-            option.attr('selected', 'selected');
-        }
-        $('#brands').append(option);
+    if (personalLicense) {
+        $('#brands').find('[value=' + personalLicense + ']').attr('selected', 'selected');
     }
+}
+
+/**
+ * Update a facilitators filter according to user actions
+ *
+ * @param brand Brand to filter
+ */
+function updateFacilitatorsFilter(brand) {
+    var records = [];
+    if (brand && brand != 'all') {
+        var data = $.grep(facilitators, function (f) {
+            return f.code === brand
+        })[0].facilitators;
+        records = data;
+    } else {
+        var ids = [];
+        for (var i = 0; i < facilitators.length; i++) {
+            var data = facilitators[i].facilitators;
+            for (var j = 0; j < data.length; j++) {
+                if (ids.indexOf(data[j].id) < 0) {
+                    records.push(data[j]);
+                    ids.push(data[j].id);
+                }
+            }
+        }
+    }
+    $('#facilitators').empty().append('<option value="all">All</option>');
+    records.sort(function(a, b) {
+        return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
+    })
+    for(var i = 0; i < records.length; i++) {
+        if (records[i].name) {
+            var option = $("<option></option>").attr("value", records[i].id).text(records[i].name);
+            $('#facilitators').append(option);
+        }
+    }
+}
+
+/**
+ * This function collects data from all filters and provides a requests based on their values
+ * @returns {string}
+ */
+function makeRequestUrl() {
+    var request = 'events/filtered?';
+    var filter = $('#past-future').find(':selected').val();
+    var counter = 0;
+    if (filter != 'all') {
+        request += 'future=' + ((filter == 'past') ? 'false' : 'true');
+        counter += 1;
+    }
+    filter = $('#private').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'public=' + ((filter == 'private') ? 'false' : 'true');
+        counter += 1;
+    }
+    filter = $('#archived').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'archived=' + ((filter == 'archived') ? 'true' : 'false');
+        counter += 1;
+    }
+    filter = $('#brands').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'brandCode=' + filter;
+        counter += 1;
+    }
+    filter = $('#facilitators').find(':selected').val();
+    if (filter != 'all') {
+        request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
+    }
+    return request;
 }
 
 $(document).ready( function() {
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    var events = $('#events').dataTable( {
+    updateFacilitatorsFilter(null);
+    initBrandsFilter();
+    initFacilitatorsFilter();
+
+    var events = $('#events').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
         "aaSorting": [],
         "bLengthChange": false,
-        "order": [[ 4, "asc" ]]
+        "ajax": {
+            "url" : makeRequestUrl(),
+            "dataSrc": "",
+            "deferRender": true
+        },
+        "order": [[ 4, "asc" ]],
+        "columns": [
+            { "data": "event" },
+            { "data": "brand" },
+            { "data": "facilitators" },
+            { "data": "location" },
+            { "data": "schedule" },
+            { "data": "totalHours" },
+            { "data": "materialsLanguage" },
+            { "data": "invoice" },
+            { "data": "confirmed" },
+            { "data": "actions" }
+        ],
+        "columnDefs": [{
+            "render": function(data) {
+                return '<a href="' + data.url + '">' + data.title + '</a>';
+            },
+            "targets": 0
+        }, {
+            "render": function(data) {
+                return '<a href="' + data.url + '">' + data.code + '</a>';
+            },
+            "targets": 1
+        }, {
+            "render": function(data) {
+                var html = '';
+                for (var i = 0; i < data.length; i++) {
+                    html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
+                }
+                return html;
+            },
+            "targets": 2
+        },{
+            "render": function(data) {
+                return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
+                    data.country + '.png"/> ' + data.city;
+            },
+            "targets": 3
+        }, {
+            "render": function(data) {
+                return data.start + ' / ' + data.end;
+            },
+            "targets": 4
+        }, {
+            "render": function(data) {
+                if(data) {
+                    return '<span class="label label-success">yes</span>';
+                } else {
+                    return '<span class="label label-danger">no</span>';
+                }
+            },
+            "targets": 8
+        },{
+            "render": function(data) {
+                var html = '';
+                if ('edit' in data && data.edit.length > 0) {
+                    html += '<a href="' + data.edit + '"><i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>';
+                    html += '<a href="' + data.duplicate + '"><i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>';
+                }
+                return html;
+            },
+            "targets": 9
+        }]
     });
-    initFacilitatorsFilter(events);
-    initBrandsFilter(events);
-
+    $("body").css("cursor", "progress");
+    events.on( 'xhr.dt', function () {
+        $("body").css("cursor", "default");
+    });
 
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
-    $('#past-future').on('change', function() { events.fnDraw(); } );
-    $('#private').on('change', function() { events.fnDraw(); } );
-    $('#archived').on('change', function() { events.fnDraw(); } );
-    $('#facilitators').on('change', function() { events.fnDraw(); } );
-    $('#brands').on('change', function() { events.fnDraw(); } );
+
+    function updateTable() {
+        $("body").css("cursor", "progress");
+        events
+            .api()
+            .ajax
+            .url(makeRequestUrl())
+            .load(function(){
+                $("body").css("cursor", "default");
+            });
+    }
+    $("#brands").change(function() {
+        var brand = $(this).find(':selected').val();
+        updateFacilitatorsFilter(brand);
+        updateTable(); });
+    $('#past-future').on('change', function() { updateTable(); });
+    $('#private').on('change', function() { updateTable(); });
+    $('#archived').on('change', function() {  updateTable(); });
+    $('#facilitators').on('change', function() { updateTable(); });
 
     events.fnDraw();
 });

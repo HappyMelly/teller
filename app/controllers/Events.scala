@@ -27,6 +27,7 @@ package controllers
 import Forms._
 import models._
 import play.api.mvc._
+import play.api.libs.json._
 import securesocial.core.SecuredRequest
 import play.api.data._
 import play.api.data.Forms._
@@ -118,9 +119,11 @@ object Events extends Controller with Security {
     "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(
       "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
-    "title" -> nonEmptyText,
-    "spokenLanguage" -> nonEmptyText,
-    "materialsLanguage" -> optional(text),
+    "title" -> nonEmptyText(1, 254),
+    "language" -> mapping(
+      "spoken" -> language,
+      "secondSpoken" -> optional(language),
+      "materials" -> optional(language))(Language.apply)(Language.unapply),
     "location" -> mapping(
       "city" -> nonEmptyText,
       "country" -> nonEmptyText) (Location.apply)(Location.unapply),
@@ -128,7 +131,7 @@ object Events extends Controller with Security {
       "description" -> optional(text),
       "specialAttention" -> optional(text),
       "webSite" -> optional(webUrl),
-      "registrationPage" -> optional(webUrl))(Details.apply)(Details.unapply),
+      "registrationPage" -> optional(text))(Details.apply)(Details.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
       "end" -> of(dateRangeFormatter),
@@ -143,7 +146,21 @@ object Events extends Controller with Security {
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(request.user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(Event.apply)(Event.unapply))
+      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(
+      { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
+        invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
+        {
+          val event = Event(id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic,
+            archived, confirmed, created, createdBy, updated, updatedBy)
+          event.invoice_=(invoice)
+          event.facilitatorIds_=(facilitatorIds)
+          event
+        }
+      })({ (e: Event) ⇒
+        Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language, e.location, e.details, e.schedule, e.notPublic,
+          e.archived, e.confirmed, e.invoice, e.created, e.createdBy, e.updated, e.updatedBy, e.facilitatorIds))
+
+      }))
 
   /**
    * Sends an e-mail notification for an event to the given recipients.
@@ -164,9 +181,9 @@ object Events extends Controller with Security {
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
-      val default = Event(None, 0, "", "", "", Some("English"), Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false, defaultInvoice,
-        DateTime.now(), "", DateTime.now(), "", List[Long]())
+      val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
+        notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
+      default.invoice_=(defaultInvoice)
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findByUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))
@@ -225,13 +242,15 @@ object Events extends Controller with Security {
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
-        deletedEvent ⇒
+      Event.find(id).map { event ⇒
+        if (event.deletable) {
           Event.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, deletedEvent.title)
-          sendEmailNotification(deletedEvent, List.empty, activity, Brand.find(deletedEvent.brandCode).get.coordinator)
-
+          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
+          sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+        } else {
+          Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
+        }
       }.getOrElse(NotFound)
   }
 
@@ -295,12 +314,95 @@ object Events extends Controller with Security {
 
       val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-      val events = Event.findAll.sortBy(_.schedule.start.toDate).reverse
-      val brandsOfEvents = events.map(_.brandCode).distinct
-      val brands = Brand.findAll.filter(b ⇒ brandsOfEvents.contains(b.brand.code)).map(b ⇒ (b.brand.code, b.brand.name))
-      Ok(views.html.event.index(request.user, events, brands, person.fullName, personalLicense))
+      val brands = Brand.findAll.sortBy(_.name)
+      val facilitators = brands.map(b ⇒
+        (b.code, License.allLicensees(b.code).map(l ⇒ (l.id.get, l.fullName))))
+
+      implicit val facilitatorWrites = new Writes[(Long, String)] {
+        def writes(data: (Long, String)): JsValue = {
+          Json.obj(
+            "id" -> data._1,
+            "name" -> data._2)
+        }
+      }
+      implicit val facilitatorsWrites = new Writes[(String, List[(Long, String)])] {
+        def writes(data: (String, List[(Long, String)])): JsValue = {
+          Json.obj(
+            "code" -> data._1,
+            "facilitators" -> data._2)
+        }
+      }
+      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
   }
 
+  /**
+   * Get a list of events in JSON format, filtered by parameters
+   * @param brandCode Brand string identifier
+   * @param future This flag defines if we want to get future/past events
+   * @param public This flag defines if we want to get public/private events
+   * @param archived This flag defines if we want to get archived/current events
+   * @return
+   */
+  def events(brandCode: Option[String],
+    facilitator: Option[Long],
+    future: Option[Boolean],
+    public: Option[Boolean],
+    archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
+    implicit handler ⇒
+      val events = facilitator map {
+        Event.findByFacilitator(_, brandCode, future, public, archived)
+      } getOrElse {
+        Event.findByParameters(brandCode, future, public, archived)
+      }
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      EventsCollection.facilitators(events)
+      EventsCollection.invoices(events)
+
+      implicit val personWrites = new Writes[Person] {
+        def writes(data: Person): JsValue = {
+          Json.obj(
+            "name" -> data.fullName,
+            "url" -> routes.People.details(data.id.get).url)
+        }
+      }
+      implicit val eventWrites = new Writes[Event] {
+        def writes(data: Event): JsValue = {
+          Json.obj(
+            "event" -> Json.obj(
+              "id" -> data.id,
+              "url" -> routes.Events.details(data.id.get).url,
+              "title" -> data.title),
+            "brand" -> Json.obj(
+              "code" -> data.brandCode,
+              "url" -> routes.Brands.details(data.brandCode).url),
+            "location" -> Json.obj(
+              "country" -> data.location.countryCode.toLowerCase,
+              "city" -> data.location.city),
+            "facilitators" -> data.facilitators,
+            "schedule" -> Json.obj(
+              "start" -> data.schedule.start.toString,
+              "end" -> data.schedule.end.toString),
+            "totalHours" -> data.schedule.totalHours,
+            "materialsLanguage" -> data.materialsLanguage,
+            "confirmed" -> data.confirmed,
+            "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" }),
+            "actions" -> {
+              Json.obj(
+                "edit" -> {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.edit(data.id.get).url
+                  } else ""
+                },
+                "duplicate" -> {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.duplicate(data.id.get).url
+                  } else ""
+                })
+            })
+        }
+      }
+      Ok(Json.toJson(events))
+  }
   /**
    * Edit form submits to this action.
    * @param id Event ID
@@ -320,11 +422,17 @@ object Events extends Controller with Security {
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val existingEvent = Event.find(id).get
-            val updatedInvoice = event.invoice.copy(id = existingEvent.invoice.id)
-            val updatedEvent = event.copy(id = Some(id)).copy(invoice = updatedInvoice).update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
 
+            val updatedEvent = event.copy(id = Some(id))
+            updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
+            updatedEvent.facilitatorIds_=(event.facilitatorIds)
+
+            // it's important to compare before updating as with lazy initialization invoice and facilitators data
+            // for an old event will be destroyed
             val changes = Event.compare(existingEvent, updatedEvent)
+            updatedEvent.update
+
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
             sendEmailNotification(updatedEvent, changes, activity, Brand.find(event.brandCode).get.coordinator)
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)

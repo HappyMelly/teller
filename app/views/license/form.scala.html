@@ -1,57 +1,60 @@
-@(user: securesocial.core.Identity, id: Option[Long], form: Form[License], person: Person)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+  id: Option[Long],
+  form: Form[License],
+  person: Person)(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
-@import views.ViewHelpers._
-@import models.Person
+    @import helper.CSRF
+    @import views.ViewHelpers._
+    @import models.Person
 
-@main("Add content license", "people", Some(user)) {
-  @defining(id.isDefined) { editing =>
-    @if(form.hasErrors) {
-      @html.error()
-    }
+    @main("Add content license", "people", Some(user)) {
+        @defining(id.isDefined) { editing =>
+            @if(form.hasErrors) {
+                @html.error()
+            }
 
 
-    <div class="col-md-6">
-      <div class="page-header">
-        <h1>@(if(editing) "Edit" else "Add") content license
-        @if(editing) {
-          <div class="actions pull-right">
-            <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
-              <button class="btn btn-danger" type="submit">
-                <i class="glyphicon-white glyphicon-trash glyphicon"></i> Delete</button>
-            </form>
-          </div>
-          @* Inline the delete script, which is normally in details.js, because the delete button is on this edit page. *@
-          <script type="text/javascript">
-            $(document).ready( function() {
-              $('form.delete').submit(function() {
-                return confirm('Delete permanently? You cannot undo this action.');
-              });
-            });
-          </script>
-        }
-        </h1>
-      </div>
-      @html.form(action = CSRF(if (editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
-        @html.select(form("brandId"), Brand.findAll.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
-        @html.text(form("version"), '_label -> "Version")
-        @html.date(form("signed"), '_label -> "Date signed", '_help -> "Required")
-        @html.date(form("start"), '_label -> "Start date", '_help -> "Required")
-        @html.date(form("end"), '_label -> "End date", '_help -> "Required")
-        @html.checkbox(form("confirmed"), '_label -> "Confirmed", '_help -> "")
+        <div class="col-md-6">
+            <div class="page-header">
+                <h1>@(if(editing) "Edit" else "Add") content license
+                    @if(editing) {
+                        <div class="actions pull-right">
+                            <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(id.get))">
+                                <button class="btn btn-danger" type="submit">
+                                    <i class="glyphicon-white glyphicon-trash glyphicon"></i> Delete</button>
+                            </form>
+                        </div>
+                        @* Inline the delete script, which is normally in details.js, because the delete button is on this edit page. *@
+                        <script type="text/javascript">
+                        $(document).ready (function() {
+                          $('form.delete').submit(function() {
+                            return confirm('Delete permanently? You cannot undo this action.');
+                          });
+                        });
+                        </script>
+                    }
+                </h1>
+            </div>
+            @html.form(action = CSRF(if(editing) routes.Licenses.update(id.get) else routes.Licenses.create(person.id.getOrElse(0)))) {
+                @html.select(form("brandId"), Brand.findAllWithCoordinator.map(b => (b.brand.id.get.toString, b.brand.name)), '_label -> "Brand")
+                @html.text(form("version"), '_label -> "Version")
+                @html.date(form("signed"), '_label -> "Date signed", '_help -> "Required")
+                @html.date(form("start"), '_label -> "Start date", '_help -> "Required")
+                @html.date(form("end"), '_label -> "End date", '_help -> "Required")
+                @html.checkbox(form("confirmed"), '_label -> "Confirmed", '_help -> "")
 
-        @html.money("fee", form("fee.currency"), form("fee.amount"),
-          '_label -> "Fee", '_step -> "1.0", '_help -> "Whole number, required")
-        @html.money("feePaid", form("feePaid.currency"), form("feePaid.amount"),
-          '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
+                @html.money("fee", form("fee.currency"), form("fee.amount"),
+                    '_label -> "Fee", '_help -> "Required")
+                @html.money("feePaid", form("feePaid.currency"), form("feePaid.amount"),
+                    '_label -> "Fee paid", '_currency -> form("fee.currency").value.getOrElse("EUR"))
 
-        <div clas="row">
-          <div class="col-sm-3"></div>
-          <div class="col-sm-9">
-            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
-          </div>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-9">
+                        <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+                    </div>
+                </div>
+            }
         </div>
-      }
-    </div>
-  }
-}
+        }
+    }
