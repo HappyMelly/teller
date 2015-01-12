@@ -24,12 +24,10 @@
 
 package models
 
-import laika.api._
-import laika.parse.markdown.Markdown
-import laika.render.HTML
-
 import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
+import models.event.Comparator
+import models.event.Comparator.FieldChange
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -98,7 +96,12 @@ case class Event(
   }
 
   def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {
-    facilitatorIds_=(Event.getFacilitatorIds(id.getOrElse(0)))
+    val ids = DB.withSession { implicit session: Session ⇒
+      (for {
+        e ← EventFacilitators if e.eventId === id.getOrElse(0L)
+      } yield (e)).list.map(_._2)
+    }
+    facilitatorIds_=(ids)
     _facilitatorIds.get
   } else {
     _facilitatorIds.get
@@ -118,13 +121,15 @@ case class Event(
   lazy val spokenLanguage = if (language.secondSpoken.isEmpty) {
     Languages.all.getOrElse(language.spoken, "")
   } else {
-    Languages.all.getOrElse(language.spoken, "") + " / " + Languages.all.getOrElse(language.secondSpoken.get, "")
+    Languages.all.getOrElse(language.spoken, "") + " / " +
+      Languages.all.getOrElse(language.secondSpoken.get, "")
   }
 
   lazy val spokenLanguages = if (language.secondSpoken.isEmpty) {
     List(Languages.all.getOrElse(language.spoken, ""))
   } else {
-    List(Languages.all.getOrElse(language.spoken, ""), Languages.all.getOrElse(language.secondSpoken.get, ""))
+    List(Languages.all.getOrElse(language.spoken, ""),
+      Languages.all.getOrElse(language.secondSpoken.get, ""))
   }
 
   lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
@@ -138,7 +143,8 @@ case class Event(
   lazy val deletable: Boolean = participants.isEmpty
 
   /**
-   * To facilitate the event = to edit the event, to approve/reject evaluations, to delete evaluations
+   * To facilitate the event = to edit the event, to approve/reject evaluations,
+   * to delete evaluations
    *
    * @param personId A person's unique identifier
    * @return
@@ -188,114 +194,12 @@ case class Event(
 
 object Event {
 
-  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
-    def changed() = oldValue != newValue
-    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
-  }
-
-  class SimpleFieldChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
-    override def toString = s"$label: $newValue (was: $oldValue)"
-  }
-
-  class BrandChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val oldBrand = Brand.find(oldValue).get.brand.name
-      val newBrand = Brand.find(newValue).get.brand.name
-      s"$label: $newBrand (was: $oldBrand)"
-    }
-
-    override def printable(): (String, String, String) = {
-      val oldBrand = Brand.find(oldValue).get.brand.name
-      val newBrand = Brand.find(newValue).get.brand.name
-      (label, newBrand, oldBrand)
-    }
-  }
-
-  class EventTypeChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val label, newEventType, oldEventType = printable()
-      s"$label: $newEventType (was: $oldEventType)"
-    }
-
-    override def printable(): (String, String, String) = {
-      val oldEventType = EventType.find(oldValue).get.name
-      val newEventType = EventType.find(newValue).get.name
-      (label, newEventType, oldEventType)
-    }
-  }
-
-  class InvoiceChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
-      val newInvoiceToOrg = Organisation.find(newValue).get.name
-      s"$label: $newInvoiceToOrg (was: $oldInvoiceToOrg)"
-    }
-
-    override def printable(): (String, String, String) = {
-      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
-      val newInvoiceToOrg = Organisation.find(newValue).get.name
-      (label, newInvoiceToOrg, oldInvoiceToOrg)
-    }
-
-  }
-
-  class FacilitatorChange(label: String, oldValue: List[Long], newValue: List[Long]) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
-      s"Removed $label: $removedFacilitators / Added $label: $newFacilitators"
-    }
-
-    override def printable(): (String, String, String) = {
-      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
-      (label, newFacilitators, removedFacilitators)
-    }
-  }
-
   /**
    * Compares two events and returns a list of changes.
    * @param was The event with ‘old’ values.
    * @param now The event with ‘new’ values.
    */
-  def compare(was: Event, now: Event): List[FieldChange] = {
-    val changes = List(
-      new BrandChange("Brand", was.brandCode, now.brandCode),
-      new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
-      new SimpleFieldChange("Title", was.title, now.title),
-      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.language.spoken, ""),
-        Languages.all.getOrElse(now.language.spoken, "")),
-      new SimpleFieldChange("Second Spoken Language", Languages.all.getOrElse(was.language.secondSpoken.getOrElse(""), ""),
-        Languages.all.getOrElse(now.language.secondSpoken.getOrElse(""), "")),
-      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.language.materials.getOrElse(""), ""),
-        Languages.all.getOrElse(now.language.materials.getOrElse(""), "")),
-      new SimpleFieldChange("City", was.location.city, now.location.city),
-      new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
-      new SimpleFieldChange("Description",
-        Transform from Markdown to HTML fromString was.details.description.getOrElse("") toString,
-        Transform from Markdown to HTML fromString now.details.description.getOrElse("") toString),
-      new SimpleFieldChange("Special Attention",
-        Transform from Markdown to HTML fromString was.details.specialAttention.getOrElse("") toString,
-        Transform from Markdown to HTML fromString now.details.specialAttention.getOrElse("") toString),
-      new SimpleFieldChange("Start Date", was.schedule.start.toString, now.schedule.start.toString),
-      new SimpleFieldChange("End Date", was.schedule.end.toString, now.schedule.end.toString),
-      new SimpleFieldChange("Hours Per Day", was.schedule.hoursPerDay.toString, now.schedule.hoursPerDay.toString),
-      new SimpleFieldChange("Total Hours", was.schedule.totalHours.toString, now.schedule.totalHours.toString),
-      new SimpleFieldChange("Organizer Website", was.details.webSite.getOrElse(""), now.details.webSite.getOrElse("")),
-      new SimpleFieldChange("Registration Page", was.details.registrationPage.getOrElse(""), now.details.registrationPage.getOrElse("")),
-      new SimpleFieldChange("Private Event", was.notPublic.toString, now.notPublic.toString),
-      new SimpleFieldChange("Achived Event", was.archived.toString, now.archived.toString),
-      new FacilitatorChange("Facilitators", was.facilitatorIds, now.facilitatorIds),
-      new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
-
-    changes.filter(change ⇒ change.changed())
-  }
-
-  def getFacilitatorIds(id: Long): List[Long] = DB.withSession { implicit session: Session ⇒
-    (for {
-      e ← EventFacilitators if e.eventId === id
-    } yield (e)).list.map(_._2)
-  }
+  def compare(was: Event, now: Event): List[Comparator.FieldChange] = Comparator.compare(was, now)
 
   /**
    * Return a number of events with a specified event type
@@ -466,41 +370,5 @@ object Event {
       }
   }
 
-}
-
-object EventsCollection {
-
-  /**
-   * Fill events with facilitators (using only one query to database)
-   * @param events List of events
-   * @return
-   */
-  def facilitators(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = events.map(_.id.get).distinct.toList
-    val query = for {
-      facilitation ← EventFacilitators if facilitation.eventId inSet ids
-      person ← facilitation.facilitator
-    } yield (facilitation.eventId, person)
-    val facilitationData = query.list
-    val facilitators = facilitationData.map(_._2).distinct
-    PeopleCollection.addresses(facilitators)
-    facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
-    val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
-  }
-
-  /**
-   * Fill events with invoices (using only one query to database)
-   * @param events List of events
-   * @return
-   */
-  def invoices(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = events.map(_.id.get).distinct.toList
-    val query = for {
-      invoice ← EventInvoices if invoice.eventId inSet ids
-    } yield invoice
-    val invoices = query.list
-    events.foreach(e ⇒ e.invoice_=(invoices.find(_.eventId == e.id).getOrElse(EventInvoice(None, None, 0, None, None))))
-  }
 }
 

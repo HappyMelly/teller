@@ -35,8 +35,8 @@ import play.api.i18n.Messages
 import org.joda.time.{ LocalDate, DateTime }
 import models.UserRole.Role._
 import play.api.data.format.Formatter
-import models.Location
-import models.Schedule
+import models.{ Location, Schedule }
+import models.event.Comparator.FieldChange
 import services.EmailService
 
 object Events extends Controller with Security {
@@ -166,7 +166,7 @@ object Events extends Controller with Security {
    * Sends an e-mail notification for an event to the given recipients.
    *
    */
-  def sendEmailNotification(event: Event, changes: List[Event.FieldChange], activity: Activity,
+  def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
     EmailService.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
@@ -355,8 +355,8 @@ object Events extends Controller with Security {
         Event.findByParameters(brandCode, future, public, archived)
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      EventsCollection.facilitators(events)
-      EventsCollection.invoices(events)
+      event.Collection.facilitators(events)
+      event.Collection.invoices(events)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {

@@ -48,6 +48,7 @@ class EventSpec extends Specification with WithTestApp {
       event.copy(title = tooLongTitle).longTitle mustNotEqual tooLongTitle + " / spb / 2014-05-12"
     }
   }
+
   val langEvent = EventHelper.makeEvent(spokenLanguage = Option("DE"),
     secondSpokenLanguage = Option("EN"), materialsLanguage = Option("PT"))
 

@@ -27,7 +27,8 @@ import play.mvc.Controller
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.json._
-import models.{ EventsCollection, Brand, Event }
+import models.{ Brand, Event }
+import models.event.Collection
 
 /**
  * Events API
@@ -124,7 +125,7 @@ object EventsApi extends Controller with ApiAuthentication {
     }.getOrElse {
       Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }
-    EventsCollection.facilitators(events)
+    Collection.facilitators(events)
     Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }
