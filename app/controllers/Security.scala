@@ -142,10 +142,10 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.coordinator || existingAccount.editor
             case "edit" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canAdministrate(userId))
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.isBrandManager(userId))
             case "manage" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canFacilitate(userId))
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.isFacilitator(userId))
             case _ ⇒ true
           }
         case "event" ⇒
@@ -153,10 +153,10 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canFacilitate(userId))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.isFacilitator(userId))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(userId))
+              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.isBrandManager(userId))
             case _ ⇒ true
           }
         case "person" ⇒

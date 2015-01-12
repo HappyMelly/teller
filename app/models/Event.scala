@@ -38,15 +38,35 @@ import scala.slick.lifted.Query
 import services.EmailService
 import views.Languages
 
+/**
+ * Contains schedule-related data
+ *
+ *   - when an event starts/ends
+ *   - how many hours per day it takes
+ *   - how many total hours it takes
+ */
 case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
-case class Details(description: Option[String], specialAttention: Option[String],
-  webSite: Option[String], registrationPage: Option[String])
-case class Location(city: String, countryCode: String)
-case class Language(spoken: String, secondSpoken: Option[String], materials: Option[String])
 
 /**
- * An event such as a Management 3.0 course or a DARE Festival.
+ * Contains optional descriptive data
  */
+case class Details(
+  description: Option[String],
+  specialAttention: Option[String],
+  webSite: Option[String],
+  registrationPage: Option[String])
+
+/**
+ * Contains location-related data
+ */
+case class Location(city: String, countryCode: String)
+
+/**
+ * Contains language-related data
+ */
+case class Language(spoken: String, secondSpoken: Option[String], materials: Option[String])
+
+/** An event such as a Management 3.0 course or a DARE Festival */
 case class Event(
   id: Option[Long],
   eventTypeId: Long,
@@ -68,14 +88,17 @@ case class Event(
   private var _invoice: Option[EventInvoice] = None
   private var _facilitatorIds: Option[List[Long]] = None
 
+  /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators: List[Person] = if (_facilitators.isEmpty) {
-    DB.withSession { implicit session: Session ⇒
+    val data = DB.withSession { implicit session: Session ⇒
       val query = for {
         facilitation ← EventFacilitators if facilitation.eventId === this.id
         person ← facilitation.facilitator
       } yield person
       query.sortBy(_.lastName.toLowerCase).list
     }
+    facilitators_=(data)
+    data
   } else {
     _facilitators.get
   }
@@ -84,6 +107,7 @@ case class Event(
     _facilitators = Some(facilitators)
   }
 
+  /** Returns (and retrieves from db if needed) an invoice data */
   def invoice: EventInvoice = if (_invoice.isEmpty) {
     invoice_=(EventInvoice.findByEvent(id.get))
     _invoice.get
@@ -112,25 +136,26 @@ case class Event(
   }
 
   val longTitle: String = {
-    val printableTitle = if (title.length <= 70) { title } else { title.substring(0, 70) }
+    val printableTitle = if (title.length <= 70)
+      title
+    else
+      title.substring(0, 70)
     printableTitle + " / " + location.city + " / " + schedule.start.toString
   }
 
   val materialsLanguage = Languages.all.get(language.materials.getOrElse(""))
 
-  lazy val spokenLanguage = if (language.secondSpoken.isEmpty) {
+  lazy val spokenLanguage: String = if (language.secondSpoken.isEmpty)
     Languages.all.getOrElse(language.spoken, "")
-  } else {
+  else
     Languages.all.getOrElse(language.spoken, "") + " / " +
       Languages.all.getOrElse(language.secondSpoken.get, "")
-  }
 
-  lazy val spokenLanguages = if (language.secondSpoken.isEmpty) {
+  lazy val spokenLanguages: List[String] = if (language.secondSpoken.isEmpty)
     List(Languages.all.getOrElse(language.spoken, ""))
-  } else {
+  else
     List(Languages.all.getOrElse(language.spoken, ""),
       Languages.all.getOrElse(language.secondSpoken.get, ""))
-  }
 
   lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
@@ -143,49 +168,57 @@ case class Event(
   lazy val deletable: Boolean = participants.isEmpty
 
   /**
-   * To facilitate the event = to edit the event, to approve/reject evaluations,
-   * to delete evaluations
+   * Returns true if a person is a facilitator of this event
    *
    * @param personId A person's unique identifier
-   * @return
    */
-  def canFacilitate(personId: Long): Boolean =
-    facilitatorIds.contains(personId) || canAdministrate(personId)
+  def isFacilitator(personId: Long): Boolean =
+    facilitatorIds.contains(personId) || isBrandManager(personId)
 
   /**
-   * To administrate the event = to add and edit evaluations for the event
+   * Returns true if a person is a brand manager of this event
    *
    * @param personId A person unique identifier
-   * @return
    */
-  def canAdministrate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
-    Brand.find(brandCode).exists(_.coordinator.id.get == personId)
+  def isBrandManager(personId: Long): Boolean = DB.withSession {
+    implicit session: Session ⇒
+      Brand.find(brandCode).exists(_.coordinator.id.get == personId)
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
-    val insertTuple = (eventTypeId, brandCode, title, language.spoken, language.secondSpoken, language.materials, location.city,
-      location.countryCode, details.description, details.specialAttention, details.webSite, details.registrationPage,
-      schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
-      notPublic, archived, confirmed, created, createdBy)
+    val insertTuple = (eventTypeId, brandCode, title, language.spoken,
+      language.secondSpoken, language.materials, location.city,
+      location.countryCode, details.description, details.specialAttention,
+      details.webSite, details.registrationPage, schedule.start, schedule.end,
+      schedule.hoursPerDay, schedule.totalHours, notPublic, archived, confirmed,
+      created, createdBy)
     val id = Events.forInsert.insert(insertTuple)
-    this.facilitatorIds.distinct.foreach(facilitatorId ⇒ EventFacilitators.insert((id, facilitatorId)))
+    this.facilitatorIds.distinct.foreach(facilitatorId ⇒
+      EventFacilitators.insert((id, facilitatorId)))
     EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
     this.copy(id = Some(id))
   }
 
-  def delete(): Unit = Event.delete(this.id.get)
+  /** Deletes this event and its related data from database */
+  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+    EventFacilitators.where(_.eventId === this.id.get).mutate(_.delete())
+    EventInvoice.delete(this.id.get)
+    Query(Events).filter(_.id === this.id.get).delete
+  }
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventTypeId, brandCode, title, language.spoken, language.secondSpoken, language.materials,
-      location.city, location.countryCode, details.description, details.specialAttention, details.webSite,
-      details.registrationPage, schedule.start, schedule.end, schedule.hoursPerDay, schedule.totalHours,
-      notPublic, archived, confirmed, updated, updatedBy)
+    val updateTuple = (eventTypeId, brandCode, title, language.spoken,
+      language.secondSpoken, language.materials, location.city,
+      location.countryCode, details.description, details.specialAttention,
+      details.webSite, details.registrationPage, schedule.start, schedule.end,
+      schedule.hoursPerDay, schedule.totalHours, notPublic, archived, confirmed,
+      updated, updatedBy)
     val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
 
     EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
-    this.facilitatorIds.distinct.foreach(facilitatorId ⇒ EventFacilitators.insert((this.id.get, facilitatorId)))
-
+    this.facilitatorIds.distinct.foreach(facilitatorId ⇒
+      EventFacilitators.insert((this.id.get, facilitatorId)))
     EventInvoice.update(this.invoice)
 
     this
@@ -195,28 +228,12 @@ case class Event(
 object Event {
 
   /**
-   * Compares two events and returns a list of changes.
-   * @param was The event with ‘old’ values.
-   * @param now The event with ‘new’ values.
-   */
-  def compare(was: Event, now: Event): List[Comparator.FieldChange] = Comparator.compare(was, now)
-
-  /**
    * Return a number of events with a specified event type
    * @param eventTypeId Event type id
    * @return Int
    */
   def getNumberByEventType(eventTypeId: Long): Int = DB.withSession { implicit session: Session ⇒
     Query(Events).filter(_.eventTypeId === eventTypeId).list.length
-  }
-
-  /**
-   * Delete an event.
-   */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventFacilitators.where(_.eventId === id).mutate(_.delete())
-    EventInvoice.delete(id)
-    Query(Events).filter(_.id === id).delete
   }
 
   /**
@@ -245,7 +262,9 @@ object Event {
     eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
     val baseQuery = Query(Events)
 
-    val brandQuery = brandCode map { v ⇒ baseQuery.filter(_.brandCode === v) } getOrElse { baseQuery }
+    val brandQuery = brandCode.map {
+      v ⇒ baseQuery.filter(_.brandCode === v)
+    }.getOrElse { baseQuery }
 
     val timeQuery = future.map { value ⇒
       val now = LocalDate.now()

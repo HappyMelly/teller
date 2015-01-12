@@ -1,5 +1,3 @@
-package models
-
 /*
  * Happy Melly Teller
  * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
@@ -19,20 +17,26 @@ package models
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
- * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
+ * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
+ * The Netherlands, 3071 PR
  */
+package models
 
 import helpers.{ BrandHelper, EventHelper }
 import integration.{ WithDb, WithTestApp }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
 import org.specs2.execute._
+import org.specs2.matcher.DataTables
 
-class EventSpec extends Specification with WithTestApp {
+class EventSpec extends Specification with WithTestApp with DataTables {
 
-  val event = EventHelper.makeEvent(title = Some("Daily Workshop"), city = Some("spb"), startDate = Some(LocalDate.parse("2014-05-12")))
+  val event = EventHelper.makeEvent(
+    title = Some("Daily Workshop"),
+    city = Some("spb"),
+    startDate = Some(LocalDate.parse("2014-05-12")))
   val tooLongTitle = "This title is just too long and should be truncated by the system to 70 characters"
 
   "Long title of an event" should {
@@ -42,15 +46,19 @@ class EventSpec extends Specification with WithTestApp {
   }
   "If a title is > 70 characters long it" should {
     "be truncated and has a length = 70" in {
-      event.copy(title = tooLongTitle).longTitle.length mustEqual (70 + " / spb / 2014-05-12".length)
+      event.copy(title = tooLongTitle).longTitle.length mustEqual
+        (70 + " / spb / 2014-05-12".length)
     }
     "not be contained fully in a long title" in {
-      event.copy(title = tooLongTitle).longTitle mustNotEqual tooLongTitle + " / spb / 2014-05-12"
+      event.copy(title = tooLongTitle).longTitle mustNotEqual
+        tooLongTitle + " / spb / 2014-05-12"
     }
   }
 
-  val langEvent = EventHelper.makeEvent(spokenLanguage = Option("DE"),
-    secondSpokenLanguage = Option("EN"), materialsLanguage = Option("PT"))
+  val langEvent = EventHelper.makeEvent(
+    spokenLanguage = Option("DE"),
+    secondSpokenLanguage = Option("EN"),
+    materialsLanguage = Option("PT"))
 
   "Event" should {
     "have two spoken languages divided by slash" in {
@@ -73,26 +81,39 @@ class EventSpec extends Specification with WithTestApp {
     }
   }
 
-  val facilitatedEvent = event
-  facilitatedEvent.facilitatorIds_=(List(2L, 3L, 4L, 6L))
+  event.facilitatorIds_=(List(2L, 3L, 4L, 6L))
 
-  "A new facilitator" should {
-    "be able to facilitate events" in {
-      Result.unit {
-        List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
-      }
+  "A brand manager (id = 1)" should {
+    "be detected as a brand manager" in new WithDb {
+      BrandHelper.defaultBrand.insert
+      event.isBrandManager(1) must beTrue
+    }
+    "be able to facilitate an event" in new WithDb {
+      BrandHelper.defaultBrand.insert
+      event.isFacilitator(1) must beTrue
+    }
+  }
+  "A random person (id = 5)" should {
+    val id = 5
+    "not be detected as a brand manager" in new WithDb {
+      BrandHelper.defaultBrand.insert
+      event.isBrandManager(id) must beFalse
+    }
+    "not be able to facilitate the event" in new WithDb {
+      BrandHelper.defaultBrand.insert
+      event.isFacilitator(id) must beFalse
     }
   }
 
   "A facilitator" should {
-    "not be able to facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
-      List(1, 5) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beFalse }
-    }
-    "be able to facilitate an event if she is an Editor" in new WithDb {
-      BrandHelper.defaultBrand.insert
-      facilitatedEvent.canFacilitate(1) must beTrue
+    "be able to facilitate events" in {
+      Result.unit {
+        List(2, 4, 6) foreach { i ⇒ event.isFacilitator(i) must beTrue }
+      }
     }
   }
 
+  def populateDatabase =
+    ""
 }
 

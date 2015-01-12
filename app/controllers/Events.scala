@@ -36,6 +36,7 @@ import org.joda.time.{ LocalDate, DateTime }
 import models.UserRole.Role._
 import play.api.data.format.Formatter
 import models.{ Location, Schedule }
+import models.event.Comparator
 import models.event.Comparator.FieldChange
 import services.EmailService
 
@@ -244,7 +245,7 @@ object Events extends Controller with Security {
 
       Event.find(id).map { event ⇒
         if (event.deletable) {
-          Event.delete(id)
+          event.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
           sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
@@ -429,7 +430,7 @@ object Events extends Controller with Security {
 
             // it's important to compare before updating as with lazy initialization invoice and facilitators data
             // for an old event will be destroyed
-            val changes = Event.compare(existingEvent, updatedEvent)
+            val changes = Comparator.compare(existingEvent, updatedEvent)
             updatedEvent.update
 
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
