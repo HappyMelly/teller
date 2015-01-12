@@ -34,8 +34,10 @@ import play.api.test.Helpers._
 trait WithTestApp extends Around with Scope {
 
   val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
+  val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
 
-  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb)) {
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb,
+    withoutPlugins = withoutPlugins)) {
     AsResult.effectively(t)
   }
 }
@@ -45,8 +47,10 @@ trait WithDb extends Around with Scope {
   val testDb = Map(
     "db.default.url" -> "jdbc:mysql://localhost/mellytest",
     "logger.application" -> "DEBUG")
+  val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
 
-  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb)) {
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb,
+    withoutPlugins = withoutPlugins)) {
     try {
       AsResult.effectively(t)
     } finally {

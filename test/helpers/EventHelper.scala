@@ -36,12 +36,16 @@ object EventHelper {
     facilitatorIds: Option[List[Long]] = None): Event = {
 
     val code = brandCode.getOrElse(BrandHelper.defaultBrand.code)
-    new Event(id, eventTypeId.getOrElse(1), code, title.getOrElse("Test event"),
-      spokenLanguage.getOrElse("EN"), materialsLanguage, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
+    val invoice = new EventInvoice(None, None, 1, None, None)
+    val language = new Language(spokenLanguage.getOrElse("EN"), None, materialsLanguage)
+    var event = new Event(id, eventTypeId.getOrElse(1), code, title.getOrElse("Test event"),
+      language, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
       new Details(None, None, None, None),
       new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())), endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
-      invoice.getOrElse(new EventInvoice(None, None, 1, None, None)), DateTime.now(), "Sergey Kotlov",
-      DateTime.now(), "Sergey Kotlov", facilitatorIds.getOrElse(1 :: Nil))
+      DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+    event.facilitatorIds_=(facilitatorIds.getOrElse(1 :: Nil))
+
+    event
   }
 }

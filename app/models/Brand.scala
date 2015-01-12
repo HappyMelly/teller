@@ -98,7 +98,10 @@ case class Brand(id: Option[Long],
     this.copy(id = Some(id))
   }
 
-  def delete(): Unit = Brand.delete(this.id.get)
+  def delete(): Unit = {
+    SocialProfile.delete(this.id.get, ProfileType.Brand)
+    Brand.delete(this.id.get)
+  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])

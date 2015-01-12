@@ -49,7 +49,8 @@ class EventSpec extends Specification with WithTestApp {
   }
 
   "A facilitator" should {
-    val facilitatedEvent = event.copy(facilitatorIds = List(2L, 3L, 4L, 6L))
+    val facilitatedEvent = event
+    facilitatedEvent.facilitatorIds_=(List(2L, 3L, 4L, 6L))
     "be able to facilitate events" in new WithTestApp {
       List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
     }

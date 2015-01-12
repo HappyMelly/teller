@@ -107,5 +107,16 @@ object SocialProfile {
   def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = DB.withSession { implicit session: Session ⇒
     SocialProfiles.filter(_.objectId === socialProfile.objectId).filter(_.objectType === objectType).update(socialProfile)
   }
+
+  /**
+   * Delete a social profile
+   *
+   * @param objectId Id of the object the social profile associated with
+   * @param objectType Type of the object the social profile associated with
+   */
+  def delete(objectId: Long, objectType: ProfileType.Value): Unit = DB.withSession { implicit session: Session ⇒
+    Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).delete
+  }
+
 }
 
