@@ -28,15 +28,15 @@ import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
 
+import com.github.tototoshi.slick.JodaSupport._
+import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.i18n.Messages
 import play.api.Play.current
 import scala.language.postfixOps
 import scala.slick.lifted.Query
-import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
-import play.api.i18n.Messages
-import com.github.tototoshi.slick.JodaSupport._
 import services.EmailService
 import views.Languages
 
@@ -143,9 +143,8 @@ case class Event(
    * @param personId A person's unique identifier
    * @return
    */
-  def canFacilitate(personId: Long): Boolean = DB.withSession { implicit session: Session ⇒
+  def canFacilitate(personId: Long): Boolean =
     facilitatorIds.contains(personId) || canAdministrate(personId)
-  }
 
   /**
    * To administrate the event = to add and edit evaluations for the event

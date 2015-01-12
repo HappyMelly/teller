@@ -28,6 +28,7 @@ import helpers.{ BrandHelper, EventHelper }
 import integration.{ WithDb, WithTestApp }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
+import org.specs2.execute._
 
 class EventSpec extends Specification with WithTestApp {
 
@@ -47,14 +48,42 @@ class EventSpec extends Specification with WithTestApp {
       event.copy(title = tooLongTitle).longTitle mustNotEqual tooLongTitle + " / spb / 2014-05-12"
     }
   }
+  val langEvent = EventHelper.makeEvent(spokenLanguage = Option("DE"),
+    secondSpokenLanguage = Option("EN"), materialsLanguage = Option("PT"))
+
+  "Event" should {
+    "have two spoken languages divided by slash" in {
+      langEvent.spokenLanguage mustEqual "German / English"
+    }
+    "have English as a materials language" in {
+      langEvent.materialsLanguage mustEqual Some("Portuguese")
+    }
+    "have two spoken languages returned as a list" in {
+      langEvent.spokenLanguages mustEqual List("German", "English")
+    }
+  }
+  val noMaterialsEvent = EventHelper.makeEvent(spokenLanguage = Option("EN"))
+  "Event" should {
+    "have one spoken language" in {
+      noMaterialsEvent.spokenLanguage mustEqual "English"
+    }
+    "have an empty materials language" in {
+      noMaterialsEvent.materialsLanguage mustEqual None
+    }
+  }
+
+  val facilitatedEvent = event
+  facilitatedEvent.facilitatorIds_=(List(2L, 3L, 4L, 6L))
+
+  "A new facilitator" should {
+    "be able to facilitate events" in {
+      Result.unit {
+        List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
+      }
+    }
+  }
 
   "A facilitator" should {
-    val facilitatedEvent = event
-    facilitatedEvent.facilitatorIds_=(List(2L, 3L, 4L, 6L))
-    "be able to facilitate events" in new WithTestApp {
-      List(2, 4, 6) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beTrue }
-    }
-
     "not be able to facilitate an event if the facilitator is not in the list of facilitators" in new WithTestApp {
       List(1, 5) foreach { i ⇒ facilitatedEvent.canFacilitate(i) must beFalse }
     }
