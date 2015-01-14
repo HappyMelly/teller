@@ -28,17 +28,29 @@ import org.joda.time.{ DateTime, LocalDate }
 
 object EventHelper {
 
-  def makeEvent(id: Option[Long] = None, eventTypeId: Option[Long] = None, brandCode: Option[String] = None,
-    title: Option[String] = None, spokenLanguage: Option[String] = None,
-    secondSpokenLanguage: Option[String] = None, materialsLanguage: Option[String] = None,
-    city: Option[String] = None, country: Option[String] = None, startDate: Option[LocalDate] = None,
-    endDate: Option[LocalDate] = None, notPublic: Option[Boolean] = None, archived: Option[Boolean] = None,
-    confirmed: Option[Boolean] = None, invoice: Option[EventInvoice] = None,
+  def makeEvent(id: Option[Long] = None,
+    eventTypeId: Option[Long] = None,
+    brandCode: Option[String] = None,
+    title: Option[String] = None,
+    spokenLanguage: Option[String] = None,
+    secondSpokenLanguage: Option[String] = None,
+    materialsLanguage: Option[String] = None,
+    city: Option[String] = None,
+    country: Option[String] = None,
+    startDate: Option[LocalDate] = None,
+    endDate: Option[LocalDate] = None,
+    notPublic: Option[Boolean] = None,
+    archived: Option[Boolean] = None,
+    confirmed: Option[Boolean] = None,
+    invoice: Option[EventInvoice] = None,
     facilitatorIds: Option[List[Long]] = None): Event = {
 
     val code = brandCode.getOrElse(BrandHelper.defaultBrand.code)
     val invoice = new EventInvoice(None, None, 1, None, None)
-    val language = new Language(spokenLanguage.getOrElse("DE"), secondSpokenLanguage, materialsLanguage)
+    val language = new Language(
+      spokenLanguage.getOrElse("DE"),
+      secondSpokenLanguage,
+      materialsLanguage)
     var event = new Event(id, eventTypeId.getOrElse(1), code, title.getOrElse("Test event"),
       language, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
       new Details(None, None, None, None),
@@ -46,6 +58,7 @@ object EventHelper {
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
       DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
     event.facilitatorIds_=(facilitatorIds.getOrElse(1 :: Nil))
+    event.invoice_=(invoice)
 
     event
   }

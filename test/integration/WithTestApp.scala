@@ -44,26 +44,3 @@ trait WithTestApp extends Around with Scope {
     AsResult.effectively(t)
   }
 }
-
-trait WithDb extends Around with Scope {
-
-  val conf = Map(
-    "db.default.url" -> "jdbc:mysql://localhost/mellytest",
-    "logger.play" -> "ERROR",
-    "logger.application" -> "ERROR")
-  val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
-
-  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = conf,
-    withoutPlugins = withoutPlugins)) {
-    try {
-      AsResult.effectively(t)
-    } finally {
-      cleanDb()
-    }
-  }
-
-  def cleanDb(): Unit = {
-    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
-    Event.findAll.map(_.delete())
-  }
-}

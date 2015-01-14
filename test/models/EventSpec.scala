@@ -27,7 +27,6 @@ package models
 import helpers.{ BrandHelper, EventHelper }
 import integration.{ WithDb, WithTestApp, PlayAppSpec }
 import org.joda.time.LocalDate
-import org.specs2.mutable._
 import org.specs2.execute._
 import org.specs2.specification._
 import org.specs2.matcher.DataTables
@@ -37,7 +36,17 @@ import play.api.Play
 
 class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
 
-  val event = EventHelper.makeEvent(
+  def setupDb() {
+    BrandHelper.defaultBrand.insert
+    addEvents(BrandHelper.defaultBrand.code)
+  }
+
+  def cleanupDb() {
+    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
+    Event.findAll.map(_.delete())
+  }
+
+  lazy val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
@@ -89,26 +98,20 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
 
   "A brand manager (id = 1)" should {
     "be detected as a brand manager" in {
-      BrandHelper.defaultBrand.insert
       event.isBrandManager(1) must beTrue
     }
     "be able to facilitate an event" in {
-      BrandHelper.defaultBrand.insert
       event.canFacilitate(1) must beTrue
     }
   }
   "A random person (id = 5)" should {
-    // Step(BrandHelper.defaultBrand.insert)
     val id = 5
     "not be detected as a brand manager" in {
-      // BrandHelper.defaultBrand.insert
       event.isBrandManager(id) must beFalse
     }
     "not be able to facilitate the event" in {
-      // BrandHelper.defaultBrand.insert
       event.canFacilitate(id) must beFalse
     }
-    // Step(Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete()))
   }
 
   "A facilitator" should {
@@ -119,26 +122,46 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
     }
   }
 
-  // val conf1 = Map(
-  //   "db.default.url" -> "jdbc:mysql://localhost/mellytest",
-  //   "logger.play" -> "ERROR",
-  //   "logger.application" -> "ERROR")
-  // val noPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
-  // var fake: FakeApplication = _
-  // step {
-  //   fake = FakeApplication(
-  //     additionalConfiguration = conf1,
-  //     withoutPlugins = noPlugins)
-  // }
-  // step { Play.start(fake) }
-  step(addEvents(BrandHelper.defaultBrand.code))
   "Method findByParameters" should {
     "return 6 events for default brand" in {
       Event.findByParameters(Some(BrandHelper.defaultBrand.code)).length mustEqual 6
     }
+    "return 4 public events" in {
+      val events = Event.findByParameters(brandCode = None, public = Some(true))
+      (events.length mustEqual 4) and
+        (events.exists(_.title == "one") must beTrue) and
+        (events.exists(_.title == "two") must beTrue) and
+        (events.exists(_.title == "four") must beFalse) and
+        (events.exists(_.title == "five") must beTrue) and
+        (events.exists(_.title == "six") must beTrue)
+    }
+    "return 1 archived event" in {
+      val events = Event.findByParameters(brandCode = None, archived = Some(true))
+      (events.length mustEqual 1) and
+        (events.exists(_.title == "four") must beTrue)
+    }
+    "return 3 confirmed events" in {
+      val events = Event.findByParameters(brandCode = None, confirmed = Some(true))
+      (events.length mustEqual 3) and
+        (events.exists(_.title == "one") must beTrue) and
+        (events.exists(_.title == "four") must beTrue) and
+        (events.exists(_.title == "five") must beTrue) and
+        (events.exists(_.title == "six") must beFalse)
+    }
+    "return 1 event in DE" in {
+      val events = Event.findByParameters(brandCode = None, countryCode = Some("DE"))
+      (events.length mustEqual 1) and
+        (events.exists(_.title == "five") must beTrue)
+    }
+    "return 3 events with type = 2" in {
+      val events = Event.findByParameters(brandCode = None, eventType = Some(2))
+      (events.length mustEqual 3) and
+        (events.exists(_.title == "three") must beTrue) and
+        (events.exists(_.title == "four") must beTrue) and
+        (events.exists(_.title == "six") must beTrue) and
+        (events.exists(_.title == "five") must beFalse)
+    }
   }
-  step(deleteEvents)
-  // step(Play.stop())
 
   def addEvents(brand: String) = {
     Seq(
@@ -149,7 +172,6 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
       ("five", true, false, true, "DE", 1),
       ("six", true, false, false, "ES", 2)).foreach {
         case (title, public, archived, confirmed, code, eventType) ⇒ {
-          println(title)
           val event = EventHelper.makeEvent(
             title = Some(title),
             brandCode = Some(brand),
@@ -163,5 +185,4 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
       }
   }
 
-  def deleteEvents = Event.findAll.map(_.delete())
 }

@@ -34,8 +34,8 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
   lazy val app: FakeApplication = {
     val conf = Map(
       "db.default.url" -> "jdbc:mysql://localhost/mellytest",
-      "logger.play" -> "INFO",
-      "logger.application" -> "DEBUG")
+      "logger.play" -> "ERROR",
+      "logger.application" -> "ERROR")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
     FakeApplication(
       additionalConfiguration = conf,
@@ -44,11 +44,16 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
 
   def beforeAll() {
     Play.start(app)
+    setupDb()
   }
 
   def afterAll() {
+    cleanupDb()
     Play.stop()
   }
+
+  def setupDb()
+  def cleanupDb()
 }
 import org.specs2.specification.Step
 
