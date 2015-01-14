@@ -143,7 +143,16 @@ object Participants extends Controller with Security {
               })
           }
         }
-        val participants = Participant.findByBrand(Some(brandCode))
+        val personId = account.personId
+        val participants =
+          if (account.editor || brand.brand.coordinatorId == personId) {
+            Participant.findByBrand(Some(brandCode))
+          } else if (License.licensedSince(personId, brandCode).nonEmpty) {
+            val events = Event.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
+            Participant.findEvaluationsByEvents(events)
+          } else {
+            List[ParticipantView]()
+          }
         Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
       }.getOrElse(NotFound("Unknown brand"))
   }
@@ -272,8 +281,11 @@ object Participants extends Controller with Security {
             case _ ⇒ {
               Participant.insert(participant)
               val activityObject = Messages("activity.participant.create",
-                participant.person.get.fullName, participant.event.get.title)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+                participant.person.get.fullName,
+                participant.event.get.title)
+              val activity = Activity.create(request.user.fullName,
+                Activity.Predicate.Created,
+                activityObject)
               val route = ref match {
                 case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
                 case _ ⇒ routes.Participants.index().url
@@ -306,8 +318,12 @@ object Participants extends Controller with Security {
         },
         data ⇒ {
           Participant.create(data)
-          val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          val activityObject = Messages("activity.participant.create",
+            data.firstName + " " + data.lastName,
+            data.event.get.title)
+          val activity = Activity.create(request.user.fullName,
+            Activity.Predicate.Created,
+            activityObject)
           val route = ref match {
             case Some("event") ⇒ routes.Events.details(data.eventId).url + "#participant"
             case _ ⇒ routes.Participants.index().url
@@ -329,7 +345,9 @@ object Participants extends Controller with Security {
 
         val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
         value.delete()
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.create(request.user.fullName,
+          Activity.Predicate.Deleted,
+          activityObject)
         val route = ref match {
           case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
           case _ ⇒ routes.Participants.index().url

@@ -100,6 +100,14 @@ object Activity {
     insert(subject, predicate, Some(activityObject))
   }
 
+  /** Returns new activity record */
+  def create(
+    subject: String,
+    predicate: Predicate,
+    activityObject: String): Activity = {
+    new Activity(None, subject, predicate.toString, Some(activityObject))
+  }
+
   /**
    * Links the given booking entry and activity.
    */

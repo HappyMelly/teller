@@ -163,13 +163,38 @@ object Participant {
   }
 
   /**
+   * Returns participants and their evaluations for a set of events
+   *
+   * @param events Event identifiers
+   */
+  def findEvaluationsByEvents(events: List[Long]): List[ParticipantView] = DB.withSession {
+    implicit session: Session ⇒
+      val baseQuery = for {
+        (((part, p), e), ev) ← Participants innerJoin
+          People on (_.personId === _.id) innerJoin
+          Events on (_._1.eventId === _.id) leftJoin
+          Evaluations on (_._1._1.evaluationId === _.id)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+
+      val eventQuery = baseQuery.filter(_._2.id inSet events)
+      val rawList = eventQuery.mapResult(ParticipantView.tupled).list
+      val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+      val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
+      withEvaluation.union(withoutEvaluation.distinct)
+  }
+
+  /**
    * Find all participants for the specified event
    * @param eventId Event identifier
    * @return
    */
   def findByEvent(eventId: Long): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
     val baseQuery = for {
-      (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
+      (((part, p), e), ev) ← Participants innerJoin
+        People on (_.personId === _.id) innerJoin
+        Events on (_._1.eventId === _.id) leftJoin
+        Evaluations on (_._1._1.evaluationId === _.id)
     } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
 
     val eventQuery = baseQuery.filter(_._2.id === eventId)
