@@ -1,7 +1,11 @@
 @(user: securesocial.core.Identity,
-        legalEntities: List[Organisation],
-        event: Event
-        )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  canFacilitate: Boolean,
+  legalEntities: List[Organisation],
+  event: Event)(implicit
+    request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import templates.Formatters._
@@ -157,7 +161,9 @@
     <div class="col-md-12">
         <ul class="nav nav-tabs" id="details">
             <li><a href="#description">Description</a></li>
-            <li><a href="#participant">Participants</a></li>
+            @if(canFacilitate) {
+                <li><a href="#participant">Participants</a></li>
+            }
         </ul>
         <div class="tab-content">
             <div class="tab-pane" id="description">
@@ -173,32 +179,34 @@
                     </p>
                 }
             </div>
-            <div class="tab-pane" id="participant">
-                <div id="filter-containter">
-                    <div class="pull-right">
-                        <a class="input-sm" tabindex="-1"
-                            href="@routes.Participants.add(Some(event.brandCode), event.id, Some("event")).url" title="Add Participant">
-                            <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
-                        <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
-                            <i class="glyphicon glyphicon-envelope"></i> Send Evaluation Request</a>
-                        <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
-                            <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+            @if(canFacilitate) {
+                <div class="tab-pane" id="participant">
+                    <div id="filter-containter">
+                        <div class="pull-right">
+                            <a class="input-sm" tabindex="-1"
+                                href="@routes.Participants.add(Some(event.brandCode), event.id, Some("event")).url" title="Add Participant">
+                                <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
+                            <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                                <i class="glyphicon glyphicon-envelope"></i> Send Evaluation Request</a>
+                            <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+                                <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+                        </div>
                     </div>
+                    <table id="participants" class="datatables table table-bordered">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Participant</th>
+                                <th align="center" id="impression"></th>
+                                <th>Evaluation Date</th>
+                                <th>Handled Date</th>
+                                <th>Certificate Number</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
-                <table id="participants" class="datatables table table-bordered">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Participant</th>
-                            <th align="center" id="impression"></th>
-                            <th>Evaluation Date</th>
-                            <th>Handled Date</th>
-                            <th>Certificate Number</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
+            }
         </div>
     </div>
 

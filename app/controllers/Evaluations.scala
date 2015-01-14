@@ -237,8 +237,10 @@ object Evaluations extends EvaluationsController with Security {
         val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
         ev.approve(approver)
 
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Approved,
+        val activity = Activity.create(request.user.fullName,
+          Activity.Predicate.Approved,
           ev.participant.fullName)
+
         val route = ref match {
           case Some("index") ⇒ routes.Participants.index().url
           case Some("evaluation") ⇒ routes.Evaluations.details(id).url
@@ -258,7 +260,8 @@ object Evaluations extends EvaluationsController with Security {
     implicit handler ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
         existingEvaluation.reject()
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Rejected,
+        val activity = Activity.create(request.user.fullName,
+          Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
         val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
