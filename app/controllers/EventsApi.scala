@@ -92,11 +92,15 @@ object EventsApi extends Controller with ApiAuthentication {
   }
 
   /**
-   * A list of countries with a number of events for a given brand
+   * Returns a list of countries with a number of events
+   *
+   * @param code Brand identifier
    */
-  def countries(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(brandCode).map { brandView ⇒
-      Ok(Json.toJson(Event.findByBrandGroupByCountry(brandCode)))
+  def countries(code: String) = TokenSecuredAction { implicit request ⇒
+    Brand.find(code).map { brandView ⇒
+      val events = Event.findByParameters(Some(code), future = Some(true))
+      val data = events.groupBy(_.location.countryCode).map(v ⇒ (v._1, v._2.length))
+      Ok(Json.prettyPrint(Json.toJson(data.toList.sortBy(_._1))))
     }.getOrElse(NotFound("Unknown brand"))
   }
 

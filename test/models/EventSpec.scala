@@ -25,7 +25,7 @@
 package models
 
 import helpers.{ BrandHelper, EventHelper }
-import integration.{ WithDb, WithTestApp, PlayAppSpec }
+import integration.{ WithTestApp, PlayAppSpec }
 import org.joda.time.LocalDate
 import org.specs2.execute._
 import org.specs2.specification._
@@ -149,7 +149,7 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
         (events.exists(_.title == "six") must beFalse)
     }
     "return 1 event in DE" in {
-      val events = Event.findByParameters(brandCode = None, countryCode = Some("DE"))
+      val events = Event.findByParameters(brandCode = None, country = Some("DE"))
       (events.length mustEqual 1) and
         (events.exists(_.title == "five") must beTrue)
     }
@@ -161,19 +161,29 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
         (events.exists(_.title == "six") must beTrue) and
         (events.exists(_.title == "five") must beFalse)
     }
+    "return 3 future events" in {
+      val events = Event.findByParameters(brandCode = None, future = Some(true))
+      (events.length mustEqual 3) and
+        (events.exists(_.title == "three") must beFalse) and
+        (events.exists(_.title == "four") must beTrue) and
+        (events.exists(_.title == "six") must beTrue) and
+        (events.exists(_.title == "five") must beTrue)
+    }
   }
 
   def addEvents(brand: String) = {
     Seq(
-      ("one", true, false, true, "RU", 1),
-      ("two", true, false, false, "RU", 1),
-      ("three", false, false, false, "RU", 2),
-      ("four", false, true, true, "RU", 2),
-      ("five", true, false, true, "DE", 1),
-      ("six", true, false, false, "ES", 2)).foreach {
-        case (title, public, archived, confirmed, code, eventType) ⇒ {
+      ("one", "2013-01-01", "2013-01-03", true, false, true, "RU", 1),
+      ("two", "2013-01-01", "2013-01-03", true, false, false, "RU", 1),
+      ("three", "2013-01-01", "2013-01-03", false, false, false, "RU", 2),
+      ("four", "2023-01-01", "2023-01-03", false, true, true, "RU", 2),
+      ("five", "2023-01-01", "2023-01-03", true, false, true, "DE", 1),
+      ("six", "2023-01-01", "2023-01-03", true, false, false, "ES", 2)).foreach {
+        case (title, start, end, public, archived, confirmed, code, eventType) ⇒ {
           val event = EventHelper.makeEvent(
             title = Some(title),
+            startDate = Some(LocalDate.parse(start)),
+            endDate = Some(LocalDate.parse(end)),
             brandCode = Some(brand),
             notPublic = Some(!public),
             archived = Some(archived),

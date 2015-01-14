@@ -414,12 +414,4 @@ object Participants extends Controller with Security {
       },
       "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get, Some(page)).url)
   }
-
-  private def findEvents(account: UserAccount): List[Event] = {
-    if (account.editor) {
-      Event.findActive
-    } else {
-      Event.findByCoordinator(account.personId)
-    }
-  }
 }

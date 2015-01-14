@@ -283,13 +283,21 @@ object Evaluations extends EvaluationsController with Security {
    * Retrieve active events which a user is able to see
    *
    * @param account User object
-   * @return
    */
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
       Event.findActive
     } else {
-      Event.findByCoordinator(account.personId)
+      val brands = Brand.findByCoordinator(account.personId)
+      if (brands.length > 0) {
+        val brandCodes = brands.map(_.code)
+        val events = Event.findByParameters(
+          brandCode = None,
+          archived = Some(false))
+        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+      } else {
+        List[Event]()
+      }
     }
   }
 }
