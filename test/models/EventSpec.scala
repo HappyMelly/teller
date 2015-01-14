@@ -25,13 +25,17 @@
 package models
 
 import helpers.{ BrandHelper, EventHelper }
-import integration.{ WithDb, WithTestApp }
+import integration.{ WithDb, WithTestApp, PlayAppSpec }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
 import org.specs2.execute._
+import org.specs2.specification._
 import org.specs2.matcher.DataTables
+import play.api.test.FakeApplication
+import play.api.test.Helpers._
+import play.api.Play
 
-class EventSpec extends Specification with WithTestApp with DataTables {
+class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
 
   val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
@@ -84,36 +88,80 @@ class EventSpec extends Specification with WithTestApp with DataTables {
   event.facilitatorIds_=(List(2L, 3L, 4L, 6L))
 
   "A brand manager (id = 1)" should {
-    "be detected as a brand manager" in new WithDb {
+    "be detected as a brand manager" in {
       BrandHelper.defaultBrand.insert
       event.isBrandManager(1) must beTrue
     }
-    "be able to facilitate an event" in new WithDb {
+    "be able to facilitate an event" in {
       BrandHelper.defaultBrand.insert
-      event.isFacilitator(1) must beTrue
+      event.canFacilitate(1) must beTrue
     }
   }
   "A random person (id = 5)" should {
+    // Step(BrandHelper.defaultBrand.insert)
     val id = 5
-    "not be detected as a brand manager" in new WithDb {
-      BrandHelper.defaultBrand.insert
+    "not be detected as a brand manager" in {
+      // BrandHelper.defaultBrand.insert
       event.isBrandManager(id) must beFalse
     }
-    "not be able to facilitate the event" in new WithDb {
-      BrandHelper.defaultBrand.insert
-      event.isFacilitator(id) must beFalse
+    "not be able to facilitate the event" in {
+      // BrandHelper.defaultBrand.insert
+      event.canFacilitate(id) must beFalse
     }
+    // Step(Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete()))
   }
 
   "A facilitator" should {
     "be able to facilitate events" in {
       Result.unit {
-        List(2, 4, 6) foreach { i ⇒ event.isFacilitator(i) must beTrue }
+        List(2, 4, 6) foreach { i ⇒ event.canFacilitate(i) must beTrue }
       }
     }
   }
 
-  def populateDatabase =
-    ""
-}
+  // val conf1 = Map(
+  //   "db.default.url" -> "jdbc:mysql://localhost/mellytest",
+  //   "logger.play" -> "ERROR",
+  //   "logger.application" -> "ERROR")
+  // val noPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
+  // var fake: FakeApplication = _
+  // step {
+  //   fake = FakeApplication(
+  //     additionalConfiguration = conf1,
+  //     withoutPlugins = noPlugins)
+  // }
+  // step { Play.start(fake) }
+  step(addEvents(BrandHelper.defaultBrand.code))
+  "Method findByParameters" should {
+    "return 6 events for default brand" in {
+      Event.findByParameters(Some(BrandHelper.defaultBrand.code)).length mustEqual 6
+    }
+  }
+  step(deleteEvents)
+  // step(Play.stop())
 
+  def addEvents(brand: String) = {
+    Seq(
+      ("one", true, false, true, "RU", 1),
+      ("two", true, false, false, "RU", 1),
+      ("three", false, false, false, "RU", 2),
+      ("four", false, true, true, "RU", 2),
+      ("five", true, false, true, "DE", 1),
+      ("six", true, false, false, "ES", 2)).foreach {
+        case (title, public, archived, confirmed, code, eventType) ⇒ {
+          println(title)
+          val event = EventHelper.makeEvent(
+            title = Some(title),
+            brandCode = Some(brand),
+            notPublic = Some(!public),
+            archived = Some(archived),
+            confirmed = Some(confirmed),
+            country = Some(code),
+            eventTypeId = Some(eventType))
+          event.insert
+        }
+      }
+  }
+
+  def deleteEvents = Event.findAll.map(_.delete())
+}

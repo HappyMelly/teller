@@ -172,7 +172,7 @@ case class Event(
    *
    * @param personId A person's unique identifier
    */
-  def isFacilitator(personId: Long): Boolean =
+  def canFacilitate(personId: Long): Boolean =
     facilitatorIds.contains(personId) || isBrandManager(personId)
 
   /**
@@ -238,6 +238,7 @@ object Event {
 
   /**
    * Returns true if and only if a user is allowed to manage this event.
+   * @deprecated
    */
   def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
     if (find(eventId).isEmpty)
@@ -246,54 +247,62 @@ object Event {
       findByUser(user).exists(_.id.get == eventId)
   }
 
-  def find(id: Long): Option[Event] = DB.withSession { implicit session: Session ⇒
-    Query(Events).filter(_.id === id).list.headOption
+  /**
+   * Returns event if it exists, otherwise - None
+   *
+   * @param id Event identifier
+   */
+  def find(id: Long): Option[Event] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Events).filter(_.id === id).list.headOption
   }
 
   /**
-   * Return a list of events based on several parameters
+   * Returns a list of events based on several parameters
    */
-  def findByParameters(brandCode: Option[String],
+  def findByParameters(
+    brandCode: Option[String],
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None,
     confirmed: Option[Boolean] = None,
     countryCode: Option[String] = None,
-    eventType: Option[Long] = None): List[Event] = DB.withSession { implicit session: Session ⇒
-    val baseQuery = Query(Events)
+    eventType: Option[Long] = None): List[Event] = DB.withSession {
+    implicit session: Session ⇒
+      val baseQuery = Query(Events)
 
-    val brandQuery = brandCode.map {
-      v ⇒ baseQuery.filter(_.brandCode === v)
-    }.getOrElse { baseQuery }
+      val brandQuery = brandCode.map {
+        v ⇒ baseQuery.filter(_.brandCode === v)
+      }.getOrElse { baseQuery }
 
-    val timeQuery = future.map { value ⇒
-      val now = LocalDate.now()
-      val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-      if (value) brandQuery.filter(_.start >= today)
-      else brandQuery.filter(_.end < today)
-    }.getOrElse(brandQuery)
+      val timeQuery = future.map { value ⇒
+        val now = LocalDate.now()
+        val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
+        if (value) brandQuery.filter(_.start >= today)
+        else brandQuery.filter(_.end < today)
+      }.getOrElse(brandQuery)
 
-    val publicityQuery = public.map { value ⇒
-      timeQuery.filter(_.notPublic === !value)
-    }.getOrElse(timeQuery)
+      val publicityQuery = public.map { value ⇒
+        timeQuery.filter(_.notPublic === !value)
+      }.getOrElse(timeQuery)
 
-    val archivedQuery = archived.map { value ⇒
-      publicityQuery.filter(_.archived === value)
-    }.getOrElse(publicityQuery)
+      val archivedQuery = archived.map { value ⇒
+        publicityQuery.filter(_.archived === value)
+      }.getOrElse(publicityQuery)
 
-    val confirmedQuery = confirmed.map { value ⇒
-      archivedQuery.filter(_.confirmed === value)
-    }.getOrElse(archivedQuery)
+      val confirmedQuery = confirmed.map { value ⇒
+        archivedQuery.filter(_.confirmed === value)
+      }.getOrElse(archivedQuery)
 
-    val countryQuery = countryCode.map { value ⇒
-      confirmedQuery.filter(_.countryCode === value)
-    }.getOrElse(confirmedQuery)
+      val countryQuery = countryCode.map { value ⇒
+        confirmedQuery.filter(_.countryCode === value)
+      }.getOrElse(confirmedQuery)
 
-    val typeQuery = eventType.map { value ⇒
-      countryQuery.filter(_.eventTypeId === value)
-    }.getOrElse(countryQuery)
+      val typeQuery = eventType.map { value ⇒
+        countryQuery.filter(_.eventTypeId === value)
+      }.getOrElse(countryQuery)
 
-    typeQuery.sortBy(_.start).list
+      typeQuery.sortBy(_.start).list
   }
 
   /**

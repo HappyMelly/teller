@@ -24,7 +24,7 @@
 package integration
 
 import helpers.BrandHelper
-import models.Brand
+import models.{ Brand, Event }
 import org.specs2.execute._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
@@ -33,10 +33,13 @@ import play.api.test.Helpers._
 
 trait WithTestApp extends Around with Scope {
 
-  val testDb = Map("db.default.url" -> "jdbc:mysql://localhost/mellytest")
+  val conf = Map(
+    "db.default.url" -> "jdbc:mysql://localhost/mellytest",
+    "logger.play" -> "INFO",
+    "logger.application" -> "DEBUG")
   val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
 
-  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb,
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = conf,
     withoutPlugins = withoutPlugins)) {
     AsResult.effectively(t)
   }
@@ -44,12 +47,13 @@ trait WithTestApp extends Around with Scope {
 
 trait WithDb extends Around with Scope {
 
-  val testDb = Map(
+  val conf = Map(
     "db.default.url" -> "jdbc:mysql://localhost/mellytest",
-    "logger.application" -> "DEBUG")
+    "logger.play" -> "ERROR",
+    "logger.application" -> "ERROR")
   val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
 
-  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = testDb,
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = conf,
     withoutPlugins = withoutPlugins)) {
     try {
       AsResult.effectively(t)
@@ -60,5 +64,6 @@ trait WithDb extends Around with Scope {
 
   def cleanDb(): Unit = {
     Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
+    Event.findAll.map(_.delete())
   }
 }
