@@ -14,7 +14,6 @@ object ApplicationBuild extends Build {
     cache,
     filters,
     "be.objectify" %% "deadbolt-scala" % "2.2-RC2",
-    "com.andersen-gott" %% "scravatar" % "1.0.3",
     "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
     "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0",
     "com.typesafe.play" %% "play-slick" % "0.5.0.8",
