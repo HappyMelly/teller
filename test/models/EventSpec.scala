@@ -39,6 +39,7 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
   def setupDb() {
     BrandHelper.defaultBrand.insert
     addEvents(BrandHelper.defaultBrand.code)
+    addEvents("MGT30")
   }
 
   def cleanupDb() {
@@ -128,7 +129,7 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
     }
     "return 4 public events" in {
       val events = Event.findByParameters(brandCode = None, public = Some(true))
-      (events.length mustEqual 4) and
+      (events.length mustEqual 8) and
         (events.exists(_.title == "one") must beTrue) and
         (events.exists(_.title == "two") must beTrue) and
         (events.exists(_.title == "four") must beFalse) and
@@ -137,12 +138,12 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
     }
     "return 1 archived event" in {
       val events = Event.findByParameters(brandCode = None, archived = Some(true))
-      (events.length mustEqual 1) and
+      (events.length mustEqual 2) and
         (events.exists(_.title == "four") must beTrue)
     }
     "return 3 confirmed events" in {
       val events = Event.findByParameters(brandCode = None, confirmed = Some(true))
-      (events.length mustEqual 3) and
+      (events.length mustEqual 6) and
         (events.exists(_.title == "one") must beTrue) and
         (events.exists(_.title == "four") must beTrue) and
         (events.exists(_.title == "five") must beTrue) and
@@ -150,19 +151,21 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
     }
     "return 1 event in DE" in {
       val events = Event.findByParameters(brandCode = None, country = Some("DE"))
-      (events.length mustEqual 1) and
+      (events.length mustEqual 2) and
         (events.exists(_.title == "five") must beTrue)
     }
     "return 3 events with type = 2" in {
       val events = Event.findByParameters(brandCode = None, eventType = Some(2))
-      (events.length mustEqual 3) and
+      (events.length mustEqual 6) and
         (events.exists(_.title == "three") must beTrue) and
         (events.exists(_.title == "four") must beTrue) and
         (events.exists(_.title == "six") must beTrue) and
         (events.exists(_.title == "five") must beFalse)
     }
     "return 3 future events" in {
-      val events = Event.findByParameters(brandCode = None, future = Some(true))
+      val events = Event.findByParameters(
+        brandCode = Some("MGT30"),
+        future = Some(true))
       (events.length mustEqual 3) and
         (events.exists(_.title == "three") must beFalse) and
         (events.exists(_.title == "four") must beTrue) and
@@ -171,15 +174,32 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
     }
   }
 
+  "Method findByFacilitator" should {
+    "return 4 events for default brand and facilitator = 1" in {
+      val events = Event.findByFacilitator(
+        1,
+        Some(BrandHelper.defaultBrand.code))
+      events.length mustEqual 4
+    }
+    "return 4 events facilitated by facilitator = 2" in {
+      val events = Event.findByFacilitator(2, None)
+      events.length mustEqual 4
+    }
+    "return 0 events facilitated by facilitator = 3" in {
+      Event.findByFacilitator(3, None).length mustEqual 0
+    }
+  }
+
   def addEvents(brand: String) = {
     Seq(
-      ("one", "2013-01-01", "2013-01-03", true, false, true, "RU", 1),
-      ("two", "2013-01-01", "2013-01-03", true, false, false, "RU", 1),
-      ("three", "2013-01-01", "2013-01-03", false, false, false, "RU", 2),
-      ("four", "2023-01-01", "2023-01-03", false, true, true, "RU", 2),
-      ("five", "2023-01-01", "2023-01-03", true, false, true, "DE", 1),
-      ("six", "2023-01-01", "2023-01-03", true, false, false, "ES", 2)).foreach {
-        case (title, start, end, public, archived, confirmed, code, eventType) ⇒ {
+      ("one", "2013-01-01", "2013-01-03", true, false, true, "RU", 1, List(1L, 2L)),
+      ("two", "2013-01-01", "2013-01-03", true, false, false, "RU", 1, List(1L, 4L)),
+      ("three", "2013-01-01", "2013-01-03", false, false, false, "RU", 2, List(1L, 4L)),
+      ("four", "2023-01-01", "2023-01-03", false, true, true, "RU", 2, List(2L, 4L)),
+      ("five", "2023-01-01", "2023-01-03", true, false, true, "DE", 1, List(4L, 5L)),
+      ("six", "2023-01-01", "2023-01-03", true, false, false, "ES", 2, List(1L, 4L))).foreach {
+        case (title, start, end, public, archived, confirmed, code, eventType,
+          facilitators) ⇒ {
           val event = EventHelper.makeEvent(
             title = Some(title),
             startDate = Some(LocalDate.parse(start)),
@@ -189,7 +209,8 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
             archived = Some(archived),
             confirmed = Some(confirmed),
             country = Some(code),
-            eventTypeId = Some(eventType))
+            eventTypeId = Some(eventType),
+            facilitatorIds = Some(facilitators))
           event.insert
         }
       }

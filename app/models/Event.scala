@@ -109,7 +109,7 @@ case class Event(
 
   /** Returns (and retrieves from db if needed) an invoice data */
   def invoice: EventInvoice = if (_invoice.isEmpty) {
-    invoice_=(EventInvoice.findByEvent(id.get))
+    invoice_=(EventInvoice findByEvent id.get)
     _invoice.get
   } else {
     _invoice.get
@@ -289,52 +289,47 @@ object Event {
     implicit session: Session ⇒
       val baseQuery = Query(Events)
 
-      val brandQuery = brandCode.map {
-        v ⇒ baseQuery.filter(_.brandCode === v)
-      }.getOrElse { baseQuery }
+      val brandQuery = brandCode map {
+        v ⇒ baseQuery filter (_.brandCode === v)
+      } getOrElse baseQuery
 
-      val timeQuery = future.map { value ⇒
-        val now = LocalDate.now()
-        val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-        if (value) brandQuery.filter(_.start >= today)
-        else brandQuery.filter(_.end < today)
-      }.getOrElse(brandQuery)
+      val timeQuery = applyTimeFilter(future, brandQuery)
+      val publicityQuery = applyPublicityFilter(public, timeQuery)
+      val archivedQuery = applyArchivedFilter(archived, publicityQuery)
 
-      val publicityQuery = public.map { value ⇒
-        timeQuery.filter(_.notPublic === !value)
-      }.getOrElse(timeQuery)
+      val confirmedQuery = confirmed map { value ⇒
+        archivedQuery filter (_.confirmed === value)
+      } getOrElse archivedQuery
 
-      val archivedQuery = archived.map { value ⇒
-        publicityQuery.filter(_.archived === value)
-      }.getOrElse(publicityQuery)
+      val countryQuery = country map { value ⇒
+        confirmedQuery filter (_.countryCode === value)
+      } getOrElse confirmedQuery
 
-      val confirmedQuery = confirmed.map { value ⇒
-        archivedQuery.filter(_.confirmed === value)
-      }.getOrElse(archivedQuery)
+      val typeQuery = eventType map { value ⇒
+        countryQuery filter (_.eventTypeId === value)
+      } getOrElse countryQuery
 
-      val countryQuery = country.map { value ⇒
-        confirmedQuery.filter(_.countryCode === value)
-      }.getOrElse(confirmedQuery)
-
-      val typeQuery = eventType.map { value ⇒
-        countryQuery.filter(_.eventTypeId === value)
-      }.getOrElse(countryQuery)
-
-      typeQuery.sortBy(_.start).list
+      typeQuery sortBy (_.start) list
   }
 
   /**
    * Return a list of events for a given facilitator
+   *
+   * @param facilitatorId Only events facilitated by this facilitator
+   * @param brand Only events of this brand
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
    */
   def findByFacilitator(
     facilitatorId: Long,
-    brandCode: Option[String],
+    brand: Option[String],
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None): List[Event] = DB.withSession {
     implicit session: Session ⇒
 
-      val baseQuery = brandCode map { value ⇒
+      val baseQuery = brand map { value ⇒
         for {
           entry ← EventFacilitators if entry.facilitatorId === facilitatorId
           event ← Events if event.id === entry.eventId && event.brandCode === value
@@ -346,22 +341,11 @@ object Event {
         } yield event
       }
 
-      val timeQuery = future.map { value ⇒
-        val now = LocalDate.now()
-        val today = new LocalDate(now.getValue(0), now.getValue(1), now.getValue(2))
-        if (value) baseQuery.filter(_.end >= today)
-        else baseQuery.filter(_.end <= today)
-      }.getOrElse(baseQuery)
+      val timeQuery = applyTimeFilter(future, baseQuery)
+      val publicityQuery = applyPublicityFilter(public, timeQuery)
+      val archivedQuery = applyArchivedFilter(archived, publicityQuery)
 
-      val publicityQuery = public.map { value ⇒
-        timeQuery.filter(_.notPublic === !value)
-      }.getOrElse(timeQuery)
-
-      val archivedQuery = archived.map { value ⇒
-        publicityQuery.filter(_.archived === value)
-      }.getOrElse(publicityQuery)
-
-      archivedQuery.sortBy(_.start).list
+      archivedQuery sortBy (_.start) list
   }
 
   /** Returns list with active events */
@@ -390,5 +374,57 @@ object Event {
       }
   }
 
+  /**
+   * Applies time filter on query
+   *
+   * @param future Defines if time filter should be applied
+   * @param parentQuery Query to apply this filter to
+   * @return returns updated query if 'future' flag is defined
+   */
+  private def applyTimeFilter(
+    future: Option[Boolean],
+    parentQuery: Query[Events.type, Event]) = {
+    future map { value ⇒
+      val now = LocalDate.now
+      val today = new LocalDate(
+        now.getValue(0),
+        now.getValue(1),
+        now.getValue(2))
+      if (value)
+        parentQuery.filter(_.end >= today)
+      else
+        parentQuery.filter(_.end <= today)
+    } getOrElse parentQuery
+  }
+
+  /**
+   * Applies publicity filter on query
+   *
+   * @param public Defines if publicity filter should be applied
+   * @param parentQuery Query to apply this filter to
+   * @return returns updated query if 'public' flag is defined
+   */
+  private def applyPublicityFilter(
+    public: Option[Boolean],
+    parentQuery: Query[Events.type, Event]) = {
+    public map { value ⇒
+      parentQuery.filter(_.notPublic === !value)
+    } getOrElse parentQuery
+  }
+
+  /**
+   * Applies archived filter on query
+   *
+   * @param archived Defines if archived filter should be applied
+   * @param parentQuery Query to apply this filter to
+   * @return returns updated query if 'archived' flag is defined
+   */
+  private def applyArchivedFilter(
+    archived: Option[Boolean],
+    parentQuery: Query[Events.type, Event]) = {
+    archived map { value ⇒
+      parentQuery.filter(_.archived === value)
+    } getOrElse parentQuery
+  }
 }
 
