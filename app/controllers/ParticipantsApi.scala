@@ -103,9 +103,6 @@ object ParticipantsApi extends ApiAuthentication {
         },
         participant ⇒ {
           val createdParticipant = Participant.insert(participant)
-          val activityObject = Messages("activity.participant.create",
-            participant.person.get.fullName, participant.event.get.title)
-          Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
           Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })
     } else {
@@ -117,8 +114,6 @@ object ParticipantsApi extends ApiAuthentication {
         },
         data ⇒ {
           val participant = Participant.create(data)
-          val activityObject = Messages("activity.participant.create", data.firstName + " " + data.lastName, data.event.get.title)
-          Activity.insert(person.fullName, Activity.Predicate.Created, activityObject)
           Ok(Json.prettyPrint(Json.obj("participant_id" -> participant.personId)))
         })
     }
