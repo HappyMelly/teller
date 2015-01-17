@@ -26,7 +26,7 @@ package models
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ EventInvoices, EventFacilitators, Participants, Events }
-import models.event.Comparator
+import models.event.{ EventService, Comparator }
 import models.event.Comparator.FieldChange
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
@@ -232,7 +232,7 @@ object Event {
    * @deprecated
    */
   def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (find(eventId).isEmpty)
+    if (EventService.find(eventId).isEmpty)
       false
     else
       findByUser(user).exists(_.id.get == eventId)
@@ -255,61 +255,6 @@ object Event {
         List[Event]()
       }
     }
-  }
-
-  /**
-   * Returns event if it exists, otherwise - None
-   *
-   * @param id Event identifier
-   */
-  def find(id: Long): Option[Event] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Events).filter(_.id === id).list.headOption
-  }
-
-  /**
-   * Returns a list of events based on several parameters
-   *
-   * @param brand Only events of this brand
-   * @param future Only future and current events
-   * @param public Only public events
-   * @param archived Only archived events
-   * @param confirmed Only confirmed events
-   * @param country Only events in this country
-   * @param eventType Only events of this type
-   */
-  def findByParameters(
-    brandCode: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None,
-    confirmed: Option[Boolean] = None,
-    country: Option[String] = None,
-    eventType: Option[Long] = None): List[Event] = DB.withSession {
-    implicit session: Session ⇒
-      val baseQuery = Query(Events)
-
-      val brandQuery = brandCode map {
-        v ⇒ baseQuery filter (_.brandCode === v)
-      } getOrElse baseQuery
-
-      val timeQuery = applyTimeFilter(future, brandQuery)
-      val publicityQuery = applyPublicityFilter(public, timeQuery)
-      val archivedQuery = applyArchivedFilter(archived, publicityQuery)
-
-      val confirmedQuery = confirmed map { value ⇒
-        archivedQuery filter (_.confirmed === value)
-      } getOrElse archivedQuery
-
-      val countryQuery = country map { value ⇒
-        confirmedQuery filter (_.countryCode === value)
-      } getOrElse confirmedQuery
-
-      val typeQuery = eventType map { value ⇒
-        countryQuery filter (_.eventTypeId === value)
-      } getOrElse countryQuery
-
-      typeQuery sortBy (_.start) list
   }
 
   /**
@@ -350,17 +295,17 @@ object Event {
 
   /** Returns list with active events */
   def findActive: List[Event] = DB.withSession { implicit session: Session ⇒
-    findByParameters(brandCode = None, archived = Some(false)).
+    EventService.findByParameters(brandCode = None, archived = Some(false)).
       sortBy(_.title.toLowerCase)
   }
 
   /** Returns list with all events */
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
-    findByParameters(brandCode = None)
+    EventService.findByParameters(brandCode = None)
   }
 
   def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
-    Event.findByParameters(
+    EventService.findByParameters(
       brandCode = Some(brand.code),
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒

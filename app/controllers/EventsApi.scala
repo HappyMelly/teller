@@ -23,7 +23,8 @@
  */
 package controllers
 
-import play.mvc.Controller
+import models.event.EventService
+import play.api.mvc._
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.json._
@@ -33,7 +34,8 @@ import models.event.Collection
 /**
  * Events API
  */
-object EventsApi extends Controller with ApiAuthentication {
+trait EventsApi extends ApiAuthentication {
+  this: Controller ⇒
 
   import PeopleApi.personWrites
 
@@ -73,7 +75,7 @@ object EventsApi extends Controller with ApiAuthentication {
         "end" -> event.schedule.end,
         "hoursPerDay" -> event.schedule.hoursPerDay,
         "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators,
+        //        "facilitators" -> event.facilitators,
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
         "website" -> event.details.webSite,
@@ -98,7 +100,7 @@ object EventsApi extends Controller with ApiAuthentication {
    */
   def countries(code: String) = TokenSecuredAction { implicit request ⇒
     Brand.find(code).map { brandView ⇒
-      val events = Event.findByParameters(Some(code), future = Some(true))
+      val events = EventService.findByParameters(Some(code), future = Some(true))
       val data = events.groupBy(_.location.countryCode).map(v ⇒ (v._1, v._2.length))
       Ok(Json.prettyPrint(Json.toJson(data.toList.sortBy(_._1))))
     }.getOrElse(NotFound("Unknown brand"))
@@ -108,7 +110,7 @@ object EventsApi extends Controller with ApiAuthentication {
    * Event details API.
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
-    Event.find(id).map { event ⇒
+    EventService.find(id).map { event ⇒
       Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
     }.getOrElse(NotFound("Unknown event"))
   }
@@ -127,9 +129,11 @@ object EventsApi extends Controller with ApiAuthentication {
     val events: List[Event] = facilitatorId.map { value ⇒
       Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
     }.getOrElse {
-      Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
+      EventService.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }
     Collection.facilitators(events)
     Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }
+
+object EventsApi extends Controller with EventsApi with ApiAuthentication

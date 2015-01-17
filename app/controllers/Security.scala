@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.event.EventService
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect
@@ -153,10 +154,10 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canFacilitate(userId))
+              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.canFacilitate(userId))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.isBrandManager(userId))
+              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.isBrandManager(userId))
             case _ ⇒ true
           }
         case "person" ⇒

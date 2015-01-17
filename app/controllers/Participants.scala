@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.event.EventService
 import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
@@ -153,7 +154,7 @@ object Participants extends Controller with Security {
    */
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      Event.find(eventId).map { event ⇒
+      EventService.find(eventId).map { event ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val brand = Brand.find(event.brandCode).get
         val en = Translation.find("EN").get
@@ -209,7 +210,7 @@ object Participants extends Controller with Security {
     }
 
     implicit handler ⇒
-      Event.find(eventId).map { event ⇒
+      EventService.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))

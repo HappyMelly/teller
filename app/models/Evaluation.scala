@@ -24,6 +24,7 @@
 
 package models
 
+import models.event.EventService
 import models.database.{ Evaluations, Participants, Events, People }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
@@ -68,7 +69,7 @@ case class Evaluation(
   updated: DateTime,
   updatedBy: String) {
 
-  lazy val event: Event = Event.find(eventId).get
+  lazy val event: Event = EventService.find(eventId).get
 
   lazy val participant: Person = Person.find(personId).get
 

@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.event.EventService
 import models.{ Event, Brand, EventType, Activity }
 import play.api.mvc._
 import play.api.data._
@@ -93,7 +94,7 @@ object EventTypes extends Controller with Security {
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
         val route = routes.Brands.details(brand.code).url + "#eventTypes"
-        val events = Event.findByParameters(
+        val events = EventService.findByParameters(
           brandCode = None,
           eventType = Some(eventType.id.get))
         if (events.length > 0) {

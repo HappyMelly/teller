@@ -26,6 +26,7 @@ package controllers
 
 import Forms._
 import models._
+import models.event.EventService
 import play.api.mvc._
 import play.api.libs.json._
 import securesocial.core.SecuredRequest
@@ -198,7 +199,7 @@ object Events extends Controller with Security {
   def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -243,7 +244,7 @@ object Events extends Controller with Security {
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         if (event.deletable) {
           event.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
@@ -264,7 +265,7 @@ object Events extends Controller with Security {
   def invoice(id: Long) = SecuredDynamicAction("event", "admin") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         val form = Form(invoiceMapping).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
@@ -285,7 +286,7 @@ object Events extends Controller with Security {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val legalEntities = Organisation.find(legalEntitiesOnly = true)
           Ok(views.html.event.details(request.user, legalEntities, event))
@@ -299,7 +300,7 @@ object Events extends Controller with Security {
   def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -353,7 +354,7 @@ object Events extends Controller with Security {
       val events = facilitator map {
         Event.findByFacilitator(_, brandCode, future, public, archived)
       } getOrElse {
-        Event.findByParameters(brandCode, future, public, archived)
+        EventService.findByParameters(brandCode, future, public, archived)
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       event.Collection.facilitators(events)
@@ -422,7 +423,7 @@ object Events extends Controller with Security {
           val validLicensees = License.licensees(event.brandCode)
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
-            val existingEvent = Event.find(id).get
+            val existingEvent = EventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
@@ -452,7 +453,7 @@ object Events extends Controller with Security {
    */
   def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           event.copy(confirmed = true).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Confirmed, event.title)
@@ -476,7 +477,7 @@ object Events extends Controller with Security {
             url.isDefined
           }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         form.fold(
           formWithErrors ⇒ {
             Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")
