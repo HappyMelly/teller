@@ -103,7 +103,7 @@ case class Person(
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      socialProfile_=(SocialProfile.find(id.getOrElse(0), ProfileType.Person))
+      socialProfile_=(SocialProfileService.find(id.getOrElse(0), ProfileType.Person))
       _socialProfile.get
     }
   } else {
@@ -235,7 +235,7 @@ case class Person(
   def insert: Person = DB.withTransaction { implicit session: Session ⇒
     val newAddress = Address.insert(this.address)
     val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
-    SocialProfile.insert(socialProfile.copy(objectId = personId))
+    SocialProfileService.insert(socialProfile.copy(objectId = personId))
     Accounts.insert(Account(personId = Some(personId)))
     this.copy(id = Some(personId))
   }
@@ -252,6 +252,9 @@ case class Person(
         address ← Addresses if address.id === addressId
       } yield address
       addressQuery.update(address.copy(id = Some(addressId)))
+
+      implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
+        { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 
       val socialQuery = for {
         socialProfile ← SocialProfiles if socialProfile.objectId === id.get

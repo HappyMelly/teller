@@ -25,11 +25,17 @@
 package models
 
 import helpers.EventHelper
+import integration.PlayAppSpec
+import models.event.EventService
 import org.joda.time.LocalDate
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import org.specs2.execute._
 
-class EventSpec extends Specification {
+class EventSpec extends PlayAppSpec {
+
+  def setupDb() {}
+  def cleanupDb() {}
 
   lazy val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
@@ -81,11 +87,13 @@ class EventSpec extends Specification {
 
   event.facilitatorIds_=(List(2L, 3L, 4L, 6L))
 
-  //  "A brand manager (id = 1)" should {
-  //    "be able to facilitate an event" in {
-  //      event.canFacilitate(1) must beTrue
-  //    }
-  //  }
+  "A brand manager (id = 1)" should {
+    "be able to facilitate an event" in new MockContext {
+      val s = stub[EventService]
+      (s.isBrandManager _).when(1, event).returns(true)
+      event.canFacilitate(1) must beTrue
+    }
+  }
   //  "A random person (id = 5)" should {
   //    val id = 5
   //    "not be able to facilitate the event" in {

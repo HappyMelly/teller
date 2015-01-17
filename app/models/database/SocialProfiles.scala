@@ -32,6 +32,9 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
 
+  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
+    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
+
   def objectId = column[Long]("OBJECT_ID")
   def objectType = column[ProfileType.Value]("OBJECT_TYPE")
   def email = column[String]("EMAIL")

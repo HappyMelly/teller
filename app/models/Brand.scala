@@ -57,7 +57,7 @@ case class Brand(id: Option[Long],
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      SocialProfile.find(id.getOrElse(0), ProfileType.Brand)
+      SocialProfileService.find(id.getOrElse(0), ProfileType.Brand)
     }
   } else {
     _socialProfile.get
@@ -94,12 +94,12 @@ case class Brand(id: Option[Long],
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
-    SocialProfile.insert(socialProfile.copy(objectId = id))
+    SocialProfileService.insert(socialProfile.copy(objectId = id))
     this.copy(id = Some(id))
   }
 
   def delete(): Unit = {
-    SocialProfile.delete(this.id.get, ProfileType.Brand)
+    SocialProfileService.delete(this.id.get, ProfileType.Brand)
     Brand.delete(this.id.get)
   }
 }
@@ -260,6 +260,9 @@ object Brand {
     session.withTransaction {
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
       u.socialProfile_=(updatedData.socialProfile)
+
+      implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
+        { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 
       val socialQuery = for {
         socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get
