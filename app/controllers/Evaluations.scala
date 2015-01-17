@@ -287,7 +287,7 @@ object Evaluations extends EvaluationsController with Security {
    */
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findActive
+      EventService.findActive
     } else {
       val brands = Brand.findByCoordinator(account.personId)
       if (brands.length > 0) {

@@ -329,7 +329,7 @@ object Brands extends Controller with Security {
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
           EventService.findByParameters(Some(brandCode), future)
         } else {
-          Event.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
+          EventService.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
         }
         Ok(Json.toJson(events))
       }.getOrElse(NotFound("Unknown brand"))

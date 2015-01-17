@@ -27,7 +27,6 @@ package models
 import models.database.SocialProfiles
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A type of social profile
@@ -58,6 +57,7 @@ case class SocialProfile(
 }
 
 object SocialProfile {
+  import play.api.Play.current
 
   def find(objectId: Long, objectType: ProfileType.Value): SocialProfile = DB.withSession { implicit session: Session ⇒
     Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first

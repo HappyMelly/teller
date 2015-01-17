@@ -25,7 +25,7 @@
 package integration
 
 import helpers.{ BrandHelper, EventHelper }
-import models.{ Brand, Event }
+import models.Brand
 import models.event.EventService
 import org.joda.time.LocalDate
 import org.specs2.matcher.DataTables
@@ -40,13 +40,22 @@ class EventServiceSpec extends PlayAppSpec with DataTables with WithTestApp {
 
   def cleanupDb() {
     Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
-    Event.findAll.map(_.delete())
+    EventService.findAll.map(_.delete())
   }
 
   lazy val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
+
+  "A brand manager (id = 1)" >> {
+    "with id = 1 be detected as a brand manager" in {
+      event.isBrandManager(1) must beTrue
+    }
+    "with id = 5 not be detected as a brand manager" in {
+      (event isBrandManager 5) must beFalse
+    }
+  }
 
   "Method findByParameters" should {
     "return 6 events for default brand" in {
@@ -96,6 +105,22 @@ class EventServiceSpec extends PlayAppSpec with DataTables with WithTestApp {
         (events.exists(_.title == "four") must beTrue) and
         (events.exists(_.title == "six") must beTrue) and
         (events.exists(_.title == "five") must beTrue)
+    }
+  }
+
+  "Method findByFacilitator" should {
+    "return 4 events for default brand and facilitator = 1" in {
+      val events = EventService.findByFacilitator(
+        1,
+        Some(BrandHelper.defaultBrand.code))
+      events.length mustEqual 4
+    }
+    "return 4 events facilitated by facilitator = 2" in {
+      val events = EventService.findByFacilitator(2, None)
+      events.length mustEqual 4
+    }
+    "return 0 events facilitated by facilitator = 3" in {
+      EventService.findByFacilitator(3, None).length mustEqual 0
     }
   }
 

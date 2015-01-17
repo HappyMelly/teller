@@ -127,7 +127,7 @@ trait EventsApi extends ApiAuthentication {
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
 
     val events: List[Event] = facilitatorId.map { value ⇒
-      Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
+      EventService.findByFacilitator(value, Some(code), future, public, archived = Some(false))
     }.getOrElse {
       EventService.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
     }

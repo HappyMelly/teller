@@ -23,8 +23,6 @@
  */
 package integration
 
-import helpers.BrandHelper
-import models.{ Brand, Event }
 import org.specs2.execute._
 import org.specs2.mutable._
 import org.specs2.specification.Scope

@@ -25,8 +25,8 @@
 package models.event
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.Event
-import models.database.Events
+import models.{ Brand, Event }
+import models.database.{ EventFacilitators, Events }
 import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -35,6 +35,16 @@ import scala.language.postfixOps
 import scala.slick.lifted.Query
 
 class EventService {
+
+  /**
+   * Returns true if a person is a brand manager of this event
+   *
+   * @param personId A person unique identifier
+   */
+  def isBrandManager(personId: Long, event: Event): Boolean = DB.withSession {
+    implicit session: Session ⇒
+      Brand.find(event.brandCode).exists(_.coordinator.id.get == personId)
+  }
 
   /**
    * Returns event if it exists, otherwise - None
@@ -89,6 +99,53 @@ class EventService {
       } getOrElse countryQuery
 
       typeQuery sortBy (_.start) list
+  }
+
+  /**
+   * Return a list of events for a given facilitator
+   *
+   * @param facilitatorId Only events facilitated by this facilitator
+   * @param brand Only events of this brand
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
+   */
+  def findByFacilitator(
+    facilitatorId: Long,
+    brand: Option[String],
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None): List[Event] = DB.withSession {
+    implicit session: Session ⇒
+
+      val baseQuery = brand map { value ⇒
+        for {
+          entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+          event ← Events if event.id === entry.eventId && event.brandCode === value
+        } yield event
+      } getOrElse {
+        for {
+          entry ← EventFacilitators if entry.facilitatorId === facilitatorId
+          event ← Events if event.id === entry.eventId
+        } yield event
+      }
+
+      val timeQuery = applyTimeFilter(future, baseQuery)
+      val publicityQuery = applyPublicityFilter(public, timeQuery)
+      val archivedQuery = applyArchivedFilter(archived, publicityQuery)
+
+      archivedQuery sortBy (_.start) list
+  }
+
+  /** Returns list with active events */
+  def findActive: List[Event] = DB.withSession { implicit session: Session ⇒
+    EventService.findByParameters(brandCode = None, archived = Some(false)).
+      sortBy(_.title.toLowerCase)
+  }
+
+  /** Returns list with all events */
+  def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
+    EventService.findByParameters(brandCode = None)
   }
 
   /**
@@ -149,6 +206,14 @@ object EventService {
   private val instance = new EventService()
 
   /**
+   * Returns true if a person is a brand manager of this event
+   *
+   * @param personId A person unique identifier
+   */
+  def isBrandManager(personId: Long, event: Event) = instance.isBrandManager(
+    personId, event)
+
+  /**
    * Returns event if it exists, otherwise - None
    *
    * @param id Event identifier
@@ -181,4 +246,31 @@ object EventService {
     confirmed,
     country,
     eventType)
+
+  /**
+   * Return a list of events for a given facilitator
+   *
+   * @param facilitatorId Only events facilitated by this facilitator
+   * @param brand Only events of this brand
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
+   */
+  def findByFacilitator(
+    facilitatorId: Long,
+    brand: Option[String],
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None) = instance.findByFacilitator(
+    facilitatorId,
+    brand,
+    future,
+    public,
+    archived)
+
+  /** Returns list with active events */
+  def findActive: List[Event] = instance.findActive
+
+  /** Returns list with all events */
+  def findAll: List[Event] = instance.findAll
 }

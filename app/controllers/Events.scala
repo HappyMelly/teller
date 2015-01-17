@@ -352,7 +352,7 @@ object Events extends Controller with Security {
     archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
       val events = facilitator map {
-        Event.findByFacilitator(_, brandCode, future, public, archived)
+        EventService.findByFacilitator(_, brandCode, future, public, archived)
       } getOrElse {
         EventService.findByParameters(brandCode, future, public, archived)
       }

@@ -24,24 +24,12 @@
  */
 package models
 
-import helpers.{ BrandHelper, EventHelper }
-import integration.{ WithTestApp, PlayAppSpec }
+import helpers.EventHelper
 import org.joda.time.LocalDate
+import org.specs2.mutable._
 import org.specs2.execute._
-import org.specs2.matcher.DataTables
 
-class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
-
-  def setupDb() {
-    BrandHelper.defaultBrand.insert
-    EventHelper.addEvents(BrandHelper.defaultBrand.code)
-    EventHelper.addEvents("MGT30")
-  }
-
-  def cleanupDb() {
-    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
-    Event.findAll.map(_.delete())
-  }
+class EventSpec extends Specification {
 
   lazy val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
@@ -93,45 +81,23 @@ class EventSpec extends PlayAppSpec with DataTables with WithTestApp {
 
   event.facilitatorIds_=(List(2L, 3L, 4L, 6L))
 
-  "A brand manager (id = 1)" should {
-    "be detected as a brand manager" in {
-      event.isBrandManager(1) must beTrue
-    }
-    "be able to facilitate an event" in {
-      event.canFacilitate(1) must beTrue
-    }
-  }
-  "A random person (id = 5)" should {
-    val id = 5
-    "not be detected as a brand manager" in {
-      (event isBrandManager id) must beFalse
-    }
-    "not be able to facilitate the event" in {
-      (event canFacilitate id) must beFalse
-    }
-  }
+  //  "A brand manager (id = 1)" should {
+  //    "be able to facilitate an event" in {
+  //      event.canFacilitate(1) must beTrue
+  //    }
+  //  }
+  //  "A random person (id = 5)" should {
+  //    val id = 5
+  //    "not be able to facilitate the event" in {
+  //      (event canFacilitate id) must beFalse
+  //    }
+  //  }
 
   "A facilitator" should {
     "be able to facilitate events" in {
       Result.unit {
         List(2, 4, 6) foreach { i ⇒ event.canFacilitate(i) must beTrue }
       }
-    }
-  }
-
-  "Method findByFacilitator" should {
-    "return 4 events for default brand and facilitator = 1" in {
-      val events = Event.findByFacilitator(
-        1,
-        Some(BrandHelper.defaultBrand.code))
-      events.length mustEqual 4
-    }
-    "return 4 events facilitated by facilitator = 2" in {
-      val events = Event.findByFacilitator(2, None)
-      events.length mustEqual 4
-    }
-    "return 0 events facilitated by facilitator = 3" in {
-      Event.findByFacilitator(3, None).length mustEqual 0
     }
   }
 
