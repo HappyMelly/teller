@@ -27,7 +27,7 @@ package controllers
 import helpers.{ EventHelper, BrandHelper }
 import integration.{ PlayAppSpec }
 import models.{ Event, Brand }
-import models.event.EventService
+import models.event.{ EventServiceTrait, EventService }
 import org.specs2.mutable._
 import org.scalamock.specs2.MockContext
 import org.joda.time.LocalDate
@@ -58,7 +58,7 @@ class EventApiSpec extends PlayAppSpec {
 
   "Event details API call" should {
     "return event details in JSON format" in new MockContext {
-      val s = stub[EventService]
+      val s = stub[EventServiceTrait]
       (s.find _).when(toMockParameter(event.id.get)).returns(Some(event))
       val controller = new TestEventsApi()
       val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())

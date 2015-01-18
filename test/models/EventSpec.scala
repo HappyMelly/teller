@@ -26,7 +26,7 @@ package models
 
 import helpers.EventHelper
 import integration.PlayAppSpec
-import models.event.EventService
+import models.event.{ EventServiceTrait, EventService }
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
@@ -89,8 +89,8 @@ class EventSpec extends PlayAppSpec {
 
   "A brand manager (id = 1)" should {
     "be able to facilitate an event" in new MockContext {
-      val s = stub[EventService]
-      (s.isBrandManager _).when(1, event).returns(true)
+      val s = stub[EventServiceTrait]
+      (s.isBrandManager _) when (1, event) returns (true)
       event.canFacilitate(1) must beTrue
     }
   }

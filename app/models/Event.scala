@@ -24,9 +24,8 @@
 
 package models
 
-import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ EventFacilitators, Participants, Events }
-import models.event.EventService
+import models.event.{ EventServiceClass, EventService }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -178,9 +177,11 @@ case class Event(
    *
    * @param personId A person unique identifier
    */
-  def isBrandManager(personId: Long): Boolean = EventService.isBrandManager(
-    personId,
-    this)
+  def isBrandManager(personId: Long): Boolean = {
+    (new EventServiceClass()).isBrandManager(
+      personId,
+      this)
+  }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val insertTuple = (eventTypeId, brandCode, title, language.spoken,
