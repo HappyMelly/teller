@@ -469,7 +469,7 @@ object Events extends Controller with Security {
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
-  def sendRequest(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def sendRequest(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(
