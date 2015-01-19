@@ -25,8 +25,6 @@ package controllers
 
 import models.event.EventService
 import play.api.mvc._
-import play.api.Play.current
-import play.api.cache.Cache
 import play.api.libs.json._
 import models.{ Brand, Event }
 import models.event.Collection
@@ -34,8 +32,7 @@ import models.event.Collection
 /**
  * Events API
  */
-trait EventsApi extends ApiAuthentication {
-  this: Controller ⇒
+trait EventsApi extends Controller with ApiAuthentication with Services {
 
   import PeopleApi.personWrites
 
@@ -110,7 +107,7 @@ trait EventsApi extends ApiAuthentication {
    * Event details API.
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
-    EventService.find(id).map { event ⇒
+    eventService.find(id).map { event ⇒
       Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
     }.getOrElse(NotFound("Unknown event"))
   }
@@ -136,4 +133,4 @@ trait EventsApi extends ApiAuthentication {
   }
 }
 
-object EventsApi extends Controller with EventsApi with ApiAuthentication
+object EventsApi extends EventsApi with ApiAuthentication

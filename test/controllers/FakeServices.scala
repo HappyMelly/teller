@@ -29,12 +29,7 @@ import play.api.mvc._
 /**
  * Provides token-based authentication for API actions.
  */
-trait FakeApiAuthentication extends ApiAuthentication {
+trait FakeServices extends Services {
 
-  /** Make an action require token authentication **/
-  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
-    implicit request ⇒
-      f(request)
-  }
 
 }

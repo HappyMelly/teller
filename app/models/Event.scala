@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ EventFacilitators, Participants, Events }
-import models.event.{ EventServiceClass, EventService }
+import models.event.EventService
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -178,7 +178,7 @@ case class Event(
    * @param personId A person unique identifier
    */
   def isBrandManager(personId: Long): Boolean = {
-    (new EventServiceClass()).isBrandManager(
+    (new EventService()).isBrandManager(
       personId,
       this)
   }

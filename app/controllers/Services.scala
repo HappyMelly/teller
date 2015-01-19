@@ -19,22 +19,14 @@
  *
  * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
- * The Netherlands, 3071 PR
+ * or in writing
+ * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 package controllers
 
-import play.api.mvc._
+import models.event.EventService
 
-/**
- * Provides token-based authentication for API actions.
- */
-trait FakeApiAuthentication extends ApiAuthentication {
+trait Services {
 
-  /** Make an action require token authentication **/
-  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
-    implicit request ⇒
-      f(request)
-  }
-
+  def eventService: EventService = EventService.get
 }

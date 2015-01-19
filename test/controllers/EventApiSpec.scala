@@ -27,7 +27,7 @@ package controllers
 import helpers.{ EventHelper, BrandHelper }
 import integration.{ PlayAppSpec }
 import models.{ Event, Brand }
-import models.event.{ EventServiceTrait, EventService }
+import models.event.EventService
 import org.specs2.mutable._
 import org.scalamock.specs2.MockContext
 import org.joda.time.LocalDate
@@ -35,8 +35,6 @@ import play.api.test.{ FakeHeaders, FakeRequest }
 import play.api.test.Helpers._
 import play.api.mvc._
 import scala.concurrent.Future
-
-class TestEventsApi() extends Controller with EventsApi with FakeApiAuthentication
 
 class EventApiSpec extends PlayAppSpec {
 
@@ -58,7 +56,9 @@ class EventApiSpec extends PlayAppSpec {
 
   "Event details API call" should {
     "return event details in JSON format" in new MockContext {
-      val s = stub[EventServiceTrait]
+      class TestEventsApi() extends Controller with EventsApi with FakeApiAuthentication
+
+      val s = stub[EventService]
       (s.find _).when(toMockParameter(event.id.get)).returns(Some(event))
       val controller = new TestEventsApi()
       val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
