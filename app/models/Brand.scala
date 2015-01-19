@@ -258,16 +258,16 @@ object Brand {
    */
   def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
+      import models.database.SocialProfiles._
+
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
       u.socialProfile_=(updatedData.socialProfile)
 
-      implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-        { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
-
       val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get
-      } yield socialProfile
-      socialQuery.filter(_.objectType === u.socialProfile.objectType).update(u.socialProfile.copy(objectId = u.id.get))
+        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
+      } yield p
+      socialQuery
+        .update(u.socialProfile.copy(objectId = u.id.get))
 
       if (existingData.code != u.code) {
         val eventQuery = for {

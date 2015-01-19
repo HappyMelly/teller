@@ -19,20 +19,12 @@
  *
  * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
- * The Netherlands, 3071 PR
+ * or in writing
+ * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stub
+package helpers
 
-import controllers.Services
+/** Provides a set of useful functions for testing */
+object PersonHelper {
 
-trait FakeServices extends Services {
-
-  private var _eventService = new StubEventService
-
-  def eventService_=(service: StubEventService) = {
-    _eventService = service
-  }
-
-  override def eventService: StubEventService = _eventService
 }

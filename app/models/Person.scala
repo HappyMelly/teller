@@ -34,7 +34,6 @@ import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import scala.slick.lifted.Query
-import scala.util.matching.Regex
 import services.S3Bucket
 
 /**
@@ -245,7 +244,7 @@ case class Person(
    */
   def update: Person = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
-
+      import models.database.SocialProfiles._
       val addressId = People.filter(_.id === this.id).map(_.addressId).first
 
       val addressQuery = for {
@@ -253,13 +252,10 @@ case class Person(
       } yield address
       addressQuery.update(address.copy(id = Some(addressId)))
 
-      implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-        { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
-
       val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.objectId === id.get
-      } yield socialProfile
-      socialQuery.filter(_.objectType === socialProfile.objectType).update(socialProfile.copy(objectId = id.get))
+        p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
+      } yield p
+      socialQuery.update(socialProfile.copy(objectId = id.get))
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature, bio, interests,
         role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)

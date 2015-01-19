@@ -25,14 +25,12 @@
 package models
 
 import models.database.SocialProfiles
+import models.database.SocialProfiles._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 object SocialProfileService {
-
-  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 
   def find(objectId: Long, objectType: ProfileType.Value): SocialProfile = DB.withSession { implicit session: Session ⇒
     Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first
