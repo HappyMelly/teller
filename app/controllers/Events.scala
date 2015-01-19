@@ -426,6 +426,7 @@ object Events extends Controller with Security {
             val existingEvent = Event.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
+            //@TODO it may be a mistake. Need to check it first.
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
             updatedEvent.facilitatorIds_=(event.facilitatorIds)
 
@@ -455,7 +456,10 @@ object Events extends Controller with Security {
     implicit handler ⇒
       Event.find(id).map {
         event ⇒
-          event.copy(confirmed = true).update
+          val updatedEvent = event.copy(id = Some(id))
+          updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
+          updatedEvent.facilitatorIds_=(event.facilitatorIds)
+          updatedEvent.update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Confirmed, event.title)
           Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
