@@ -70,8 +70,6 @@ object PersonRole extends Enumeration {
   val Stakeholder = Value("1")
   val BoardMember = Value("2")
 
-  implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
-    { role ⇒ role.id }, { id ⇒ PersonRole(id) })
 }
 
 /**
@@ -410,6 +408,8 @@ object Person {
    */
   def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean],
     query: Option[String]): List[Person] = DB.withSession {
+    import models.database.People.personRoleTypeMapper
+
     implicit session: Session ⇒
       val baseQuery = query.map { q ⇒
         Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
@@ -417,8 +417,14 @@ object Person {
       val activeQuery = active.map { value ⇒
         baseQuery.filter(_.active === value)
       }.getOrElse(baseQuery)
-      val stakeholderFilteredQuery = if (stakeholdersOnly) baseQuery.filter(_.role === PersonRole.Stakeholder) else baseQuery
-      val boardMembersFilteredQuery = if (boardMembersOnly) stakeholderFilteredQuery.filter(_.role === PersonRole.BoardMember) else stakeholderFilteredQuery
+      val stakeholderFilteredQuery = if (stakeholdersOnly)
+        baseQuery.filter(_.role === PersonRole.Stakeholder)
+      else
+        baseQuery
+      val boardMembersFilteredQuery = if (boardMembersOnly)
+        stakeholderFilteredQuery.filter(_.role === PersonRole.BoardMember)
+      else
+        stakeholderFilteredQuery
       boardMembersFilteredQuery.sortBy(_.firstName.toLowerCase).list
   }
 
@@ -429,15 +435,17 @@ object Person {
    * @param boardMembersOnly Only active board members will be returned
    * @return
    */
-  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession { implicit session: Session ⇒
-    val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
-    if (boardMembersOnly) {
-      baseQuery.filter(_.role === PersonRole.BoardMember).list
-    } else if (stakeholdersOnly) {
-      baseQuery.filter(_.role =!= PersonRole.NoRole).list
-    } else {
-      baseQuery.list
-    }
+  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession {
+    import models.database.People._
+    implicit session: Session ⇒
+      val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
+      if (boardMembersOnly) {
+        baseQuery.filter(_.role === PersonRole.BoardMember).list
+      } else if (stakeholdersOnly) {
+        baseQuery.filter(_.role =!= PersonRole.NoRole).list
+      } else {
+        baseQuery.list
+      }
   }
 
   /**
@@ -456,6 +464,7 @@ object Person {
    * @return
    */
   def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
+    import models.database.People._
     Query(People).filter(_.role === PersonRole.BoardMember).list.toSet
   }
 

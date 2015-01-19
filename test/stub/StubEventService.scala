@@ -25,13 +25,16 @@
 package stub
 
 import models.event.EventService
-import models.Event
-import helpers.EventHelper
+import models.{ Person, Event }
+import helpers.{ PersonHelper, EventHelper }
 
 class StubEventService extends EventService {
 
   override def find(id: Long): Option[Event] = id match {
-    case 1 ⇒ Some(EventHelper.makeEvent(id = Some(1)))
+    case 1 ⇒
+      val event = EventHelper.makeEvent(id = Some(1))
+      event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
+      Some(event)
     case _ ⇒ None
   }
 }

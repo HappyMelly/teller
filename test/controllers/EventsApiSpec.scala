@@ -63,6 +63,23 @@ class EventsApiSpec extends Specification {
         "end" -> "2015-01-19",
         "hoursPerDay" -> 1,
         "totalHours" -> 1,
+        "facilitators" -> Json.arr(
+          Json.obj(
+            "id" -> 1,
+            "unique_name" -> "first.tester",
+            "href" -> "/api/v1/person/1",
+            "first_name" -> "First",
+            "last_name" -> "Tester",
+            "photo" -> None.asInstanceOf[Option[String]],
+            "country" -> "UK"),
+          Json.obj(
+            "id" -> 2,
+            "unique_name" -> "second.tester",
+            "href" -> "/api/v1/person/2",
+            "first_name" -> "Second",
+            "last_name" -> "Tester",
+            "photo" -> None.asInstanceOf[Option[String]],
+            "country" -> "UK")),
         "city" -> "spb",
         "country" -> "RU",
         "website" -> None.asInstanceOf[Option[String]],

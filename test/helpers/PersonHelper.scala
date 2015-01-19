@@ -24,7 +24,37 @@
  */
 package helpers
 
+import models._
+import org.joda.time.{ DateTime, LocalDate }
+
 /** Provides a set of useful functions for testing */
 object PersonHelper {
 
+  def make(id: Option[Long],
+    firstName: String,
+    lastName: String,
+    birthday: Option[LocalDate] = None,
+    photo: Option[Photo] = None,
+    signature: Boolean = false,
+    bio: Option[String] = None,
+    interests: Option[String] = None,
+    webSite: Option[String] = None,
+    blog: Option[String] = None,
+    virtual: Boolean = false,
+    active: Boolean = true): Person = {
+    val address = new Address(id = Some(1), countryCode = "UK")
+    val realPhoto = new Photo(None, None)
+    val dateStamp = new DateStamp(DateTime.now(),
+      "Sergey Kotlov",
+      DateTime.now(),
+      "Sergey Kotlov")
+    val person = new Person(id, firstName, lastName, birthday, realPhoto,
+      signature, address.id.get, bio, interests, PersonRole.NoRole,
+      webSite, blog, virtual, active, dateStamp)
+    person.address_=(address)
+    person
+  }
+
+  def one(): Person = make(Some(1), "First", "Tester")
+  def two(): Person = make(Some(2), "Second", "Tester")
 }

@@ -72,7 +72,7 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "end" -> event.schedule.end,
         "hoursPerDay" -> event.schedule.hoursPerDay,
         "totalHours" -> event.schedule.totalHours,
-        //        "facilitators" -> event.facilitators,
+        "facilitators" -> event.facilitators,
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
         "website" -> event.details.webSite,
