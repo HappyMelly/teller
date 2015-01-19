@@ -107,9 +107,9 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
    * Event details API.
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
-    eventService.find(id).map { event ⇒
+    eventService find id map { event ⇒
       Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
-    }.getOrElse(NotFound("Unknown event"))
+    } getOrElse NotFound("Unknown event")
   }
 
   /**
@@ -123,10 +123,22 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
 
-    val events: List[Event] = facilitatorId.map { value ⇒
-      EventService.findByFacilitator(value, Some(code), future, public, archived = Some(false))
-    }.getOrElse {
-      EventService.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
+    val events: List[Event] = facilitatorId map { value ⇒
+      eventService.findByFacilitator(
+        value,
+        Some(code),
+        future,
+        public,
+        archived = Some(false))
+    } getOrElse {
+      eventService.findByParameters(
+        Some(code),
+        future,
+        public,
+        archived,
+        None,
+        countryCode,
+        eventType)
     }
     Collection.facilitators(events)
     Ok(Json.prettyPrint(Json.toJson(events)))

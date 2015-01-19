@@ -22,19 +22,16 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package controllers
+package stub
 
-import play.api.mvc._
+import models.event.EventService
+import models.Event
+import helpers.EventHelper
 
-/**
- * Provides token-based authentication for API actions.
- */
-trait FakeApiAuthentication extends ApiAuthentication {
+class StubEventService extends EventService {
 
-  /** Make an action require token authentication **/
-  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
-    implicit request ⇒
-      f(request)
+  override def find(id: Long): Option[Event] = id match {
+    case 1 ⇒ Some(EventHelper.makeEvent(id = Some(1)))
+    case _ ⇒ None
   }
-
 }

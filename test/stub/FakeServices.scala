@@ -22,14 +22,11 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package controllers
+package stub
 
-import play.api.mvc._
+import controllers.Services
 
-/**
- * Provides token-based authentication for API actions.
- */
 trait FakeServices extends Services {
 
-
+  override def eventService: StubEventService = new StubEventService
 }
