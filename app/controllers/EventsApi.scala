@@ -140,7 +140,7 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         countryCode,
         eventType)
     }
-    Collection.facilitators(events)
+    //    Collection.facilitators(events)
     Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }

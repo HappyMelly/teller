@@ -25,11 +25,13 @@
 package controllers
 
 import org.specs2.mutable._
+import models.Event
+import org.scalamock.specs2.MockContext
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.libs.json._
 import play.api.mvc._
-import stub.{ FakeServices, FakeApiAuthentication }
+import stub.{ StubEventService, FakeServices, FakeApiAuthentication }
 import scala.concurrent.Future
 
 class EventsApiSpec extends Specification {
@@ -104,6 +106,39 @@ class EventsApiSpec extends Specification {
   }
 
   "Events API call" should {
+    "pass all parameters to findByFacilitator in a right order" in new MockContext {
+      val service = mock[StubEventService]
+      (service.findByFacilitator _)
+        .expects(1, Some("TEST"), None, Some(true), Some(false))
+        .returning(List[Event]())
+      val controller = new TestEventsApi()
+      controller.eventService_=(service)
+      controller.events(
+        "TEST",
+        future = None,
+        public = Some(true),
+        archived = Some(false),
+        facilitatorId = Some(1),
+        countryCode = Some("UK"),
+        eventType = Some(1)).apply(FakeRequest())
+    }
+
+    "pass all parameters to findByParameters in a right order" in new MockContext {
+      val service = mock[StubEventService]
+      (service.findByParameters _)
+        .expects(Some("TEST"), None, Some(true), Some(false), None, Some("UK"), Some(1L))
+        .returning(List[Event]())
+      val controller = new TestEventsApi()
+      controller.eventService_=(service)
+      controller.events(
+        "TEST",
+        future = None,
+        public = Some(true),
+        archived = Some(false),
+        facilitatorId = None,
+        countryCode = Some("UK"),
+        eventType = Some(1)).apply(FakeRequest())
+    }
 
   }
 

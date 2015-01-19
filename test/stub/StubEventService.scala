@@ -37,4 +37,25 @@ class StubEventService extends EventService {
       Some(event)
     case _ ⇒ None
   }
+
+  override def findByFacilitator(
+    facilitatorId: Long,
+    brand: Option[String],
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None): List[Event] = {
+    List(EventHelper.makeEvent())
+  }
+
+  override def findByParameters(brandCode: Option[String],
+    future: Option[Boolean] = None,
+    public: Option[Boolean] = None,
+    archived: Option[Boolean] = None,
+    confirmed: Option[Boolean] = None,
+    country: Option[String] = None,
+    eventType: Option[Long] = None): List[Event] = {
+    List(EventHelper.makeEvent())
+  }
+
+  override def findActive: List[Event] = List()
 }
