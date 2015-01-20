@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.service.EventService
 import models.{ Event, Brand, EventType, Activity }
 import play.api.mvc._
 import play.api.data._
@@ -93,7 +94,10 @@ object EventTypes extends Controller with Security {
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
         val route = routes.Brands.details(brand.code).url + "#eventTypes"
-        if (Event.getNumberByEventType(eventType.id.get) > 0) {
+        val events = EventService.findByParameters(
+          brandCode = None,
+          eventType = Some(eventType.id.get))
+        if (events.length > 0) {
           Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
         } else {
           EventType.delete(id)

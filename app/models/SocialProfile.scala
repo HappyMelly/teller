@@ -24,11 +24,6 @@
 
 package models
 
-import models.database.SocialProfiles
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-
 /**
  * A type of social profile
  */
@@ -37,9 +32,6 @@ object ProfileType extends Enumeration {
   val Person = Value("0")
   val Brand = Value("1")
   val Organisation = Value("2")
-
-  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 }
 
 case class SocialProfile(
@@ -55,57 +47,5 @@ case class SocialProfile(
 
   def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
     googlePlusUrl.isDefined || linkedInUrl.isDefined
-}
-
-object SocialProfile {
-
-  def find(objectId: Long, objectType: ProfileType.Value): SocialProfile = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first
-  }
-
-  /**
-   * Find a profile associated with Twitter
-   * @param twitterHandle Twitter name
-   * @return
-   */
-  def findByTwitter(twitterHandle: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.twitterHandle === twitterHandle).firstOption
-  }
-
-  /**
-   * Find a profile associated with Facebook
-   * @param facebookUrl Facebook profile
-   * @return
-   */
-  def findByFacebook(facebookUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.facebookUrl === facebookUrl).firstOption
-  }
-
-  /**
-   * Find a profile associated with LinkedIn
-   * @param linkedInUrl LinkedIn profile
-   * @return
-   */
-  def findByLinkedin(linkedInUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.linkedInUrl === linkedInUrl).firstOption
-  }
-
-  /**
-   * Find a profile associated with Google+
-   * @param googlePlusUrl Google+ profile
-   * @return
-   */
-  def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
-  }
-
-  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
-    SocialProfiles.insert(socialProfile)
-    socialProfile
-  }
-
-  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = DB.withSession { implicit session: Session ⇒
-    SocialProfiles.filter(_.objectId === socialProfile.objectId).filter(_.objectType === objectType).update(socialProfile)
-  }
 }
 

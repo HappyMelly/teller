@@ -21,31 +21,22 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package helpers
 
-package models.database
+import models.{ SocialProfile, Brand, ProfileType }
+import org.joda.time.DateTime
 
-import models.{ ProfileType, SocialProfile }
-import play.api.db.slick.Config.driver.simple._
+object BrandHelper {
 
-/**
- * `SocialProfile` table mapping
- */
-private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
+  def defaultBrand: Brand = {
+    val brandCode = "TEST"
+    val brandUniqueName = "test.brand"
+    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
 
-  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
+    var brand = new Brand(None, brandCode, brandUniqueName, "Test Brand", coordinatorId = 1, None, None, generateCert = false, None,
+      None, None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+    brand.socialProfile_=(socialProfile)
 
-  def objectId = column[Long]("OBJECT_ID")
-  def objectType = column[ProfileType.Value]("OBJECT_TYPE")
-  def email = column[String]("EMAIL")
-  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
-  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
-  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
-  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
-  def skype = column[Option[String]]("SKYPE")
-  def phone = column[Option[String]]("PHONE")
-
-  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl ~ skype ~ phone <> (SocialProfile.apply _, SocialProfile.unapply _)
-
+    brand
+  }
 }

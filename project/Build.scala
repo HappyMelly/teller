@@ -14,7 +14,6 @@ object ApplicationBuild extends Build {
     cache,
     filters,
     "be.objectify" %% "deadbolt-scala" % "2.2-RC2",
-    "com.andersen-gott" %% "scravatar" % "1.0.3",
     "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
     "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0",
     "com.typesafe.play" %% "play-slick" % "0.5.0.8",
@@ -31,6 +30,8 @@ object ApplicationBuild extends Build {
     "ws.securesocial" %% "securesocial" % "2.1.4",
     "nl.rhinofly" %% "play-s3" % "3.3.3"
   )
+
+  javaOptions in Test += "-Dconfig.file=conf/application-test.conf"
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings: _*).settings(
     resolvers += Resolver.url("sbt-plugin-releases", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),

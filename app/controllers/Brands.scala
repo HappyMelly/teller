@@ -26,6 +26,7 @@ package controllers
 
 import controllers.Forms._
 import models._
+import models.service.EventService
 import org.joda.time._
 import play.api.data.validation.Constraints
 import play.api.mvc._
@@ -326,9 +327,9 @@ object Brands extends Controller with Security {
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
-          Event.findByParameters(Some(brandCode), future)
+          EventService.findByParameters(Some(brandCode), future)
         } else {
-          Event.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
+          EventService.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
         }
         Ok(Json.toJson(events))
       }.getOrElse(NotFound("Unknown brand"))

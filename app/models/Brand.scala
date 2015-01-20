@@ -27,6 +27,7 @@ package models
 import java.text.Collator
 import java.util.Locale
 import models.database._
+import models.service.SocialProfileService
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -57,7 +58,7 @@ case class Brand(id: Option[Long],
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      SocialProfile.find(id.getOrElse(0), ProfileType.Brand)
+      SocialProfileService.find(id.getOrElse(0), ProfileType.Brand)
     }
   } else {
     _socialProfile.get
@@ -94,11 +95,14 @@ case class Brand(id: Option[Long],
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
-    SocialProfile.insert(socialProfile.copy(objectId = id))
+    SocialProfileService.insert(socialProfile.copy(objectId = id))
     this.copy(id = Some(id))
   }
 
-  def delete(): Unit = Brand.delete(this.id.get)
+  def delete(): Unit = {
+    SocialProfileService.delete(this.id.get, ProfileType.Brand)
+    Brand.delete(this.id.get)
+  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
@@ -174,7 +178,6 @@ object Brand {
         case ((brand, coordinator), licenses) ⇒
           BrandView(brand, coordinator, licenses)
       }.toList.headOption
-
   }
 
   /**
@@ -243,6 +246,7 @@ object Brand {
   }
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    //TODO delete social profile
     Brands.where(_.id === id).mutate(_.delete())
   }
 
@@ -255,13 +259,16 @@ object Brand {
    */
   def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
     session.withTransaction {
+      import models.database.SocialProfiles._
+
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
       u.socialProfile_=(updatedData.socialProfile)
 
       val socialQuery = for {
-        socialProfile ← SocialProfiles if socialProfile.objectId === u.id.get
-      } yield socialProfile
-      socialQuery.filter(_.objectType === u.socialProfile.objectType).update(u.socialProfile.copy(objectId = u.id.get))
+        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
+      } yield p
+      socialQuery
+        .update(u.socialProfile.copy(objectId = u.id.get))
 
       if (existingData.code != u.code) {
         val eventQuery = for {

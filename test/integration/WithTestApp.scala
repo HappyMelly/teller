@@ -21,31 +21,24 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package integration
 
-package models.database
+import org.specs2.execute._
+import org.specs2.mutable._
+import org.specs2.specification.Scope
+import play.api.test.FakeApplication
+import play.api.test.Helpers._
 
-import models.{ ProfileType, SocialProfile }
-import play.api.db.slick.Config.driver.simple._
+trait WithTestApp extends Around with Scope {
 
-/**
- * `SocialProfile` table mapping
- */
-private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
+  val conf = Map(
+    "db.default.url" -> "jdbc:mysql://localhost/mellytest",
+    "logger.play" -> "INFO",
+    "logger.application" -> "DEBUG")
+  val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
 
-  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
-    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
-
-  def objectId = column[Long]("OBJECT_ID")
-  def objectType = column[ProfileType.Value]("OBJECT_TYPE")
-  def email = column[String]("EMAIL")
-  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
-  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
-  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
-  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
-  def skype = column[Option[String]]("SKYPE")
-  def phone = column[Option[String]]("PHONE")
-
-  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl ~ skype ~ phone <> (SocialProfile.apply _, SocialProfile.unapply _)
-
+  def around[T: AsResult](t: ⇒ T): Result = running(FakeApplication(additionalConfiguration = conf,
+    withoutPlugins = withoutPlugins)) {
+    AsResult.effectively(t)
+  }
 }

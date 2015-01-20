@@ -27,6 +27,7 @@ package controllers
 import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
+import models.service.EventService
 import org.joda.time._
 import play.api.Play.current
 import play.mvc.Controller
@@ -48,7 +49,7 @@ object Reports extends Controller with Security {
         Brand.find(brandCode).map { brand ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = if (eventId > 0) {
-            Event.find(eventId).map { event ⇒
+            EventService.find(eventId).map { event ⇒
               if (byMe) {
                 if (event.facilitatorIds.contains(account.personId)) {
                   event :: Nil
@@ -62,9 +63,9 @@ object Reports extends Controller with Security {
             }.getOrElse(Nil)
           } else {
             if (byMe) {
-              Event.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
+              EventService.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
             } else {
-              Event.findByParameters(Some(brandCode))
+              EventService.findByParameters(Some(brandCode))
             }
           }
           val eventIds = events.map(e ⇒ e.id.get)

@@ -23,16 +23,14 @@
  */
 package controllers
 
-import play.mvc.Controller
-import play.api.Play.current
-import play.api.cache.Cache
+import models.Event
 import play.api.libs.json._
-import models.{ EventsCollection, Brand, Event }
+import play.api.mvc._
 
 /**
  * Events API
  */
-object EventsApi extends Controller with ApiAuthentication {
+trait EventsApi extends Controller with ApiAuthentication with Services {
 
   import PeopleApi.personWrites
 
@@ -82,34 +80,27 @@ object EventsApi extends Controller with ApiAuthentication {
     }
   }
 
-  implicit val countryInfoWrites = new Writes[(String, Int)] {
-    def writes(countryInfo: (String, Int)): JsValue = {
-      Json.obj(
-        "country" -> countryInfo._1,
-        "eventsNumber" -> countryInfo._2)
-    }
-  }
-
   /**
-   * A list of countries with a number of events for a given brand
-   */
-  def countries(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(brandCode).map { brandView ⇒
-      Ok(Json.toJson(Event.findByBrandGroupByCountry(brandCode)))
-    }.getOrElse(NotFound("Unknown brand"))
-  }
-
-  /**
-   * Event details API.
+   * Returns event in JSON format
+   *
+   * @param id Event identifier
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
-    Event.find(id).map { event ⇒
+    eventService find id map { event ⇒
       Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
-    }.getOrElse(NotFound("Unknown event"))
+    } getOrElse NotFound("Unknown event")
   }
 
   /**
-   * Events list
+   * Returns a list of events based on several parameters in JSON format
+   *
+   * @param code Only events of this brand
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
+   * @param facilitatorId Only events by this facilitator
+   * @param countryCode Only events in this country
+   * @param eventType Only events of this type
    */
   def events(code: String,
     future: Option[Boolean],
@@ -119,12 +110,26 @@ object EventsApi extends Controller with ApiAuthentication {
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
 
-    val events: List[Event] = facilitatorId.map { value ⇒
-      Event.findByFacilitator(value, Some(code), future, public, archived = Some(false))
-    }.getOrElse {
-      Event.findByParameters(Some(code), future, public, archived, None, countryCode, eventType)
+    val events: List[Event] = facilitatorId map { value ⇒
+      eventService.findByFacilitator(
+        value,
+        Some(code),
+        future,
+        public,
+        archived = Some(false))
+    } getOrElse {
+      eventService.findByParameters(
+        Some(code),
+        future,
+        public,
+        archived,
+        None,
+        countryCode,
+        eventType)
     }
-    EventsCollection.facilitators(events)
+    eventService.applyFacilitators(events)
     Ok(Json.prettyPrint(Json.toJson(events)))
   }
 }
+
+object EventsApi extends EventsApi with ApiAuthentication

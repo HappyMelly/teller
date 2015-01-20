@@ -24,6 +24,7 @@
 package controllers
 
 import models._
+import models.service.EventService
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.mvc._
@@ -39,7 +40,7 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "event_id" -> longNumber.verifying(
-      "error.event.notExist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+      "error.event.notExist", (eventId: Long) ⇒ EventService.find(eventId).isDefined),
     "participant_id" -> longNumber.verifying(
       "error.person.notExist", (participantId: Long) ⇒ Person.find(participantId).isDefined),
     "question1" -> nonEmptyText,
@@ -76,7 +77,7 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
         if (Evaluation.findByEventAndPerson(evaluation.personId, evaluation.eventId).isDefined) {
           val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
           BadRequest(Json.prettyPrint(json))
-        } else if (Event.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
+        } else if (EventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
           val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
           BadRequest(Json.prettyPrint(json))
         } else {

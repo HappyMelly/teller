@@ -26,6 +26,7 @@ package controllers
 
 import Forms._
 import models._
+import models.service.EventService
 import play.api.mvc._
 import play.api.libs.json._
 import securesocial.core.SecuredRequest
@@ -35,8 +36,9 @@ import play.api.i18n.Messages
 import org.joda.time.{ LocalDate, DateTime }
 import models.UserRole.Role._
 import play.api.data.format.Formatter
-import models.Location
-import models.Schedule
+import models.{ Location, Schedule }
+import models.event.Comparator
+import models.event.Comparator.FieldChange
 import services.EmailService
 
 object Events extends Controller with Security {
@@ -166,7 +168,7 @@ object Events extends Controller with Security {
    * Sends an e-mail notification for an event to the given recipients.
    *
    */
-  def sendEmailNotification(event: Event, changes: List[Event.FieldChange], activity: Activity,
+  def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
     EmailService.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
@@ -197,7 +199,7 @@ object Events extends Controller with Security {
   def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -242,9 +244,9 @@ object Events extends Controller with Security {
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         if (event.deletable) {
-          Event.delete(id)
+          event.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
           sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
@@ -263,7 +265,7 @@ object Events extends Controller with Security {
   def invoice(id: Long) = SecuredDynamicAction("event", "admin") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         val form = Form(invoiceMapping).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
@@ -276,6 +278,7 @@ object Events extends Controller with Security {
           })
       }.getOrElse(NotFound)
   }
+
   /**
    * Details page.
    * @param id Event ID
@@ -283,7 +286,7 @@ object Events extends Controller with Security {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val legalEntities = Organisation.find(legalEntitiesOnly = true)
           val user = request.user
@@ -300,7 +303,7 @@ object Events extends Controller with Security {
   def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -352,13 +355,13 @@ object Events extends Controller with Security {
     archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
       val events = facilitator map {
-        Event.findByFacilitator(_, brandCode, future, public, archived)
+        EventService.findByFacilitator(_, brandCode, future, public, archived)
       } getOrElse {
-        Event.findByParameters(brandCode, future, public, archived)
+        EventService.findByParameters(brandCode, future, public, archived)
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      EventsCollection.facilitators(events)
-      EventsCollection.invoices(events)
+      EventService.get.applyFacilitators(events)
+      EventService.get.applyInvoices(events)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -423,7 +426,7 @@ object Events extends Controller with Security {
           val validLicensees = License.licensees(event.brandCode)
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
-            val existingEvent = Event.find(id).get
+            val existingEvent = EventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
             //@TODO it may be a mistake. Need to check it first.
@@ -432,7 +435,7 @@ object Events extends Controller with Security {
 
             // it's important to compare before updating as with lazy initialization invoice and facilitators data
             // for an old event will be destroyed
-            val changes = Event.compare(existingEvent, updatedEvent)
+            val changes = Comparator.compare(existingEvent, updatedEvent)
             updatedEvent.update
 
             val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
@@ -454,7 +457,7 @@ object Events extends Controller with Security {
    */
   def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
-      Event.find(id).map {
+      EventService.find(id).map {
         event ⇒
           val updatedEvent = event.copy(id = Some(id))
           updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
@@ -481,7 +484,7 @@ object Events extends Controller with Security {
             url.isDefined
           }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
 
-      Event.find(id).map { event ⇒
+      EventService.find(id).map { event ⇒
         form.fold(
           formWithErrors ⇒ {
             Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")

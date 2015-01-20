@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.service.EventService
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect
@@ -142,7 +143,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.coordinator || existingAccount.editor
             case "edit" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canAdministrate(userId))
+              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.isBrandManager(userId))
             case "manage" ⇒
               val evaluationId = """\d+""".r findFirstIn request.uri
               existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canFacilitate(userId))
@@ -153,10 +154,10 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canFacilitate(userId))
+              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.canFacilitate(userId))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Event.find(eventId.get.toLong).exists(_.canAdministrate(userId))
+              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.isBrandManager(userId))
             case _ ⇒ true
           }
         case "person" ⇒

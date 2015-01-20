@@ -27,6 +27,7 @@ package controllers
 import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
+import models.service.EventService
 import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
@@ -40,7 +41,7 @@ object Evaluations extends EvaluationsController with Security {
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> longNumber.verifying(
-      "An event doesn't exist", (eventId: Long) ⇒ Event.find(eventId).isDefined),
+      "An event doesn't exist", (eventId: Long) ⇒ EventService.find(eventId).isDefined),
     "participantId" -> {
       if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter)
     },
@@ -139,7 +140,7 @@ object Evaluations extends EvaluationsController with Security {
               val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
               Ok(Json.obj("success" -> activity.toString))
             } else {
-              Event.find(eventId).map { event ⇒
+              EventService.find(eventId).map { event ⇒
                 Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
                   // first we need to check if this event has already the participant
                   Participant.find(evaluation.personId, eventId).map { participant ⇒
@@ -286,13 +287,21 @@ object Evaluations extends EvaluationsController with Security {
    * Retrieve active events which a user is able to see
    *
    * @param account User object
-   * @return
    */
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      Event.findActive
+      EventService.findActive
     } else {
-      Event.findByCoordinator(account.personId)
+      val brands = Brand.findByCoordinator(account.personId)
+      if (brands.length > 0) {
+        val brandCodes = brands.map(_.code)
+        val events = EventService.findByParameters(
+          brandCode = None,
+          archived = Some(false))
+        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+      } else {
+        List[Event]()
+      }
     }
   }
 }

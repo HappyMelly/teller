@@ -34,6 +34,9 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object People extends Table[Person]("PERSON") {
 
+  implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
+    { role ⇒ role.id }, { id ⇒ PersonRole(id) })
+
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def firstName = column[String]("FIRST_NAME")
   def lastName = column[String]("LAST_NAME")

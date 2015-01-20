@@ -25,6 +25,7 @@
 package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
+import models.service.EventService
 import org.joda.time.LocalDate
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
@@ -88,7 +89,7 @@ case class Certificate(
    * @return
    */
   private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
-    val event = Event.find(evaluation.eventId).get
+    val event = EventService.find(evaluation.eventId).get
     val templates = CertificateTemplate.findByBrand(event.brandCode)
     val data = templates.find(_.language == event.language.spoken).map { template ⇒
       if (twoFacilitators) template.twoFacilitators else template.oneFacilitator

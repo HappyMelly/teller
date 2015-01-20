@@ -173,7 +173,6 @@ POST        /api/v1/evaluation                                                  
 
 GET         /api/v1/event/:id                                                         controllers.EventsApi.event(id: Long)
 GET         /api/v1/event/:id/participants                                            controllers.ParticipantsApi.participants(id: Long)
-GET         /api/v1/events/:brandCode/grouped/country                                 controllers.EventsApi.countries(brandCode: String)
 
 GET         /api/v1/licensees/:brandCode                                              controllers.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET         /api/v1/licensee/:licenseeId/brand/:brandCode                             controllers.LicensesApi.licensee(licenseeId: Long, brandCode: String)
