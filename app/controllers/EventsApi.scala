@@ -23,10 +23,9 @@
  */
 package controllers
 
-import models.service.EventService
-import play.api.mvc._
+import models.Event
 import play.api.libs.json._
-import models.{ Brand, Event }
+import play.api.mvc._
 
 /**
  * Events API
@@ -81,29 +80,10 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  implicit val countryInfoWrites = new Writes[(String, Int)] {
-    def writes(countryInfo: (String, Int)): JsValue = {
-      Json.obj(
-        "country" -> countryInfo._1,
-        "eventsNumber" -> countryInfo._2)
-    }
-  }
-
   /**
-   * Returns a list of countries with a number of events
+   * Returns event in JSON format
    *
-   * @param code Brand identifier
-   */
-  def countries(code: String) = TokenSecuredAction { implicit request ⇒
-    Brand.find(code).map { brandView ⇒
-      val events = eventService.findByParameters(Some(code), future = Some(true))
-      val data = events.groupBy(_.location.countryCode).map(v ⇒ (v._1, v._2.length))
-      Ok(Json.prettyPrint(Json.toJson(data.toList.sortBy(_._1))))
-    }.getOrElse(NotFound("Unknown brand"))
-  }
-
-  /**
-   * Event details API.
+   * @param id Event identifier
    */
   def event(id: Long) = TokenSecuredAction { implicit request ⇒
     eventService find id map { event ⇒
@@ -112,7 +92,15 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
   }
 
   /**
-   * Events list
+   * Returns a list of events based on several parameters in JSON format
+   *
+   * @param code Only events of this brand
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
+   * @param facilitatorId Only events by this facilitator
+   * @param countryCode Only events in this country
+   * @param eventType Only events of this type
    */
   def events(code: String,
     future: Option[Boolean],
