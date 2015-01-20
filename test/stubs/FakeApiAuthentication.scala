@@ -22,17 +22,16 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package stub
+package stubs
 
-import controllers.Services
+import controllers.ApiAuthentication
+import play.api.mvc._
 
-trait FakeServices extends Services {
+/** Stubs api authentication */
+trait FakeApiAuthentication extends ApiAuthentication {
 
-  private var _eventService = new StubEventService
-
-  def eventService_=(service: StubEventService) = {
-    _eventService = service
+  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
+    implicit request ⇒
+      f(request)
   }
-
-  override def eventService: StubEventService = _eventService
 }

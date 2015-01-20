@@ -32,7 +32,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.libs.json._
 import play.api.mvc._
-import stub.{ StubEventService, FakeServices, FakeApiAuthentication }
+import stubs.{ StubEventService, FakeServices, FakeApiAuthentication }
 import scala.concurrent.Future
 
 class EventsApiSpec extends Specification {

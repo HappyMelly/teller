@@ -22,7 +22,7 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package stub
+package stubs
 
 import models.service.EventService
 import models.{ Person, Event }

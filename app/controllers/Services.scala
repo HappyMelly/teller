@@ -26,6 +26,7 @@ package controllers
 
 import models.service.EventService
 
+/** Contains references to all services so we can stub them in tests */
 trait Services {
 
   def eventService: EventService = EventService.get
