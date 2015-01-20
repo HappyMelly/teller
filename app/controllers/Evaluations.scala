@@ -24,14 +24,12 @@
 
 package controllers
 
-import java.io.{ File, FileOutputStream }
 import models._
 import models.UserRole.Role._
 import models.service.EventService
 import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
-import play.api.Play.current
 import play.api.libs.json.Json
 import services.EmailService
 
@@ -290,14 +288,18 @@ object Evaluations extends EvaluationsController with Security {
    */
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
-      EventService.findActive
+      EventService.findByParameters(
+        brandCode = None,
+        archived = Some(false),
+        confirmed = Some(true))
     } else {
       val brands = Brand.findByCoordinator(account.personId)
       if (brands.length > 0) {
         val brandCodes = brands.map(_.code)
         val events = EventService.findByParameters(
           brandCode = None,
-          archived = Some(false))
+          archived = Some(false),
+          confirmed = Some(true))
         events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
       } else {
         List[Event]()
