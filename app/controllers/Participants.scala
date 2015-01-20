@@ -149,7 +149,7 @@ object Participants extends Controller with Security {
           if (account.editor || brand.brand.coordinatorId == personId) {
             Participant.findByBrand(Some(brandCode))
           } else if (License.licensedSince(personId, brandCode).nonEmpty) {
-            val events = Event.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
+            val events = EventService.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
             Participant.findEvaluationsByEvents(events)
           } else {
             List[ParticipantView]()
