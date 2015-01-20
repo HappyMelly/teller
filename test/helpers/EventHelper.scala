@@ -25,6 +25,7 @@ package helpers
 
 import models._
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.libs.json.{ Json, JsValue }
 
 object EventHelper {
 
@@ -88,5 +89,64 @@ object EventHelper {
         }
       }
   }
+
+  def one: Event = {
+    val event = makeEvent(id = Some(1),
+      title = Some("One"),
+      startDate = Some(LocalDate.parse("2015-01-01")),
+      endDate = Some(LocalDate.parse("2015-01-02")))
+    event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
+    event
+  }
+
+  def two: Event = {
+    val event = makeEvent(id = Some(2),
+      title = Some("Two"),
+      eventTypeId = Some(2),
+      startDate = Some(LocalDate.parse("2015-01-01")),
+      endDate = Some(LocalDate.parse("2015-01-02")))
+    event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
+    event
+  }
+
+  def oneAsJson: JsValue = Json.obj(
+    "id" -> 1,
+    "title" -> "One",
+    "type" -> 1,
+    "description" -> None.asInstanceOf[Option[String]],
+    "spokenLanguages" -> Json.arr("German"),
+    "materialsLanguage" -> None.asInstanceOf[Option[String]],
+    "specialAttention" -> None.asInstanceOf[Option[String]],
+    "start" -> "2015-01-01",
+    "end" -> "2015-01-02",
+    "hoursPerDay" -> 1,
+    "totalHours" -> 1,
+    "facilitators" -> Json.arr(
+      PersonHelper.oneAsJson(),
+      PersonHelper.twoAsJson()),
+    "city" -> "spb",
+    "country" -> "RU",
+    "website" -> None.asInstanceOf[Option[String]],
+    "registrationPage" -> None.asInstanceOf[Option[String]])
+
+  def twoAsJson: JsValue = Json.obj(
+    "id" -> 2,
+    "title" -> "Two",
+    "type" -> 2,
+    "description" -> None.asInstanceOf[Option[String]],
+    "spokenLanguages" -> Json.arr("German"),
+    "materialsLanguage" -> None.asInstanceOf[Option[String]],
+    "specialAttention" -> None.asInstanceOf[Option[String]],
+    "start" -> "2015-01-01",
+    "end" -> "2015-01-02",
+    "hoursPerDay" -> 1,
+    "totalHours" -> 1,
+    "facilitators" -> Json.arr(
+      PersonHelper.oneAsJson(),
+      PersonHelper.twoAsJson()),
+    "city" -> "spb",
+    "country" -> "RU",
+    "website" -> None.asInstanceOf[Option[String]],
+    "registrationPage" -> None.asInstanceOf[Option[String]])
 
 }

@@ -41,6 +41,7 @@ class EventSpec extends PlayAppSpec {
     title = Some("Daily Workshop"),
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
+
   val tooLongTitle = "This title is just too long and should be truncated by the system to 70 characters"
 
   "Long title of an event" should {
@@ -89,17 +90,15 @@ class EventSpec extends PlayAppSpec {
 
   "A brand manager (id = 1)" should {
     "be able to facilitate an event" in new MockContext {
-      val s = stub[EventService]
-      (s.isBrandManager _) when (1, event) returns (true)
       event.canFacilitate(1) must beTrue
     }
   }
-  //  "A random person (id = 5)" should {
-  //    val id = 5
-  //    "not be able to facilitate the event" in {
-  //      (event canFacilitate id) must beFalse
-  //    }
-  //  }
+  "A random person (id = 5)" should {
+    val id = 5
+    "not be able to facilitate the event" in {
+      (event canFacilitate id) must beFalse
+    }
+  }
 
   "A facilitator" should {
     "be able to facilitate events" in {

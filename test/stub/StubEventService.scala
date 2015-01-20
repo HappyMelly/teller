@@ -27,35 +27,37 @@ package stub
 import models.event.EventService
 import models.{ Person, Event }
 import helpers.{ PersonHelper, EventHelper }
+import org.joda.time.LocalDate
 
 class StubEventService extends EventService {
 
   override def find(id: Long): Option[Event] = id match {
     case 1 ⇒
-      val event = EventHelper.makeEvent(id = Some(1))
+      val event = EventHelper.makeEvent(
+        id = Some(1),
+        startDate = Some(LocalDate.parse("2015-01-20")),
+        endDate = Some(LocalDate.parse("2015-01-20")))
       event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
       Some(event)
     case _ ⇒ None
   }
 
-  override def findByFacilitator(
-    facilitatorId: Long,
-    brand: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None): List[Event] = {
-    List(EventHelper.makeEvent())
-  }
-
-  override def findByParameters(brandCode: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None,
-    confirmed: Option[Boolean] = None,
-    country: Option[String] = None,
-    eventType: Option[Long] = None): List[Event] = {
-    List(EventHelper.makeEvent())
-  }
-
-  override def findActive: List[Event] = List()
+  //  override def findByFacilitator(
+  //    facilitatorId: Long,
+  //    brand: Option[String],
+  //    future: Option[Boolean] = None,
+  //    public: Option[Boolean] = None,
+  //    archived: Option[Boolean] = None): List[Event] = {
+  //    List(EventHelper.makeEvent())
+  //  }
+  //
+  //  override def findByParameters(brandCode: Option[String],
+  //    future: Option[Boolean] = None,
+  //    public: Option[Boolean] = None,
+  //    archived: Option[Boolean] = None,
+  //    confirmed: Option[Boolean] = None,
+  //    country: Option[String] = None,
+  //    eventType: Option[Long] = None): List[Event] = {
+  //    List(EventHelper.makeEvent())
+  //  }
 }

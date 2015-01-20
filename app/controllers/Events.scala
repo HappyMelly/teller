@@ -357,8 +357,8 @@ object Events extends Controller with Security {
         EventService.findByParameters(brandCode, future, public, archived)
       }
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      event.Collection.facilitators(events)
-      event.Collection.invoices(events)
+      EventService.get.applyFacilitators(events)
+      EventService.get.applyInvoices(events)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {

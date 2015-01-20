@@ -24,6 +24,7 @@
 */
 package controllers
 
+import helpers.{ PersonHelper, EventHelper }
 import org.specs2.mutable._
 import models.Event
 import org.scalamock.specs2.MockContext
@@ -61,27 +62,13 @@ class EventsApiSpec extends Specification {
         "spokenLanguages" -> Json.arr("German"),
         "materialsLanguage" -> None.asInstanceOf[Option[String]],
         "specialAttention" -> None.asInstanceOf[Option[String]],
-        "start" -> "2015-01-19",
-        "end" -> "2015-01-19",
+        "start" -> "2015-01-20",
+        "end" -> "2015-01-20",
         "hoursPerDay" -> 1,
         "totalHours" -> 1,
         "facilitators" -> Json.arr(
-          Json.obj(
-            "id" -> 1,
-            "unique_name" -> "first.tester",
-            "href" -> "/api/v1/person/1",
-            "first_name" -> "First",
-            "last_name" -> "Tester",
-            "photo" -> None.asInstanceOf[Option[String]],
-            "country" -> "UK"),
-          Json.obj(
-            "id" -> 2,
-            "unique_name" -> "second.tester",
-            "href" -> "/api/v1/person/2",
-            "first_name" -> "Second",
-            "last_name" -> "Tester",
-            "photo" -> None.asInstanceOf[Option[String]],
-            "country" -> "UK")),
+          PersonHelper.oneAsJson(),
+          PersonHelper.twoAsJson()),
         "city" -> "spb",
         "country" -> "RU",
         "website" -> None.asInstanceOf[Option[String]],
@@ -97,7 +84,6 @@ class EventsApiSpec extends Specification {
       contentAsString(result) mustEqual "Unknown event"
     }
     "return 401 error if api_token is not provided" in {
-
       val controller = new AnotherTestEventsApi()
       val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
       status(result) must equalTo(UNAUTHORIZED)
@@ -108,9 +94,12 @@ class EventsApiSpec extends Specification {
   "Events API call" should {
     "pass all parameters to findByFacilitator in a right order" in new MockContext {
       val service = mock[StubEventService]
-      (service.findByFacilitator _)
-        .expects(1, Some("TEST"), None, Some(true), Some(false))
-        .returning(List[Event]())
+      inSequence {
+        (service.findByFacilitator _)
+          .expects(1, Some("TEST"), None, Some(true), Some(false))
+          .returning(List[Event]())
+        (service.applyFacilitators _).expects(*)
+      }
       val controller = new TestEventsApi()
       controller.eventService_=(service)
       controller.events(
@@ -125,9 +114,12 @@ class EventsApiSpec extends Specification {
 
     "pass all parameters to findByParameters in a right order" in new MockContext {
       val service = mock[StubEventService]
-      (service.findByParameters _)
-        .expects(Some("TEST"), None, Some(true), Some(false), None, Some("UK"), Some(1L))
-        .returning(List[Event]())
+      inSequence {
+        (service.findByParameters _)
+          .expects(Some("TEST"), None, Some(true), Some(false), None, Some("UK"), Some(1L))
+          .returning(List[Event]())
+        (service.applyFacilitators _).expects(*)
+      }
       val controller = new TestEventsApi()
       controller.eventService_=(service)
       controller.events(
@@ -140,6 +132,44 @@ class EventsApiSpec extends Specification {
         eventType = Some(1)).apply(FakeRequest())
     }
 
+    "return events in JSON format" in new MockContext {
+      val service = mock[StubEventService]
+      inSequence {
+        (service.findByFacilitator _)
+          .expects(*, *, *, *, *)
+          .returning(List[Event](EventHelper.one, EventHelper.two))
+        (service.applyFacilitators _).expects(*)
+      }
+      val controller = new TestEventsApi()
+      controller.eventService_=(service)
+      val result: Future[SimpleResult] = controller.events(
+        "TEST",
+        future = None,
+        public = Some(true),
+        archived = Some(false),
+        facilitatorId = Some(1),
+        countryCode = Some("UK"),
+        eventType = Some(1)).apply(FakeRequest())
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("text/plain")
+      charset(result) must beSome("utf-8")
+      contentAsJson(result) mustEqual Json.arr(
+        EventHelper.oneAsJson,
+        EventHelper.twoAsJson)
+    }
+    "return 401 error if api_token is not provided" in {
+      val controller = new AnotherTestEventsApi()
+      val result: Future[SimpleResult] = controller.events(
+        "TEST",
+        future = None,
+        public = Some(true),
+        archived = Some(false),
+        facilitatorId = Some(1),
+        countryCode = Some("UK"),
+        eventType = Some(1)).apply(FakeRequest())
+      status(result) must equalTo(UNAUTHORIZED)
+      contentAsString(result) mustEqual "Unauthorized"
+    }
   }
 
 }

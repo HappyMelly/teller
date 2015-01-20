@@ -26,6 +26,7 @@ package helpers
 
 import models._
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.libs.json.{ Json, JsValue }
 
 /** Provides a set of useful functions for testing */
 object PersonHelper {
@@ -57,4 +58,22 @@ object PersonHelper {
 
   def one(): Person = make(Some(1), "First", "Tester")
   def two(): Person = make(Some(2), "Second", "Tester")
+
+  def oneAsJson(): JsValue = Json.obj(
+    "id" -> 1,
+    "unique_name" -> "first.tester",
+    "href" -> "/api/v1/person/1",
+    "first_name" -> "First",
+    "last_name" -> "Tester",
+    "photo" -> None.asInstanceOf[Option[String]],
+    "country" -> "UK")
+
+  def twoAsJson(): JsValue = Json.obj(
+    "id" -> 2,
+    "unique_name" -> "second.tester",
+    "href" -> "/api/v1/person/2",
+    "first_name" -> "Second",
+    "last_name" -> "Tester",
+    "photo" -> None.asInstanceOf[Option[String]],
+    "country" -> "UK")
 }
