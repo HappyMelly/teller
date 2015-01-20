@@ -24,18 +24,25 @@
  */
 package models
 
-import helpers.EventHelper
+import helpers.{ BrandHelper, EventHelper }
 import integration.PlayAppSpec
 import models.service.EventService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
-import org.specs2.mutable._
 import org.specs2.execute._
 
 class EventSpec extends PlayAppSpec {
 
-  def setupDb() {}
-  def cleanupDb() {}
+  def setupDb() {
+    BrandHelper.defaultBrand.insert
+    EventHelper.addEvents(BrandHelper.defaultBrand.code)
+    EventHelper.addEvents("MGT30")
+  }
+
+  def cleanupDb() {
+    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
+    EventService.get.findAll.map(_.delete())
+  }
 
   lazy val event = EventHelper.makeEvent(
     title = Some("Daily Workshop"),
