@@ -26,7 +26,7 @@ package models
 
 import helpers.EventHelper
 import integration.PlayAppSpec
-import models.event.EventService
+import models.service.EventService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._

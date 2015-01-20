@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import models.event.EventService
+import models.service.EventService
 import securesocial.core.SecureSocial
 import play.api.mvc._
 import play.api.mvc.Results.Redirect

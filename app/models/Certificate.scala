@@ -24,8 +24,8 @@
 
 package models
 
-import models.event.EventService
 import fly.play.s3.{ BucketFile, S3Exception }
+import models.service.EventService
 import org.joda.time.LocalDate
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._

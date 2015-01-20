@@ -24,7 +24,7 @@
 package controllers
 
 import models._
-import models.event.EventService
+import models.service.EventService
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.mvc._

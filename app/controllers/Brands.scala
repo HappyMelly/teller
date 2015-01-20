@@ -26,7 +26,7 @@ package controllers
 
 import controllers.Forms._
 import models._
-import models.event.EventService
+import models.service.EventService
 import org.joda.time._
 import play.api.data.validation.Constraints
 import play.api.mvc._

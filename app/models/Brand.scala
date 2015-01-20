@@ -27,6 +27,7 @@ package models
 import java.text.Collator
 import java.util.Locale
 import models.database._
+import models.service.SocialProfileService
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._

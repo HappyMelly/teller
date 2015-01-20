@@ -26,7 +26,7 @@ package controllers
 
 import Forms._
 import models._
-import models.event.EventService
+import models.service.EventService
 import play.api.mvc._
 import play.api.libs.json._
 import securesocial.core.SecuredRequest

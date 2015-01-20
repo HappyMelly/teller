@@ -24,7 +24,7 @@
  */
 package controllers
 
-import models.event.EventService
+import models.service.EventService
 
 trait Services {
 

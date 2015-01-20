@@ -22,13 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+package models.service
 
 import models.database.SocialProfiles
 import models.database.SocialProfiles._
+import models.{ ProfileType, SocialProfile }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 object SocialProfileService {
 

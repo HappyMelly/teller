@@ -26,7 +26,7 @@ package integration
 
 import helpers.{ BrandHelper, EventHelper }
 import models.Brand
-import models.event.EventService
+import models.service.EventService
 import org.joda.time.LocalDate
 import org.specs2.matcher.DataTables
 

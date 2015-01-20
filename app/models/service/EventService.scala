@@ -22,15 +22,16 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.event
+package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ EventInvoice, PeopleCollection, Brand, Event }
-import models.database.{ EventInvoices, EventFacilitators, Events }
+import models.database.{ EventFacilitators, EventInvoices, Events }
+import models.{ Brand, Event, EventInvoice, PeopleCollection }
 import org.joda.time.LocalDate
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
+
 import scala.language.postfixOps
 import scala.slick.lifted.Query
 
@@ -247,12 +248,15 @@ object EventService {
   /**
    * Returns event if it exists, otherwise - None
    *
+   * @deprecated EventService.get should be used
    * @param id Event identifier
    */
   def find(id: Long): Option[Event] = instance.find(id)
 
   /**
    * Returns a list of events based on several parameters
+   *
+   * @deprecated EventService.get should be used
    *
    * @param brandCode Only events of this brand
    * @param future Only future and current events
@@ -281,6 +285,8 @@ object EventService {
   /**
    * Return a list of events for a given facilitator
    *
+   * @deprecated EventService.get should be used
+   *
    * @param facilitatorId Only events facilitated by this facilitator
    * @param brand Only events of this brand
    * @param future Only future and current events
@@ -299,9 +305,17 @@ object EventService {
     public,
     archived)
 
-  /** Returns list with active events */
+  /**
+   * Returns list with active events
+   *
+   * @deprecated EventService.get should be used
+   */
   def findActive: List[Event] = instance.findActive
 
-  /** Returns list with all events */
+  /**
+   * Returns list with all events
+   *
+   * @deprecated EventService.get should be used
+   */
   def findAll: List[Event] = instance.findAll
 }

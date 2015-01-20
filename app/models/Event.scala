@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ EventFacilitators, Participants, Events }
-import models.event.EventService
+import models.service.EventService
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB

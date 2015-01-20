@@ -23,11 +23,10 @@
  */
 package controllers
 
-import models.event.EventService
+import models.service.EventService
 import play.api.mvc._
 import play.api.libs.json._
 import models.{ Brand, Event }
-import models.event.Collection
 
 /**
  * Events API
@@ -97,7 +96,7 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
    */
   def countries(code: String) = TokenSecuredAction { implicit request ⇒
     Brand.find(code).map { brandView ⇒
-      val events = EventService.findByParameters(Some(code), future = Some(true))
+      val events = eventService.findByParameters(Some(code), future = Some(true))
       val data = events.groupBy(_.location.countryCode).map(v ⇒ (v._1, v._2.length))
       Ok(Json.prettyPrint(Json.toJson(data.toList.sortBy(_._1))))
     }.getOrElse(NotFound("Unknown brand"))

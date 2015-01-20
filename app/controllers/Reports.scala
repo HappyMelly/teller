@@ -26,8 +26,8 @@ package controllers
 
 import java.io.{ File, FileOutputStream }
 import models._
-import models.event.EventService
 import models.UserRole.Role._
+import models.service.EventService
 import org.joda.time._
 import play.api.Play.current
 import play.mvc.Controller
