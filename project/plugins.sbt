@@ -4,6 +4,11 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 
 resolvers += Classpaths.sbtPluginReleases
 
+resolvers += Resolver.url("heroku-sbt-plugin-releases",
+  url("https://dl.bintray.com/heroku/sbt-plugins/"))(Resolver.ivyStylePatterns)
+
+addSbtPlugin("com.heroku" % "sbt-heroku" % "0.3.0")
+
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.5")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.2.1")
