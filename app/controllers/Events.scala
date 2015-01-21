@@ -26,7 +26,7 @@ package controllers
 
 import Forms._
 import models._
-import models.service.EventService
+import models.service.{ PersonService, EventService }
 import play.api.mvc._
 import play.api.libs.json._
 import securesocial.core.SecuredRequest
@@ -510,7 +510,7 @@ object Events extends Controller with Security {
               val namePattern = new Regex("""(PARTICIPANT_NAME_TOKEN)""", "name")
               val brand = Brand.find(event.brandCode).get
               requestData.participantIds.foreach { id ⇒
-                val participant = Person.find(id).get
+                val participant = PersonService.get.find(id).get
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
                 EmailService.send(Set(participant), None, None, subject,

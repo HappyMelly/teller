@@ -44,7 +44,7 @@ import scravatar.Gravatar
 import securesocial.core.SecuredRequest
 import services.S3Bucket
 
-trait People extends Controller with Security {
+trait People extends Controller with Security with Services {
 
   val contentType = "image/jpeg"
 
@@ -168,7 +168,7 @@ trait People extends Controller with Security {
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(id).map { person ⇒
+      personService.find(id).map { person ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           form ⇒ BadRequest("invalid form data"),
           active ⇒ {
@@ -201,7 +201,7 @@ trait People extends Controller with Security {
         errors ⇒ BadRequest("organisationId missing"),
         {
           case (page, personId, organisationId) ⇒
-            Person.find(personId).map { person ⇒
+            personService.find(personId).map { person ⇒
               Organisation.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
                 val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
@@ -241,7 +241,7 @@ trait People extends Controller with Security {
   def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(id).map { person ⇒
+      personService.find(id).map { person ⇒
         if (!person.deletable) {
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
@@ -262,7 +262,7 @@ trait People extends Controller with Security {
   def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(personId).map { person ⇒
+      personService.find(personId).map { person ⇒
         Organisation.find(organisationId).map { organisation ⇒
           person.deleteMembership(organisationId)
           val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
@@ -283,7 +283,7 @@ trait People extends Controller with Security {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      models.Person.find(id).map { person ⇒
+      personService.find(id).map { person ⇒
         val memberships = person.memberships
         val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ memberships.contains(organisation))
         val licenses = License.licenses(id)
@@ -309,7 +309,7 @@ trait People extends Controller with Security {
   def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(id).map { person ⇒
+      personService.find(id).map { person ⇒
         Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
       }.getOrElse(NotFound)
   }
@@ -354,7 +354,7 @@ trait People extends Controller with Security {
     implicit handler ⇒
 
       val encoding = "ISO-8859-1"
-      Person.find(id).map { person ⇒
+      personService.find(id).map { person ⇒
         val route = routes.People.details(person.id.get).url + "#licenses"
 
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
@@ -384,7 +384,7 @@ trait People extends Controller with Security {
    */
   def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
-      Person.find(personId.toLong).map { person ⇒
+      personService.find(personId.toLong).map { person ⇒
         if (person.signature) {
           S3Bucket.remove(Person.fullFileName(personId))
           Cache.remove(Person.cacheId(personId))
@@ -408,7 +408,7 @@ trait People extends Controller with Security {
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = Person.find(personId).map { person ⇒
+      val image: Future[Array[Byte]] = personService.find(personId).map { person ⇒
         if (person.signature) {
           Person.downloadFromCloud(personId)
         } else Future.successful(empty)

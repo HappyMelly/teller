@@ -36,7 +36,7 @@ import org.joda.time.DateTime
 /**
  * User administration controller.
  */
-object UserAccounts extends Controller with Security {
+trait UserAccounts extends Controller with Security with Services {
 
   val userForm = Form(tuple(
     "personId" -> longNumber,
@@ -52,7 +52,7 @@ object UserAccounts extends Controller with Security {
         form ⇒ BadRequest("invalid form data"),
         user ⇒ {
           val (personId, role) = user
-          Person.find(personId).map { person ⇒
+          personService.find(personId).map { person ⇒
             Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
             val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
             if (role.isDefined) {
@@ -77,3 +77,5 @@ object UserAccounts extends Controller with Security {
   }
 
 }
+
+object UserAccounts extends UserAccounts with Security with Services

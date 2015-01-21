@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import models.service.EventService
+import models.service.{ PersonService, EventService }
 import org.joda.time.DateTime
 import play.api.data._
 import play.api.data.Forms._
@@ -72,7 +72,7 @@ object Participants extends Controller with Security {
         (eventId: Long) ⇒ Event.canManage(eventId, request.user.asInstanceOf[LoginIdentity].userAccount)),
       "participantId" -> longNumber.verifying(
         "error.person.notExist",
-        (participantId: Long) ⇒ Person.find(participantId).nonEmpty),
+        (participantId: Long) ⇒ PersonService.get.find(participantId).nonEmpty),
       "evaluationId" -> optional(longNumber))({
         (id, brandId, eventId, participantId, evaluationId) ⇒
           Participant(id, eventId, participantId, evaluationId, organisation = None, comment = None)

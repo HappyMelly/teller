@@ -22,14 +22,47 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service.{ PersonService, EventService }
+import models.Person
+import models.database.People
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class PersonService {
 
-  def eventService: EventService = EventService.get
+  /**
+   * Returns person if it exists, otherwise - None
+   * @param id Person Identifier
+   * @return
+   */
+  def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      person ← People if person.id === id
+    } yield person
 
-  def personService: PersonService = PersonService.get
+    query.firstOption
+  }
+
+  /**
+   * Returns person if it exists, otherwise - None
+   *
+   * @param name Person Identifier
+   */
+  def find(name: String): Option[Person] = DB.withSession { implicit session: Session ⇒
+    val transformed = name.replace(".", " ")
+    val query = for {
+      person ← People if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
+    } yield person
+
+    query.firstOption
+  }
+
+}
+
+object PersonService {
+  private val instance = new PersonService()
+
+  def get: PersonService = instance
 }

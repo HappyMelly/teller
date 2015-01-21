@@ -33,7 +33,7 @@ import scala.util.{ Failure, Success, Try }
 /**
  * Content licenses API.
  */
-object LicensesApi extends Controller with ApiAuthentication {
+trait LicensesApi extends Controller with ApiAuthentication with Services {
 
   case class LicenseeView(brandCode: String, licensee: Person)
 
@@ -88,7 +88,7 @@ object LicensesApi extends Controller with ApiAuthentication {
    * API that returns details of a licensee for a brand.
    */
   def licensee(licenseeId: Long, brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Person.find(licenseeId).map { person ⇒
+    personService.find(licenseeId).map { person ⇒
       if (Brand.exists(brandCode)) {
         val view = LicensedSinceView(person, License.licensedSince(licenseeId, brandCode))
         Ok(Json.toJson(view))
@@ -96,3 +96,5 @@ object LicensesApi extends Controller with ApiAuthentication {
     }.getOrElse(NotFound("Unknown licensee"))
   }
 }
+
+object LicensesApi extends LicensesApi with ApiAuthentication with Services

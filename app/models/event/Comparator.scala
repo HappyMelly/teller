@@ -26,6 +26,7 @@ package models.event
 import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
+import models.service.PersonService
 
 import models.{ Event, Brand, EventType, Organisation, Person }
 import models.database.{ EventFacilitators, EventInvoices }
@@ -91,14 +92,14 @@ object Comparator {
 
   class FacilitatorChange(label: String, oldValue: List[Long], newValue: List[Long]) extends FieldChange(label, oldValue, newValue) {
     override def toString = {
-      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
+      val newFacilitators = newValue.diff(oldValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
+      val removedFacilitators = oldValue.diff(newValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
       s"Removed $label: $removedFacilitators / Added $label: $newFacilitators"
     }
 
     override def printable(): (String, String, String) = {
-      val newFacilitators = newValue.diff(oldValue).map(Person.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(Person.find(_).get.fullName).mkString(", ")
+      val newFacilitators = newValue.diff(oldValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
+      val removedFacilitators = oldValue.diff(newValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
       (label, newFacilitators, removedFacilitators)
     }
   }

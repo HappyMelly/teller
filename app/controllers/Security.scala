@@ -26,12 +26,9 @@ package controllers
 
 import models._
 import models.service.EventService
-import play.api.i18n.Messages
-import play.api.libs.json.Json
 import securesocial.core._
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
-import securesocial.core.providers.utils.RoutesHelper
 import scala.concurrent.Future
 
 /**
@@ -135,7 +132,9 @@ trait Security extends SecureSocial with DeadboltActions {
  *  A Brand Coordinator is able to create events for his/her own brand even if he/she is a Viewer.
  *  A Facilitator is able to create events for any brand he/she has active content licenses even if he/she is a Viewer.
  */
-class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
+class TellerResourceHandler(account: Option[UserAccount])
+  extends DynamicResourceHandler
+  with Services {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     account.exists { existingAccount ⇒
@@ -170,7 +169,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
               //   where the person was a participant
               existingAccount.editor || personId.get.toLong == existingAccount.personId || {
-                Person.find(personId.get.toLong).exists { person ⇒
+                personService.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
                     person.participateInEvents(userId).nonEmpty
                   } else {
@@ -182,7 +181,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               val personId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or he's a facilitator of the event where the person was a participant
               existingAccount.editor || {
-                Person.find(personId.get.toLong).exists { person ⇒
+                personService.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
                     person.participateInEvents(existingAccount.personId).nonEmpty
                   } else {

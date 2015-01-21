@@ -26,6 +26,7 @@ package models
 
 import be.objectify.deadbolt.core.models.{ Permission, Subject }
 import models.database.UserAccounts
+import models.service.PersonService
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -69,7 +70,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
     !brands.isEmpty
   }
 
-  lazy val person: Option[Person] = Person.find(personId)
+  lazy val person: Option[Person] = PersonService.get.find(personId)
   lazy val account: Option[Account] = Account.findByPerson(personId)
   lazy val licenses: List[LicenseView] = License.activeLicenses(personId)
   lazy val brands: List[Brand] = Brand.findByCoordinator(personId)

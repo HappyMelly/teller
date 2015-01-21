@@ -24,13 +24,12 @@
 package controllers
 
 import models._
-import models.service.EventService
 import play.api.data.FormError
 import play.api.data.Forms._
 import play.api.data.format.Formatter
 import play.mvc.Controller
 
-trait EvaluationsController extends Controller {
+trait EvaluationsController extends Controller with Services {
 
   /**
    * Formatter used to define a form mapping for the `EvaluationStatus` enumeration.
@@ -60,12 +59,12 @@ trait EvaluationsController extends Controller {
         try {
           val eventId = data.get("eventId").get.toLong
           val personId = data.get(key).get.toLong
-          if (Person.find(personId).isEmpty) {
+          if (personService.find(personId).isEmpty) {
             Left(List(FormError(key, "error.person.notExist")))
           } else {
             if (Evaluation.findByEventAndPerson(personId, eventId).isDefined) {
               Left(List(FormError(key, "error.evaluation.exist")))
-            } else if (EventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
+            } else if (eventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
               Left(List(FormError(key, "error.participant.notExist")))
             } else {
               Right(personId)
@@ -91,10 +90,10 @@ trait EvaluationsController extends Controller {
         try {
           val eventId = data.get("eventId").get.toLong
           val personId = data.get(key).get.toLong
-          if (Person.find(personId).isEmpty) {
+          if (personService.find(personId).isEmpty) {
             Left(List(FormError(key, "error.person.notExist")))
           } else {
-            if (EventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
+            if (eventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
               Left(List(FormError(key, "error.participant.notExist")))
             } else {
               Right(personId)
