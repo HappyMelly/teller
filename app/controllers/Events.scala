@@ -359,9 +359,23 @@ object Events extends Controller with Security {
       } getOrElse {
         EventService.findByParameters(brandCode, future, public, archived)
       }
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
       EventService.get.applyFacilitators(events)
-      EventService.get.applyInvoices(events)
+
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      // we do not show private events of other facilitators to anyone except
+      // brand coordinator or Editor
+      val filteredEvents: List[Event] = if (account.editor)
+        events
+      else if (account.coordinator)
+        events.filter(!_.notPublic) :::
+          events.filter(e ⇒ e.notPublic &&
+            account.brands.exists(_.code == e.brandCode))
+      else
+        events.filter(!_.notPublic) :::
+          events.filter(e ⇒ e.notPublic &&
+            e.facilitators.exists(_.id.get == account.personId))
+
+      EventService.get.applyInvoices(filteredEvents)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -406,7 +420,7 @@ object Events extends Controller with Security {
             })
         }
       }
-      Ok(Json.toJson(events))
+      Ok(Json.toJson(filteredEvents))
   }
   /**
    * Edit form submits to this action.
