@@ -25,14 +25,22 @@
 package stubs
 
 import controllers.Services
+import models.service.PersonService
 
 trait FakeServices extends Services {
 
   private var _eventService = new StubEventService
+  private var _personService = new PersonService
 
   def eventService_=(service: StubEventService) = {
     _eventService = service
   }
 
   override def eventService: StubEventService = _eventService
+
+  def personService_=(service: PersonService) = {
+    _personService = service
+  }
+
+  override def personService: PersonService = _personService
 }

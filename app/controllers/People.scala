@@ -283,7 +283,7 @@ trait People extends Controller with Security with Services {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      personService.find(id).map { person ⇒
+      personService.find(id) map { person ⇒
         val memberships = person.memberships
         val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ memberships.contains(organisation))
         val licenses = License.licenses(id)
@@ -296,7 +296,7 @@ trait People extends Controller with Security with Services {
           contributions, products,
           licenses, accountRole,
           UserAccount.findDuplicateIdentity(person)))
-      }.getOrElse {
+      } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
