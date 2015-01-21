@@ -35,11 +35,15 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
     val conf = Map(
       "db.default.url" -> "jdbc:mysql://localhost/mellytest",
       "logger.play" -> "INFO",
-      "logger.application" -> "DEBUG")
-    val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
+      "logger.application" -> "DEBUG",
+      "ehcacheplugin" -> "enabled")
+    val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
+      "services.LoginIdentityService")
+    val withPlugins = List("stubs.StubLoginIdentityService")
     FakeApplication(
       additionalConfiguration = conf,
-      withoutPlugins = withoutPlugins)
+      withoutPlugins = withoutPlugins,
+      additionalPlugins = withPlugins)
   }
 
   def beforeAll() {

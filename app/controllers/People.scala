@@ -44,7 +44,7 @@ import scravatar.Gravatar
 import securesocial.core.SecuredRequest
 import services.S3Bucket
 
-object People extends Controller with Security {
+trait People extends Controller with Security {
 
   val contentType = "image/jpeg"
 
@@ -283,7 +283,6 @@ object People extends Controller with Security {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-
       models.Person.find(id).map { person ⇒
         val memberships = person.memberships
         val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ memberships.contains(organisation))
@@ -421,3 +420,5 @@ object People extends Controller with Security {
     }
   }
 }
+
+object People extends People with Security

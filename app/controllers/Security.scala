@@ -26,13 +26,13 @@ package controllers
 
 import models._
 import models.service.EventService
-import securesocial.core.SecureSocial
+import play.api.i18n.Messages
+import play.api.libs.json.Json
+import securesocial.core._
 import play.api.mvc._
-import play.api.mvc.Results.Redirect
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
-import securesocial.core.SecuredRequest
+import securesocial.core.providers.utils.RoutesHelper
 import scala.concurrent.Future
-import scala.util.matching.Regex
 
 /**
  * Integrates SecureSocial authentication with Deadbolt.
@@ -46,12 +46,15 @@ trait Security extends SecureSocial with DeadboltActions {
   val MissingUserAccountResult = Future.successful(Redirect(securesocial.controllers.routes.LoginPage.logout))
 
   /**
-   * Defines an action that authenticates using SecureSocial, and uses Deadbolt to restrict access to the given role.
+   * Authenticates using SecureSocial, and uses Deadbolt to restrict access to
+   * the given role
    */
-  def SecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
+  def SecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       try {
-        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
+        // Use the authenticated user’s account details to construct a handler
+        // (to look up account role) for Deadbolt authorisation
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val handler = new AuthorisationHandler(Some(account))
         val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)))
