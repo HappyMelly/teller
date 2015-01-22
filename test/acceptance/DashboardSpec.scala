@@ -47,6 +47,10 @@ class DashboardSpec extends PlayAppSpec {
   API page should
     not be visible to Viewer                  $e3
     and be visible to Editor                  $e4
+
+  Activity stream on the dashboard should
+    not be visible to Viewer                  $e5
+    and be visible to Editor                  $e6
   """
 
   def e1 = {
@@ -79,5 +83,23 @@ class DashboardSpec extends PlayAppSpec {
     val request = prepareSecuredRequest(identity, "/api")
     val result: Future[SimpleResult] = controller.api().apply(request)
     status(result) must equalTo(OK)
+  }
+
+  def e5 = {
+    val controller = new TestDashboard()
+    val identity = StubLoginIdentity.viewer
+    val request = prepareSecuredRequest(identity, "/")
+    val result: Future[SimpleResult] = controller.index().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Latest activity"
+  }
+
+  def e6 = {
+    val controller = new TestDashboard()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredRequest(identity, "/")
+    val result: Future[SimpleResult] = controller.index().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Latest activity")
   }
 }

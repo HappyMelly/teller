@@ -51,7 +51,11 @@ trait Dashboard extends Controller with Security {
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      val activity = Activity.findAll
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val activity = if (account.editor)
+        Some(Activity.findAll)
+      else
+        None
       Ok(views.html.dashboard(request.user, activity))
   }
 

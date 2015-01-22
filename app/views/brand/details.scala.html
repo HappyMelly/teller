@@ -1,8 +1,11 @@
 @(user: securesocial.core.Identity,
-        brand: Brand,
-        coordinator: Person,
-        eventTypes: List[EventType]
-        )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  brand: Brand,
+  coordinator: Person,
+  eventTypes: List[EventType]
+  )(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.UserRole.Role._
