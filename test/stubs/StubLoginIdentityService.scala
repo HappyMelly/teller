@@ -30,9 +30,9 @@ class StubLoginIdentityService(application: Application)
   extends services.LoginIdentityService(application) {
 
   override def find(id: IdentityId) = {
-    val identityId = new IdentityId("123", "twitter")
+    val identityId = id
     val identity = new StubLoginIdentity(Some(123213L), identityId,
-      "Sergey", "kotlov", "Sergey Kotlov", None)
+      "Sergey", "Kotlov", "Sergey Kotlov", None)
     Some(identity)
   }
 

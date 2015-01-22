@@ -27,15 +27,17 @@ package acceptance
 import controllers.{ People, Security }
 import helpers.PersonHelper
 import integration.PlayAppSpec
+import models.SocialProfile
 import org.joda.time.DateTime
 import org.scalamock.specs2.MockContext
 import play.api.cache.Cache
-import play.api.mvc.SimpleResult
-import play.api.test.FakeRequest
+import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
+import play.api.test.{ FakeHeaders, FakeRequest }
 import play.api.test.Helpers._
 import play.api.Play.current
+import play.filters.csrf.CSRF
 import securesocial.core.{ IdentityId, Authenticator }
-import stubs.{ StubPersonService, FakeServices }
+import stubs.{ StubLoginIdentity, StubPersonService, FakeServices }
 
 import scala.concurrent.Future
 
@@ -51,11 +53,13 @@ class PeopleSpec extends PlayAppSpec {
     not be visible to unauthorized user                  $e1
     and be visible to authorized user                    $e2
     not contain accounting details if user is not Editor $e3
+    contain accounting details if user is Editor         $e4
   """
 
   def e1 = {
     val controller = new TestPeople()
     val result: Future[SimpleResult] = controller.details(1).apply(FakeRequest())
+
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("login"))
   }
@@ -67,13 +71,8 @@ class PeopleSpec extends PlayAppSpec {
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
-      val identity = new IdentityId("123", "twitter")
-      val authenticator = new Authenticator("auth.1", identity,
-        DateTime.now().minusHours(1),
-        DateTime.now(),
-        DateTime.now().plusHours(5))
-      Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
-      val request = FakeRequest(GET, "/person/1").withCookies(authenticator.toCookie)
+      val identity = StubLoginIdentity.viewer
+      val request = PeopleSpec.prepareSecuredRequest(identity, "/person/1")
       controller.details(1).apply(request)
     }
   }
@@ -81,19 +80,59 @@ class PeopleSpec extends PlayAppSpec {
   def e3 = {
     new MockContext {
       val person = PersonHelper.one()
+      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val controller = new TestPeople()
       val mockService = mock[StubPersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = new IdentityId("123", "twitter")
-      val authenticator = new Authenticator("auth.1", identity,
-        DateTime.now().minusHours(1),
-        DateTime.now(),
-        DateTime.now().plusHours(5))
-      Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
-      val request = FakeRequest(GET, "/person/1").withCookies(authenticator.toCookie)
+      val identity = StubLoginIdentity.viewer
+      val request = PeopleSpec.prepareSecuredRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
       status(result) must equalTo(OK)
+      contentAsString(result) must not contain "Financial account"
+      contentAsString(result) must not contain "Account history"
     }
+  }
+
+  def e4 = {
+    new MockContext {
+      val person = PersonHelper.one()
+      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+      val controller = new TestPeople()
+      val mockService = mock[StubPersonService]
+      (mockService.find(_: Long)) expects 1L returning Some(person)
+      controller.personService_=(mockService)
+      val identity = StubLoginIdentity.editor
+      val request = PeopleSpec.prepareSecuredRequest(identity, "/person/1")
+      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("Financial account")
+      contentAsString(result) must contain("Account history")
+    }
+  }
+}
+
+object PeopleSpec {
+
+  /**
+   * Returns a secured request object and sets authenticator object to cache
+   *
+   * @param identity Identity object
+   * @param url Path
+   */
+  def prepareSecuredRequest(identity: IdentityId, url: String) = {
+    val authenticator = new Authenticator("auth.1", identity,
+      DateTime.now().minusHours(1),
+      DateTime.now(),
+      DateTime.now().plusHours(5))
+    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(GET,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag).withCookies(authenticator.toCookie)
   }
 }
