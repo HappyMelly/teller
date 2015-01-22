@@ -1,4 +1,10 @@
-@(user: securesocial.core.Identity, transactionTypes: List[TransactionType], form: Form[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+@(user: securesocial.core.Identity,
+    transactionTypes: List[TransactionType],
+    form: Form[String])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
 @import helper.CSRF
 
 @main("Settings", "admin", Some(user)) {

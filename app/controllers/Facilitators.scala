@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.service.PersonService
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -83,7 +84,7 @@ object Facilitators extends Controller with Security {
         errors ⇒ BadRequest("Language is not chosen"),
         {
           case (language) ⇒
-            Person.find(id).map { person ⇒
+            PersonService.get.find(id).map { person ⇒
               if (!FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
                 FacilitatorLanguage(id, language).insert
               }
@@ -104,7 +105,7 @@ object Facilitators extends Controller with Security {
    */
   def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
-      Person.find(id).map { person ⇒
+      PersonService.get.find(id).map { person ⇒
         if (FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
           FacilitatorLanguage(id, language).delete()
         }
@@ -130,7 +131,7 @@ object Facilitators extends Controller with Security {
         errors ⇒ BadRequest("Country is not chosen"),
         {
           case (country) ⇒
-            Person.find(id).map { person ⇒
+            PersonService.get.find(id).map { person ⇒
               if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
                 FacilitatorCountry(id, country).insert
               }
@@ -151,7 +152,7 @@ object Facilitators extends Controller with Security {
   def deleteCountry(id: Long, country: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(id).map { person ⇒
+      PersonService.get.find(id).map { person ⇒
         if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
           FacilitatorCountry(id, country).delete()
         }

@@ -26,7 +26,7 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import models.service.SocialProfileService
+import models.service.{ ContributionService, PersonService, SocialProfileService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -152,17 +152,11 @@ case class Person(
   }
 
   /**
-   * Returns a list of the organisations this person is a member of.
+   * Returns a list of organisations this person is a member of
    */
   def memberships: List[Organisation] = if (_memberships.isEmpty) {
-    DB.withSession { implicit session: Session ⇒
-      val query = for {
-        membership ← OrganisationMemberships if membership.personId === this.id
-        organisation ← membership.organisation
-      } yield organisation
-      memberships_=(query.sortBy(_.name.toLowerCase).list)
-      _memberships.get
-    }
+    memberships_=(PersonService.get.memberships(this))
+    _memberships.get
   } else {
     _memberships.get
   }
@@ -223,8 +217,8 @@ case class Person(
   /**
    * Returns a list of this person's contributions.
    */
-  lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
-    Contribution.contributions(this.id.get, isPerson = true)
+  lazy val contributions: List[ContributionView] = {
+    ContributionService.get.contributions(this.id.get, isPerson = true)
   }
 
   /**
@@ -366,36 +360,10 @@ object Person {
    * @param id Person Identifier
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    find(id).map(_.account).map(_.delete)
+    import models.service.PersonService
+    PersonService.get.find(id).map(_.account).map(_.delete)
     Participants.where(_.personId === id).mutate(_.delete())
     People.where(_.id === id).mutate(_.delete())
-  }
-
-  /**
-   * Find a specified person
-   * @param id Person Identifier
-   * @return
-   */
-  def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      person ← People if person.id === id
-    } yield person
-
-    query.firstOption
-  }
-
-  /**
-   * Find a person
-   * @param name Person Identifier
-   * @return
-   */
-  def find(name: String): Option[Person] = DB.withSession { implicit session: Session ⇒
-    val transformed = name.replace(".", " ")
-    val query = for {
-      person ← People if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
-    } yield person
-
-    query.firstOption
   }
 
   /**

@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.service.UserAccountService
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -36,7 +37,7 @@ import org.joda.time.DateTime
 /**
  * User administration controller.
  */
-object UserAccounts extends Controller with Security {
+trait UserAccounts extends Controller with Security with Services {
 
   val userForm = Form(tuple(
     "personId" -> longNumber,
@@ -52,11 +53,11 @@ object UserAccounts extends Controller with Security {
         form ⇒ BadRequest("invalid form data"),
         user ⇒ {
           val (personId, role) = user
-          Person.find(personId).map { person ⇒
+          personService.find(personId).map { person ⇒
             Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
             val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
             if (role.isDefined) {
-              if (UserAccount.findRole(personId).isDefined) {
+              if (UserAccountService.get.findRole(personId).isDefined) {
                 UserAccount.updateRole(personId, role.get)
               } else {
                 val account = UserAccount(None, personId, role.get, person.socialProfile.twitterHandle,
@@ -77,3 +78,5 @@ object UserAccounts extends Controller with Security {
   }
 
 }
+
+object UserAccounts extends UserAccounts with Security with Services

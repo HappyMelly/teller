@@ -26,6 +26,7 @@ package models
 
 import be.objectify.deadbolt.core.models.{ Permission, Subject }
 import models.database.UserAccounts
+import models.service.{ UserAccountService, PersonService }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -47,7 +48,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
    * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = if (_roles.isEmpty) {
-    val accountRole = UserAccount.findRole(personId).map(role ⇒ UserRole(role))
+    val accountRole = UserAccountService.get.findRole(personId).map(role ⇒ UserRole(role))
     roles_=(accountRole.map(_.list).getOrElse(java.util.Collections.emptyList()))
     _roles.get
   } else {
@@ -69,7 +70,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
     !brands.isEmpty
   }
 
-  lazy val person: Option[Person] = Person.find(personId)
+  lazy val person: Option[Person] = PersonService.get.find(personId)
   lazy val account: Option[Account] = Account.findByPerson(personId)
   lazy val licenses: List[LicenseView] = License.activeLicenses(personId)
   lazy val brands: List[Brand] = Brand.findByCoordinator(personId)
@@ -82,32 +83,9 @@ object UserAccount {
     UserAccounts.where(_.personId === personId).mutate(_.delete)
   }
 
-  /**
-   * Returns the account for the person who has a duplicate social network identity, if there is one.
-   */
-  def findDuplicateIdentity(person: Person): Option[UserAccount] = DB.withSession { implicit session: Session ⇒
-    val query = Query(UserAccounts).filter(_.personId =!= person.id).filter { account ⇒
-      account.twitterHandle.toLowerCase === person.socialProfile.twitterHandle.map(_.toLowerCase) ||
-        account.googlePlusUrl === person.socialProfile.googlePlusUrl ||
-        (account.facebookUrl like "https?".r.replaceFirstIn(person.socialProfile.facebookUrl.getOrElse(""), "%")) ||
-        (account.linkedInUrl like "https?".r.replaceFirstIn(person.socialProfile.linkedInUrl.getOrElse(""), "%"))
-    }
-    query.firstOption
-  }
-
   def insert(account: UserAccount) = DB.withSession { implicit session: Session ⇒
     val id = UserAccounts.forInsert.insert(account)
     account.copy(id = Some(id))
-  }
-
-  /**
-   * Returns the given person’s role.
-   */
-  def findRole(personId: Long): Option[UserRole.Role.Role] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      account ← UserAccounts if account.personId === personId
-    } yield account.role
-    query.firstOption.map(role ⇒ UserRole.Role.withName(role))
   }
 
   /**

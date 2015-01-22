@@ -22,24 +22,36 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service._
+import models.ContributionView
+import models.database.Contributions
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class ContributionService {
 
-  def eventService: EventService = EventService.get
+  /**
+   * Returns a list of all contributions for the given contributor
+   * @param contributorId Contributor identifier
+   * @param isPerson If true this contributor is a person, otherwise - company
+   */
+  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession { implicit session: Session ⇒
 
-  def personService: PersonService = PersonService.get
+    val query = for {
+      contribution ← Contributions if contribution.contributorId === contributorId && contribution.isPerson === isPerson
+      product ← contribution.product
+    } yield (contribution, product)
 
-  def orgService: OrganisationService = OrganisationService.get
+    query.sortBy(_._2.title.toLowerCase).list.map {
+      case (contribution, product) ⇒ ContributionView(product, contribution)
+    }
+  }
+}
 
-  def licenseService: LicenseService = LicenseService.get
+object ContributionService {
+  private val instance = new ContributionService
 
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
+  def get: ContributionService = instance
 }

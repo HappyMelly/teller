@@ -32,7 +32,7 @@ import play.api.i18n.Messages
 /**
  * Products API.
  */
-object ProductsApi extends Controller with ApiAuthentication {
+trait ProductsApi extends Controller with ApiAuthentication with Services {
 
   import BrandsApi.brandWrites
 
@@ -80,8 +80,10 @@ object ProductsApi extends Controller with ApiAuthentication {
    * Product list API.
    */
   def products = TokenSecuredAction { implicit request ⇒
-    val products = Product.findAll
+    val products = productService.findAll
     ProductsCollection.brands(products)
     Ok(Json.prettyPrint(Json.toJson(products)))
   }
 }
+
+object ProductsApi extends ProductsApi with ApiAuthentication with Services

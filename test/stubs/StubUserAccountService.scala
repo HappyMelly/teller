@@ -17,29 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * If you have questions concerning this license or the applicable additional 
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package stubs
 
-import models.service._
+import models.{ Person, UserAccount, UserRole }
+import models.service.UserAccountService
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class StubUserAccountService extends UserAccountService {
 
-  def eventService: EventService = EventService.get
+  override def findRole(personId: Long): Option[UserRole.Role.Role] =
+    Some(UserRole.forName("viewer").role)
 
-  def personService: PersonService = PersonService.get
+  override def findDuplicateIdentity(person: Person): Option[UserAccount] = None
 
-  def orgService: OrganisationService = OrganisationService.get
-
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
 }

@@ -25,40 +25,51 @@
 package controllers
 
 import play.api.mvc._
+import models.UserRole.Role._
 import models.{ LoginIdentity, Activity }
-import securesocial.core.SecureSocial
 
-object Dashboard extends Controller with SecureSocial {
+trait Dashboard extends Controller with Security {
 
   /**
    * About page - credits.
    */
-  def about = SecuredAction { implicit request ⇒
-    Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
+  def about = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
   }
 
   /**
    * API documentation page.
    */
-  def api = SecuredAction { implicit request ⇒
-    Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
+  def api = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
   }
 
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = SecuredAction { implicit request ⇒
-    val activity = Activity.findAll
-    Ok(views.html.dashboard(request.user, activity))
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val activity = if (account.editor)
+        Some(Activity.findAll)
+      else
+        None
+      Ok(views.html.dashboard(request.user, activity))
   }
 
   /**
    * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
-  def profile = SecuredAction { implicit request ⇒
-    val currentUser = request.user.asInstanceOf[LoginIdentity].person
-    Redirect(routes.People.details(currentUser.id.getOrElse(0)))
+  def profile = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      val currentUser = request.user.asInstanceOf[LoginIdentity].person
+      Redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
 
 }
+
+object Dashboard extends Dashboard with Security
+

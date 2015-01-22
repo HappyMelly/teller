@@ -1,6 +1,9 @@
 @(user: securesocial.core.Identity,
-        id: Option[Long],
-        form: Form[Person])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+    id: Option[Long],
+    form: Form[Person])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
     @import helper.CSRF
     @import views.Countries

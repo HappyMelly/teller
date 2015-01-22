@@ -1,13 +1,16 @@
 @(user: securesocial.core.Identity,
-        person: Person,
-        organisations: List[Organisation],
-        otherOrganisations: List[Organisation],
-        contributions: List[ContributionView],
-        products: List[Product],
-        licenses: List[LicenseView],
-        accountRole: Option[models.UserRole.Role.Role],
-        otherUser: Option[UserAccount]
-        )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+    person: Person,
+    organisations: List[Organisation],
+    otherOrganisations: List[Organisation],
+    contributions: List[ContributionView],
+    products: List[Product],
+    licenses: List[LicenseView],
+    accountRole: Option[models.UserRole.Role.Role],
+    otherUser: Option[UserAccount]
+    )(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
     @import helper.CSRF
     @import models.UserRole.Role._
@@ -144,17 +147,6 @@
                 </p>
 
             }
-
-            <p>
-                <strong>Financial account</strong>
-                <br>@if(person.account.active) {Active} else {Inactive}
-                @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-                    (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>
-                    )
-            </p>
-        }
-            <p><strong>Account history</strong>
-                <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
         </div>
 
         @restrict(handler, List(as("admin"))) {
@@ -202,29 +194,35 @@
 
         <div class="col-md-10">
             <ul class="nav nav-tabs" id="activities">
-                <li><a href="#finance">Accounting details</a></li>
                 <li><a href="#organizations">Organizations</a></li>
+                @restrict(handler, List(as(Editor.toString))) {
+                    <li><a href="#finance">Accounting details</a></li>
+                }
                 <li><a href="#contributions">Product Contributions</a></li>
                 <li><a href="#licenses">Licenses</a></li>
                 <li><a href="#events">Event Settings</a></li>
             </ul>
 
             <div class="tab-content">
-                <div class="tab-pane active" id="finance">
-                    <div class="col-xs-9">
-                        <br/>
-                        <p><strong>Financial account</strong><br>@if(person.account.active) {Active} else {Inactive}
-                            @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-                                (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>
-                                )</p>
-                        }
-                        <p><strong>Account history</strong>
-                            <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a></p>
-                    </div>
-                </div>
-                <div class="tab-pane" id="organizations">
+                <div class="tab-pane active" id="organizations">
                     @views.html.person.tabs.organisations(person, organisations, otherOrganisations)
                 </div>
+                @restrict(handler, List(as(Editor.toString))) {
+                    <div class="tab-pane" id="finance">
+                        <div class="col-xs-9">
+                            <br/>
+                            <p>
+                                <strong>Financial account</strong>
+                                <br>@if(person.account.active) {Active} else {Inactive}
+                                @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+                                    (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>)</p>
+                            }
+                            <p><strong>Account history</strong>
+                                <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a>
+                            </p>
+                        </div>
+                    </div>
+                }
                 <div class="tab-pane" id="contributions">
                     @views.html.person.tabs.contributions(person, contributions, products)
                 </div>

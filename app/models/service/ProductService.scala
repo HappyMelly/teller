@@ -22,24 +22,25 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service._
+import models.Product
+import models.database.Products
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class ProductService {
 
-  def eventService: EventService = EventService.get
+  /** Return a list with all products */
+  def findAll: List[Product] = DB.withSession { implicit session: Session ⇒
+    Query(Products).sortBy(_.title.toLowerCase).list
+  }
 
-  def personService: PersonService = PersonService.get
+}
 
-  def orgService: OrganisationService = OrganisationService.get
+object ProductService {
+  private val instance = new ProductService
 
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
+  def get: ProductService = instance
 }

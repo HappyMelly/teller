@@ -24,7 +24,6 @@
 package controllers
 
 import models._
-import models.service.EventService
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.mvc._
@@ -34,15 +33,15 @@ import play.api.libs.json._
 /**
  * Evaluations API
  */
-object EvaluationsApi extends EvaluationsController with ApiAuthentication {
+trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "event_id" -> longNumber.verifying(
-      "error.event.notExist", (eventId: Long) ⇒ EventService.find(eventId).isDefined),
+      "error.event.notExist", (eventId: Long) ⇒ eventService.find(eventId).isDefined),
     "participant_id" -> longNumber.verifying(
-      "error.person.notExist", (participantId: Long) ⇒ Person.find(participantId).isDefined),
+      "error.person.notExist", (participantId: Long) ⇒ personService.find(participantId).isDefined),
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
@@ -77,7 +76,7 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
         if (Evaluation.findByEventAndPerson(evaluation.personId, evaluation.eventId).isDefined) {
           val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
           BadRequest(Json.prettyPrint(json))
-        } else if (EventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
+        } else if (eventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
           val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
           BadRequest(Json.prettyPrint(json))
         } else {
@@ -89,3 +88,5 @@ object EvaluationsApi extends EvaluationsController with ApiAuthentication {
       })
   }
 }
+
+object EvaluationsApi extends EvaluationsApi with ApiAuthentication

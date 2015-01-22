@@ -137,10 +137,6 @@ object Product {
     Query(Products).filter(_.parentId === parentId).list
   }
 
-  def findAll: List[Product] = DB.withSession { implicit session: Session ⇒
-    Query(Products).sortBy(_.title.toLowerCase).list
-  }
-
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     Products.where(_.id === id).mutate(_.delete())
   }

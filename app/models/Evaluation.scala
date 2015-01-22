@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ Evaluations, Participants, Events, People }
-import models.service.EventService
+import models.service.{ PersonService, EventService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -71,7 +71,7 @@ case class Evaluation(
 
   lazy val event: Event = EventService.find(eventId).get
 
-  lazy val participant: Person = Person.find(personId).get
+  lazy val participant: Person = PersonService.get.find(personId).get
 
   def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)

@@ -1,22 +1,29 @@
-@(user: securesocial.core.Identity, activityStream: List[Activity])(implicit flash: Flash)
+@(user: securesocial.core.Identity,
+  activityStream: Option[List[Activity]])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
 @import templates.Formatters._
 
 @main("Home", "", Some(user)) {
+  @restrict(handler, List(as(Editor.toString))) {
+    <div class="col-md-offset-7 col-md-5">
+      <h4>Latest activity</h4>
 
-  <div class="col-md-offset-7 col-md-5">
-
-    <h4>Latest activity</h4>
-
-    <table class="activity table">
-      @for(activity <- activityStream) {
-        <tr>
-          <td>
-            <i class="glyphicon glyphicon-activity-@activity.predicate"></i>
-            @activity.description
-            <br><small>@activity.created.format</small>
-          </td>
-        </tr>
-        }
-    </table>
-  </div>
+      <table class="activity table">
+        @for(activity <- activityStream.get) {
+          <tr>
+            <td>
+              <i class="glyphicon glyphicon-activity-@activity.predicate"></i>
+              @activity.description
+              <br><small>@activity.created.format</small>
+            </td>
+          </tr>
+          }
+      </table>
+    </div>
+  }
 }

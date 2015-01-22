@@ -57,7 +57,7 @@ object Accounts extends Controller with Security {
   /**
    * An overview of bookings for the given account.
    */
-  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       val entries = BookingEntry.findByAccountId(id, from, to)
       val account = Account.find(id)
@@ -76,7 +76,7 @@ object Accounts extends Controller with Security {
       Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
   }
 
-  def details(id: Long) = SecuredRestrictedAction(Viewer) {
+  def details(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map{ account ⇒
@@ -84,7 +84,7 @@ object Accounts extends Controller with Security {
         }.getOrElse(NotFound)
   }
 
-  def activate(id: Long) = SecuredRestrictedAction(Viewer) {
+  def activate(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map{ account ⇒
@@ -104,7 +104,7 @@ object Accounts extends Controller with Security {
 
   }
 
-  def deactivate(id: Long) = SecuredRestrictedAction(Viewer) {
+  def deactivate(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
         Account.find(id).map(account ⇒
@@ -118,7 +118,7 @@ object Accounts extends Controller with Security {
           }).getOrElse(NotFound)
   }
 
-  def index = SecuredRestrictedAction(Viewer) {
+  def index = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
         Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))

@@ -26,13 +26,10 @@ package controllers
 
 import models._
 import models.service.EventService
-import securesocial.core.SecureSocial
+import securesocial.core._
 import play.api.mvc._
-import play.api.mvc.Results.Redirect
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
-import securesocial.core.SecuredRequest
 import scala.concurrent.Future
-import scala.util.matching.Regex
 
 /**
  * Integrates SecureSocial authentication with Deadbolt.
@@ -46,12 +43,15 @@ trait Security extends SecureSocial with DeadboltActions {
   val MissingUserAccountResult = Future.successful(Redirect(securesocial.controllers.routes.LoginPage.logout))
 
   /**
-   * Defines an action that authenticates using SecureSocial, and uses Deadbolt to restrict access to the given role.
+   * Authenticates using SecureSocial, and uses Deadbolt to restrict access to
+   * the given role
    */
-  def SecuredRestrictedAction(role: UserRole.Role.Role)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
+  def SecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       try {
-        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
+        // Use the authenticated user’s account details to construct a handler
+        // (to look up account role) for Deadbolt authorisation
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val handler = new AuthorisationHandler(Some(account))
         val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)))
@@ -132,7 +132,9 @@ trait Security extends SecureSocial with DeadboltActions {
  *  A Brand Coordinator is able to create events for his/her own brand even if he/she is a Viewer.
  *  A Facilitator is able to create events for any brand he/she has active content licenses even if he/she is a Viewer.
  */
-class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourceHandler {
+class TellerResourceHandler(account: Option[UserAccount])
+  extends DynamicResourceHandler
+  with Services {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     account.exists { existingAccount ⇒
@@ -167,7 +169,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
               //   where the person was a participant
               existingAccount.editor || personId.get.toLong == existingAccount.personId || {
-                Person.find(personId.get.toLong).exists { person ⇒
+                personService.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
                     person.participateInEvents(userId).nonEmpty
                   } else {
@@ -179,7 +181,7 @@ class TellerResourceHandler(account: Option[UserAccount]) extends DynamicResourc
               val personId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or he's a facilitator of the event where the person was a participant
               existingAccount.editor || {
-                Person.find(personId.get.toLong).exists { person ⇒
+                personService.find(personId.get.toLong).exists { person ⇒
                   if (person.virtual) {
                     person.participateInEvents(existingAccount.personId).nonEmpty
                   } else {

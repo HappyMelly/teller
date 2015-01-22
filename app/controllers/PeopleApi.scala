@@ -29,7 +29,7 @@ import models._
 import play.mvc.Controller
 import play.api.libs.json._
 
-object PeopleApi extends Controller with ApiAuthentication {
+trait PeopleApi extends Controller with ApiAuthentication with Services {
 
   implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
@@ -121,10 +121,12 @@ object PeopleApi extends Controller with ApiAuthentication {
   def person(identifier: String) = TokenSecuredAction { implicit request ⇒
     val person = try {
       val id = identifier.toLong
-      Person.find(id)
+      personService.find(id)
     } catch {
-      case e: NumberFormatException ⇒ Person.find(URLDecoder.decode(identifier, "ASCII"))
+      case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
     }
     person.map(person ⇒ Ok(Json.prettyPrint(Json.toJson(person)(personDetailsWrites)))).getOrElse(NotFound)
   }
 }
+
+object PeopleApi extends PeopleApi with ApiAuthentication with Services

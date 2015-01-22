@@ -18,28 +18,16 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package stubs
 
-import models.service._
+import models.{ Person, Organisation }
+import models.service.PersonService
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class StubPersonService extends PersonService {
 
-  def eventService: EventService = EventService.get
+  override def memberships(person: Person): List[Organisation] = List()
 
-  def personService: PersonService = PersonService.get
-
-  def orgService: OrganisationService = OrganisationService.get
-
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
 }

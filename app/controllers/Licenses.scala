@@ -26,6 +26,7 @@ package controllers
 
 import models._
 import models.JodaMoney.jodaMoney
+import models.service.PersonService
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
@@ -75,7 +76,7 @@ object Licenses extends Controller with Security {
   def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(personId).map { person ⇒
+      PersonService.get.find(personId).map { person ⇒
         val form = licenseForm.fill(License.blank(personId))
         Ok(views.html.license.form(request.user, None, form, person))
       } getOrElse {
@@ -91,7 +92,7 @@ object Licenses extends Controller with Security {
   def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Person.find(personId).map { person ⇒
+      PersonService.get.find(personId).map { person ⇒
         licenseForm.bindFromRequest.fold(
           form ⇒ BadRequest(views.html.license.form(request.user, None, form, person)),
           license ⇒ {
@@ -158,7 +159,7 @@ object Licenses extends Controller with Security {
     implicit handler ⇒
 
       License.find(id).map { license ⇒
-        Person.find(license.licenseeId).map { licensee ⇒
+        PersonService.get.find(license.licenseeId).map { licensee ⇒
           Ok(views.html.license.form(request.user, license.id, licenseForm.fill(license), licensee))
         }.getOrElse {
           throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")

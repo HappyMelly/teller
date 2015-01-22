@@ -1,9 +1,13 @@
 @(user: securesocial.core.Identity,
   id: Option[Long],
   title: Option[String],
-  form: Form[Product])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Product])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
+@import models.service.ProductService
 @import views.ViewHelpers._
 
 @defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>
@@ -35,7 +39,7 @@
 
           @html.select(
             form("parentId"),
-            ("", "Choose a product parent") :: Product.findAll.map(p => (p.id.get.toString, p.title)),
+            ("", "Choose a product parent") :: ProductService.get.findAll.map(p => (p.id.get.toString, p.title)),
             '_label -> "Parent", '_help -> "")
 
         <div clas="row">

@@ -1,9 +1,11 @@
-@(loginForm: Form[(String,String)], errorMsg: Option[String] = None)(implicit request: RequestHeader, flash: Flash)
+@(loginForm: Form[(String,String)],
+    errorMsg: Option[String] = None)(implicit request: Request[Any],
+        flash: Flash)
 
 @import securesocial.core.Registry
 @import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
 
-@main("Sign in", "", None) {
+@secure.unauthorized("Sign in") {
   <div class="page-header">
     <h1>Sign in</h1>
   </div>

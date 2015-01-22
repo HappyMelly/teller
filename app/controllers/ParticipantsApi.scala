@@ -35,7 +35,7 @@ import views.Countries
 /**
  * Participants API
  */
-object ParticipantsApi extends ApiAuthentication {
+trait ParticipantsApi extends ApiAuthentication with Services {
 
   def participantForm(account: UserAccount, userName: String) = {
 
@@ -79,7 +79,7 @@ object ParticipantsApi extends ApiAuthentication {
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "person_id" -> longNumber.verifying(
         "error.person.notExist",
-        (personId: Long) ⇒ Person.find(personId).nonEmpty))({
+        (personId: Long) ⇒ personService.find(personId).nonEmpty))({
         (id, event_id, person_id) ⇒
           Participant(id = None, event_id, person_id, evaluationId = None, organisation = None, comment = None)
       })({
@@ -131,3 +131,5 @@ object ParticipantsApi extends ApiAuthentication {
   }
 
 }
+
+object ParticipantsApi extends ParticipantsApi with Services
