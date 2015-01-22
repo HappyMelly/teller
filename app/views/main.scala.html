@@ -23,54 +23,54 @@
                 <a class="navbar-brand" href="/">Happy Melly</a>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
-                    @if(maybeUser.isDefined) {
+                      @restrict(handler, List(as(Editor.toString))) {
                         <li @if(menu == "orgs") {
-                            class="active"}><a href="@routes.Organisations.index()">Organizations</a></li>
+                          class="active"}><a href="@routes.Organisations.index()">
+                          Organizations</a></li>
                         <li @if(menu == "people") {
-                            class="active"}><a href="@routes.People.index()">People</a></li>
-                        <li @if(menu == "brands") {
-                            class="active"}><a href="@routes.Brands.index()">Brands</a></li>
-                        <li @if(menu == "products") {
-                            class="active"}><a href="@routes.Products.index()">Products</a></li>
-                        @restrict(handler, List(as(Editor.toString))) {
-                            <li @if(menu == "finance") {
-                                class="active"}><a href="@routes.BookingEntries.index()">
-                                Finance</a></li>
-                        }
-                        <li @if(menu == "events") {
-                            class="active"}><a href="@routes.Events.index()">Events</a></li>
-                        <li @if(menu == "participants") {
-                            class="active"}><a href="@routes.Participants.index()">Participants</a></li>
-                    }
+                          class="active"}><a href="@routes.People.index()">
+                          People</a></li>
+                      }
+                      <li @if(menu == "brands") {
+                          class="active"}><a href="@routes.Brands.index()">Brands</a></li>
+                      <li @if(menu == "products") {
+                          class="active"}><a href="@routes.Products.index()">Products</a></li>
+                      @restrict(handler, List(as(Editor.toString))) {
+                          <li @if(menu == "finance") {
+                              class="active"}><a href="@routes.BookingEntries.index()">
+                              Finance</a></li>
+                      }
+                      <li @if(menu == "events") {
+                          class="active"}><a href="@routes.Events.index()">Events</a></li>
+                      <li @if(menu == "participants") {
+                          class="active"}><a href="@routes.Participants.index()">Participants</a></li>
                     </ul>
-                    @maybeUser.map { user =>
-                        <ul class="nav navbar-nav navbar-right">
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    @user.fullName
-                                <b class="caret"></b>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="@routes.Dashboard.profile()">
-                                        <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
-                                    @restrict(handler, List(as(Editor.toString))) {
-                                        <li class="divider"></li>
-                                        <li><a href="@routes.Dashboard.about()">About</a></li>
-                                        <li><a href="@routes.Dashboard.api()">
-                                            API (v1)</a></li>
-                                        <li><a href="@routes.Administration.settings()">
-                                            Settings</a></li>
-                                        <li><a href="@routes.Translations.index()">
-                                            Translations</a></li>
-                                    }
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                @maybeUser.map{ user => user.fullName }.getOrElse { "" }
+                            <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="@routes.Dashboard.profile()">
+                                    <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
+                                @restrict(handler, List(as(Editor.toString))) {
                                     <li class="divider"></li>
-                                    <li>
-                                        <a href="@securesocial.controllers.routes.LoginPage.logout()">
-                                            <i class="glyphicon glyphicon-off"></i>&nbsp;&nbsp;&nbsp;Sign out</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    }
+                                    <li><a href="@routes.Dashboard.about()">About</a></li>
+                                    <li><a href="@routes.Dashboard.api()">
+                                        API (v1)</a></li>
+                                    <li><a href="@routes.Administration.settings()">
+                                        Settings</a></li>
+                                    <li><a href="@routes.Translations.index()">
+                                        Translations</a></li>
+                                }
+                                <li class="divider"></li>
+                                <li>
+                                    <a href="@securesocial.controllers.routes.LoginPage.logout()">
+                                        <i class="glyphicon glyphicon-off"></i>&nbsp;&nbsp;&nbsp;Sign out</a></li>
+                            </ul>
+                        </li>
+                    </ul>
                 </div> <!--/.navbar-collapse -->
             </div>
         </div>
