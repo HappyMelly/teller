@@ -109,6 +109,24 @@ object EventHelper {
     event
   }
 
+  def future(id: Long, plusDays: Int): Event = {
+    val event = makeEvent(id = Some(id),
+      title = Some(id.toString),
+      startDate = Some(LocalDate.now().plusDays(plusDays)),
+      endDate = Some(LocalDate.now().plusDays(plusDays + 2)))
+    event.facilitators_=(List[Person](PersonHelper.one()))
+    event
+  }
+
+  def past(id: Long, minusDays: Int): Event = {
+    val event = makeEvent(id = Some(id),
+      title = Some(id.toString),
+      startDate = Some(LocalDate.now().minusDays(minusDays - 2)),
+      endDate = Some(LocalDate.now().minusDays(minusDays)))
+    event.facilitators_=(List[Person](PersonHelper.one()))
+    event
+  }
+
   def oneAsJson: JsValue = Json.obj(
     "id" -> 1,
     "title" -> "One",

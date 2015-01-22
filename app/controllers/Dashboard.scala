@@ -24,7 +24,7 @@
 
 package controllers
 
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.LocalDate
 import play.api.mvc._
 import models.UserRole.Role._
 import models._

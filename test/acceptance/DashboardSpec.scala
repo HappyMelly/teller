@@ -25,14 +25,16 @@
 package acceptance
 
 import controllers.{ Dashboard, Security }
+import helpers.EventHelper
 import integration.PlayAppSpec
+import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.Helpers._
-import stubs.StubLoginIdentity
+import stubs.{ StubEventService, FakeServices, StubLoginIdentity }
 
 import scala.concurrent.Future
 
-class TestDashboard() extends Dashboard with Security
+class TestDashboard() extends Dashboard with Security with FakeServices
 
 class DashboardSpec extends PlayAppSpec {
   def setupDb() {}
@@ -40,17 +42,21 @@ class DashboardSpec extends PlayAppSpec {
 
   override def is = s2"""
 
-  About page should
-    not be visible to Viewer                  $e1
-    and be visible to Editor                  $e2
+    About page should
+      not be visible to Viewer                  $e1
+      and be visible to Editor                  $e2
 
-  API page should
-    not be visible to Viewer                  $e3
-    and be visible to Editor                  $e4
+    API page should
+      not be visible to Viewer                  $e3
+      and be visible to Editor                  $e4
 
-  Activity stream on the dashboard should
-    not be visible to Viewer                  $e5
-    and be visible to Editor                  $e6
+    Activity stream on the dashboard should
+      not be visible to Viewer                  $e5
+      and be visible to Editor                  $e6
+
+    On facilitator's dashboard should be
+      three nearest future events               $e7
+      10 latest evaluations                     $e8
   """
 
   def e1 = {
@@ -101,5 +107,51 @@ class DashboardSpec extends PlayAppSpec {
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Latest activity")
+  }
+
+  def e7 = {
+    new MockContext {
+      //@TODO use FakeSecurity here
+      val identity = StubLoginIdentity.viewer
+      val request = prepareSecuredRequest(identity, "/")
+
+      val events = List(EventHelper.future(1, 1), EventHelper.future(2, 2),
+        EventHelper.future(3, 3), EventHelper.future(4, 4),
+        EventHelper.past(5, 3), EventHelper.past(6, 2))
+      val service = stub[StubEventService]
+      (service.findByFacilitator _).when(1L, None, *, *, *).returns(events)
+
+      val controller = new TestDashboard()
+      controller.eventService_=(service)
+      val result: Future[SimpleResult] = controller.index().apply(request)
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("Upcoming events")
+      contentAsString(result) must contain("/event/1")
+      contentAsString(result) must contain("/event/2")
+      contentAsString(result) must contain("/event/3")
+      contentAsString(result) must not contain "/event/4"
+      contentAsString(result) must not contain "/event/5"
+      contentAsString(result) must not contain "/event/6"
+    }
+  }
+
+  def e8 = {
+    new MockContext {
+      //@TODO use FakeSecurity here
+      val identity = StubLoginIdentity.viewer
+      val request = prepareSecuredRequest(identity, "/")
+
+      val events = List(EventHelper.past(1, 1), EventHelper.past(2, 2),
+        EventHelper.past(3, 3), EventHelper.past(4, 4),
+        EventHelper.past(5, 3), EventHelper.past(6, 2))
+      val service = stub[StubEventService]
+      (service.findByFacilitator _).when(1L, None, *, *, *).returns(events)
+
+      val controller = new TestDashboard()
+      controller.eventService_=(service)
+      val result: Future[SimpleResult] = controller.index().apply(request)
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("Latest evaluations")
+    }
   }
 }

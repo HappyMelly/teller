@@ -1,9 +1,9 @@
 @(title: String,
-    menu: String,
-    maybeUser: Option[securesocial.core.Identity])(
-    content: Html)(implicit flash: Flash,
-        request: Request[Any],
-        handler: AuthorisationHandler)
+  menu: String,
+  maybeUser: Option[securesocial.core.Identity])(
+  content: Html)(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
@@ -11,84 +11,84 @@
 
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>@title - Happy Melly</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        @head()
-        <script src="@routes.Assets.at("main.js")" type="text/javascript"></script>
-    </head>
-    <body class='@title.split(" ").last.toLowerCase'>
-        <div class="navbar navbar-inverse navbar-fixed-top" role="nagivation">
-            <div class="container">
-                <a class="navbar-brand" href="/">Happy Melly</a>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                      @restrict(handler, List(as(Editor.toString))) {
-                        <li @if(menu == "orgs") {
-                          class="active"}><a href="@routes.Organisations.index()">
-                          Organizations</a></li>
-                        <li @if(menu == "people") {
-                          class="active"}><a href="@routes.People.index()">
-                          People</a></li>
-                      }
-                      <li @if(menu == "brands") {
-                          class="active"}><a href="@routes.Brands.index()">Brands</a></li>
-                      <li @if(menu == "products") {
-                          class="active"}><a href="@routes.Products.index()">Products</a></li>
-                      @restrict(handler, List(as(Editor.toString))) {
-                          <li @if(menu == "finance") {
-                              class="active"}><a href="@routes.BookingEntries.index()">
-                              Finance</a></li>
-                      }
-                      <li @if(menu == "events") {
-                          class="active"}><a href="@routes.Events.index()">Events</a></li>
-                      <li @if(menu == "participants") {
-                          class="active"}><a href="@routes.Participants.index()">Participants</a></li>
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                @maybeUser.map{ user => user.fullName }.getOrElse { "" }
-                            <b class="caret"></b>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a href="@routes.Dashboard.profile()">
-                                    <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
-                                @restrict(handler, List(as(Editor.toString))) {
-                                    <li class="divider"></li>
-                                    <li><a href="@routes.Dashboard.about()">About</a></li>
-                                    <li><a href="@routes.Dashboard.api()">
-                                        API (v1)</a></li>
-                                    <li><a href="@routes.Administration.settings()">
-                                        Settings</a></li>
-                                    <li><a href="@routes.Translations.index()">
-                                        Translations</a></li>
-                                }
-                                <li class="divider"></li>
-                                <li>
-                                    <a href="@securesocial.controllers.routes.LoginPage.logout()">
-                                        <i class="glyphicon glyphicon-off"></i>&nbsp;&nbsp;&nbsp;Sign out</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div> <!--/.navbar-collapse -->
-            </div>
-        </div>
-        <div class="container">
-            @alert(alertType: String) = {
-              @flash.get(alertType).map { message =>
-                  <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-                      <button type="button" class="close" data-dismiss="alert">&times;</button>
-                      @message
-                  </div>
-              }
+  <head>
+    <title>@title - Happy Melly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @head()
+    <script src="@routes.Assets.at("main.js")" type="text/javascript"></script>
+  </head>
+  <body class='@title.split(" ").last.toLowerCase'>
+      <div class="navbar navbar-inverse navbar-fixed-top" role="nagivation">
+          <div class="container">
+              <a class="navbar-brand" href="/">Happy Melly</a>
+              <div class="navbar-collapse collapse">
+                  <ul class="nav navbar-nav">
+                    @restrict(handler, List(as(Editor.toString))) {
+                      <li @if(menu == "orgs") {
+                        class="active"}><a href="@routes.Organisations.index()">
+                        Organizations</a></li>
+                      <li @if(menu == "people") {
+                        class="active"}><a href="@routes.People.index()">
+                        People</a></li>
+                    }
+                    <li @if(menu == "brands") {
+                        class="active"}><a href="@routes.Brands.index()">Brands</a></li>
+                    <li @if(menu == "products") {
+                        class="active"}><a href="@routes.Products.index()">Products</a></li>
+                    @restrict(handler, List(as(Editor.toString))) {
+                        <li @if(menu == "finance") {
+                            class="active"}><a href="@routes.BookingEntries.index()">
+                            Finance</a></li>
+                    }
+                    <li @if(menu == "events") {
+                        class="active"}><a href="@routes.Events.index()">Events</a></li>
+                    <li @if(menu == "participants") {
+                        class="active"}><a href="@routes.Participants.index()">Participants</a></li>
+                  </ul>
+                  <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                              @maybeUser.map{ user => user.fullName }.getOrElse { "" }
+                          <b class="caret"></b>
+                          </a>
+                          <ul class="dropdown-menu">
+                              <li><a href="@routes.Dashboard.profile()">
+                                  <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
+                              @restrict(handler, List(as(Editor.toString))) {
+                                  <li class="divider"></li>
+                                  <li><a href="@routes.Dashboard.about()">About</a></li>
+                                  <li><a href="@routes.Dashboard.api()">
+                                      API (v1)</a></li>
+                                  <li><a href="@routes.Administration.settings()">
+                                      Settings</a></li>
+                                  <li><a href="@routes.Translations.index()">
+                                      Translations</a></li>
+                              }
+                              <li class="divider"></li>
+                              <li>
+                                  <a href="@securesocial.controllers.routes.LoginPage.logout()">
+                                      <i class="glyphicon glyphicon-off"></i>&nbsp;&nbsp;&nbsp;Sign out</a></li>
+                          </ul>
+                      </li>
+                  </ul>
+              </div> <!--/.navbar-collapse -->
+          </div>
+      </div>
+      <div class="container">
+          @alert(alertType: String) = {
+            @flash.get(alertType).map { message =>
+                <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    @message
+                </div>
             }
-            @alert("error")
-            @alert("success")
-            @content
-        </div>
-        <footer>
-            <div class="container"></div>
-        </footer>
-    </body>
+          }
+          @alert("error")
+          @alert("success")
+          @content
+      </div>
+      <footer>
+          <div class="container"></div>
+      </footer>
+  </body>
 </html>
