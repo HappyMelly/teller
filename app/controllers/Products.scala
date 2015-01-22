@@ -43,7 +43,7 @@ import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 
-object Products extends Controller with Security {
+trait Products extends Controller with Security with Services {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -87,7 +87,7 @@ object Products extends Controller with Security {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      val products = models.Product.findAll
+      val products = productService.findAll
       Ok(views.html.product.index(request.user, products))
   }
 
@@ -308,3 +308,6 @@ object Products extends Controller with Security {
   }
 
 }
+
+object Products extends Products with Security with Services
+

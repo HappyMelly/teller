@@ -41,9 +41,9 @@ class StubLoginIdentity(
   override def person = PersonHelper.one()
 
   override def userAccount = {
-    val account = new UserAccount(Some(1L), person.id.get, "admin",
+    val account = new UserAccount(Some(1L), person.id.get, "viewer",
       None, None, None, None)
-    account.roles_=(UserRole.forName("admin").list)
+    account.roles_=(UserRole.forName("viewer").list)
     account
   }
 

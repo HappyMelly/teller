@@ -58,21 +58,6 @@ case class ContributionView(product: Product, contribution: Contribution)
 object Contribution {
 
   /**
-   * Returns a list of all contributions for the given contributor.
-   */
-  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession { implicit session: Session ⇒
-
-    val query = for {
-      contribution ← Contributions if contribution.contributorId === contributorId && contribution.isPerson === isPerson
-      product ← contribution.product
-    } yield (contribution, product)
-
-    query.sortBy(_._2.title.toLowerCase).list.map {
-      case (contribution, product) ⇒ ContributionView(product, contribution)
-    }
-  }
-
-  /**
    * Returns a list of contributors for the given product
    */
   def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session: Session ⇒

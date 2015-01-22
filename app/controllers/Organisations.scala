@@ -25,9 +25,9 @@
 package controllers
 
 import Forms._
-import models.{ Person, Activity, Organisation, Contribution, Product }
+import models.service.ContributionService
+import models.{ Person, Activity, Organisation, Product }
 import play.api.mvc._
-import securesocial.core.{ SecuredRequest, SecureSocial }
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -35,10 +35,9 @@ import org.joda.time.DateTime
 import models.UserRole.Role._
 import models.OrganisationCategory
 import securesocial.core.SecuredRequest
-import scala.Some
 import play.api.data.format.Formatter
 
-object Organisations extends Controller with Security {
+trait Organisations extends Controller with Security with Services {
 
   /**
    * Formatter used to define a form mapping for the `OrganisationCategory` enumeration.
@@ -153,8 +152,8 @@ object Organisations extends Controller with Security {
         organisation ⇒
           val members = organisation.members
           val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-          val contributions = Contribution.contributions(id, isPerson = false)
-          val products = Product.findAll
+          val contributions = contributionService.contributions(id, isPerson = false)
+          val products = productService.findAll
 
           Ok(views.html.organisation.details(request.user, organisation,
             members, otherPeople,
@@ -203,3 +202,5 @@ object Organisations extends Controller with Security {
   }
 
 }
+
+object Organisations extends Organisations with Security with Services

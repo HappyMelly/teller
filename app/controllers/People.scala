@@ -285,17 +285,18 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒
       personService.find(id) map { person ⇒
         val memberships = person.memberships
-        val otherOrganisations = Organisation.findActive.filterNot(organisation ⇒ memberships.contains(organisation))
-        val licenses = License.licenses(id)
-        val accountRole = UserAccount.findRole(id)
-        val contributions = Contribution.contributions(id, isPerson = true)
-        val products = Product.findAll
+        val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
+          memberships.contains(organisation))
+        val licenses = licenseService.licenses(id)
+        val accountRole = userAccountService.findRole(id)
+        val contributions = contributionService.contributions(id, isPerson = true)
+        val products = productService.findAll
 
         Ok(views.html.person.details(request.user, person,
           memberships, otherOrganisations,
           contributions, products,
           licenses, accountRole,
-          UserAccount.findDuplicateIdentity(person)))
+          userAccountService.findDuplicateIdentity(person)))
       } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }

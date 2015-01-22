@@ -24,13 +24,25 @@
  */
 package models.service
 
-import models.Person
-import models.database.People
+import models.{ Organisation, Person }
+import models.database.{ OrganisationMemberships, People }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 class PersonService {
+
+  /**
+   * Returns list of organizations this person is a member of
+   * @param person Person object
+   */
+  def memberships(person: Person): List[Organisation] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      membership ← OrganisationMemberships if membership.personId === person.id.get
+      organisation ← membership.organisation
+    } yield organisation
+    query.sortBy(_.name.toLowerCase).list
+  }
 
   /**
    * Returns person if it exists, otherwise - None

@@ -149,21 +149,6 @@ object License {
   }
 
   /**
-   * Returns a list of content licenses for the given person.
-   */
-  def licenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒
-
-    val query = for {
-      license ← Licenses if license.licenseeId === personId
-      brand ← license.brand
-    } yield (license, brand)
-
-    query.sortBy(_._2.name.toLowerCase).list.map {
-      case (license, brand) ⇒ LicenseView(brand, license)
-    }
-  }
-
-  /**
    * Returns a list of active content licenses for the given person.
    */
   def activeLicenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒

@@ -26,6 +26,7 @@ package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
+import models.service.ContributionService
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -79,8 +80,8 @@ case class Organisation(
   /**
    * Returns a list of this organisation's contributions.
    */
-  lazy val contributions: List[ContributionView] = DB.withSession { implicit session: Session ⇒
-    Contribution.contributions(this.id.get, false)
+  lazy val contributions: List[ContributionView] = {
+    ContributionService.get.contributions(this.id.get, isPerson = false)
   }
 
   /**
@@ -143,8 +144,5 @@ object Organisation {
     query.filter(_.active).sortBy(_.name.toLowerCase).list
   }
 
-  def findActive: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    Query(Organisations).filter(_.active === true).sortBy(_.name.toLowerCase).list
-  }
 }
 

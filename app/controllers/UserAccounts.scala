@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.service.UserAccountService
 import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -56,7 +57,7 @@ trait UserAccounts extends Controller with Security with Services {
             Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
             val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
             if (role.isDefined) {
-              if (UserAccount.findRole(personId).isDefined) {
+              if (UserAccountService.get.findRole(personId).isDefined) {
                 UserAccount.updateRole(personId, role.get)
               } else {
                 val account = UserAccount(None, personId, role.get, person.socialProfile.twitterHandle,

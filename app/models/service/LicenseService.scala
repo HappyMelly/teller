@@ -22,24 +22,35 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service._
+import models.LicenseView
+import models.database.Licenses
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class LicenseService {
 
-  def eventService: EventService = EventService.get
+  /**
+   * Returns a list of content licenses for the given person
+   * @param personId Person identifier
+   */
+  def licenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒
 
-  def personService: PersonService = PersonService.get
+    val query = for {
+      license ← Licenses if license.licenseeId === personId
+      brand ← license.brand
+    } yield (license, brand)
 
-  def orgService: OrganisationService = OrganisationService.get
+    query.sortBy(_._2.name.toLowerCase).list.map {
+      case (license, brand) ⇒ LicenseView(brand, license)
+    }
+  }
+}
 
-  def licenseService: LicenseService = LicenseService.get
+object LicenseService {
+  private val instance = new LicenseService
 
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
+  def get: LicenseService = instance
 }
