@@ -1,4 +1,6 @@
-@(user: LoginIdentity)(implicit flash: Flash)
+@(user: LoginIdentity)(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler)
 
 @main("API", "admin", Some(user)) {
 

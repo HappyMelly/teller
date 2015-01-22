@@ -1,6 +1,6 @@
-@()(implicit flash: Flash)
+@()(implicit flash: Flash, request: Request[Any])
 
-@main(Messages("securesocial.notAuthorized.title"), "", None) {
+@secure.unauthorized(Messages("securesocial.notAuthorized.title")) {
     <div class="page-header">
         <h1>@Messages("securesocial.notAuthorized.title")</h1>
     </div>

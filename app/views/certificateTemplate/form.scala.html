@@ -1,7 +1,10 @@
 @(user: securesocial.core.Identity,
-        brand: Brand,
-        languages: Map[String, String],
-        form: Form[FakeCertificateTemplate])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+    brand: Brand,
+    languages: Map[String, String],
+    form: Form[FakeCertificateTemplate])(implicit flash: Flash,
+        request: Request[Any],
+        token: play.filters.csrf.CSRF.Token,
+        handler: AuthorisationHandler)
 
 @import helper.CSRF
 @import views.ViewHelpers._

@@ -7,7 +7,10 @@
   showExistingPersonForm: Boolean = true,
   currentBrand: Option[String],
   currentEvent: Option[Long],
-  ref: Option[String])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  ref: Option[String])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries

@@ -2,7 +2,10 @@
   translation: Option[Translation],
   language: String,
   en: Translation,
-  form: Form[Translation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Translation])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Languages

@@ -1,7 +1,10 @@
 @(user: securesocial.core.Identity,
   id: Option[Long],
   title: Option[String],
-  form: Form[Product])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Product])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import models.service.ProductService

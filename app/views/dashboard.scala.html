@@ -1,4 +1,8 @@
-@(user: securesocial.core.Identity, activityStream: List[Activity])(implicit flash: Flash)
+@(user: securesocial.core.Identity,
+    activityStream: List[Activity])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler)
+
 @import templates.Formatters._
 
 @main("Home", "", Some(user)) {

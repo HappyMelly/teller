@@ -1,11 +1,14 @@
 @(user: securesocial.core.Identity,
-        evaluation: Option[Evaluation],
-        form: Form[Evaluation],
-        events: List[Event],
-        eventId: Option[Long],
-        participantId: Option[Long],
-        en: Translation
-        )(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+    evaluation: Option[Evaluation],
+    form: Form[Evaluation],
+    events: List[Event],
+    eventId: Option[Long],
+    participantId: Option[Long],
+    en: Translation
+    )(implicit flash: Flash,
+        request: Request[Any],
+        token: play.filters.csrf.CSRF.Token,
+        handler: AuthorisationHandler)
 
 @import helper.CSRF
 @import views.Evaluations

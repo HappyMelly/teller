@@ -1,6 +1,10 @@
-@(user: securesocial.core.Identity, translations: Map[String, Translation])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
-@import helper.CSRF
-@import views.Languages
+@(user: securesocial.core.Identity,
+    translations: Map[String, Translation])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+    @import views.Languages
 
 @main("Translations", "admin", Some(user)) {
 

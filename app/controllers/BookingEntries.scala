@@ -94,7 +94,7 @@ object BookingEntries extends Controller with Security {
   /**
    * Renders the page for adding a new booking entry.
    */
-  def add = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -156,7 +156,7 @@ object BookingEntries extends Controller with Security {
       richMessage = true)
   }
 
-  def details(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
@@ -177,7 +177,7 @@ object BookingEntries extends Controller with Security {
    * @param key The S3 object key for the uploaded file
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         // Update entity
@@ -202,7 +202,7 @@ object BookingEntries extends Controller with Security {
    * @param bookingNumber the id of the BookingEntry to remove the attachment from
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
@@ -218,7 +218,7 @@ object BookingEntries extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  def edit(bookingNumber: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def edit(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         if (bookingEntry.editable) {
@@ -253,7 +253,7 @@ object BookingEntries extends Controller with Security {
       }.getOrElse(NotFound)
   }
 
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Ok(views.html.booking.index(request.user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
@@ -357,8 +357,13 @@ object BookingEntries extends Controller with Security {
   }
 
   // Redirect or re-render according to which submit button was clicked.
-  private def nextPageResult(next: Option[String], successMessage: String, form: Form[BookingEntry],
-    currentUser: UserAccount, user: Identity)(implicit request: SecuredRequest[AnyContent]): SimpleResult = {
+  private def nextPageResult(
+    next: Option[String],
+    successMessage: String,
+    form: Form[BookingEntry],
+    currentUser: UserAccount,
+    user: Identity)(implicit request: SecuredRequest[AnyContent],
+      handler: AuthorisationHandler): SimpleResult = {
 
     next match {
       case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)

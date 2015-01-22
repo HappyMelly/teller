@@ -54,7 +54,7 @@ $(document).ready( function() {
     });
     var hash = window.location.hash.substring(1);
     if (!hash) {
-        hash = 'finance';
+        hash = 'organizations';
     }
     $('#activities a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();

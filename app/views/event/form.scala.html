@@ -3,7 +3,10 @@
   brands: List[Brand],
   currentUserId: Long,
   emptyForm: Boolean,
-  form: Form[Event])(implicit flash: Flash, token: play.filters.csrf.CSRF.Token)
+  form: Form[Event])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.Countries
