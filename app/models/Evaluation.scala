@@ -148,25 +148,6 @@ object Evaluation {
     Query(Evaluations).filter(_.id === id).firstOption
   }
 
-  /**
-   * Retrieve the evaluations for a set of events
-   * @param eventIds a list of event ids
-   * @return
-   */
-  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
-    if (eventIds.length > 0) {
-      val baseQuery = for {
-        e ← Events if e.id inSet eventIds
-        part ← Participants if part.eventId === e.id
-        p ← People if p.id === part.personId
-        ev ← Evaluations if ev.id === part.evaluationId
-      } yield (e, p, ev)
-      baseQuery.list
-    } else {
-      List()
-    }
-  }
-
   def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).sortBy(_.created).list
   }

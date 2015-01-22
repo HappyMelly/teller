@@ -22,26 +22,37 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service._
+import models.database.{ Evaluations, People, Participants, Events }
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class EvaluationService {
 
-  def eventService: EventService = EventService.get
+  /**
+   * Returns a list of evaluations for the given events
+   * @param eventIds a list of event ids
+   */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    if (eventIds.length > 0) {
+      val baseQuery = for {
+        e ← Events if e.id inSet eventIds
+        part ← Participants if part.eventId === e.id
+        p ← People if p.id === part.personId
+        ev ← Evaluations if ev.id === part.evaluationId
+      } yield (e, p, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
+  }
 
-  def personService: PersonService = PersonService.get
+}
 
-  def orgService: OrganisationService = OrganisationService.get
+object EvaluationService {
+  private val instance = new EvaluationService
 
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
-
-  def evaluationService: EvaluationService = EvaluationService.get
+  def get: EvaluationService = instance
 }

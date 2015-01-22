@@ -65,7 +65,7 @@ trait Dashboard extends Controller with Security with Services {
         slice(0, 3)
       val pastEvents = events.
         filter(_.schedule.end.toString < LocalDate.now().toString)
-      val evaluations = Evaluation.
+      val evaluations = evaluationService.
         findByEvents(pastEvents.map(_.id.get)).
         sortBy(_._3.created.toString())(Ordering[String].reverse).
         slice(0, 10)
