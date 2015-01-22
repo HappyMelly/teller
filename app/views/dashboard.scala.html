@@ -61,14 +61,23 @@
             <th>Participant</th>
             <th>Event</th>
             <th>Location</th>
-            <th>Dates</th>
             <th>General Impr</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
         @for(evaluation <- evaluations) {
           <tr>
             <td>
+              @if(evaluation._3.status.id == 0) {
+                <span class="badge"><i class="glyphicon-white glyphicon glyphicon-hand-right"></i></span>
+              } else {
+                @if(evaluation._3.status.id == 1) {
+                  <span class="badge alert-success"><i class="glyphicon-white glyphicon glyphicon-thumbs-up"></i></span>
+                } else {
+                  <span class="badge alert-warning"><i class="glyphicon-white glyphicon glyphicon-thumbs-down"></i></span>
+                }
+              }
             </td>
             <td>
               <a href="@routes.People.details(evaluation._2.id.get).url">
@@ -86,14 +95,12 @@
               @evaluation._1.location.city
             </td>
             <td>
-              @evaluation._1.schedule.start.toString / @evaluation._1.schedule.end.toString
-            </td>
-            <td>
               <span class="badge @if(evaluation._3.question6 < 5){alert-danger} else {
                 @if(evaluation._3.question6 < 8) {alert-warning} else {alert-success}
               }">
               @evaluation._3.question6</span>
             </td>
+            <td><a href="@routes.Evaluations.details(evaluation._3.id.get).url">view</a></td>
           </tr>
         }
         </tbody>
