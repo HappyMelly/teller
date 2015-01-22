@@ -23,28 +23,11 @@
  */
 package stubs
 
-import helpers.PersonHelper
-import models.{ UserRole, UserAccount }
-import securesocial.core.AuthenticationMethod
-import securesocial.core.IdentityId
+import models.{ Person, Organisation }
+import models.service.PersonService
 
-class StubLoginIdentity(
-  override val uid: Option[Long],
-  override val identityId: IdentityId,
-  override val firstName: String,
-  override val lastName: String,
-  override val fullName: String,
-  override val email: Option[String]) extends models.LoginIdentity(uid, identityId,
-  firstName, lastName, fullName, email, None, AuthenticationMethod.OAuth2, None,
-  None, None, "123", None, None, None, None) {
+class StubPersonService extends PersonService {
 
-  override def person = PersonHelper.one()
-
-  override def userAccount = {
-    val account = new UserAccount(Some(1L), person.id.get, "viewer",
-      None, None, None, None)
-    account.roles_=(UserRole.forName("viewer").list)
-    account
-  }
+  override def memberships(person: Person): List[Organisation] = List()
 
 }

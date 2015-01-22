@@ -27,7 +27,6 @@ package acceptance
 import controllers.{ People, Security }
 import helpers.PersonHelper
 import integration.PlayAppSpec
-import models.service.PersonService
 import org.joda.time.DateTime
 import org.scalamock.specs2.MockContext
 import play.api.cache.Cache
@@ -36,7 +35,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.Play.current
 import securesocial.core.{ IdentityId, Authenticator }
-import stubs.FakeServices
+import stubs.{ StubPersonService, FakeServices }
 
 import scala.concurrent.Future
 
@@ -64,7 +63,7 @@ class PeopleSpec extends PlayAppSpec {
   def e2 = {
     new MockContext {
       val controller = new TestPeople()
-      val mockService = mock[PersonService]
+      val mockService = mock[StubPersonService]
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
@@ -83,7 +82,7 @@ class PeopleSpec extends PlayAppSpec {
     new MockContext {
       val person = PersonHelper.one()
       val controller = new TestPeople()
-      val mockService = mock[PersonService]
+      val mockService = mock[StubPersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val identity = new IdentityId("123", "twitter")

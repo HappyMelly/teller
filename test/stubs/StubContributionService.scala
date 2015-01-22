@@ -17,34 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional
+ * If you have questions concerning this license or the applicable additional 
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 package stubs
 
-import helpers.PersonHelper
-import models.{ UserRole, UserAccount }
-import securesocial.core.AuthenticationMethod
-import securesocial.core.IdentityId
+import models.ContributionView
+import models.service.ContributionService
 
-class StubLoginIdentity(
-  override val uid: Option[Long],
-  override val identityId: IdentityId,
-  override val firstName: String,
-  override val lastName: String,
-  override val fullName: String,
-  override val email: Option[String]) extends models.LoginIdentity(uid, identityId,
-  firstName, lastName, fullName, email, None, AuthenticationMethod.OAuth2, None,
-  None, None, "123", None, None, None, None) {
+class StubContributionService extends ContributionService {
 
-  override def person = PersonHelper.one()
-
-  override def userAccount = {
-    val account = new UserAccount(Some(1L), person.id.get, "viewer",
-      None, None, None, None)
-    account.roles_=(UserRole.forName("viewer").list)
-    account
-  }
-
+  override def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = List()
 }

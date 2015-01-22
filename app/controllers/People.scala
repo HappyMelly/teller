@@ -298,7 +298,8 @@ trait People extends Controller with Security with Services {
           licenses, accountRole,
           userAccountService.findDuplicateIdentity(person)))
       } getOrElse {
-        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+        Redirect(routes.People.index()).flashing(
+          "error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
