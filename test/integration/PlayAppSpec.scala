@@ -24,18 +24,25 @@
  */
 package integration
 
+import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.specification._
-import play.api.test.FakeApplication
+import play.api.cache.Cache
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.Helpers._
+import play.api.test.{ FakeHeaders, FakeRequest, FakeApplication }
 import play.api.Play
+import play.api.Play.current
+import play.filters.csrf.CSRF
+import securesocial.core.{ Authenticator, IdentityId }
 
 trait PlayAppSpec extends Specification with BeforeAllAfterAll {
   sequential
   lazy val app: FakeApplication = {
     val conf = Map(
       "db.default.url" -> "jdbc:mysql://localhost/mellytest",
-      "logger.play" -> "INFO",
-      "logger.application" -> "DEBUG",
+      "logger.play" -> "ERROR",
+      "logger.application" -> "ERROR",
       "ehcacheplugin" -> "enabled")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
       "services.LoginIdentityService")
@@ -58,6 +65,26 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
 
   def setupDb()
   def cleanupDb()
+
+  /**
+   * Returns a secured request object and sets authenticator object to cache
+   *
+   * @param identity Identity object
+   * @param url Path
+   */
+  def prepareSecuredRequest(identity: IdentityId, url: String) = {
+    val authenticator = new Authenticator("auth.1", identity,
+      DateTime.now().minusHours(1),
+      DateTime.now(),
+      DateTime.now().plusHours(5))
+    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(GET,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag).withCookies(authenticator.toCookie)
+  }
 }
 import org.specs2.specification.Step
 

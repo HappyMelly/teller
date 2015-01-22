@@ -28,7 +28,7 @@ import play.api.mvc._
 import models.UserRole.Role._
 import models.{ LoginIdentity, Activity }
 
-object Dashboard extends Controller with Security {
+trait Dashboard extends Controller with Security {
 
   /**
    * About page - credits.
@@ -66,3 +66,6 @@ object Dashboard extends Controller with Security {
   }
 
 }
+
+object Dashboard extends Dashboard with Security
+
