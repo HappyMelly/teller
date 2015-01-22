@@ -1,4 +1,6 @@
 @(user: securesocial.core.Identity,
+  events: List[Event],
+  evaluations: List[(Event, Person, Evaluation)],
   activityStream: Option[List[Activity]])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
@@ -9,6 +11,95 @@
 @import templates.Formatters._
 
 @main("Home", "", Some(user)) {
+  @if(events.length > 0) {
+    <div class="col-md-10">
+      <h3>Upcoming events</h3>
+      <table id="events" class="datatables table table-bordered">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Location</th>
+            <th>Dates</th>
+            <th>Total hours</th>
+            <th>Confirmed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(event <- events) {
+            <tr>
+              <td>
+                <a href="@routes.Events.details(event.id.get).url">
+                  @event.title
+                </a>
+              </td>
+              <td>
+                <img align="absmiddle" width="16"
+                src="/assets/images/flags/16/@(event.location.countryCode.toLowerCase).png"/>
+                @event.location.city
+              </td>
+              <td>
+                @event.schedule.start.toString / @event.schedule.end.toString
+              </td>
+              <td>@event.schedule.totalHours</td>
+              <td>
+                <span class="label label-@if(event.confirmed){success}else{danger}">yes</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+    </div>
+  }
+  @if(evaluations.length > 0) {
+    <div class="col-md-10">
+      <h3>Latest evaluations</h3>
+      <table id="events" class="datatables table table-bordered">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Participant</th>
+            <th>Event</th>
+            <th>Location</th>
+            <th>Dates</th>
+            <th>General Impr</th>
+          </tr>
+        </thead>
+        <tbody>
+        @for(evaluation <- evaluations) {
+          <tr>
+            <td>
+            </td>
+            <td>
+              <a href="@routes.People.details(evaluation._2.id.get).url">
+                @evaluation._2.fullName
+              </a>
+            </td>
+            <td>
+              <a href="@routes.Events.details(evaluation._1.id.get).url">
+                @evaluation._1.title
+              </a>
+            </td>
+            <td>
+              <img align="absmiddle" width="16"
+              src="/assets/images/flags/16/@(evaluation._1.location.countryCode.toLowerCase).png"/>
+              @evaluation._1.location.city
+            </td>
+            <td>
+              @evaluation._1.schedule.start.toString / @evaluation._1.schedule.end.toString
+            </td>
+            <td>
+              <span class="badge @if(evaluation._3.question6 < 5){alert-danger} else {
+                @if(evaluation._3.question6 < 8) {alert-warning} else {alert-success}
+              }">
+              @evaluation._3.question6</span>
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  }
   @restrict(handler, List(as(Editor.toString))) {
     <div class="col-md-offset-7 col-md-5">
       <h4>Latest activity</h4>
