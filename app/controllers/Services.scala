@@ -42,4 +42,6 @@ trait Services {
   def contributionService: ContributionService = ContributionService.get
 
   def productService: ProductService = ProductService.get
+
+  def evaluationService: EvaluationService = EvaluationService.get
 }

@@ -32,7 +32,7 @@ import org.joda.time._
 import play.api.Play.current
 import play.mvc.Controller
 
-object Reports extends Controller with Security {
+trait Reports extends Controller with Security with Services {
 
   /**
    * Generate a XLSX report with evaluations (if they're available)
@@ -69,7 +69,7 @@ object Reports extends Controller with Security {
             }
           }
           val eventIds = events.map(e ⇒ e.id.get)
-          val evaluations = Evaluation.findByEvents(eventIds)
+          val evaluations = evaluationService.findByEvents(eventIds)
           val participants = if (status >= 0) {
             // no participant without an evaluation
             evaluations.filter(e ⇒ e._3.status.id == status).map(e ⇒ (e._1, e._2, Option(e._3)))
@@ -125,3 +125,5 @@ object Reports extends Controller with Security {
   }
 
 }
+
+object Reports extends Reports with Security with Services

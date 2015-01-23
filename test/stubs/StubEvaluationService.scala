@@ -18,27 +18,13 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
- * The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 package stubs
 
-import models.service.EventService
-import models.{ Person, Event }
-import helpers.{ PersonHelper, EventHelper }
-import org.joda.time.LocalDate
+import models.service.EvaluationService
 
-class StubEventService extends EventService {
+class StubEvaluationService extends EvaluationService {
 
-  override def find(id: Long): Option[Event] = id match {
-    case 1 ⇒
-      val event = EventHelper.make(
-        id = Some(1),
-        startDate = Some(LocalDate.parse("2015-01-20")),
-        endDate = Some(LocalDate.parse("2015-01-20")))
-      event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
-      Some(event)
-    case _ ⇒ None
-  }
 }

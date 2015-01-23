@@ -19,26 +19,40 @@
  *
  * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
- * The Netherlands, 3071 PR
+ * or in writing
+ * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
+package models.service
 
-import models.service.EventService
-import models.{ Person, Event }
-import helpers.{ PersonHelper, EventHelper }
-import org.joda.time.LocalDate
+import models.database.{ Evaluations, People, Participants, Events }
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-class StubEventService extends EventService {
+class EvaluationService {
 
-  override def find(id: Long): Option[Event] = id match {
-    case 1 ⇒
-      val event = EventHelper.make(
-        id = Some(1),
-        startDate = Some(LocalDate.parse("2015-01-20")),
-        endDate = Some(LocalDate.parse("2015-01-20")))
-      event.facilitators_=(List[Person](PersonHelper.one(), PersonHelper.two()))
-      Some(event)
-    case _ ⇒ None
+  /**
+   * Returns a list of evaluations for the given events
+   * @param eventIds a list of event ids
+   */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+    if (eventIds.length > 0) {
+      val baseQuery = for {
+        e ← Events if e.id inSet eventIds
+        part ← Participants if part.eventId === e.id
+        p ← People if p.id === part.personId
+        ev ← Evaluations if ev.id === part.evaluationId
+      } yield (e, p, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
   }
+
+}
+
+object EvaluationService {
+  private val instance = new EvaluationService
+
+  def get: EvaluationService = instance
 }

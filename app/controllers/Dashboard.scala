@@ -24,11 +24,12 @@
 
 package controllers
 
+import org.joda.time.LocalDate
 import play.api.mvc._
 import models.UserRole.Role._
-import models.{ LoginIdentity, Activity }
+import models._
 
-trait Dashboard extends Controller with Security {
+trait Dashboard extends Controller with Security with Services {
 
   /**
    * About page - credits.
@@ -56,7 +57,22 @@ trait Dashboard extends Controller with Security {
         Some(Activity.findAll)
       else
         None
-      Ok(views.html.dashboard(request.user, activity))
+      val events = eventService.findByFacilitator(
+        account.personId,
+        brand = None)
+      val upcomingEvents = events.
+        filter(_.schedule.end.toString >= LocalDate.now().toString).
+        slice(0, 3)
+      val pastEvents = events.
+        filter(_.schedule.end.toString < LocalDate.now().toString)
+      val evaluations = evaluationService.
+        findByEvents(pastEvents.map(_.id.get)).
+        sortBy(_._3.created.toString())(Ordering[String].reverse).
+        slice(0, 10)
+      Ok(views.html.dashboard(request.user,
+        upcomingEvents,
+        evaluations,
+        activity))
   }
 
   /**
@@ -71,5 +87,5 @@ trait Dashboard extends Controller with Security {
 
 }
 
-object Dashboard extends Dashboard with Security
+object Dashboard extends Dashboard with Security with Services
 

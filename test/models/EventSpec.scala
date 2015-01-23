@@ -44,7 +44,7 @@ class EventSpec extends PlayAppSpec {
     EventService.get.findAll.map(_.delete())
   }
 
-  lazy val event = EventHelper.makeEvent(
+  lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
@@ -67,7 +67,7 @@ class EventSpec extends PlayAppSpec {
     }
   }
 
-  val langEvent = EventHelper.makeEvent(
+  val langEvent = EventHelper.make(
     spokenLanguage = Option("DE"),
     secondSpokenLanguage = Option("EN"),
     materialsLanguage = Option("PT"))
@@ -83,7 +83,7 @@ class EventSpec extends PlayAppSpec {
       langEvent.spokenLanguages mustEqual List("German", "English")
     }
   }
-  val noMaterialsEvent = EventHelper.makeEvent(spokenLanguage = Option("EN"))
+  val noMaterialsEvent = EventHelper.make(spokenLanguage = Option("EN"))
   "Event" should {
     "have one spoken language" in {
       noMaterialsEvent.spokenLanguage mustEqual "English"
