@@ -1,6 +1,6 @@
 @(user: securesocial.core.Identity,
   canFacilitate: Boolean,
-  legalEntities: List[Organisation],
+  funders: List[Organisation],
   event: Event)(implicit
     request: Request[Any],
     flash: Flash,
@@ -141,7 +141,7 @@
                 <label for="invoiceBy" class="control-label">Invoiced By</label>
                 <select name="invoiceBy" class="form-control" id="invoiceBy">
                     <option value="">Choose an organisation</option>
-                    @legalEntities.map { entity =>
+                    @funders.map { entity =>
                         <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)) {selected}>@entity.name </option>
                     }
                 </select>

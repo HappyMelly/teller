@@ -288,11 +288,12 @@ object Events extends Controller with Security {
 
       EventService.find(id).map {
         event ⇒
-          val legalEntities = Organisation.find(legalEntitiesOnly = true)
+          //@TODO only funders must be retrieved
+          val funders = Organisation.findAll
           val user = request.user
           val acc = user.asInstanceOf[LoginIdentity].userAccount
           val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-          Ok(views.html.event.details(user, canFacilitate, legalEntities, event))
+          Ok(views.html.event.details(user, canFacilitate, funders, event))
       }.getOrElse(NotFound)
   }
 

@@ -136,13 +136,5 @@ object Organisation {
     Query(Organisations).sortBy(_.name.toLowerCase).list
   }
 
-  /**
-   * Returns a list of active organisations, optionally filtered to only include legal entities.
-   */
-  def find(legalEntitiesOnly: Boolean): List[Organisation] = DB.withSession { implicit session: Session ⇒
-    val query = if (legalEntitiesOnly) Query(Organisations).filter(_.category === OrganisationCategory.LegalEntity) else Query(Organisations)
-    query.filter(_.active).sortBy(_.name.toLowerCase).list
-  }
-
 }
 

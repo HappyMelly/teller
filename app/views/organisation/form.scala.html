@@ -29,11 +29,7 @@
         @html.text(form("province"), '_label -> "Province or state")
         @html.text(form("vatNumber"), '_label -> "VAT number")
         @html.text(form("registrationNumber"), '_label -> "Registration number")
-
-        @html.select(
-          form("category"),
-          ("", "None") +: models.OrganisationCategory.values.map(value => value.toString -> Messages(s"models.OrganisationCategory.${value.toString}")).toSeq, '_label -> "Category")
-
+        <input type="hidden" id="category" value=""/>
         @html.text(form("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
         @html.text(form("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
 

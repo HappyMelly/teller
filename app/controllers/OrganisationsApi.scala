@@ -58,7 +58,6 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "address" -> Json.toJson(address),
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
-        "category" -> organisation.category.map(_.toString).orNull,
         "website" -> organisation.webSite,
         "members" -> organisation.members,
         "contributions" -> organisation.contributions)
@@ -74,10 +73,8 @@ object OrganisationsApi extends Controller with ApiAuthentication {
     }.getOrElse(NotFound("Unknown organization"))
   }
 
-  /**
-   * Organisation list API.
-   */
-  def organisations(legalEntitiesOnly: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Organisation.find(legalEntitiesOnly.getOrElse(false))))
+  /** Returns a list of all organisations in JSON format */
+  def organisations = TokenSecuredAction { implicit request ⇒
+    Ok(Json.toJson(Organisation.findAll))
   }
 }
