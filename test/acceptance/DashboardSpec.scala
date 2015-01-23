@@ -25,12 +25,14 @@
 package acceptance
 
 import controllers.{ Dashboard, Security }
-import helpers.EventHelper
+import helpers.{ EvaluationHelper, PersonHelper, EventHelper }
 import integration.PlayAppSpec
+import models._
+import org.joda.time.DateTime
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.Helpers._
-import stubs.{ StubEventService, FakeServices, StubLoginIdentity }
+import stubs._
 
 import scala.concurrent.Future
 
@@ -141,17 +143,53 @@ class DashboardSpec extends PlayAppSpec {
       val identity = StubLoginIdentity.viewer
       val request = prepareSecuredRequest(identity, "/")
 
-      val events = List(EventHelper.past(1, 1), EventHelper.past(2, 2),
-        EventHelper.past(3, 3), EventHelper.past(4, 4),
-        EventHelper.past(5, 3), EventHelper.past(6, 2))
-      val service = stub[StubEventService]
-      (service.findByFacilitator _).when(1L, None, *, *, *).returns(events)
+      val evaluationService = stub[StubEvaluationService]
+      val evalStatus = EvaluationStatus.Pending
+      val evaluations: List[(Event, Person, Evaluation)] = List(
+        (EventHelper.one, PersonHelper.one(),
+          EvaluationHelper.make(Some(13L), 1L, 1L, evalStatus, 8, DateTime.now().minusHours(13))),
+        (EventHelper.one, PersonHelper.two(),
+          EvaluationHelper.make(Some(2L), 1L, 2L, evalStatus, 8, DateTime.now().minusHours(12))),
+        (EventHelper.one, PersonHelper.fast(3, "Three", "Lad"),
+          EvaluationHelper.make(Some(3L), 1L, 3L, evalStatus, 8, DateTime.now().minusHours(11))),
+        (EventHelper.one, PersonHelper.fast(4, "Four", "Girl"),
+          EvaluationHelper.make(Some(4L), 1L, 4L, evalStatus, 8, DateTime.now().minusHours(10))),
+        (EventHelper.one, PersonHelper.fast(5, "Five", "Lad"),
+          EvaluationHelper.make(Some(5L), 1L, 5L, evalStatus, 8, DateTime.now().minusHours(9))),
+        (EventHelper.one, PersonHelper.fast(6, "Six", "Girl"),
+          EvaluationHelper.make(Some(6L), 1L, 6L, evalStatus, 8, DateTime.now().minusHours(8))),
+        (EventHelper.one, PersonHelper.fast(7, "Seven", "Lad"),
+          EvaluationHelper.make(Some(7L), 1L, 7L, evalStatus, 8, DateTime.now().minusHours(7))),
+        (EventHelper.one, PersonHelper.fast(8, "Eight", "Girl"),
+          EvaluationHelper.make(Some(8L), 1L, 8L, evalStatus, 8, DateTime.now().minusHours(6))),
+        (EventHelper.one, PersonHelper.fast(9, "Nine", "Lad"),
+          EvaluationHelper.make(Some(9L), 1L, 9L, evalStatus, 8, DateTime.now().minusHours(5))),
+        (EventHelper.one, PersonHelper.fast(10, "Ten", "Girl"),
+          EvaluationHelper.make(Some(10L), 1L, 10L, evalStatus, 8, DateTime.now().minusHours(4))),
+        (EventHelper.one, PersonHelper.fast(11, "Eleven", "Lad"),
+          EvaluationHelper.make(Some(11L), 1L, 11L, evalStatus, 8, DateTime.now().minusHours(3))))
+      (evaluationService.findByEvents _).when(toMockParameter(List())).returns(evaluations)
+
+      val eventService = stub[StubEventService]
+      (eventService.findByFacilitator _).when(1L, None, *, *, *).returns(List())
 
       val controller = new TestDashboard()
-      controller.eventService_=(service)
+      controller.eventService_=(eventService)
+      controller.evaluationService_=(evaluationService)
       val result: Future[SimpleResult] = controller.index().apply(request)
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Latest evaluations")
+      contentAsString(result) must not contain "/evaluation/13"
+      contentAsString(result) must contain("/evaluation/2")
+      contentAsString(result) must contain("/evaluation/3")
+      contentAsString(result) must contain("/evaluation/4")
+      contentAsString(result) must contain("/evaluation/5")
+      contentAsString(result) must contain("/evaluation/6")
+      contentAsString(result) must contain("/evaluation/7")
+      contentAsString(result) must contain("/evaluation/8")
+      contentAsString(result) must contain("/evaluation/9")
+      contentAsString(result) must contain("/evaluation/10")
+      contentAsString(result) must contain("/evaluation/11")
     }
   }
 }

@@ -43,7 +43,7 @@ class EventServiceSpec extends PlayAppSpec with DataTables {
     EventService.findAll.map(_.delete())
   }
 
-  lazy val event = EventHelper.makeEvent(
+  lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))

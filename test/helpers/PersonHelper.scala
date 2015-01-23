@@ -56,6 +56,10 @@ object PersonHelper {
     person
   }
 
+  def fast(id: Long, firstName: String, lastName: String): Person = {
+    make(Some(id), firstName, lastName)
+  }
+
   def one(): Person = make(Some(1), "First", "Tester")
   def two(): Person = make(Some(2), "Second", "Tester")
 

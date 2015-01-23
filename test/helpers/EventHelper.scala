@@ -29,7 +29,7 @@ import play.api.libs.json.{ Json, JsValue }
 
 object EventHelper {
 
-  def makeEvent(id: Option[Long] = None,
+  def make(id: Option[Long] = None,
     eventTypeId: Option[Long] = None,
     brandCode: Option[String] = None,
     title: Option[String] = None,
@@ -74,7 +74,7 @@ object EventHelper {
       ("six", "2023-01-01", "2023-01-03", true, false, false, "ES", 2, List(1L, 4L))).foreach {
         case (title, start, end, public, archived, confirmed, code, eventType,
           facilitators) ⇒ {
-          val event = EventHelper.makeEvent(
+          val event = EventHelper.make(
             title = Some(title),
             startDate = Some(LocalDate.parse(start)),
             endDate = Some(LocalDate.parse(end)),
@@ -91,7 +91,7 @@ object EventHelper {
   }
 
   def one: Event = {
-    val event = makeEvent(id = Some(1),
+    val event = make(id = Some(1),
       title = Some("One"),
       startDate = Some(LocalDate.parse("2015-01-01")),
       endDate = Some(LocalDate.parse("2015-01-02")))
@@ -100,7 +100,7 @@ object EventHelper {
   }
 
   def two: Event = {
-    val event = makeEvent(id = Some(2),
+    val event = make(id = Some(2),
       title = Some("Two"),
       eventTypeId = Some(2),
       startDate = Some(LocalDate.parse("2015-01-01")),
@@ -110,7 +110,7 @@ object EventHelper {
   }
 
   def future(id: Long, plusDays: Int): Event = {
-    val event = makeEvent(id = Some(id),
+    val event = make(id = Some(id),
       title = Some(id.toString),
       startDate = Some(LocalDate.now().plusDays(plusDays)),
       endDate = Some(LocalDate.now().plusDays(plusDays + 2)))
@@ -119,7 +119,7 @@ object EventHelper {
   }
 
   def past(id: Long, minusDays: Int): Event = {
-    val event = makeEvent(id = Some(id),
+    val event = make(id = Some(id),
       title = Some(id.toString),
       startDate = Some(LocalDate.now().minusDays(minusDays - 2)),
       endDate = Some(LocalDate.now().minusDays(minusDays)))
