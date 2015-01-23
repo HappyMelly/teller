@@ -63,32 +63,7 @@
                         'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
                     @html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
                         'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
-                    @defining(form("role")) { field =>
-                        <div class="form-group @if(field.hasErrors) {has-error}" id="role">
-                            @defining(field.value.getOrElse("0")) { value =>
-                                <label class="control-label col-sm-3" for="@field.id" >Role</label>
-                                <div class="input col-sm-9">
-                                    <label class="radio">
-                                        <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
-                                        No role
-                                    </label>
-                                    <label class="radio">
-                                        <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
-                                        Stakeholder
-                                    </label>
-                                    <label class="radio">
-                                        <input type="radio" name="@field.name" id="role2" value="2" @if(value == "2") {checked}>
-                                        Board Member
-                                    </label>
-                                </div>
-                            }
-                            <span class="help-block">
-                            @if(form("role").hasErrors) {
-                                @form("role").errors.map(error => Messages(error.message)).mkString(", ")
-                            }
-                            </span>
-                        </div>
-                    }
+                    <input type="hidden" id="role" name="role" value="@form("role").value.getOrElse("0")"/>
 
                     @html.text(form("webSite"), '_label -> "Web site",
                         'placeholder -> "http://", '_help -> "Web site URL")

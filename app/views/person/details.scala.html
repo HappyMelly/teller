@@ -136,17 +136,6 @@
                     @person.socialProfile.googlePlusUrl.map { url => <br> <a href="@url" target="_blank">Google+</a> }
                 </p>
             }
-
-            @if(person.role != PersonRole.NoRole) {
-                <p><strong>Happy Melly Role</strong>
-                    @if(person.role == PersonRole.BoardMember) {
-                        <br>Board Member
-                    } else {
-                        <br>Stakeholder
-                    }
-                </p>
-
-            }
         </div>
 
         @restrict(handler, List(as("admin"))) {
