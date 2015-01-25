@@ -1,0 +1,33 @@
+@(user: securesocial.core.Identity,
+  members: List[Member])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler)
+
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@main("Members", "members", Some(user)) {
+
+  @html.indexPageHeader("Members") {
+    @restrict(handler, List(as(Editor.toString))) {
+      <a class="btn btn-success pull-right" href="@routes.People.add()">
+      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Member</a>
+    }
+  }
+
+  <div class="col-md-12">
+    @if(members.isEmpty) {
+      <p>There are no members</p>
+    } else {
+      @table(members) { member =>
+        @restrict(handler, List(as(Editor.toString))) {
+          <a href="@routes.People.edit(member.id.get)"><i
+            class="glyphicon glyphicon-pencil"></i> Edit</a>
+        }
+      }
+    }
+  </div>
+
+	<script src="@routes.Assets.at("index.js")" type="text/javascript"></script>
+}

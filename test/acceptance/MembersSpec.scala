@@ -25,10 +25,12 @@
 package acceptance
 
 import controllers._
+import helpers.EventHelper
 import integration.PlayAppSpec
+import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import stubs.{ StubLoginIdentity, FakeServices }
+import stubs.{ FakeMemberService, StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -43,6 +45,7 @@ class MembersSpec extends PlayAppSpec {
   Page with a list of members should
     not be visible to unauthorized user                  $e1
     and be visible to authorized user                    $e2
+    show all members sorted by names                     $e3
   """
 
   def e1 = {
@@ -54,10 +57,33 @@ class MembersSpec extends PlayAppSpec {
   }
 
   def e2 = {
-    val controller = new TestMembers()
+    new MockContext {
+      val controller = new TestMembers()
+      val identity = StubLoginIdentity.viewer
+      val request = prepareSecuredRequest(identity, "/members/")
+
+      val service = mock[FakeMemberService]
+      (service.findAll _).expects().returning(List()).once()
+      controller.memberService_=(service)
+
+      val result: Future[SimpleResult] = controller.index().apply(request)
+      status(result) must equalTo(OK)
+    }
+  }
+
+  def e3 = {
+    //@TODO use FakeSecurity here
     val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredRequest(identity, "/members/")
+    val request = prepareSecuredRequest(identity, "/members")
+
+    val controller = new TestMembers()
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
+    contentAsString(result) must contain("Members")
+    contentAsString(result) must contain("/member/1")
+    contentAsString(result) must contain("/member/2")
+    contentAsString(result) must contain("/member/3")
+    contentAsString(result) must contain("/member/4")
+    //@TODO finish multiple checks
   }
 }

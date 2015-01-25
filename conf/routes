@@ -95,7 +95,7 @@ POST        /license/:id                                                        
 POST        /license/:id/delete                                                  controllers.Licenses.delete(id: Long)
 
 GET         /members                                                             controllers.Members.index()
-
+GET         /member/:id  controllers.Members.details(id: Long)
 GET         /organizations                                                       controllers.Organisations.index
 POST        /organizations                                                       controllers.Organisations.create
 GET         /organization/new                                                    controllers.Organisations.add

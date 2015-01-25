@@ -29,7 +29,18 @@ import play.api.mvc._
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
 
+  /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒
+      val members = memberService.findAll
+      Ok(views.html.member.index(request.user, members))
+  }
+
+  /**
+   * Renders detailed info about a member
+   * @param id Member identifier
+   */
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Ok("")
   }

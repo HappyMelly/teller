@@ -1,0 +1,32 @@
+@(members: List[Member])(actions: (Member) => Html)
+
+<table id="people" class="datatables table table-bordered">
+  <thead>
+    <tr>
+      <th></th>
+      <th class="sorting_asc">Name</th>
+      <th>Type</th>
+      <th>Paid Fee</th>
+      <th>Member Since</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for(member <- members) {
+      <tr>
+        <td>@if(member.person){
+          <i class="glyphicon glyphicon-user"></i>
+        }else{
+          <i class="glyphicon glyphicon-home"></i>
+        }</td>
+        <td><a href="@routes.Members.details(member.id.get)">@member.name</a></td>
+        <td>@if(member.funder){
+          <span class="label label-success">funder</span>
+        }else{
+          <span class="label label-info">supporter</span>
+        }</td>
+        <td>@member.fee</td>
+        <td>@member.since</td>
+      </tr>
+    }
+  </tbody>
+</table>
