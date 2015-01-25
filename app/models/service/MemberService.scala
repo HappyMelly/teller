@@ -22,28 +22,31 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package models.service
 
-import models.service._
+import models._
+import models.database.{ People, Members }
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+import play.api.Play.current
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+/** Provides operations with database related to members */
+class MemberService {
 
-  def eventService: EventService = EventService.get
+  def findAll: List[Member] = DB.withSession { implicit session ⇒
+    List()
+    //    val query = for {
+    //      m <- Members if m.person === true
+    //      p <- People if p.id === m.objectId
+    //    } yield (m, p)
+    //    query.list.map { m =>
+    //
+    //    }
+  }
+}
 
-  def personService: PersonService = PersonService.get
+object MemberService {
+  private val instance = new MemberService
 
-  def orgService: OrganisationService = OrganisationService.get
-
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
-
-  def evaluationService: EvaluationService = EvaluationService.get
-
-  def memberService: MemberService = MemberService.get
+  def get: MemberService = instance
 }

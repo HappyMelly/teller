@@ -23,6 +23,8 @@
               <a class="navbar-brand" href="/">Happy Melly</a>
               <div class="navbar-collapse collapse">
                   <ul class="nav navbar-nav">
+                    <li @if(menu == "members") { class="active" }
+                      ><a href="@routes.Members.index()">Members</a></li>
                     @restrict(handler, List(as(Editor.toString))) {
                       <li @if(menu == "orgs") {
                         class="active"}><a href="@routes.Organisations.index()">

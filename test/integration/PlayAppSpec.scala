@@ -30,13 +30,13 @@ import org.specs2.specification._
 import play.api.cache.Cache
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers._
-import play.api.test.{ FakeHeaders, FakeRequest, FakeApplication }
+import play.api.test.{ PlaySpecification, FakeHeaders, FakeRequest, FakeApplication }
 import play.api.Play
 import play.api.Play.current
 import play.filters.csrf.CSRF
 import securesocial.core.{ Authenticator, IdentityId }
 
-trait PlayAppSpec extends Specification with BeforeAllAfterAll {
+trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   sequential
   lazy val app: FakeApplication = {
     val conf = Map(
