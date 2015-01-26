@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.service.ContributionService
+import models.service.{ Services, ContributionService }
 import models.{ Person, Activity, Organisation, Product }
 import play.api.mvc._
 import play.api.data._

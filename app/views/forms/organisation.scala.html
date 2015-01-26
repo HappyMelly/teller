@@ -1,24 +1,21 @@
-@(form: Form[Organisation],
-    prefix: Option[String] = None)
+@(form: Form[Organisation])
 
 @import views.Countries
 @import views.ViewHelpers._
 
-@defining(prefix.map(p => p + "../../../public").getOrElse("../../../public")) { pre: String =>
-  @html.text(form(pre + "name"), '_label -> "Name", 'class -> "mail")
-  @html.select(form(pre + "country"), ("../../../public", "Choose a country") +: Countries.all,
-    '_label -> "Country")
-  @html.text(form(pre + "street1"), '_label -> "Address line 1")
-  @html.text(form(pre + "street2"), '_label -> "Address line 2")
-  @html.text(form(pre + "postCode"), '_label -> "Post code")
-  @html.text(form(pre + "city"), '_label -> "City")
-  @html.text(form(pre + "province"), '_label -> "Province or state")
-  @html.text(form(pre + "vatNumber"), '_label -> "VAT number")
-  @html.text(form(pre + "registrationNumber"), '_label -> "Registration number")
-<input type="hidden" id="@(pre + "category")" name=@(pre + "category")"
-    value="@form(pre + "category").value.getOrElse("../../../public")"/>
-  @html.text(form(pre + "webSite"), '_label -> "Web site",
-    'placeholder -> "http://", '_help -> "Web site URL")
-  @html.text(form(pre + "blog"), '_label -> "Blog",
-    'placeholder -> "http://", '_help -> "Web site URL")
-}
+@html.text(form("name"), '_label -> "Name", 'class -> "mail")
+@html.select(form("country"), ("", "Choose a country") +: Countries.all,
+  '_label -> "Country")
+@html.text(form("street1"), '_label -> "Address line 1")
+@html.text(form("street2"), '_label -> "Address line 2")
+@html.text(form("postCode"), '_label -> "Post code")
+@html.text(form("city"), '_label -> "City")
+@html.text(form("province"), '_label -> "Province or state")
+@html.text(form("vatNumber"), '_label -> "VAT number")
+@html.text(form("registrationNumber"), '_label -> "Registration number")
+<input type="hidden" id="category" name="category"
+  value="@form("category").value.getOrElse("")"/>
+@html.text(form("webSite"), '_label -> "Web site",
+  'placeholder -> "http://", '_help -> "Web site URL")
+@html.text(form("blog"), '_label -> "Blog",
+  'placeholder -> "http://", '_help -> "Web site URL")

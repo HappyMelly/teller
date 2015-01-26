@@ -22,9 +22,7 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
-
-import models.service._
+package models.service
 
 /** Contains references to all services so we can stub them in tests */
 trait Services {

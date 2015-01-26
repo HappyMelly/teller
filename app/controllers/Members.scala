@@ -25,8 +25,10 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.Member
+import models.service.Services
+import models.{ Activity, LoginIdentity, Member }
 import org.joda.money.Money
+import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
@@ -34,13 +36,19 @@ import play.api.mvc._
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
 
-  def form = Form(mapping(
+  def form(modifierId: Long) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "objectId" -> optional(longNumber),
-    "person" -> boolean,
+    "person" -> number.transform(
+      (i: Int) ⇒ if (i == 0) false else true,
+      (b: Boolean) ⇒ if (b) 1 else 0),
     "funder" -> boolean,
     "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
-    "since" -> jodaLocalDate)(Member.apply)(Member.unapply))
+    "since" -> jodaLocalDate,
+    "created" -> ignored(DateTime.now()),
+    "createdBy" -> ignored(modifierId),
+    "updated" -> ignored(DateTime.now()),
+    "updatedBy" -> ignored(modifierId))(Member.apply)(Member.unapply))
 
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -61,8 +69,48 @@ trait Members extends Controller with Security with Services {
   /** Renders Add form */
   def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.member.form(request.user, None, form))
+      val user = request.user.asInstanceOf[LoginIdentity].person
+      Ok(views.html.member.form(request.user, None, form(user.id.get)))
   }
+
+  /**
+   * Records a first block of data about member to database and redirects
+   * users to the next step
+   */
+  def create() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      val user = request.user.asInstanceOf[LoginIdentity].person
+      form(user.id.get).bindFromRequest.fold(
+        formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
+          None,
+          formWithErrors)),
+        member ⇒ {
+          member.insert
+          Redirect(routes.Organisations.add())
+        })
+  }
+
+  /** Renders Add new organisation page */
+  def addOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.member.newOrg(request.user, None, Organisations.organisationForm))
+  }
+
+  def createNewOrganisation() = SecuredRestrictedAction(Editor) {
+    implicit request ⇒
+      implicit handler ⇒
+        Organisations.organisationForm.bindFromRequest.fold(
+          formWithErrors ⇒
+            BadRequest(views.html.member.newOrg(request.user, None, formWithErrors)),
+          organisation ⇒ {
+            val user = request.user.asInstanceOf[LoginIdentity].person
+            val org = organisation.insert
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
+            Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+          })
+  }
+
+  //  private def uncompleteMember(person: ): Option[Member] =
 }
 
 object Members extends Members with Security with Services

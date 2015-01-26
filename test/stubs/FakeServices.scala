@@ -24,7 +24,7 @@
  */
 package stubs
 
-import controllers.Services
+import models.service.Services
 
 trait FakeServices extends Services {
 

@@ -23,8 +23,9 @@
  */
 package models
 
+import models.service.Services
 import org.joda.money.Money
-import org.joda.time.LocalDate
+import org.joda.time.{ DateTime, LocalDate }
 
 case class Member(
   id: Option[Long],
@@ -32,7 +33,11 @@ case class Member(
   person: Boolean,
   funder: Boolean,
   fee: Money,
-  since: LocalDate) {
+  since: LocalDate,
+  created: DateTime,
+  createdBy: Long,
+  updated: DateTime,
+  updatedBy: Long) extends Services {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
 
@@ -52,4 +57,7 @@ case class Member(
   else if (!person && _memberObj._2.nonEmpty)
     _memberObj._2.get.name
   else ""
+
+  /** Records this member to database */
+  def insert: Member = memberService.insert(this)
 }

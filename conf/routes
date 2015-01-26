@@ -94,8 +94,11 @@ GET         /license/:id/edit                                                   
 POST        /license/:id                                                         controllers.Licenses.update(id: Long)
 POST        /license/:id/delete                                                  controllers.Licenses.delete(id: Long)
 
-GET         /members                                                             controllers.Members.index()
+GET         /members                                                             controllers.Members.index
 GET         /member/new                                                          controllers.Members.add
+GET         /member/new/organisation                                             controllers.Members.addOrganisation
+POST        /member                                                              controllers.Members.create
+POST        /member/organisation                                                 controllers.Members.createNewOrganisation
 GET         /member/:id                                                          controllers.Members.details(id: Long)
 
 GET         /organizations                                                       controllers.Organisations.index

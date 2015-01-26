@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import models.service.EventService
+import models.service.{ Services, EventService }
 import securesocial.core._
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }

@@ -17,11 +17,12 @@
       <div class="col-md-6">
         <div class="page-header">
             <h1>@title</h1>
+            <h3>Step 1: Fee</h3>
         </div>
-        @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
+        @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.Members.create()))) {
           <input type="hidden" value="@form("objectId").value.getOrElse(0)"
             id="objectId" name="objectId"/>
-          <input type="hidden" value="@form("person").value.getOrElse(false)"
+          <input type="hidden" value="@form("person").value.getOrElse(0)"
             id="person" name="person"/>
           @defining(form("type")) { field =>
             <div class="form-group @if(field.hasErrors) {has-error}" id="type">
@@ -45,7 +46,8 @@
               </span>
             </div>
           }
-          @html.number(form("fee"), '_label -> "Fee", '_step -> "0.01")
+          @html.money("fee", form("fee.currency"), form("fee.amount"),
+            '_label -> "Fee")
           @html.date(form("since"), '_label -> "Member since")
 
           <div class="row">

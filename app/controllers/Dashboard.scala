@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.service.Services
 import org.joda.time.LocalDate
 import play.api.mvc._
 import models.UserRole.Role._

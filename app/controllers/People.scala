@@ -28,6 +28,7 @@ import Forms._
 import fly.play.s3.{ BucketFile, S3Exception }
 import models._
 import models.UserRole.Role._
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.data.{ FormError, Form }
