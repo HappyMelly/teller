@@ -75,11 +75,22 @@ class MemberService {
   /**
    * Inserts the given member to database
    *
+   * @param m Object to insert
    * @return Returns member object with updated id
    */
   def insert(m: Member): Member = DB.withSession { implicit session ⇒
     val id: Long = Members.forInsert.insert(m)
     m.copy(id = Some(id))
+  }
+
+  /**
+   * Updates the given member in database
+   * @param m Member to update
+   * @return Updated member
+   */
+  def update(m: Member): Member = DB.withSession { implicit session ⇒
+    Members.filter(_.id === m.id).update(m)
+    m
   }
 }
 

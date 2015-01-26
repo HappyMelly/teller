@@ -60,4 +60,7 @@ case class Member(
 
   /** Records this member to database */
   def insert: Member = memberService.insert(this)
+
+  /** Updates this member in database */
+  def update: Member = memberService.update(this)
 }

@@ -86,7 +86,7 @@ trait Members extends Controller with Security with Services {
           formWithErrors)),
         member ⇒ {
           member.insert
-          Redirect(routes.Organisations.add())
+          Redirect(routes.Members.createNewOrganisation())
         })
   }
 
@@ -96,21 +96,33 @@ trait Members extends Controller with Security with Services {
       Ok(views.html.member.newOrg(request.user, None, Organisations.organisationForm))
   }
 
+  /** Records a new member-organisation to database */
   def createNewOrganisation() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
-        Organisations.organisationForm.bindFromRequest.fold(
-          formWithErrors ⇒
-            BadRequest(views.html.member.newOrg(request.user, None, formWithErrors)),
-          organisation ⇒ {
+        val orgForm = Organisations.organisationForm.bindFromRequest
+        orgForm.fold(
+          hasErrors ⇒
+            BadRequest(views.html.member.newOrg(request.user, None, hasErrors)),
+          success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
-            val org = organisation.insert
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
-            Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+            val member = memberService.findIncompleteMember(
+              isPerson = false,
+              user.id.get)
+            member map { m ⇒
+              val org = success.insert
+              m.copy(objectId = Some(org.id.get)).update
+              val activity = Activity.insert(request.user.fullName,
+                Activity.Predicate.Created, "new member " + success.name)
+              //@TODO redirect to details
+              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+            } getOrElse {
+              BadRequest(views.html.member.newOrg(request.user, None, orgForm)).
+                flashing("error" -> "Sorry")
+            }
           })
   }
 
-  //  private def uncompleteMember(person: ): Option[Member] =
 }
 
 object Members extends Members with Security with Services
