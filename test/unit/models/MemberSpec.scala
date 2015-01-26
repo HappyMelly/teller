@@ -21,9 +21,12 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
+package unit.models.models
 
 import helpers.{ OrganisationHelper, PersonHelper }
+import models.Member
+import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.specs2.mutable._
 
@@ -32,7 +35,7 @@ class MemberSpec extends Specification {
   "Member" should {
     "have a readable name if it's a person" in {
       val member = new Member(None, None, person = true, funder = true,
-        BigDecimal(100), BigDecimal(100), LocalDate.now())
+        Money.of(EUR, 100), LocalDate.now())
       member.memberObj_=(PersonHelper.one())
       member.name mustEqual "First Tester"
       member.memberObj_=(PersonHelper.two())
@@ -40,7 +43,7 @@ class MemberSpec extends Specification {
     }
     "have a readable name if it's an organisation" in {
       val member = new Member(None, None, person = false, funder = true,
-        BigDecimal(100), BigDecimal(100), LocalDate.now())
+        Money.of(EUR, 100), LocalDate.now())
       member.memberObj_=(OrganisationHelper.one)
       member.name mustEqual "One"
       member.memberObj_=(OrganisationHelper.two)

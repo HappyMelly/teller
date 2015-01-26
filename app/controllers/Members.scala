@@ -23,11 +23,24 @@
  */
 package controllers
 
+import models.JodaMoney._
 import models.UserRole.Role._
+import models.Member
+import org.joda.money.Money
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
+
+  def form = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "objectId" -> optional(longNumber),
+    "person" -> boolean,
+    "funder" -> boolean,
+    "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
+    "since" -> jodaLocalDate)(Member.apply)(Member.unapply))
 
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -43,6 +56,12 @@ trait Members extends Controller with Security with Services {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
       Ok("")
+  }
+
+  /** Renders Add form */
+  def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.member.form(request.user, None, form))
   }
 }
 

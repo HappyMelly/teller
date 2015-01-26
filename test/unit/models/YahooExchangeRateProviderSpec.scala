@@ -1,4 +1,4 @@
-package models
+package unit.models.models
 
 /*
  * Happy Melly Teller
@@ -24,11 +24,13 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import concurrent.duration._
+import models.ExchangeRate
 import org.joda.money.CurrencyUnit._
 import org.specs2.mutable._
 import org.specs2.time.NoTimeConversions
 import services.YahooExchangeRateProvider
+
+import scala.concurrent.duration._
 
 class YahooExchangeRateProviderSpec extends Specification with NoTimeConversions {
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global

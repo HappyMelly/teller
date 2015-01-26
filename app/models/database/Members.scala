@@ -24,6 +24,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
+import models.JodaMoney._
 import models.Member
 import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
@@ -35,11 +36,14 @@ object Members extends Table[Member]("MEMBERS") {
   def person = column[Boolean]("PERSON")
   def funder = column[Boolean]("FUNDER")
   def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
-  def totalFee = column[BigDecimal]("TOTAL_FEE", O.DBType("DECIMAL(13,3)"))
   def since = column[LocalDate]("SINCE")
 
-  def * = id.? ~ objectId ~ person ~ funder ~ fee ~ totalFee ~
-    since <> (Member.apply _, Member.unapply _)
+  def * = id.? ~ objectId ~ person ~ funder ~ fee ~ since <> ({
+    m ⇒ Member(m._1, m._2, m._3, m._4, "EUR" -> m._5, m._6)
+  }, {
+    (m: Member) ⇒
+      Some(m.id, m.objectId, m.person, m.funder, m.fee.getAmount, m.since)
+  })
 
   def forInsert = * returning id
 }

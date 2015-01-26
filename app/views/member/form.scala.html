@@ -1,0 +1,60 @@
+@(user: securesocial.core.Identity,
+    id: Option[Long],
+    form: Form[Member])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpers._
+
+@defining(form.value.map(member => "Member %s".format(member.name)).getOrElse("Add member")) { title: String =>
+    @main("Member", "members", Some(user)) {
+      @if(form.hasErrors) {
+          @html.error()
+      }
+
+      <div class="col-md-6">
+        <div class="page-header">
+            <h1>@title</h1>
+        </div>
+        @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
+          <input type="hidden" value="@form("objectId").value.getOrElse(0)"
+            id="objectId" name="objectId"/>
+          <input type="hidden" value="@form("person").value.getOrElse(false)"
+            id="person" name="person"/>
+          @defining(form("type")) { field =>
+            <div class="form-group @if(field.hasErrors) {has-error}" id="type">
+              @defining(field.value.getOrElse("0")) { value =>
+                <label class="control-label col-sm-3" for="@field.id" >Type</label>
+                <div class="input col-sm-9">
+                  <label class="radio">
+                    <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
+                    Supporter
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
+                    Funder
+                  </label>
+                </div>
+              }
+              <span class="help-block">
+              @if(form("role").hasErrors) {
+                @form("role").errors.map(error => Messages(error.message)).mkString(", ")
+              }
+              </span>
+            </div>
+          }
+          @html.number(form("fee"), '_label -> "Fee", '_step -> "0.01")
+          @html.date(form("since"), '_label -> "Member since")
+
+          <div class="row">
+              <div class="col-sm-3"></div>
+              <div class="col-sm-9">
+                  <button class="btn btn-primary btn-block pull-right" type="submit">Add Member Data</button>
+              </div>
+          </div>
+          }
+      </div>
+    }
+}

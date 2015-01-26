@@ -43,6 +43,21 @@ class MemberService {
     //
     //    }
   }
+
+  /** Returns member if it exists, otherwise - None */
+  def find(id: Long): Option[Member] = DB.withSession { implicit session ⇒
+    Query(Members).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Inserts the given member to database
+   *
+   * @return Returns member object with updated id
+   */
+  def insert(m: Member): Member = DB.withSession { implicit session ⇒
+    val id: Long = Members.forInsert.insert(m)
+    m.copy(id = Some(id))
+  }
 }
 
 object MemberService {

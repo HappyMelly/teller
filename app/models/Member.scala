@@ -23,6 +23,7 @@
  */
 package models
 
+import org.joda.money.Money
 import org.joda.time.LocalDate
 
 case class Member(
@@ -30,8 +31,7 @@ case class Member(
   objectId: Option[Long],
   person: Boolean,
   funder: Boolean,
-  fee: BigDecimal,
-  totalFee: BigDecimal,
+  fee: Money,
   since: LocalDate) {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)

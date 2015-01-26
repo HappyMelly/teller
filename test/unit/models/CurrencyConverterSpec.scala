@@ -1,4 +1,4 @@
-package models
+package unit.models.models
 
 /*
  * Happy Melly Teller
@@ -24,15 +24,15 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import org.joda.money.{ Money, CurrencyUnit }
+import models.ExchangeRate
 import org.joda.money.CurrencyUnit._
+import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import scala.concurrent.Future
-import scala.Some
 import services.CurrencyConverter.NoExchangeRateException
 import services.{ CurrencyConverter, ExchangeRateProvider }
-import play.api.test.Helpers._
+
+import scala.concurrent.Future
 
 class CurrencyConverterSpec extends Specification {
 

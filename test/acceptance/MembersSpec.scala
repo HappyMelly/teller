@@ -25,7 +25,6 @@
 package acceptance
 
 import controllers._
-import helpers.EventHelper
 import integration.PlayAppSpec
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
@@ -46,6 +45,10 @@ class MembersSpec extends PlayAppSpec {
     not be visible to unauthorized user                  $e1
     and be visible to authorized user                    $e2
     show all members sorted by names                     $e3
+
+  Add form should
+    not be accessible to Viewers                         $e4
+    be accessible to Editors                             $e5
   """
 
   def e1 = {
@@ -85,5 +88,25 @@ class MembersSpec extends PlayAppSpec {
     contentAsString(result) must contain("/member/3")
     contentAsString(result) must contain("/member/4")
     //@TODO finish multiple checks
+  }
+
+  def e4 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.viewer
+    val request = prepareSecuredRequest(identity, "/member/")
+
+    val result: Future[SimpleResult] = controller.add().apply(request)
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e5 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredRequest(identity, "/member/")
+
+    val result: Future[SimpleResult] = controller.add().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add member")
   }
 }
