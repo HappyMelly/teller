@@ -63,8 +63,10 @@ class MembersSpec extends PlayAppSpec with DataTables {
     not be able to add new member with wrong parameters            $e6
     get a correct error message if membership date is too early    $e7
     get a correct error message if membership date is too late     $e8
-    be redirected to 'Organisation Data' form if he chose 'Org'    $e9
-    be redirected to 'Person Data' form if he chose 'Person'       $e10
+    be redirected to 'New Organisation' form if he chose 'Org'     $e9
+    be redirected to 'New Person' form if he chose 'Person'        $e10
+    be redirected to 'Existing Org' form if he chose 'Org'         $e11
+    be redirected to 'Existing Person' form if he chose 'Person'   $e12
 
   If an editor tries to create an organisation without creating membership fee first then
     she should get an error message                                $e14
@@ -79,6 +81,14 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   If an editor tries to create a person without creating membership fee first then
     she should get an error message                                       $e19
+
+  Add existing organisation form should
+    not be accessible to Viewers                         $e20
+    be accessible to Editors                             $e21
+
+  Add existing person form should
+    not be accessible to Viewers                         $e22
+    be accessible to Editors                             $e23
   """
 
   def e1 = {
@@ -237,6 +247,38 @@ class MembersSpec extends PlayAppSpec with DataTables {
     headers(result).get("Location").get must_== "/member/new/person"
   }
 
+  def e11 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val person = "0"
+    val request = prepareSecuredPostRequest(identity, "/member/new").
+      withFormUrlEncodedBody(("objectId", "0"), ("person", person),
+        ("fee.currency", "EUR"), ("fee.amount", "100"),
+        ("existingObject", "true"), ("since", "2015-01-03"))
+    val result: Future[SimpleResult] = controller.create().apply(request)
+    // we can already clean up
+    Cache.remove(controller.cacheId(1L))
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location").nonEmpty must_== true
+    headers(result).get("Location").get must_== "/member/existing/organisation"
+  }
+
+  def e12 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val person = "1"
+    val request = prepareSecuredPostRequest(identity, "/member/new").
+      withFormUrlEncodedBody(("objectId", "0"), ("person", person),
+        ("fee.currency", "EUR"), ("fee.amount", "100"),
+        ("existingObject", "true"), ("since", "2015-01-03"))
+    val result: Future[SimpleResult] = controller.create().apply(request)
+    status(result) must equalTo(SEE_OTHER)
+    // we can already clean up
+    Cache.remove(controller.cacheId(1L))
+    headers(result).get("Location").nonEmpty must_== true
+    headers(result).get("Location").get must_== "/member/existing/person"
+  }
+
   def e14 = {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.editor
@@ -301,5 +343,46 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
   }
 
+  def e20 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.viewer
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(request)
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e21 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add member")
+    contentAsString(result) must contain("Step 2: Existing organisation")
+  }
+
+  def e22 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.viewer
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val result: Future[SimpleResult] = controller.addExistingPerson().apply(request)
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e23 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val result: Future[SimpleResult] = controller.addExistingPerson().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add member")
+    contentAsString(result) must contain("Step 2: Existing person")
+  }
 }
 

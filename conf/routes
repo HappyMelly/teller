@@ -98,6 +98,8 @@ GET         /members                                                            
 GET         /member/new                                                          controllers.Members.add
 GET         /member/new/organisation                                             controllers.Members.addOrganisation
 GET         /member/new/person                                                   controllers.Members.addPerson
+GET         /member/existing/organisation                                        controllers.Members.addExistingOrganisation
+GET         /member/existing/person                                              controllers.Members.addExistingPerson
 POST        /member                                                              controllers.Members.create
 POST        /member/organisation                                                 controllers.Members.createNewOrganisation
 POST        /member/person                                                       controllers.Members.createNewPerson

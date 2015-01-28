@@ -69,6 +69,12 @@ trait Members extends Controller with Security with Services {
       "updatedBy" -> ignored(modifierId))(Member.apply)(Member.unapply))
   }
 
+  def existingOrgForm = Form(
+    single("id" -> longNumber))
+
+  def existingPersonForm = Form(
+    single("id" -> longNumber))
+
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
@@ -106,10 +112,11 @@ trait Members extends Controller with Security with Services {
         member ⇒ {
           val m = member.copy(id = None).copy(objectId = None)
           Cache.set(cacheId(user.id.get), m, 1800)
-          if (member.person) {
-            Redirect(routes.Members.addPerson())
-          } else {
-            Redirect(routes.Members.addOrganisation())
+          (member.person, member.existingObject) match {
+            case (true, false) ⇒ Redirect(routes.Members.addPerson())
+            case (false, false) ⇒ Redirect(routes.Members.addOrganisation())
+            case (false, true) ⇒ Redirect(routes.Members.addExistingOrganisation())
+            case (true, true) ⇒ Redirect(routes.Members.addExistingPerson())
           }
         })
   }
@@ -124,6 +131,18 @@ trait Members extends Controller with Security with Services {
   def addOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
       Ok(views.html.member.newOrg(request.user, None, Organisations.organisationForm))
+  }
+
+  /** Renders Add existing organisation page */
+  def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.member.existingOrg(request.user, None, existingOrgForm))
+  }
+
+  /** Renders Add existing person page */
+  def addExistingPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.member.existingPerson(request.user, None, existingPersonForm))
   }
 
   /** Records a new member-organisation to database */

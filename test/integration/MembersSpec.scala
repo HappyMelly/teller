@@ -28,7 +28,6 @@ import java.math.RoundingMode
 
 import controllers.{ Security, Members }
 import models.{ Person, Organisation, Member }
-import models.service.MemberService
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.mutable.After
@@ -149,7 +148,7 @@ class MembersSpec extends PlayAppSpec {
         implicit val getMemberResult = GetResult(r ⇒
           Member(r.<<, r.<<, r.<<, r.<<,
             Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
-            LocalDate.parse(r.nextString()), r.<<,
+            LocalDate.parse(r.nextString()), false,
             DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
             DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
         val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + org.id.get.toString)
@@ -196,7 +195,7 @@ class MembersSpec extends PlayAppSpec {
         implicit val getMemberResult = GetResult(r ⇒
           Member(r.<<, r.<<, r.<<, r.<<,
             Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
-            LocalDate.parse(r.nextString()), r.<<,
+            LocalDate.parse(r.nextString()), false,
             DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
             DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
         val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + person.id.toString)
