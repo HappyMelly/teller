@@ -24,16 +24,50 @@
 */
 package integration
 
-import org.scalamock.specs2.MockContext
-import play.api.test.FakeRequest
+import controllers.{ Security, Members }
+import models.Member
+import models.service.MemberService
+import org.joda.money.Money
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.db.slick._
+import play.api.mvc.SimpleResult
+import play.api.Play.current
+import stubs.{ StubLoginIdentity, FakeServices }
+
+import scala.concurrent.Future
+import scala.slick.jdbc.{ StaticQuery ⇒ Q }
+import scala.slick.session.Session
+
+class TestMembers() extends Members with Security with FakeServices
 
 class MembersSpec extends PlayAppSpec {
   def setupDb() {}
-  def cleanupDb() {}
 
-  //  "An action" >> {
-  //    "`index` should be callen when a user requests /members/" in new MockContext {
-  //      val Some(result) = route(FakeRequest(GET, "/members"))
-  //    }
-  //  }
+  def cleanupDb(): Unit = DB.withSession { implicit session: Session ⇒
+    Q.updateNA("TRUNCATE `MEMBER`").execute
+  }
+
+  "While creating membership fee, objectId and id are unknown and a system" should {
+    "reset them to None to prevent cheating" in {
+      val controller = new TestMembers()
+      val identity = StubLoginIdentity.editor
+      // here we have resetted values
+      val m = new Member(None, None, person = true, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), DateTime.now(), 1L,
+        DateTime.now(), 1L)
+      val fakeId = 400
+      val request = prepareSecuredPostRequest(identity, "/member/new").
+        withFormUrlEncodedBody(("id", fakeId.toString),
+          ("objectId", "3"),
+          ("person", "1"), ("funder", m.funder.toString),
+          ("fee.currency", m.fee.getCurrencyUnit.toString),
+          ("fee.amount", m.fee.getAmountMajorLong.toString),
+          ("since", m.since.toString))
+      val result: Future[SimpleResult] = controller.create().apply(request)
+      status(result) must equalTo(SEE_OTHER)
+      val insertedM = MemberService.get.findIncompleteMember(m.person, m.createdBy)
+      insertedM.nonEmpty must_== true
+      insertedM.get.id must_!= fakeId
+    }
+  }
 }

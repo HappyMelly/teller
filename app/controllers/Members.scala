@@ -92,7 +92,7 @@ trait Members extends Controller with Security with Services {
           None,
           formWithErrors)),
         member ⇒ {
-          member.insert
+          member.copy(id = None).copy(objectId = None).insert
           Redirect(routes.Members.addOrganisation())
         })
   }
