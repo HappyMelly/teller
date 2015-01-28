@@ -35,8 +35,8 @@ class MemberSpec extends Specification {
   "Member" should {
     "have a readable name if it's a person" in {
       val member = new Member(None, None, person = true, funder = true,
-        Money.of(EUR, 100), LocalDate.now(), DateTime.now(), 1L,
-        DateTime.now(), 1L)
+        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)
       member.memberObj_=(PersonHelper.one())
       member.name mustEqual "First Tester"
       member.memberObj_=(PersonHelper.two())
@@ -44,8 +44,8 @@ class MemberSpec extends Specification {
     }
     "have a readable name if it's an organisation" in {
       val member = new Member(None, None, person = false, funder = true,
-        Money.of(EUR, 100), LocalDate.now(), DateTime.now(), 1L,
-        DateTime.now(), 1L)
+        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)
       member.memberObj_=(OrganisationHelper.one)
       member.name mustEqual "One"
       member.memberObj_=(OrganisationHelper.two)

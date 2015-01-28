@@ -74,6 +74,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
       (None, true, false, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒ {
           val member = new Member(None, objectId, person, funder, fee, since,
+            existingObject = false,
             DateTime.now(), createdBy, DateTime.now(), createdBy)
           member.insert
         }

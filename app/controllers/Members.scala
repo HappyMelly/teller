@@ -29,13 +29,22 @@ import models.service.Services
 import models.{ Activity, LoginIdentity, Member }
 import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
+import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
+import play.api.Play.current
 
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
+
+  /**
+   * Returns cache identifier to store incomplete member object
+   * @param id User id
+   * @return
+   */
+  def cacheId(id: Long): String = "incomplete.member." + id.toString
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -49,9 +58,11 @@ trait Members extends Controller with Security with Services {
       "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
-        _.isAfter(MEMBERSHIP_EARLIEST_DATE)).verifying(
+        d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
+        verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().plusDays(1))),
+      "existingObject" -> boolean,
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
       "updated" -> ignored(DateTime.now()),
@@ -93,7 +104,8 @@ trait Members extends Controller with Security with Services {
           None,
           formWithErrors)),
         member ⇒ {
-          member.copy(id = None).copy(objectId = None).insert
+          val m = member.copy(id = None).copy(objectId = None)
+          Cache.set(cacheId(user.id.get), m, 1800)
           if (member.person) {
             Redirect(routes.Members.addPerson())
           } else {
@@ -124,12 +136,11 @@ trait Members extends Controller with Security with Services {
             BadRequest(views.html.member.newOrg(request.user, None, hasErrors)),
           success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = memberService.findIncompleteMember(
-              isPerson = false,
-              user.id.get)
+            val member = Cache.getAs[Member](cacheId(user.id.get))
             member map { m ⇒
               val org = success.insert
-              m.copy(objectId = Some(org.id.get)).update
+              m.copy(objectId = org.id).insert
+              Cache.remove(cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               //@TODO redirect to details
@@ -151,12 +162,11 @@ trait Members extends Controller with Security with Services {
             BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
           success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = memberService.findIncompleteMember(
-              isPerson = true,
-              user.id.get)
+            val member = Cache.getAs[Member](cacheId(user.id.get))
             member map { m ⇒
               val person = success.insert
-              m.copy(objectId = Some(person.id.get)).update
+              m.copy(objectId = person.id).insert
+              Cache.remove(cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               //@TODO redirect to details

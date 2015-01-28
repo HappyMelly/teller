@@ -32,6 +32,7 @@ import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import play.api.db.slick._
+import play.api.cache.Cache
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
 import play.api.Play.current
@@ -45,9 +46,7 @@ class TestMembers() extends Members with Security with FakeServices
 
 class MembersSpec extends PlayAppSpec with DataTables {
   def setupDb() {}
-  def cleanupDb(): Unit = DB.withSession { implicit session: Session ⇒
-    Q.updateNA("TRUNCATE `MEMBER`").execute
-  }
+  def cleanupDb() {}
 
   override def is = s2"""
 
@@ -80,7 +79,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   If an editor tries to create a person without creating membership fee first then
     she should get an error message                                       $e19
-    she should get an error even if membership fee was created for an org $e20
   """
 
   def e1 = {
@@ -146,33 +144,38 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.editor
 
-    "objectId" || "person" | "funder" | "currency" | "amount" | "since" |
+    "objectId" || "person" | "funder" | "currency" | "amount" | "since" | "existingObject" |
       // empty currency
-      "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" |
+      "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" ! "true" |
       // unknown currency
-      "0" !! "1" ! "false" ! "TERES" ! "100" ! "2015-01-01" |
+      "0" !! "1" ! "false" ! "TERES" ! "100" ! "2015-01-01" ! "true" |
       // negative amount
-      "0" !! "1" ! "false" ! "EUR" ! "-100" ! "2015-01-01" |
+      "0" !! "1" ! "false" ! "EUR" ! "-100" ! "2015-01-01" ! "true" |
       // zero amount
-      "0" !! "1" ! "false" ! "EUR" ! "0.00" ! "2015-01-01" |
+      "0" !! "1" ! "false" ! "EUR" ! "0.00" ! "2015-01-01" ! "false" |
       // empty since
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "" ! "false" |
       // wrong since
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "31-312-321" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "31-312-321" ! "true" |
       // since earlier than 2015-01-01
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2014-12-31" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2014-12-31" ! "false" |
       // since later than today
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! LocalDate.now().plusDays(1).toString |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! LocalDate.now().plusDays(1).toString ! "false" |
       // empty 'funder'
-      "0" !! "1" ! "" ! "EUR" ! "105.05" ! "2015-01-01" |
+      "0" !! "1" ! "" ! "EUR" ! "105.05" ! "2015-01-01" ! "true" |
       // non-boolean 'funder'
-      "0" !! "1" ! "1.00" ! "EUR" ! "105.05" ! "2015-01-01" |> {
-        (objectId, person, funder, currency, amount, since) ⇒
+      "0" !! "1" ! "1.00" ! "EUR" ! "105.05" ! "2015-01-01" ! "false" |
+      // empty 'existingObject'
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2015-01-01" ! "" |
+      // non-boolean 'existingObject'
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2015-01-01" ! "1.00" |> {
+        (objectId, person, funder, currency, amount, since, existingObject) ⇒
           {
             val data = Seq()
             val request = prepareSecuredPostRequest(identity, "/member/new").
               withFormUrlEncodedBody(("objectId", objectId), ("person", person), ("funder", funder),
-                ("fee.currency", currency), ("fee.amount", amount), ("since", since))
+                ("fee.currency", currency), ("fee.amount", amount), ("since", since),
+                ("existingObject", existingObject))
             val result: Future[SimpleResult] = controller.create().apply(request)
             status(result) must equalTo(BAD_REQUEST)
           }
@@ -207,13 +210,13 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val identity = StubLoginIdentity.editor
     val person = "0"
     val request = prepareSecuredPostRequest(identity, "/member/new").
-      withFormUrlEncodedBody(("objectId", "0"), ("person", person), ("funder", "false"),
+      withFormUrlEncodedBody(("objectId", "0"), ("person", person),
         ("fee.currency", "EUR"), ("fee.amount", "100"),
         ("since", "2015-01-03"))
     val result: Future[SimpleResult] = controller.create().apply(request)
-    status(result) must equalTo(SEE_OTHER)
     // we can already clean up
-    cleanupDb()
+    Cache.remove(controller.cacheId(1L))
+    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/new/organisation"
   }
@@ -223,30 +226,25 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val identity = StubLoginIdentity.editor
     val person = "1"
     val request = prepareSecuredPostRequest(identity, "/member/new").
-      withFormUrlEncodedBody(("objectId", "0"), ("person", person), ("funder", "false"),
+      withFormUrlEncodedBody(("objectId", "0"), ("person", person),
         ("fee.currency", "EUR"), ("fee.amount", "100"),
         ("since", "2015-01-03"))
     val result: Future[SimpleResult] = controller.create().apply(request)
     status(result) must equalTo(SEE_OTHER)
     // we can already clean up
-    cleanupDb()
+    Cache.remove(controller.cacheId(1L))
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/new/person"
   }
 
   def e14 = {
-    new MockContext {
-      val controller = new TestMembers()
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/organisation").
-        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
-      val service = mock[FakeMemberService]
-      (service.findIncompleteMember _).expects(false, 1L).returning(None)
-      controller.memberService_=(service)
-      val result = controller.createNewOrganisation().apply(request)
-      status(result) must equalTo(BAD_REQUEST)
-      contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
-    }
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/organisation").
+      withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+    val result = controller.createNewOrganisation().apply(request)
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
   }
 
   def e15 = {
@@ -292,35 +290,16 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e19 = {
-    new MockContext {
-      val controller = new TestMembers()
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/person").
-        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"), ("address.country", "RU"),
-          ("firstName", "Test"), ("lastName", "Test"), ("signature", "false"),
-          ("role", "0"))
-      val service = mock[FakeMemberService]
-      (service.findIncompleteMember _).expects(true, 1L).returning(None)
-      controller.memberService_=(service)
-      val result = controller.createNewPerson().apply(request)
-      status(result) must equalTo(BAD_REQUEST)
-      contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
-    }
-  }
-
-  def e20 = {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/person").
       withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"), ("address.country", "RU"),
         ("firstName", "Test"), ("lastName", "Test"), ("signature", "false"),
         ("role", "0"))
-    val m = new Member(None, None, person = false, funder = false,
-      Money.parse("EUR 100"), LocalDate.now(), DateTime.now(), 1L,
-      DateTime.now(), 1L).insert
     val result = controller.createNewPerson().apply(request)
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
   }
+
 }
 

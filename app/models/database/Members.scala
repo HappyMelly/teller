@@ -38,20 +38,22 @@ object Members extends Table[Member]("MEMBER") {
   def feeCurrency = column[String]("FEE_CURRENCY")
   def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
   def since = column[LocalDate]("SINCE")
+  def existingObject = column[Boolean]("EXISTING_OBJECT")
   def created = column[DateTime]("CREATED")
   def createdBy = column[Long]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[Long]("UPDATED_BY")
 
-  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~ since ~
-    created ~ createdBy ~ updated ~ updatedBy <> ({
+  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~
+    since ~ existingObject ~ created ~ createdBy ~ updated ~ updatedBy <> ({
       m ⇒
         Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, m._10,
-          m._11)
+          m._11, m._12)
     }, {
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.since, m.created, m.createdBy, m.updated, m.updatedBy)
+          m.fee.getAmount, m.since, m.existingObject, m.created, m.createdBy,
+          m.updated, m.updatedBy)
     })
 
   def forInsert = * returning id

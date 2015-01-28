@@ -34,6 +34,7 @@ case class Member(
   funder: Boolean,
   fee: Money,
   since: LocalDate,
+  existingObject: Boolean,
   created: DateTime,
   createdBy: Long,
   updated: DateTime,
