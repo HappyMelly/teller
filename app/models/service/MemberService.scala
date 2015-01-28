@@ -50,29 +50,6 @@ class MemberService {
   }
 
   /**
-   * Returns member which doesn't have complete data
-   *
-   * Members are created in two steps. On the first one fee data are added.
-   * On the second one - person or organisation is added. If the second step
-   * is not finished when member is in incomplete state.
-   *
-   * @param isPerson Only human members
-   * @param editorId Only members added by the given editor
-   * @return
-   */
-  def findIncompleteMember(isPerson: Boolean, editorId: Long): Option[Member] = {
-    import scala.language.postfixOps
-    DB.withSession {
-      implicit session ⇒
-        Query(Members).
-          filter(_.createdBy === editorId).
-          filter(_.person === isPerson).
-          filter(_.objectId isNull).
-          firstOption
-    }
-  }
-
-  /**
    * Inserts the given member to database
    *
    * @param m Object to insert

@@ -43,27 +43,6 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     Q.updateNA("TRUNCATE `MEMBER`").execute
   }
 
-  "Method findIncompleteMember" should {
-    "return a member which is a person" in {
-      val member = MemberService.get.findIncompleteMember(isPerson = true, 1L)
-      member.nonEmpty should beTrue
-      member.get.person should beTrue
-      member.get.funder should beFalse
-      member.get.fee.getAmount.doubleValue() should beEqualTo(200.00)
-    }
-    "return a member which is an organisation" in {
-      val member = MemberService.get.findIncompleteMember(isPerson = false, 1L)
-      member.nonEmpty should beTrue
-      member.get.person should beFalse
-      member.get.funder should beFalse
-      member.get.fee.getAmount.doubleValue() should beEqualTo(100.00)
-    }
-    "return no incomplete member" in {
-      val member = MemberService.get.findIncompleteMember(isPerson = false, 2L)
-      member.nonEmpty should beFalse
-    }
-  }
-
   private def add() = {
     Seq(
       (Some(1L), false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
