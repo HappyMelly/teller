@@ -28,7 +28,7 @@ import models.UserRole.Role._
 import models.service.Services
 import models.{ Activity, LoginIdentity, Member }
 import org.joda.money.Money
-import org.joda.time.DateTime
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
@@ -36,19 +36,26 @@ import play.api.mvc._
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
 
-  def form(modifierId: Long) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "objectId" -> optional(longNumber),
-    "person" -> number.transform(
-      (i: Int) ⇒ if (i == 0) false else true,
-      (b: Boolean) ⇒ if (b) 1 else 0),
-    "funder" -> boolean,
-    "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
-    "since" -> jodaLocalDate,
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(modifierId),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(modifierId))(Member.apply)(Member.unapply))
+  def form(modifierId: Long) = {
+    val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "objectId" -> optional(longNumber),
+      "person" -> number.transform(
+        (i: Int) ⇒ if (i == 0) false else true,
+        (b: Boolean) ⇒ if (b) 1 else 0),
+      "funder" -> boolean,
+      "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
+      "since" -> jodaLocalDate.verifying(
+        "error.membership.tooEarly",
+        _.isAfter(MEMBERSHIP_EARLIEST_DATE)).verifying(
+          "error.membership.tooLate",
+          _.isBefore(LocalDate.now().plusDays(1))),
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(modifierId),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(modifierId))(Member.apply)(Member.unapply))
+  }
 
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -86,7 +93,7 @@ trait Members extends Controller with Security with Services {
           formWithErrors)),
         member ⇒ {
           member.insert
-          Redirect(routes.Members.createNewOrganisation())
+          Redirect(routes.Members.addOrganisation())
         })
   }
 

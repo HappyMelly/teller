@@ -24,7 +24,7 @@
 
 package models
 
-import org.joda.money.{ CurrencyUnit, Money }
+import org.joda.money.{ IllegalCurrencyException, CurrencyUnit, Money }
 import java.math.RoundingMode
 import play.api.data.Mapping
 import play.api.data.Forms._
@@ -41,7 +41,8 @@ object JodaMoney {
    * Form mapping for Joda Money values, using an implicit conversion from `currency -> amount` to `Money`.
    */
   def jodaMoney(precision: Int = 13, scale: Int = 2): Mapping[Money] = mapping[Money, String, BigDecimal](
-    "currency" -> text,
+    "currency" -> text.verifying("error.currency.unknown",
+      (cur: String) ⇒ try { CurrencyUnit.of(cur); true } catch { case _: IllegalCurrencyException ⇒ false }),
     "amount" -> bigDecimal(precision, scale))(JodaMoney.apply)(JodaMoney.unapply)
 
   /**

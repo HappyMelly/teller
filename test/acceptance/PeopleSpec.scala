@@ -67,7 +67,7 @@ class PeopleSpec extends PlayAppSpec {
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredRequest(identity, "/person/1")
+      val request = prepareSecuredGetRequest(identity, "/person/1")
       controller.details(1).apply(request)
     }
   }
@@ -81,7 +81,7 @@ class PeopleSpec extends PlayAppSpec {
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredRequest(identity, "/person/1")
+      val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
       status(result) must equalTo(OK)
@@ -99,7 +99,7 @@ class PeopleSpec extends PlayAppSpec {
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.editor
-      val request = prepareSecuredRequest(identity, "/person/1")
+      val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
       status(result) must equalTo(OK)

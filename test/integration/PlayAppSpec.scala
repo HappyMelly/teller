@@ -67,12 +67,12 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   def cleanupDb()
 
   /**
-   * Returns a secured request object and sets authenticator object to cache
+   * Returns a secured GET request object and sets authenticator object to cache
    *
    * @param identity Identity object
    * @param url Path
    */
-  def prepareSecuredRequest(identity: IdentityId, url: String) = {
+  def prepareSecuredGetRequest(identity: IdentityId, url: String) = {
     val authenticator = new Authenticator("auth.1", identity,
       DateTime.now().minusHours(1),
       DateTime.now(),
@@ -80,6 +80,27 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
     val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
     FakeRequest(GET,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag).withCookies(authenticator.toCookie)
+  }
+
+  /**
+   * Returns a secured request object and sets authenticator object to cache
+   *
+   * @param identity Identity object
+   * @param url Path
+   */
+  def prepareSecuredPostRequest(identity: IdentityId,
+    url: String) = {
+    val authenticator = new Authenticator("auth.1", identity,
+      DateTime.now().minusHours(1),
+      DateTime.now(),
+      DateTime.now().plusHours(5))
+    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(POST,
       url,
       headers = FakeHeaders(),
       body = AnyContentAsEmpty,

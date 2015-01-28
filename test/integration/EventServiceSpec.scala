@@ -30,7 +30,7 @@ import models.service.EventService
 import org.joda.time.LocalDate
 import org.specs2.matcher.DataTables
 
-class EventServiceSpec extends PlayAppSpec with DataTables {
+class EventServiceSpec extends PlayAppSpec {
 
   def setupDb() {
     BrandHelper.defaultBrand.insert

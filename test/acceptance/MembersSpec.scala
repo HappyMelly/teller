@@ -26,7 +26,9 @@ package acceptance
 
 import controllers._
 import integration.PlayAppSpec
+import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
+import org.specs2.matcher.DataTables
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
 import stubs.{ FakeMemberService, StubLoginIdentity, FakeServices }
@@ -35,7 +37,7 @@ import scala.concurrent.Future
 
 class TestMembers() extends Members with Security with FakeServices
 
-class MembersSpec extends PlayAppSpec {
+class MembersSpec extends PlayAppSpec with DataTables {
   def setupDb() {}
   def cleanupDb() {}
 
@@ -49,6 +51,11 @@ class MembersSpec extends PlayAppSpec {
   Add form should
     not be accessible to Viewers                         $e4
     be accessible to Editors                             $e5
+
+  Editor should
+    not be able to add new member with wrong parameters            $e6
+    get a correct error message if membership date is too early    $e7
+    get a correct error message if membership date is too late     $e8
   """
 
   def e1 = {
@@ -63,7 +70,7 @@ class MembersSpec extends PlayAppSpec {
     new MockContext {
       val controller = new TestMembers()
       val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredRequest(identity, "/members/")
+      val request = prepareSecuredGetRequest(identity, "/members/")
 
       val service = mock[FakeMemberService]
       (service.findAll _).expects().returning(List()).once()
@@ -77,7 +84,7 @@ class MembersSpec extends PlayAppSpec {
   def e3 = {
     //@TODO use FakeSecurity here
     val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredRequest(identity, "/members")
+    val request = prepareSecuredGetRequest(identity, "/members")
 
     val controller = new TestMembers()
     val result: Future[SimpleResult] = controller.index().apply(request)
@@ -93,7 +100,7 @@ class MembersSpec extends PlayAppSpec {
   def e4 = {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredRequest(identity, "/member/")
+    val request = prepareSecuredGetRequest(identity, "/member/")
 
     val result: Future[SimpleResult] = controller.add().apply(request)
     status(result) must equalTo(SEE_OTHER)
@@ -103,10 +110,70 @@ class MembersSpec extends PlayAppSpec {
   def e5 = {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.editor
-    val request = prepareSecuredRequest(identity, "/member/")
+    val request = prepareSecuredGetRequest(identity, "/member/")
 
     val result: Future[SimpleResult] = controller.add().apply(request)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add member")
+  }
+
+  def e6 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+
+    "objectId" || "person" | "funder" | "currency" | "amount" | "since" |
+      // empty currency
+      "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" |
+      // unknown currency
+      "0" !! "1" ! "false" ! "TERES" ! "100" ! "2015-01-01" |
+      // negative amount
+      "0" !! "1" ! "false" ! "EUR" ! "-100" ! "2015-01-01" |
+      // zero amount
+      "0" !! "1" ! "false" ! "EUR" ! "0.00" ! "2015-01-01" |
+      // empty since
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "" |
+      // wrong since
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "31-312-321" |
+      // since earlier than 2015-01-01
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2014-12-31" |
+      // since later than today
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! LocalDate.now().plusDays(1).toString |
+      // empty 'funder'
+      "0" !! "1" ! "" ! "EUR" ! "105.05" ! "2015-01-01" |
+      // non-boolean 'funder'
+      "0" !! "1" ! "1.00" ! "EUR" ! "105.05" ! "2015-01-01" |> {
+        (objectId, person, funder, currency, amount, since) ⇒
+          {
+            val data = Seq()
+            val request = prepareSecuredPostRequest(identity, "/member/new").
+              withFormUrlEncodedBody(("objectId", objectId), ("person", person), ("funder", funder),
+                ("fee.currency", currency), ("fee.amount", amount), ("since", since))
+            val result: Future[SimpleResult] = controller.create().apply(request)
+            status(result) must equalTo(BAD_REQUEST)
+          }
+      }
+  }
+
+  def e7 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/new").
+      withFormUrlEncodedBody(("objectId", "0"), ("person", "1"), ("funder", "false"),
+        ("fee.currency", "EUR"), ("fee.amount", "100"), ("since", "2014-01-01"))
+    val result: Future[SimpleResult] = controller.create().apply(request)
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("Membership date cannot be earlier than 2015-01-01")
+  }
+
+  def e8 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/new").
+      withFormUrlEncodedBody(("objectId", "0"), ("person", "1"), ("funder", "false"),
+        ("fee.currency", "EUR"), ("fee.amount", "100"),
+        ("since", LocalDate.now().plusDays(3).toString))
+    val result: Future[SimpleResult] = controller.create().apply(request)
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("Membership date cannot be later than today")
   }
 }
