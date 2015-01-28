@@ -56,6 +56,10 @@ class MembersSpec extends PlayAppSpec with DataTables {
     not be able to add new member with wrong parameters            $e6
     get a correct error message if membership date is too early    $e7
     get a correct error message if membership date is too late     $e8
+
+  If an editor tries to create an organisation without creating membership fee first then
+    she should get an error message                                $e9
+
   """
 
   def e1 = {
@@ -175,5 +179,15 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val result: Future[SimpleResult] = controller.create().apply(request)
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("Membership date cannot be later than today")
+  }
+
+  def e9 = {
+    val controller = new TestMembers()
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/organisation").
+      withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+    val result = controller.createNewOrganisation().apply(request)
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
   }
 }

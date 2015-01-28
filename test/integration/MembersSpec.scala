@@ -25,7 +25,7 @@
 package integration
 
 import controllers.{ Security, Members }
-import models.Member
+import models.{ Organisation, Member }
 import models.service.MemberService
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -65,9 +65,38 @@ class MembersSpec extends PlayAppSpec {
           ("since", m.since.toString))
       val result: Future[SimpleResult] = controller.create().apply(request)
       status(result) must equalTo(SEE_OTHER)
+      //@TODO redirection check
       val insertedM = MemberService.get.findIncompleteMember(m.person, m.createdBy)
       insertedM.nonEmpty must_== true
       insertedM.get.id must_!= fakeId
+    }
+  }
+
+  "The organisation created on step 2" should {
+    "be connected with member data" in {
+      val m = new Member(None, None, person = false, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), DateTime.now(), 1L,
+        DateTime.now(), 1L).insert
+      val justAddedM = MemberService.get.find(m.id.get)
+      justAddedM.nonEmpty must_== true
+      justAddedM.get.objectId.isEmpty must_== true
+
+      val controller = new TestMembers()
+      val identity = StubLoginIdentity.editor
+      val request = prepareSecuredPostRequest(identity, "/member/organisation").
+        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      val result = controller.createNewOrganisation().apply(request)
+      status(result) must equalTo(SEE_OTHER)
+      //@TODO this should be moved to acceptance module
+      headers(result).get("Location").nonEmpty must_== true
+      headers(result).get("Location").get must_== "/members"
+
+      val updatedM = MemberService.get.find(m.id.get)
+      updatedM.nonEmpty must_== true
+      // clean up. We don't need this organisation anymore
+      Organisation.delete(updatedM.get.objectId.get)
+
+      updatedM.get.objectId.nonEmpty must_== true
     }
   }
 }

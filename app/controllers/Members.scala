@@ -31,6 +31,7 @@ import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
@@ -124,8 +125,8 @@ trait Members extends Controller with Security with Services {
               //@TODO redirect to details
               Redirect(routes.Members.index()).flashing("success" -> activity.toString)
             } getOrElse {
-              BadRequest(views.html.member.newOrg(request.user, None, orgForm)).
-                flashing("error" -> "Sorry")
+              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
+              BadRequest(views.html.member.newOrg(request.user, None, orgForm))
             }
           })
   }

@@ -79,10 +79,10 @@
       <div class="container">
           @alert(alertType: String) = {
             @flash.get(alertType).map { message =>
-                <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    @message
-                </div>
+              <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+                  <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  @message
+              </div>
             }
           }
           @alert("error")
