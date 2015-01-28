@@ -94,8 +94,18 @@ trait Members extends Controller with Security with Services {
           formWithErrors)),
         member ⇒ {
           member.copy(id = None).copy(objectId = None).insert
-          Redirect(routes.Members.addOrganisation())
+          if (member.person) {
+            Redirect(routes.Members.addPerson())
+          } else {
+            Redirect(routes.Members.addOrganisation())
+          }
         })
+  }
+
+  /** Renders Add new person page */
+  def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      Ok(views.html.member.newPerson(request.user, None, People.personForm(request)))
   }
 
   /** Renders Add new organisation page */
@@ -131,6 +141,32 @@ trait Members extends Controller with Security with Services {
           })
   }
 
+  /** Records a new member-person to database */
+  def createNewPerson() = SecuredRestrictedAction(Editor) {
+    implicit request ⇒
+      implicit handler ⇒
+        val personForm = People.personForm(request).bindFromRequest
+        personForm.fold(
+          hasErrors ⇒
+            BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
+          success ⇒ {
+            val user = request.user.asInstanceOf[LoginIdentity].person
+            val member = memberService.findIncompleteMember(
+              isPerson = true,
+              user.id.get)
+            member map { m ⇒
+              val person = success.insert
+              m.copy(objectId = Some(person.id.get)).update
+              val activity = Activity.insert(request.user.fullName,
+                Activity.Predicate.Created, "new member " + success.name)
+              //@TODO redirect to details
+              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+            } getOrElse {
+              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
+              BadRequest(views.html.member.newPerson(request.user, None, personForm))
+            }
+          })
+  }
 }
 
 object Members extends Members with Security with Services

@@ -25,10 +25,11 @@
 package integration
 
 import controllers.{ Security, Members }
-import models.{ Organisation, Member }
+import models.{ Person, Organisation, Member }
 import models.service.MemberService
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
+import org.specs2.mutable.After
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
 import play.api.Play.current
@@ -42,13 +43,10 @@ class TestMembers() extends Members with Security with FakeServices
 
 class MembersSpec extends PlayAppSpec {
   def setupDb() {}
-
-  def cleanupDb(): Unit = DB.withSession { implicit session: Session ⇒
-    Q.updateNA("TRUNCATE `MEMBER`").execute
-  }
+  def cleanupDb() {}
 
   "While creating membership fee, objectId and id are unknown and a system" should {
-    "reset them to None to prevent cheating" in {
+    "reset them to None to prevent cheating" in new cleanDb {
       val controller = new TestMembers()
       val identity = StubLoginIdentity.editor
       // here we have resetted values
@@ -73,7 +71,7 @@ class MembersSpec extends PlayAppSpec {
   }
 
   "The organisation created on step 2" should {
-    "be connected with member data" in {
+    "be connected with member data" in new cleanDb {
       val m = new Member(None, None, person = false, funder = false,
         Money.parse("EUR 100"), LocalDate.now(), DateTime.now(), 1L,
         DateTime.now(), 1L).insert
@@ -93,10 +91,49 @@ class MembersSpec extends PlayAppSpec {
 
       val updatedM = MemberService.get.find(m.id.get)
       updatedM.nonEmpty must_== true
+      updatedM.get.objectId.nonEmpty must_== true
+
       // clean up. We don't need this organisation anymore
       Organisation.delete(updatedM.get.objectId.get)
-
-      updatedM.get.objectId.nonEmpty must_== true
+      ok
     }
+  }
+
+  "The person created on step 2" should {
+    "be connected with member data" in new cleanDb {
+      val m = new Member(None, None, person = true, funder = true,
+        Money.parse("EUR 100"), LocalDate.now(), DateTime.now(), 1L,
+        DateTime.now(), 1L).insert
+      val justAddedM = MemberService.get.find(m.id.get)
+      justAddedM.nonEmpty must_== true
+      justAddedM.get.objectId.isEmpty must_== true
+
+      val controller = new TestMembers()
+      val identity = StubLoginIdentity.editor
+      val request = prepareSecuredPostRequest(identity, "/member/member").
+        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
+          ("address.country", "RU"), ("firstName", "Test"),
+          ("lastName", "Test"), ("signature", "false"),
+          ("role", "0"))
+      val result = controller.createNewPerson().apply(request)
+      status(result) must equalTo(SEE_OTHER)
+      //@TODO this should be moved to acceptance module
+      headers(result).get("Location").nonEmpty must_== true
+      headers(result).get("Location").get must_== "/members"
+
+      val updatedM = MemberService.get.find(m.id.get)
+      updatedM.nonEmpty must_== true
+      updatedM.get.objectId.nonEmpty must_== true
+
+      // clean up. We don't need this person anymore
+      Person.delete(updatedM.get.objectId.get)
+      ok
+    }
+  }
+}
+
+trait cleanDb extends After {
+  def after = DB.withSession { implicit session: Session ⇒
+    Q.updateNA("TRUNCATE `MEMBER`").execute
   }
 }

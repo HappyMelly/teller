@@ -1,6 +1,6 @@
 @(user: securesocial.core.Identity,
     id: Option[Long],
-    form: Form[Organisation])(implicit flash: Flash,
+    form: Form[Person])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@main("Organizations", "members", Some(user)) {
+@main("People", "members", Some(user)) {
   @if(form.hasErrors) {
     @html.error()
   }
@@ -16,10 +16,10 @@
   <div class="col-md-6">
     <div class="page-header">
       <h1>Add member</h1>
-      <h3>Step 2: New organisation</h3>
+      <h3>Step 2: New person</h3>
     </div>
-    @html.form(action = CSRF(routes.Members.createNewOrganisation())) {
-      @forms.organisation(form)
+    @html.form(action = CSRF(routes.Members.createNewPerson())) {
+      @forms.person(form)
 
       <div class="row">
         <div class="col-sm-3"></div>

@@ -97,8 +97,10 @@ POST        /license/:id/delete                                                 
 GET         /members                                                             controllers.Members.index
 GET         /member/new                                                          controllers.Members.add
 GET         /member/new/organisation                                             controllers.Members.addOrganisation
+GET         /member/new/person                                                   controllers.Members.addPerson
 POST        /member                                                              controllers.Members.create
 POST        /member/organisation                                                 controllers.Members.createNewOrganisation
+POST        /member/person                                                       controllers.Members.createNewPerson
 GET         /member/:id                                                          controllers.Members.details(id: Long)
 
 GET         /organizations                                                       controllers.Organisations.index
