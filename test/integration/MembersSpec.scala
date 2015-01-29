@@ -47,25 +47,29 @@ class MembersSpec extends PlayAppSpec {
   def setupDb() {}
   def cleanupDb() {}
 
+  implicit val getMemberResult = GetResult(r ⇒
+    Member(r.<<, r.<<, r.<<, r.<<,
+      Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
+      LocalDate.parse(r.nextString()), existingObject = false,
+      DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
+      DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
+
+  val controller = new TestMembers()
+
   "While creating membership fee, objectId and id are unknown and a system" should {
     "reset them to None to prevent cheating" in new cleanDb {
-      val controller = new TestMembers()
-      val identity = StubLoginIdentity.editor
-      // here we have resetted values
-      val m = new Member(None, None, person = true, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
+      val m = member()
       val fakeId = 400
-      val request = prepareSecuredPostRequest(identity, "/member/new").
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", m.funder.toString),
           ("fee.currency", m.fee.getCurrencyUnit.toString),
           ("fee.amount", m.fee.getAmountMajorLong.toString),
           ("since", m.since.toString))
-      val result: Future[SimpleResult] = controller.create().apply(request)
+      val result: Future[SimpleResult] = controller.create().apply(req)
+
       status(result) must equalTo(SEE_OTHER)
-      //@TODO redirection check
       val insertedM = Cache.getAs[Member](Members.cacheId(1L))
       insertedM.nonEmpty must_== true
       insertedM.get.id must_!= fakeId
@@ -74,13 +78,9 @@ class MembersSpec extends PlayAppSpec {
 
   "Incomplete member object" should {
     "be destroyed after successful creation of a person" in new cleanDb {
-      val m = new Member(None, None, person = true, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
-      val controller = new TestMembers()
+      val m = member()
       val oldList = Person.findAll
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/member").
+      val request = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -91,88 +91,64 @@ class MembersSpec extends PlayAppSpec {
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
 
-      //this is a little bit ugly but there's no other way for now to track
-      // new person
-      val person = Person.findAll.diff(oldList).headOption
-      person map { o ⇒ Person.delete(o.id); success } getOrElse failure
+      Person.findAll.diff(oldList).headOption map { p ⇒
+        Person.delete(p.id); success
+      } getOrElse failure
     }
 
     "be destroyed after successful creation of an organisation" in new cleanDb {
-      val m = new Member(None, None, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
-      val controller = new TestMembers()
+      val m = member()
       val oldList = Organisation.findAll
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/organisation").
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
-      controller.createNewOrganisation().apply(request)
+      controller.createNewOrganisation().apply(req)
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
 
-      //this is a little bit ugly but there's no other way for now to track
-      // new organisations
-      val org = Organisation.findAll.diff(oldList).headOption
-      org map { o ⇒ Organisation.delete(o.id.get); success } getOrElse failure
+      Organisation.findAll.diff(oldList).headOption map { o ⇒
+        Organisation.delete(o.id.get); success
+      } getOrElse failure
     }
 
   }
 
   "The organisation created on step 2" should {
     "be connected with member data" in new cleanDb {
-      val m = new Member(None, None, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
-      val controller = new TestMembers()
+      val m = member()
       val oldList = Organisation.findAll
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/organisation").
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
-      val result = controller.createNewOrganisation().apply(request)
+      val result = controller.createNewOrganisation().apply(req)
       status(result) must equalTo(SEE_OTHER)
       //@TODO this should be moved to acceptance module
       headers(result).get("Location").nonEmpty must_== true
       headers(result).get("Location").get must_== "/members"
 
-      //this is a little bit ugly but there's no other way for now to track
-      // new organisations
-      val newList = Organisation.findAll.diff(oldList)
-      newList.length must_== 1
-      val org = newList.head
-
-      DB.withSession { implicit session: Session ⇒
-        implicit val getMemberResult = GetResult(r ⇒
-          Member(r.<<, r.<<, r.<<, r.<<,
-            Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
-            LocalDate.parse(r.nextString()), false,
-            DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
-            DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
-        val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + org.id.get.toString)
-        val updatedM = q.firstOption
+      Organisation.findAll.diff(oldList).headOption map { org ⇒
+        val updatedM = retrieveMember(org.id.get.toString)
         updatedM.nonEmpty must_== true
         updatedM.get.objectId.nonEmpty must_== true
         updatedM.get.objectId must_== org.id
-      }
+        //@TODO make a separate test for this
+        updatedM.get.person must_== false
 
-      // clean up. We don't need this organisation anymore
-      Organisation.delete(org.id.get)
-      ok
+        // clean up. We don't need this organisation anymore
+        Organisation.delete(org.id.get)
+        success
+      } getOrElse failure
+
     }
   }
 
   "The person created on step 2" should {
     "be connected with member data" in new cleanDb {
-      val m = new Member(None, None, person = true, funder = true,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
+      val m = member()
       val oldList = Person.findAll
-      val identity = StubLoginIdentity.editor
-      val controller = new TestMembers()
-      val request = prepareSecuredPostRequest(identity, "/member/member").
+      val request = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -185,30 +161,34 @@ class MembersSpec extends PlayAppSpec {
       headers(result).get("Location").nonEmpty must_== true
       headers(result).get("Location").get must_== "/members"
 
-      //this is a little bit ugly but there's no other way for now to track
-      // new person
-      val newList = Person.findAll.diff(oldList)
-      newList.length must_== 1
-      val person = newList.head
-
-      DB.withSession { implicit session: Session ⇒
-        implicit val getMemberResult = GetResult(r ⇒
-          Member(r.<<, r.<<, r.<<, r.<<,
-            Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
-            LocalDate.parse(r.nextString()), false,
-            DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
-            DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
-        val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + person.id.toString)
-        val updatedM = q.firstOption
+      Person.findAll.diff(oldList).headOption map { person ⇒
+        val updatedM = retrieveMember(person.id.toString)
         updatedM.nonEmpty must_== true
         updatedM.get.objectId.nonEmpty must_== true
         updatedM.get.objectId.get must_== person.id
-      }
 
-      // clean up. We don't need this person anymore
-      Person.delete(person.id)
-      ok
+        // clean up. We don't need this person anymore
+        Person.delete(person.id)
+        success
+      } getOrElse failure
     }
+  }
+
+  /**
+   * Retrieves member from database if it exists
+   * @param id Id of related object
+   * @return Member or None
+   */
+  private def retrieveMember(id: String) = DB.withSession {
+    implicit session: Session ⇒
+      val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + id)
+      q.firstOption
+  }
+
+  private def member(): Member = {
+    new Member(None, None, person = true, funder = false,
+      Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
+      DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }
 
