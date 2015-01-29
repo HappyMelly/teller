@@ -1,5 +1,7 @@
 @(user: securesocial.core.Identity,
-  members: List[Member])(implicit request: Request[Any],
+  members: List[Member],
+  fee: Option[org.joda.money.Money],
+  totalFee: org.joda.money.Money)(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler)
 
@@ -9,14 +11,18 @@
 
 @main("Members", "members", Some(user)) {
 
-  @html.indexPageHeader("Members") {
-    @restrict(handler, List(as(Editor.toString))) {
-      <a class="btn btn-success pull-right" href="@routes.Members.add()">
-      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Member</a>
-    }
-  }
-
+  <div class="page-header">
+    <h2>Total Fee <span class="label label-success">@totalFee.toString</span>
+      @restrict(handler, List(as(Editor.toString))) {
+        <a class="btn btn-success pull-right" href="@routes.Members.add()">
+          <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Member</a>
+      }
+    </h2>
+  </div>
   <div class="col-md-12">
+    @fee.map { f =>
+      Your Fee <span class="label label-info">@f.toString</span>
+    }
     @if(members.isEmpty) {
       <p>There are no members</p>
     } else {

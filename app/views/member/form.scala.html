@@ -49,7 +49,7 @@
           </div>
         }
         @html.money("fee", form("fee.currency"), form("fee.amount"),
-          '_label -> "Fee")
+          '_label -> "Fee", '_currency -> "EUR")
         @html.date(form("since"), '_label -> "Member since")
         <div class="form-group">
             <label class="control-label col-sm-3">Object</label>

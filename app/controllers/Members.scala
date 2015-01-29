@@ -50,7 +50,9 @@ trait Members extends Controller with Security with Services {
       "funder" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
-      "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
+      "fee" -> jodaMoney().
+        verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
+        verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR"),
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
@@ -75,8 +77,13 @@ trait Members extends Controller with Security with Services {
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
+      val user = request.user.asInstanceOf[LoginIdentity].person
       val members = memberService.findAll
-      Ok(views.html.member.index(request.user, members))
+      val fee = members.find(m ⇒
+        m.person && m.objectId == user.id.get) map { m ⇒ Some(m.fee) } getOrElse None
+      var totalFee = Money.parse("EUR 0")
+      members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
+      Ok(views.html.member.index(request.user, members, fee, totalFee))
   }
 
   /**
@@ -157,12 +164,12 @@ trait Members extends Controller with Security with Services {
               val org = success.insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
-              val ins = m.copy(objectId = org.id.get).copy(person = false).insert
+              m.copy(objectId = org.id.get).copy(person = false).insert
               Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
-              //@TODO redirect to details
-              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+              Redirect(routes.Organisations.details(org.id.get)).
+                flashing("success" -> activity.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.newOrg(request.user, None, orgForm))
@@ -171,31 +178,30 @@ trait Members extends Controller with Security with Services {
   }
 
   /** Records a new member-person to database */
-  def createNewPerson() = SecuredRestrictedAction(Editor) {
-    implicit request ⇒
-      implicit handler ⇒
-        val personForm = People.personForm(request).bindFromRequest
-        personForm.fold(
-          hasErrors ⇒
-            BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
-          success ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
-            member map { m ⇒
-              val person = success.insert
-              m.copy(objectId = person.id.get).copy(person = true).insert
-              Cache.remove(Members.cacheId(user.id.get))
-              val activity = Activity.insert(
-                request.user.fullName,
-                Activity.Predicate.Created,
-                "new member " + success.name)
-              //@TODO redirect to details
-              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
-            } getOrElse {
-              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.newPerson(request.user, None, personForm))
-            }
-          })
+  def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      val personForm = People.personForm(request).bindFromRequest
+      personForm.fold(
+        hasErrors ⇒
+          BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
+        success ⇒ {
+          val user = request.user.asInstanceOf[LoginIdentity].person
+          val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+          member map { m ⇒
+            val person = success.insert
+            m.copy(objectId = person.id.get).copy(person = true).insert
+            Cache.remove(Members.cacheId(user.id.get))
+            val activity = Activity.insert(
+              request.user.fullName,
+              Activity.Predicate.Created,
+              "new member " + success.name)
+            Redirect(routes.People.details(person.id.get)).
+              flashing("success" -> activity.toString)
+          } getOrElse {
+            implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
+            BadRequest(views.html.member.newPerson(request.user, None, personForm))
+          }
+        })
   }
 
   /** Records an existing member-person to database */
@@ -225,8 +231,8 @@ trait Members extends Controller with Security with Services {
                     request.user.fullName,
                     Activity.Predicate.Created,
                     "new member " + person.fullName)
-                  //@TODO redirect to details
-                  Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+                  Redirect(routes.People.details(id)).
+                    flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
@@ -269,8 +275,8 @@ trait Members extends Controller with Security with Services {
                     request.user.fullName,
                     Activity.Predicate.Created,
                     "new member " + org.name)
-                  //@TODO redirect to details
-                  Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+                  Redirect(routes.Organisations.details(id)).
+                    flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))

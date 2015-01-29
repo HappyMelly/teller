@@ -22,6 +22,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "url-text-pre": function ( a ) {
+        var x = String(a).replace( /<[\s\S]*?>/g, "" );
+        return x;
+    },
+
+    "url-text-asc": function ( a, b ) {
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+
+    "url-text-desc": function ( a, b ) {
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+} );
+
 $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
@@ -30,9 +45,12 @@ $(document).ready( function() {
         $(this).dataTable( {
             "iDisplayLength": 25,
             "asStripeClasses":[],
-            "aaSorting": [],
+            //"aaSorting": [],
             "bLengthChange": false,
-            "order": [[ 1, "asc" ]]
+            "order": [[ 1, "asc" ]],
+            "columnDefs": [
+                { "type": "url-text", targets: 1 }
+            ]
         });
     });
 });

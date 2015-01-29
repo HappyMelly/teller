@@ -99,10 +99,10 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Members")
-    contentAsString(result) must contain("/member/1")
-    contentAsString(result) must contain("/member/2")
-    contentAsString(result) must contain("/member/3")
-    contentAsString(result) must contain("/member/4")
+    contentAsString(result) must contain("/person/1")
+    contentAsString(result) must contain("/person/2")
+    contentAsString(result) must contain("/organization/1")
+    contentAsString(result) must contain("/organization/2")
     //@TODO finish multiple checks
   }
 
