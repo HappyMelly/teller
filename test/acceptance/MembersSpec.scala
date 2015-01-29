@@ -455,7 +455,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     existingObject: String = "0") = {
     request.withFormUrlEncodedBody(
       ("objectId", "0"), ("person", person),
-      ("funder", "false"), ("fee.currency", "EUR"),
+      ("funder", "0"), ("fee.currency", "EUR"),
       ("fee.amount", "100"), ("since", since),
       ("existingObject", existingObject))
   }

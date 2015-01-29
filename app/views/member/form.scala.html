@@ -26,8 +26,8 @@
           id="person" name="person"/>
         <input type="hidden" value="@form("existingObject").value.getOrElse(0)"
           id="existingObject" name="existingObject"/>
-        @defining(form("type")) { field =>
-          <div class="form-group @if(field.hasErrors) {has-error}" id="type">
+        @defining(form("funder")) { field =>
+          <div class="form-group @if(field.hasErrors) {has-error}" id="funder">
             @defining(field.value.getOrElse("0")) { value =>
               <label class="control-label col-sm-3" for="@field.id" >Type</label>
               <div class="input col-sm-9">
@@ -42,9 +42,9 @@
               </div>
             }
             <span class="help-block">
-            @if(form("role").hasErrors) {
-              @form("role").errors.map(error => Messages(error.message)).mkString(", ")
-            }
+              @if(form("funder").hasErrors) {
+                @form("funder").errors.map(error => Messages(error.message)).mkString(", ")
+              }
             </span>
           </div>
         }

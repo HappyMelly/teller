@@ -58,14 +58,14 @@ class MembersSpec extends PlayAppSpec {
 
   val controller = new TestMembers()
 
-  "While creating membership fee, objectId and id are unknown and a system" should {
-    "reset them to None to prevent cheating" in new cleanDb {
+  "While creating membership fee, a system" should {
+    "reset objectId and id to 0/None to prevent cheating" in new cleanDb {
       val m = member()
       val fakeId = 400
       val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
-          ("person", "1"), ("funder", m.funder.toString),
+          ("person", "1"), ("funder", "0"),
           ("fee.currency", m.fee.getCurrencyUnit.toString),
           ("fee.amount", m.fee.getAmountMajorLong.toString),
           ("since", m.since.toString), ("existingObject", "0"))
@@ -75,6 +75,29 @@ class MembersSpec extends PlayAppSpec {
       val insertedM = Cache.getAs[Member](Members.cacheId(1L))
       insertedM.nonEmpty must_== true
       insertedM.get.id must_!= fakeId
+      insertedM.get.objectId must_== 0
+    }
+    "pass all fields from form to object" in new cleanDb {
+      val fakeId = 400
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+        withFormUrlEncodedBody(("id", fakeId.toString),
+          ("objectId", "3"),
+          ("person", "1"), ("funder", "1"),
+          ("fee.currency", "EUR"),
+          ("fee.amount", "100"),
+          ("since", "2015-01-15"), ("existingObject", "1"))
+      val result: Future[SimpleResult] = controller.create().apply(req)
+
+      status(result) must equalTo(SEE_OTHER)
+      Cache.getAs[Member](Members.cacheId(1L)) map { m ⇒
+        m.id must_== None
+        m.objectId must_== 0
+        m.existingObject must_== true
+        m.person must_== true
+        m.funder must_== true
+        m.fee.getCurrencyUnit.getCode must_== "EUR"
+        m.since.toString must_== "2015-01-15"
+      } getOrElse failure
     }
   }
 

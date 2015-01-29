@@ -47,7 +47,9 @@ trait Members extends Controller with Security with Services {
       "person" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
-      "funder" -> boolean,
+      "funder" -> number.transform(
+        (i: Int) ⇒ if (i == 0) false else true,
+        (b: Boolean) ⇒ if (b) 1 else 0),
       "fee" -> jodaMoney().verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive),
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
