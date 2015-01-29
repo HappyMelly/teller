@@ -25,7 +25,7 @@
 package models.service
 
 import models._
-import models.database.{ People, Members }
+import models.database.{ People, Members, Organisations }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -34,14 +34,20 @@ import play.api.Play.current
 class MemberService {
 
   def findAll: List[Member] = DB.withSession { implicit session ⇒
-    List()
-    //    val query = for {
-    //      m <- Members if m.person === true
-    //      p <- People if p.id === m.objectId
-    //    } yield (m, p)
-    //    query.list.map { m =>
-    //
-    //    }
+    val peopleQuery = for {
+      m ← Members if m.person === true
+      p ← People if p.id === m.objectId
+    } yield (m, p)
+    val result1 = peopleQuery.list
+    result1.foreach(d ⇒ d._1.memberObj_=(d._2))
+
+    val orgQuery = for {
+      m ← Members if m.person === false
+      o ← Organisations if o.id === m.objectId
+    } yield (m, o)
+    val result2 = orgQuery.list
+    result2.foreach(d ⇒ d._1.memberObj_=(d._2))
+    result1.map(_._1) ::: result2.map(_._1)
   }
 
   /** Returns member if it exists, otherwise - None */
