@@ -62,6 +62,18 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
       people.exists(_.id == Some(6L)) must_== true
     }
   }
+
+  "Method isMember" should {
+    "return false if person is not a member" in {
+      val r = PersonService.get.isMember(3L)
+      r must_== false
+    }
+    "return true if person is a member" in {
+      val r = PersonService.get.isMember(1L)
+      r must_== true
+    }
+  }
+
   private def addPeople() = {
     Seq(
       (Some(1L), "First", "Tester"),

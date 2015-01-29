@@ -201,20 +201,35 @@ trait Members extends Controller with Security with Services {
         val personForm = existingPersonForm.bindFromRequest
         personForm.fold(
           hasErrors ⇒
-            BadRequest(views.html.member.existingPerson(request.user, peopleNonMembers, hasErrors)),
-          success ⇒ {
+            BadRequest(views.html.member.existingPerson(request.user,
+              peopleNonMembers,
+              hasErrors)),
+          id ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
-              //              val person = success.insert
-              //              m.copy(objectId = person.id).copy(person = true).insert
-              Cache.remove(Members.cacheId(user.id.get))
-              val activity = Activity.insert(
-                request.user.fullName,
-                Activity.Predicate.Created,
-                "new member " + "test")
-              //@TODO redirect to details
-              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+              personService.find(id) map { person ⇒
+                if (person.member) {
+                  implicit val flash = Flash(Map("error" -> Messages("error.person.member")))
+                  BadRequest(views.html.member.existingPerson(request.user,
+                    peopleNonMembers,
+                    personForm))
+                } else {
+                  m.copy(objectId = person.id.get).copy(person = true).insert
+                  Cache.remove(Members.cacheId(user.id.get))
+                  val activity = Activity.insert(
+                    request.user.fullName,
+                    Activity.Predicate.Created,
+                    "new member " + "test")
+                  //@TODO redirect to details
+                  Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+                }
+              } getOrElse {
+                implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
+                BadRequest(views.html.member.existingOrg(request.user,
+                  peopleNonMembers,
+                  personForm))
+              }
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.existingPerson(request.user, peopleNonMembers, personForm))

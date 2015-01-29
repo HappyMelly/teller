@@ -86,6 +86,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   While updating existing person Editor should
     get a correct error message if person does not exist           $e23
+    get a correct error message if person is already a member      $e24
   """
 
   val controller = new TestMembers()
@@ -408,7 +409,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       DateTime.now(), 1L, DateTime.now(), 1L)
     Cache.set(Members.cacheId(1L), m, 1800)
     val service = mock[FakePersonService]
-    (service.find _).expects(*).returning(None)
+    (service.find(_: Long)).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.personService_=(service)
     val identity = StubLoginIdentity.editor
@@ -418,6 +419,28 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("This person does not exist")
+  }
+
+  def e24 = new cleanup {
+    new MockContext {
+      val controller = new TestMembers()
+      val m = new Member(None, 1L, person = true, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val person = PersonHelper.one.copy(id = Some(1L))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      val service = mock[FakePersonService]
+      (service.find(_: Long)).expects(*).returning(Some(person))
+      (service.findNonMembers _).expects().returning(List())
+      controller.personService_=(service)
+      val identity = StubLoginIdentity.editor
+      val request = prepareSecuredPostRequest(identity, "/member/existing/person").
+        withFormUrlEncodedBody(("id", "1"))
+      val result = controller.updateExistingPerson().apply(request)
+
+      status(result) must equalTo(BAD_REQUEST)
+      contentAsString(result) must contain("This person is already a member")
+    }
   }
 
   /**

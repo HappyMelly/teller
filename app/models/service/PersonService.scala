@@ -81,6 +81,16 @@ class PersonService {
     val ids = members.list
     Query(People).filter(row ⇒ !(row.id inSet ids)).sortBy(_.firstName).list
   }
+
+  /**
+   * Returns true if person is a member, false otherwise
+   * @param id Person id
+   */
+  def isMember(id: Long): Boolean = DB.withSession { implicit session ⇒
+    Query(Members).
+      filter(_.objectId === id).
+      filter(_.person === true).firstOption.nonEmpty
+  }
 }
 
 object PersonService {

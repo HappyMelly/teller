@@ -27,8 +27,8 @@ package integration
 import java.math.RoundingMode
 
 import controllers.{ Security, Members }
-import helpers.OrganisationHelper
-import models.service.OrganisationService
+import helpers.{ PersonHelper, OrganisationHelper }
+import models.service.{ PersonService, OrganisationService }
 import models.{ Person, Organisation, Member }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
@@ -239,6 +239,26 @@ class MembersSpec extends PlayAppSpec {
 
       OrganisationService.get.find(1L) map { o ⇒
         o.member must_== true
+      } getOrElse failure
+    }
+  }
+
+  "On step 2 an existing person" should {
+    "be linked to a member object" in new cleanDb {
+      truncateTables()
+      val m = member(person = true)
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+        withFormUrlEncodedBody(("id", "1"))
+      val person = PersonHelper.one().insert
+      Cache.set(Members.cacheId(1L), m, 1800)
+      PersonService.get.find(1L) map { p ⇒
+        p.member must_== false
+      } getOrElse failure
+      val result = controller.updateExistingPerson().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+
+      PersonService.get.find(1L) map { p ⇒
+        p.member must_== true
       } getOrElse failure
     }
   }
