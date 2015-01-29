@@ -188,7 +188,10 @@ case class Person(
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
+  lazy val deletable: Boolean = account.deletable &&
+    contributions.isEmpty &&
+    memberships.isEmpty &&
+    licenses.isEmpty
 
   /**
    * Removes this person’s membership in the given organisation
@@ -203,7 +206,6 @@ case class Person(
    * Returns a list of this person’s content licenses.
    */
   lazy val licenses: List[LicenseView] = DB.withSession { implicit session: Session ⇒
-
     val query = for {
       license ← Licenses if license.licenseeId === this.id
       brand ← license.brand

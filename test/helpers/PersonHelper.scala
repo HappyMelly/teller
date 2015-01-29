@@ -43,7 +43,7 @@ object PersonHelper {
     blog: Option[String] = None,
     virtual: Boolean = false,
     active: Boolean = true): Person = {
-    val address = new Address(id = Some(1), countryCode = "UK")
+    val address = new Address(id = id, countryCode = "UK")
     val realPhoto = new Photo(None, None)
     val dateStamp = new DateStamp(DateTime.now(),
       "Sergey Kotlov",
@@ -53,6 +53,7 @@ object PersonHelper {
       signature, address.id.get, bio, interests, PersonRole.NoRole,
       webSite, blog, virtual, active, dateStamp)
     person.address_=(address)
+    person.socialProfile_=(new SocialProfile(email = "test@test.ru"))
     person
   }
 

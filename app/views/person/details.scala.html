@@ -57,7 +57,7 @@
                             </form>
                         </div>
                     }
-                    @dynamic(handler, "person", "delete") {
+                  @dynamic(handler, "person", "delete") {
                         <div class="button">
                             <form class="delete form-inline" method="post" text="person"
                             action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
@@ -78,7 +78,6 @@
             <div class="alert alert-warning">
                 <i class="glyphicon glyphicon-warning-sign"></i> This person is <strong>deactivated</strong></div>
         }
-
         <div class="col-md-4">
             <address>
                 <strong>@person.fullName</strong><br>

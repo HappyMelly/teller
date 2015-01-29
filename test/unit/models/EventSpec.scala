@@ -22,12 +22,11 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package unit.models.models
+package unit.models
 
-import helpers.{ BrandHelper, EventHelper }
+import helpers.{ PersonHelper, BrandHelper, EventHelper }
 import integration.PlayAppSpec
-import models.Brand
-import models.service.EventService
+import _root_.models.EventType
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._
@@ -35,15 +34,18 @@ import org.specs2.execute._
 class EventSpec extends PlayAppSpec {
 
   def setupDb() {
+    PersonHelper.one().insert
+    PersonHelper.two().insert
+    PersonHelper.make(Some(4L), "Four", "Tester").insert
+    PersonHelper.make(Some(5L), "Four", "Tester").insert
     BrandHelper.defaultBrand.insert
+    (new EventType(None, 1L, "Type 1", None)).insert
+    (new EventType(None, 1L, "Type 2", None)).insert
     EventHelper.addEvents(BrandHelper.defaultBrand.code)
     EventHelper.addEvents("MGT30")
   }
 
-  def cleanupDb() {
-    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
-    EventService.get.findAll.map(_.delete())
-  }
+  def cleanupDb() {}
 
   lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),

@@ -292,12 +292,12 @@ trait People extends Controller with Security with Services {
         val accountRole = userAccountService.findRole(id)
         val contributions = contributionService.contributions(id, isPerson = true)
         val products = productService.findAll
+        val duplicated = userAccountService.findDuplicateIdentity(person)
 
         Ok(views.html.person.details(request.user, person,
           memberships, otherOrganisations,
           contributions, products,
-          licenses, accountRole,
-          userAccountService.findDuplicateIdentity(person)))
+          licenses, accountRole, duplicated))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))

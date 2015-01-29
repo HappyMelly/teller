@@ -24,8 +24,8 @@
  */
 package integration
 
-import helpers.{ BrandHelper, EventHelper }
-import models.Brand
+import helpers.{ PersonHelper, BrandHelper, EventHelper }
+import models.{ EventType, Brand }
 import models.service.EventService
 import org.joda.time.LocalDate
 import org.specs2.matcher.DataTables
@@ -33,15 +33,18 @@ import org.specs2.matcher.DataTables
 class EventServiceSpec extends PlayAppSpec {
 
   def setupDb() {
+    PersonHelper.one().insert
+    PersonHelper.two().insert
+    PersonHelper.make(Some(4L), "Four", "Tester").insert
+    PersonHelper.make(Some(5L), "Four", "Tester").insert
     BrandHelper.defaultBrand.insert
+    (new EventType(None, 1L, "Type 1", None)).insert
+    (new EventType(None, 1L, "Type 2", None)).insert
     EventHelper.addEvents(BrandHelper.defaultBrand.code)
     EventHelper.addEvents("MGT30")
   }
 
-  def cleanupDb() {
-    Brand.find(BrandHelper.defaultBrand.code).map(_.brand.delete())
-    EventService.findAll.map(_.delete())
-  }
+  def cleanupDb() {}
 
   lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),

@@ -193,6 +193,62 @@ trait Members extends Controller with Security with Services {
             }
           })
   }
+
+  /** Records an existing member-person to database */
+  def updateExistingPerson() = SecuredRestrictedAction(Editor) {
+    implicit request ⇒
+      implicit handler ⇒
+        val personForm = existingPersonForm.bindFromRequest
+        personForm.fold(
+          hasErrors ⇒
+            BadRequest(views.html.member.existingPerson(request.user, None, hasErrors)),
+          success ⇒ {
+            val user = request.user.asInstanceOf[LoginIdentity].person
+            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            member map { m ⇒
+              //              val person = success.insert
+              //              m.copy(objectId = person.id).copy(person = true).insert
+              Cache.remove(Members.cacheId(user.id.get))
+              val activity = Activity.insert(
+                request.user.fullName,
+                Activity.Predicate.Created,
+                "new member " + "test")
+              //@TODO redirect to details
+              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+            } getOrElse {
+              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
+              BadRequest(views.html.member.existingPerson(request.user, None, personForm))
+            }
+          })
+  }
+
+  /** Records an existing organisation-person to database */
+  def updateExistingOrg() = SecuredRestrictedAction(Editor) {
+    implicit request ⇒
+      implicit handler ⇒
+        val personForm = existingOrgForm.bindFromRequest
+        personForm.fold(
+          hasErrors ⇒
+            BadRequest(views.html.member.existingOrg(request.user, None, hasErrors)),
+          success ⇒ {
+            val user = request.user.asInstanceOf[LoginIdentity].person
+            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            member map { m ⇒
+              //              val person = success.insert
+              //              m.copy(objectId = person.id).copy(person = true).insert
+              Cache.remove(Members.cacheId(user.id.get))
+              val activity = Activity.insert(
+                request.user.fullName,
+                Activity.Predicate.Created,
+                "new member " + "test")
+              //@TODO redirect to details
+              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+            } getOrElse {
+              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
+              BadRequest(views.html.member.existingOrg(request.user, None, personForm))
+            }
+          })
+  }
 }
 
 object Members extends Members with Security with Services {

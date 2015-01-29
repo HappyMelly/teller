@@ -46,7 +46,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   override def is = s2"""
 
   Page with a list of members should
-    show all members sorted by names                     $e3
+    show all members sorted by names                     $e1
 
   Editor should
     not be able to add new member with wrong parameters            $e6
@@ -57,18 +57,22 @@ class MembersSpec extends PlayAppSpec with DataTables {
     be redirected to 'Existing Org' form if he chose 'Org'         $e11
     be redirected to 'Existing Person' form if he chose 'Person'   $e12
 
-  If an editor tries to create an organisation without creating membership fee first then
-    she should get an error message                                $e14
+  If an editor tries to complete step 2 without completing step 1,
+    she should get an error message
+      while creating new organisation                              $e13
+      while creating new person                                    $e14
+      while updating exiting organisation                          $e15
+      while updating existing person                               $e16
 
-
-  If an editor tries to create a person without creating membership fee first then
-    she should get an error message                                       $e19
+  Add existing form should contain
+    a set of predefined elements                                   $e17
+    only organisations which are not members in the selector       $e18
   """
 
   val controller = new TestMembers()
+  val MSG = "You are trying to complete step 2 while adding new member without completing step 1"
 
-  def e3 = {
-    //@TODO use FakeSecurity here
+  def e1 = {
     val identity = StubLoginIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/members")
 
@@ -185,17 +189,17 @@ class MembersSpec extends PlayAppSpec with DataTables {
     headers(result).get("Location").get must_== "/member/existing/person"
   }
 
-  def e14 = {
+  def e13 = {
     val identity = StubLoginIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/organisation").
       withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
     val result = controller.createNewOrganisation().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
+    contentAsString(result) must contain(MSG)
   }
 
-  def e19 = {
+  def e14 = {
     val identity = StubLoginIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/person").
       withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"), ("address.country", "RU"),
@@ -204,7 +208,59 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val result = controller.createNewPerson().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
+    contentAsString(result) must contain(MSG)
+  }
+
+  def e15 = {
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+      withFormUrlEncodedBody(("id", "1"))
+    val result = controller.updateExistingOrg().apply(request)
+
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain(MSG)
+  }
+
+  def e16 = {
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/existing/person").
+      withFormUrlEncodedBody(("id", "1"))
+    val result = controller.updateExistingPerson().apply(request)
+
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain(MSG)
+  }
+
+  def e17 = {
+    val req = prepareSecuredGetRequest(
+      StubLoginIdentity.editor,
+      "/member/existing/organisation")
+    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add member")
+    contentAsString(result) must contain("Step 2: Existing organisation")
+    contentAsString(result) must contain(routes.Members.updateExistingOrg.url)
+    contentAsString(result) must contain("<select")
+  }
+
+  def e18 = {
+    val req = prepareSecuredGetRequest(
+      StubLoginIdentity.editor,
+      "/member/existing/organisation")
+    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("<select")
+    contentAsString(result) must contain("Select organisation")
+    contentAsString(result) must contain("value=\"1\"")
+    contentAsString(result) must contain("value=\"3\"")
+    contentAsString(result) must contain("value=\"4\"")
+    contentAsString(result) must contain("value=\"6\"")
+    contentAsString(result) must contain("First org")
+    contentAsString(result) must contain("Third org")
+    contentAsString(result) must contain("Fourth org")
+    contentAsString(result) must contain("Sixth org")
   }
 
   /**
