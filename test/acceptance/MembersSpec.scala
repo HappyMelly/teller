@@ -26,38 +26,25 @@ package acceptance
 
 import controllers._
 import integration.PlayAppSpec
-import models.Member
-import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
+import org.joda.time.LocalDate
 import org.specs2.matcher._
-import play.api.db.slick._
 import play.api.cache.Cache
 import play.api.mvc.SimpleResult
-import play.api.test.FakeRequest
 import play.api.Play.current
-import stubs.{ FakeMemberService, StubLoginIdentity, FakeServices }
+import stubs.{ StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
-import scala.slick.jdbc.{ StaticQuery ⇒ Q }
-import scala.slick.session.Session
-
-class TestMembers() extends Members with Security with FakeServices
 
 class MembersSpec extends PlayAppSpec with DataTables {
+  class TestMembers() extends Members with Security with FakeServices
+
   def setupDb() {}
   def cleanupDb() {}
 
   override def is = s2"""
 
   Page with a list of members should
-    not be visible to unauthorized user                  $e1
-    and be visible to authorized user                    $e2
     show all members sorted by names                     $e3
-
-  Add Fee form should
-    not be accessible to Viewers                         $e4
-    be accessible to Editors                             $e5
 
   Editor should
     not be able to add new member with wrong parameters            $e6
@@ -71,48 +58,10 @@ class MembersSpec extends PlayAppSpec with DataTables {
   If an editor tries to create an organisation without creating membership fee first then
     she should get an error message                                $e14
 
-  Add new organisation form should
-    not be accessible to Viewers                         $e15
-    be accessible to Editors                             $e16
-
-  Add new person form should
-    not be accessible to Viewers                         $e17
-    be accessible to Editors                             $e18
 
   If an editor tries to create a person without creating membership fee first then
     she should get an error message                                       $e19
-
-  Add existing organisation form should
-    not be accessible to Viewers                         $e20
-    be accessible to Editors                             $e21
-
-  Add existing person form should
-    not be accessible to Viewers                         $e22
-    be accessible to Editors                             $e23
   """
-
-  def e1 = {
-    val controller = new TestMembers()
-    val result: Future[SimpleResult] = controller.index().apply(FakeRequest())
-
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome.which(_.contains("login"))
-  }
-
-  def e2 = {
-    new MockContext {
-      val controller = new TestMembers()
-      val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredGetRequest(identity, "/members/")
-
-      val service = mock[FakeMemberService]
-      (service.findAll _).expects().returning(List()).once()
-      controller.memberService_=(service)
-
-      val result: Future[SimpleResult] = controller.index().apply(request)
-      status(result) must equalTo(OK)
-    }
-  }
 
   def e3 = {
     //@TODO use FakeSecurity here
@@ -128,26 +77,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("/member/3")
     contentAsString(result) must contain("/member/4")
     //@TODO finish multiple checks
-  }
-
-  def e4 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/member/")
-
-    val result: Future[SimpleResult] = controller.add().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome("/")
-  }
-
-  def e5 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/member/")
-
-    val result: Future[SimpleResult] = controller.add().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Add member")
   }
 
   def e6 = {
@@ -289,48 +218,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
   }
 
-  def e15 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addOrganisation().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome("/")
-  }
-
-  def e16 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addOrganisation().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Add member")
-    contentAsString(result) must contain("Step 2: New organisation")
-  }
-
-  def e17 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addOrganisation().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome("/")
-  }
-
-  def e18 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addPerson().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Add member")
-    contentAsString(result) must contain("Step 2: New person")
-  }
-
   def e19 = {
     val controller = new TestMembers()
     val identity = StubLoginIdentity.editor
@@ -341,48 +228,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val result = controller.createNewPerson().apply(request)
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("You are trying to complete step 2 while adding new member without completing step 1")
-  }
-
-  def e20 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome("/")
-  }
-
-  def e21 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Add member")
-    contentAsString(result) must contain("Step 2: Existing organisation")
-  }
-
-  def e22 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addExistingPerson().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome("/")
-  }
-
-  def e23 = {
-    val controller = new TestMembers()
-    val identity = StubLoginIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/")
-
-    val result: Future[SimpleResult] = controller.addExistingPerson().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Add member")
-    contentAsString(result) must contain("Step 2: Existing person")
   }
 }
 
