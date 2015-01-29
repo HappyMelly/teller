@@ -32,7 +32,7 @@ import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ StubLoginIdentity, StubPersonService, FakeServices }
+import stubs.{ StubLoginIdentity, FakePersonService, FakeServices }
 
 import scala.concurrent.Future
 
@@ -61,7 +61,7 @@ class PeopleSpec extends PlayAppSpec {
   def e2 = {
     new MockContext {
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
@@ -76,7 +76,7 @@ class PeopleSpec extends PlayAppSpec {
       val person = PersonHelper.one()
       person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.viewer
@@ -94,7 +94,7 @@ class PeopleSpec extends PlayAppSpec {
       val person = PersonHelper.one().insert
       person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/person/1")

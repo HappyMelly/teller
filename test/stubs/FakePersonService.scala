@@ -26,7 +26,7 @@ package stubs
 import models.{ Person, Organisation }
 import models.service.PersonService
 
-class StubPersonService extends PersonService {
+class FakePersonService extends PersonService {
 
   override def memberships(person: Person): List[Organisation] = List()
 

@@ -129,15 +129,13 @@ trait Members extends Controller with Security with Services {
   /** Renders Add existing organisation page */
   def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      val orgs = organisationService.findNonMembers.map(o ⇒
-        (o.id.get.toString, o.name))
-      Ok(views.html.member.existingOrg(request.user, orgs, existingOrgForm))
+      Ok(views.html.member.existingOrg(request.user, orgsNonMembers, existingOrgForm))
   }
 
   /** Renders Add existing person page */
   def addExistingPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.member.existingPerson(request.user, None, existingPersonForm))
+      Ok(views.html.member.existingPerson(request.user, peopleNonMembers, existingPersonForm))
   }
 
   /** Records a new member-organisation to database */
@@ -203,7 +201,7 @@ trait Members extends Controller with Security with Services {
         val personForm = existingPersonForm.bindFromRequest
         personForm.fold(
           hasErrors ⇒
-            BadRequest(views.html.member.existingPerson(request.user, None, hasErrors)),
+            BadRequest(views.html.member.existingPerson(request.user, peopleNonMembers, hasErrors)),
           success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
@@ -219,7 +217,7 @@ trait Members extends Controller with Security with Services {
               Redirect(routes.Members.index()).flashing("success" -> activity.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingPerson(request.user, None, personForm))
+              BadRequest(views.html.member.existingPerson(request.user, peopleNonMembers, personForm))
             }
           })
   }
@@ -232,7 +230,7 @@ trait Members extends Controller with Security with Services {
         orgForm.fold(
           hasErrors ⇒ {
             BadRequest(views.html.member.existingOrg(request.user,
-              nonMembers,
+              orgsNonMembers,
               hasErrors))
           },
           id ⇒ {
@@ -243,7 +241,7 @@ trait Members extends Controller with Security with Services {
                 if (org.member) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
                   BadRequest(views.html.member.existingOrg(request.user,
-                    nonMembers,
+                    orgsNonMembers,
                     orgForm))
                 } else {
                   m.copy(objectId = org.id.get).copy(person = false).insert
@@ -258,21 +256,25 @@ trait Members extends Controller with Security with Services {
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
                 BadRequest(views.html.member.existingOrg(request.user,
-                  nonMembers,
+                  orgsNonMembers,
                   orgForm))
               }
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.existingOrg(request.user,
-                nonMembers,
+                orgsNonMembers,
                 orgForm))
             }
           })
   }
 
   /** Returns ids and names of organisations which are not members */
-  private def nonMembers: List[(String, String)] = organisationService.findNonMembers.
+  private def orgsNonMembers: List[(String, String)] = organisationService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))
+
+  /** Returns ids and names of people which are not members */
+  private def peopleNonMembers: List[(String, String)] = personService.findNonMembers.
+    map(p ⇒ (p.id.get.toString, p.fullName))
 }
 
 object Members extends Members with Security with Services {

@@ -25,10 +25,12 @@
 package models.service
 
 import models.{ Organisation, Person }
-import models.database.{ OrganisationMemberships, People }
+import models.database.{ Organisations, Members, OrganisationMemberships, People }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
+
+import scala.slick.lifted.Query
 
 class PersonService {
 
@@ -71,6 +73,14 @@ class PersonService {
     query.firstOption
   }
 
+  /** Returns list of people which are not members (yet!) */
+  def findNonMembers: List[Person] = DB.withSession { implicit session ⇒
+    import scala.language.postfixOps
+
+    val members = for { m ← Members if m.person === true } yield m.objectId
+    val ids = members.list
+    Query(People).filter(row ⇒ !(row.id inSet ids)).sortBy(_.firstName).list
+  }
 }
 
 object PersonService {

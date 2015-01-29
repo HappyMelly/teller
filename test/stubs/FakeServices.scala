@@ -29,7 +29,7 @@ import models.service.Services
 trait FakeServices extends Services {
 
   private var _eventService = new StubEventService
-  private var _personService = new StubPersonService
+  private var _personService = new FakePersonService
   private var _licenseService = new StubLicenseService
   private var _userAccountService = new StubUserAccountService
   private var _contributionService = new StubContributionService
@@ -44,11 +44,11 @@ trait FakeServices extends Services {
 
   override def eventService: StubEventService = _eventService
 
-  def personService_=(service: StubPersonService) = {
+  def personService_=(service: FakePersonService) = {
     _personService = service
   }
 
-  override def personService: StubPersonService = _personService
+  override def personService: FakePersonService = _personService
 
   def licenseService_=(service: StubLicenseService) = {
     _licenseService = service

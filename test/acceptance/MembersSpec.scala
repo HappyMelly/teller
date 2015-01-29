@@ -25,7 +25,7 @@
 package acceptance
 
 import controllers._
-import helpers.OrganisationHelper
+import helpers.{ PersonHelper, OrganisationHelper }
 import integration.PlayAppSpec
 import models.Member
 import org.joda.money.CurrencyUnit._
@@ -35,12 +35,15 @@ import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import org.specs2.mutable.After
 import play.api.cache.Cache
+import play.api.db.slick._
 import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
-import stubs.{ FakeOrganisationService, StubLoginIdentity, FakeServices }
+import stubs.{ FakePersonService, FakeOrganisationService, StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
+import scala.slick.jdbc.{ StaticQuery ⇒ Q }
+import scala.slick.session.Session
 
 class MembersSpec extends PlayAppSpec with DataTables {
   class TestMembers() extends Members with Security with FakeServices
@@ -69,13 +72,20 @@ class MembersSpec extends PlayAppSpec with DataTables {
       while updating exiting organisation                          $e15
       while updating existing person                               $e16
 
-  Add existing form should contain
+  Add existing org form should contain
     a set of predefined elements                                   $e17
     only organisations which are not members in the selector       $e18
 
   While updating existing org Editor should
     get a correct error message if org does not exist              $e19
     get a correct error message if org is already a member         $e20
+
+  Add existing person form should contain
+    a set of predefined elements                                   $e21
+    only people which are not members in the selector              $e22
+
+  While updating existing person Editor should
+    get a correct error message if person does not exist           $e23
   """
 
   val controller = new TestMembers()
@@ -297,6 +307,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e19 = new MockContext {
+    val controller = new TestMembers()
     val m = new Member(None, 0, person = false, funder = false,
       Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
       DateTime.now(), 1L, DateTime.now(), 1L)
@@ -314,24 +325,101 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("This organisation does not exist")
   }
 
-  def e20 = new MockContext {
-    val m = new Member(None, 1L, person = false, funder = false,
+  def e20 = new cleanup {
+    new MockContext {
+      val controller = new TestMembers()
+      val m = new Member(None, 1L, person = false, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val org = OrganisationHelper.one.copy(id = Some(1L))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      val service = mock[FakeOrganisationService]
+      (service.find _).expects(*).returning(Some(org))
+      (service.findNonMembers _).expects().returning(List())
+      controller.organisationService_=(service)
+      val identity = StubLoginIdentity.editor
+      val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+        withFormUrlEncodedBody(("id", "1"))
+      val result = controller.updateExistingOrg().apply(request)
+
+      status(result) must equalTo(BAD_REQUEST)
+      contentAsString(result) must contain("This organisation is already a member")
+    }
+  }
+
+  def e21 = {
+    val req = prepareSecuredGetRequest(
+      StubLoginIdentity.editor,
+      "/member/existing/person")
+    val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add member")
+    contentAsString(result) must contain("Step 2: Existing person")
+    contentAsString(result) must contain(routes.Members.updateExistingPerson.url)
+    contentAsString(result) must contain("<select")
+  }
+
+  def e22 = {
+    Seq(
+      (Some(1L), "First", "Tester"),
+      (Some(2L), "Second", "Tester"),
+      (Some(3L), "Third", "Tester"),
+      (Some(4L), "Fourth", "Tester"),
+      (Some(5L), "Firth", "Tester"),
+      (Some(6L), "Sixth", "Tester")).foreach {
+        case (id, firstName, lastName) ⇒
+          val person = PersonHelper.make(id = id, firstName = firstName,
+            lastName = lastName)
+          person.insert
+      }
+    Seq(
+      (2L, true, false, Money.of(EUR, 100), LocalDate.now(), 1L),
+      (5L, true, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
+        case (objectId, person, funder, fee, since, createdBy) ⇒
+          val member = new Member(None, objectId, person, funder, fee, since,
+            existingObject = false,
+            DateTime.now(), createdBy, DateTime.now(), createdBy)
+          member.insert
+      }
+
+    val req = prepareSecuredGetRequest(
+      StubLoginIdentity.editor,
+      "/member/existing/person")
+    val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("<select")
+    contentAsString(result) must contain("Select person")
+    contentAsString(result) must contain("value=\"1\"")
+    contentAsString(result) must contain("value=\"3\"")
+    contentAsString(result) must contain("value=\"4\"")
+    contentAsString(result) must contain("value=\"6\"")
+    contentAsString(result) must contain("First Tester")
+    contentAsString(result) must contain("Third Tester")
+    contentAsString(result) must contain("Fourth Tester")
+    contentAsString(result) must contain("Sixth Tester")
+  }
+
+  def e23 = new MockContext {
+    val controller = new TestMembers()
+    val m = new Member(None, 0, person = true, funder = false,
       Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-      DateTime.now(), 1L, DateTime.now(), 1L).insert
-    val org = OrganisationHelper.one.copy(id = Some(1L))
+      DateTime.now(), 1L, DateTime.now(), 1L)
     Cache.set(Members.cacheId(1L), m, 1800)
-    val service = mock[FakeOrganisationService]
-    (service.find _).expects(*).returning(Some(org))
+    val service = mock[FakePersonService]
+    (service.find _).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
-    controller.organisationService_=(service)
+    controller.personService_=(service)
     val identity = StubLoginIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+    val request = prepareSecuredPostRequest(identity, "/member/existing/person").
       withFormUrlEncodedBody(("id", "1"))
-    val result = controller.updateExistingOrg().apply(request)
+    val result = controller.updateExistingPerson().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("This organisation is already a member")
+    contentAsString(result) must contain("This person does not exist")
   }
+
   /**
    * Adds member data to post request and returns updated request
    * @param request Request
@@ -351,5 +439,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
 }
 
 trait cleanup extends After {
-  def after = Cache.remove(Members.cacheId(1L))
+  def after = DB.withSession { implicit session: Session ⇒
+    Q.updateNA("TRUNCATE `MEMBER`").execute
+    Cache.remove(Members.cacheId(1L))
+  }
 }
