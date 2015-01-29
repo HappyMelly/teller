@@ -66,7 +66,7 @@ class MembersSpec extends PlayAppSpec {
       val result: Future[SimpleResult] = controller.create().apply(request)
       status(result) must equalTo(SEE_OTHER)
       //@TODO redirection check
-      val insertedM = Cache.getAs[Member](controller.cacheId(1L))
+      val insertedM = Cache.getAs[Member](Members.cacheId(1L))
       insertedM.nonEmpty must_== true
       insertedM.get.id must_!= fakeId
     }
@@ -86,10 +86,10 @@ class MembersSpec extends PlayAppSpec {
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
 
-      Cache.set(controller.cacheId(1L), m, 1800)
+      Cache.set(Members.cacheId(1L), m, 1800)
       controller.createNewPerson().apply(request)
       // test check
-      Cache.getAs[Member](controller.cacheId(1L)).isEmpty must_== true
+      Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
 
       //this is a little bit ugly but there's no other way for now to track
       // new person
@@ -107,10 +107,10 @@ class MembersSpec extends PlayAppSpec {
       val request = prepareSecuredPostRequest(identity, "/member/organisation").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
-      Cache.set(controller.cacheId(1L), m, 1800)
+      Cache.set(Members.cacheId(1L), m, 1800)
       controller.createNewOrganisation().apply(request)
       // test check
-      Cache.getAs[Member](controller.cacheId(1L)).isEmpty must_== true
+      Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
 
       //this is a little bit ugly but there's no other way for now to track
       // new organisations
@@ -131,7 +131,7 @@ class MembersSpec extends PlayAppSpec {
       val request = prepareSecuredPostRequest(identity, "/member/organisation").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
-      Cache.set(controller.cacheId(1L), m, 1800)
+      Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewOrganisation().apply(request)
       status(result) must equalTo(SEE_OTHER)
       //@TODO this should be moved to acceptance module
@@ -178,7 +178,7 @@ class MembersSpec extends PlayAppSpec {
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
 
-      Cache.set(controller.cacheId(1L), m, 1800)
+      Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewPerson().apply(request)
       status(result) must equalTo(SEE_OTHER)
       //@TODO this should be moved to acceptance module

@@ -39,13 +39,6 @@ import play.api.Play.current
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
 
-  /**
-   * Returns cache identifier to store incomplete member object
-   * @param id User id
-   * @return
-   */
-  def cacheId(id: Long): String = "incomplete.member." + id.toString
-
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
     Form(mapping(
@@ -111,7 +104,7 @@ trait Members extends Controller with Security with Services {
           formWithErrors)),
         member ⇒ {
           val m = member.copy(id = None).copy(objectId = None)
-          Cache.set(cacheId(user.id.get), m, 1800)
+          Cache.set(Members.cacheId(user.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
             case (false, false) ⇒ Redirect(routes.Members.addOrganisation())
@@ -155,11 +148,11 @@ trait Members extends Controller with Security with Services {
             BadRequest(views.html.member.newOrg(request.user, None, hasErrors)),
           success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               val org = success.insert
               m.copy(objectId = org.id).insert
-              Cache.remove(cacheId(user.id.get))
+              Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               //@TODO redirect to details
@@ -181,11 +174,11 @@ trait Members extends Controller with Security with Services {
             BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
           success ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               val person = success.insert
               m.copy(objectId = person.id).insert
-              Cache.remove(cacheId(user.id.get))
+              Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               //@TODO redirect to details
@@ -198,4 +191,12 @@ trait Members extends Controller with Security with Services {
   }
 }
 
-object Members extends Members with Security with Services
+object Members extends Members with Security with Services {
+
+  /**
+   * Returns cache identifier to store incomplete member object
+   * @param id User id
+   * @return
+   */
+  def cacheId(id: Long): String = "incomplete.member." + id.toString
+}
