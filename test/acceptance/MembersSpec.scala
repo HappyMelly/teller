@@ -75,6 +75,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   While updating existing org Editor should
     get a correct error message if org does not exist              $e19
+    get a correct error message if org is already a member         $e20
   """
 
   val controller = new TestMembers()
@@ -313,6 +314,24 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("This organisation does not exist")
   }
 
+  def e20 = new MockContext {
+    val m = new Member(None, 1L, person = false, funder = false,
+      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+      DateTime.now(), 1L, DateTime.now(), 1L).insert
+    val org = OrganisationHelper.one.copy(id = Some(1L))
+    Cache.set(Members.cacheId(1L), m, 1800)
+    val service = mock[FakeOrganisationService]
+    (service.find _).expects(*).returning(Some(org))
+    (service.findNonMembers _).expects().returning(List())
+    controller.organisationService_=(service)
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+      withFormUrlEncodedBody(("id", "1"))
+    val result = controller.updateExistingOrg().apply(request)
+
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("This organisation is already a member")
+  }
   /**
    * Adds member data to post request and returns updated request
    * @param request Request

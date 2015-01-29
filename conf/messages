@@ -116,6 +116,7 @@ error.membership.wrongStep = You are trying to complete step 2 while adding new 
 
 error.organisation.nonDeletable = You cannot delete this organisation because it has members, booking entries or an active account
 error.organisation.notExist = This organisation does not exist
+error.organisation.member = This organisation is already a member
 
 error.participant.notExist = The person is not a participant of the event
 error.participant.exist = This person already participates in this event

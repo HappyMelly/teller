@@ -27,15 +27,18 @@ package integration
 import java.math.RoundingMode
 
 import controllers.{ Security, Members }
+import helpers.OrganisationHelper
+import models.service.OrganisationService
 import models.{ Person, Organisation, Member }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable.After
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
 import play.api.Play.current
-import stubs.{ StubLoginIdentity, FakeServices }
+import stubs.{ FakeOrganisationService, StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q, GetResult }
@@ -217,6 +220,25 @@ class MembersSpec extends PlayAppSpec {
         // clean up. We don't need this person anymore
         Person.delete(person.id)
         success
+      } getOrElse failure
+    }
+  }
+
+  "On step 2 an existing organisation " should {
+    "be linked to a member object" in new cleanDb {
+      val m = member(person = false)
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+        withFormUrlEncodedBody(("id", "1"))
+      val org = OrganisationHelper.one.copy(id = Some(1L)).insert
+      Cache.set(Members.cacheId(1L), m, 1800)
+      OrganisationService.get.find(1L) map { o ⇒
+        o.member must_== false
+      } getOrElse failure
+      val result = controller.updateExistingOrg().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+
+      OrganisationService.get.find(1L) map { o ⇒
+        o.member must_== true
       } getOrElse failure
     }
   }

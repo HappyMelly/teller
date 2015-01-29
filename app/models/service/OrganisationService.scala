@@ -60,6 +60,16 @@ class OrganisationService {
     implicit session: Session ⇒
       Query(Organisations).filter(_.id === id).list.headOption
   }
+
+  /**
+   * Returns true if org is a member, false otherwise
+   * @param id Organisation id
+   */
+  def isMember(id: Long): Boolean = DB.withSession { implicit session ⇒
+    Query(Members).
+      filter(_.objectId === id).
+      filter(_.person === false).firstOption.nonEmpty
+  }
 }
 
 object OrganisationService {

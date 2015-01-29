@@ -240,15 +240,21 @@ trait Members extends Controller with Security with Services {
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               organisationService.find(id) map { org ⇒
-                //              val person = success.insert
-                //              m.copy(objectId = person.id).copy(person = true).insert
-                Cache.remove(Members.cacheId(user.id.get))
-                val activity = Activity.insert(
-                  request.user.fullName,
-                  Activity.Predicate.Created,
-                  "new member " + "test")
-                //@TODO redirect to details
-                Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+                if (org.member) {
+                  implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
+                  BadRequest(views.html.member.existingOrg(request.user,
+                    nonMembers,
+                    orgForm))
+                } else {
+                  m.copy(objectId = org.id.get).copy(person = false).insert
+                  Cache.remove(Members.cacheId(user.id.get))
+                  val activity = Activity.insert(
+                    request.user.fullName,
+                    Activity.Predicate.Created,
+                    "new member " + org.name)
+                  //@TODO redirect to details
+                  Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+                }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
                 BadRequest(views.html.member.existingOrg(request.user,
