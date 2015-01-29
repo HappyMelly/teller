@@ -9,54 +9,78 @@
 @import views.ViewHelpers._
 
 @defining(form.value.map(member => "Member %s".format(member.name)).getOrElse("Add member")) { title: String =>
-    @main("Member", "members", Some(user)) {
-      @if(form.hasErrors) {
-          @html.error()
-      }
-
-      <div class="col-md-6">
-        <div class="page-header">
-            <h1>@title</h1>
-            <h3>Step 1: Fee</h3>
-        </div>
-        @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.Members.create()))) {
-          <input type="hidden" value="@form("objectId").value.getOrElse(0)"
-            id="objectId" name="objectId"/>
-          <input type="hidden" value="@form("person").value.getOrElse(0)"
-            id="person" name="person"/>
-          @defining(form("type")) { field =>
-            <div class="form-group @if(field.hasErrors) {has-error}" id="type">
-              @defining(field.value.getOrElse("0")) { value =>
-                <label class="control-label col-sm-3" for="@field.id" >Type</label>
-                <div class="input col-sm-9">
-                  <label class="radio">
-                    <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
-                    Supporter
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
-                    Funder
-                  </label>
-                </div>
-              }
-              <span class="help-block">
-              @if(form("role").hasErrors) {
-                @form("role").errors.map(error => Messages(error.message)).mkString(", ")
-              }
-              </span>
-            </div>
-          }
-          @html.money("fee", form("fee.currency"), form("fee.amount"),
-            '_label -> "Fee")
-          @html.date(form("since"), '_label -> "Member since")
-
-          <div class="row">
-              <div class="col-sm-3"></div>
-              <div class="col-sm-9">
-                  <button class="btn btn-primary btn-block pull-right" type="submit">Add Member Data</button>
-              </div>
-          </div>
-          }
-      </div>
+  @main("Member", "members", Some(user)) {
+    @if(form.hasErrors) {
+        @html.error()
     }
+
+    <div class="col-md-6">
+      <div class="page-header">
+          <h1>@title</h1>
+          <h3>Step 1: Fee</h3>
+      </div>
+      @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.Members.create()))) {
+        <input type="hidden" value="@form("objectId").value.getOrElse(0)"
+          id="objectId" name="objectId"/>
+        <input type="hidden" value="@form("person").value.getOrElse(0)"
+          id="person" name="person"/>
+        <input type="hidden" value="@form("existingObject").value.getOrElse(0)"
+          id="existingObject" name="existingObject"/>
+        @defining(form("type")) { field =>
+          <div class="form-group @if(field.hasErrors) {has-error}" id="type">
+            @defining(field.value.getOrElse("0")) { value =>
+              <label class="control-label col-sm-3" for="@field.id" >Type</label>
+              <div class="input col-sm-9">
+                <label class="radio">
+                  <input type="radio" name="@field.name" id="role0" value="0" @if(value == "0") {checked}>
+                  Supporter
+                </label>
+                <label class="radio">
+                  <input type="radio" name="@field.name" id="role1" value="1" @if(value == "1") {checked}>
+                  Funder
+                </label>
+              </div>
+            }
+            <span class="help-block">
+            @if(form("role").hasErrors) {
+              @form("role").errors.map(error => Messages(error.message)).mkString(", ")
+            }
+            </span>
+          </div>
+        }
+        @html.money("fee", form("fee.currency"), form("fee.amount"),
+          '_label -> "Fee")
+        @html.date(form("since"), '_label -> "Member since")
+        <div class="form-group">
+            <label class="control-label col-sm-3">Object</label>
+            <div class="input col-sm-9">
+              <label class="radio">
+                <input type="radio" name="object" id="object0" value="0" checked>
+                New person
+              </label>
+              <label class="radio">
+                <input type="radio" name="object" id="object1" value="1" >
+                Existing person
+              </label>
+              <label class="radio">
+                <input type="radio" name="object" id="object2" value="2" >
+                New organisation
+              </label>
+              <label class="radio">
+                <input type="radio" name="object" id="object3" value="3" >
+                Existing organisation
+              </label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-9">
+                <button class="btn btn-primary btn-block pull-right" type="submit">Add Member Data</button>
+            </div>
+        </div>
+        }
+    </div>
+  }
+  <script src='@routes.Assets.at("member/form.js")' type="text/javascript"></script>
 }

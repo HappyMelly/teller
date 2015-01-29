@@ -32,13 +32,12 @@ import models.service.{ PersonService, OrganisationService }
 import models.{ Person, Organisation, Member }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
 import org.specs2.mutable.After
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
 import play.api.Play.current
-import stubs.{ FakeOrganisationService, StubLoginIdentity, FakeServices }
+import stubs.{ StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q, GetResult }
@@ -69,7 +68,7 @@ class MembersSpec extends PlayAppSpec {
           ("person", "1"), ("funder", m.funder.toString),
           ("fee.currency", m.fee.getCurrencyUnit.toString),
           ("fee.amount", m.fee.getAmountMajorLong.toString),
-          ("since", m.since.toString))
+          ("since", m.since.toString), ("existingObject", "0"))
       val result: Future[SimpleResult] = controller.create().apply(req)
 
       status(result) must equalTo(SEE_OTHER)

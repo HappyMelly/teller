@@ -55,7 +55,9 @@ trait Members extends Controller with Security with Services {
         verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().plusDays(1))),
-      "existingObject" -> boolean,
+      "existingObject" -> number.transform(
+        (i: Int) ⇒ if (i == 0) false else true,
+        (b: Boolean) ⇒ if (b) 1 else 0),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
       "updated" -> ignored(DateTime.now()),
@@ -220,7 +222,7 @@ trait Members extends Controller with Security with Services {
                   val activity = Activity.insert(
                     request.user.fullName,
                     Activity.Predicate.Created,
-                    "new member " + "test")
+                    "new member " + person.fullName)
                   //@TODO redirect to details
                   Redirect(routes.Members.index()).flashing("success" -> activity.toString)
                 }

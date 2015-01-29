@@ -111,25 +111,25 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
     "objectId" || "person" | "funder" | "currency" | "amount" | "since" | "existingObject" |
       // empty currency
-      "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" ! "true" |
+      "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" ! "1" |
       // unknown currency
-      "0" !! "1" ! "false" ! "TERES" ! "100" ! "2015-01-01" ! "true" |
+      "0" !! "1" ! "false" ! "TERES" ! "100" ! "2015-01-01" ! "1" |
       // negative amount
-      "0" !! "1" ! "false" ! "EUR" ! "-100" ! "2015-01-01" ! "true" |
+      "0" !! "1" ! "false" ! "EUR" ! "-100" ! "2015-01-01" ! "1" |
       // zero amount
-      "0" !! "1" ! "false" ! "EUR" ! "0.00" ! "2015-01-01" ! "false" |
+      "0" !! "1" ! "false" ! "EUR" ! "0.00" ! "2015-01-01" ! "0" |
       // empty since
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "" ! "false" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "" ! "0" |
       // wrong since
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "31-312-321" ! "true" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "31-312-321" ! "1" |
       // since earlier than 2015-01-01
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2014-12-31" ! "false" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2014-12-31" ! "0" |
       // since later than today
-      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! LocalDate.now().plusDays(1).toString ! "false" |
+      "0" !! "1" ! "false" ! "EUR" ! "105.05" ! LocalDate.now().plusDays(1).toString ! "0" |
       // empty 'funder'
-      "0" !! "1" ! "" ! "EUR" ! "105.05" ! "2015-01-01" ! "true" |
+      "0" !! "1" ! "" ! "EUR" ! "105.05" ! "2015-01-01" ! "1" |
       // non-boolean 'funder'
-      "0" !! "1" ! "1.00" ! "EUR" ! "105.05" ! "2015-01-01" ! "false" |
+      "0" !! "1" ! "1.00" ! "EUR" ! "105.05" ! "2015-01-01" ! "0" |
       // empty 'existingObject'
       "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2015-01-01" ! "" |
       // non-boolean 'existingObject'
@@ -191,7 +191,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e11 = new cleanup {
     val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "0", existingObject = "true")
+    val uReq = addMemberData(req, person = "0", existingObject = "1")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
     status(result) must equalTo(SEE_OTHER)
@@ -201,7 +201,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e12 = new cleanup {
     val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "1", existingObject = "true")
+    val uReq = addMemberData(req, person = "1", existingObject = "1")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
     status(result) must equalTo(SEE_OTHER)
@@ -452,7 +452,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     request: FakeRequest[AnyContentAsEmpty.type],
     since: String = "2015-01-03",
     person: String = "1",
-    existingObject: String = "false") = {
+    existingObject: String = "0") = {
     request.withFormUrlEncodedBody(
       ("objectId", "0"), ("person", person),
       ("funder", "false"), ("fee.currency", "EUR"),
