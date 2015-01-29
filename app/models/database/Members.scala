@@ -32,7 +32,7 @@ import play.api.db.slick.Config.driver.simple._
 object Members extends Table[Member]("MEMBER") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def objectId = column[Option[Long]]("OBJECT_ID")
+  def objectId = column[Long]("OBJECT_ID")
   def person = column[Boolean]("PERSON")
   def funder = column[Boolean]("FUNDER")
   def feeCurrency = column[String]("FEE_CURRENCY")

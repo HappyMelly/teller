@@ -24,7 +24,9 @@
  */
 package integration
 
+import helpers.OrganisationHelper
 import models.Member
+import models.service.OrganisationService
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -32,18 +34,57 @@ import org.specs2.matcher.DataTables
 
 class OrganisationServiceSpec extends PlayAppSpec with DataTables {
   def setupDb(): Unit = {
+    addOrgs()
     add()
   }
   def cleanupDb() {}
 
+  "Method findNonMembers" should {
+    "return 4 non members" in {
+      val orgs = OrganisationService.get.findNonMembers
+      orgs.length must_== 4
+      orgs.exists(_.id == Some(3L)) must_== true
+      orgs.exists(_.id == Some(4L)) must_== true
+      orgs.exists(_.id == Some(5L)) must_== true
+      orgs.exists(_.id == Some(6L)) must_== true
+    }
+
+    "return 4 non members" in {
+      (new Member(None, 3L, person = true, funder = true,
+        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)).insert
+      val orgs = OrganisationService.get.findNonMembers
+
+      orgs.length must_== 4
+      orgs.exists(_.id == Some(3L)) must_== true
+      orgs.exists(_.id == Some(4L)) must_== true
+      orgs.exists(_.id == Some(5L)) must_== true
+      orgs.exists(_.id == Some(6L)) must_== true
+    }
+  }
+
+  private def addOrgs() = {
+    Seq(
+      (Some(1L), "First org", "DE"),
+      (Some(2L), "Second org", "DE"),
+      (Some(3L), "Third org", "DE"),
+      (Some(4L), "Fourth org", "DE"),
+      (Some(5L), "Firth org", "DE"),
+      (Some(6L), "Sixth org", "DE")).foreach {
+        case (id, name, country) ⇒
+          val org = OrganisationHelper.make(
+            id = id,
+            name = name,
+            countryCode = country)
+          org.insert
+      }
+  }
   private def add() = {
     Seq(
-      (Some(1L), false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (Some(2L), false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
-      (Some(1L), true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
-      (Some(2L), true, true, Money.of(EUR, 1000), LocalDate.now(), 1L),
-      (None, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (None, true, false, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
+      (1L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
+      (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
+      (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
+      (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒ {
           val member = new Member(None, objectId, person, funder, fee, since,
             existingObject = false,

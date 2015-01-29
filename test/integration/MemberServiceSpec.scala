@@ -25,7 +25,6 @@
 package integration
 
 import models.Member
-import models.service.MemberService
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
 import org.joda.time.{ DateTime, LocalDate }
@@ -45,12 +44,10 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
 
   private def add() = {
     Seq(
-      (Some(1L), false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (Some(2L), false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
-      (Some(1L), true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
-      (Some(2L), true, true, Money.of(EUR, 1000), LocalDate.now(), 1L),
-      (None, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (None, true, false, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
+      (1L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
+      (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
+      (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
+      (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒ {
           val member = new Member(None, objectId, person, funder, fee, since,
             existingObject = false,

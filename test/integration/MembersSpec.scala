@@ -182,8 +182,7 @@ class MembersSpec extends PlayAppSpec {
       Organisation.findAll.diff(oldList).headOption map { org ⇒
         val updatedM = retrieveMember(org.id.get.toString)
         updatedM.nonEmpty must_== true
-        updatedM.get.objectId.nonEmpty must_== true
-        updatedM.get.objectId must_== org.id
+        updatedM.get.objectId must_== org.id.get
 
         // clean up. We don't need this organisation anymore
         Organisation.delete(org.id.get)
@@ -213,8 +212,7 @@ class MembersSpec extends PlayAppSpec {
       Person.findAll.diff(oldList).headOption map { person ⇒
         val updatedM = retrieveMember(person.id.toString)
         updatedM.nonEmpty must_== true
-        updatedM.get.objectId.nonEmpty must_== true
-        updatedM.get.objectId.get must_== person.id
+        updatedM.get.objectId must_== person.id
 
         // clean up. We don't need this person anymore
         Person.delete(person.id)
@@ -235,7 +233,7 @@ class MembersSpec extends PlayAppSpec {
   }
 
   private def member(person: Boolean = true, existingObject: Boolean = false): Member = {
-    new Member(None, None, person = person, funder = false,
+    new Member(None, 0, person = person, funder = false,
       Money.parse("EUR 100"), LocalDate.now(), existingObject = existingObject,
       DateTime.now(), 1L, DateTime.now(), 1L)
   }

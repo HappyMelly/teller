@@ -34,19 +34,19 @@ import org.joda.time.{ DateTime, LocalDate }
 class FakeMemberService extends MemberService {
 
   override def findAll: List[Member] = {
-    val m1 = new Member(Some(1L), Some(1L), person = true, funder = true,
+    val m1 = new Member(Some(1L), 1L, person = true, funder = true,
       eur(200), LocalDate.parse("2015-01-01"), existingObject = false,
       DateTime.now(), 1L, DateTime.now(), 1L)
     m1.memberObj_=(PersonHelper.one())
-    val m2 = new Member(Some(2L), Some(2L), person = true, funder = false,
+    val m2 = new Member(Some(2L), 2L, person = true, funder = false,
       eur(20), LocalDate.parse("2015-01-10"), existingObject = false,
       DateTime.now(), 1L, DateTime.now(), 1L)
     m2.memberObj_=(PersonHelper.two())
-    val m3 = new Member(Some(3L), Some(1L), person = false, funder = true,
+    val m3 = new Member(Some(3L), 1L, person = false, funder = true,
       eur(2000), LocalDate.parse("2015-01-11"), existingObject = false,
       DateTime.now(), 1L, DateTime.now(), 1L)
     m3.memberObj_=(OrganisationHelper.one)
-    val m4 = new Member(Some(4L), Some(2L), person = false, funder = false,
+    val m4 = new Member(Some(4L), 2L, person = false, funder = false,
       eur(40), LocalDate.parse("2015-01-15"), existingObject = false,
       DateTime.now(), 1L, DateTime.now(), 1L)
     m4.memberObj_=(OrganisationHelper.two)

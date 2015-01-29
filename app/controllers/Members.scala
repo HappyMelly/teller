@@ -43,7 +43,7 @@ trait Members extends Controller with Security with Services {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
-      "objectId" -> optional(longNumber),
+      "objectId" -> longNumber,
       "person" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
@@ -103,7 +103,7 @@ trait Members extends Controller with Security with Services {
           None,
           formWithErrors)),
         member ⇒ {
-          val m = member.copy(id = None).copy(objectId = None)
+          val m = member.copy(id = None).copy(objectId = 0)
           Cache.set(Members.cacheId(user.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
@@ -153,7 +153,7 @@ trait Members extends Controller with Security with Services {
               val org = success.insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
-              val ins = m.copy(objectId = org.id).copy(person = false).insert
+              val ins = m.copy(objectId = org.id.get).copy(person = false).insert
               Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
@@ -179,7 +179,7 @@ trait Members extends Controller with Security with Services {
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               val person = success.insert
-              m.copy(objectId = person.id).copy(person = true).insert
+              m.copy(objectId = person.id.get).copy(person = true).insert
               Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(
                 request.user.fullName,

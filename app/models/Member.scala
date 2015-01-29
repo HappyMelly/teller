@@ -29,7 +29,7 @@ import org.joda.time.{ DateTime, LocalDate }
 
 case class Member(
   id: Option[Long],
-  objectId: Option[Long],
+  objectId: Long,
   person: Boolean,
   funder: Boolean,
   fee: Money,
