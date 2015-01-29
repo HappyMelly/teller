@@ -114,6 +114,57 @@ class MembersSpec extends PlayAppSpec {
 
   }
 
+  """Incomplete member object can be created with one type of related object
+    |(ex: person) and be connected to another type (ex: org).
+    |
+    |To keep system coherency attribute 'person' in a
+    |member object should be updated""".stripMargin >> {
+
+    "after the creation of related new organisation" in new cleanDb {
+      val m = member(person = true)
+      val oldList = Organisation.findAll
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      val result = controller.createNewOrganisation().apply(req)
+
+      status(result) must equalTo(SEE_OTHER)
+
+      Organisation.findAll.diff(oldList).headOption map { org ⇒
+        retrieveMember(org.id.get.toString) map { upd ⇒
+          upd.person must_== false
+        } getOrElse failure
+
+        // clean up. We don't need this organisation anymore
+        Organisation.delete(org.id.get)
+        success
+      } getOrElse failure
+    }
+    "after the creation of related new person" in new cleanDb {
+      val m = member(person = false, existingObject = true)
+      val oldList = Person.findAll
+      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
+          ("address.country", "RU"), ("firstName", "Test"),
+          ("lastName", "Test"), ("signature", "false"),
+          ("role", "0"))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      val result = controller.createNewPerson().apply(req)
+
+      status(result) must equalTo(SEE_OTHER)
+
+      Person.findAll.diff(oldList).headOption map { person ⇒
+        retrieveMember(person.id.toString) map { upd ⇒
+          upd.person must_== true
+        } getOrElse failure
+
+        // clean up. We don't need this organisation anymore
+        Person.delete(person.id)
+        success
+      } getOrElse failure
+    }
+  }
+
   "The organisation created on step 2" should {
     "be connected with member data" in new cleanDb {
       val m = member()
@@ -133,8 +184,6 @@ class MembersSpec extends PlayAppSpec {
         updatedM.nonEmpty must_== true
         updatedM.get.objectId.nonEmpty must_== true
         updatedM.get.objectId must_== org.id
-        //@TODO make a separate test for this
-        updatedM.get.person must_== false
 
         // clean up. We don't need this organisation anymore
         Organisation.delete(org.id.get)
@@ -185,9 +234,9 @@ class MembersSpec extends PlayAppSpec {
       q.firstOption
   }
 
-  private def member(): Member = {
-    new Member(None, None, person = true, funder = false,
-      Money.parse("EUR 100"), LocalDate.now(), existingObject = false,
+  private def member(person: Boolean = true, existingObject: Boolean = false): Member = {
+    new Member(None, None, person = person, funder = false,
+      Money.parse("EUR 100"), LocalDate.now(), existingObject = existingObject,
       DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

@@ -153,7 +153,7 @@ trait Members extends Controller with Security with Services {
               val org = success.insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
-              m.copy(objectId = org.id).copy(person = false).insert
+              val ins = m.copy(objectId = org.id).copy(person = false).insert
               Cache.remove(Members.cacheId(user.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
@@ -179,10 +179,12 @@ trait Members extends Controller with Security with Services {
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               val person = success.insert
-              m.copy(objectId = person.id).insert
+              m.copy(objectId = person.id).copy(person = true).insert
               Cache.remove(Members.cacheId(user.id.get))
-              val activity = Activity.insert(request.user.fullName,
-                Activity.Predicate.Created, "new member " + success.name)
+              val activity = Activity.insert(
+                request.user.fullName,
+                Activity.Predicate.Created,
+                "new member " + success.name)
               //@TODO redirect to details
               Redirect(routes.Members.index()).flashing("success" -> activity.toString)
             } getOrElse {
