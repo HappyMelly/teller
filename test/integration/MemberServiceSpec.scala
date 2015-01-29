@@ -24,36 +24,68 @@
  */
 package integration
 
+import helpers.{ PersonHelper, OrganisationHelper }
 import models.Member
+import models.service.MemberService
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
-import play.api.db.slick.DB
-import play.api.Play.current
-import scala.slick.jdbc.{ StaticQuery ⇒ Q }
-import scala.slick.session.Session
 
 class MemberServiceSpec extends PlayAppSpec with DataTables {
-  def setupDb(): Unit = {
-    add()
-  }
-  def cleanupDb(): Unit = DB.withSession { implicit session: Session ⇒
-    Q.updateNA("TRUNCATE `MEMBER`").execute
-  }
+  def setupDb() {}
+  def cleanupDb() {}
 
-  private def add() = {
-    Seq(
-      (1L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
-      (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
-      (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
-        case (objectId, person, funder, fee, since, createdBy) ⇒ {
-          val member = new Member(None, objectId, person, funder, fee, since,
-            existingObject = false,
-            DateTime.now(), createdBy, DateTime.now(), createdBy)
-          member.insert
+  "Method findAll" should {
+    "return 6 members" in {
+      Seq(
+        (Some(1L), "First org", "DE"),
+        (Some(2L), "Second org", "DE"),
+        (Some(3L), "Third org", "DE"),
+        (Some(4L), "Fourth org", "DE"),
+        (Some(5L), "Fifth org", "DE"),
+        (Some(6L), "Sixth org", "DE")).foreach {
+          case (id, name, country) ⇒
+            val org = OrganisationHelper.make(
+              id = id,
+              name = name,
+              countryCode = country)
+            org.insert
         }
-      }
+      Seq(
+        (Some(1L), "First", "Tester"),
+        (Some(2L), "Second", "Tester"),
+        (Some(3L), "Third", "Tester"),
+        (Some(4L), "Fourth", "Tester"),
+        (Some(5L), "Fifth", "Tester"),
+        (Some(6L), "Sixth", "Tester")).foreach {
+          case (id, firstName, lastName) ⇒
+            val person = PersonHelper.make(id = id, firstName = firstName,
+              lastName = lastName)
+            person.insert
+        }
+      Seq(
+        (1L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
+        (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
+        (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
+        (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L),
+        (3L, false, false, Money.of(EUR, 50), LocalDate.now(), 1L),
+        (5L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
+          case (objectId, person, funder, fee, since, createdBy) ⇒ {
+            val member = new Member(None, objectId, person, funder, fee, since,
+              existingObject = false,
+              DateTime.now(), createdBy, DateTime.now(), createdBy)
+            member.insert
+          }
+        }
+      val members = MemberService.get.findAll
+      members.length must_== 6
+      members.exists(_.name == "First org") must_== true
+      members.exists(_.name == "Second org") must_== true
+      members.exists(_.name == "Third org") must_== true
+      members.exists(_.name == "First Tester") must_== true
+      members.exists(_.name == "Second Tester") must_== true
+      members.exists(_.name == "Fifth Tester") must_== true
+    }
   }
 }
