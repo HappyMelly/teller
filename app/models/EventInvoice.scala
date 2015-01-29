@@ -25,6 +25,7 @@
 package models
 
 import models.database.EventInvoices
+import models.service.OrganisationService
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -35,8 +36,8 @@ case class EventInvoice(id: Option[Long],
   invoiceBy: Option[Long],
   number: Option[String]) {
 
-  lazy val invoiceToOrg: Option[Organisation] = Organisation.find(invoiceTo)
-  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map{ Organisation.find(_) }.getOrElse(None)
+  lazy val invoiceToOrg: Option[Organisation] = OrganisationService.get.find(invoiceTo)
+  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map{ OrganisationService.get.find(_) }.getOrElse(None)
 }
 
 object EventInvoice {

@@ -115,6 +115,8 @@ error.membership.tooLate = Membership date cannot be later than today
 error.membership.wrongStep = You are trying to complete step 2 while adding new member without completing step 1
 
 error.organisation.nonDeletable = You cannot delete this organisation because it has members, booking entries or an active account
+error.organisation.notExist = This organisation does not exist
+
 error.participant.notExist = The person is not a participant of the event
 error.participant.exist = This person already participates in this event
 error.socialProfile.exist = This social profile is already in use

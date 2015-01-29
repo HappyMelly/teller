@@ -45,12 +45,11 @@ class PeopleSpec extends PlayAppSpec {
   override def is = s2"""
 
   Page with person's data should
-
+    not be visible to unauthorized user                  $e1
+    and be visible to authorized user                    $e2
+    not contain accounting details if user is not Editor $e3
     contain accounting details if user is Editor         $e4
   """
-  //  not be visible to unauthorized user                  $e1
-  //  and be visible to authorized user                    $e2
-  //  not contain accounting details if user is not Editor $e3
   def e1 = {
     val controller = new TestPeople()
     val result: Future[SimpleResult] = controller.details(1).apply(FakeRequest())

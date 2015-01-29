@@ -203,7 +203,7 @@ trait People extends Controller with Security with Services {
         {
           case (page, personId, organisationId) ⇒
             personService.find(personId).map { person ⇒
-              Organisation.find(organisationId).map { organisation ⇒
+              organisationService.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
                 val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
@@ -264,7 +264,7 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒
 
       personService.find(personId).map { person ⇒
-        Organisation.find(organisationId).map { organisation ⇒
+        organisationService.find(organisationId).map { organisation ⇒
           person.deleteMembership(organisationId)
           val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)

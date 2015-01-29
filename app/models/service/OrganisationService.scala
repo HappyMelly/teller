@@ -51,6 +51,15 @@ class OrganisationService {
     val ids = members.list
     Query(Organisations).filter(row ⇒ !(row.id inSet ids)).sortBy(_.name).list
   }
+
+  /**
+   * Returns organisation if exists, otherwise None
+   * @param id Organisation id
+   */
+  def find(id: Long): Option[Organisation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Organisations).filter(_.id === id).list.headOption
+  }
 }
 
 object OrganisationService {

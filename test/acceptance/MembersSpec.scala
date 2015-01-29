@@ -25,15 +25,20 @@
 package acceptance
 
 import controllers._
+import helpers.OrganisationHelper
 import integration.PlayAppSpec
-import org.joda.time.LocalDate
+import models.Member
+import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
+import org.joda.time.{ DateTime, LocalDate }
+import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import org.specs2.mutable.After
 import play.api.cache.Cache
 import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
-import stubs.{ StubLoginIdentity, FakeServices }
+import stubs.{ FakeOrganisationService, StubLoginIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -67,6 +72,9 @@ class MembersSpec extends PlayAppSpec with DataTables {
   Add existing form should contain
     a set of predefined elements                                   $e17
     only organisations which are not members in the selector       $e18
+
+  While updating existing org Editor should
+    get a correct error message if org does not exist              $e19
   """
 
   val controller = new TestMembers()
@@ -245,6 +253,30 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e18 = {
+    Seq(
+      (Some(1L), "First org", "DE"),
+      (Some(2L), "Second org", "DE"),
+      (Some(3L), "Third org", "DE"),
+      (Some(4L), "Fourth org", "DE"),
+      (Some(5L), "Firth org", "DE"),
+      (Some(6L), "Sixth org", "DE")).foreach {
+        case (id, name, country) ⇒
+          val org = OrganisationHelper.make(
+            id = id,
+            name = name,
+            countryCode = country)
+          org.insert
+      }
+    Seq(
+      (2L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
+      (5L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
+        case (objectId, person, funder, fee, since, createdBy) ⇒
+          val member = new Member(None, objectId, person, funder, fee, since,
+            existingObject = false,
+            DateTime.now(), createdBy, DateTime.now(), createdBy)
+          member.insert
+      }
+
     val req = prepareSecuredGetRequest(
       StubLoginIdentity.editor,
       "/member/existing/organisation")
@@ -261,6 +293,24 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("Third org")
     contentAsString(result) must contain("Fourth org")
     contentAsString(result) must contain("Sixth org")
+  }
+
+  def e19 = new MockContext {
+    val m = new Member(None, 0, person = false, funder = false,
+      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+      DateTime.now(), 1L, DateTime.now(), 1L)
+    Cache.set(Members.cacheId(1L), m, 1800)
+    val service = mock[FakeOrganisationService]
+    (service.find _).expects(*).returning(None)
+    (service.findNonMembers _).expects().returning(List())
+    controller.organisationService_=(service)
+    val identity = StubLoginIdentity.editor
+    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+      withFormUrlEncodedBody(("id", "1"))
+    val result = controller.updateExistingOrg().apply(request)
+
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("This organisation does not exist")
   }
 
   /**

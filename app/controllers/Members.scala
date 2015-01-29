@@ -26,7 +26,7 @@ package controllers
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
-import models.{ Activity, LoginIdentity, Member }
+import models.{ Organisation, Activity, LoginIdentity, Member }
 import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.cache.Cache
@@ -129,7 +129,9 @@ trait Members extends Controller with Security with Services {
   /** Renders Add existing organisation page */
   def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      Ok(views.html.member.existingOrg(request.user, None, existingOrgForm))
+      val orgs = organisationService.findNonMembers.map(o ⇒
+        (o.id.get.toString, o.name))
+      Ok(views.html.member.existingOrg(request.user, orgs, existingOrgForm))
   }
 
   /** Renders Add existing person page */
@@ -226,29 +228,45 @@ trait Members extends Controller with Security with Services {
   def updateExistingOrg() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒
-        val personForm = existingOrgForm.bindFromRequest
-        personForm.fold(
-          hasErrors ⇒
-            BadRequest(views.html.member.existingOrg(request.user, None, hasErrors)),
-          success ⇒ {
+        val orgForm = existingOrgForm.bindFromRequest
+        orgForm.fold(
+          hasErrors ⇒ {
+            BadRequest(views.html.member.existingOrg(request.user,
+              nonMembers,
+              hasErrors))
+          },
+          id ⇒ {
             val user = request.user.asInstanceOf[LoginIdentity].person
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
-              //              val person = success.insert
-              //              m.copy(objectId = person.id).copy(person = true).insert
-              Cache.remove(Members.cacheId(user.id.get))
-              val activity = Activity.insert(
-                request.user.fullName,
-                Activity.Predicate.Created,
-                "new member " + "test")
-              //@TODO redirect to details
-              Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+              organisationService.find(id) map { org ⇒
+                //              val person = success.insert
+                //              m.copy(objectId = person.id).copy(person = true).insert
+                Cache.remove(Members.cacheId(user.id.get))
+                val activity = Activity.insert(
+                  request.user.fullName,
+                  Activity.Predicate.Created,
+                  "new member " + "test")
+                //@TODO redirect to details
+                Redirect(routes.Members.index()).flashing("success" -> activity.toString)
+              } getOrElse {
+                implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
+                BadRequest(views.html.member.existingOrg(request.user,
+                  nonMembers,
+                  orgForm))
+              }
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingOrg(request.user, None, personForm))
+              BadRequest(views.html.member.existingOrg(request.user,
+                nonMembers,
+                orgForm))
             }
           })
   }
+
+  /** Returns ids and names of organisations which are not members */
+  private def nonMembers: List[(String, String)] = organisationService.findNonMembers.
+    map(o ⇒ (o.id.get.toString, o.name))
 }
 
 object Members extends Members with Security with Services {
