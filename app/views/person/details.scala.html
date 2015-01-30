@@ -3,7 +3,6 @@
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
     contributions: List[ContributionView],
-    products: List[Product],
     licenses: List[LicenseView],
     accountRole: Option[models.UserRole.Role.Role],
     otherUser: Option[UserAccount]
@@ -26,11 +25,73 @@
 
     @main(person.fullName + " - Person", "people", Some(user)) {
 
+      <div class="col-md-3 info">
+        <div class="page-header">
+          @person.photo.url.map { photo =>
+            <img width="200" class="img-rounded photo" src="@photo"/>
+          }.getOrElse {
+            <img width="200" class="img-rounded photo"
+              src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+          }
+        </div>
+        <div class="social">
+          @person.socialProfile.twitterHandle.map { handle =>
+            <a href="http://twitter.com/@handle" target="_blank">
+              <img width="30" src="@routes.Assets.at("images/securesocial/twitter.png")"/>
+            </a>
+          }
+          @person.socialProfile.facebookUrl.map { url =>
+            <a href="@url" target="_blank">
+              <img width="30" src="@routes.Assets.at("images/securesocial/facebook.png")"/>
+            </a>
+          }
+          @person.socialProfile.linkedInUrl.map { url =>
+            <a href="@url" target="_blank">
+              <img width="30" src="@routes.Assets.at("images/securesocial/linkedin.png")"/>
+            </a>
+          }
+          @person.socialProfile.googlePlusUrl.map { url =>
+            <a href="@url" target="_blank">
+              <img width="30" src="@routes.Assets.at("images/securesocial/google.png")"/>
+            </a>
+          }
+        </div>
+        @restrict(handler, List(as("admin"))) {
+          <div class="role panel panel-default">
+            <div class="panel-body">
+              @otherUser.map { account =>
+                <p>None (cannot log in)</p>
+                <div class="alert alert-danger">
+                  <p>You cannot add a role because <a href="@routes.People.details(account.personId)">another user</a>
+                    has the same Twitter handle, Facebook URL, Google+ URL or LinkedIn URL.</p>
+                </div>
+              }.getOrElse {
+                @if(!person.canHaveUserAccount) {
+                  <p>None (cannot log in) - add a Twitter handle, Facebook URL, Google+ URL or LinkedIn URL to assign roles</p>
+                } else {
+                  <form method="post" action="@CSRF(routes.UserAccounts.update)">
+                    <input type="hidden" name="personId" value="@person.id">
+                    <div class="control-group" id="role_field">
+                      <label class="radio">
+                        <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
+                      </label>
+                      @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
+                      @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
+                      @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
+                    </div>
+
+                    <button class="btn" type="submit">Update Role</button>
+                  </form>
+                }
+              }
+            </div>
+          </div>
+        }
+
+      </div>
+      <div class="col-md-9">
         <div class="page-header">
             <h1>
-                @person.photo.url.map { photo =>
-                    <img width="64" class="img-rounded" src="@photo"/>
-                }
                 @person.fullName
                 <div class="actions pull-right">
                     @dynamic(handler, "person", "edit") {
@@ -80,25 +141,27 @@
         }
         <div class="col-md-4">
             <address>
-                <strong>@person.fullName</strong><br>
-                @person.address.street1.map { addressLine =>
-                    @addressLine,
-                }
-                @person.address.street2.map { addressLine =>
-                    @addressLine
-                }
+              <strong>Address</strong><br/>
+              @person.address.street1.map { addressLine =>
+                  @addressLine,
+              }
+              @person.address.street2.map { addressLine =>
+                  @addressLine
+              }
+              @if(person.address.street1.nonEmpty || person.address.street2.nonEmpty) {
                 <br>
-                @person.address.city.map { addressLine =>
-                    @addressLine,
-                }
-                @person.address.province.map { addressLine =>
-                    @addressLine
-                }
-                @person.address.postCode.map { addressLine =>
-                    @addressLine
-                }
-                <br>
-                @Messages("country." + person.address.countryCode)
+              }
+              @person.address.city.map { addressLine =>
+                  @addressLine,
+              }
+              @person.address.province.map { addressLine =>
+                  @addressLine
+              }
+              @person.address.postCode.map { addressLine =>
+                  @addressLine
+              }
+              <br>
+              @Messages("country." + person.address.countryCode)
             </address>
 
             @person.webSite.map { url =>
@@ -110,63 +173,23 @@
                 <p><strong>Blog</strong>
                     <br><a href="@url" target="_blank">@url</a></p>
             }
-            <p><strong>E-mail address</strong>
-                <br><a href="mailto:@person.socialProfile.email"><i class="glyphicon glyphicon-google_plus"></i>
-                    @person.socialProfile.email</a></p>
+
         </div>
 
         <div class="col-md-4">
+            <p><strong>E-mail address</strong>
+            <br>
+              <a href="mailto:@person.socialProfile.email">
+                <i class="glyphicon glyphicon-google_plus"></i>
+              @person.socialProfile.email</a>
+            </p>
+
             @person.birthday.map { birthday =>
                 <p><strong>Birthday</strong>
                     <br>@birthday</p>
             }
 
-            @person.socialProfile.twitterHandle.map { handle =>
-                <p><strong>Twitter</strong>
-                    <br><a href="http://twitter.com/@handle" target="_blank">@@@handle</a></p>
-            }
-
-            @if(person.socialProfile.facebookUrl.isDefined || person.socialProfile.linkedInUrl.isDefined ||
-                    person.socialProfile.googlePlusUrl.isDefined) {
-                <p>
-                    <strong>Social networks</strong>
-                    @person.socialProfile.facebookUrl.map { url => <br> <a href="@url" target="_blank">Facebook</a>}
-                    @person.socialProfile.linkedInUrl.map { url => <br> <a href="@url" target="_blank">LinkedIn</a>}
-                    @person.socialProfile.googlePlusUrl.map { url => <br> <a href="@url" target="_blank">Google+</a> }
-                </p>
-            }
         </div>
-
-        @restrict(handler, List(as("admin"))) {
-            <div class="col-md-3">
-                <h3>User role</h3>
-                @otherUser.map { account =>
-                    <p>None (cannot log in)</p>
-                    <div class="alert alert-danger">
-                        <p>You cannot add a role because <a href="@routes.People.details(account.personId)">another user</a>
-                        has the same Twitter handle, Facebook URL, Google+ URL or LinkedIn URL.</p>
-                    </div>
-                }.getOrElse {
-                    @if(!person.canHaveUserAccount) {
-                        <p>None (cannot log in) - add a Twitter handle, Facebook URL, Google+ URL or LinkedIn URL to assign roles</p>
-                    } else {
-                        <form method="post" action="@CSRF(routes.UserAccounts.update)">
-                            <input type="hidden" name="personId" value="@person.id">
-                            <div class="control-group" id="role_field">
-                                <label class="radio">
-                                    <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
-                                </label>
-                                @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
-                                @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
-                                @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
-                            </div>
-
-                            <button class="btn" type="submit">Update Role</button>
-                        </form>
-                    }
-                }
-            </div>
-        }
 
         <div class="col-md-10">
             @person.bio.map { text =>
@@ -181,47 +204,67 @@
         </div>
 
         <div class="col-md-10">
+          <h3>General</h3>
+          <ul class="nav nav-tabs" id="activities">
+              <li><a href="#organizations">Organizations</a></li>
+              @restrict(handler, List(as(Editor.toString))) {
+                  <li><a href="#finance">Accounting details</a></li>
+              }
+              <li><a href="#contributions">Product Contributions</a></li>
+          </ul>
+
+          <div class="tab-content">
+              <div class="tab-pane active" id="organizations">
+                  @views.html.person.tabs.organisations(person, organisations, otherOrganisations)
+              </div>
+              @restrict(handler, List(as(Editor.toString))) {
+                  <div class="tab-pane" id="finance">
+                      <div class="col-xs-9">
+                          <br/>
+                          <p>
+                              <strong>Financial account</strong>
+                              <br>@if(person.account.active) {Active} else {Inactive}
+                              @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+                                  (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>)</p>
+                          }
+                          <p><strong>Account history</strong>
+                              <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a>
+                          </p>
+                      </div>
+                  </div>
+              }
+              <div class="tab-pane" id="contributions">
+                  @views.html.person.tabs.contributions(person, contributions)
+              </div>
+          </div>
+        </div>
+        @if(licenses.length > 0) {
+          <div class="col-md-10">
+            <h3>Facilitator</h3>
             <ul class="nav nav-tabs" id="activities">
-                <li><a href="#organizations">Organizations</a></li>
-                @restrict(handler, List(as(Editor.toString))) {
-                    <li><a href="#finance">Accounting details</a></li>
-                }
-                <li><a href="#contributions">Product Contributions</a></li>
-                <li><a href="#licenses">Licenses</a></li>
-                <li><a href="#events">Event Settings</a></li>
+              <li><a href="#licenses">Licenses</a></li>
+              <li><a href="#signature">Signature</a></li>
+              <li><a href="#languages">Languages</a></li>
+              <li><a href="#countries">Countries</a></li>
             </ul>
 
             <div class="tab-content">
-                <div class="tab-pane active" id="organizations">
-                    @views.html.person.tabs.organisations(person, organisations, otherOrganisations)
-                </div>
-                @restrict(handler, List(as(Editor.toString))) {
-                    <div class="tab-pane" id="finance">
-                        <div class="col-xs-9">
-                            <br/>
-                            <p>
-                                <strong>Financial account</strong>
-                                <br>@if(person.account.active) {Active} else {Inactive}
-                                @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-                                    (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>)</p>
-                            }
-                            <p><strong>Account history</strong>
-                                <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a>
-                            </p>
-                        </div>
-                    </div>
-                }
-                <div class="tab-pane" id="contributions">
-                    @views.html.person.tabs.contributions(person, contributions, products)
-                </div>
-                <div class="tab-pane" id="licenses">
-                    @views.html.person.tabs.licenses(person, licenses)
-                </div>
-                <div class="tab-pane" id="events">
-                    @views.html.person.tabs.eventSettings(person)
-                </div>
+              <div class="tab-pane" id="licenses">
+              @views.html.person.tabs.licenses(person, licenses)
+              </div>
+              <div class="tab-pane" id="signature">
+              @views.html.person.tabs.signature(person)
+              </div>
+              <div class="tab-pane" id="languages">
+              @views.html.person.tabs.languages(person)
+              </div>
+              <div class="tab-pane" id="countries">
+              @views.html.person.tabs.countries(person)
+              </div>
             </div>
-        </div>
+          </div>
+        }
+      </div>
 
         <script src="@routes.Assets.at("person/details.js")" type="text/javascript"></script>
     }

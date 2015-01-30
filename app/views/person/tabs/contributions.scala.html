@@ -1,7 +1,8 @@
 @(person: Person,
-  contributions: List[ContributionView],
-  products: List[Product]
-    )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  contributions: List[ContributionView])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -32,21 +33,4 @@
         }
         </tbody>
     </table>
-}
-@restrict(handler, List(as(Editor.toString))) {
-    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("person"))">
-        <p>
-            <input type="hidden" name="page" value="person">
-            <input type="hidden" name="contributorId" value="@person.id.get">
-            <input type="hidden" name="isPerson" value="true">
-            <select name="productId" class="form-control input-sm">
-            @for(product <- products) {
-                <option value="@product.id">@product.title</option>
-            }
-            </select>
-            <input name="role" placeholder="Role" class="form-control input-sm">
-            <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>
-                Add Contribution</button>
-        </p>
-    </form>
 }
