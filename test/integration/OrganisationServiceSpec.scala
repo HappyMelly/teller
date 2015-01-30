@@ -63,14 +63,16 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
     }
   }
 
-  "Method isMember" should {
-    "return false if org is not a member" in {
-      val r = OrganisationService.get.isMember(3L)
-      r must_== false
+  "Method member" should {
+    "return None if org is not a member" in {
+      val r = OrganisationService.get.member(3L)
+      r must_== None
     }
-    "return true if org is a member" in {
-      val r = OrganisationService.get.isMember(1L)
-      r must_== true
+    "return member data if org is a member" in {
+      OrganisationService.get.member(1L) map { o ⇒
+        o.person must_== false
+        o.funder must_== false
+      } getOrElse ko
     }
   }
 

@@ -173,8 +173,8 @@ case class Person(
 
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
 
-  /** Returns true if person is a member, false otherwise */
-  def member: Boolean = id exists { PersonService.get.isMember _ }
+  /** Returns member data if person is a member, false None */
+  def member: Option[Member] = id map { PersonService.get.member _ } getOrElse None
 
   /**
    * Associates this person with given organisation.

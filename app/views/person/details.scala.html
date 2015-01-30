@@ -56,6 +56,18 @@
             </a>
           }
         </div>
+        @person.member.map { m =>
+          <div class="panel panel-success">
+            <div class="panel-body">
+              @if(m.funder) {
+                <h2>Funder</h2>
+              }else{
+                <h2>Supporter</h2>
+              }
+              <br/><span class="label label-info">@m.fee.toString</span>
+            </div>
+          </div>
+        }
         @restrict(handler, List(as("admin"))) {
           <div class="role panel panel-default">
             <div class="panel-body">

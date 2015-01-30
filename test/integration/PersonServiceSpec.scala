@@ -63,14 +63,17 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
     }
   }
 
-  "Method isMember" should {
-    "return false if person is not a member" in {
-      val r = PersonService.get.isMember(3L)
-      r must_== false
+  "Method member" should {
+    "return None if person is not a member" in {
+      val r = PersonService.get.member(3L)
+      r.nonEmpty must_== false
     }
-    "return true if person is a member" in {
-      val r = PersonService.get.isMember(1L)
-      r must_== true
+    "return member data if person is a member" in {
+      PersonService.get.member(1L) map { m ⇒
+        m.person must_== true
+        m.funder must_== false
+        m.createdBy must_== 1L
+      } getOrElse ko
     }
   }
 

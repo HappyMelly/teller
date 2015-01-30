@@ -202,7 +202,7 @@ class MembersSpec extends PlayAppSpec {
       status(result) must equalTo(SEE_OTHER)
       //@TODO this should be moved to acceptance module
       headers(result).get("Location").nonEmpty must_== true
-      headers(result).get("Location").get must_== "/members"
+      headers(result).get("Location").get must contain("/organization")
 
       Organisation.findAll.diff(oldList).headOption map { org ⇒
         val updatedM = retrieveMember(org.id.get.toString)
@@ -232,7 +232,7 @@ class MembersSpec extends PlayAppSpec {
       status(result) must equalTo(SEE_OTHER)
       //@TODO this should be moved to acceptance module
       headers(result).get("Location").nonEmpty must_== true
-      headers(result).get("Location").get must_== "/members"
+      headers(result).get("Location").get must contain("/person")
 
       Person.findAll.diff(oldList).headOption map { person ⇒
         val updatedM = retrieveMember(person.id.toString)
@@ -254,13 +254,13 @@ class MembersSpec extends PlayAppSpec {
       val org = OrganisationHelper.one.copy(id = Some(1L)).insert
       Cache.set(Members.cacheId(1L), m, 1800)
       OrganisationService.get.find(1L) map { o ⇒
-        o.member must_== false
+        o.member must_== None
       } getOrElse failure
       val result = controller.updateExistingOrg().apply(req)
       status(result) must equalTo(SEE_OTHER)
 
       OrganisationService.get.find(1L) map { o ⇒
-        o.member must_== true
+        o.member.nonEmpty must_== true
       } getOrElse failure
     }
   }
@@ -274,13 +274,13 @@ class MembersSpec extends PlayAppSpec {
       val person = PersonHelper.one().insert
       Cache.set(Members.cacheId(1L), m, 1800)
       PersonService.get.find(1L) map { p ⇒
-        p.member must_== false
+        p.member must_== None
       } getOrElse failure
       val result = controller.updateExistingPerson().apply(req)
       status(result) must equalTo(SEE_OTHER)
 
       PersonService.get.find(1L) map { p ⇒
-        p.member must_== true
+        p.member.nonEmpty must_== true
       } getOrElse failure
     }
   }

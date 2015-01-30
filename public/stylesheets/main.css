@@ -143,9 +143,11 @@ body.api h3 {
 .info {
     text-align: center;
 }
+.panel {
+    margin-top: 20px;
+}
 .role {
     text-align: left;
-    margin-top: 20px;
 }
 .photo {
     border: 1px solid #bbbbbb;

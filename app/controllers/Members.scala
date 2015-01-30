@@ -219,7 +219,7 @@ trait Members extends Controller with Security with Services {
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               personService.find(id) map { person ⇒
-                if (person.member) {
+                if (person.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.person.member")))
                   BadRequest(views.html.member.existingPerson(request.user,
                     peopleNonMembers,
@@ -263,7 +263,7 @@ trait Members extends Controller with Security with Services {
             val member = Cache.getAs[Member](Members.cacheId(user.id.get))
             member map { m ⇒
               organisationService.find(id) map { org ⇒
-                if (org.member) {
+                if (org.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
                   BadRequest(views.html.member.existingOrg(request.user,
                     orgsNonMembers,

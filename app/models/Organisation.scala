@@ -77,8 +77,10 @@ case class Organisation(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
-  /** Returns true if org is a member, false otherwise */
-  def member: Boolean = id exists { OrganisationService.get.isMember _ }
+  /** Returns member data if org is a member, false None */
+  def member: Option[Member] = id map {
+    OrganisationService.get.member _
+  } getOrElse None
 
   /**
    * Returns a list of this organisation's contributions.

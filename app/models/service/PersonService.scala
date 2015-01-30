@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.{ Organisation, Person }
-import models.database.{ Organisations, Members, OrganisationMemberships, People }
+import models.{ Organisation, Person, Member }
+import models.database.{ Members, OrganisationMemberships, People }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -83,13 +83,13 @@ class PersonService {
   }
 
   /**
-   * Returns true if person is a member, false otherwise
+   * Returns member data if person is a member, false None
    * @param id Person id
    */
-  def isMember(id: Long): Boolean = DB.withSession { implicit session ⇒
+  def member(id: Long): Option[Member] = DB.withSession { implicit session ⇒
     Query(Members).
       filter(_.objectId === id).
-      filter(_.person === true).firstOption.nonEmpty
+      filter(_.person === true).firstOption
   }
 }
 
