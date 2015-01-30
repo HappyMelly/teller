@@ -42,7 +42,8 @@
               </td>
               <td>@event.schedule.totalHours</td>
               <td>
-                <span class="label label-@if(event.confirmed){success}else{danger}">yes</span>
+                <span class="label label-@if(event.confirmed){success}else{danger}">
+                @if(event.confirmed){yes}else{no}</span>
               </td>
             </tr>
           }
