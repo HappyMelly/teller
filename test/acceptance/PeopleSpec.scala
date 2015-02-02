@@ -25,7 +25,7 @@
 package acceptance
 
 import controllers.{ People, Security }
-import helpers.PersonHelper
+import helpers.{ OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import models._
 import org.joda.money.Money
@@ -46,6 +46,7 @@ class PeopleSpec extends PlayAppSpec {
   override def is = s2"""
 
   Page with person's data should
+
     not be visible to unauthorized user                                 $e1
     and be visible to authorized user                                   $e2
     not contain accounting details if user is not Editor                $e3
@@ -128,28 +129,31 @@ class PeopleSpec extends PlayAppSpec {
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Supporter")
       contentAsString(result) must contain("EUR 500")
+      contentAsString(result) must not contain "/member/1/edit"
     }
   }
 
   def e6 = {
+    truncateTables()
     new MockContext {
-      val person = PersonHelper.one()
+      val person = PersonHelper.one().insert
       person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val member = new Member(None, 1L, person = true, funder = true,
         Money.parse("EUR 255"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
       person.member_=(member)
       val controller = new TestPeople()
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.viewer
+      val identity = StubLoginIdentity.editor
       val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Funder")
       contentAsString(result) must contain("EUR 255")
+      contentAsString(result) must contain("/member/1/edit")
     }
   }
 

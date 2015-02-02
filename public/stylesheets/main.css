@@ -146,6 +146,13 @@ body.api h3 {
 .panel {
     margin-top: 20px;
 }
+.panel > a {
+    float: right;
+    position: relative;
+    top: 10px;
+    right: 10px;
+}
+
 .role {
     text-align: left;
 }

@@ -57,16 +57,7 @@
           }
         </div>
         @person.member.map { m =>
-          <div class="panel panel-success">
-            <div class="panel-body">
-              @if(m.funder) {
-                <h2>Funder</h2>
-              }else{
-                <h2>Supporter</h2>
-              }
-              <br/><span class="label label-info">@m.fee.toString</span>
-            </div>
-          </div>
+          @element.funder(m)
         }
         @restrict(handler, List(as("admin"))) {
           <div class="role panel panel-default">
@@ -134,7 +125,7 @@
                         <div class="button">
                             <form class="delete form-inline" method="post" text="person"
                             action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
-                                <div data-toggle="tooltip" data-placement="bottom"
+                              <div data-toggle="tooltip" data-placement="bottom"
                                     @if(!person.deletable) { title="@Messages("error.person.nonDeletable")" }>
                                     <button class="btn btn-danger" type="submit"
                                         @if(!person.deletable) { disabled="disabled" } >
@@ -187,7 +178,6 @@
             }
 
         </div>
-
         <div class="col-md-4">
             <p><strong>E-mail address</strong>
             <br>
@@ -245,7 +235,7 @@
                       </div>
                   </div>
               }
-              <div class="tab-pane" id="contributions">
+            <div class="tab-pane" id="contributions">
                   @views.html.person.tabs.contributions(person, contributions)
               </div>
           </div>
