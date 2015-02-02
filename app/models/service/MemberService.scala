@@ -51,8 +51,19 @@ class MemberService {
   }
 
   /** Returns member if it exists, otherwise - None */
-  def find(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    Query(Members).filter(_.id === id).firstOption
+  def find(id: Long, withObject: Boolean = false): Option[Member] = DB.withSession { implicit session ⇒
+    val member = Query(Members).filter(_.id === id).firstOption
+    if (member.nonEmpty && withObject) {
+      val m = member.get
+      if (m.person) {
+        val person = Query(People).filter(_.id === m.objectId).first
+        m.memberObj_=(person)
+      } else {
+        val org = Query(Organisations).filter(_.id === m.objectId).first
+        m.memberObj_=(org)
+      }
+    }
+    member
   }
 
   /**

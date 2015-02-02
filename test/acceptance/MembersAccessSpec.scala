@@ -55,6 +55,9 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     not be accessible to Viewers                         $e6
     be accessible to Editors                             $e7
 
+  Update membershipt action should
+    not be accessible to Viewers                         $e8
+    be accessible to Editors                             $e9
 
   Add new organisation form should
     not be accessible to Viewers                         $e15
@@ -72,10 +75,6 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     not be accessible to Viewers                         $e22
     be accessible to Editors                             $e23
   """
-
-  //  Update membershipt action should
-  //    not be accessible to Viewers                         $e8
-  //    be accessible to Editors                             $e9
 
   val controller = new TestMembers()
 
@@ -125,27 +124,28 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e7 = new MockContext {
     val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/")
     val service = mock[FakeMemberService]
-    (service.find _).expects(1L).returning(None)
+    (service.find _).expects(1L, true).returning(None)
     controller.memberService_=(service)
     val result: Future[SimpleResult] = controller.edit(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
   def e8 = {
-    val req = prepareSecuredGetRequest(StubLoginIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.update().apply(req)
+    val req = prepareSecuredPostRequest(StubLoginIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.update(1L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome("/")
   }
 
-  def e9 = {
-    val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/")
-    val result: Future[SimpleResult] = controller.update().apply(req)
+  def e9 = new MockContext {
+    val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/")
+    val service = mock[FakeMemberService]
+    (service.find _).expects(1L, true).returning(None)
+    controller.memberService_=(service)
+    val result: Future[SimpleResult] = controller.update(1L).apply(req)
 
-    status(result) must equalTo(OK)
-    //    contentAsString(result) must contain("Edit member")
-
+    status(result) must equalTo(NOT_FOUND)
   }
 
   def e15 = {

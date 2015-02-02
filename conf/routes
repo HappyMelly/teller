@@ -106,6 +106,8 @@ POST        /member/person                                                      
 POST        /member/existing/organisation/                                       controllers.Members.updateExistingOrg
 POST        /member/existing/person/                                             controllers.Members.updateExistingPerson
 GET         /member/:id                                                          controllers.Members.details(id: Long)
+GET         /member/:id/edit                                                     controllers.Members.edit(id: Long)
+POST        /member/:id                                                          controllers.Members.update(id: Long)
 
 GET         /organizations                                                       controllers.Organisations.index
 POST        /organizations                                                       controllers.Organisations.create

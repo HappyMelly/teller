@@ -39,7 +39,7 @@ import play.api.db.slick._
 import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
-import stubs.{ FakePersonService, FakeOrganisationService, StubLoginIdentity, FakeServices }
+import stubs._
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
@@ -87,6 +87,12 @@ class MembersSpec extends PlayAppSpec with DataTables {
   While updating existing person Editor should
     get a correct error message if person does not exist           $e23
     get a correct error message if person is already a member      $e24
+
+  Edit membership form should contain
+    a set of predefined elements                                   $e25
+
+  Editor should
+    be able to update membership data                              $e26
   """
 
   val controller = new TestMembers()
@@ -441,6 +447,50 @@ class MembersSpec extends PlayAppSpec with DataTables {
       status(result) must equalTo(BAD_REQUEST)
       contentAsString(result) must contain("This person is already a member")
     }
+  }
+
+  def e25 = {
+    truncateTables()
+    val m = new Member(None, 1L, person = true, funder = false,
+      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+      DateTime.now(), 1L, DateTime.now(), 1L).insert
+    val person = PersonHelper.one.insert
+
+    val req = prepareSecuredGetRequest(
+      StubLoginIdentity.editor,
+      "/member/1")
+    val result: Future[SimpleResult] = controller.edit(1L).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Edit member First Tester")
+    contentAsString(result) must not contain "Step 1"
+    contentAsString(result) must not contain "New person"
+    contentAsString(result) must not contain "New organisation"
+    contentAsString(result) must not contain "Existing person"
+    contentAsString(result) must not contain "Existing organisation"
+    contentAsString(result) must contain("member/1")
+    contentAsString(result) must contain("Save")
+  }
+
+  def e26 = new MockContext {
+    truncateTables()
+    val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      withFormUrlEncodedBody(
+        ("objectId", "0"), ("person", "0"),
+        ("funder", "0"), ("fee.currency", "EUR"),
+        ("fee.amount", "100"), ("since", "2015-01-31"),
+        ("existingObject", "0"))
+    val m = new Member(None, 1L, person = true, funder = true,
+      Money.parse("EUR 200"), LocalDate.parse("2015-01-15"),
+      existingObject = true, DateTime.now(), 1L, DateTime.now(), 1L).insert
+    PersonHelper.one().insert
+
+    val result: Future[SimpleResult] = controller.update(m.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location") map { loc ⇒
+      loc must_== "/person/" + m.id.get.toString
+    } getOrElse failure
   }
 
   /**

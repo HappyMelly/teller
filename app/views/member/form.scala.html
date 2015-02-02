@@ -1,5 +1,5 @@
 @(user: securesocial.core.Identity,
-    id: Option[Long],
+    member: Option[Member],
     form: Form[Member])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@defining(form.value.map(member => "Edit member %s".format(member.name)).getOrElse("Add member")) { title: String =>
+@defining(if (form.value.nonEmpty && member.nonEmpty) { true } else { false }) { edit: Boolean =>
   @main("Member", "members", Some(user)) {
     @if(form.hasErrors) {
         @html.error()
@@ -16,10 +16,14 @@
 
     <div class="col-md-6">
       <div class="page-header">
-          <h1>@title</h1>
+        @if(edit) {
+          <h1>Edit member @member.get.name</h1>
+        } else {
+          <h1>Add member</h1>
           <h3>Step 1: Fee</h3>
+        }
       </div>
-      @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.Members.create()))) {
+      @html.form(action = CSRF(if(edit) { routes.Members.update(member.get.id.get) } else { routes.Members.create() } )) {
         <input type="hidden" value="@form("objectId").value.getOrElse(0)"
           id="objectId" name="objectId"/>
         <input type="hidden" value="@form("person").value.getOrElse(0)"
@@ -51,7 +55,10 @@
         @html.money("fee", form("fee.currency"), form("fee.amount"),
           '_label -> "Fee", '_currency -> "EUR")
         @html.date(form("since"), '_label -> "Member since")
-        <div class="form-group">
+        @if(edit) {
+          <input type="hidden" name="object" value="0"/>
+        } else {
+          <div class="form-group">
             <label class="control-label col-sm-3">Object</label>
             <div class="input col-sm-9">
               <label class="radio">
@@ -71,12 +78,15 @@
                 Existing organisation
               </label>
             </div>
-        </div>
+          </div>
+        }
 
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-9">
-                <button class="btn btn-primary btn-block pull-right" type="submit">Add Member Data</button>
+                <button class="btn btn-primary btn-block pull-right" type="submit">
+                  @if(edit) { Save } else { Add Member Data }
+                </button>
             </div>
         </div>
         }

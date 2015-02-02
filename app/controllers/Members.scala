@@ -128,18 +128,39 @@ trait Members extends Controller with Security with Services {
   /** Renders Edit form */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      memberService.find(id) map { m ⇒
+      memberService.find(id, withObject = true) map { m ⇒
         val user = request.user.asInstanceOf[LoginIdentity].person
         val formWithData = form(user.id.get).fill(m)
-        Ok(views.html.member.form(request.user, Some(id), formWithData))
+        Ok(views.html.member.form(request.user, Some(m), formWithData))
       } getOrElse NotFound
   }
 
-  /** Updates membership data */
-  def update() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  /**
+   * Updates membership data
+   * @param id Member identifier
+   */
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
-      Ok(views.html.member.form(request.user, None, form(user.id.get)))
+      memberService.find(id, withObject = true) map { m ⇒
+        val user = request.user.asInstanceOf[LoginIdentity].person
+        form(user.id.get).bindFromRequest.fold(
+          formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
+            Some(m),
+            formWithErrors)),
+          member ⇒ {
+            val updMember = member.copy(id = m.id).
+              copy(person = m.person).
+              copy(objectId = m.objectId).update
+            val activity = Activity.insert(request.user.fullName,
+              Activity.Predicate.Updated, "membership data")
+            val url: String = if (updMember.person) {
+              routes.People.details(updMember.objectId).url
+            } else {
+              routes.Organisations.details(updMember.objectId).url
+            }
+            Redirect(url).flashing("success" -> activity.toString)
+          })
+      } getOrElse NotFound
   }
 
   /** Renders Add new person page */
