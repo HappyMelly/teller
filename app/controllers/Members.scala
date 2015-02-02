@@ -125,6 +125,23 @@ trait Members extends Controller with Security with Services {
         })
   }
 
+  /** Renders Edit form */
+  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      memberService.find(id) map { m ⇒
+        val user = request.user.asInstanceOf[LoginIdentity].person
+        val formWithData = form(user.id.get).fill(m)
+        Ok(views.html.member.form(request.user, Some(id), formWithData))
+      } getOrElse NotFound
+  }
+
+  /** Updates membership data */
+  def update() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒
+      val user = request.user.asInstanceOf[LoginIdentity].person
+      Ok(views.html.member.form(request.user, None, form(user.id.get)))
+  }
+
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒

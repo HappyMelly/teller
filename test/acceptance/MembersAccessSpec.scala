@@ -51,6 +51,11 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     not be accessible to Viewers                         $e4
     be accessible to Editors                             $e5
 
+  Edit Fee form should
+    not be accessible to Viewers                         $e6
+    be accessible to Editors                             $e7
+
+
   Add new organisation form should
     not be accessible to Viewers                         $e15
     be accessible to Editors                             $e16
@@ -67,6 +72,10 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     not be accessible to Viewers                         $e22
     be accessible to Editors                             $e23
   """
+
+  //  Update membershipt action should
+  //    not be accessible to Viewers                         $e8
+  //    be accessible to Editors                             $e9
 
   val controller = new TestMembers()
 
@@ -103,6 +112,40 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add member")
+  }
+
+  def e6 = {
+    val req = prepareSecuredGetRequest(StubLoginIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.edit(1L).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e7 = new MockContext {
+    val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/")
+    val service = mock[FakeMemberService]
+    (service.find _).expects(1L).returning(None)
+    controller.memberService_=(service)
+    val result: Future[SimpleResult] = controller.edit(1L).apply(req)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+  def e8 = {
+    val req = prepareSecuredGetRequest(StubLoginIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.update().apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e9 = {
+    val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/")
+    val result: Future[SimpleResult] = controller.update().apply(req)
+
+    status(result) must equalTo(OK)
+    //    contentAsString(result) must contain("Edit member")
+
   }
 
   def e15 = {

@@ -98,6 +98,7 @@ case class Person(
   private var _languages: Option[List[FacilitatorLanguage]] = None
   private var _countries: Option[List[FacilitatorCountry]] = None
   private var _memberships: Option[List[Organisation]] = None
+  private var _member: Option[Member] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -173,8 +174,19 @@ case class Person(
 
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
 
+  /**
+   * Sets member data
+   * @param member Member data
+   */
+  def member_=(member: Member): Unit = _member = Some(member)
+
   /** Returns member data if person is a member, false None */
-  def member: Option[Member] = id map { PersonService.get.member _ } getOrElse None
+  def member: Option[Member] = _member map { Some(_) } getOrElse {
+    id map { i ⇒
+      _member = PersonService.get.member(i)
+      _member
+    } getOrElse None
+  }
 
   /**
    * Associates this person with given organisation.

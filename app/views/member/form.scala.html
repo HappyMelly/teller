@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@defining(form.value.map(member => "Member %s".format(member.name)).getOrElse("Add member")) { title: String =>
+@defining(form.value.map(member => "Edit member %s".format(member.name)).getOrElse("Add member")) { title: String =>
   @main("Member", "members", Some(user)) {
     @if(form.hasErrors) {
         @html.error()

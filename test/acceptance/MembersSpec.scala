@@ -54,7 +54,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   override def is = s2"""
 
   Page with a list of members should
-    show all members sorted by names                     $e1
+    show all members sorted by names                               $e1
 
   Editor should
     not be able to add new member with wrong parameters            $e6
