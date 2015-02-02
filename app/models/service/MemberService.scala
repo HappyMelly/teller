@@ -86,6 +86,18 @@ class MemberService {
     Members.filter(_.id === m.id).update(m)
     m
   }
+
+  /**
+   * Deletes a record from database
+   * @param objectId Object id
+   * @param person If true, object is a person, otherwise - org
+   */
+  def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Members.
+        filter(_.objectId === objectId).
+        filter(_.person === person).delete
+  }
 }
 
 object MemberService {

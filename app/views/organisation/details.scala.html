@@ -14,186 +14,195 @@
 
 @main(organisation.name + " - Organization", "orgs", Some(user)) {
 
-  <div class="page-header">
-    <h1>
-      <img width="32" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png" align="baseline">
-      @organisation.name
-        <div class="actions pull-right">
-          @dynamic(handler, "organisation", "edit") {
-            <div class="button">
-              <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">
-                <i class="glyphicon glyphicon-pencil"></i> Edit
-              </a>
-            </div>
-          }
-          @restrict(handler, List(as(Editor.toString))) {
-            <div class="button">
-            <form method="post" class="form-inline"
-              action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
-              <input name="active" value="@(!organisation.active)" type="hidden">
-              @if(organisation.active) {
-                <button class="btn btn-warning" type="submit">
-                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
-                </button>
-              } else {
-                <button class="btn btn-success" type="submit">
-                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
-                </button>
-              }
-            </form>
-            </div>
-            <div class="button">
-              <form class="delete form-inline" method="post" text="organisation"
-                action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
-                <div data-toggle="tooltip" data-placement="bottom"
-                  @if(!organisation.deletable) { title="@Messages("error.organisation.nonDeletable")" }>
-                    <button class="btn btn-danger" type="submit"
-                      @if(!organisation.deletable) { disabled="disabled" }>
-                      <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                    </button>
-                </div>
-              </form>
-            </div>
-          }
-        </div>
-    </h1>
+  <div class="col-md-3 info">
+    <div class="page-header">
+      <img width="64" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png"
+        align="baseline">
+      @organisation.member.map { m =>
+        @element.funder(m)
+      }
+    </div>
   </div>
-  @if(!organisation.active) {
-    <div class="alert alert-warning">
-      <i class="glyphicon glyphicon-warning-sign"></i> This organization is <strong>deactivated</strong></div>
-  }
-
-  <div class="col-md-4">
-    <address>
-      <strong>@organisation.name</strong><br>
-      @organisation.street1.map { addressLine =>
-        @addressLine,
-      }
-      @organisation.street2.map { addressLine =>
-        @addressLine
-      }
-      <br>
-      @organisation.city.map { addressLine =>
-        @addressLine,
-      }
-      @organisation.province.map { addressLine =>
-        @addressLine
-      }
-      @organisation.postCode.map { addressLine =>
-        @addressLine
-      }
-      <br>
-      @Messages("country." + organisation.countryCode)
-    </address>
-
-    @organisation.webSite.map { url =>
-    <p><strong>Web site</strong>
-        <br><a href="@url" target="_blank">@url</a></p>
-    }
-
-    @organisation.blog.map { url =>
-    <p><strong>Blog</strong>
-        <br><a href="@url" target="_blank">@url</a></p>
-    }
-  </div>
-
-  <div class="col-md-4">
-    @restrict(handler, List(as(Editor.toString))) {
-      <p>
-        <strong>Financial account</strong>
-        <br>@if(organisation.account.active){Active}else{Inactive}
-        @if(organisation.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
-          (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
-        }
-      </p>
-      <p>
-        <strong>Account history</strong>
-        <br><a href="@routes.Accounts.bookings(organisation.account.id.get)">Booking entries</a>
-      </p>
-    }
-
-    @organisation.vatNumber.map { number =>
-      <p><strong>VAT number</strong>
-      <br>@number</p>
-    }
-
-    @organisation.registrationNumber.map { number =>
-      <p><strong>Company registration</strong>
-      <br>@number</p>
-    }
-  </div>
-
-  <div class="col-md-10">
-    <legend>Members</legend>
-    @if(members.isEmpty) {
-      @organisation.name has no members.
-    } else {
-      @views.html.person.table(members.map(_.summary)) { person =>
-        @restrict(handler, List(as(Editor.toString))) {
-		      <a href="@routes.People.deleteMembership("organisation", person.id, organisation.id.get)">
-            <i class="glyphicon glyphicon-trash"></i> Delete member</a>
-        }
-      }
-    }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addMembership)">
-        <input type="hidden" name="page" value="organisation">
-        <input type="hidden" name="organisationId" value="@organisation.id.get">
-        <select class="form-control input-sm" name="personId">
-          @for(person <- otherPeople) {
-          <option value="@person.id">@person.fullName</option>
-          }
-        </select>
-        <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Add member</button>
-      </form>
-    }
-    <br><br>
-  </div>
-
-  <div class="col-md-10">
-    <legend>Products Contribution</legend>
-    @if(contributions.isEmpty) {
-      <p>@organisation.name has no contributions.</p>
-    } else {
-      <table  class="datatables table table-bordered">
-        <thead>
-          <th>Product</th>
-          <th>Role</th>
-          <th></th>
-        </thead>
-        <tbody>
-          @for(contribution <- contributions) {
-            <tr>
-              <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
-              <td>@contribution.contribution.role</td>
-              <td>
-                @restrict(handler, List(as(Editor.toString))) {
-                  <a href="@routes.Contributions.delete(contribution.contribution.id.get, "organisation")">
-                  <i class="glyphicon glyphicon-trash"></i> Delete contribution</a>
+  <div class="col-md-9">
+    <div class="page-header">
+      <h1>
+        @organisation.name
+          <div class="actions pull-right">
+            @dynamic(handler, "organisation", "edit") {
+              <div class="button">
+                <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">
+                  <i class="glyphicon glyphicon-pencil"></i> Edit
+                </a>
+              </div>
+            }
+            @restrict(handler, List(as(Editor.toString))) {
+              <div class="button">
+              <form method="post" class="form-inline"
+                action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
+                <input name="active" value="@(!organisation.active)" type="hidden">
+                @if(organisation.active) {
+                  <button class="btn btn-warning" type="submit">
+                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
+                  </button>
+                } else {
+                  <button class="btn btn-success" type="submit">
+                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
+                  </button>
                 }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+              </form>
+              </div>
+              <div class="button">
+                <form class="delete form-inline" method="post" text="organisation"
+                  action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
+                  <div data-toggle="tooltip" data-placement="bottom"
+                    @if(!organisation.deletable) { title="@Messages("error.organisation.nonDeletable")" }>
+                      <button class="btn btn-danger" type="submit"
+                        @if(!organisation.deletable) { disabled="disabled" }>
+                        <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                      </button>
+                  </div>
+                </form>
+              </div>
+            }
+          </div>
+      </h1>
+    </div>
+    @if(!organisation.active) {
+      <div class="alert alert-warning">
+        <i class="glyphicon glyphicon-warning-sign"></i> This organization is <strong>deactivated</strong></div>
     }
-    @restrict(handler, List(as(Editor.toString))) {
-      <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("organisation"))">
+
+    <div class="col-md-4">
+      <address>
+        <strong>Address</strong><br>
+        @organisation.street1.map { addressLine =>
+          @addressLine,
+        }
+        @organisation.street2.map { addressLine =>
+          @addressLine
+        }
+        <br>
+        @organisation.city.map { addressLine =>
+          @addressLine,
+        }
+        @organisation.province.map { addressLine =>
+          @addressLine
+        }
+        @organisation.postCode.map { addressLine =>
+          @addressLine
+        }
+        <br>
+        @Messages("country." + organisation.countryCode)
+      </address>
+
+      @organisation.webSite.map { url =>
+      <p><strong>Web site</strong>
+          <br><a href="@url" target="_blank">@url</a></p>
+      }
+
+      @organisation.blog.map { url =>
+      <p><strong>Blog</strong>
+          <br><a href="@url" target="_blank">@url</a></p>
+      }
+    </div>
+
+    <div class="col-md-4">
+      @restrict(handler, List(as(Editor.toString))) {
         <p>
+          <strong>Financial account</strong>
+          <br>@if(organisation.account.active){Active}else{Inactive}
+          @if(organisation.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+            (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
+          }
+        </p>
+        <p>
+          <strong>Account history</strong>
+          <br><a href="@routes.Accounts.bookings(organisation.account.id.get)">Booking entries</a>
+        </p>
+      }
+
+      @organisation.vatNumber.map { number =>
+        <p><strong>VAT number</strong>
+        <br>@number</p>
+      }
+
+      @organisation.registrationNumber.map { number =>
+        <p><strong>Company registration</strong>
+        <br>@number</p>
+      }
+    </div>
+
+    <div class="col-md-10">
+      <legend>Members</legend>
+      @if(members.isEmpty) {
+        @organisation.name has no members.
+      } else {
+        @views.html.person.table(members.map(_.summary)) { person =>
+          @restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.People.deleteMembership("organisation", person.id, organisation.id.get)">
+              <i class="glyphicon glyphicon-trash"></i> Delete member</a>
+          }
+        }
+      }
+      @restrict(handler, List(as(Editor.toString))) {
+        <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addMembership)">
           <input type="hidden" name="page" value="organisation">
-          <input type="hidden" name="contributorId" value="@organisation.id.get">
-          <input type="hidden" name="isPerson" value="false">
-          <select class="form-control input-sm" name="productId">
-            @for(product <- products) {
-              <option value="@product.id">@product.title</option>
+          <input type="hidden" name="organisationId" value="@organisation.id.get">
+          <select class="form-control input-sm" name="personId">
+            @for(person <- otherPeople) {
+            <option value="@person.id">@person.fullName</option>
             }
           </select>
-          <input class="form-control input-sm" name="role" placeholder="Role">
-          <button class="btn btn-sm btn-success"><i class="glyphicon glyphicon-plus"></i>Add contribution</button>
-        </p>
-      </form>
-    }
-  </div>
+          <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Add member</button>
+        </form>
+      }
+      <br><br>
+    </div>
 
+    <div class="col-md-10">
+      <legend>Products Contribution</legend>
+      @if(contributions.isEmpty) {
+        <p>@organisation.name has no contributions.</p>
+      } else {
+        <table  class="datatables table table-bordered">
+          <thead>
+            <th>Product</th>
+            <th>Role</th>
+            <th></th>
+          </thead>
+          <tbody>
+            @for(contribution <- contributions) {
+              <tr>
+                <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+                <td>@contribution.contribution.role</td>
+                <td>
+                  @restrict(handler, List(as(Editor.toString))) {
+                    <a href="@routes.Contributions.delete(contribution.contribution.id.get, "organisation")">
+                    <i class="glyphicon glyphicon-trash"></i> Delete contribution</a>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @restrict(handler, List(as(Editor.toString))) {
+        <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("organisation"))">
+          <p>
+            <input type="hidden" name="page" value="organisation">
+            <input type="hidden" name="contributorId" value="@organisation.id.get">
+            <input type="hidden" name="isPerson" value="false">
+            <select class="form-control input-sm" name="productId">
+              @for(product <- products) {
+                <option value="@product.id">@product.title</option>
+              }
+            </select>
+            <input class="form-control input-sm" name="role" placeholder="Role">
+            <button class="btn btn-sm btn-success"><i class="glyphicon glyphicon-plus"></i>Add contribution</button>
+          </p>
+        </form>
+      }
+    </div>
+  </div>
 	<script src="@routes.Assets.at("details.js")" type="text/javascript"></script>
 }

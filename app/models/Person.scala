@@ -26,7 +26,7 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import models.service.{ ContributionService, PersonService, SocialProfileService }
+import models.service.{ MemberService, ContributionService, PersonService, SocialProfileService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -378,7 +378,8 @@ object Person {
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     import models.service.PersonService
-    PersonService.get.find(id).map(_.account).map(_.delete)
+    PersonService.get.find(id).map(_.account).map(_.delete())
+    MemberService.get.delete(id, person = true)
     Participants.where(_.personId === id).mutate(_.delete())
     People.where(_.id === id).mutate(_.delete())
   }

@@ -26,7 +26,7 @@ package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
-import models.service.{ OrganisationService, ContributionService }
+import models.service.{ MemberService, OrganisationService, ContributionService }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -129,7 +129,10 @@ object Organisation {
    * Deletes an organisation.
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    OrganisationService.get.find(id).map(_.account).map(_.delete)
+    OrganisationService.get.find(id).map { org ⇒
+      org.account.delete()
+      MemberService.get.delete(id, person = false)
+    }
     Organisations.where(_.id === id).mutate(_.delete())
   }
 
