@@ -109,11 +109,21 @@ error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete this event type because there are several events of this type
 error.eventType.nameWrongLength = A name of event type should not be empty or more than 254 characters long
 error.language.unknown = Unknown language
+
+error.membership.tooEarly = Membership date cannot be earlier than 2015-01-01
+error.membership.tooLate = Membership date cannot be later than today
+error.membership.wrongStep = You are trying to complete step 2 while adding new member without completing step 1
+
 error.organisation.nonDeletable = You cannot delete this organisation because it has members, booking entries or an active account
+error.organisation.notExist = This organisation does not exist
+error.organisation.member = This organisation is already a member
+
 error.participant.notExist = The person is not a participant of the event
 error.participant.exist = This person already participates in this event
 error.socialProfile.exist = This social profile is already in use
-error.person.notExist = The person does not exist
+
+error.person.member = This person is already a member
+error.person.notExist = This person does not exist
 error.person.nonDeletable = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 error.product.nonDeletable = You cannot delete this product because it has contributors or derivative products
 error.retry = {0}. Please try again.

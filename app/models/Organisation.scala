@@ -26,7 +26,7 @@ package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
-import models.service.ContributionService
+import models.service.{ MemberService, OrganisationService, ContributionService }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -77,6 +77,11 @@ case class Organisation(
     query.sortBy(_.lastName.toLowerCase).list
   }
 
+  /** Returns member data if org is a member, false None */
+  def member: Option[Member] = id map {
+    OrganisationService.get.member _
+  } getOrElse None
+
   /**
    * Returns a list of this organisation's contributions.
    */
@@ -124,24 +129,15 @@ object Organisation {
    * Deletes an organisation.
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    find(id).map(_.account).map(_.delete)
+    OrganisationService.get.find(id).map { org ⇒
+      org.account.delete()
+      MemberService.get.delete(id, person = false)
+    }
     Organisations.where(_.id === id).mutate(_.delete())
-  }
-
-  def find(id: Long): Option[Organisation] = DB.withSession { implicit session: Session ⇒
-    Query(Organisations).filter(_.id === id).list.headOption
   }
 
   def findAll: List[Organisation] = DB.withSession { implicit session: Session ⇒
     Query(Organisations).sortBy(_.name.toLowerCase).list
-  }
-
-  /**
-   * Returns a list of active organisations, optionally filtered to only include legal entities.
-   */
-  def find(legalEntitiesOnly: Boolean): List[Organisation] = DB.withSession { implicit session: Session ⇒
-    val query = if (legalEntitiesOnly) Query(Organisations).filter(_.category === OrganisationCategory.LegalEntity) else Query(Organisations)
-    query.filter(_.active).sortBy(_.name.toLowerCase).list
   }
 
 }

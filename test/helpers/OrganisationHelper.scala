@@ -21,13 +21,36 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
+package helpers
 
-import models.{ Person, Organisation }
-import models.service.PersonService
+import models.Organisation
+import org.joda.time.DateTime
 
-class StubPersonService extends PersonService {
+object OrganisationHelper {
 
-  override def memberships(person: Person): List[Organisation] = List()
+  def make(id: Option[Long] = None,
+    name: String,
+    street1: Option[String] = None,
+    street2: Option[String] = None,
+    city: Option[String] = None,
+    province: Option[String] = None,
+    postCode: Option[String] = None,
+    countryCode: String = "RU",
+    vatNumber: Option[String] = None,
+    registrationNumber: Option[String] = None,
+    webSite: Option[String] = None,
+    blog: Option[String] = None,
+    active: Boolean = true,
+    created: DateTime = DateTime.now(),
+    createdBy: String = "Sergey Kotlov",
+    updated: DateTime = DateTime.now(),
+    updatedBy: String = "Sergey Kotlov"): Organisation = {
+    new Organisation(id, name, street1, street2, city, province, postCode,
+      countryCode, vatNumber, registrationNumber, None, webSite, blog, active,
+      created, createdBy, updated, updatedBy)
+  }
 
+  def one: Organisation = make(name = "One")
+
+  def two: Organisation = make(name = "Two")
 }

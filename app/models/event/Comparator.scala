@@ -26,7 +26,7 @@ package models.event
 import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
-import models.service.PersonService
+import models.service.{ OrganisationService, PersonService }
 
 import models.{ Event, Brand, EventType, Organisation, Person }
 import models.database.{ EventFacilitators, EventInvoices }
@@ -77,14 +77,14 @@ object Comparator {
 
   class InvoiceChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
     override def toString = {
-      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
-      val newInvoiceToOrg = Organisation.find(newValue).get.name
+      val oldInvoiceToOrg = OrganisationService.get.find(oldValue).get.name
+      val newInvoiceToOrg = OrganisationService.get.find(newValue).get.name
       s"$label: $newInvoiceToOrg (was: $oldInvoiceToOrg)"
     }
 
     override def printable(): (String, String, String) = {
-      val oldInvoiceToOrg = Organisation.find(oldValue).get.name
-      val newInvoiceToOrg = Organisation.find(newValue).get.name
+      val oldInvoiceToOrg = OrganisationService.get.find(oldValue).get.name
+      val newInvoiceToOrg = OrganisationService.get.find(newValue).get.name
       (label, newInvoiceToOrg, oldInvoiceToOrg)
     }
 

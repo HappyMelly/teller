@@ -25,14 +25,15 @@
 package acceptance
 
 import controllers.{ People, Security }
-import helpers.PersonHelper
+import helpers.{ OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.SocialProfile
+import models._
+import org.joda.money.Money
+import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import stubs.{ StubLoginIdentity, StubPersonService, FakeServices }
+import stubs.{ StubLoginIdentity, FakePersonService, FakeServices }
 
 import scala.concurrent.Future
 
@@ -45,12 +46,14 @@ class PeopleSpec extends PlayAppSpec {
   override def is = s2"""
 
   Page with person's data should
-    not be visible to unauthorized user                  $e1
-    and be visible to authorized user                    $e2
-    not contain accounting details if user is not Editor $e3
-    contain accounting details if user is Editor         $e4
-  """
 
+    not be visible to unauthorized user                                 $e1
+    and be visible to authorized user                                   $e2
+    not contain accounting details if user is not Editor                $e3
+    contain accounting details if user is Editor                        $e4
+    contain a supporter badge if the person is a supporter              $e5
+    contain a funder badge and paid fee if the person is a funder       $e6
+  """
   def e1 = {
     val controller = new TestPeople()
     val result: Future[SimpleResult] = controller.details(1).apply(FakeRequest())
@@ -62,12 +65,12 @@ class PeopleSpec extends PlayAppSpec {
   def e2 = {
     new MockContext {
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredRequest(identity, "/person/1")
+      val request = prepareSecuredGetRequest(identity, "/person/1")
       controller.details(1).apply(request)
     }
   }
@@ -77,11 +80,11 @@ class PeopleSpec extends PlayAppSpec {
       val person = PersonHelper.one()
       person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
       val identity = StubLoginIdentity.viewer
-      val request = prepareSecuredRequest(identity, "/person/1")
+      val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
       status(result) must equalTo(OK)
@@ -92,19 +95,66 @@ class PeopleSpec extends PlayAppSpec {
 
   def e4 = {
     new MockContext {
-      val person = PersonHelper.one()
+      val person = PersonHelper.one().insert
       person.socialProfile_=(new SocialProfile(email = "test@test.com"))
       val controller = new TestPeople()
-      val mockService = mock[StubPersonService]
+      val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.editor
-      val request = prepareSecuredRequest(identity, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+      val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/person/1")
+      val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Financial account")
       contentAsString(result) must contain("Account history")
     }
   }
+
+  def e5 = {
+    new MockContext {
+      val person = PersonHelper.one()
+      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+      val member = new Member(None, 1L, person = true, funder = false,
+        Money.parse("EUR 500"), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)
+      person.member_=(member)
+      val controller = new TestPeople()
+      val mockService = mock[FakePersonService]
+      (mockService.find(_: Long)) expects 1L returning Some(person)
+      controller.personService_=(mockService)
+      val identity = StubLoginIdentity.viewer
+      val request = prepareSecuredGetRequest(identity, "/person/1")
+      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("Supporter")
+      contentAsString(result) must contain("EUR 500")
+      contentAsString(result) must not contain "/member/1/edit"
+    }
+  }
+
+  def e6 = {
+    truncateTables()
+    new MockContext {
+      val person = PersonHelper.one().insert
+      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+      val member = new Member(None, 1L, person = true, funder = true,
+        Money.parse("EUR 255"), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      person.member_=(member)
+      val controller = new TestPeople()
+      val mockService = mock[FakePersonService]
+      (mockService.find(_: Long)) expects 1L returning Some(person)
+      controller.personService_=(mockService)
+      val identity = StubLoginIdentity.editor
+      val request = prepareSecuredGetRequest(identity, "/person/1")
+      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("Funder")
+      contentAsString(result) must contain("EUR 255")
+      contentAsString(result) must contain("/member/1/edit")
+    }
+  }
+
 }

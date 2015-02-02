@@ -24,17 +24,19 @@
  */
 package stubs
 
-import controllers.Services
+import models.service.Services
 
 trait FakeServices extends Services {
 
   private var _eventService = new StubEventService
-  private var _personService = new StubPersonService
+  private var _personService = new FakePersonService
   private var _licenseService = new StubLicenseService
   private var _userAccountService = new StubUserAccountService
   private var _contributionService = new StubContributionService
   private var _productService = new StubProductService
   private var _evaluationService = new StubEvaluationService
+  private var _memberService = new FakeMemberService
+  private var _organisationService = new FakeOrganisationService
 
   def eventService_=(service: StubEventService) = {
     _eventService = service
@@ -42,11 +44,11 @@ trait FakeServices extends Services {
 
   override def eventService: StubEventService = _eventService
 
-  def personService_=(service: StubPersonService) = {
+  def personService_=(service: FakePersonService) = {
     _personService = service
   }
 
-  override def personService: StubPersonService = _personService
+  override def personService: FakePersonService = _personService
 
   def licenseService_=(service: StubLicenseService) = {
     _licenseService = service
@@ -77,4 +79,16 @@ trait FakeServices extends Services {
   }
 
   override def evaluationService: StubEvaluationService = _evaluationService
+
+  def memberService_=(service: FakeMemberService) = {
+    _memberService = service
+  }
+
+  override def memberService: FakeMemberService = _memberService
+
+  def organisationService_=(service: FakeOrganisationService) = {
+    _organisationService = service
+  }
+
+  override def organisationService: FakeOrganisationService = _organisationService
 }

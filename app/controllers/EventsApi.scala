@@ -24,6 +24,7 @@
 package controllers
 
 import models.Event
+import models.service.Services
 import play.api.libs.json._
 import play.api.mvc._
 

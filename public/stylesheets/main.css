@@ -140,6 +140,25 @@ body.api h3 {
  margin-top: -21px;
  padding-top: 41px;
 }
+.info {
+    text-align: center;
+}
+.panel {
+    margin-top: 20px;
+}
+.panel > a {
+    float: right;
+    position: relative;
+    top: 10px;
+    right: 10px;
+}
+
+.role {
+    text-align: left;
+}
+.photo {
+    border: 1px solid #bbbbbb;
+}
 
 .cloudbees {
     padding-top: 20%;

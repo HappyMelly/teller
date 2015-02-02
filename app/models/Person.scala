@@ -26,7 +26,7 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import models.service.{ ContributionService, PersonService, SocialProfileService }
+import models.service.{ MemberService, ContributionService, PersonService, SocialProfileService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -98,6 +98,7 @@ case class Person(
   private var _languages: Option[List[FacilitatorLanguage]] = None
   private var _countries: Option[List[FacilitatorCountry]] = None
   private var _memberships: Option[List[Organisation]] = None
+  private var _member: Option[Member] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
@@ -174,6 +175,20 @@ case class Person(
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
 
   /**
+   * Sets member data
+   * @param member Member data
+   */
+  def member_=(member: Member): Unit = _member = Some(member)
+
+  /** Returns member data if person is a member, false None */
+  def member: Option[Member] = _member map { Some(_) } getOrElse {
+    id map { i ⇒
+      _member = PersonService.get.member(i)
+      _member
+    } getOrElse None
+  }
+
+  /**
    * Associates this person with given organisation.
    */
   def addMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
@@ -188,7 +203,10 @@ case class Person(
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && memberships.isEmpty && licenses.isEmpty
+  lazy val deletable: Boolean = account.deletable &&
+    contributions.isEmpty &&
+    memberships.isEmpty &&
+    licenses.isEmpty
 
   /**
    * Removes this person’s membership in the given organisation
@@ -203,7 +221,6 @@ case class Person(
    * Returns a list of this person’s content licenses.
    */
   lazy val licenses: List[LicenseView] = DB.withSession { implicit session: Session ⇒
-
     val query = for {
       license ← Licenses if license.licenseeId === this.id
       brand ← license.brand
@@ -361,7 +378,8 @@ object Person {
    */
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     import models.service.PersonService
-    PersonService.get.find(id).map(_.account).map(_.delete)
+    PersonService.get.find(id).map(_.account).map(_.delete())
+    MemberService.get.delete(id, person = true)
     Participants.where(_.personId === id).mutate(_.delete())
     People.where(_.id === id).mutate(_.delete())
   }

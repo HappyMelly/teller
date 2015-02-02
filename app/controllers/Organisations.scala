@@ -25,7 +25,7 @@
 package controllers
 
 import Forms._
-import models.service.ContributionService
+import models.service.{ Services, ContributionService }
 import models.{ Person, Activity, Organisation, Product }
 import play.api.mvc._
 import play.api.data._
@@ -86,7 +86,7 @@ trait Organisations extends Controller with Security with Services {
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Organisation.find(id).map { organisation ⇒
+      organisationService.find(id).map { organisation ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           form ⇒ {
             BadRequest("invalid form data")
@@ -133,7 +133,7 @@ trait Organisations extends Controller with Security with Services {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒
 
-      Organisation.find(id).map {
+      organisationService.find(id).map {
         organisation ⇒
           Organisation.delete(id)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, organisation.name)
@@ -148,7 +148,7 @@ trait Organisations extends Controller with Security with Services {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      Organisation.find(id).map {
+      organisationService.find(id).map {
         organisation ⇒
           val members = organisation.members
           val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
@@ -168,7 +168,7 @@ trait Organisations extends Controller with Security with Services {
   def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      Organisation.find(id).map {
+      organisationService.find(id).map {
         organisation ⇒
           Ok(views.html.organisation.form(request.user, Some(id), organisationForm.fill(organisation)))
       }.getOrElse(NotFound)

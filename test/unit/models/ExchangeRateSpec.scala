@@ -1,4 +1,4 @@
-package models
+package unit.models.models
 
 /*
  * Happy Melly Teller
@@ -24,12 +24,13 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import org.joda.money.{ Money, CurrencyUnit }
-import CurrencyUnit.{ EUR, USD, GBP }
+import models.ExchangeRate
+import org.joda.money.CurrencyUnit.{ EUR, GBP, USD }
+import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.DateTime
-import org.specs2.matcher.DataTables
 import org.specs2.mutable._
-import math.BigDecimal.int2bigDecimal
+
+import scala.math.BigDecimal.int2bigDecimal
 
 class ExchangeRateSpec extends Specification with Tables {
 

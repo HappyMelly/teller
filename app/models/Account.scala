@@ -24,7 +24,7 @@
 
 package models
 
-import models.service.PersonService
+import models.service.{ OrganisationService, PersonService }
 import org.joda.money.{ Money, CurrencyUnit }
 import org.joda.time.LocalDate
 import models.database.{ BookingEntries, Organisations, People, Accounts }
@@ -47,7 +47,7 @@ case class Account(id: Option[Long] = None, organisationId: Option[Long] = None,
 
   /** Resolves the holder for this account **/
   def accountHolder = (organisationId, personId) match {
-    case (Some(o), None) ⇒ Organisation.find(o)
+    case (Some(o), None) ⇒ OrganisationService.get.find(o)
       .orElse(throw new IllegalStateException(s"Organisation with id $o (account holder for account ${id.getOrElse("(NEW)")}) does not exist"))
       .get
     case (None, Some(p)) ⇒ PersonService.get.find(p)

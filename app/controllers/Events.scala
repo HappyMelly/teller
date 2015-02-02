@@ -26,7 +26,7 @@ package controllers
 
 import Forms._
 import models._
-import models.service.{ PersonService, EventService }
+import models.service.{ Services, PersonService, EventService }
 import play.api.mvc._
 import play.api.libs.json._
 import securesocial.core.SecuredRequest
@@ -41,7 +41,7 @@ import models.event.Comparator
 import models.event.Comparator.FieldChange
 import services.EmailService
 
-object Events extends Controller with Security {
+object Events extends Controller with Security with Services {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -108,9 +108,11 @@ object Events extends Controller with Security {
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> ignored(Option.empty[Long]),
     "invoiceTo" -> longNumber.verifying(
-      "Such organization doesn't exist", (invoiceTo: Long) ⇒ Organisation.find(invoiceTo).isDefined),
+      "Such organization doesn't exist", (invoiceTo: Long) ⇒ organisationService.find(invoiceTo).isDefined),
     "invoiceBy" -> optional(longNumber).verifying(
-      "Such organization doesn't exist", (invoiceBy: Option[Long]) ⇒ invoiceBy.map{ value ⇒ Organisation.find(value).isDefined }.getOrElse(true)),
+      "Such organization doesn't exist", (invoiceBy: Option[Long]) ⇒ invoiceBy.map { value ⇒
+        organisationService.find(value).isDefined
+      }.getOrElse(true)),
     "number" -> optional(nonEmptyText))(EventInvoice.apply)(EventInvoice.unapply)
 
   /**
@@ -288,11 +290,12 @@ object Events extends Controller with Security {
 
       EventService.find(id).map {
         event ⇒
-          val legalEntities = Organisation.find(legalEntitiesOnly = true)
+          //@TODO only funders must be retrieved
+          val funders = Organisation.findAll
           val user = request.user
           val acc = user.asInstanceOf[LoginIdentity].userAccount
           val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-          Ok(views.html.event.details(user, canFacilitate, legalEntities, event))
+          Ok(views.html.event.details(user, canFacilitate, funders, event))
       }.getOrElse(NotFound)
   }
 
@@ -443,7 +446,6 @@ object Events extends Controller with Security {
             val existingEvent = EventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
-            //@TODO it may be a mistake. Need to check it first.
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
             updatedEvent.facilitatorIds_=(event.facilitatorIds)
 

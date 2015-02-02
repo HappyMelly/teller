@@ -28,15 +28,17 @@ import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.specification._
 import play.api.cache.Cache
+import play.api.db.slick._
 import play.api.mvc.AnyContentAsEmpty
-import play.api.test.Helpers._
-import play.api.test.{ FakeHeaders, FakeRequest, FakeApplication }
+import play.api.test.{ PlaySpecification, FakeHeaders, FakeRequest, FakeApplication }
 import play.api.Play
 import play.api.Play.current
 import play.filters.csrf.CSRF
+import scala.slick.jdbc.{ StaticQuery ⇒ Q }
+import scala.slick.session.Session
 import securesocial.core.{ Authenticator, IdentityId }
 
-trait PlayAppSpec extends Specification with BeforeAllAfterAll {
+trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   sequential
   lazy val app: FakeApplication = {
     val conf = Map(
@@ -55,6 +57,7 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
 
   def beforeAll() {
     Play.start(app)
+    truncateTables()
     setupDb()
   }
 
@@ -67,12 +70,12 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
   def cleanupDb()
 
   /**
-   * Returns a secured request object and sets authenticator object to cache
+   * Returns a secured GET request object and sets authenticator object to cache
    *
    * @param identity Identity object
    * @param url Path
    */
-  def prepareSecuredRequest(identity: IdentityId, url: String) = {
+  def prepareSecuredGetRequest(identity: IdentityId, url: String) = {
     val authenticator = new Authenticator("auth.1", identity,
       DateTime.now().minusHours(1),
       DateTime.now(),
@@ -84,6 +87,65 @@ trait PlayAppSpec extends Specification with BeforeAllAfterAll {
       headers = FakeHeaders(),
       body = AnyContentAsEmpty,
       tags = csrfTag).withCookies(authenticator.toCookie)
+  }
+
+  /**
+   * Returns a secured request object and sets authenticator object to cache
+   *
+   * @param identity Identity object
+   * @param url Path
+   */
+  def prepareSecuredPostRequest(identity: IdentityId,
+    url: String) = {
+    val authenticator = new Authenticator("auth.1", identity,
+      DateTime.now().minusHours(1),
+      DateTime.now(),
+      DateTime.now().plusHours(5))
+    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(POST,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag).withCookies(authenticator.toCookie)
+  }
+
+  /** Cleans all records from database */
+  def truncateTables() = DB.withSession { implicit session: Session ⇒
+    Q.updateNA("SET FOREIGN_KEY_CHECKS = 0;").execute
+    Q.updateNA("TRUNCATE `BOOKING_ENTRY`").execute
+    Q.updateNA("TRUNCATE `BOOKING_ENTRY_ACTIVITY`").execute
+    Q.updateNA("TRUNCATE `ACCOUNT`").execute
+    Q.updateNA("TRUNCATE `ACTIVITY`").execute
+    Q.updateNA("TRUNCATE `ADDRESS`").execute
+    Q.updateNA("TRUNCATE `BRAND`").execute
+    Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
+    Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
+    Q.updateNA("TRUNCATE `EVALUATION`").execute
+    Q.updateNA("TRUNCATE `EVALUATION_IMPRESSION`").execute
+    Q.updateNA("TRUNCATE `EVALUATION_QUESTION`").execute
+    Q.updateNA("TRUNCATE `EVALUATION_RECOMMENDATION`").execute
+    Q.updateNA("TRUNCATE `EVENT`").execute
+    Q.updateNA("TRUNCATE `EVENT_FACILITATOR`").execute
+    Q.updateNA("TRUNCATE `EVENT_INVOICE`").execute
+    Q.updateNA("TRUNCATE `EVENT_PARTICIPANT`").execute
+    Q.updateNA("TRUNCATE `EVENT_TYPE`").execute
+    Q.updateNA("TRUNCATE `EXCHANGE_RATE`").execute
+    Q.updateNA("TRUNCATE `FACILITATOR_COUNTRY`").execute
+    Q.updateNA("TRUNCATE `FACILITATOR_LANGUAGE`").execute
+    Q.updateNA("TRUNCATE `LICENSE`").execute
+    Q.updateNA("TRUNCATE `LOGIN_IDENTITY`").execute
+    Q.updateNA("TRUNCATE `MEMBER`").execute
+    Q.updateNA("TRUNCATE `ORGANISATION`").execute
+    Q.updateNA("TRUNCATE `ORGANISATION_MEMBERSHIPS`").execute
+    Q.updateNA("TRUNCATE `PERMANENT_SESSION`").execute
+    Q.updateNA("TRUNCATE `PERSON`").execute
+    Q.updateNA("TRUNCATE `PRODUCT`").execute
+    Q.updateNA("TRUNCATE `PRODUCT_BRAND_ASSOCIATION`").execute
+    Q.updateNA("TRUNCATE `SOCIAL_PROFILE`").execute
+    Q.updateNA("TRUNCATE `TRANSACTION_TYPE`").execute
+    Q.updateNA("TRUNCATE `USER_ACCOUNT`").execute
+    Q.updateNA("SET FOREIGN_KEY_CHECKS = 1;").execute
   }
 }
 import org.specs2.specification.Step

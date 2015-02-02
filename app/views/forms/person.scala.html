@@ -1,0 +1,54 @@
+@(form: Form[Person])
+
+@import views.Countries
+@import views.ViewHelpers._
+
+@html.text(form("firstName"), '_label -> "First name")
+@html.text(form("lastName"), '_label -> "Last name")
+@html.email(form("emailAddress"), '_label -> "E-mail address")
+@html.select(form("photo"), List(("none", "None"),("facebook", "Facebook"),("gravatar", "Gravatar (from your email address)")),
+  '_label -> "Photo")
+@html.date(form("birthday"), '_label -> "Birthday")
+@html.text(form("address.street1"), '_label -> "Address line 1")
+@html.text(form("address.street2"), '_label -> "Address line 2")
+@html.text(form("address.postCode"), '_label -> "Post code")
+@html.text(form("address.city"), '_label -> "City")
+@html.text(form("address.province"), '_label -> "Province or state")
+@html.select(form("address.country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+@html.textarea(form("bio"), '_label -> "Bio", 'rows -> "5", '_help -> views.html.markdownHelp())
+@html.textarea(form("interests"), '_label -> "Interests", 'rows -> "5", '_help -> views.html.markdownHelp())
+
+<input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
+<input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
+
+@defining(form("profile.twitterHandle")) { field =>
+  <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+    <label for="@field.id" class="col-sm-3 control-label">Twitter user name</label>
+    <div class="col-sm-9">
+      <div class="input-group">
+        <span class="input-group-addon">@@</span>
+        <input type="text" id="@field.id" name="@field.name"
+        value="@field.value.getOrElse("")"
+        placeholder="MyTwitter"
+        class="form-control">
+      </div>
+      <span class="help-block">
+      @if(field.hasErrors) {
+        @field.errors.map(error => Messages(error.message)).mkString(", ")
+      }
+      </span>
+    </div>
+  </div>
+}
+@html.text(form("profile.facebookUrl"), '_label -> "Facebook profile",
+  'placeholder -> "http://www.facebook.com/my.profile", '_help -> "")
+@html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn profile",
+  'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
+@html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
+  'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+<input type="hidden" id="role" name="role" value="@form("role").value.getOrElse("0")"/>
+
+@html.text(form("webSite"), '_label -> "Web site",
+  'placeholder -> "http://", '_help -> "Web site URL")
+@html.text(form("blog"), '_label -> "Blog",
+  'placeholder -> "http://", '_help -> "Web site URL")

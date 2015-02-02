@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.Organisation
-import models.database.Organisations
+import models.{ Organisation, Member }
+import models.database.{ Members, Organisations }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -35,10 +35,41 @@ import scala.slick.lifted.Query
 class OrganisationService {
 
   /** Returns list of active organisations */
-  def findActive: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    Query(Organisations).filter(_.active === true).sortBy(_.name.toLowerCase).list
+  def findActive: List[Organisation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Organisations).
+        filter(_.active === true).
+        sortBy(_.name.toLowerCase).
+        list
   }
 
+  /** Returns list of organisations which are not members (yet!) */
+  def findNonMembers: List[Organisation] = DB.withSession { implicit session ⇒
+    import scala.language.postfixOps
+
+    val members = for { m ← Members if m.person === false } yield m.objectId
+    val ids = members.list
+    Query(Organisations).filter(row ⇒ !(row.id inSet ids)).sortBy(_.name).list
+  }
+
+  /**
+   * Returns organisation if exists, otherwise None
+   * @param id Organisation id
+   */
+  def find(id: Long): Option[Organisation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Organisations).filter(_.id === id).list.headOption
+  }
+
+  /**
+   * Returns member data if org is a member, false None
+   * @param id Organisation id
+   */
+  def member(id: Long): Option[Member] = DB.withSession { implicit session ⇒
+    Query(Members).
+      filter(_.objectId === id).
+      filter(_.person === false).firstOption
+  }
 }
 
 object OrganisationService {

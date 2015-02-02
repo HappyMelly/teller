@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import models.service.EventService
+import models.service.{ Services, EventService }
 import securesocial.core._
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
@@ -197,7 +197,7 @@ class TellerResourceHandler(account: Option[UserAccount])
               val organisationId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or should be a member of the organisation
               existingAccount.editor ||
-                (organisationId.nonEmpty && Organisation.find(organisationId.get.toLong).exists {
+                (organisationId.nonEmpty && organisationService.find(organisationId.get.toLong).exists {
                   _.members.find(_.id == Some(existingAccount.personId)).nonEmpty
                 })
             case _ ⇒ true

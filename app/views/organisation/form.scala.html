@@ -6,7 +6,6 @@
         token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import views.Countries
 @import views.ViewHelpers._
 
 @defining(form.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { name =>
@@ -20,24 +19,9 @@
         <h1>@name</h1>
       </div>
       @html.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()))) {
-        @html.text(form("name"), '_label -> "Name", 'class -> "mail")
-        @html.select(form("country"), ("", "Choose a country") +: Countries.all, '_label -> "Country")
-        @html.text(form("street1"), '_label -> "Address line 1")
-        @html.text(form("street2"), '_label -> "Address line 2")
-        @html.text(form("postCode"), '_label -> "Post code")
-        @html.text(form("city"), '_label -> "City")
-        @html.text(form("province"), '_label -> "Province or state")
-        @html.text(form("vatNumber"), '_label -> "VAT number")
-        @html.text(form("registrationNumber"), '_label -> "Registration number")
+        @forms.organisation(form)
 
-        @html.select(
-          form("category"),
-          ("", "None") +: models.OrganisationCategory.values.map(value => value.toString -> Messages(s"models.OrganisationCategory.${value.toString}")).toSeq, '_label -> "Category")
-
-        @html.text(form("webSite"), '_label -> "Web site", 'placeholder -> "http://", '_help -> "Web site URL")
-        @html.text(form("blog"), '_label -> "Blog", 'placeholder -> "http://", '_help -> "Web site URL")
-
-        <div clas="row">
+        <div class="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
             <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>

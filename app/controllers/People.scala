@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
@@ -28,6 +28,7 @@ import Forms._
 import fly.play.s3.{ BucketFile, S3Exception }
 import models._
 import models.UserRole.Role._
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.data.{ FormError, Form }
@@ -202,7 +203,7 @@ trait People extends Controller with Security with Services {
         {
           case (page, personId, organisationId) ⇒
             personService.find(personId).map { person ⇒
-              Organisation.find(organisationId).map { organisation ⇒
+              organisationService.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
                 val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
@@ -263,7 +264,7 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒
 
       personService.find(personId).map { person ⇒
-        Organisation.find(organisationId).map { organisation ⇒
+        organisationService.find(organisationId).map { organisation ⇒
           person.deleteMembership(organisationId)
           val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
@@ -290,13 +291,12 @@ trait People extends Controller with Security with Services {
         val licenses = licenseService.licenses(id)
         val accountRole = userAccountService.findRole(id)
         val contributions = contributionService.contributions(id, isPerson = true)
-        val products = productService.findAll
+        val duplicated = userAccountService.findDuplicateIdentity(person)
 
         Ok(views.html.person.details(request.user, person,
           memberships, otherOrganisations,
-          contributions, products,
-          licenses, accountRole,
-          userAccountService.findDuplicateIdentity(person)))
+          contributions,
+          licenses, accountRole, duplicated))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))

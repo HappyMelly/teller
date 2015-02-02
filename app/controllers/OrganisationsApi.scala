@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.service.Services
 import play.api.mvc.Controller
 import play.api.libs.json._
 import models.{ Address, Organisation }
@@ -31,7 +32,7 @@ import models.{ Address, Organisation }
 /**
  * Organisations API.
  */
-object OrganisationsApi extends Controller with ApiAuthentication {
+object OrganisationsApi extends Controller with ApiAuthentication with Services {
 
   implicit val organisationWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {
@@ -58,7 +59,6 @@ object OrganisationsApi extends Controller with ApiAuthentication {
         "address" -> Json.toJson(address),
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
-        "category" -> organisation.category.map(_.toString).orNull,
         "website" -> organisation.webSite,
         "members" -> organisation.members,
         "contributions" -> organisation.contributions)
@@ -69,15 +69,13 @@ object OrganisationsApi extends Controller with ApiAuthentication {
    * Organisation details API.
    */
   def organisation(id: Long) = TokenSecuredAction { implicit request ⇒
-    Organisation.find(id).map { organisation ⇒
+    organisationService.find(id).map { organisation ⇒
       Ok(Json.toJson(organisation)(organisationDetailsWrites))
     }.getOrElse(NotFound("Unknown organization"))
   }
 
-  /**
-   * Organisation list API.
-   */
-  def organisations(legalEntitiesOnly: Option[Boolean]) = TokenSecuredAction { implicit request ⇒
-    Ok(Json.toJson(Organisation.find(legalEntitiesOnly.getOrElse(false))))
+  /** Returns a list of all organisations in JSON format */
+  def organisations = TokenSecuredAction { implicit request ⇒
+    Ok(Json.toJson(Organisation.findAll))
   }
 }

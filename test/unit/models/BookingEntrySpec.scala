@@ -1,4 +1,4 @@
-package models
+package unit.models.models
 
 /*
  * Happy Melly Teller
@@ -24,8 +24,9 @@ package models
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import org.joda.money.{ Money, CurrencyUnit }
-import org.specs2.mutable.{ Tables, Specification }
+import models.BookingEntry
+import org.joda.money.{ CurrencyUnit, Money }
+import org.specs2.mutable.{ Specification, Tables }
 
 class BookingEntrySpec extends Specification with Tables {
 
