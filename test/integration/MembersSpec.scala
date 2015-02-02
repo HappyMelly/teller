@@ -200,7 +200,6 @@ class MembersSpec extends PlayAppSpec {
       Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewOrganisation().apply(req)
       status(result) must equalTo(SEE_OTHER)
-      //@TODO this should be moved to acceptance module
       headers(result).get("Location").nonEmpty must_== true
       headers(result).get("Location").get must contain("/organization")
 
@@ -230,7 +229,6 @@ class MembersSpec extends PlayAppSpec {
       Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewPerson().apply(request)
       status(result) must equalTo(SEE_OTHER)
-      //@TODO this should be moved to acceptance module
       headers(result).get("Location").nonEmpty must_== true
       headers(result).get("Location").get must contain("/person")
 

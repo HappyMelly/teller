@@ -446,7 +446,6 @@ object Events extends Controller with Security with Services {
             val existingEvent = EventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
-            //@TODO it may be a mistake. Need to check it first.
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
             updatedEvent.facilitatorIds_=(event.facilitatorIds)
 

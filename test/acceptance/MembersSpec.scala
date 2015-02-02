@@ -109,7 +109,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
     contentAsString(result) must contain("/person/2")
     contentAsString(result) must contain("/organization/1")
     contentAsString(result) must contain("/organization/2")
-    //@TODO finish multiple checks
   }
 
   def e6 = {

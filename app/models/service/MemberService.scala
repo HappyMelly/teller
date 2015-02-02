@@ -50,7 +50,12 @@ class MemberService {
     result1.map(_._1) ::: result2.map(_._1)
   }
 
-  /** Returns member if it exists, otherwise - None */
+  /**
+   * Returns member if it exists, otherwise - None
+   *
+   * @param id Member identifier
+   * @param withObject If true, person/org is retrieved
+   */
   def find(id: Long, withObject: Boolean = false): Option[Member] = DB.withSession { implicit session ⇒
     val member = Query(Members).filter(_.id === id).firstOption
     if (member.nonEmpty && withObject) {

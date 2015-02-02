@@ -88,4 +88,71 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
       members.exists(_.name == "Fifth Tester") must_== true
     }
   }
+
+  "Method find" should {
+    "return only membership data" in {
+      truncateTables()
+      val m = new Member(None, 1L, person = true, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val data = MemberService.get.find(1L)
+      data map { v ⇒
+        v.objectId must_== m.objectId
+        v.person must_== m.person
+        v.funder must_== m.funder
+        v.memberObj must_== (None, None)
+      } getOrElse ko
+    }
+    "return empty data" in {
+      truncateTables()
+      val data = MemberService.get.find(2L)
+      data must_== None
+    }
+    "return membership data with person object" in {
+      truncateTables()
+      val m = new Member(None, 1L, person = true, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      PersonHelper.one().insert
+      val data = MemberService.get.find(1L, withObject = true)
+      data map { v ⇒
+        v.objectId must_== m.objectId
+        v.person must_== m.person
+        v.funder must_== m.funder
+        v.name must_== "First Tester"
+      } getOrElse ko
+    }
+    "return membership data with org object" in {
+      truncateTables()
+      val m = new Member(None, 1L, person = false, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      OrganisationHelper.one.insert
+      val data = MemberService.get.find(1L, withObject = true)
+      data map { v ⇒
+        v.objectId must_== m.objectId
+        v.person must_== m.person
+        v.funder must_== m.funder
+        v.name must_== "One"
+      } getOrElse ko
+    }
+  }
+  "Method `delete`" should {
+    "delete membership data" in {
+      truncateTables()
+      val m = new Member(None, 1L, person = false, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      MemberService.get.delete(m.objectId, person = false)
+      MemberService.get.find(m.id.get) must_== None
+    }
+    "not delete membership data" in {
+      truncateTables()
+      val m = new Member(None, 1L, person = false, funder = false,
+        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
+        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      MemberService.get.delete(m.objectId, person = true)
+      MemberService.get.find(m.id.get) must_!= None
+    }
+  }
 }
