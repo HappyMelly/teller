@@ -35,18 +35,6 @@ function filterByEvent(oSettings, aData, iDataIndex) {
 }
 
 /**
- * Leave the events, facilitated by the user
- */
-function filterByFacilitator(oSettings, aData, iDataIndex) {
-    var index = 10;
-    var state = $('#facilitatedByMe').is(':checked');
-    if (state == false) {
-        return true;
-    }
-    return aData[index] == 1;
-}
-
-/**
  * Filter evaluations checking if they are pending, approved or rejected
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
@@ -61,7 +49,6 @@ function filterByStatus(oSettings, aData, iDataIndex) {
 
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
-$.fn.dataTableExt.afnFiltering.push(filterByFacilitator);
 
 function loadEventList(events) {
     $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
@@ -101,7 +88,6 @@ $(document).ready( function() {
             { "data": "evaluation.creation" },
             { "data": "evaluation.handled" },
             { "data": "evaluation.certificate" },
-            { "data": "event" },
             { "data": "event" },
             { "data": "actions" }
         ],
@@ -143,15 +129,9 @@ $(document).ready( function() {
                 "render": function(data) { return data.id; },
                 "visible": false,
                 "targets": 9
-            },{
-                "render": function(data) {
-                    return data.facilitatedByMe ? 1 : 0;
-                },
-                "targets": 10,
-                "visible": false
             }, {
                "render": function(data) { return renderDropdown(data, $("#brands").find(':selected').val()); },
-               "targets": 11,
+               "targets": 10,
                "bSortable": false
             }
         ]

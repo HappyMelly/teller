@@ -39,7 +39,12 @@ import scala.concurrent.Await
  */
 class LoginIdentityService(application: Application) extends UserServicePlugin(application) {
 
-  def find(id: IdentityId) = LoginIdentity.findByUserId(id)
+  /**
+   * Returns login identity if it exists, otherwise - None
+   * @param id Identity identifier
+   * @return
+   */
+  def find(id: IdentityId): Option[LoginIdentity] = LoginIdentity.findByUserId(id)
 
   def save(user: Identity) = {
     val loginIdentity = user match {
