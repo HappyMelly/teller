@@ -103,7 +103,9 @@ trait ParticipantsApi extends ApiAuthentication with Services {
           BadRequest(Json.prettyPrint(json))
         },
         participant ⇒ {
-          val createdParticipant = Participant.insert(participant)
+          val createdParticipant = Participant.
+            find(participant.personId, participant.eventId).
+            map { p ⇒ p } getOrElse { Participant.insert(participant) }
           Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })
     } else {
