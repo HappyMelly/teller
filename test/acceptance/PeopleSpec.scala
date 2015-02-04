@@ -47,12 +47,13 @@ class PeopleSpec extends PlayAppSpec {
 
   Page with person's data should
 
-    not be visible to unauthorized user                                 $e1
-    and be visible to authorized user                                   $e2
-    not contain accounting details if user is not Editor                $e3
-    contain accounting details if user is Editor                        $e4
-    contain a supporter badge if the person is a supporter              $e5
-    contain a funder badge and paid fee if the person is a funder       $e6
+    not be visible to unauthorized user                                  $e1
+    and be visible to authorized user                                    $e2
+    not contain accounting details if user is not Editor                 $e3
+    contain accounting details if user is Editor                         $e4
+    contain a supporter badge if the person is a supporter               $e5
+    contain a funder badge and paid fee if the person is a funder        $e6
+    contain 'Add license' button if user is Editor and a person has none $e7
   """
   def e1 = {
     val controller = new TestPeople()
@@ -157,4 +158,21 @@ class PeopleSpec extends PlayAppSpec {
     }
   }
 
+  def e7 = {
+    truncateTables()
+    new MockContext {
+      val person = PersonHelper.one().insert
+      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+      val controller = new TestPeople()
+      val mockService = mock[FakePersonService]
+      (mockService.find(_: Long)) expects 1L returning Some(person)
+      controller.personService_=(mockService)
+      val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/person/1")
+      val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+      status(result) must equalTo(OK)
+      contentAsString(result) must contain("/person/1/licenses/new")
+      contentAsString(result) must contain("Add license")
+    }
+  }
 }

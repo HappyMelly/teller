@@ -68,7 +68,7 @@ object EventHelper {
     Seq(
       ("one", "2013-01-01", "2013-01-03", true, false, true, "RU", 1, List(1L, 2L)),
       ("two", "2013-01-01", "2013-01-03", true, false, false, "RU", 1, List(1L, 4L)),
-      ("three", "2013-01-01", "2013-01-03", false, false, false, "RU", 2, List(1L, 4L)),
+      ("three", "2013-01-01", "2023-01-03", false, false, false, "RU", 2, List(1L, 4L)), //current
       ("four", "2023-01-01", "2023-01-03", false, true, true, "RU", 2, List(2L, 4L)),
       ("five", "2023-01-01", "2023-01-03", true, false, true, "DE", 1, List(4L, 5L)),
       ("six", "2023-01-01", "2023-01-03", true, false, false, "ES", 2, List(1L, 4L))).foreach {

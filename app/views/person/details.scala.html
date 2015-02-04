@@ -265,6 +265,14 @@
               </div>
             </div>
           </div>
+        } else {
+          @restrict(handler, List(as(Editor.toString))) {
+            <div class="col-md-10">
+              <h3>Facilitator
+                <a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success btn-sm">
+                  <i class="glyphicon glyphicon-plus"></i>Add license</a></h3>
+            </div>
+          }
         }
       </div>
 

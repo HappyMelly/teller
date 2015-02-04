@@ -186,6 +186,7 @@ class EventService {
         .find(_.eventId == e.id)
         .getOrElse(EventInvoice(None, None, 0, None, None))))
   }
+
   /**
    * Applies time filter on query
    *
@@ -203,7 +204,7 @@ class EventService {
         now.getValue(1),
         now.getValue(2))
       if (value)
-        parentQuery.filter(_.end >= today)
+        parentQuery.filter(_.start > today)
       else
         parentQuery.filter(_.end <= today)
     } getOrElse parentQuery
