@@ -31,6 +31,7 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import services.EmailService
 
 import scala.language.postfixOps
 import scala.slick.lifted.Query
@@ -167,6 +168,25 @@ class EventService {
     facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
     val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
     events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+  }
+
+  /**
+   * Sends email notifications to facilitators asking to confirm or delete
+   *  past events which are unconfirmed
+   */
+  def sendConfirmationAlert() = BrandService.get.findAll.foreach { brand ⇒
+    findByParameters(
+      brandCode = Some(brand.code),
+      future = Some(false),
+      confirmed = Some(false)).foreach { event ⇒
+        val subject = "Confirm your event " + event.title
+        EmailService.get.send(
+          event.facilitators.toSet,
+          None,
+          None,
+          subject,
+          mail.txt.confirm(event).toString())
+      }
   }
 
   /**

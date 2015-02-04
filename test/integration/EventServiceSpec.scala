@@ -86,6 +86,14 @@ class EventServiceSpec extends PlayAppSpec {
         (events.exists(_.title == "five") must beTrue) and
         (events.exists(_.title == "six") must beFalse)
     }
+    "return 2 unconfirmed past events for brand TEST" in {
+      val events = EventService.findByParameters(brandCode = Some("TEST"),
+        future = Some(false),
+        confirmed = Some(false))
+      (events.length mustEqual 2) and
+        (events.exists(_.title == "two") must beTrue) and
+        (events.exists(_.title == "three") must beTrue)
+    }
     "return 1 event in DE" in {
       val events = EventService.findByParameters(brandCode = None, country = Some("DE"))
       (events.length mustEqual 2) and

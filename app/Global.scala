@@ -23,7 +23,7 @@
  */
 
 import java.util.concurrent.TimeUnit
-import models.Event
+import models.service.EventService
 import org.joda.time.{ LocalDateTime, LocalDate, LocalTime, Seconds }
 import play.api._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -83,12 +83,14 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    // this is a dirty hack as I don't want to pay Heroku additional $30 for only sending notifications through
-    //  a separate process
+    // this is a dirty hack as I don't want to pay Heroku additional $30 for only
+    // sending notifications through  a separate process
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.1")) {
-      Akka.system.scheduler.schedule(Duration.create(waitPeriod, TimeUnit.MILLISECONDS), Duration.create(24, TimeUnit.HOURS)) {
-        Event.sendConfirmationAlert()
-      }
+      Akka.system.scheduler.schedule(
+        Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
+        Duration.create(24, TimeUnit.HOURS)) {
+          EventService.get.sendConfirmationAlert()
+        }
     }
 
   }

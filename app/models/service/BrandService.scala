@@ -24,32 +24,26 @@
  */
 package models.service
 
-import services.EmailService
+import models.Brand
+import models.database.Brands
+import play.api.Play.current
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+import scala.slick.lifted.Query
 
-  def eventService: EventService = EventService.get
+class BrandService {
 
-  def personService: PersonService = PersonService.get
+  /**
+   * Returns a list of all brands
+   */
+  def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
+    Query(Brands).sortBy(_.name.toLowerCase).list
+  }
+}
 
-  def orgService: OrganisationService = OrganisationService.get
+object BrandService {
+  private val instance = new BrandService
 
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
-
-  def evaluationService: EvaluationService = EvaluationService.get
-
-  def memberService: MemberService = MemberService.get
-
-  def organisationService: OrganisationService = OrganisationService.get
-
-  def emailService: EmailService = EmailService.get
-
-  def brandService: BrandService = BrandService.get
+  def get: BrandService = instance
 }

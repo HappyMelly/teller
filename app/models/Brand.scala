@@ -221,15 +221,6 @@ object Brand {
     Query(Brands).filter(_.coordinatorId === coordinatorId).list
   }
 
-  /**
-   * Get a list of all brands
-   *
-   * @return
-   */
-  def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
-    Query(Brands).sortBy(_.name.toLowerCase).list
-  }
-
   def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒
     val query = for {
       (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId)

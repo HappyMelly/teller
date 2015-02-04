@@ -83,7 +83,7 @@ case class Evaluation(
     val en = Translation.find("EN").get
     val impression = en.impressions.value(question6)
     val subject = s"New evaluation (General impression: $impression)"
-    EmailService.send(event.facilitators.toSet,
+    EmailService.get.send(event.facilitators.toSet,
       Some(Set(brand.coordinator)), None, subject,
       mail.html.evaluation(created, participant, en).toString(), richMessage = true)
 
@@ -117,7 +117,7 @@ case class Evaluation(
     } else if (evaluation.certificate.isEmpty) {
       val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
       val subject = s"Your ${brand.brand.name} event's evaluation approval"
-      EmailService.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
+      EmailService.get.send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
         Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
     } else {
       val cert = new Certificate(evaluation, renew = true)

@@ -72,7 +72,7 @@ case class Certificate(
     val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
     val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
-    EmailService.send(Set(evaluation.participant),
+    EmailService.get.send(Set(evaluation.participant),
       Some(evaluation.event.facilitators.toSet),
       Some(Set(brand.coordinator)),
       subject,

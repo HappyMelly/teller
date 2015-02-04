@@ -255,20 +255,5 @@ object Event {
     }
   }
 
-  def sendConfirmationAlert() = Brand.findAll.foreach { brand ⇒
-    EventService.findByParameters(
-      brandCode = Some(brand.code),
-      future = Some(false),
-      confirmed = Some(false)).foreach { event ⇒
-        val subject = "Confirm your event " + event.title
-        EmailService.send(
-          event.facilitators.toSet,
-          None,
-          None,
-          subject,
-          mail.txt.confirm(event).toString())
-      }
-  }
-
 }
 

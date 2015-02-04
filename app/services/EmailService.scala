@@ -32,7 +32,7 @@ import play.api.Play.current
 /**
  * Service to asynchronously send e-mail using an Akka actor.
  */
-object EmailService {
+class EmailService {
 
   val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
@@ -111,4 +111,10 @@ object EmailService {
       }
     }
   }
+}
+
+object EmailService {
+  private var instance = new EmailService
+
+  def get: EmailService = instance
 }

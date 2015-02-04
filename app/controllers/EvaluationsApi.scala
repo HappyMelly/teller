@@ -81,8 +81,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
           BadRequest(Json.prettyPrint(json))
         } else {
           val createdEvaluation = evaluation.create
-
-          Activity.insert(person.fullName, Activity.Predicate.Created, "new evaluation")
+          val message = "new evaluation for " + createdEvaluation.participant.fullName
+          Activity.insert(person.fullName, Activity.Predicate.Created, message)
           Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))
         }
       })

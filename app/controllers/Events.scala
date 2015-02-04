@@ -173,7 +173,7 @@ object Events extends Controller with Security with Services {
   def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
-    EmailService.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
+    emailService.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
   }
 
   /**
@@ -322,7 +322,7 @@ object Events extends Controller with Security with Services {
 
       val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-      val brands = Brand.findAll.sortBy(_.name)
+      val brands = brandService.findAll
       val facilitators = brands.map(b ⇒
         (b.code, License.allLicensees(b.code).map(l ⇒ (l.id.get, l.fullName))))
 
@@ -515,7 +515,7 @@ object Events extends Controller with Security with Services {
                 val participant = PersonService.get.find(id).get
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
-                EmailService.send(Set(participant), None, None, subject,
+                emailService.send(Set(participant), None, None, subject,
                   mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
               }
 
