@@ -49,7 +49,7 @@ trait Reports extends Controller with Security with Services {
         Brand.find(brandCode).map { brand ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = if (eventId > 0) {
-            EventService.find(eventId).map { event ⇒
+            EventService.get.find(eventId).map { event ⇒
               if (byMe) {
                 if (event.facilitatorIds.contains(account.personId)) {
                   event :: Nil
@@ -63,9 +63,9 @@ trait Reports extends Controller with Security with Services {
             }.getOrElse(Nil)
           } else {
             if (byMe) {
-              EventService.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
+              EventService.get.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
             } else {
-              EventService.findByParameters(Some(brandCode))
+              EventService.get.findByParameters(Some(brandCode))
             }
           }
           val eventIds = events.map(e ⇒ e.id.get)

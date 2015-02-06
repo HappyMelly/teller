@@ -24,31 +24,27 @@
 
 package controllers
 
+import java.net.URLDecoder
+
 import controllers.Forms._
+import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
+import models.BookingEntry.FieldChange
 import models.JodaMoney._
 import models.UserRole.Role._
-import models._
+import models.{ AccountSummary, _ }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
-import play.api.mvc._
-import play.api.data.Forms._
 import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.Messages
+import play.api.mvc.{ SimpleResult, _ }
+import securesocial.core.{ Identity, SecuredRequest }
+import services.{ CurrencyConverter, EmailSender, S3Bucket }
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import securesocial.core.{ Identity, SecuredRequest }
-import fly.play.s3.{ BUCKET_OWNER_FULL_CONTROL }
-import play.api.Play
-import play.api.Play.current
-import java.net.URLDecoder
-import scala.Some
-import play.api.mvc.SimpleResult
-import models.AccountSummary
-import securesocial.core.SecuredRequest
-import services.{ CurrencyConverter, EmailService, S3Bucket }
-import models.BookingEntry.FieldChange
 
-object BookingEntries extends Controller with Security {
+object BookingEntries extends Controller with Security with EmailSender {
 
   def bookingEntryForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -152,7 +148,7 @@ object BookingEntries extends Controller with Security {
   def sendEmailNotification(entry: BookingEntry, changes: List[BookingEntry.FieldChange], activity: Activity,
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    EmailService.send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
+    send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
       richMessage = true)
   }
 

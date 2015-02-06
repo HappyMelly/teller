@@ -156,10 +156,10 @@ class TellerResourceHandler(account: Option[UserAccount])
             case "add" ⇒ existingAccount.facilitator || existingAccount.editor
             case "edit" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.canFacilitate(userId))
+              existingAccount.editor || eventService.find(eventId.get.toLong).exists(_.canFacilitate(userId))
             case "admin" ⇒
               val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || EventService.find(eventId.get.toLong).exists(_.isBrandManager(userId))
+              existingAccount.editor || eventService.find(eventId.get.toLong).exists(_.isBrandManager(userId))
             case _ ⇒ true
           }
         case "person" ⇒

@@ -37,6 +37,7 @@ trait FakeServices extends Services {
   private var _evaluationService = new StubEvaluationService
   private var _memberService = new FakeMemberService
   private var _organisationService = new FakeOrganisationService
+  private var _brandService = new FakeBrandService
 
   def eventService_=(service: StubEventService) = {
     _eventService = service
@@ -91,4 +92,11 @@ trait FakeServices extends Services {
   }
 
   override def organisationService: FakeOrganisationService = _organisationService
+
+  def brandService_=(service: FakeBrandService) = {
+    _brandService = service
+  }
+
+  override def brandService: FakeBrandService = _brandService
+
 }
