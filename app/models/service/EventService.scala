@@ -25,8 +25,8 @@
 package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.database.{ EventFacilitators, EventInvoices, Events }
 import models._
+import models.database.{ EventFacilitators, EventInvoices, Events }
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._

@@ -24,18 +24,13 @@
 
 package models
 
-import models.database.{ Evaluations, Participants, Events, People }
-import models.service.{ PersonService, EventService }
+import models.database.Evaluations
+import models.service.{ EventService, PersonService }
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.cache.Cache
-import play.api.Play.current
-import play.api.i18n.Messages
-import play.api.libs.Crypto
-import scala.util.Random
-import play.api.libs.concurrent.Execution.Implicits._
-import services.{ EmailSender, EmailService }
+import services.EmailSender
 
 /**
  * A status of an evaluation which a participant gives to an event

@@ -31,7 +31,7 @@ import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json.Json
-import services.{ EmailSender, EmailService }
+import services.EmailSender
 
 object Evaluations extends EvaluationsController with Security with EmailSender {
 

@@ -24,16 +24,17 @@
 
 package models
 
+import com.itextpdf.text.Image
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.service.EventService
 import org.joda.time.LocalDate
+import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.Play.current
+import services.{ EmailSender, S3Bucket }
+
 import scala.concurrent.Future
 import scala.language.postfixOps
-import services.{ EmailSender, S3Bucket, EmailService }
-import com.itextpdf.text.Image
 
 /**
  * An certificate which a participant gets after an event
@@ -103,21 +104,14 @@ case class Certificate(
 
   /** Generate a Management 3.0 certificate (the only one supported right now) */
   private def generate(ev: Evaluation): Array[Byte] = {
-    import com.itextpdf.text.Document
-    import com.itextpdf.text.pdf.PdfWriter
-    import com.itextpdf.text.pdf.BaseFont
-    import com.itextpdf.text.Font
-    import com.itextpdf.text.Element
-    import com.itextpdf.text.PageSize
-    import com.itextpdf.text.Phrase
-    import com.itextpdf.text.pdf.ColumnText
-    import com.itextpdf.text.Image
+    import java.io.ByteArrayOutputStream
+
+    import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
+    import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
     import play.api.i18n.Messages
+
     import scala.concurrent.Await
     import scala.concurrent.duration._
-
-    import java.io.ByteArrayOutputStream
-    import play.api._
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/MGT30/DejaVuSerif.ttf",

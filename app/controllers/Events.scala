@@ -24,22 +24,21 @@
 
 package controllers
 
-import Forms._
-import models._
-import models.service.{ Services, PersonService, EventService }
-import play.api.mvc._
-import play.api.libs.json._
-import securesocial.core.SecuredRequest
-import play.api.data._
-import play.api.data.Forms._
-import play.api.i18n.Messages
-import org.joda.time.{ LocalDate, DateTime }
+import controllers.Forms._
 import models.UserRole.Role._
-import play.api.data.format.Formatter
-import models.{ Location, Schedule }
 import models.event.Comparator
 import models.event.Comparator.FieldChange
-import services.{ EmailSender, EmailService }
+import models.service.{ EventService, PersonService, Services }
+import models.{ Location, Schedule, _ }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.data.Forms._
+import play.api.data._
+import play.api.data.format.Formatter
+import play.api.i18n.Messages
+import play.api.libs.json._
+import play.api.mvc._
+import securesocial.core.SecuredRequest
+import services.EmailSender
 
 object Events extends Controller
   with Security
