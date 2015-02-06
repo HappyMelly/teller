@@ -230,7 +230,7 @@ object Event {
    * @deprecated
    */
   def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (EventService.find(eventId).isEmpty)
+    if (EventService.get.find(eventId).isEmpty)
       false
     else
       findByUser(user).exists(_.id.get == eventId)

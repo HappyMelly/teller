@@ -69,7 +69,7 @@ case class Evaluation(
   updated: DateTime,
   updatedBy: String) extends EmailSender {
 
-  lazy val event: Event = EventService.find(eventId).get
+  lazy val event: Event = EventService.get.find(eventId).get
 
   lazy val participant: Person = PersonService.get.find(personId).get
 

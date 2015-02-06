@@ -31,12 +31,12 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.{ EmailSender, EmailService }
+import services.EmailSender
 
 import scala.language.postfixOps
 import scala.slick.lifted.Query
 
-class EventService extends EmailSender {
+class EventService extends EmailSender with Services {
 
   /**
    * Returns true if a person is a brand manager of this event
@@ -174,7 +174,7 @@ class EventService extends EmailSender {
    * Sends email notifications to facilitators asking to confirm or delete
    *  past events which are unconfirmed
    */
-  def sendConfirmationAlert() = BrandService.get.findAll.foreach { brand ⇒
+  def sendConfirmationAlert() = brandService.findAll.foreach { brand ⇒
     findByParameters(
       brandCode = Some(brand.code),
       future = Some(false),
@@ -265,77 +265,4 @@ object EventService {
 
   def get: EventService = instance
 
-  /**
-   * Returns event if it exists, otherwise - None
-   *
-   * @deprecated EventService.get should be used
-   * @param id Event identifier
-   */
-  def find(id: Long): Option[Event] = instance.find(id)
-
-  /**
-   * Returns a list of events based on several parameters
-   *
-   * @deprecated EventService.get should be used
-   *
-   * @param brandCode Only events of this brand
-   * @param future Only future and current events
-   * @param public Only public events
-   * @param archived Only archived events
-   * @param confirmed Only confirmed events
-   * @param country Only events in this country
-   * @param eventType Only events of this type
-   */
-  def findByParameters(
-    brandCode: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None,
-    confirmed: Option[Boolean] = None,
-    country: Option[String] = None,
-    eventType: Option[Long] = None) = instance.findByParameters(
-    brandCode,
-    future,
-    public,
-    archived,
-    confirmed,
-    country,
-    eventType)
-
-  /**
-   * Return a list of events for a given facilitator
-   *
-   * @deprecated EventService.get should be used
-   *
-   * @param facilitatorId Only events facilitated by this facilitator
-   * @param brand Only events of this brand
-   * @param future Only future and current events
-   * @param public Only public events
-   * @param archived Only archived events
-   */
-  def findByFacilitator(
-    facilitatorId: Long,
-    brand: Option[String],
-    future: Option[Boolean] = None,
-    public: Option[Boolean] = None,
-    archived: Option[Boolean] = None) = instance.findByFacilitator(
-    facilitatorId,
-    brand,
-    future,
-    public,
-    archived)
-
-  /**
-   * Returns list with active events
-   *
-   * @deprecated EventService.get should be used
-   */
-  def findActive: List[Event] = instance.findActive
-
-  /**
-   * Returns list with all events
-   *
-   * @deprecated EventService.get should be used
-   */
-  def findAll: List[Event] = instance.findAll
 }

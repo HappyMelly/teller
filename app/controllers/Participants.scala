@@ -148,7 +148,7 @@ object Participants extends Controller with Security {
           if (account.editor || brand.brand.coordinatorId == personId) {
             Participant.findByBrand(Some(brandCode))
           } else if (License.licensedSince(personId, brandCode).nonEmpty) {
-            val events = EventService.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
+            val events = EventService.get.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
             Participant.findEvaluationsByEvents(events)
           } else {
             List[ParticipantView]()
@@ -162,7 +162,7 @@ object Participants extends Controller with Security {
    */
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
-      EventService.find(eventId).map { event ⇒
+      EventService.get.find(eventId).map { event ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val brand = Brand.find(event.brandCode).get
         val en = Translation.find("EN").get
@@ -218,7 +218,7 @@ object Participants extends Controller with Security {
     }
 
     implicit handler ⇒
-      EventService.find(eventId).map { event ⇒
+      EventService.get.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))

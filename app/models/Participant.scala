@@ -50,7 +50,7 @@ case class Participant(
   organisation: Option[String],
   comment: Option[String]) {
 
-  lazy val event: Option[Event] = EventService.find(eventId)
+  lazy val event: Option[Event] = EventService.get.find(eventId)
   lazy val person: Option[Person] = PersonService.get.find(personId)
   lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
 
@@ -128,7 +128,7 @@ case class ParticipantData(id: Option[Long],
   updated: DateTime,
   updatedBy: String) {
 
-  lazy val event: Option[Event] = EventService.find(eventId)
+  lazy val event: Option[Event] = EventService.get.find(eventId)
 }
 
 object Participant {

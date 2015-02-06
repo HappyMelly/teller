@@ -94,7 +94,7 @@ object EventTypes extends Controller with Security {
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
         val route = routes.Brands.details(brand.code).url + "#eventTypes"
-        val events = EventService.findByParameters(
+        val events = EventService.get.findByParameters(
           brandCode = None,
           eventType = Some(eventType.id.get))
         if (events.length > 0) {

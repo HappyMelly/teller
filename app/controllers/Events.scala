@@ -204,7 +204,7 @@ object Events extends Controller
   def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      EventService.find(id).map {
+      EventService.get.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -249,7 +249,7 @@ object Events extends Controller
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
     implicit handler ⇒
 
-      EventService.find(id).map { event ⇒
+      eventService.find(id).map { event ⇒
         if (event.deletable) {
           event.delete()
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
@@ -270,7 +270,7 @@ object Events extends Controller
   def invoice(id: Long) = SecuredDynamicAction("event", "admin") { implicit request ⇒
     implicit handler ⇒
 
-      EventService.find(id).map { event ⇒
+      eventService.find(id).map { event ⇒
         val form = Form(invoiceMapping).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
@@ -291,7 +291,7 @@ object Events extends Controller
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒
 
-      EventService.find(id).map {
+      eventService.find(id).map {
         event ⇒
           //@TODO only funders must be retrieved
           val funders = Organisation.findAll
@@ -309,7 +309,7 @@ object Events extends Controller
   def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
 
-      EventService.find(id).map {
+      eventService.find(id).map {
         event ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val brands = Brand.findByUser(account)
@@ -361,11 +361,11 @@ object Events extends Controller
     archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒
       val events = facilitator map {
-        EventService.findByFacilitator(_, brandCode, future, public, archived)
+        eventService.findByFacilitator(_, brandCode, future, public, archived)
       } getOrElse {
-        EventService.findByParameters(brandCode, future, public, archived)
+        eventService.findByParameters(brandCode, future, public, archived)
       }
-      EventService.get.applyFacilitators(events)
+      eventService.applyFacilitators(events)
 
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       // we do not show private events of other facilitators to anyone except
@@ -381,7 +381,7 @@ object Events extends Controller
           events.filter(e ⇒ e.notPublic &&
             e.facilitators.exists(_.id.get == account.personId))
 
-      EventService.get.applyInvoices(filteredEvents)
+      eventService.applyInvoices(filteredEvents)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -446,7 +446,7 @@ object Events extends Controller
           val validLicensees = License.licensees(event.brandCode)
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
-            val existingEvent = EventService.find(id).get
+            val existingEvent = eventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
@@ -476,7 +476,7 @@ object Events extends Controller
    */
   def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒
-      EventService.find(id).map {
+      eventService.find(id).map {
         event ⇒
           val updatedEvent = event.copy(id = Some(id))
           updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
@@ -503,7 +503,7 @@ object Events extends Controller
             url.isDefined
           }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
 
-      EventService.find(id).map { event ⇒
+      eventService.find(id).map { event ⇒
         form.fold(
           formWithErrors ⇒ {
             Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")

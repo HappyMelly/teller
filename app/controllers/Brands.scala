@@ -327,9 +327,9 @@ object Brands extends Controller with Security {
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
-          EventService.findByParameters(Some(brandCode), future)
+          EventService.get.findByParameters(Some(brandCode), future)
         } else {
-          EventService.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
+          EventService.get.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
         }
         Ok(Json.toJson(events))
       }.getOrElse(NotFound("Unknown brand"))

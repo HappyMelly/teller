@@ -89,7 +89,7 @@ case class Certificate(
    * @return
    */
   private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
-    val event = EventService.find(evaluation.eventId).get
+    val event = EventService.get.find(evaluation.eventId).get
     val templates = CertificateTemplate.findByBrand(event.brandCode)
     val data = templates.find(_.language == event.language.spoken).map { template ⇒
       if (twoFacilitators) template.twoFacilitators else template.oneFacilitator

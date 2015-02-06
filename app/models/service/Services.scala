@@ -24,8 +24,6 @@
  */
 package models.service
 
-import services.EmailService
-
 /** Contains references to all services so we can stub them in tests */
 trait Services {
 
