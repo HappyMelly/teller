@@ -190,7 +190,7 @@ class EventService extends EmailSender with Services {
         val msg = "confirmation email for event %s (id = %s)".format(
           event.title,
           event.id.get.toString)
-        Activity.insert("system", Activity.Predicate.Sent, msg)
+        Activity.insert("Teller", Activity.Predicate.Sent, msg)
       }
   }
 

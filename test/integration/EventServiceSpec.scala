@@ -177,7 +177,7 @@ class EventServiceSpec extends PlayAppSpec {
 
       val activities = Activity.findAll
       activities.length must_== 1
-      activities.head.subject must_== "system"
+      activities.head.subject must_== "Teller"
       activities.head.predicate must_== Activity.Predicate.Sent.toString
       val msg = "confirmation email for event One (id = 1)"
       activities.head.activityObject must_== Some(msg)
