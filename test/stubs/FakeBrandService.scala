@@ -19,35 +19,13 @@
  *
  * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
+ * The Netherlands, 3071 PR
  */
-package models.service
+package stubs
 
-import services.EmailService
+import models.service.BrandService
 
-/** Contains references to all services so we can stub them in tests */
-trait Services {
+class FakeBrandService extends BrandService {
 
-  def eventService: EventService = EventService.get
-
-  def personService: PersonService = PersonService.get
-
-  def orgService: OrganisationService = OrganisationService.get
-
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def contributionService: ContributionService = ContributionService.get
-
-  def productService: ProductService = ProductService.get
-
-  def evaluationService: EvaluationService = EvaluationService.get
-
-  def memberService: MemberService = MemberService.get
-
-  def organisationService: OrganisationService = OrganisationService.get
-
-  def brandService: BrandService = BrandService.get
 }

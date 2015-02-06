@@ -39,9 +39,12 @@ import play.api.data.format.Formatter
 import models.{ Location, Schedule }
 import models.event.Comparator
 import models.event.Comparator.FieldChange
-import services.EmailService
+import services.{ EmailSender, EmailService }
 
-object Events extends Controller with Security with Services {
+object Events extends Controller
+  with Security
+  with Services
+  with EmailSender {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -173,7 +176,7 @@ object Events extends Controller with Security with Services {
   def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
-    emailService.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
+    send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
   }
 
   /**
@@ -515,7 +518,7 @@ object Events extends Controller with Security with Services {
                 val participant = PersonService.get.find(id).get
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
-                emailService.send(Set(participant), None, None, subject,
+                send(Set(participant), None, None, subject,
                   mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
               }
 

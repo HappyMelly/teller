@@ -31,12 +31,12 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.EmailService
+import services.{ EmailSender, EmailService }
 
 import scala.language.postfixOps
 import scala.slick.lifted.Query
 
-class EventService {
+class EventService extends EmailSender {
 
   /**
    * Returns true if a person is a brand manager of this event
@@ -180,7 +180,7 @@ class EventService {
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title
-        EmailService.get.send(
+        send(
           event.facilitators.toSet,
           None,
           None,

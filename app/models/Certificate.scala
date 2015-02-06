@@ -32,7 +32,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
 import scala.language.postfixOps
-import services.{ S3Bucket, EmailService }
+import services.{ EmailSender, S3Bucket, EmailService }
 import com.itextpdf.text.Image
 
 /**
@@ -40,7 +40,7 @@ import com.itextpdf.text.Image
  */
 case class Certificate(
   evaluation: Evaluation,
-  renew: Boolean = false) {
+  renew: Boolean = false) extends EmailSender {
 
   val id = evaluation.certificateId
 
@@ -72,7 +72,7 @@ case class Certificate(
     val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
     val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
-    EmailService.get.send(Set(evaluation.participant),
+    send(Set(evaluation.participant),
       Some(evaluation.event.facilitators.toSet),
       Some(Set(brand.coordinator)),
       subject,

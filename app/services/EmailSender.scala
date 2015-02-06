@@ -28,23 +28,12 @@ import models.Person
 import play.api.{ Logger, Play }
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+import services.EmailService.EmailMessage
 
 /**
  * Service to asynchronously send e-mail using an Akka actor.
  */
-class EmailService {
-
-  val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
-  val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
-
-  case class EmailMessage(to: List[String],
-    cc: List[String],
-    bcc: List[String],
-    from: String,
-    subject: String,
-    body: String,
-    richMessage: Boolean = false,
-    attachment: Option[(String, String)] = None)
+trait EmailSender {
 
   /**
    * Sends an e-mail message asynchronously using an actor.
@@ -62,9 +51,24 @@ class EmailService {
     val message = EmailMessage(toAddresses.toList,
       ccAddresses.map(_.toList).getOrElse(List[String]()),
       bccAddresses.map(_.toList).getOrElse(List[String]()),
-      from, subject, body, richMessage, attachment)
-    emailServiceActor ! message
+      EmailService.from, subject, body, richMessage, attachment)
+    EmailService.emailServiceActor ! message
   }
+
+}
+
+object EmailService {
+  val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
+  val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
+
+  case class EmailMessage(to: List[String],
+    cc: List[String],
+    bcc: List[String],
+    from: String,
+    subject: String,
+    body: String,
+    richMessage: Boolean = false,
+    attachment: Option[(String, String)] = None)
 
   /**
    * Actor that sends an e-mail message synchronously.
@@ -111,10 +115,4 @@ class EmailService {
       }
     }
   }
-}
-
-object EmailService {
-  private var instance = new EmailService
-
-  def get: EmailService = instance
 }

@@ -31,9 +31,9 @@ import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json.Json
-import services.EmailService
+import services.{ EmailSender, EmailService }
 
-object Evaluations extends EvaluationsController with Security {
+object Evaluations extends EvaluationsController with Security with EmailSender {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -267,10 +267,11 @@ object Evaluations extends EvaluationsController with Security {
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
         val subject = s"Your ${brand.brand.name} certificate"
-        emailService.send(Set(participant),
+        send(Set(participant),
           Some(existingEvaluation.event.facilitators.toSet),
           Some(Set(brand.coordinator)), subject,
-          mail.html.rejected(brand.brand, participant, facilitator).toString(), richMessage = true)
+          mail.html.rejected(brand.brand, participant, facilitator).toString(),
+          richMessage = true)
 
         val route = ref match {
           case Some("index") ⇒ routes.Participants.index().url

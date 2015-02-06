@@ -45,10 +45,10 @@ import scala.Some
 import play.api.mvc.SimpleResult
 import models.AccountSummary
 import securesocial.core.SecuredRequest
-import services.{ CurrencyConverter, EmailService, S3Bucket }
+import services.{ EmailSender, CurrencyConverter, EmailService, S3Bucket }
 import models.BookingEntry.FieldChange
 
-object BookingEntries extends Controller with Security {
+object BookingEntries extends Controller with Security with EmailSender {
 
   def bookingEntryForm(implicit request: SecuredRequest[_]) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -152,7 +152,7 @@ object BookingEntries extends Controller with Security {
   def sendEmailNotification(entry: BookingEntry, changes: List[BookingEntry.FieldChange], activity: Activity,
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    EmailService.get.send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
+    send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
       richMessage = true)
   }
 
