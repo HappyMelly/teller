@@ -26,7 +26,7 @@ package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ EventFacilitators, EventInvoices, Events }
-import models.{ Brand, Event, EventInvoice, PeopleCollection }
+import models._
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -180,12 +180,17 @@ class EventService extends EmailSender with Services {
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title
+        val body = mail.txt.confirm(event, brand).toString()
         send(
           event.facilitators.toSet,
           None,
           None,
           subject,
-          mail.txt.confirm(event).toString())
+          body)
+        val msg = "confirmation email for event %s (id = %s)".format(
+          event.title,
+          event.id.get.toString)
+        Activity.insert("system", Activity.Predicate.Sent, msg)
       }
   }
 

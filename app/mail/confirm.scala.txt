@@ -1,8 +1,8 @@
-@(event: Event)
+@(event: Event, brand: Brand)
 @import play.api.Play
 @import play.api.Play.current
 @import templates.Formatters._
-You received this e-mail because you were added as a facilitator for a @Brand.find(event.brandCode).get.brand.name event @event.title (link: @Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0))).
+You received this e-mail because you were added as a facilitator for a @brand.name event @event.title (link: @Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0))).
 
 Please, follow the link @Play.configuration.getString("application.baseUrl")@routes.Events.details(event.id.getOrElse(0)) to confirm the event if it actually took place or delete it.
 
