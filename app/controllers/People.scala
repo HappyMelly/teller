@@ -358,7 +358,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val encoding = "ISO-8859-1"
       personService.find(id).map { person ⇒

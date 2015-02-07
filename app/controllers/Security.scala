@@ -126,23 +126,29 @@ trait Security extends SecureSocial with DeadboltActions {
   }
 
   /**
-   * Defines an action that authenticates using SecureSocial, and uses Deadbolt to restrict access to the given role
+   * Asynchronously authenticates using SecureSocial and uses Deadbolt to
+   * restrict access to the given role
    *
    * @param name Name of the object
    * @param level Access right level
    * @return
    */
-  def AsyncSecuredDynamicAction(name: String, level: String)(f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ Future[SimpleResult]): Action[AnyContent] = {
+  def AsyncSecuredDynamicAction(name: String, level: String)(
+    f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
-
-      try {
-        // Use the authenticated user’s account details to construct a handler (to look up account role) for Deadbolt authorisation.
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
-        val handler = new AuthorisationHandler(Some(account))
-        val restrictedAction = Dynamic(name, level, handler)(SecuredAction.async(f(_)(handler)))
-        restrictedAction(request)
-      } catch {
-        case _: NoSuchElementException ⇒ MissingUserAccountResult
+      request.user match {
+        case user: LoginIdentity ⇒
+          try {
+            // Use the authenticated user’s account details to construct
+            // a handler (to look up account role) for Deadbolt authorisation.
+            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val handler = new AuthorisationHandler(Some(account))
+            val restrictedAction = Dynamic(name, level, handler)(SecuredAction.async(f(_)(handler)(user)))
+            restrictedAction(request)
+          } catch {
+            case _: NoSuchElementException ⇒ MissingUserAccountResult
+          }
+        case _ ⇒ MissingUserAccountResult
       }
     }
   }
