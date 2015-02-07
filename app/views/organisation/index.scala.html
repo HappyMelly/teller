@@ -1,4 +1,4 @@
-@(user: LoginIdentity, organisations: List[Organisation])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: UserIdentity, organisations: List[Organisation])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._

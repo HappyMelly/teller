@@ -69,7 +69,7 @@ object Brands extends Controller with Security {
         })
 
   /** HTML form mapping for creating and editing. */
-  def brandsForm(implicit user: LoginIdentity) = Form(mapping(
+  def brandsForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "code" -> nonEmptyText.verifying(pattern("[A-Z0-9]*".r, "constraint.brand.code", "constraint.brand.code.error"), maxLength(5)),
     "uniqueName" -> nonEmptyText.verifying(pattern("[A-Za-z0-9._]*".r, "constraint.brand.code", "constraint.brand.uniqueName.error"), maxLength(25)),

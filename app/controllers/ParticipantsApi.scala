@@ -91,7 +91,7 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   /**
    * Create a participant through API call
    */
-  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
+  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
     val person = identity.person
 
     val testFrom = existingPersonForm(identity.account).bindFromRequest()(request)

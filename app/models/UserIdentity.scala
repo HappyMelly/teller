@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ People, UserAccounts, LoginIdentities }
+import models.database.{ People, UserAccounts, UserIdentities }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.Crypto
@@ -41,9 +41,9 @@ import securesocial.core.PasswordInfo
 import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
 
 /**
- * Contains profile and authentication info for a SecureSocial Identity.
+ * Contains profile and authentication info for a SecureSocial Identity
  */
-case class LoginIdentity(uid: Option[Long],
+case class UserIdentity(uid: Option[Long],
   identityId: IdentityId,
   firstName: String,
   lastName: String,
@@ -125,33 +125,33 @@ case class LoginIdentity(uid: Option[Long],
 
 }
 
-object LoginIdentity {
+object UserIdentity {
 
   /**
    * Factory method to return a Twitter login identity.
    */
-  def forTwitterHandle(i: Identity, twitterHandle: String): LoginIdentity = LoginIdentity(None, i.identityId,
+  def forTwitterHandle(i: Identity, twitterHandle: String): UserIdentity = UserIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
     generateApiToken(i), Some(twitterHandle), None, None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forFacebookUrl(i: Identity, facebookUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+  def forFacebookUrl(i: Identity, facebookUrl: String): UserIdentity = UserIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
     generateApiToken(i), None, Some(facebookUrl), None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forGooglePlusUrl(i: Identity, googlePlusUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+  def forGooglePlusUrl(i: Identity, googlePlusUrl: String): UserIdentity = UserIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
     generateApiToken(i), None, None, Some(googlePlusUrl), None)
 
   /**
    * Factory method to return a LinkedIn login identity.
    */
-  def forLinkedInUrl(i: Identity, linkedInUrl: String): LoginIdentity = LoginIdentity(None, i.identityId,
+  def forLinkedInUrl(i: Identity, linkedInUrl: String): UserIdentity = UserIdentity(None, i.identityId,
     i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
     generateApiToken(i), None, None, None, Some(linkedInUrl))
 
@@ -159,41 +159,41 @@ object LoginIdentity {
     Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt()))
   }
 
-  def findBytoken(token: String): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
-    Query(LoginIdentities).filter(_.apiToken === token).list.headOption
+  def findBytoken(token: String): Option[UserIdentity] = DB.withSession { implicit session: Session ⇒
+    Query(UserIdentities).filter(_.apiToken === token).list.headOption
   }
 
   def findByUid(uid: Long) = DB.withSession { implicit session: Session ⇒
     val q = for {
-      user ← LoginIdentities
+      user ← UserIdentities
       if user.uid is uid
     } yield user
 
     q.firstOption
   }
 
-  def findByUserId(identityId: IdentityId): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
+  def findByUserId(identityId: IdentityId): Option[UserIdentity] = DB.withSession { implicit session: Session ⇒
     val q = identityId.providerId match {
       case TwitterProvider.Twitter ⇒ for {
-        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
         account ← UserAccounts if account.twitterHandle === identity.twitterHandle
         person ← People if person.id === account.personId
       } yield (identity, account, person)
 
       case FacebookProvider.Facebook ⇒ for {
-        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
         account ← UserAccounts if account.facebookUrl like identity.facebookUrl
         person ← People if person.id === account.personId
       } yield (identity, account, person)
 
       case GoogleProvider.Google ⇒ for {
-        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
         account ← UserAccounts if account.googlePlusUrl === identity.googlePlusUrl
         person ← People if person.id === account.personId
       } yield (identity, account, person)
 
       case LinkedInProvider.LinkedIn ⇒ for {
-        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
         account ← UserAccounts if account.linkedInUrl like identity.linkedInUrl
         person ← People if person.id === account.personId
       } yield (identity, account, person)
@@ -209,18 +209,18 @@ object LoginIdentity {
     } getOrElse None
   }
 
-  def save(user: LoginIdentity) = DB.withSession { implicit session: Session ⇒
+  def save(user: UserIdentity) = DB.withSession { implicit session: Session ⇒
     findByUserId(user.identityId) match {
       case None ⇒ {
         Activity.insert(user.fullName, Activity.Predicate.SignedUp)
-        val uid = LoginIdentities.forInsert.insert(user)
+        val uid = UserIdentities.forInsert.insert(user)
         val updatedUser = user.copy(uid = Some(uid))
         Cache.set("identity." + updatedUser.apiToken, updatedUser)
         updatedUser
       }
       case Some(existingUser) ⇒ {
         val userRow = for {
-          u ← LoginIdentities
+          u ← UserIdentities
           if u.uid is existingUser.uid
         } yield u
 

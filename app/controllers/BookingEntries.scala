@@ -45,7 +45,7 @@ import scala.concurrent.Future
 
 object BookingEntries extends Controller with Security with EmailSender {
 
-  def bookingEntryForm(implicit user: LoginIdentity) = Form(mapping(
+  def bookingEntryForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "ownerId" -> ignored(0L),
     "bookingNumber" -> ignored(Option.empty[Int]),
@@ -264,7 +264,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     }
   }
 
-  private def isAccessible(user: LoginIdentity, accountId: Long): Boolean = {
+  private def isAccessible(user: UserIdentity, accountId: Long): Boolean = {
     val account = user.account
     if (account.admin) {
       true
@@ -357,7 +357,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     successMessage: String,
     form: Form[BookingEntry],
     currentUser: UserAccount,
-    user: LoginIdentity)(implicit request: Request[AnyContent],
+    user: UserIdentity)(implicit request: Request[AnyContent],
       handler: AuthorisationHandler): SimpleResult = {
 
     next match {

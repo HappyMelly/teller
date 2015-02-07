@@ -119,7 +119,7 @@ object Events extends Controller
   /**
    * HTML form mapping for creating and editing.
    */
-  def eventForm(implicit user: LoginIdentity) = Form(mapping(
+  def eventForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(

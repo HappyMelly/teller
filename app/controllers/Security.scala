@@ -51,10 +51,10 @@ trait Security extends SecureSocial with DeadboltActions {
    * @param role Allowed role
    */
   def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       request.user match {
-        case user: LoginIdentity ⇒
+        case user: UserIdentity ⇒
           try {
             // Use the authenticated user’s account details to construct a handler
             // (to look up account role) for Deadbolt authorisation
@@ -80,10 +80,10 @@ trait Security extends SecureSocial with DeadboltActions {
    * @param meta Access level description
    */
   def SecuredDynamicAction(name: String, meta: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       request.user match {
-        case user: LoginIdentity ⇒
+        case user: UserIdentity ⇒
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation
@@ -106,10 +106,10 @@ trait Security extends SecureSocial with DeadboltActions {
    * @param role Allowed role
    */
   def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       request.user match {
-        case user: LoginIdentity ⇒
+        case user: UserIdentity ⇒
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
@@ -135,10 +135,10 @@ trait Security extends SecureSocial with DeadboltActions {
    * @return
    */
   def AsyncSecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       request.user match {
-        case user: LoginIdentity ⇒
+        case user: UserIdentity ⇒
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.

@@ -59,7 +59,7 @@ trait Organisations extends Controller with Security with Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def organisationForm(implicit user: LoginIdentity) = Form(mapping(
+  def organisationForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "name" -> nonEmptyText,
     "street1" -> optional(text),

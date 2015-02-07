@@ -1,4 +1,4 @@
-@(user: LoginIdentity, account: Account, currencyForm:Form[org.joda.money.CurrencyUnit])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: UserIdentity, account: Account, currencyForm:Form[org.joda.money.CurrencyUnit])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import scala.collection.JavaConverters._
 @import org.joda.money.CurrencyUnit

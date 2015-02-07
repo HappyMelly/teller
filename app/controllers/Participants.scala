@@ -63,7 +63,7 @@ object Participants extends Controller with Security {
       }))
   }
 
-  def existingPersonForm(implicit user: LoginIdentity) = {
+  def existingPersonForm(implicit user: UserIdentity) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "brandId" -> nonEmptyText,

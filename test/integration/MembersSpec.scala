@@ -37,7 +37,7 @@ import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
 import play.api.Play.current
-import stubs.{ StubLoginIdentity, FakeServices }
+import stubs.{ StubUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q, GetResult }
@@ -62,7 +62,7 @@ class MembersSpec extends PlayAppSpec {
     "reset objectId and id to 0/None to prevent cheating" in new cleanDb {
       val m = member()
       val fakeId = 400
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "0"),
@@ -79,7 +79,7 @@ class MembersSpec extends PlayAppSpec {
     }
     "pass all fields from form to object" in new cleanDb {
       val fakeId = 400
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "1"),
@@ -105,7 +105,7 @@ class MembersSpec extends PlayAppSpec {
     "be destroyed after successful creation of a person" in new cleanDb {
       val m = member()
       val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val request = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -124,7 +124,7 @@ class MembersSpec extends PlayAppSpec {
     "be destroyed after successful creation of an organisation" in new cleanDb {
       val m = member()
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -148,7 +148,7 @@ class MembersSpec extends PlayAppSpec {
     "after the creation of related new organisation" in new cleanDb {
       val m = member(person = true)
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
       Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewOrganisation().apply(req)
@@ -168,7 +168,7 @@ class MembersSpec extends PlayAppSpec {
     "after the creation of related new person" in new cleanDb {
       val m = member(person = false, existingObject = true)
       val oldList = Person.findAll
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -194,7 +194,7 @@ class MembersSpec extends PlayAppSpec {
     "be connected with member data" in new cleanDb {
       val m = member()
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -220,7 +220,7 @@ class MembersSpec extends PlayAppSpec {
     "be connected with member data" in new cleanDb {
       val m = member()
       val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val request = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -247,7 +247,7 @@ class MembersSpec extends PlayAppSpec {
   "On step 2 an existing organisation " should {
     "be linked to a member object" in new cleanDb {
       val m = member(person = false)
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val org = OrganisationHelper.one.copy(id = Some(1L)).insert
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -267,7 +267,7 @@ class MembersSpec extends PlayAppSpec {
     "be linked to a member object" in new cleanDb {
       truncateTables()
       val m = member(person = true)
-      val req = prepareSecuredPostRequest(StubLoginIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val person = PersonHelper.one().insert
       Cache.set(Members.cacheId(1L), m, 1800)

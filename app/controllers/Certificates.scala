@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ LoginIdentity, Brand, Certificate, Evaluation }
+import models.{ UserIdentity$, Brand, Certificate, Evaluation }
 import play.api.mvc._
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._

@@ -122,7 +122,7 @@ trait People extends Controller with Security with Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(user: LoginIdentity) = {
+  def personForm(user: UserIdentity) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,

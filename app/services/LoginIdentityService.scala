@@ -25,7 +25,7 @@
 package services
 
 import LoginIdentityService._
-import models.LoginIdentity
+import models.UserIdentity
 import play.api.{ Logger, Application }
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.concurrent.Execution.Implicits._
@@ -44,22 +44,22 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[LoginIdentity] = LoginIdentity.findByUserId(id)
+  def find(id: IdentityId): Option[UserIdentity] = UserIdentity.findByUserId(id)
 
   def save(user: Identity) = {
     val loginIdentity = user match {
       case su: SocialUser ⇒ su.identityId.providerId match {
-        case TwitterProvider.Twitter ⇒ LoginIdentity.forTwitterHandle(su, findTwitterHandle(su))
-        case FacebookProvider.Facebook ⇒ LoginIdentity.forFacebookUrl(su, findFacebookUrl(su))
-        case GoogleProvider.Google ⇒ LoginIdentity.forGooglePlusUrl(su, findGooglePlusUrl(su))
-        case LinkedInProvider.LinkedIn ⇒ LoginIdentity.forLinkedInUrl(su, findLinkedInUrl(su))
+        case TwitterProvider.Twitter ⇒ UserIdentity.forTwitterHandle(su, findTwitterHandle(su))
+        case FacebookProvider.Facebook ⇒ UserIdentity.forFacebookUrl(su, findFacebookUrl(su))
+        case GoogleProvider.Google ⇒ UserIdentity.forGooglePlusUrl(su, findGooglePlusUrl(su))
+        case LinkedInProvider.LinkedIn ⇒ UserIdentity.forLinkedInUrl(su, findLinkedInUrl(su))
       }
-      case li: LoginIdentity ⇒ li
+      case li: UserIdentity ⇒ li
     }
 
     try {
       if (loginIdentity.account.viewer) {
-        LoginIdentity.save(loginIdentity)
+        UserIdentity.save(loginIdentity)
       } else {
         Logger.info(s"Denying authentication to user (@${loginIdentity.name}}) without Viewer role")
         throw new AccessDeniedException

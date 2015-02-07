@@ -26,7 +26,7 @@ package controllers
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
-import models.{ Organisation, Activity, LoginIdentity, Member }
+import models.{ Organisation, Activity, UserIdentity$, Member }
 import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.cache.Cache

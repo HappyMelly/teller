@@ -68,7 +68,7 @@ trait Products extends Controller with Security with Services {
   val categoryMapping = of[ProductCategory.Value]
 
   /** HTML form mapping for creating and editing. */
-  def productForm(implicit user: LoginIdentity) = Form(mapping(
+  def productForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "title" -> text.verifying(nonEmpty),
     "subtitle" -> optional(text),

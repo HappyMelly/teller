@@ -33,7 +33,7 @@ import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import stubs.{ StubLoginIdentity, FakePersonService, FakeServices }
+import stubs.{ StubUserIdentity, FakePersonService, FakeServices }
 
 import scala.concurrent.Future
 
@@ -70,7 +70,7 @@ class PeopleSpec extends PlayAppSpec {
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects 1L returning None
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.viewer
+      val identity = StubUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/person/1")
       controller.details(1).apply(request)
     }
@@ -84,7 +84,7 @@ class PeopleSpec extends PlayAppSpec {
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.viewer
+      val identity = StubUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
@@ -102,7 +102,7 @@ class PeopleSpec extends PlayAppSpec {
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/person/1")
+      val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
       status(result) must equalTo(OK)
@@ -123,7 +123,7 @@ class PeopleSpec extends PlayAppSpec {
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.viewer
+      val identity = StubUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
@@ -147,7 +147,7 @@ class PeopleSpec extends PlayAppSpec {
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val identity = StubLoginIdentity.editor
+      val identity = StubUserIdentity.editor
       val request = prepareSecuredGetRequest(identity, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
@@ -167,7 +167,7 @@ class PeopleSpec extends PlayAppSpec {
       val mockService = mock[FakePersonService]
       (mockService.find(_: Long)) expects 1L returning Some(person)
       controller.personService_=(mockService)
-      val req = prepareSecuredGetRequest(StubLoginIdentity.editor, "/person/1")
+      val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
       val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
       status(result) must equalTo(OK)
