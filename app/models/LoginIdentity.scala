@@ -92,7 +92,6 @@ case class LoginIdentity(uid: Option[Long],
    * Returns the `Person` associated with this identity.
    */
   def person: Person = _person map { p ⇒ p } getOrElse {
-    println("======> PERSON REQUEST")
     val person = DB.withSession { implicit session: Session ⇒
       (for {
         account ← accountQuery
@@ -103,11 +102,12 @@ case class LoginIdentity(uid: Option[Long],
     _person.get
   }
 
+  def person_=(person: Person) = _person = Some(person)
+
   /**
    * Returns user account associated with this identity
    */
   def account: UserAccount = _account map { v ⇒ v } getOrElse {
-    println("ACCOUNT REQUEST")
     val account = DB.withSession { implicit session: Session ⇒
       accountQuery.first
     }
@@ -173,12 +173,40 @@ object LoginIdentity {
   }
 
   def findByUserId(identityId: IdentityId): Option[LoginIdentity] = DB.withSession { implicit session: Session ⇒
-    val q = for {
-      identity ← LoginIdentities
-      if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-    } yield identity
+    val q = identityId.providerId match {
+      case TwitterProvider.Twitter ⇒ for {
+        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        account ← UserAccounts if account.twitterHandle === identity.twitterHandle
+        person ← People if person.id === account.personId
+      } yield (identity, account, person)
 
-    q.firstOption
+      case FacebookProvider.Facebook ⇒ for {
+        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        account ← UserAccounts if account.facebookUrl like identity.facebookUrl
+        person ← People if person.id === account.personId
+      } yield (identity, account, person)
+
+      case GoogleProvider.Google ⇒ for {
+        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        account ← UserAccounts if account.googlePlusUrl === identity.googlePlusUrl
+        person ← People if person.id === account.personId
+      } yield (identity, account, person)
+
+      case LinkedInProvider.LinkedIn ⇒ for {
+        identity ← LoginIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
+        account ← UserAccounts if account.linkedInUrl like identity.linkedInUrl
+        person ← People if person.id === account.personId
+      } yield (identity, account, person)
+    }
+    val data = q.firstOption
+    data map { d ⇒
+      val account = d._2
+      val roles = UserRole.forName(account.role)
+      account.roles_=(roles.list)
+      d._1.account_=(Some(account))
+      d._1.person_=(d._3)
+      Some(d._1)
+    } getOrElse None
   }
 
   def save(user: LoginIdentity) = DB.withSession { implicit session: Session ⇒

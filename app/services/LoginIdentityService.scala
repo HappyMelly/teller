@@ -44,10 +44,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[LoginIdentity] = {
-    println("=========> SIMPLE FIND")
-    LoginIdentity.findByUserId(id)
-  }
+  def find(id: IdentityId): Option[LoginIdentity] = LoginIdentity.findByUserId(id)
 
   def save(user: Identity) = {
     val loginIdentity = user match {
