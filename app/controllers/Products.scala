@@ -68,7 +68,7 @@ trait Products extends Controller with Security with Services {
   val categoryMapping = of[ProductCategory.Value]
 
   /** HTML form mapping for creating and editing. */
-  def productForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def productForm(implicit user: LoginIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "title" -> text.verifying(nonEmpty),
     "subtitle" -> optional(text),
@@ -80,9 +80,9 @@ trait Products extends Controller with Security with Services {
     "category" -> optional(categoryMapping),
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
     "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(request.user.fullName))(Product.apply)(Product.unapply))
+    "updatedBy" -> ignored(user.fullName))(Product.apply)(Product.unapply))
 
   /** Show all products **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -117,7 +117,7 @@ trait Products extends Controller with Security with Services {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 product.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
                 Redirect(routes.Products.index()).flashing("success" -> activity.toString)
               }.recover {
                 case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(user, None, None,
@@ -125,7 +125,7 @@ trait Products extends Controller with Security with Services {
               }
             }.getOrElse {
               product.insert
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
               Future.successful(Redirect(routes.Products.index()).flashing("success" -> activity.toString))
             }
           }
@@ -148,7 +148,7 @@ trait Products extends Controller with Security with Services {
               Brand.find(brandId).map { brand ⇒
                 product.addBrand(brandId)
                 val activityObject = Messages("activity.relationship.create", product.title, brand.name)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the product or brand details page.
                 val action = if (page == "product") routes.Products.details(productId)
@@ -170,7 +170,7 @@ trait Products extends Controller with Security with Services {
         Brand.find(brandId).map { brand ⇒
           product.deleteBrand(brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the product or brand details page.
           val action = if (page == "product") routes.Products.details(productId)
@@ -191,7 +191,7 @@ trait Products extends Controller with Security with Services {
             Cache.remove(Product.cacheId(product.id.get))
           }
           Product.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, product.title)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, product.title)
           Redirect(routes.Products.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -205,7 +205,7 @@ trait Products extends Controller with Security with Services {
           Cache.remove(Product.cacheId(product.id.get))
         }
         product.copy(picture = None).update
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
         Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -264,7 +264,7 @@ trait Products extends Controller with Security with Services {
                   existingProduct.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
                   Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
@@ -273,7 +273,7 @@ trait Products extends Controller with Security with Services {
                 }
               }.getOrElse {
                 product.copy(id = Some(id)).copy(picture = existingProduct.picture).update
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
                 Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
               }
             }

@@ -69,7 +69,7 @@ object Brands extends Controller with Security {
         })
 
   /** HTML form mapping for creating and editing. */
-  def brandsForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def brandsForm(implicit user: LoginIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "code" -> nonEmptyText.verifying(pattern("[A-Z0-9]*".r, "constraint.brand.code", "constraint.brand.code.error"), maxLength(5)),
     "uniqueName" -> nonEmptyText.verifying(pattern("[A-Za-z0-9._]*".r, "constraint.brand.code", "constraint.brand.uniqueName.error"), maxLength(25)),
@@ -83,9 +83,9 @@ object Brands extends Controller with Security {
     "blog" -> optional(webUrl),
     "profile" -> socialProfileMapping,
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))({
+    "updatedBy" -> ignored(user.fullName))({
       (id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
       profile, created, createdBy, updated, updatedBy) ⇒
         {
@@ -143,7 +143,7 @@ object Brands extends Controller with Security {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 brand.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, brand.name)
                 Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
               }.recover {
                 case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.brand.form(user, None,
@@ -151,7 +151,7 @@ object Brands extends Controller with Security {
               }
             }.getOrElse {
               brand.insert
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, brand.name)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, brand.name)
               Future.successful(Redirect(routes.Brands.index()).flashing("success" -> activity.toString))
             }
           }
@@ -173,7 +173,7 @@ object Brands extends Controller with Security {
             Cache.remove(Brand.cacheId(brand.code))
           }
           brand.delete()
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, brand.name)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, brand.name)
           Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
   }
@@ -192,7 +192,7 @@ object Brands extends Controller with Security {
           Cache.remove(Brand.cacheId(brandView.brand.code))
         }
         Brand.update(brandView.brand, brandView.brand, None)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted,
           "image from the brand " + brandView.brand.name)
         Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
@@ -264,7 +264,7 @@ object Brands extends Controller with Security {
                   existingBrandView.brand.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, brand.name)
                   Redirect(routes.Brands.details(updatedBrand.code)).flashing("success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
@@ -273,7 +273,7 @@ object Brands extends Controller with Security {
                 }
               }.getOrElse {
                 val updatedBrand = Brand.update(existingBrandView.brand, brand, existingBrandView.brand.picture)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, brand.name)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, brand.name)
                 Future.successful(Redirect(routes.Brands.details(updatedBrand.code)).flashing("success" -> activity.toString))
               }
             }

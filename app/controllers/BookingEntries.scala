@@ -126,7 +126,7 @@ object BookingEntries extends Controller with Security with EmailSender {
             // Create booking entry.
             val insertedEntry = entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             Activity.link(insertedEntry, activity)
             sendEmailNotification(insertedEntry, List.empty, activity, entry.participants)
             sendEmailNotification(insertedEntry, List.empty, activity, Person.findActiveAdmins -- entry.participants)
@@ -184,7 +184,7 @@ object BookingEntries extends Controller with Security with EmailSender {
         //Construct activity
         val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(request.user.fullName, activityPredicate, activityObject)
+        val activity = Activity.insert(user.fullName, activityPredicate, activityObject)
         Activity.link(entry, activity)
         val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), decodedKey.split("/").last))
         sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
@@ -205,7 +205,7 @@ object BookingEntries extends Controller with Security with EmailSender {
         BookingEntry.update(updatedEntry)
 
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
         Activity.link(entry, activity)
         val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), ""))
         sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
@@ -238,7 +238,7 @@ object BookingEntries extends Controller with Security with EmailSender {
             val deletedEntry = entry.copy()
             BookingEntry.delete(id)
             val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
             Activity.link(entry, activity)
             sendEmailNotification(deletedEntry, List.empty, activity, Person.findActiveAdmins)
             Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
@@ -331,7 +331,7 @@ object BookingEntries extends Controller with Security with EmailSender {
                   ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
 
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
                 Activity.link(existingEntry, activity)
 
                 val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)

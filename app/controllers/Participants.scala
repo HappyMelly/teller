@@ -267,7 +267,7 @@ object Participants extends Controller with Security {
           val people = Person.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
-            newPersonForm(account, request.user.fullName), formWithErrors,
+            newPersonForm(account, user.fullName), formWithErrors,
             showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },
         participant ⇒ {
@@ -278,7 +278,7 @@ object Participants extends Controller with Security {
               val people = Person.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
               BadRequest(views.html.participant.form(user, None, brands, people,
-                newPersonForm(account, request.user.fullName), form.withError("participantId", "error.participant.exist"),
+                newPersonForm(account, user.fullName), form.withError("participantId", "error.participant.exist"),
                 showExistingPersonForm = true, form("brandId").value, Some(chosenEventId), ref))
             }
             case _ ⇒ {
@@ -286,7 +286,7 @@ object Participants extends Controller with Security {
               val activityObject = Messages("activity.participant.create",
                 participant.person.get.fullName,
                 participant.event.get.title)
-              val activity = Activity.create(request.user.fullName,
+              val activity = Activity.create(user.fullName,
                 Activity.Predicate.Created,
                 activityObject)
               val route = ref match {
@@ -308,7 +308,7 @@ object Participants extends Controller with Security {
   def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.userAccount
-      val form: Form[ParticipantData] = newPersonForm(account, request.user.fullName).bindFromRequest
+      val form: Form[ParticipantData] = newPersonForm(account, user.fullName).bindFromRequest
 
       form.fold(
         formWithErrors ⇒ {
@@ -324,7 +324,7 @@ object Participants extends Controller with Security {
           val activityObject = Messages("activity.participant.create",
             data.firstName + " " + data.lastName,
             data.event.get.title)
-          val activity = Activity.create(request.user.fullName,
+          val activity = Activity.create(user.fullName,
             Activity.Predicate.Created,
             activityObject)
           val route = ref match {
@@ -348,7 +348,7 @@ object Participants extends Controller with Security {
 
         val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
         value.delete()
-        val activity = Activity.create(request.user.fullName,
+        val activity = Activity.create(user.fullName,
           Activity.Predicate.Deleted,
           activityObject)
         val route = ref match {

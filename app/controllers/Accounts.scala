@@ -49,7 +49,7 @@ object Accounts extends Controller with Security {
       implicit handler ⇒ implicit user ⇒
         val currentUser = user.userAccount
         Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
-          val activity = Activity.insert(request.user.fullName,
+          val activity = Activity.insert(user.fullName,
             Activity.Predicate.BalancedAccounts,
             bookingEntries.size.toString)
           Redirect(routes.Accounts.index()).flashing("success" -> activity.toString)
@@ -96,10 +96,10 @@ object Accounts extends Controller with Security {
               form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
                 account.activate(currency)
-                val activity = Activity.insert(request.user.fullName,
+                val activity = Activity.insert(user.fullName,
                   Activity.Predicate.Activated,
                   "the account for " + account.accountHolder.name)
-                account.accountHolder.updated(request.user.fullName)
+                account.accountHolder.updated(user.fullName)
                 Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
               })
           } else {
@@ -115,10 +115,10 @@ object Accounts extends Controller with Security {
         Account.find(id).map(account ⇒
           if (account.editableBy(user.userAccount)) {
             account.deactivate()
-            val activity = Activity.insert(request.user.fullName,
+            val activity = Activity.insert(user.fullName,
               Activity.Predicate.Deactivated,
               "the account for " + account.accountHolder.name)
-            account.accountHolder.updated(request.user.fullName)
+            account.accountHolder.updated(user.fullName)
             Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
           } else {
             Unauthorized("You are not allowed to deactivate this account")

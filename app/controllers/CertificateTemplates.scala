@@ -95,7 +95,7 @@ object CertificateTemplates extends Controller with Security {
                 new CertificateTemplate(None, code, data.language, firstSource.toArray.map(_.toByte), secondSource.toArray.map(_.toByte)).insert
                 firstSource.close()
                 secondSource.close()
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new certificate template")
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new certificate template")
                 Redirect(routes.Brands.details(code).url + "#templates").flashing("success" -> activity.toString)
               }
             }
@@ -133,7 +133,7 @@ object CertificateTemplates extends Controller with Security {
 
       CertificateTemplate.find(id).map { template ⇒
         template.delete()
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "certificate template")
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "certificate template")
         Redirect(routes.Brands.details(template.brandCode).url + "#templates").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

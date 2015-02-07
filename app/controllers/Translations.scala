@@ -126,7 +126,7 @@ object Translations extends Controller with Security {
           }.getOrElse {
             translation.create
 
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new translation")
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new translation")
             Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
           }
 
@@ -188,7 +188,7 @@ object Translations extends Controller with Security {
             },
             translation ⇒ {
               translation.update
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "translation")
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "translation")
               Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
             })
         } else {
@@ -209,7 +209,7 @@ object Translations extends Controller with Security {
       Translation.find(lang).map { translation ⇒
         if (translation.changeable) {
           translation.delete()
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "translation")
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "translation")
           Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
         } else {
           Redirect(routes.Translations.index()).flashing("error" -> Messages("error.translation.notChangeable"))

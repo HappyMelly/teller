@@ -65,7 +65,7 @@ object Contributions extends Controller with Security {
         contribution ⇒ {
           contribution.insert
           val activityObject = Messages("activity.contribution.create", contribution.product.title, contribution.role)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -84,7 +84,7 @@ object Contributions extends Controller with Security {
         contribution ⇒
           Contribution.delete(id)
           val activityObject = Messages("activity.contribution.delete", contribution.product.title, contribution.role)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
           val route = if (page == "organisation") {
             routes.Organisations.details(contribution.contributorId).url
           } else if (page == "product") {

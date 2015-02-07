@@ -146,7 +146,7 @@ trait Members extends Controller with Security with Services {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
               copy(objectId = m.objectId).update
-            val activity = Activity.insert(request.user.fullName,
+            val activity = Activity.insert(user.fullName,
               Activity.Predicate.Updated, "membership data")
             val url: String = if (updMember.person) {
               routes.People.details(updMember.objectId).url
@@ -161,7 +161,7 @@ trait Members extends Controller with Security with Services {
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newPerson(user, None, People.personForm(request)))
+      Ok(views.html.member.newPerson(user, None, People.personForm(user)))
   }
 
   /** Renders Add new organisation page */
@@ -198,7 +198,7 @@ trait Members extends Controller with Security with Services {
               //  created for different type of member
               m.copy(objectId = org.id.get).copy(person = false).insert
               Cache.remove(Members.cacheId(user.person.id.get))
-              val activity = Activity.insert(request.user.fullName,
+              val activity = Activity.insert(user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               Redirect(routes.Organisations.details(org.id.get)).
                 flashing("success" -> activity.toString)
@@ -212,7 +212,7 @@ trait Members extends Controller with Security with Services {
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(request).bindFromRequest
+      val personForm = People.personForm(user).bindFromRequest
       personForm.fold(
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(user, None, hasErrors)),
@@ -223,7 +223,7 @@ trait Members extends Controller with Security with Services {
             m.copy(objectId = person.id.get).copy(person = true).insert
             Cache.remove(Members.cacheId(user.person.id.get))
             val activity = Activity.insert(
-              request.user.fullName,
+              user.fullName,
               Activity.Predicate.Created,
               "new member " + success.name)
             Redirect(routes.People.details(person.id.get)).
@@ -258,7 +258,7 @@ trait Members extends Controller with Security with Services {
                   m.copy(objectId = person.id.get).copy(person = true).insert
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
-                    request.user.fullName,
+                    user.fullName,
                     Activity.Predicate.Created,
                     "new member " + person.fullName)
                   Redirect(routes.People.details(id)).
@@ -301,7 +301,7 @@ trait Members extends Controller with Security with Services {
                   m.copy(objectId = org.id.get).copy(person = false).insert
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
-                    request.user.fullName,
+                    user.fullName,
                     Activity.Predicate.Created,
                     "new member " + org.name)
                   Redirect(routes.Organisations.details(id)).

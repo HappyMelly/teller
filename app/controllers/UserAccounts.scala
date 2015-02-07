@@ -51,10 +51,10 @@ trait UserAccounts extends Controller with Security with Services {
 
       userForm.bindFromRequest.fold(
         form ⇒ BadRequest("invalid form data"),
-        user ⇒ {
-          val (personId, role) = user
+        account ⇒ {
+          val (personId, role) = account
           personService.find(personId).map { person ⇒
-            Logger.debug(s"update role for person (${person.fullName}}) to ${role}")
+            Logger.debug(s"update role for person (${person.fullName}}) to $role")
             val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
             if (role.isDefined) {
               if (UserAccountService.get.findRole(personId).isDefined) {
@@ -69,8 +69,8 @@ trait UserAccounts extends Controller with Security with Services {
             } else { // Remove the account
               UserAccount.delete(personId)
             }
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
-            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = request.user.fullName)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
+            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = user.fullName)
             person.copy(dateStamp = dateStamp).update
             Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
           }.getOrElse(BadRequest("invalid form data - person not found"))

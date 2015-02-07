@@ -63,7 +63,7 @@ object Administration extends Controller with Security {
           } else {
             TransactionType.insert(transactionType)
             val activityObject = Messages("models.TransactionType.name", transactionType)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
           }
         })
@@ -77,7 +77,7 @@ object Administration extends Controller with Security {
       TransactionType.find(id).map { transactionType ⇒
         TransactionType.delete(id)
         val activityObject = Messages("models.TransactionType.name", transactionType.name)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
         Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

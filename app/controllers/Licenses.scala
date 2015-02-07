@@ -100,7 +100,7 @@ object Licenses extends Controller with Security {
             val brand = Brand.find(newLicense.brandId).get
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             val route = routes.People.details(personId).url + "#licenses"
             Redirect(route).flashing("success" -> activity.toString)
           })
@@ -120,7 +120,7 @@ object Licenses extends Controller with Security {
       License.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
         val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#licenses"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -141,7 +141,7 @@ object Licenses extends Controller with Security {
             License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
 
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
             val route = routes.People.details(view.licensee.id.get).url + "#licenses"
             Redirect(route).flashing("success" -> activity.toString)
           })

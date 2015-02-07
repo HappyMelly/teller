@@ -26,14 +26,13 @@ package controllers
 
 import Forms._
 import models.service.{ Services, ContributionService }
-import models.{ Person, Activity, Organisation, Product }
+import models._
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import org.joda.time.DateTime
 import models.UserRole.Role._
-import models.OrganisationCategory
 import securesocial.core.SecuredRequest
 import play.api.data.format.Formatter
 
@@ -60,7 +59,7 @@ trait Organisations extends Controller with Security with Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def organisationForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def organisationForm(implicit user: LoginIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "name" -> nonEmptyText,
     "street1" -> optional(text),
@@ -76,9 +75,9 @@ trait Organisations extends Controller with Security with Services {
     "blog" -> optional(webUrl),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName))(Organisation.apply)(Organisation.unapply))
+    "updatedBy" -> ignored(user.fullName))(Organisation.apply)(Organisation.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -93,7 +92,7 @@ trait Organisations extends Controller with Security with Services {
           },
           active ⇒ {
             Organisation.activate(id, active)
-            val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+            val activity = Activity.insert(user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
@@ -121,7 +120,7 @@ trait Organisations extends Controller with Security with Services {
           BadRequest(views.html.organisation.form(user, None, formWithErrors)),
         organisation ⇒ {
           val org = organisation.insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, organisation.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
   }
@@ -136,7 +135,7 @@ trait Organisations extends Controller with Security with Services {
       organisationService.find(id).map {
         organisation ⇒
           Organisation.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, organisation.name)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -196,7 +195,7 @@ trait Organisations extends Controller with Security with Services {
           BadRequest(views.html.organisation.form(user, Some(id), formWithErrors)),
         organisation ⇒ {
           organisation.copy(id = Some(id)).update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, organisation.name)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, organisation.name)
           Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
         })
   }

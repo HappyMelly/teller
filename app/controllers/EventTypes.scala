@@ -78,7 +78,7 @@ object EventTypes extends Controller with Security {
         eventType ⇒ {
           eventType.insert
           val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -102,7 +102,7 @@ object EventTypes extends Controller with Security {
         } else {
           EventType.delete(id)
           val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)

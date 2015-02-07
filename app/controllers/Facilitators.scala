@@ -90,7 +90,7 @@ object Facilitators extends Controller with Security {
               }
               val languageName = Languages.all.getOrElse(language, "")
               val activityObject = Messages("activity.relationship.create", languageName, person.fullName)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
               Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
@@ -111,7 +111,7 @@ object Facilitators extends Controller with Security {
         }
         val languageName = Languages.all.getOrElse(language, "")
         val activityObject = Messages("activity.relationship.delete", languageName, person.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
         Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -136,7 +136,7 @@ object Facilitators extends Controller with Security {
                 FacilitatorCountry(id, country).insert
               }
               val activityObject = Messages("activity.relationship.create", Messages("country." + country), person.fullName)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
               Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
@@ -157,7 +157,7 @@ object Facilitators extends Controller with Security {
           FacilitatorCountry(id, country).delete()
         }
         val activityObject = Messages("activity.relationship.delete", Messages("country." + country), person.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
         Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)

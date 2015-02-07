@@ -228,7 +228,7 @@ object Events extends Controller
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val addedEvent = event.insert
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, addedEvent.title)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, addedEvent.title)
             sendEmailNotification(addedEvent, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
@@ -250,7 +250,7 @@ object Events extends Controller
       eventService.find(id).map { event ⇒
         if (event.deletable) {
           event.delete()
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, event.title)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, event.title)
           sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
         } else {
@@ -454,7 +454,7 @@ object Events extends Controller
             val changes = Comparator.compare(existingEvent, updatedEvent)
             updatedEvent.update
 
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, event.title)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, event.title)
             sendEmailNotification(updatedEvent, changes, activity, Brand.find(event.brandCode).get.coordinator)
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
@@ -479,7 +479,7 @@ object Events extends Controller
           updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
           updatedEvent.facilitatorIds_=(event.facilitatorIds)
           updatedEvent.update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Confirmed, event.title)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Confirmed, event.title)
           Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -519,7 +519,7 @@ object Events extends Controller
                   mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
               }
 
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Sent, event.title)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Sent, event.title)
               Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
             } else {
               Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event.")
