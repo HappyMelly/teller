@@ -47,7 +47,7 @@ object Accounts extends Controller with Security {
   def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        val currentUser = user.userAccount
+        val currentUser = user.account
         Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
           val activity = Activity.insert(user.fullName,
             Activity.Predicate.BalancedAccounts,
@@ -91,7 +91,7 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map{ account ⇒
-          if (account.editableBy(user.userAccount)) {
+          if (account.editableBy(user.account)) {
             currencyForm.bindFromRequest().fold (
               form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
@@ -113,7 +113,7 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map(account ⇒
-          if (account.editableBy(user.userAccount)) {
+          if (account.editableBy(user.account)) {
             account.deactivate()
             val activity = Activity.insert(user.fullName,
               Activity.Predicate.Deactivated,

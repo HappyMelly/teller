@@ -69,7 +69,7 @@ object Participants extends Controller with Security {
       "brandId" -> nonEmptyText,
       "eventId" -> longNumber.verifying(
         "error.event.invalid",
-        (eventId: Long) ⇒ Event.canManage(eventId, user.userAccount)),
+        (eventId: Long) ⇒ Event.canManage(eventId, user.account)),
       "participantId" -> longNumber.verifying(
         "error.person.notExist",
         (participantId: Long) ⇒ PersonService.get.find(participantId).nonEmpty),
@@ -86,7 +86,7 @@ object Participants extends Controller with Security {
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.userAccount
+      val account = user.account
       val brands = Brand.findByUser(account)
       val brandCode = request.session.get("brandCode").getOrElse("")
       Ok(views.html.participant.index(user, brands, brandCode))
@@ -100,7 +100,7 @@ object Participants extends Controller with Security {
     implicit handler ⇒ implicit user ⇒
       // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
-        val account = user.userAccount
+        val account = user.account
         val en = Translation.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -163,7 +163,7 @@ object Participants extends Controller with Security {
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
-        val account = user.userAccount
+        val account = user.account
         val brand = Brand.find(event.brandCode).get
         val en = Translation.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
@@ -239,7 +239,7 @@ object Participants extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
-        val account = user.userAccount
+        val account = user.account
         val brands = Brand.findByUser(account)
         val people = Person.findActive
         val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
@@ -262,7 +262,7 @@ object Participants extends Controller with Security {
 
       form.fold(
         formWithErrors ⇒ {
-          val account = user.userAccount
+          val account = user.account
           val brands = Brand.findByUser(account)
           val people = Person.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
@@ -273,7 +273,7 @@ object Participants extends Controller with Security {
         participant ⇒ {
           Participant.find(participant.personId, participant.eventId) match {
             case Some(p) ⇒ {
-              val account = user.userAccount
+              val account = user.account
               val brands = Brand.findByUser(account)
               val people = Person.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
@@ -307,7 +307,7 @@ object Participants extends Controller with Security {
    */
   def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.userAccount
+      val account = user.account
       val form: Form[ParticipantData] = newPersonForm(account, user.fullName).bindFromRequest
 
       form.fold(

@@ -36,7 +36,7 @@ import play.api.i18n.Messages
 object Contributions extends Controller with Security {
 
   /** HTML form mapping for creating and editing. */
-  def contributionForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def contributionForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "contributorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "productId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),

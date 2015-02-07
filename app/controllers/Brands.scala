@@ -325,7 +325,7 @@ object Brands extends Controller with Security {
   def events(brandCode: String, future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
-        val account = user.userAccount
+        val account = user.account
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
           EventService.get.findByParameters(Some(brandCode), future)
         } else {

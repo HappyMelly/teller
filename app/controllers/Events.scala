@@ -123,7 +123,7 @@ object Events extends Controller
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(
-      "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, user.userAccount)),
+      "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, user.account)),
     "title" -> nonEmptyText(1, 254),
     "language" -> mapping(
       "spoken" -> language,
@@ -189,7 +189,7 @@ object Events extends Controller
       val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
-      val account = user.userAccount
+      val account = user.account
       val brands = Brand.findByUser(account)
       Ok(views.html.event.form(user, None, brands, account.personId, true, eventForm.fill(default)))
   }
@@ -204,7 +204,7 @@ object Events extends Controller
 
       EventService.get.find(id).map {
         event ⇒
-          val account = user.userAccount
+          val account = user.account
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(event)))
       }.getOrElse(NotFound)
@@ -219,7 +219,7 @@ object Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = user.userAccount
+          val account = user.account
           val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(user, None, brands, account.personId, false, formWithErrors))
         },
@@ -232,7 +232,7 @@ object Events extends Controller
             sendEmailNotification(addedEvent, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
-            val account = user.userAccount
+            val account = user.account
             val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(user, None, brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
@@ -293,7 +293,7 @@ object Events extends Controller
         event ⇒
           //@TODO only funders must be retrieved
           val funders = Organisation.findAll
-          val acc = user.userAccount
+          val acc = user.account
           val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
           Ok(views.html.event.details(user, canFacilitate, funders, event))
       }.getOrElse(NotFound)
@@ -308,7 +308,7 @@ object Events extends Controller
 
       eventService.find(id).map {
         event ⇒
-          val account = user.userAccount
+          val account = user.account
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
       }.getOrElse(NotFound)
@@ -320,7 +320,7 @@ object Events extends Controller
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val person = user.userAccount.person.get
+      val person = user.account.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val brands = brandService.findAll
       val facilitators = brands.map(b ⇒
@@ -364,7 +364,7 @@ object Events extends Controller
       }
       eventService.applyFacilitators(events)
 
-      val account = user.userAccount
+      val account = user.account
       // we do not show private events of other facilitators to anyone except
       // brand coordinator or Editor
       val filteredEvents: List[Event] = if (account.editor)
@@ -435,7 +435,7 @@ object Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = user.userAccount
+          val account = user.account
           val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false, formWithErrors))
         },
@@ -459,7 +459,7 @@ object Events extends Controller
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
-            val account = user.userAccount
+            val account = user.account
             val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))

@@ -53,7 +53,7 @@ trait Dashboard extends Controller with Security with Services {
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.userAccount
+      val account = user.account
       val activity = if (account.editor)
         Some(Activity.findAll)
       else

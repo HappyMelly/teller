@@ -38,7 +38,6 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc.{ SimpleResult, _ }
-import securesocial.core.{ Identity, SecuredRequest }
 import services.{ CurrencyConverter, EmailSender, S3Bucket }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -93,7 +92,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
-      val currentUser = user.userAccount
+      val currentUser = user.account
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
 
       Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
@@ -105,7 +104,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val currentUser = user.userAccount
+      val currentUser = user.account
       val form = bookingEntryForm(user).bindFromRequest
 
       // Extracted function to handle the error case, either from validation or currency conversion failure,
@@ -156,7 +155,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     implicit handler ⇒ implicit user ⇒
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
-        val currentUser = user.userAccount
+        val currentUser = user.account
         val activity = Activity.findForBookingEntry(bookingEntry.id.getOrElse(0))
         Ok(views.html.booking.details(user, bookingEntry, currentUser, attachmentForm, activity))
       }.getOrElse(NotFound)
@@ -219,7 +218,7 @@ object BookingEntries extends Controller with Security with EmailSender {
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         if (bookingEntry.editable) {
           val form = bookingEntryForm.fill(bookingEntry)
-          val currentUser = user.userAccount
+          val currentUser = user.account
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
           Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
@@ -232,7 +231,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
-        val currentUser = user.userAccount
+        val currentUser = user.account
         if (entry.editableBy(currentUser)) {
           entry.id.map { id ⇒
             val deletedEntry = entry.copy()
@@ -266,7 +265,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   }
 
   private def isAccessible(user: LoginIdentity, accountId: Long): Boolean = {
-    val account = user.userAccount
+    val account = user.account
     if (account.admin) {
       true
     } else {
@@ -282,7 +281,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { existingEntry ⇒
-        val currentUser = user.userAccount
+        val currentUser = user.account
         if (existingEntry.editableBy(currentUser)) {
           val form = bookingEntryForm(user).bindFromRequest
 
@@ -358,7 +357,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     successMessage: String,
     form: Form[BookingEntry],
     currentUser: UserAccount,
-    user: LoginIdentity)(implicit request: SecuredRequest[AnyContent],
+    user: LoginIdentity)(implicit request: Request[AnyContent],
       handler: AuthorisationHandler): SimpleResult = {
 
     next match {

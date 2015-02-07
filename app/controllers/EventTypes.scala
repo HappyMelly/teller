@@ -37,7 +37,7 @@ import play.api.libs.json.{ JsValue, Writes, Json }
 object EventTypes extends Controller with Security {
 
   /** HTML form mapping for creating and editing. */
-  def eventTypeForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def eventTypeForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),

@@ -60,6 +60,9 @@ case class LoginIdentity(uid: Option[Long],
   googlePlusUrl: Option[String],
   linkedInUrl: Option[String]) extends Identity {
 
+  private var _account: Option[UserAccount] = None
+  private var _person: Option[Person] = None
+
   /**
    * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
    */
@@ -88,19 +91,38 @@ case class LoginIdentity(uid: Option[Long],
   /**
    * Returns the `Person` associated with this identity.
    */
-  def person: Person = DB.withSession { implicit session: Session ⇒
-    (for {
-      account ← accountQuery
-      person ← People if person.id === account.personId
-    } yield person).first
+  def person: Person = _person map { p ⇒ p } getOrElse {
+    println("======> PERSON REQUEST")
+    val person = DB.withSession { implicit session: Session ⇒
+      (for {
+        account ← accountQuery
+        person ← People if person.id === account.personId
+      } yield person).first
+    }
+    _person = Some(person)
+    _person.get
   }
 
   /**
-   * Returns the `UserAccount` associated with this identity.
+   * Returns user account associated with this identity
    */
-  def userAccount: UserAccount = DB.withSession { implicit session: Session ⇒
-    accountQuery.first
+  def account: UserAccount = _account map { v ⇒ v } getOrElse {
+    println("ACCOUNT REQUEST")
+    val account = DB.withSession { implicit session: Session ⇒
+      accountQuery.first
+    }
+    val roles = UserRole.forName(account.role)
+    account.roles_=(roles.list)
+    _account = Some(account)
+    _account.get
   }
+
+  /**
+   * Sets account attribute
+   * @param account Account object
+   */
+  def account_=(account: Option[UserAccount]) = _account = account
+
 }
 
 object LoginIdentity {

@@ -40,7 +40,7 @@ class StubLoginIdentity(
 
   override def person = PersonHelper.one()
 
-  override def userAccount = {
+  override def account = {
     val role = identityId.userId
     val account = new UserAccount(Some(1L), person.id.get, role,
       None, None, None, None)

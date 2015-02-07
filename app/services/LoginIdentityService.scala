@@ -44,7 +44,10 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[LoginIdentity] = LoginIdentity.findByUserId(id)
+  def find(id: IdentityId): Option[LoginIdentity] = {
+    println("=========> SIMPLE FIND")
+    LoginIdentity.findByUserId(id)
+  }
 
   def save(user: Identity) = {
     val loginIdentity = user match {
@@ -58,7 +61,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
     }
 
     try {
-      if (loginIdentity.userAccount.viewer) {
+      if (loginIdentity.account.viewer) {
         LoginIdentity.save(loginIdentity)
       } else {
         Logger.info(s"Denying authentication to user (@${loginIdentity.name}}) without Viewer role")

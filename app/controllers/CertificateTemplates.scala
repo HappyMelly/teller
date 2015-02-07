@@ -43,7 +43,7 @@ object CertificateTemplates extends Controller with Security {
   val encoding = "ISO-8859-1"
 
   /** HTML form mapping for creating certificate templates */
-  def certificateFileForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def certificateFileForm = Form(mapping(
     "language" -> nonEmptyText,
     "oneFacilitator" -> optional(text),
     "twoFacilitators" -> optional(text))(FakeCertificateTemplate.apply)(FakeCertificateTemplate.unapply))
