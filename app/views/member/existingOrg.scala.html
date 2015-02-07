@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@main("Organizations", "members", Some(user)) {
+@main("Organizations", "members", user) {
   @if(form.hasErrors) {
     @html.error()
   }

@@ -16,7 +16,7 @@
 @import views.Countries
 @import views.ViewHelpers._
 
-@main("Participants", "participants", Some(user)) {
+@main("Participants", "participants", user) {
   <div id="error">
     @if(newPersonForm.hasErrors || existingPersonForm.hasErrors) {
       @html.error()

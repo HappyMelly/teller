@@ -9,7 +9,7 @@
     @import be.objectify.deadbolt.core.utils.TemplateUtils._
     @import templates.Formatters._
 
-    @main("Booking entries", "finance", Some(user)) {
+    @main("Booking entries", "finance", user) {
 
         <ul class="nav nav-tabs">
             <li class="active"><a href="@routes.BookingEntries.index()">Booking entries</a></li>

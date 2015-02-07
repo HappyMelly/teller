@@ -10,7 +10,7 @@
     @import views.ViewHelpers._
 
     @defining(form.value.map(person => "Person %s %s".format(person.firstName, person.lastName)).getOrElse("Add person")) { personName =>
-        @main("Person", "people", Some(user)) {
+        @main("Person", "people", user) {
             @if(form.hasErrors) {
                 @html.error()
             }

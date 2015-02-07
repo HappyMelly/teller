@@ -6,7 +6,7 @@
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
 
-@main("Evaluation for %s".format(evaluation.participant.fullName), "participants", Some(user)) {
+@main("Evaluation for %s".format(evaluation.participant.fullName), "participants", user) {
 
     @html.evaluationActions()
     <div class="page-header">

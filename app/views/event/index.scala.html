@@ -6,7 +6,7 @@
 
 @import be.objectify.deadbolt.scala.views.html._
 
-@main("Events", "events", Some(user)) {
+@main("Events", "events", user) {
 
   @html.indexPageHeader("Events") {
     @dynamic(handler, "event", "add") {

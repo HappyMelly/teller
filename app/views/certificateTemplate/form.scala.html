@@ -10,7 +10,7 @@
 @import views.ViewHelpers._
 
 @defining("Add Certificate Templates for %s brand".format(brand.name)) { title =>
-    @main("Certificate Template", "brand", Some(user)) {
+    @main("Certificate Template", "brand", user) {
         @if(form.hasErrors) {
             @html.error()
         }

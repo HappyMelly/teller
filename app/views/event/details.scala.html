@@ -11,7 +11,7 @@
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 
-@main(event.title + " - Event", "events", Some(user)) {
+@main(event.title + " - Event", "events", user) {
 
     @html.evaluationActions()
     @views.html.event.requestEvaluation(event)

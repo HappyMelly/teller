@@ -11,7 +11,7 @@
 @import views.ViewHelpers._
 
 @defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>
-  @main("Product", "products", Some(user)) {
+  @main("Product", "products", user) {
     @if(form.hasErrors) {
       @html.error()
     }
