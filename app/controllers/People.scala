@@ -194,7 +194,7 @@ trait People extends Controller with Security with Services {
    * Assign a person to an organisation
    */
   def addMembership() = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
 
@@ -240,7 +240,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
         if (!person.deletable) {
@@ -260,21 +260,26 @@ trait People extends Controller with Security with Services {
    * @param personId Person identifier
    * @param organisationId Org identifier
    */
-  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+  def deleteMembership(page: String,
+    personId: Long,
+    organisationId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      personService.find(personId).map { person ⇒
-        organisationService.find(organisationId).map { organisation ⇒
-          person.deleteMembership(organisationId)
-          val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        personService.find(personId).map { person ⇒
+          organisationService.find(organisationId).map { organisation ⇒
+            person.deleteMembership(organisationId)
+            val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
+            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
 
-          // Redirect to the page we came from - either the person or organisation details page.
-          val action = if (page == "person") routes.People.details(personId).url + "#organizations"
-          else routes.Organisations.details(organisationId).url
-          Redirect(action).flashing("success" -> activity.toString)
-        }
-      }.flatten.getOrElse(NotFound)
+            // Redirect to the page we came from - either the person or organisation details page.
+            val action = if (page == "person")
+              routes.People.details(personId).url + "#organizations"
+            else
+              routes.Organisations.details(organisationId).url
+            Redirect(action).flashing("success" -> activity.toString)
+          }
+        }.flatten.getOrElse(NotFound)
   }
 
   /**
@@ -309,7 +314,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
         Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
@@ -322,7 +327,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def update(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
@@ -385,7 +390,7 @@ trait People extends Controller with Security with Services {
    * @param personId Person identifier
    */
   def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       personService.find(personId.toLong).map { person ⇒
         if (person.signature) {
           S3Bucket.remove(Person.fullFileName(personId))

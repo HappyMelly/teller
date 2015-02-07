@@ -182,7 +182,7 @@ object Events extends Controller
    * Create page.
    */
   def add = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
@@ -201,7 +201,7 @@ object Events extends Controller
    * @return
    */
   def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       EventService.get.find(id).map {
         event ⇒
@@ -215,7 +215,7 @@ object Events extends Controller
    * Create form submits to this action.
    */
   def create = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form = eventForm.bindFromRequest
       form.fold(
@@ -246,7 +246,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map { event ⇒
         if (event.deletable) {
@@ -267,7 +267,7 @@ object Events extends Controller
    * @return
    */
   def invoice(id: Long) = SecuredDynamicAction("event", "admin") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map { event ⇒
         val form = Form(invoiceMapping).bindFromRequest
@@ -306,7 +306,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map {
         event ⇒
@@ -320,7 +320,7 @@ object Events extends Controller
    * List page.
    */
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
@@ -358,7 +358,7 @@ object Events extends Controller
     future: Option[Boolean],
     public: Option[Boolean],
     archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val events = facilitator map {
         eventService.findByFacilitator(_, brandCode, future, public, archived)
       } getOrElse {
@@ -432,7 +432,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def update(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form = eventForm.bindFromRequest
       form.fold(
@@ -474,7 +474,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       eventService.find(id).map {
         event ⇒
           val updatedEvent = event.copy(id = Some(id))
@@ -491,7 +491,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def sendRequest(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(
         "participantIds" -> list(longNumber),

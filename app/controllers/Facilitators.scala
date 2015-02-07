@@ -76,7 +76,7 @@ object Facilitators extends Controller with Security {
    * @param id Person identifier
    */
   def addLanguage(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(single("language" -> nonEmptyText))
 
@@ -104,7 +104,7 @@ object Facilitators extends Controller with Security {
    * @param language Two-letters language identifier
    */
   def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       PersonService.get.find(id).map { person ⇒
         if (FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
           FacilitatorLanguage(id, language).delete()
@@ -123,7 +123,7 @@ object Facilitators extends Controller with Security {
    * @param id Person identifier
    */
   def addCountry(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(single("country" -> nonEmptyText))
 
@@ -150,7 +150,7 @@ object Facilitators extends Controller with Security {
    * @param country Two-letters country identifier
    */
   def deleteCountry(id: Long, country: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(id).map { person ⇒
         if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {

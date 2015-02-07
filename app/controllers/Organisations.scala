@@ -166,7 +166,7 @@ trait Organisations extends Controller with Security with Services {
    * @param id Organisation ID
    */
   def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationService.find(id).map {
         organisation ⇒
@@ -189,7 +189,7 @@ trait Organisations extends Controller with Security with Services {
    * @param id Organisation ID
    */
   def update(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒

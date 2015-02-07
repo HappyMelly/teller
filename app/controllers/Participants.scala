@@ -233,18 +233,21 @@ object Participants extends Controller with Security {
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def add(brandCode: Option[String], eventId: Option[Long], ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+  def add(brandCode: Option[String],
+    eventId: Option[Long],
+    ref: Option[String]) = SecuredDynamicAction("event", "add") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
-      val brands = Brand.findByUser(account)
-      val people = Person.findActive
-      val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
-        request.session.get("brandCode").getOrElse("")
-      }
-      Ok(views.html.participant.form(request.user, id = None, brands, people,
-        newPersonForm(account, request.user.fullName), existingPersonForm(request),
-        showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
+        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val brands = Brand.findByUser(account)
+        val people = Person.findActive
+        val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
+          request.session.get("brandCode").getOrElse("")
+        }
+        Ok(views.html.participant.form(request.user, id = None, brands, people,
+          newPersonForm(account, request.user.fullName), existingPersonForm(request),
+          showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
   }
 
   /**
@@ -254,7 +257,7 @@ object Participants extends Controller with Security {
    * @return
    */
   def create(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val form: Form[Participant] = existingPersonForm.bindFromRequest
 
       form.fold(
@@ -303,7 +306,7 @@ object Participants extends Controller with Security {
    * @return
    */
   def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val form: Form[ParticipantData] = newPersonForm(account, request.user.fullName).bindFromRequest
 
@@ -340,7 +343,7 @@ object Participants extends Controller with Security {
    * @return
    */
   def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Participant.find(personId, eventId).map { value ⇒
 
         val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
