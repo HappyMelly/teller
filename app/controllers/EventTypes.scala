@@ -58,7 +58,7 @@ object EventTypes extends Controller with Security {
    * @param brandCode Brand code
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
         Ok(Json.toJson(EventType.findByBrand(brand.brand.id.get)))
       }.getOrElse(NotFound("Unknown brand"))
@@ -68,7 +68,7 @@ object EventTypes extends Controller with Security {
    * Creates a new event type
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
       val brand = Brand.find(boundForm.data("brandId").toLong).get
@@ -89,7 +89,7 @@ object EventTypes extends Controller with Security {
    * @param id Type identifier
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand

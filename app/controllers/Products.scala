@@ -86,7 +86,7 @@ trait Products extends Controller with Security with Services {
 
   /** Show all products **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val products = productService.findAll
       Ok(views.html.product.index(request.user, products))
@@ -94,7 +94,7 @@ trait Products extends Controller with Security with Services {
 
   /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.product.form(request.user, None, None, productForm))
   }
 
@@ -136,7 +136,7 @@ trait Products extends Controller with Security with Services {
    * Assign the product to a brand
    */
   def addBrand = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
 
@@ -164,7 +164,7 @@ trait Products extends Controller with Security with Services {
    * Unassign the product from the brand
    */
   def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(productId).map { product ⇒
         Brand.find(brandId).map { brand ⇒
@@ -182,7 +182,7 @@ trait Products extends Controller with Security with Services {
 
   /** Delete a product **/
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒
@@ -198,7 +198,7 @@ trait Products extends Controller with Security with Services {
 
   /** Delete picture form submits to this action **/
   def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Product.find(id).map { product ⇒
         product.picture.map { picture ⇒
           S3Bucket.remove(picture)
@@ -212,7 +212,7 @@ trait Products extends Controller with Security with Services {
 
   /** Details page **/
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒
@@ -230,7 +230,7 @@ trait Products extends Controller with Security with Services {
 
   /** Edit page **/
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒

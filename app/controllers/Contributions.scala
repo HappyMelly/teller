@@ -49,7 +49,7 @@ object Contributions extends Controller with Security {
    * @return
    */
   def create(page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
@@ -78,7 +78,7 @@ object Contributions extends Controller with Security {
    * @return
    */
   def delete(id: Long, page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Contribution.find(id).map {
         contribution ⇒

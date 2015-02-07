@@ -166,7 +166,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
         val brand = Brand.find(evaluation.event.brandCode).get

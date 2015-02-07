@@ -76,7 +76,7 @@ trait Members extends Controller with Security with Services {
 
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val user = request.user.asInstanceOf[LoginIdentity].person
       val members = memberService.findAll
       val fee = members.find(m ⇒
@@ -91,13 +91,13 @@ trait Members extends Controller with Security with Services {
    * @param id Member identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok("")
   }
 
   /** Renders Add form */
   def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val user = request.user.asInstanceOf[LoginIdentity].person
       Ok(views.html.member.form(request.user, None, form(user.id.get)))
   }
@@ -107,7 +107,7 @@ trait Members extends Controller with Security with Services {
    * users to the next step
    */
   def create() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val user = request.user.asInstanceOf[LoginIdentity].person
       form(user.id.get).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
@@ -127,7 +127,7 @@ trait Members extends Controller with Security with Services {
 
   /** Renders Edit form */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
         val user = request.user.asInstanceOf[LoginIdentity].person
         val formWithData = form(user.id.get).fill(m)
@@ -140,7 +140,7 @@ trait Members extends Controller with Security with Services {
    * @param id Member identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
         val user = request.user.asInstanceOf[LoginIdentity].person
         form(user.id.get).bindFromRequest.fold(
@@ -165,32 +165,32 @@ trait Members extends Controller with Security with Services {
 
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.newPerson(request.user, None, People.personForm(request)))
   }
 
   /** Renders Add new organisation page */
   def addOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.newOrg(request.user, None, Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
   def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.existingOrg(request.user, orgsNonMembers, existingOrgForm))
   }
 
   /** Renders Add existing person page */
   def addExistingPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.existingPerson(request.user, peopleNonMembers, existingPersonForm))
   }
 
   /** Records a new member-organisation to database */
   def createNewOrganisation() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val orgForm = Organisations.organisationForm.bindFromRequest
         orgForm.fold(
           hasErrors ⇒
@@ -217,7 +217,7 @@ trait Members extends Controller with Security with Services {
 
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val personForm = People.personForm(request).bindFromRequest
       personForm.fold(
         hasErrors ⇒
@@ -245,7 +245,7 @@ trait Members extends Controller with Security with Services {
   /** Records an existing member-person to database */
   def updateExistingPerson() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val personForm = existingPersonForm.bindFromRequest
         personForm.fold(
           hasErrors ⇒
@@ -288,7 +288,7 @@ trait Members extends Controller with Security with Services {
   /** Records an existing organisation-person to database */
   def updateExistingOrg() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val orgForm = existingOrgForm.bindFromRequest
         orgForm.fold(
           hasErrors ⇒ {

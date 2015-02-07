@@ -55,7 +55,7 @@ object CertificateTemplates extends Controller with Security {
    * @return
    */
   def add(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
@@ -70,7 +70,7 @@ object CertificateTemplates extends Controller with Security {
    * @return
    */
   def create(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
@@ -110,7 +110,7 @@ object CertificateTemplates extends Controller with Security {
    * @return
    */
   def template(id: Long, single: Boolean) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val contentType = "image/jpeg"
 
       CertificateTemplate.find(id).map { template ⇒
@@ -129,7 +129,7 @@ object CertificateTemplates extends Controller with Security {
    * @return
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       CertificateTemplate.find(id).map { template ⇒
         template.delete()

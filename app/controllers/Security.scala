@@ -47,18 +47,22 @@ trait Security extends SecureSocial with DeadboltActions {
    * the given role
    */
   def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ SimpleResult): Action[AnyContent] = {
+    f: SecuredRequest[AnyContent] ⇒ AuthorisationHandler ⇒ LoginIdentity ⇒ SimpleResult): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
-      try {
-        // Use the authenticated user’s account details to construct a handler
-        // (to look up account role) for Deadbolt authorisation
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
-        val handler = new AuthorisationHandler(Some(account))
-        val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)))
-        val result: Future[SimpleResult] = restrictedAction(request)
-        result
-      } catch {
-        case _: NoSuchElementException ⇒ MissingUserAccountResult
+      request.user match {
+        case user: LoginIdentity ⇒
+          try {
+            // Use the authenticated user’s account details to construct a handler
+            // (to look up account role) for Deadbolt authorisation
+            val account = user.userAccount
+            val handler = new AuthorisationHandler(Some(account))
+            val restrictedAction = Restrict(Array(role.toString), handler)(SecuredAction(f(_)(handler)(user)))
+            val result: Future[SimpleResult] = restrictedAction(request)
+            result
+          } catch {
+            case _: NoSuchElementException ⇒ MissingUserAccountResult
+          }
+        case _ ⇒ MissingUserAccountResult
       }
     }
   }

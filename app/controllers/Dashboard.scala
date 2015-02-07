@@ -36,7 +36,7 @@ trait Dashboard extends Controller with Security with Services {
    * About page - credits.
    */
   def about = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
   }
 
@@ -44,7 +44,7 @@ trait Dashboard extends Controller with Security with Services {
    * API documentation page.
    */
   def api = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
   }
 
@@ -52,7 +52,7 @@ trait Dashboard extends Controller with Security with Services {
    * Dashboard page - logged-in home page.
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val activity = if (account.editor)
         Some(Activity.findAll)
@@ -81,7 +81,7 @@ trait Dashboard extends Controller with Security with Services {
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
   def profile = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val currentUser = request.user.asInstanceOf[LoginIdentity].person
       Redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }

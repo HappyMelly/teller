@@ -47,7 +47,7 @@ trait UserAccounts extends Controller with Security with Services {
    * Updates a person’s user role.
    */
   def update = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       userForm.bindFromRequest.fold(
         form ⇒ BadRequest("invalid form data"),

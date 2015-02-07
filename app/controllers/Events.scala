@@ -288,7 +288,7 @@ object Events extends Controller
    * @param id Event ID
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map {
         event ⇒

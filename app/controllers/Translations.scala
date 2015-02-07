@@ -80,7 +80,7 @@ object Translations extends Controller with Security {
 
   /** Shows all translation **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val translations = Translation.findAll
       Ok(views.html.translation.index(request.user, translations))
@@ -93,7 +93,7 @@ object Translations extends Controller with Security {
    */
   def add(lang: String) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val en = Translation.find("EN")
         en.map { value ⇒
           Ok(views.html.translation.form(request.user, None, lang, value, translationForm))
@@ -107,7 +107,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def create(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form: Form[Translation] = translationForm.bindFromRequest
       form.fold(
@@ -140,7 +140,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def details(lang: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
@@ -157,7 +157,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def edit(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
@@ -174,7 +174,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def update(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { existingTranslation ⇒
         if (existingTranslation.changeable) {
@@ -204,7 +204,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def delete(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         if (translation.changeable) {

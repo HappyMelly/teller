@@ -167,7 +167,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
         Form("active" -> boolean).bindFromRequest.fold(
@@ -186,7 +186,7 @@ trait People extends Controller with Security with Services {
    * Render a Create page
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.person.form(request.user, None, personForm(request)))
   }
 
@@ -221,7 +221,7 @@ trait People extends Controller with Security with Services {
    * Create form submits to this action.
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ {
@@ -283,7 +283,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
         val memberships = person.memberships
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
@@ -342,7 +342,7 @@ trait People extends Controller with Security with Services {
    * @return
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
       Ok(views.html.person.index(request.user, people))
   }

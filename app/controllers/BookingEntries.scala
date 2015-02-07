@@ -91,7 +91,7 @@ object BookingEntries extends Controller with Security with EmailSender {
    * Renders the page for adding a new booking entry.
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
@@ -153,7 +153,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   }
 
   def details(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -174,7 +174,7 @@ object BookingEntries extends Controller with Security with EmailSender {
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
   def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         // Update entity
         val decodedKey = URLDecoder.decode(key, "UTF-8")
@@ -199,7 +199,7 @@ object BookingEntries extends Controller with Security with EmailSender {
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
   def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
         BookingEntry.update(updatedEntry)
@@ -215,7 +215,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   }
 
   def edit(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         if (bookingEntry.editable) {
           val form = bookingEntryForm.fill(bookingEntry)
@@ -229,7 +229,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   }
 
   def delete(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -250,7 +250,7 @@ object BookingEntries extends Controller with Security with EmailSender {
   }
 
   def index = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.booking.index(request.user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
 

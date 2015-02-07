@@ -84,7 +84,7 @@ trait Organisations extends Controller with Security with Services {
    * Form target for toggling whether an organisation is active.
    */
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationService.find(id).map { organisation ⇒
         Form("active" -> boolean).bindFromRequest.fold(
@@ -105,7 +105,7 @@ trait Organisations extends Controller with Security with Services {
    * Create page.
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Ok(views.html.organisation.form(request.user, None, organisationForm))
   }
@@ -114,7 +114,7 @@ trait Organisations extends Controller with Security with Services {
    * Create form submits to this action.
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
@@ -131,7 +131,7 @@ trait Organisations extends Controller with Security with Services {
    * @param id Organisation ID
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationService.find(id).map {
         organisation ⇒
@@ -146,7 +146,7 @@ trait Organisations extends Controller with Security with Services {
    * @param id Organisation ID
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       organisationService.find(id).map {
         organisation ⇒
@@ -178,7 +178,7 @@ trait Organisations extends Controller with Security with Services {
    * List page.
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val organisations = Organisation.findAll
       Ok(views.html.organisation.index(request.user, organisations))

@@ -101,7 +101,7 @@ object Brands extends Controller with Security {
 
   /** Shows all brands **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val brands = models.Brand.findAllWithCoordinator
       Ok(views.html.brand.index(request.user, brands))
@@ -113,7 +113,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.brand.form(request.user, None, brandsForm))
   }
 
@@ -165,7 +165,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def delete(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map {
         case BrandView(brand, _, _) ⇒
           brand.picture.map { picture ⇒
@@ -185,7 +185,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def deletePicture(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map { brandView ⇒
         brandView.brand.picture.map { picture ⇒
           S3Bucket.remove(picture)
@@ -205,7 +205,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def details(code: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map {
         case BrandView(brand, coordinator, licenseIds) ⇒ {
           val eventTypes = EventType.findByBrand(brand.id.get)
@@ -222,7 +222,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def edit(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(code).map { brandView ⇒
         val filledForm: Form[Brand] = brandsForm.fill(brandView.brand)
         Ok(views.html.brand.form(request.user, Some(code), filledForm))
@@ -323,7 +323,7 @@ object Brands extends Controller with Security {
    * Returns a list of managed events for the given brand and current user
    */
   def events(brandCode: String, future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val events = if (account.editor || brand.brand.coordinatorId == account.personId) {

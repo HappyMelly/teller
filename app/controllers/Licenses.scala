@@ -74,7 +74,7 @@ object Licenses extends Controller with Security {
    * @return
    */
   def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(personId).map { person ⇒
         val form = licenseForm.fill(License.blank(personId))
@@ -90,7 +90,7 @@ object Licenses extends Controller with Security {
    * @param personId Person identifier
    */
   def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(personId).map { person ⇒
         licenseForm.bindFromRequest.fold(
@@ -115,7 +115,7 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
@@ -132,7 +132,7 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.findWithBrandAndLicensee(id).map { view ⇒
         licenseForm.bindFromRequest.fold(
@@ -156,7 +156,7 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.find(id).map { license ⇒
         PersonService.get.find(license.licenseeId).map { licensee ⇒

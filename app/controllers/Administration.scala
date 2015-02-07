@@ -42,7 +42,7 @@ object Administration extends Controller with Security {
    * Application settings page.
    */
   def settings = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok(views.html.admin.settings(request.user, TransactionType.findAll, transactionTypeForm))
   }
 
@@ -50,7 +50,7 @@ object Administration extends Controller with Security {
    * Adds a new transaction type and redirects to the settings page.
    */
   def createTransactionType = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm = transactionTypeForm.bindFromRequest
       boundForm.fold(
@@ -73,7 +73,7 @@ object Administration extends Controller with Security {
    * Deletes a transaction type and redirects to the settings page.
    */
   def deleteTransactionType(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       TransactionType.find(id).map { transactionType ⇒
         TransactionType.delete(id)
         val activityObject = Messages("models.TransactionType.name", transactionType.name)

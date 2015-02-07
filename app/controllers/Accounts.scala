@@ -57,28 +57,29 @@ object Accounts extends Controller with Security {
   /**
    * An overview of bookings for the given account.
    */
-  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      val entries = BookingEntry.findByAccountId(id, from, to)
-      val account = Account.find(id)
-      var balance = Money.zero(account.get.balance.getCurrencyUnit)
-      val entriesWithBalance = entries.reverse.map { e ⇒
-        if (e.fromId == id) {
-          balance = balance.plus(e.fromAmount)
-          (e, Some(balance))
-        } else if (e.toId == id) {
-          balance = balance.minus(e.toAmount)
-          (e, Some(balance))
-        } else {
-          (e, None)
-        }
-      }.toList.reverse
-      Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
+  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Editor) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val entries = BookingEntry.findByAccountId(id, from, to)
+        val account = Account.find(id)
+        var balance = Money.zero(account.get.balance.getCurrencyUnit)
+        val entriesWithBalance = entries.reverse.map { e ⇒
+          if (e.fromId == id) {
+            balance = balance.plus(e.fromAmount)
+            (e, Some(balance))
+          } else if (e.toId == id) {
+            balance = balance.minus(e.toAmount)
+            (e, Some(balance))
+          } else {
+            (e, None)
+          }
+        }.toList.reverse
+        Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         Account.find(id).map{ account ⇒
           Ok(views.html.account.details(request.user, account, currencyForm))
         }.getOrElse(NotFound)
@@ -86,7 +87,7 @@ object Accounts extends Controller with Security {
 
   def activate(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         Account.find(id).map{ account ⇒
           if (account.editableBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             currencyForm.bindFromRequest().fold (
@@ -106,7 +107,7 @@ object Accounts extends Controller with Security {
 
   def deactivate(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         Account.find(id).map(account ⇒
           if (account.editableBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
             account.deactivate()
@@ -120,7 +121,7 @@ object Accounts extends Controller with Security {
 
   def index = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))
   }
 

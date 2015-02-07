@@ -45,7 +45,7 @@ trait Reports extends Controller with Security with Services {
    */
   def create(brandCode: String, eventId: Long, status: Int, byMe: Boolean) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         Brand.find(brandCode).map { brand ⇒
           val account = request.user.asInstanceOf[LoginIdentity].userAccount
           val events = if (eventId > 0) {

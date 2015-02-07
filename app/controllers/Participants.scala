@@ -85,7 +85,7 @@ object Participants extends Controller with Security {
    * Returns a list of participants
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val account = request.user.asInstanceOf[LoginIdentity].userAccount
       val brands = Brand.findByUser(account)
       val brandCode = request.session.get("brandCode").getOrElse("")
@@ -97,7 +97,7 @@ object Participants extends Controller with Security {
    * and events
    */
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
@@ -161,7 +161,7 @@ object Participants extends Controller with Security {
    * Returns JSON data about participants together with their evaluations
    */
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val account = request.user.asInstanceOf[LoginIdentity].userAccount
         val brand = Brand.find(event.brandCode).get
@@ -217,7 +217,7 @@ object Participants extends Controller with Security {
       }
     }
 
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = Evaluation.findByEvent(eventId)
