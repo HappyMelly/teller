@@ -47,7 +47,7 @@ trait Reports extends Controller with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Brand.find(brandCode).map { brand ⇒
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val events = if (eventId > 0) {
             EventService.get.find(eventId).map { event ⇒
               if (byMe) {

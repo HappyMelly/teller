@@ -69,7 +69,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
   def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val account = user.userAccount
         val events = findEvents(account)
         val en = Translation.find("EN").get
         Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
@@ -85,7 +85,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
       val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val events = findEvents(account)
           val en = Translation.find("EN").get
           BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None, en))
@@ -186,7 +186,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val account = user.userAccount
         val events = findEvents(account)
         val en = Translation.find("EN").get
 
@@ -209,7 +209,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
         val form: Form[Evaluation] = evaluationForm(request.user.fullName, edit = true).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val account = user.userAccount
             val events = findEvents(account)
             val en = Translation.find("EN").get
 
@@ -233,7 +233,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
     implicit handler ⇒ implicit user ⇒
       Evaluation.find(id).map { ev ⇒
 
-        val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val approver = user.userAccount.person.get
         ev.approve(approver)
 
         val activity = Activity.create(request.user.fullName,
@@ -263,7 +263,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
-        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val facilitator = user.userAccount.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
         val subject = s"Your ${brand.brand.name} certificate"

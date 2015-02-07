@@ -77,10 +77,9 @@ trait Members extends Controller with Security with Services {
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
       val members = memberService.findAll
       val fee = members.find(m ⇒
-        m.person && m.objectId == user.id.get) map { m ⇒ Some(m.fee) } getOrElse None
+        m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
       Ok(views.html.member.index(request.user, members, fee, totalFee))
@@ -98,8 +97,7 @@ trait Members extends Controller with Security with Services {
   /** Renders Add form */
   def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
-      Ok(views.html.member.form(request.user, None, form(user.id.get)))
+      Ok(views.html.member.form(request.user, None, form(user.person.id.get)))
   }
 
   /**
@@ -108,14 +106,13 @@ trait Members extends Controller with Security with Services {
    */
   def create() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
-      form(user.id.get).bindFromRequest.fold(
+      form(user.person.id.get).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
           None,
           formWithErrors)),
         member ⇒ {
           val m = member.copy(id = None).copy(objectId = 0)
-          Cache.set(Members.cacheId(user.id.get), m, 1800)
+          Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
             case (false, false) ⇒ Redirect(routes.Members.addOrganisation())
@@ -129,8 +126,7 @@ trait Members extends Controller with Security with Services {
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
-        val user = request.user.asInstanceOf[LoginIdentity].person
-        val formWithData = form(user.id.get).fill(m)
+        val formWithData = form(user.person.id.get).fill(m)
         Ok(views.html.member.form(request.user, Some(m), formWithData))
       } getOrElse NotFound
   }
@@ -142,8 +138,7 @@ trait Members extends Controller with Security with Services {
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
-        val user = request.user.asInstanceOf[LoginIdentity].person
-        form(user.id.get).bindFromRequest.fold(
+        form(user.person.id.get).bindFromRequest.fold(
           formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
             Some(m),
             formWithErrors)),
@@ -196,14 +191,13 @@ trait Members extends Controller with Security with Services {
           hasErrors ⇒
             BadRequest(views.html.member.newOrg(request.user, None, hasErrors)),
           success ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               val org = success.insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
               m.copy(objectId = org.id.get).copy(person = false).insert
-              Cache.remove(Members.cacheId(user.id.get))
+              Cache.remove(Members.cacheId(user.person.id.get))
               val activity = Activity.insert(request.user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               Redirect(routes.Organisations.details(org.id.get)).
@@ -223,12 +217,11 @@ trait Members extends Controller with Security with Services {
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
         success ⇒ {
-          val user = request.user.asInstanceOf[LoginIdentity].person
-          val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+          val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
           member map { m ⇒
             val person = success.insert
             m.copy(objectId = person.id.get).copy(person = true).insert
-            Cache.remove(Members.cacheId(user.id.get))
+            Cache.remove(Members.cacheId(user.person.id.get))
             val activity = Activity.insert(
               request.user.fullName,
               Activity.Predicate.Created,
@@ -253,8 +246,7 @@ trait Members extends Controller with Security with Services {
               peopleNonMembers,
               hasErrors)),
           id ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               personService.find(id) map { person ⇒
                 if (person.member.nonEmpty) {
@@ -264,7 +256,7 @@ trait Members extends Controller with Security with Services {
                     personForm))
                 } else {
                   m.copy(objectId = person.id.get).copy(person = true).insert
-                  Cache.remove(Members.cacheId(user.id.get))
+                  Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
                     request.user.fullName,
                     Activity.Predicate.Created,
@@ -297,8 +289,7 @@ trait Members extends Controller with Security with Services {
               hasErrors))
           },
           id ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               organisationService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
@@ -308,7 +299,7 @@ trait Members extends Controller with Security with Services {
                     orgForm))
                 } else {
                   m.copy(objectId = org.id.get).copy(person = false).insert
-                  Cache.remove(Members.cacheId(user.id.get))
+                  Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
                     request.user.fullName,
                     Activity.Predicate.Created,

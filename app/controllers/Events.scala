@@ -37,7 +37,6 @@ import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
-import securesocial.core.SecuredRequest
 import services.EmailSender
 
 object Events extends Controller
@@ -120,11 +119,11 @@ object Events extends Controller
   /**
    * HTML form mapping for creating and editing.
    */
-  def eventForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def eventForm(implicit user: LoginIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> of(eventTypeFormatter),
     "brandCode" -> nonEmptyText.verifying(
-      "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, request.user.asInstanceOf[LoginIdentity].userAccount)),
+      "error.brand.invalid", (brandCode: String) ⇒ Brand.canManage(brandCode, user.userAccount)),
     "title" -> nonEmptyText(1, 254),
     "language" -> mapping(
       "spoken" -> language,
@@ -148,9 +147,9 @@ object Events extends Controller
     "confirmed" -> default(boolean, false),
     "invoice" -> invoiceMapping,
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(request.user.fullName),
+    "updatedBy" -> ignored(user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
       "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(
       { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
@@ -190,7 +189,7 @@ object Events extends Controller
       val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val account = user.userAccount
       val brands = Brand.findByUser(account)
       Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))
   }
@@ -205,7 +204,7 @@ object Events extends Controller
 
       EventService.get.find(id).map {
         event ⇒
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(request.user, None, brands, account.personId, false, eventForm.fill(event)))
       }.getOrElse(NotFound)
@@ -220,7 +219,7 @@ object Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(request.user, None, brands, account.personId, false, formWithErrors))
         },
@@ -233,7 +232,7 @@ object Events extends Controller
             sendEmailNotification(addedEvent, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val account = user.userAccount
             val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(request.user, None, brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
@@ -294,8 +293,7 @@ object Events extends Controller
         event ⇒
           //@TODO only funders must be retrieved
           val funders = Organisation.findAll
-          val user = request.user
-          val acc = user.asInstanceOf[LoginIdentity].userAccount
+          val acc = user.userAccount
           val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
           Ok(views.html.event.details(user, canFacilitate, funders, event))
       }.getOrElse(NotFound)
@@ -310,7 +308,7 @@ object Events extends Controller
 
       eventService.find(id).map {
         event ⇒
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(request.user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
       }.getOrElse(NotFound)
@@ -322,7 +320,7 @@ object Events extends Controller
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val person = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+      val person = user.userAccount.person.get
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val brands = brandService.findAll
       val facilitators = brands.map(b ⇒
@@ -366,7 +364,7 @@ object Events extends Controller
       }
       eventService.applyFacilitators(events)
 
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      val account = user.userAccount
       // we do not show private events of other facilitators to anyone except
       // brand coordinator or Editor
       val filteredEvents: List[Event] = if (account.editor)
@@ -437,7 +435,7 @@ object Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.userAccount
           val brands = Brand.findByUser(account)
           BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false, formWithErrors))
         },
@@ -461,7 +459,7 @@ object Events extends Controller
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val account = user.userAccount
             val brands = Brand.findByUser(account)
             BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))

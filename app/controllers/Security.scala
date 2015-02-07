@@ -37,10 +37,12 @@ import scala.concurrent.Future
 trait Security extends SecureSocial with DeadboltActions {
 
   /**
-   * A redirect to the login page, used when authorisation fails due to a missing user account, e.g. because the user
-   * removed their own account while logged in.
+   * A redirect to the login page, used when authorisation fails due to
+   * a missing user account, e.g. because the user
+   * removed their own account while logged in
    */
-  val MissingUserAccountResult = Future.successful(Redirect(securesocial.controllers.routes.LoginPage.logout))
+  val MissingUserAccountResult = Future.successful(
+    Redirect(securesocial.controllers.routes.LoginPage.logout()))
 
   /**
    * Authenticates using SecureSocial, and uses Deadbolt to restrict access to
@@ -111,8 +113,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val handler = new AuthorisationHandler(Some(account))
+            val handler = new AuthorisationHandler(Some(user.userAccount))
             val restrictedAction = Restrict(
               Array(role.toString),
               handler)(SecuredAction.async(f(_)(handler)(user)))
@@ -141,8 +142,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
-            val handler = new AuthorisationHandler(Some(account))
+            val handler = new AuthorisationHandler(Some(user.userAccount))
             val restrictedAction = Dynamic(name, level, handler)(SecuredAction.async(f(_)(handler)(user)))
             restrictedAction(request)
           } catch {

@@ -47,9 +47,11 @@ object Accounts extends Controller with Security {
   def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
+        val currentUser = user.userAccount
         Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.BalancedAccounts, bookingEntries.size.toString)
+          val activity = Activity.insert(request.user.fullName,
+            Activity.Predicate.BalancedAccounts,
+            bookingEntries.size.toString)
           Redirect(routes.Accounts.index()).flashing("success" -> activity.toString)
         }
   }
@@ -89,12 +91,14 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map{ account ⇒
-          if (account.editableBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
+          if (account.editableBy(user.userAccount)) {
             currencyForm.bindFromRequest().fold (
               form ⇒ BadRequest(views.html.account.details(request.user, account, form)),
               currency ⇒ {
                 account.activate(currency)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Activated, "the account for " + account.accountHolder.name)
+                val activity = Activity.insert(request.user.fullName,
+                  Activity.Predicate.Activated,
+                  "the account for " + account.accountHolder.name)
                 account.accountHolder.updated(request.user.fullName)
                 Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
               })
@@ -109,9 +113,11 @@ object Accounts extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map(account ⇒
-          if (account.editableBy(request.user.asInstanceOf[LoginIdentity].userAccount)) {
+          if (account.editableBy(user.userAccount)) {
             account.deactivate()
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deactivated, "the account for " + account.accountHolder.name)
+            val activity = Activity.insert(request.user.fullName,
+              Activity.Predicate.Deactivated,
+              "the account for " + account.accountHolder.name)
             account.accountHolder.updated(request.user.fullName)
             Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
           } else {
