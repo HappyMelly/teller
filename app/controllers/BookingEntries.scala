@@ -103,7 +103,7 @@ object BookingEntries extends Controller with Security with EmailSender {
    * Creates a booking entry from an ‘add form’ submission.
    */
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
       val form = bookingEntryForm(request).bindFromRequest
@@ -279,7 +279,7 @@ object BookingEntries extends Controller with Security with EmailSender {
    * Updates a booking entry.
    */
   def update(bookingNumber: Int) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { existingEntry ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount

@@ -122,7 +122,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form: Form[Brand] = brandsForm.bindFromRequest
       form.fold(
@@ -236,7 +236,7 @@ object Brands extends Controller with Security {
    * @return
    */
   def update(code: String) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Brand.find(code).map { existingBrandView ⇒
         val form: Form[Brand] = brandsForm.bindFromRequest

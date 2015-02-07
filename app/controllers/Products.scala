@@ -100,7 +100,7 @@ trait Products extends Controller with Security with Services {
 
   /** Add form submits to this action **/
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form: Form[Product] = productForm.bindFromRequest
       form.fold(
@@ -135,7 +135,7 @@ trait Products extends Controller with Security with Services {
   /**
    * Assign the product to a brand
    */
-  def addBrand = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addBrand() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
@@ -241,7 +241,7 @@ trait Products extends Controller with Security with Services {
 
   /** Edit form submits to this action **/
   def update(id: Long) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map { existingProduct ⇒
         val form: Form[Product] = productForm.bindFromRequest

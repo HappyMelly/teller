@@ -46,7 +46,7 @@ object Accounts extends Controller with Security {
    */
   def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val currentUser = request.user.asInstanceOf[LoginIdentity].userAccount
         Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.BalancedAccounts, bookingEntries.size.toString)
@@ -127,7 +127,7 @@ object Accounts extends Controller with Security {
 
   def previewBalance = AsyncSecuredRestrictedAction(Admin) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val levy = Account.find(Levy)
         Account.findAllForAdjustment(levy.currency).map { accounts ⇒
           val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
