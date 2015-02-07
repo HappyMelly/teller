@@ -59,7 +59,7 @@ object CertificateTemplates extends Controller with Security {
       Brand.find(code).map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        Ok(views.html.certificateTemplate.form(request.user, brand.brand, languages, certificateFileForm))
+        Ok(views.html.certificateTemplate.form(user, brand.brand, languages, certificateFileForm))
       }.getOrElse(NotFound)
   }
 
@@ -76,10 +76,10 @@ object CertificateTemplates extends Controller with Security {
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(request.user, brand.brand, languages, formWithErrors)),
+          formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages, formWithErrors)),
           data ⇒ {
             templates.find(_.language == data.language).map { v ⇒
-              BadRequest(views.html.certificateTemplate.form(request.user, brand.brand, languages, form.withError("language", "error.template.exist")))
+              BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages, form.withError("language", "error.template.exist")))
             }.getOrElse {
               val template = request.body.asMultipartFormData.get.file("oneFacilitator")
               val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
@@ -87,7 +87,7 @@ object CertificateTemplates extends Controller with Security {
               if (template.isEmpty || templateOneFacilitator.isEmpty
                 || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
                 || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
-                BadRequest(views.html.certificateTemplate.form(request.user, brand.brand, languages,
+                BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages,
                   form.withError("oneFacilitator", "error.required").withError("twoFacilitators", "error.required")))
               } else {
                 val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)

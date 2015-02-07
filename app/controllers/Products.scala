@@ -89,13 +89,13 @@ trait Products extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       val products = productService.findAll
-      Ok(views.html.product.index(request.user, products))
+      Ok(views.html.product.index(user, products))
   }
 
   /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.product.form(request.user, None, None, productForm))
+      Ok(views.html.product.form(user, None, None, productForm))
   }
 
   /** Add form submits to this action **/
@@ -104,10 +104,10 @@ trait Products extends Controller with Security with Services {
 
       val form: Form[Product] = productForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, None, None, formWithErrors))),
+        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, None, None, formWithErrors))),
         product ⇒ {
           if (Product.exists(product.title))
-            Future.successful(BadRequest(views.html.product.form(request.user, None, None,
+            Future.successful(BadRequest(views.html.product.form(user, None, None,
               form.withError("title", "constraint.product.title.exists", product.title))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -120,7 +120,7 @@ trait Products extends Controller with Security with Services {
                 val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
                 Redirect(routes.Products.index()).flashing("success" -> activity.toString)
               }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(request.user, None, None,
+                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(user, None, None,
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
@@ -223,7 +223,7 @@ trait Products extends Controller with Security with Services {
           val people = Person.findAll
           val organisations = Organisation.findAll
 
-          Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors, people, organisations))
+          Ok(views.html.product.details(user, product, derivatives, parent, brands, contributors, people, organisations))
       }.getOrElse(NotFound)
 
   }
@@ -234,7 +234,7 @@ trait Products extends Controller with Security with Services {
 
       Product.find(id).map {
         product ⇒
-          Ok(views.html.product.form(request.user, Some(id), Some(product.title), productForm.fill(product)))
+          Ok(views.html.product.form(user, Some(id), Some(product.title), productForm.fill(product)))
       }.getOrElse(NotFound)
 
   }
@@ -247,10 +247,10 @@ trait Products extends Controller with Security with Services {
         val form: Form[Product] = productForm.bindFromRequest
         val title = Some(existingProduct.title)
         form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title, form))),
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, Some(id), title, form))),
           product ⇒ {
             if (Product.exists(product.title, id))
-              Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title,
+              Future.successful(BadRequest(views.html.product.form(user, Some(id), title,
                 form.withError("title", "constraint.product.title.exists", product.title))))
             else {
               request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -268,7 +268,7 @@ trait Products extends Controller with Security with Services {
                   Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
-                    BadRequest(views.html.product.form(request.user, Some(id), title,
+                    BadRequest(views.html.product.form(user, Some(id), title,
                       form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                 }
               }.getOrElse {

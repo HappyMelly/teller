@@ -107,7 +107,7 @@ trait Organisations extends Controller with Security with Services {
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Ok(views.html.organisation.form(request.user, None, organisationForm))
+      Ok(views.html.organisation.form(user, None, organisationForm))
   }
 
   /**
@@ -118,7 +118,7 @@ trait Organisations extends Controller with Security with Services {
 
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.organisation.form(request.user, None, formWithErrors)),
+          BadRequest(views.html.organisation.form(user, None, formWithErrors)),
         organisation ⇒ {
           val org = organisation.insert
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, organisation.name)
@@ -155,7 +155,7 @@ trait Organisations extends Controller with Security with Services {
           val contributions = contributionService.contributions(id, isPerson = false)
           val products = productService.findAll
 
-          Ok(views.html.organisation.details(request.user, organisation,
+          Ok(views.html.organisation.details(user, organisation,
             members, otherPeople,
             contributions, products))
       }.getOrElse(NotFound)
@@ -170,7 +170,7 @@ trait Organisations extends Controller with Security with Services {
 
       organisationService.find(id).map {
         organisation ⇒
-          Ok(views.html.organisation.form(request.user, Some(id), organisationForm.fill(organisation)))
+          Ok(views.html.organisation.form(user, Some(id), organisationForm.fill(organisation)))
       }.getOrElse(NotFound)
   }
 
@@ -181,7 +181,7 @@ trait Organisations extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       val organisations = Organisation.findAll
-      Ok(views.html.organisation.index(request.user, organisations))
+      Ok(views.html.organisation.index(user, organisations))
   }
 
   /**
@@ -193,7 +193,7 @@ trait Organisations extends Controller with Security with Services {
 
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.organisation.form(request.user, Some(id), formWithErrors)),
+          BadRequest(views.html.organisation.form(user, Some(id), formWithErrors)),
         organisation ⇒ {
           organisation.copy(id = Some(id)).update
           val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, organisation.name)

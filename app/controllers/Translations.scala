@@ -83,7 +83,7 @@ object Translations extends Controller with Security {
     implicit handler ⇒ implicit user ⇒
 
       val translations = Translation.findAll
-      Ok(views.html.translation.index(request.user, translations))
+      Ok(views.html.translation.index(user, translations))
   }
 
   /**
@@ -96,7 +96,7 @@ object Translations extends Controller with Security {
       implicit handler ⇒ implicit user ⇒
         val en = Translation.find("EN")
         en.map { value ⇒
-          Ok(views.html.translation.form(request.user, None, lang, value, translationForm))
+          Ok(views.html.translation.form(user, None, lang, value, translationForm))
         }.getOrElse(InternalServerError)
   }
 
@@ -114,14 +114,14 @@ object Translations extends Controller with Security {
         formWithErrors ⇒ {
           val en = Translation.find("EN")
           en.map { value ⇒
-            BadRequest(views.html.translation.form(request.user, None, lang, value, formWithErrors))
+            BadRequest(views.html.translation.form(user, None, lang, value, formWithErrors))
           }.getOrElse(InternalServerError)
         },
         translation ⇒ {
           Translation.find(lang).map { v ⇒
             val en = Translation.find("EN")
             en.map { value ⇒
-              BadRequest(views.html.translation.form(request.user, None, lang, value, form)).flashing("error" -> Messages("error.translation.exist"))
+              BadRequest(views.html.translation.form(user, None, lang, value, form)).flashing("error" -> Messages("error.translation.exist"))
             }.getOrElse(InternalServerError)
           }.getOrElse {
             translation.create
@@ -144,7 +144,7 @@ object Translations extends Controller with Security {
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
-          Ok(views.html.translation.details(request.user, translation, en))
+          Ok(views.html.translation.details(user, translation, en))
         }.getOrElse(InternalServerError)
       }.getOrElse(NotFound)
 
@@ -161,7 +161,7 @@ object Translations extends Controller with Security {
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
-          Ok(views.html.translation.form(request.user, Some(translation), lang, en, translationForm.fill(translation)))
+          Ok(views.html.translation.form(user, Some(translation), lang, en, translationForm.fill(translation)))
         }.getOrElse(InternalServerError)
       }.getOrElse(NotFound)
 
@@ -183,7 +183,7 @@ object Translations extends Controller with Security {
             formWithErrors ⇒ {
               val en = Translation.find("EN")
               en.map { value ⇒
-                BadRequest(views.html.translation.form(request.user, Some(existingTranslation), lang, value, formWithErrors))
+                BadRequest(views.html.translation.form(user, Some(existingTranslation), lang, value, formWithErrors))
               }.getOrElse(InternalServerError)
             },
             translation ⇒ {

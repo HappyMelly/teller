@@ -43,7 +43,7 @@ object Administration extends Controller with Security {
    */
   def settings = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.admin.settings(request.user, TransactionType.findAll, transactionTypeForm))
+      Ok(views.html.admin.settings(user, TransactionType.findAll, transactionTypeForm))
   }
 
   /**
@@ -54,12 +54,12 @@ object Administration extends Controller with Security {
 
       val boundForm = transactionTypeForm.bindFromRequest
       boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.admin.settings(request.user, TransactionType.findAll, formWithErrors)),
+        formWithErrors ⇒ BadRequest(views.html.admin.settings(user, TransactionType.findAll, formWithErrors)),
         value ⇒ {
           val transactionType = value.trim
           if (TransactionType.exists(transactionType)) {
             val form = boundForm.withError("name", "constraint.transactionType.exists")
-            BadRequest(views.html.admin.settings(request.user, TransactionType.findAll, form))
+            BadRequest(views.html.admin.settings(user, TransactionType.findAll, form))
           } else {
             TransactionType.insert(transactionType)
             val activityObject = Messages("models.TransactionType.name", transactionType)

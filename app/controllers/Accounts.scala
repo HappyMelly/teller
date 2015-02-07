@@ -76,14 +76,14 @@ object Accounts extends Controller with Security {
             (e, None)
           }
         }.toList.reverse
-        Ok(views.html.booking.index(request.user, account, entriesWithBalance, from, to))
+        Ok(views.html.booking.index(user, account, entriesWithBalance, from, to))
   }
 
   def details(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map{ account ⇒
-          Ok(views.html.account.details(request.user, account, currencyForm))
+          Ok(views.html.account.details(user, account, currencyForm))
         }.getOrElse(NotFound)
   }
 
@@ -93,7 +93,7 @@ object Accounts extends Controller with Security {
         Account.find(id).map{ account ⇒
           if (account.editableBy(user.userAccount)) {
             currencyForm.bindFromRequest().fold (
-              form ⇒ BadRequest(views.html.account.details(request.user, account, form)),
+              form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
                 account.activate(currency)
                 val activity = Activity.insert(request.user.fullName,
@@ -128,7 +128,7 @@ object Accounts extends Controller with Security {
   def index = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Ok(views.html.account.index(request.user, Account.findAllActiveWithBalance))
+        Ok(views.html.account.index(user, Account.findAllActiveWithBalance))
   }
 
   def previewBalance = AsyncSecuredRestrictedAction(Admin) {
@@ -138,7 +138,7 @@ object Accounts extends Controller with Security {
         Account.findAllForAdjustment(levy.currency).map { accounts ⇒
           val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
           val canBalanceAccounts = accounts.exists(!_.adjustment.isZero)
-          Ok(views.html.account.balance(request.user, totalBalance, accounts, canBalanceAccounts))
+          Ok(views.html.account.balance(user, totalBalance, accounts, canBalanceAccounts))
         }.recover {
           case e: NoExchangeRateException ⇒ {
             Redirect(routes.Accounts.index()).flashing("error" -> Messages("error.retry", e.getMessage))

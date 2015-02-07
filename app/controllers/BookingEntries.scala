@@ -96,7 +96,7 @@ object BookingEntries extends Controller with Security with EmailSender {
       val currentUser = user.userAccount
       val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
 
-      Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
+      Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
   }
 
   /**
@@ -114,7 +114,7 @@ object BookingEntries extends Controller with Security with EmailSender {
         val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
         val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
-        BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
+        BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
       }
 
       form.fold(
@@ -130,7 +130,7 @@ object BookingEntries extends Controller with Security with EmailSender {
             Activity.link(insertedEntry, activity)
             sendEmailNotification(insertedEntry, List.empty, activity, entry.participants)
             sendEmailNotification(insertedEntry, List.empty, activity, Person.findActiveAdmins -- entry.participants)
-            nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
+            nextPageResult(form("next").value, activity.toString, form, currentUser, user)
           }.recover {
             case e: CurrencyConverter.NoExchangeRateException ⇒
               val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
@@ -158,7 +158,7 @@ object BookingEntries extends Controller with Security with EmailSender {
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         val currentUser = user.userAccount
         val activity = Activity.findForBookingEntry(bookingEntry.id.getOrElse(0))
-        Ok(views.html.booking.details(request.user, bookingEntry, currentUser, attachmentForm, activity))
+        Ok(views.html.booking.details(user, bookingEntry, currentUser, attachmentForm, activity))
       }.getOrElse(NotFound)
   }
 
@@ -221,7 +221,7 @@ object BookingEntries extends Controller with Security with EmailSender {
           val form = bookingEntryForm.fill(bookingEntry)
           val currentUser = user.userAccount
           val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
-          Ok(views.html.booking.form(request.user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
+          Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
           Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
         }
@@ -251,7 +251,7 @@ object BookingEntries extends Controller with Security with EmailSender {
 
   def index = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.booking.index(request.user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
+      Ok(views.html.booking.index(user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
 
   private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
@@ -292,7 +292,7 @@ object BookingEntries extends Controller with Security with EmailSender {
             val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
             val brands = Brand.findAllWithCoordinator
             val transactionTypes = TransactionType.findAll
-            BadRequest(views.html.booking.form(request.user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
+            BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
           }
 
           form.fold(
@@ -337,7 +337,7 @@ object BookingEntries extends Controller with Security with EmailSender {
                 val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)
                 sendEmailNotification(populatedUpdatedEntry, changes, activity, Person.findActiveAdmins)
 
-                nextPageResult(form("next").value, activity.toString, form, currentUser, request.user)
+                nextPageResult(form("next").value, activity.toString, form, currentUser, user)
               }.recover {
                 case e: CurrencyConverter.NoExchangeRateException ⇒
                   val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
@@ -358,7 +358,7 @@ object BookingEntries extends Controller with Security with EmailSender {
     successMessage: String,
     form: Form[BookingEntry],
     currentUser: UserAccount,
-    user: Identity)(implicit request: SecuredRequest[AnyContent],
+    user: LoginIdentity)(implicit request: SecuredRequest[AnyContent],
       handler: AuthorisationHandler): SimpleResult = {
 
     next match {

@@ -191,7 +191,7 @@ object Events extends Controller
       default.invoice_=(defaultInvoice)
       val account = user.userAccount
       val brands = Brand.findByUser(account)
-      Ok(views.html.event.form(request.user, None, brands, account.personId, true, eventForm.fill(default)))
+      Ok(views.html.event.form(user, None, brands, account.personId, true, eventForm.fill(default)))
   }
 
   /**
@@ -206,7 +206,7 @@ object Events extends Controller
         event ⇒
           val account = user.userAccount
           val brands = Brand.findByUser(account)
-          Ok(views.html.event.form(request.user, None, brands, account.personId, false, eventForm.fill(event)))
+          Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
 
@@ -221,7 +221,7 @@ object Events extends Controller
         formWithErrors ⇒ {
           val account = user.userAccount
           val brands = Brand.findByUser(account)
-          BadRequest(views.html.event.form(request.user, None, brands, account.personId, false, formWithErrors))
+          BadRequest(views.html.event.form(user, None, brands, account.personId, false, formWithErrors))
         },
         event ⇒ {
           val validLicensees = License.licensees(event.brandCode)
@@ -234,7 +234,7 @@ object Events extends Controller
           } else {
             val account = user.userAccount
             val brands = Brand.findByUser(account)
-            BadRequest(views.html.event.form(request.user, None, brands, account.personId, false,
+            BadRequest(views.html.event.form(user, None, brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
         })
@@ -310,7 +310,7 @@ object Events extends Controller
         event ⇒
           val account = user.userAccount
           val brands = Brand.findByUser(account)
-          Ok(views.html.event.form(request.user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
+          Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
       }.getOrElse(NotFound)
   }
 
@@ -340,7 +340,7 @@ object Events extends Controller
             "facilitators" -> data._2)
         }
       }
-      Ok(views.html.event.index(request.user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
+      Ok(views.html.event.index(user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
   }
 
   /**
@@ -437,7 +437,7 @@ object Events extends Controller
         formWithErrors ⇒ {
           val account = user.userAccount
           val brands = Brand.findByUser(account)
-          BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false, formWithErrors))
+          BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false, formWithErrors))
         },
         event ⇒ {
           val validLicensees = License.licensees(event.brandCode)
@@ -461,7 +461,7 @@ object Events extends Controller
           } else {
             val account = user.userAccount
             val brands = Brand.findByUser(account)
-            BadRequest(views.html.event.form(request.user, Some(id), brands, account.personId, false,
+            BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false,
               form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
           }
         })

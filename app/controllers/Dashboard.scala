@@ -70,7 +70,7 @@ trait Dashboard extends Controller with Security with Services {
         findByEvents(pastEvents.map(_.id.get)).
         sortBy(_._3.created.toString())(Ordering[String].reverse).
         slice(0, 10)
-      Ok(views.html.dashboard(request.user,
+      Ok(views.html.dashboard(user,
         upcomingEvents,
         evaluations,
         activity))

@@ -89,7 +89,7 @@ object Participants extends Controller with Security {
       val account = user.userAccount
       val brands = Brand.findByUser(account)
       val brandCode = request.session.get("brandCode").getOrElse("")
-      Ok(views.html.participant.index(request.user, brands, brandCode))
+      Ok(views.html.participant.index(user, brands, brandCode))
   }
 
   /**
@@ -245,7 +245,7 @@ object Participants extends Controller with Security {
         val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
           request.session.get("brandCode").getOrElse("")
         }
-        Ok(views.html.participant.form(request.user, id = None, brands, people,
+        Ok(views.html.participant.form(user, id = None, brands, people,
           newPersonForm(account, user.fullName), existingPersonForm(user),
           showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
   }
@@ -266,7 +266,7 @@ object Participants extends Controller with Security {
           val brands = Brand.findByUser(account)
           val people = Person.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
-          BadRequest(views.html.participant.form(request.user, None, brands, people,
+          BadRequest(views.html.participant.form(user, None, brands, people,
             newPersonForm(account, request.user.fullName), formWithErrors,
             showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },
@@ -277,7 +277,7 @@ object Participants extends Controller with Security {
               val brands = Brand.findByUser(account)
               val people = Person.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
-              BadRequest(views.html.participant.form(request.user, None, brands, people,
+              BadRequest(views.html.participant.form(user, None, brands, people,
                 newPersonForm(account, request.user.fullName), form.withError("participantId", "error.participant.exist"),
                 showExistingPersonForm = true, form("brandId").value, Some(chosenEventId), ref))
             }
@@ -315,7 +315,7 @@ object Participants extends Controller with Security {
           val people = Person.findActive
           val brands = Brand.findByUser(account)
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
-          BadRequest(views.html.participant.form(request.user, None, brands, people,
+          BadRequest(views.html.participant.form(user, None, brands, people,
             formWithErrors, existingPersonForm(user),
             showExistingPersonForm = false, formWithErrors("brandId").value, Some(chosenEventId), ref))
         },

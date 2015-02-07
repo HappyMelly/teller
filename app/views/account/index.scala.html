@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, accounts: List[AccountSummaryWithBalance])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: LoginIdentity, accounts: List[AccountSummaryWithBalance])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._

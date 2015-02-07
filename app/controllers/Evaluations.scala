@@ -72,7 +72,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
         val account = user.userAccount
         val events = findEvents(account)
         val en = Translation.find("EN").get
-        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
+        Ok(views.html.evaluation.form(user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
   }
 
   /**
@@ -88,7 +88,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           val account = user.userAccount
           val events = findEvents(account)
           val en = Translation.find("EN").get
-          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None, en))
+          BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
           evaluation.create
@@ -171,7 +171,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
       Evaluation.find(id).map { evaluation ⇒
         val brand = Brand.find(evaluation.event.brandCode).get
         val en = Translation.find("EN").get
-        Ok(views.html.evaluation.details(request.user, evaluation, en, brand.brand))
+        Ok(views.html.evaluation.details(user, evaluation, en, brand.brand))
       }.getOrElse(NotFound)
 
   }
@@ -190,7 +190,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
         val events = findEvents(account)
         val en = Translation.find("EN").get
 
-        Ok(views.html.evaluation.form(request.user, Some(evaluation),
+        Ok(views.html.evaluation.form(user, Some(evaluation),
           evaluationForm(request.user.fullName).fill(evaluation), events, None, None, en))
       }.getOrElse(NotFound)
 
@@ -213,7 +213,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
             val events = findEvents(account)
             val en = Translation.find("EN").get
 
-            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None, en))
+            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update

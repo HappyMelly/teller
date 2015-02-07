@@ -1,6 +1,6 @@
 @(title: String,
   menu: String,
-  maybeUser: Option[securesocial.core.Identity])(
+  maybeUser: Option[LoginIdentity])(
   content: Html)(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)

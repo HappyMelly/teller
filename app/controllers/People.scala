@@ -187,7 +187,7 @@ trait People extends Controller with Security with Services {
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.person.form(request.user, None, personForm(request)))
+      Ok(views.html.person.form(user, None, personForm(request)))
   }
 
   /**
@@ -225,7 +225,7 @@ trait People extends Controller with Security with Services {
 
       personForm(request).bindFromRequest.fold(
         formWithErrors ⇒ {
-          BadRequest(views.html.person.form(request.user, None, formWithErrors))
+          BadRequest(views.html.person.form(user, None, formWithErrors))
         },
         person ⇒ {
           val updatedPerson = person.insert
@@ -298,7 +298,7 @@ trait People extends Controller with Security with Services {
         val contributions = contributionService.contributions(id, isPerson = true)
         val duplicated = userAccountService.findDuplicateIdentity(person)
 
-        Ok(views.html.person.details(request.user, person,
+        Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
           contributions,
           licenses, accountRole, duplicated))
@@ -317,7 +317,7 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
+        Ok(views.html.person.form(user, Some(id), personForm(request).fill(person)))
       }.getOrElse(NotFound)
   }
 
@@ -330,7 +330,7 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       personForm(request).bindFromRequest.fold(
-        formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
+        formWithErrors ⇒ BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
         person ⇒ {
           val updatedPerson = person.copy(id = Some(id))
           updatedPerson.socialProfile_=(person.socialProfile)
@@ -349,7 +349,7 @@ trait People extends Controller with Security with Services {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
-      Ok(views.html.person.index(request.user, people))
+      Ok(views.html.person.index(user, people))
   }
 
   /**
