@@ -320,7 +320,7 @@ object Events extends Controller
   def index = SecuredDynamicAction("event", "view") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val person = user.account.person.get
+      val person = user.person
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val brands = brandService.findAll
       val facilitators = brands.map(b ⇒

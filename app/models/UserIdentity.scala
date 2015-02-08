@@ -98,8 +98,6 @@ case class UserIdentity(uid: Option[Long],
 
   /**
    * Returns user account associated with this identity
-   *
-   * @deprecated The whole block of with retrieval of
    */
   def account: UserAccount = _account map { v ⇒ v } getOrElse {
     //@deprecated

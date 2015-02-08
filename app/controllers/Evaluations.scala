@@ -233,8 +233,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
     implicit handler ⇒ implicit user ⇒
       Evaluation.find(id).map { ev ⇒
 
-        val approver = user.account.person.get
-        ev.approve(approver)
+        ev.approve(user.person)
 
         val activity = Activity.create(user.fullName,
           Activity.Predicate.Approved,
@@ -263,14 +262,13 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
-        val facilitator = user.account.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
         val subject = s"Your ${brand.brand.name} certificate"
         send(Set(participant),
           Some(existingEvaluation.event.facilitators.toSet),
           Some(Set(brand.coordinator)), subject,
-          mail.html.rejected(brand.brand, participant, facilitator).toString(),
+          mail.html.rejected(brand.brand, participant, user.person).toString(),
           richMessage = true)
 
         val route = ref match {

@@ -46,7 +46,7 @@ object Certificates extends Controller with Security {
 
         Evaluation.find(id).map {
           evaluation ⇒
-            val approver = user.account.person.get
+            val approver = user.person
             val brand = Brand.find(evaluation.event.brandCode).get
             val certificate = new Certificate(evaluation, renew = true)
             certificate.generateAndSend(brand, approver)

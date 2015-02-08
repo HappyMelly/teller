@@ -26,15 +26,15 @@ package controllers
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
-import models.{ Organisation, Activity, UserIdentity$, Member }
+import models.{ Activity, Member }
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
-import play.api.Play.current
 
 /** Renders pages and contains actions related to members */
 trait Members extends Controller with Security with Services {
