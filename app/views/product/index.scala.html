@@ -1,9 +1,9 @@
-@(user: securesocial.core.Identity, products: List[Product])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: UserIdentity, products: List[Product])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main("Products", "products", Some(user)) {
+@main("Products", "products", user) {
 
   @html.indexPageHeader("Products") {
     @restrict(handler, List(as(Editor.toString))) {

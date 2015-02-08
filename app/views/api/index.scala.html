@@ -1,8 +1,8 @@
-@(user: LoginIdentity)(implicit flash: Flash,
+@(user: UserIdentity)(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler)
 
-@main("API", "admin", Some(user)) {
+@main("API", "admin", user) {
 
   <div class="page-header">
     <h1>API</h1>

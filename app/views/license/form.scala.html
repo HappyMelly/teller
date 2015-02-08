@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   id: Option[Long],
   form: Form[License],
   person: Person)(implicit flash: Flash,
@@ -10,7 +10,7 @@
     @import views.ViewHelpers._
     @import models.Person
 
-    @main("Add content license", "people", Some(user)) {
+    @main("Add content license", "people", user) {
         @defining(id.isDefined) { editing =>
             @if(form.hasErrors) {
                 @html.error()

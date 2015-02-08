@@ -26,7 +26,7 @@ package controllers
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
-import models.{ Organisation, Activity, LoginIdentity, Member }
+import models.{ Organisation, Activity, UserIdentity$, Member }
 import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.cache.Cache
@@ -76,14 +76,13 @@ trait Members extends Controller with Security with Services {
 
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
+    implicit handler ⇒ implicit user ⇒
       val members = memberService.findAll
       val fee = members.find(m ⇒
-        m.person && m.objectId == user.id.get) map { m ⇒ Some(m.fee) } getOrElse None
+        m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
-      Ok(views.html.member.index(request.user, members, fee, totalFee))
+      Ok(views.html.member.index(user, members, fee, totalFee))
   }
 
   /**
@@ -91,15 +90,14 @@ trait Members extends Controller with Security with Services {
    * @param id Member identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Ok("")
   }
 
   /** Renders Add form */
   def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
-      Ok(views.html.member.form(request.user, None, form(user.id.get)))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.member.form(user, None, form(user.person.id.get)))
   }
 
   /**
@@ -107,15 +105,14 @@ trait Members extends Controller with Security with Services {
    * users to the next step
    */
   def create() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      val user = request.user.asInstanceOf[LoginIdentity].person
-      form(user.id.get).bindFromRequest.fold(
-        formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
+    implicit handler ⇒ implicit user ⇒
+      form(user.person.id.get).bindFromRequest.fold(
+        formWithErrors ⇒ BadRequest(views.html.member.form(user,
           None,
           formWithErrors)),
         member ⇒ {
           val m = member.copy(id = None).copy(objectId = 0)
-          Cache.set(Members.cacheId(user.id.get), m, 1800)
+          Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
             case (false, false) ⇒ Redirect(routes.Members.addOrganisation())
@@ -127,11 +124,10 @@ trait Members extends Controller with Security with Services {
 
   /** Renders Edit form */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
-        val user = request.user.asInstanceOf[LoginIdentity].person
-        val formWithData = form(user.id.get).fill(m)
-        Ok(views.html.member.form(request.user, Some(m), formWithData))
+        val formWithData = form(user.person.id.get).fill(m)
+        Ok(views.html.member.form(user, Some(m), formWithData))
       } getOrElse NotFound
   }
 
@@ -140,18 +136,17 @@ trait Members extends Controller with Security with Services {
    * @param id Member identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       memberService.find(id, withObject = true) map { m ⇒
-        val user = request.user.asInstanceOf[LoginIdentity].person
-        form(user.id.get).bindFromRequest.fold(
-          formWithErrors ⇒ BadRequest(views.html.member.form(request.user,
+        form(user.person.id.get).bindFromRequest.fold(
+          formWithErrors ⇒ BadRequest(views.html.member.form(user,
             Some(m),
             formWithErrors)),
           member ⇒ {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
               copy(objectId = m.objectId).update
-            val activity = Activity.insert(request.user.fullName,
+            val activity = Activity.insert(user.fullName,
               Activity.Predicate.Updated, "membership data")
             val url: String = if (updMember.person) {
               routes.People.details(updMember.objectId).url
@@ -165,79 +160,77 @@ trait Members extends Controller with Security with Services {
 
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.member.newPerson(request.user, None, People.personForm(request)))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.member.newPerson(user, None, People.personForm(user)))
   }
 
   /** Renders Add new organisation page */
   def addOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.member.newOrg(request.user, None, Organisations.organisationForm))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
   def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.member.existingOrg(request.user, orgsNonMembers, existingOrgForm))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.member.existingOrg(user, orgsNonMembers, existingOrgForm))
   }
 
   /** Renders Add existing person page */
   def addExistingPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.member.existingPerson(request.user, peopleNonMembers, existingPersonForm))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.member.existingPerson(user, peopleNonMembers, existingPersonForm))
   }
 
   /** Records a new member-organisation to database */
   def createNewOrganisation() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val orgForm = Organisations.organisationForm.bindFromRequest
         orgForm.fold(
           hasErrors ⇒
-            BadRequest(views.html.member.newOrg(request.user, None, hasErrors)),
+            BadRequest(views.html.member.newOrg(user, None, hasErrors)),
           success ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               val org = success.insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
               m.copy(objectId = org.id.get).copy(person = false).insert
-              Cache.remove(Members.cacheId(user.id.get))
-              val activity = Activity.insert(request.user.fullName,
+              Cache.remove(Members.cacheId(user.person.id.get))
+              val activity = Activity.insert(user.fullName,
                 Activity.Predicate.Created, "new member " + success.name)
               Redirect(routes.Organisations.details(org.id.get)).
                 flashing("success" -> activity.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.newOrg(request.user, None, orgForm))
+              BadRequest(views.html.member.newOrg(user, None, orgForm))
             }
           })
   }
 
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      val personForm = People.personForm(request).bindFromRequest
+    implicit handler ⇒ implicit user ⇒
+      val personForm = People.personForm(user).bindFromRequest
       personForm.fold(
         hasErrors ⇒
-          BadRequest(views.html.member.newPerson(request.user, None, hasErrors)),
+          BadRequest(views.html.member.newPerson(user, None, hasErrors)),
         success ⇒ {
-          val user = request.user.asInstanceOf[LoginIdentity].person
-          val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+          val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
           member map { m ⇒
             val person = success.insert
             m.copy(objectId = person.id.get).copy(person = true).insert
-            Cache.remove(Members.cacheId(user.id.get))
+            Cache.remove(Members.cacheId(user.person.id.get))
             val activity = Activity.insert(
-              request.user.fullName,
+              user.fullName,
               Activity.Predicate.Created,
               "new member " + success.name)
             Redirect(routes.People.details(person.id.get)).
               flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-            BadRequest(views.html.member.newPerson(request.user, None, personForm))
+            BadRequest(views.html.member.newPerson(user, None, personForm))
           }
         })
   }
@@ -245,28 +238,27 @@ trait Members extends Controller with Security with Services {
   /** Records an existing member-person to database */
   def updateExistingPerson() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val personForm = existingPersonForm.bindFromRequest
         personForm.fold(
           hasErrors ⇒
-            BadRequest(views.html.member.existingPerson(request.user,
+            BadRequest(views.html.member.existingPerson(user,
               peopleNonMembers,
               hasErrors)),
           id ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               personService.find(id) map { person ⇒
                 if (person.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.person.member")))
-                  BadRequest(views.html.member.existingPerson(request.user,
+                  BadRequest(views.html.member.existingPerson(user,
                     peopleNonMembers,
                     personForm))
                 } else {
                   m.copy(objectId = person.id.get).copy(person = true).insert
-                  Cache.remove(Members.cacheId(user.id.get))
+                  Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
-                    request.user.fullName,
+                    user.fullName,
                     Activity.Predicate.Created,
                     "new member " + person.fullName)
                   Redirect(routes.People.details(id)).
@@ -274,13 +266,13 @@ trait Members extends Controller with Security with Services {
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
-                BadRequest(views.html.member.existingOrg(request.user,
+                BadRequest(views.html.member.existingOrg(user,
                   peopleNonMembers,
                   personForm))
               }
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingPerson(request.user, peopleNonMembers, personForm))
+              BadRequest(views.html.member.existingPerson(user, peopleNonMembers, personForm))
             }
           })
   }
@@ -288,29 +280,28 @@ trait Members extends Controller with Security with Services {
   /** Records an existing organisation-person to database */
   def updateExistingOrg() = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val orgForm = existingOrgForm.bindFromRequest
         orgForm.fold(
           hasErrors ⇒ {
-            BadRequest(views.html.member.existingOrg(request.user,
+            BadRequest(views.html.member.existingOrg(user,
               orgsNonMembers,
               hasErrors))
           },
           id ⇒ {
-            val user = request.user.asInstanceOf[LoginIdentity].person
-            val member = Cache.getAs[Member](Members.cacheId(user.id.get))
+            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             member map { m ⇒
               organisationService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
-                  BadRequest(views.html.member.existingOrg(request.user,
+                  BadRequest(views.html.member.existingOrg(user,
                     orgsNonMembers,
                     orgForm))
                 } else {
                   m.copy(objectId = org.id.get).copy(person = false).insert
-                  Cache.remove(Members.cacheId(user.id.get))
+                  Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = Activity.insert(
-                    request.user.fullName,
+                    user.fullName,
                     Activity.Predicate.Created,
                     "new member " + org.name)
                   Redirect(routes.Organisations.details(id)).
@@ -318,13 +309,13 @@ trait Members extends Controller with Security with Services {
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
-                BadRequest(views.html.member.existingOrg(request.user,
+                BadRequest(views.html.member.existingOrg(user,
                   orgsNonMembers,
                   orgForm))
               }
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingOrg(request.user,
+              BadRequest(views.html.member.existingOrg(user,
                 orgsNonMembers,
                 orgForm))
             }

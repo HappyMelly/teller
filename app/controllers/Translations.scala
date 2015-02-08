@@ -80,10 +80,10 @@ object Translations extends Controller with Security {
 
   /** Shows all translation **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val translations = Translation.findAll
-      Ok(views.html.translation.index(request.user, translations))
+      Ok(views.html.translation.index(user, translations))
   }
 
   /**
@@ -93,10 +93,10 @@ object Translations extends Controller with Security {
    */
   def add(lang: String) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
-      implicit handler ⇒
+      implicit handler ⇒ implicit user ⇒
         val en = Translation.find("EN")
         en.map { value ⇒
-          Ok(views.html.translation.form(request.user, None, lang, value, translationForm))
+          Ok(views.html.translation.form(user, None, lang, value, translationForm))
         }.getOrElse(InternalServerError)
   }
 
@@ -107,26 +107,26 @@ object Translations extends Controller with Security {
    * @return
    */
   def create(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form: Form[Translation] = translationForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ {
           val en = Translation.find("EN")
           en.map { value ⇒
-            BadRequest(views.html.translation.form(request.user, None, lang, value, formWithErrors))
+            BadRequest(views.html.translation.form(user, None, lang, value, formWithErrors))
           }.getOrElse(InternalServerError)
         },
         translation ⇒ {
           Translation.find(lang).map { v ⇒
             val en = Translation.find("EN")
             en.map { value ⇒
-              BadRequest(views.html.translation.form(request.user, None, lang, value, form)).flashing("error" -> Messages("error.translation.exist"))
+              BadRequest(views.html.translation.form(user, None, lang, value, form)).flashing("error" -> Messages("error.translation.exist"))
             }.getOrElse(InternalServerError)
           }.getOrElse {
             translation.create
 
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new translation")
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new translation")
             Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
           }
 
@@ -140,11 +140,11 @@ object Translations extends Controller with Security {
    * @return
    */
   def details(lang: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
-          Ok(views.html.translation.details(request.user, translation, en))
+          Ok(views.html.translation.details(user, translation, en))
         }.getOrElse(InternalServerError)
       }.getOrElse(NotFound)
 
@@ -157,11 +157,11 @@ object Translations extends Controller with Security {
    * @return
    */
   def edit(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         Translation.find("EN").map { en ⇒
-          Ok(views.html.translation.form(request.user, Some(translation), lang, en, translationForm.fill(translation)))
+          Ok(views.html.translation.form(user, Some(translation), lang, en, translationForm.fill(translation)))
         }.getOrElse(InternalServerError)
       }.getOrElse(NotFound)
 
@@ -174,7 +174,7 @@ object Translations extends Controller with Security {
    * @return
    */
   def update(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { existingTranslation ⇒
         if (existingTranslation.changeable) {
@@ -183,12 +183,12 @@ object Translations extends Controller with Security {
             formWithErrors ⇒ {
               val en = Translation.find("EN")
               en.map { value ⇒
-                BadRequest(views.html.translation.form(request.user, Some(existingTranslation), lang, value, formWithErrors))
+                BadRequest(views.html.translation.form(user, Some(existingTranslation), lang, value, formWithErrors))
               }.getOrElse(InternalServerError)
             },
             translation ⇒ {
               translation.update
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "translation")
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "translation")
               Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
             })
         } else {
@@ -204,12 +204,12 @@ object Translations extends Controller with Security {
    * @return
    */
   def delete(lang: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Translation.find(lang).map { translation ⇒
         if (translation.changeable) {
           translation.delete()
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "translation")
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "translation")
           Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
         } else {
           Redirect(routes.Translations.index()).flashing("error" -> Messages("error.translation.notChangeable"))

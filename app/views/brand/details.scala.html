@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   brand: Brand,
   coordinator: Person,
   eventTypes: List[EventType]
@@ -13,7 +13,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(brand.code + " - Brand", "brands", Some(user)) {
+@main(brand.code + " - Brand", "brands", user) {
 
     <div class="page-header">
         <h1>

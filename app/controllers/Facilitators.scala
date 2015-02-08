@@ -62,7 +62,7 @@ object Facilitators extends Controller with Security {
    * Returns a list of facilitators for the given brand on today, including the coordinator of the brand
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
         val facilitators = Brand.findFacilitators(brandCode, brand.coordinator)
         PeopleCollection.organisations(facilitators)
@@ -76,7 +76,7 @@ object Facilitators extends Controller with Security {
    * @param id Person identifier
    */
   def addLanguage(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(single("language" -> nonEmptyText))
 
@@ -90,7 +90,7 @@ object Facilitators extends Controller with Security {
               }
               val languageName = Languages.all.getOrElse(language, "")
               val activityObject = Messages("activity.relationship.create", languageName, person.fullName)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
               Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
@@ -104,14 +104,14 @@ object Facilitators extends Controller with Security {
    * @param language Two-letters language identifier
    */
   def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       PersonService.get.find(id).map { person ⇒
         if (FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
           FacilitatorLanguage(id, language).delete()
         }
         val languageName = Languages.all.getOrElse(language, "")
         val activityObject = Messages("activity.relationship.delete", languageName, person.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
         Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -123,7 +123,7 @@ object Facilitators extends Controller with Security {
    * @param id Person identifier
    */
   def addCountry(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(single("country" -> nonEmptyText))
 
@@ -136,7 +136,7 @@ object Facilitators extends Controller with Security {
                 FacilitatorCountry(id, country).insert
               }
               val activityObject = Messages("activity.relationship.create", Messages("country." + country), person.fullName)
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
               Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
@@ -150,14 +150,14 @@ object Facilitators extends Controller with Security {
    * @param country Two-letters country identifier
    */
   def deleteCountry(id: Long, country: String) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(id).map { person ⇒
         if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
           FacilitatorCountry(id, country).delete()
         }
         val activityObject = Messages("activity.relationship.delete", Messages("country." + country), person.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
         Redirect(routes.People.details(id).url + "#events").flashing("success" -> activity.toString)
       }.getOrElse(NotFound)

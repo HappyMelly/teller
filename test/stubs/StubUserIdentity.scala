@@ -28,19 +28,19 @@ import models.{ UserRole, UserAccount }
 import securesocial.core.AuthenticationMethod
 import securesocial.core.IdentityId
 
-class StubLoginIdentity(
+class StubUserIdentity(
   override val uid: Option[Long],
   override val identityId: IdentityId,
   override val firstName: String,
   override val lastName: String,
   override val fullName: String,
-  override val email: Option[String]) extends models.LoginIdentity(uid, identityId,
+  override val email: Option[String]) extends models.UserIdentity(uid, identityId,
   firstName, lastName, fullName, email, None, AuthenticationMethod.OAuth2, None,
   None, None, "api_token", None, None, None, None) {
 
   override def person = PersonHelper.one()
 
-  override def userAccount = {
+  override def account = {
     val role = identityId.userId
     val account = new UserAccount(Some(1L), person.id.get, role,
       None, None, None, None)
@@ -50,7 +50,7 @@ class StubLoginIdentity(
 
 }
 
-object StubLoginIdentity {
+object StubUserIdentity {
   def viewer: IdentityId = new IdentityId("viewer", "twitter")
   def editor: IdentityId = new IdentityId("editor", "twitter")
   def admin: IdentityId = new IdentityId("admin", "twitter")

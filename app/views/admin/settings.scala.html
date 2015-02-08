@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     transactionTypes: List[TransactionType],
     form: Form[String])(implicit flash: Flash,
         request: Request[Any],
@@ -7,7 +7,7 @@
 
 @import helper.CSRF
 
-@main("Settings", "admin", Some(user)) {
+@main("Settings", "admin", user) {
 
   <div class="page-header">
     <h1>Application settings</h1>

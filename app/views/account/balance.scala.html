@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, balance: org.joda.money.Money, accounts: List[AccountSummaryWithAdjustment],
+@(user: UserIdentity, balance: org.joda.money.Money, accounts: List[AccountSummaryWithAdjustment],
   canBalanceAccounts: Boolean)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -6,7 +6,7 @@
 @import models.UserRole.Role._
 @import templates.Formatters._
 
-@main("Accounts", "finance", Some(user)) {
+@main("Accounts", "finance", user) {
 
   <ul class="nav nav-tabs">
     <li><a href="@routes.BookingEntries.index()">Booking entries</a></li>

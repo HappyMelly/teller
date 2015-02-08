@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   organisation: Organisation,
   members: List[Person],
   otherPeople: List[Person],
@@ -12,7 +12,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(organisation.name + " - Organization", "orgs", Some(user)) {
+@main(organisation.name + " - Organization", "orgs", user) {
 
   <div class="col-md-3 info">
     <div class="page-header">
@@ -111,7 +111,7 @@
         <p>
           <strong>Financial account</strong>
           <br>@if(organisation.account.active){Active}else{Inactive}
-          @if(organisation.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+          @if(organisation.account.editableBy(user.account)) {
             (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
           }
         </p>

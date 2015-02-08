@@ -1,10 +1,10 @@
-@(user: securesocial.core.Identity, accounts: List[AccountSummaryWithBalance])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: UserIdentity, accounts: List[AccountSummaryWithBalance])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import templates.Formatters._
 
-@main("Accounts", "finance", Some(user)) {
+@main("Accounts", "finance", user) {
 
   <ul class="nav nav-tabs">
     <li><a href="@routes.BookingEntries.index()">Booking entries</a></li>

@@ -122,7 +122,7 @@ trait People extends Controller with Security with Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(request: SecuredRequest[_]) = {
+  def personForm(user: UserIdentity) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
@@ -141,9 +141,9 @@ trait People extends Controller with Security with Services {
       "active" -> ignored(true),
       "dateStamp" -> mapping(
         "created" -> ignored(DateTime.now()),
-        "createdBy" -> ignored(request.user.fullName),
+        "createdBy" -> ignored(user.fullName),
         "updated" -> ignored(DateTime.now()),
-        "updatedBy" -> ignored(request.user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
+        "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
           webSite, blog, active, dateStamp) ⇒
           {
@@ -167,14 +167,14 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           form ⇒ BadRequest("invalid form data"),
           active ⇒ {
             Person.activate(id, active)
-            val activity = Activity.insert(request.user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
+            val activity = Activity.insert(user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
             Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
@@ -186,15 +186,15 @@ trait People extends Controller with Security with Services {
    * Render a Create page
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.person.form(request.user, None, personForm(request)))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.person.form(user, None, personForm(user)))
   }
 
   /**
    * Assign a person to an organisation
    */
   def addMembership() = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
 
@@ -206,7 +206,7 @@ trait People extends Controller with Security with Services {
               organisationService.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
                 val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the person or organisation details page.
                 val action = if (page == "person") routes.People.details(personId).url + "#organizations"
@@ -221,15 +221,15 @@ trait People extends Controller with Security with Services {
    * Create form submits to this action.
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
-      personForm(request).bindFromRequest.fold(
+      personForm(user).bindFromRequest.fold(
         formWithErrors ⇒ {
-          BadRequest(views.html.person.form(request.user, None, formWithErrors))
+          BadRequest(views.html.person.form(user, None, formWithErrors))
         },
         person ⇒ {
           val updatedPerson = person.insert
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
           Redirect(routes.People.index()).flashing("success" -> activity.toString)
         })
   }
@@ -240,14 +240,14 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
         if (!person.deletable) {
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
           Person.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, person.fullName)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, person.fullName)
           Redirect(routes.People.index()).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
@@ -260,21 +260,26 @@ trait People extends Controller with Security with Services {
    * @param personId Person identifier
    * @param organisationId Org identifier
    */
-  def deleteMembership(page: String, personId: Long, organisationId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+  def deleteMembership(page: String,
+    personId: Long,
+    organisationId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      personService.find(personId).map { person ⇒
-        organisationService.find(organisationId).map { organisation ⇒
-          person.deleteMembership(organisationId)
-          val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        personService.find(personId).map { person ⇒
+          organisationService.find(organisationId).map { organisation ⇒
+            person.deleteMembership(organisationId)
+            val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
-          // Redirect to the page we came from - either the person or organisation details page.
-          val action = if (page == "person") routes.People.details(personId).url + "#organizations"
-          else routes.Organisations.details(organisationId).url
-          Redirect(action).flashing("success" -> activity.toString)
-        }
-      }.flatten.getOrElse(NotFound)
+            // Redirect to the page we came from - either the person or organisation details page.
+            val action = if (page == "person")
+              routes.People.details(personId).url + "#organizations"
+            else
+              routes.Organisations.details(organisationId).url
+            Redirect(action).flashing("success" -> activity.toString)
+          }
+        }.flatten.getOrElse(NotFound)
   }
 
   /**
@@ -283,7 +288,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
         val memberships = person.memberships
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
@@ -293,7 +298,7 @@ trait People extends Controller with Security with Services {
         val contributions = contributionService.contributions(id, isPerson = true)
         val duplicated = userAccountService.findDuplicateIdentity(person)
 
-        Ok(views.html.person.details(request.user, person,
+        Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
           contributions,
           licenses, accountRole, duplicated))
@@ -309,10 +314,10 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.person.form(request.user, Some(id), personForm(request).fill(person)))
+        Ok(views.html.person.form(user, Some(id), personForm(user).fill(person)))
       }.getOrElse(NotFound)
   }
 
@@ -322,16 +327,16 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def update(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
-      personForm(request).bindFromRequest.fold(
-        formWithErrors ⇒ BadRequest(views.html.person.form(request.user, Some(id), formWithErrors)),
+      personForm(user).bindFromRequest.fold(
+        formWithErrors ⇒ BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
         person ⇒ {
           val updatedPerson = person.copy(id = Some(id))
           updatedPerson.socialProfile_=(person.socialProfile)
           updatedPerson.address_=(person.address)
           updatedPerson.update
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, person.fullName)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, person.fullName)
           Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
         })
   }
@@ -342,9 +347,9 @@ trait People extends Controller with Security with Services {
    * @return
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
-      Ok(views.html.person.index(request.user, people))
+      Ok(views.html.person.index(user, people))
   }
 
   /**
@@ -353,7 +358,7 @@ trait People extends Controller with Security with Services {
    * @param id Person identifier
    */
   def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val encoding = "ISO-8859-1"
       personService.find(id).map { person ⇒
@@ -367,7 +372,7 @@ trait People extends Controller with Security with Services {
           S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
             person.copy(signature = true).update
             Cache.remove(Person.cacheId(id))
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
             Redirect(route).flashing("success" -> activity.toString)
           }.recover {
             case S3Exception(status, code, message, originalXml) ⇒
@@ -385,14 +390,14 @@ trait People extends Controller with Security with Services {
    * @param personId Person identifier
    */
   def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       personService.find(personId.toLong).map { person ⇒
         if (person.signature) {
           S3Bucket.remove(Person.fullFileName(personId))
           Cache.remove(Person.cacheId(personId))
         }
         person.copy(signature = false).update
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted,
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted,
           "signature from the person " + person.fullName)
         val route = routes.People.details(personId).url + "#licenses"
         Redirect(route).flashing("success" -> activity.toString)

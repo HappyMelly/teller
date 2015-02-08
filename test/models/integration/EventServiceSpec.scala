@@ -22,15 +22,15 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package integration
+package models.integration
 
-import helpers.{ PersonHelper, BrandHelper, EventHelper }
+import _root_.integration.PlayAppSpec
+import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.service.EventService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
-import org.specs2.matcher.DataTables
-import stubs.{ FakeServices, FakeBrandService }
+import stubs.{ FakeBrandService, FakeServices }
 
 class EventServiceSpec extends PlayAppSpec {
 
@@ -89,13 +89,13 @@ class EventServiceSpec extends PlayAppSpec {
         (events.exists(_.title == "five") must beTrue) and
         (events.exists(_.title == "six") must beFalse)
     }
-    "return 2 unconfirmed past events for brand TEST" in {
+    "return 1 unconfirmed past events for brand TEST" in {
       val events = service.findByParameters(brandCode = Some("TEST"),
         future = Some(false),
         confirmed = Some(false))
-      (events.length mustEqual 2) and
+      (events.length mustEqual 1) and
         (events.exists(_.title == "two") must beTrue) and
-        (events.exists(_.title == "three") must beTrue)
+        (events.exists(_.title == "three") must beFalse)
     }
     "return 1 event in DE" in {
       val events = service.findByParameters(brandCode = None, country = Some("DE"))

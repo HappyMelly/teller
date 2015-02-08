@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     member: Option[Member],
     form: Form[Member])(implicit flash: Flash,
         request: Request[Any],
@@ -9,7 +9,7 @@
 @import views.ViewHelpers._
 
 @defining(if (form.value.nonEmpty && member.nonEmpty) { true } else { false }) { edit: Boolean =>
-  @main("Member", "members", Some(user)) {
+  @main("Member", "members", user) {
     @if(form.hasErrors) {
         @html.error()
     }

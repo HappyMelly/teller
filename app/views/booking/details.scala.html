@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity, booking: BookingEntry, currentUser: UserAccount,
+@(user: UserIdentity, booking: BookingEntry, currentUser: UserAccount,
   attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any], flash: Flash,
   handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 @import scala.math.BigDecimal.RoundingMode
@@ -10,7 +10,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(booking.summary + " - Booking", "finance", Some(user)) {
+@main(booking.summary + " - Booking", "finance", user) {
 
   <div class="page-header">
     <h1>

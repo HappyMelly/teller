@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.LoginIdentity
+import models.UserIdentity
 import play.api.db.slick.Config.driver.simple._
 import scala.language.implicitConversions
 import securesocial.core.{ IdentityId, OAuth2Info, OAuth1Info, AuthenticationMethod }
@@ -32,7 +32,7 @@ import securesocial.core.{ IdentityId, OAuth2Info, OAuth1Info, AuthenticationMet
 /**
  * `LoginIdentity` database table mapping.
  */
-private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENTITY") {
+private[models] object UserIdentities extends Table[UserIdentity]("LOGIN_IDENTITY") {
 
   implicit def string2AuthenticationMethod: TypeMapper[AuthenticationMethod] = MappedTypeMapper.base[AuthenticationMethod, String](
     authenticationMethod ⇒ authenticationMethod.method,
@@ -80,8 +80,8 @@ private[models] object LoginIdentities extends Table[LoginIdentity]("LOGIN_IDENT
   def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~
     secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ apiToken ~ twitterHandle ~ facebookUrl ~
     googlePlusUrl ~ linkedInUrl <> (
-      u ⇒ LoginIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17, u._18, u._19, u._20),
-      (u: LoginIdentity) ⇒ {
+      u ⇒ UserIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17, u._18, u._19, u._20),
+      (u: UserIdentity) ⇒ {
         Some((u.uid, u.identityId.userId, u.identityId.providerId, u.firstName, u.lastName, u.fullName, u.email,
           u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret),
           u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn),

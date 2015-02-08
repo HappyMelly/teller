@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   events: List[Event],
   evaluations: List[(Event, Person, Evaluation)],
   activityStream: Option[List[Activity]])(implicit flash: Flash,
@@ -10,7 +10,7 @@
 @import models.UserRole.Role._
 @import templates.Formatters._
 
-@main("Home", "", Some(user)) {
+@main("Home", "", user) {
   @if(events.length > 0) {
     <div class="col-md-10">
       <h3>Upcoming events</h3>

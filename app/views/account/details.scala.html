@@ -1,11 +1,11 @@
-@(user: securesocial.core.Identity, account: Account, currencyForm:Form[org.joda.money.CurrencyUnit])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(user: UserIdentity, account: Account, currencyForm:Form[org.joda.money.CurrencyUnit])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import scala.collection.JavaConverters._
 @import org.joda.money.CurrencyUnit
 @import helper.CSRF
 
 
-@main("Account details", "finance", Some(user)) {
+@main("Account details", "finance", user) {
   <div class="col-md-8">
     <header>
       <h1>Account for @account.accountHolder.name </h1>

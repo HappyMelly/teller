@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     code: Option[String],
     form: Form[Brand])(implicit flash: Flash,
         request: Request[Any],
@@ -10,7 +10,7 @@
     @import models.Person
 
     @defining(form.value.map(brand => "Brand %s".format(brand.name)).getOrElse("Add brand")) { name =>
-        @main("Brand", "brands", Some(user)) {
+        @main("Brand", "brands", user) {
             @if(form.hasErrors) {
                 @html.error()
             }

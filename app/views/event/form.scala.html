@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   id: Option[Long],
   brands: List[Brand],
   currentUserId: Long,
@@ -22,7 +22,7 @@
 }
 
 @defining(form.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
-  @main("Events", "events", Some(user)) {
+  @main("Events", "events", user) {
     <div id="error">
       @if(form.hasErrors) {
         @html.error()

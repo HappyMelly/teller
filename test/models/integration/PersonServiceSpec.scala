@@ -22,74 +22,74 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package integration
+package models.integration
 
-import helpers.OrganisationHelper
+import helpers.PersonHelper
+import integration.PlayAppSpec
 import models.Member
-import models.service.OrganisationService
+import models.service.PersonService
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
 
-class OrganisationServiceSpec extends PlayAppSpec with DataTables {
+class PersonServiceSpec extends PlayAppSpec with DataTables {
   def setupDb(): Unit = {
-    addOrgs()
+    addPeople()
     add()
   }
   def cleanupDb() {}
 
   "Method findNonMembers" should {
     "return 4 non members" in {
-      val orgs = OrganisationService.get.findNonMembers
-      orgs.length must_== 4
-      orgs.exists(_.id == Some(3L)) must_== true
-      orgs.exists(_.id == Some(4L)) must_== true
-      orgs.exists(_.id == Some(5L)) must_== true
-      orgs.exists(_.id == Some(6L)) must_== true
+      val people = PersonService.get.findNonMembers
+      people.length must_== 4
+      people.exists(_.id == Some(3L)) must_== true
+      people.exists(_.id == Some(4L)) must_== true
+      people.exists(_.id == Some(5L)) must_== true
+      people.exists(_.id == Some(6L)) must_== true
     }
 
     "return 4 non members" in {
-      (new Member(None, 3L, person = true, funder = true,
+      (new Member(None, 3L, person = false, funder = true,
         Money.of(EUR, 100), LocalDate.now(), existingObject = false,
         DateTime.now(), 1L, DateTime.now(), 1L)).insert
-      val orgs = OrganisationService.get.findNonMembers
+      val people = PersonService.get.findNonMembers
 
-      orgs.length must_== 4
-      orgs.exists(_.id == Some(3L)) must_== true
-      orgs.exists(_.id == Some(4L)) must_== true
-      orgs.exists(_.id == Some(5L)) must_== true
-      orgs.exists(_.id == Some(6L)) must_== true
+      people.length must_== 4
+      people.exists(_.id == Some(3L)) must_== true
+      people.exists(_.id == Some(4L)) must_== true
+      people.exists(_.id == Some(5L)) must_== true
+      people.exists(_.id == Some(6L)) must_== true
     }
   }
 
   "Method member" should {
-    "return None if org is not a member" in {
-      val r = OrganisationService.get.member(3L)
-      r must_== None
+    "return None if person is not a member" in {
+      val r = PersonService.get.member(3L)
+      r.nonEmpty must_== false
     }
-    "return member data if org is a member" in {
-      OrganisationService.get.member(1L) map { o ⇒
-        o.person must_== false
-        o.funder must_== false
+    "return member data if person is a member" in {
+      PersonService.get.member(1L) map { m ⇒
+        m.person must_== true
+        m.funder must_== false
+        m.createdBy must_== 1L
       } getOrElse ko
     }
   }
 
-  private def addOrgs() = {
+  private def addPeople() = {
     Seq(
-      (Some(1L), "First org", "DE"),
-      (Some(2L), "Second org", "DE"),
-      (Some(3L), "Third org", "DE"),
-      (Some(4L), "Fourth org", "DE"),
-      (Some(5L), "Firth org", "DE"),
-      (Some(6L), "Sixth org", "DE")).foreach {
-        case (id, name, country) ⇒
-          val org = OrganisationHelper.make(
-            id = id,
-            name = name,
-            countryCode = country)
-          org.insert
+      (Some(1L), "First", "Tester"),
+      (Some(2L), "Second", "Tester"),
+      (Some(3L), "Third", "Tester"),
+      (Some(4L), "Fourth", "Tester"),
+      (Some(5L), "Firth", "Tester"),
+      (Some(6L), "Sixth", "Tester")).foreach {
+        case (id, firstName, lastName) ⇒
+          val person = PersonHelper.make(id = id, firstName = firstName,
+            lastName = lastName)
+          person.insert
       }
   }
   private def add() = {

@@ -42,28 +42,28 @@ object Administration extends Controller with Security {
    * Application settings page.
    */
   def settings = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.admin.settings(request.user, TransactionType.findAll, transactionTypeForm))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.admin.settings(user, TransactionType.findAll, transactionTypeForm))
   }
 
   /**
    * Adds a new transaction type and redirects to the settings page.
    */
   def createTransactionType = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm = transactionTypeForm.bindFromRequest
       boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.admin.settings(request.user, TransactionType.findAll, formWithErrors)),
+        formWithErrors ⇒ BadRequest(views.html.admin.settings(user, TransactionType.findAll, formWithErrors)),
         value ⇒ {
           val transactionType = value.trim
           if (TransactionType.exists(transactionType)) {
             val form = boundForm.withError("name", "constraint.transactionType.exists")
-            BadRequest(views.html.admin.settings(request.user, TransactionType.findAll, form))
+            BadRequest(views.html.admin.settings(user, TransactionType.findAll, form))
           } else {
             TransactionType.insert(transactionType)
             val activityObject = Messages("models.TransactionType.name", transactionType)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
           }
         })
@@ -73,11 +73,11 @@ object Administration extends Controller with Security {
    * Deletes a transaction type and redirects to the settings page.
    */
   def deleteTransactionType(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       TransactionType.find(id).map { transactionType ⇒
         TransactionType.delete(id)
         val activityObject = Messages("models.TransactionType.name", transactionType.name)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
         Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

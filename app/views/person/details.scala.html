@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
@@ -23,7 +23,7 @@
         </label>
     }
 
-    @main(person.fullName + " - Person", "people", Some(user)) {
+    @main(person.fullName + " - Person", "people", user) {
 
       <div class="col-md-3 info">
         <div class="page-header">
@@ -226,7 +226,7 @@
                           <p>
                               <strong>Financial account</strong>
                               <br>@if(person.account.active) {Active} else {Inactive}
-                              @if(person.account.editableBy(user.asInstanceOf[LoginIdentity].userAccount)) {
+                              @if(person.account.editableBy(user.account)) {
                                   (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>)</p>
                           }
                           <p><strong>Account history</strong>

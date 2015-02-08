@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
         account: Option[Account],
         entries: List[(BookingEntrySummary, Option[org.joda.money.Money])],
         from: Option[org.joda.time.LocalDate] = None,
@@ -9,7 +9,7 @@
     @import be.objectify.deadbolt.core.utils.TemplateUtils._
     @import templates.Formatters._
 
-    @main("Booking entries", "finance", Some(user)) {
+    @main("Booking entries", "finance", user) {
 
         <ul class="nav nav-tabs">
             <li class="active"><a href="@routes.BookingEntries.index()">Booking entries</a></li>

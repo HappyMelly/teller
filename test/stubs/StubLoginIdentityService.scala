@@ -31,14 +31,14 @@ class StubLoginIdentityService(application: Application)
 
   override def find(id: IdentityId) = {
     val identityId = id
-    val identity = new StubLoginIdentity(Some(123213L), identityId,
+    val identity = new StubUserIdentity(Some(123213L), identityId,
       "Sergey", "Kotlov", "Sergey Kotlov", None)
     Some(identity)
   }
 
   override def save(user: Identity) = {
     val identityId = new IdentityId("123", "twitter")
-    new StubLoginIdentity(Some(123213L), identityId,
+    new StubUserIdentity(Some(123213L), identityId,
       "Sergey", "kotlov", "Sergey Kotlov", None)
   }
 

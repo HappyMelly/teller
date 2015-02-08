@@ -34,8 +34,8 @@ import models._
 object CertificatesApi extends Controller with ApiAuthentication {
 
   /** Generate new certificate through API call **/
-  def create(id: Long) = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
-    val approver = identity.userAccount.person.get
+  def create(id: Long) = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
+    val approver = identity.account.person.get
     Evaluation.find(id).map {
       evaluation ⇒
         val brand = Brand.find(evaluation.event.brandCode).get

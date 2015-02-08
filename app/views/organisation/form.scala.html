@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   id: Option[Long],
   form: Form[Organisation])(implicit flash: Flash,
         request: Request[Any],
@@ -9,7 +9,7 @@
 @import views.ViewHelpers._
 
 @defining(form.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { name =>
-  @main("Organizations", "orgs", Some(user)) {
+  @main("Organizations", "orgs", user) {
     @if(form.hasErrors) {
       @html.error()
     }

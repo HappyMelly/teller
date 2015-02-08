@@ -36,7 +36,7 @@ import play.api.i18n.Messages
 object Contributions extends Controller with Security {
 
   /** HTML form mapping for creating and editing. */
-  def contributionForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def contributionForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "contributorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "productId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
@@ -49,7 +49,7 @@ object Contributions extends Controller with Security {
    * @return
    */
   def create(page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
@@ -65,7 +65,7 @@ object Contributions extends Controller with Security {
         contribution ⇒ {
           contribution.insert
           val activityObject = Messages("activity.contribution.create", contribution.product.title, contribution.role)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -78,13 +78,13 @@ object Contributions extends Controller with Security {
    * @return
    */
   def delete(id: Long, page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Contribution.find(id).map {
         contribution ⇒
           Contribution.delete(id)
           val activityObject = Messages("activity.contribution.delete", contribution.product.title, contribution.role)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
           val route = if (page == "organisation") {
             routes.Organisations.details(contribution.contributorId).url
           } else if (page == "product") {

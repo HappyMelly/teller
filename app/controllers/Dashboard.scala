@@ -36,24 +36,24 @@ trait Dashboard extends Controller with Security with Services {
    * About page - credits.
    */
   def about = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.about(request.user.asInstanceOf[LoginIdentity]))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.about(user))
   }
 
   /**
    * API documentation page.
    */
   def api = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.api.index(request.user.asInstanceOf[LoginIdentity]))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.api.index(user))
   }
 
   /**
    * Dashboard page - logged-in home page.
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-      val account = request.user.asInstanceOf[LoginIdentity].userAccount
+    implicit handler ⇒ implicit user ⇒
+      val account = user.account
       val activity = if (account.editor)
         Some(Activity.findAll)
       else
@@ -70,7 +70,7 @@ trait Dashboard extends Controller with Security with Services {
         findByEvents(pastEvents.map(_.id.get)).
         sortBy(_._3.created.toString())(Ordering[String].reverse).
         slice(0, 10)
-      Ok(views.html.dashboard(request.user,
+      Ok(views.html.dashboard(user,
         upcomingEvents,
         evaluations,
         activity))
@@ -81,8 +81,8 @@ trait Dashboard extends Controller with Security with Services {
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
   def profile = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
-      val currentUser = request.user.asInstanceOf[LoginIdentity].person
+    implicit handler ⇒ implicit user ⇒
+      val currentUser = user.person
       Redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
 

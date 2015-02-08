@@ -74,11 +74,11 @@ object Licenses extends Controller with Security {
    * @return
    */
   def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(personId).map { person ⇒
         val form = licenseForm.fill(License.blank(personId))
-        Ok(views.html.license.form(request.user, None, form, person))
+        Ok(views.html.license.form(user, None, form, person))
       } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
@@ -90,17 +90,17 @@ object Licenses extends Controller with Security {
    * @param personId Person identifier
    */
   def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(personId).map { person ⇒
         licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.license.form(request.user, None, form, person)),
+          form ⇒ BadRequest(views.html.license.form(user, None, form, person)),
           license ⇒ {
             val newLicense = License.insert(license.copy(licenseeId = personId))
             val brand = Brand.find(newLicense.brandId).get
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             val route = routes.People.details(personId).url + "#licenses"
             Redirect(route).flashing("success" -> activity.toString)
           })
@@ -115,12 +115,12 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
         val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#licenses"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -132,16 +132,16 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.findWithBrandAndLicensee(id).map { view ⇒
         licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.license.form(request.user, None, form, view.licensee)),
+          form ⇒ BadRequest(views.html.license.form(user, None, form, view.licensee)),
           editedLicense ⇒ {
             License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
 
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, activityObject)
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
             val route = routes.People.details(view.licensee.id.get).url + "#licenses"
             Redirect(route).flashing("success" -> activity.toString)
           })
@@ -156,11 +156,11 @@ object Licenses extends Controller with Security {
    * @param id License identifier
    */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       License.find(id).map { license ⇒
         PersonService.get.find(license.licenseeId).map { licensee ⇒
-          Ok(views.html.license.form(request.user, license.id, licenseForm.fill(license), licensee))
+          Ok(views.html.license.form(user, license.id, licenseForm.fill(license), licensee))
         }.getOrElse {
           throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
         }

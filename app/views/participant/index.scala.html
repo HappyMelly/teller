@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
         brands: List[Brand],
         brandCode: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
@@ -6,7 +6,7 @@
     @import be.objectify.deadbolt.scala.views.html._
     @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-    @main("Participants", "participants", Some(user)) {
+    @main("Participants", "participants", user) {
 
         @html.evaluationActions()
         @html.indexPageHeader("Participants") {

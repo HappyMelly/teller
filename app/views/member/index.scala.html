@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   members: List[Member],
   fee: Option[org.joda.money.Money],
   totalFee: org.joda.money.Money)(implicit request: Request[Any],
@@ -9,7 +9,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main("Members", "members", Some(user)) {
+@main("Members", "members", user) {
 
   <div class="page-header">
     <h2>Total Fee <span class="label label-success">@totalFee.toString</span>

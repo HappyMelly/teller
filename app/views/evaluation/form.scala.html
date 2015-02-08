@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     evaluation: Option[Evaluation],
     form: Form[Evaluation],
     events: List[Event],
@@ -14,7 +14,7 @@
 @import views.Evaluations
 @import views.ViewHelpers._
 
-@main("Evaluation", "participants", Some(user)) {
+@main("Evaluation", "participants", user) {
 
     @defining(evaluation.map(evaluation => "Evaluation for %s".format(evaluation.participant.fullName)).getOrElse("Add evaluation")) { title =>
         @if(form.hasErrors) {

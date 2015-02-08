@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     id: Option[Long],
     form: Form[Person])(implicit flash: Flash,
     request: Request[Any],
@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@main("People", "members", Some(user)) {
+@main("People", "members", user) {
   @if(form.hasErrors) {
     @html.error()
   }

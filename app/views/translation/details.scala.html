@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   translation: Translation,
   en: Translation)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
@@ -7,7 +7,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 
 @defining("Translation for %s language".format(Languages.all.get(translation.language).get)) { title =>
-  @main(title, "admin", Some(user)) {
+  @main(title, "admin", user) {
 
     <div class="page-header">
       <h1>

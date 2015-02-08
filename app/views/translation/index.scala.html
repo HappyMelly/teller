@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
     translations: Map[String, Translation])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
@@ -6,7 +6,7 @@
 
     @import views.Languages
 
-@main("Translations", "admin", Some(user)) {
+@main("Translations", "admin", user) {
 
 <div class="page-header">
   <h1>Evaluation translations</h1>

@@ -68,7 +68,7 @@ trait Products extends Controller with Security with Services {
   val categoryMapping = of[ProductCategory.Value]
 
   /** HTML form mapping for creating and editing. */
-  def productForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def productForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "title" -> text.verifying(nonEmpty),
     "subtitle" -> optional(text),
@@ -80,34 +80,34 @@ trait Products extends Controller with Security with Services {
     "category" -> optional(categoryMapping),
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
     "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(request.user.fullName),
+    "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(request.user.fullName))(Product.apply)(Product.unapply))
+    "updatedBy" -> ignored(user.fullName))(Product.apply)(Product.unapply))
 
   /** Show all products **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val products = productService.findAll
-      Ok(views.html.product.index(request.user, products))
+      Ok(views.html.product.index(user, products))
   }
 
   /** Add page **/
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
-      Ok(views.html.product.form(request.user, None, None, productForm))
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.product.form(user, None, None, productForm))
   }
 
   /** Add form submits to this action **/
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val form: Form[Product] = productForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, None, None, formWithErrors))),
+        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, None, None, formWithErrors))),
         product ⇒ {
           if (Product.exists(product.title))
-            Future.successful(BadRequest(views.html.product.form(request.user, None, None,
+            Future.successful(BadRequest(views.html.product.form(user, None, None,
               form.withError("title", "constraint.product.title.exists", product.title))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -117,15 +117,15 @@ trait Products extends Controller with Security with Services {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 product.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
                 Redirect(routes.Products.index()).flashing("success" -> activity.toString)
               }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(request.user, None, None,
+                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(user, None, None,
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
               product.insert
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, product.title)
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
               Future.successful(Redirect(routes.Products.index()).flashing("success" -> activity.toString))
             }
           }
@@ -135,8 +135,8 @@ trait Products extends Controller with Security with Services {
   /**
    * Assign the product to a brand
    */
-  def addBrand = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+  def addBrand() = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
 
@@ -148,7 +148,7 @@ trait Products extends Controller with Security with Services {
               Brand.find(brandId).map { brand ⇒
                 product.addBrand(brandId)
                 val activityObject = Messages("activity.relationship.create", product.title, brand.name)
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the product or brand details page.
                 val action = if (page == "product") routes.Products.details(productId)
@@ -164,13 +164,13 @@ trait Products extends Controller with Security with Services {
    * Unassign the product from the brand
    */
   def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(productId).map { product ⇒
         Brand.find(brandId).map { brand ⇒
           product.deleteBrand(brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the product or brand details page.
           val action = if (page == "product") routes.Products.details(productId)
@@ -182,7 +182,7 @@ trait Products extends Controller with Security with Services {
 
   /** Delete a product **/
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒
@@ -191,28 +191,28 @@ trait Products extends Controller with Security with Services {
             Cache.remove(Product.cacheId(product.id.get))
           }
           Product.delete(id)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, product.title)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, product.title)
           Redirect(routes.Products.index).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
   /** Delete picture form submits to this action **/
   def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Product.find(id).map { product ⇒
         product.picture.map { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
         }
         product.copy(picture = None).update
-        val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
         Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
   /** Details page **/
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒
@@ -223,34 +223,34 @@ trait Products extends Controller with Security with Services {
           val people = Person.findAll
           val organisations = Organisation.findAll
 
-          Ok(views.html.product.details(request.user, product, derivatives, parent, brands, contributors, people, organisations))
+          Ok(views.html.product.details(user, product, derivatives, parent, brands, contributors, people, organisations))
       }.getOrElse(NotFound)
 
   }
 
   /** Edit page **/
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map {
         product ⇒
-          Ok(views.html.product.form(request.user, Some(id), Some(product.title), productForm.fill(product)))
+          Ok(views.html.product.form(user, Some(id), Some(product.title), productForm.fill(product)))
       }.getOrElse(NotFound)
 
   }
 
   /** Edit form submits to this action **/
   def update(id: Long) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Product.find(id).map { existingProduct ⇒
         val form: Form[Product] = productForm.bindFromRequest
         val title = Some(existingProduct.title)
         form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title, form))),
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, Some(id), title, form))),
           product ⇒ {
             if (Product.exists(product.title, id))
-              Future.successful(BadRequest(views.html.product.form(request.user, Some(id), title,
+              Future.successful(BadRequest(views.html.product.form(user, Some(id), title,
                 form.withError("title", "constraint.product.title.exists", product.title))))
             else {
               request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -264,16 +264,16 @@ trait Products extends Controller with Security with Services {
                   existingProduct.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
                   Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
-                    BadRequest(views.html.product.form(request.user, Some(id), title,
+                    BadRequest(views.html.product.form(user, Some(id), title,
                       form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                 }
               }.getOrElse {
                 product.copy(id = Some(id)).copy(picture = existingProduct.picture).update
-                val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, product.title)
+                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
                 Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
               }
             }

@@ -91,12 +91,13 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   /**
    * Create a participant through API call
    */
-  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: LoginIdentity) ⇒
-    val person = identity.person
+  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
+    //@TODO this should be changed as soon as API is refactored
+    val name = "Teller API"
 
-    val testFrom = existingPersonForm(identity.userAccount).bindFromRequest()(request)
+    val testFrom = existingPersonForm(identity.account).bindFromRequest()(request)
     if (testFrom.data.contains("person_id")) {
-      val form: Form[Participant] = existingPersonForm(identity.userAccount).bindFromRequest()(request)
+      val form: Form[Participant] = existingPersonForm(identity.account).bindFromRequest()(request)
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
@@ -109,7 +110,7 @@ trait ParticipantsApi extends ApiAuthentication with Services {
           Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })
     } else {
-      val form: Form[ParticipantData] = participantForm(identity.userAccount, person.fullName).bindFromRequest()(request)
+      val form: Form[ParticipantData] = participantForm(identity.account, name).bindFromRequest()(request)
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))

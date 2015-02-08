@@ -37,7 +37,7 @@ import play.api.libs.json.{ JsValue, Writes, Json }
 object EventTypes extends Controller with Security {
 
   /** HTML form mapping for creating and editing. */
-  def eventTypeForm(implicit request: SecuredRequest[_]) = Form(mapping(
+  def eventTypeForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),
@@ -58,7 +58,7 @@ object EventTypes extends Controller with Security {
    * @param brandCode Brand code
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
         Ok(Json.toJson(EventType.findByBrand(brand.brand.id.get)))
       }.getOrElse(NotFound("Unknown brand"))
@@ -68,7 +68,7 @@ object EventTypes extends Controller with Security {
    * Creates a new event type
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
       val brand = Brand.find(boundForm.data("brandId").toLong).get
@@ -78,7 +78,7 @@ object EventTypes extends Controller with Security {
         eventType ⇒ {
           eventType.insert
           val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -89,7 +89,7 @@ object EventTypes extends Controller with Security {
    * @param id Type identifier
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       EventType.find(id).map { eventType ⇒
         val brand = eventType.brand
@@ -102,7 +102,7 @@ object EventTypes extends Controller with Security {
         } else {
           EventType.delete(id)
           val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
           Redirect(route).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)

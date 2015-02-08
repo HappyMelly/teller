@@ -68,11 +68,11 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    */
   def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
     implicit request ⇒
-      implicit handler ⇒
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+      implicit handler ⇒ implicit user ⇒
+        val account = user.account
         val events = findEvents(account)
         val en = Translation.find("EN").get
-        Ok(views.html.evaluation.form(request.user, None, evaluationForm(request.user.fullName), events, eventId, participantId, en))
+        Ok(views.html.evaluation.form(user, None, evaluationForm(user.fullName), events, eventId, participantId, en))
   }
 
   /**
@@ -80,20 +80,20 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
-      val form: Form[Evaluation] = evaluationForm(request.user.fullName).bindFromRequest
+      val form: Form[Evaluation] = evaluationForm(user.fullName).bindFromRequest
       form.fold(
         formWithErrors ⇒ {
-          val account = request.user.asInstanceOf[LoginIdentity].userAccount
+          val account = user.account
           val events = findEvents(account)
           val en = Translation.find("EN").get
-          BadRequest(views.html.evaluation.form(request.user, None, formWithErrors, events, None, None, en))
+          BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
           evaluation.create
 
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Created, "new evaluation")
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new evaluation")
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
   }
@@ -105,12 +105,12 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map {
         evaluation ⇒
           evaluation.delete()
-          val activity = Activity.insert(request.user.fullName, Activity.Predicate.Deleted, "evaluation")
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "evaluation")
           val route = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
@@ -125,7 +125,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def move(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
         val form = Form(single(
@@ -135,7 +135,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
           eventId ⇒ {
             if (eventId == evaluation.eventId) {
-              val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+              val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
               Ok(Json.obj("success" -> activity.toString))
             } else {
               EventService.get.find(eventId).map { event ⇒
@@ -150,7 +150,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
                     oldParticipant.copy(eventId = eventId).update
                   }
                   evaluation.copy(eventId = eventId).update
-                  val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
                   Ok(Json.obj("success" -> activity.toString))
                 }.getOrElse(NotFound)
               }.getOrElse(NotFound)
@@ -166,12 +166,12 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
         val brand = Brand.find(evaluation.event.brandCode).get
         val en = Translation.find("EN").get
-        Ok(views.html.evaluation.details(request.user, evaluation, en, brand.brand))
+        Ok(views.html.evaluation.details(user, evaluation, en, brand.brand))
       }.getOrElse(NotFound)
 
   }
@@ -183,15 +183,15 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
-        val account = request.user.asInstanceOf[LoginIdentity].userAccount
+        val account = user.account
         val events = findEvents(account)
         val en = Translation.find("EN").get
 
-        Ok(views.html.evaluation.form(request.user, Some(evaluation),
-          evaluationForm(request.user.fullName).fill(evaluation), events, None, None, en))
+        Ok(views.html.evaluation.form(user, Some(evaluation),
+          evaluationForm(user.fullName).fill(evaluation), events, None, None, en))
       }.getOrElse(NotFound)
 
   }
@@ -203,21 +203,21 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @return
    */
   def update(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm(request.user.fullName, edit = true).bindFromRequest
+        val form: Form[Evaluation] = evaluationForm(user.fullName, edit = true).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
-            val account = request.user.asInstanceOf[LoginIdentity].userAccount
+            val account = user.account
             val events = findEvents(account)
             val en = Translation.find("EN").get
 
-            BadRequest(views.html.evaluation.form(request.user, Some(existingEvaluation), form, events, None, None, en))
+            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
             evaluation.copy(id = Some(id)).update
-            val activity = Activity.insert(request.user.fullName, Activity.Predicate.Updated, "evaluation")
+            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
             Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
@@ -230,13 +230,13 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @param ref Identifier of a page where a user should be redirected
    */
   def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Evaluation.find(id).map { ev ⇒
 
-        val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val approver = user.account.person.get
         ev.approve(approver)
 
-        val activity = Activity.create(request.user.fullName,
+        val activity = Activity.create(user.fullName,
           Activity.Predicate.Approved,
           ev.participant.fullName)
 
@@ -256,14 +256,14 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @param ref Identifier of a page where a user should be redirected
    */
   def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒
+    implicit handler ⇒ implicit user ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
         existingEvaluation.reject()
-        val activity = Activity.create(request.user.fullName,
+        val activity = Activity.create(user.fullName,
           Activity.Predicate.Rejected,
           existingEvaluation.participant.fullName)
 
-        val facilitator = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
+        val facilitator = user.account.person.get
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
         val subject = s"Your ${brand.brand.name} certificate"

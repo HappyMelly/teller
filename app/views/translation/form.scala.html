@@ -1,4 +1,4 @@
-@(user: securesocial.core.Identity,
+@(user: UserIdentity,
   translation: Option[Translation],
   language: String,
   en: Translation,
@@ -11,7 +11,7 @@
 @import views.Languages
 @import views.ViewHelpers._
 
-@main("Translation", "admin", Some(user)) {
+@main("Translation", "admin", user) {
 
   @defining(Languages.all.getOrElse(language, "")) { lang =>
     @defining(translation.map(translation =>

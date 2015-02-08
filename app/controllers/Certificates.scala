@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ LoginIdentity, Brand, Certificate, Evaluation }
+import models.{ UserIdentity$, Brand, Certificate, Evaluation }
 import play.api.mvc._
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
@@ -39,22 +39,24 @@ object Certificates extends Controller with Security {
    * @param id Certificate identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def create(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒
+  def create(id: Long,
+    ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map {
-        evaluation ⇒
-          val approver = request.user.asInstanceOf[LoginIdentity].userAccount.person.get
-          val brand = Brand.find(evaluation.event.brandCode).get
-          val certificate = new Certificate(evaluation, renew = true)
-          certificate.generateAndSend(brand, approver)
-          val route = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
-            case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.id.get).url
-            case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
-          }
-          Redirect(route).flashing("success" -> "Certificate was generated")
-      }.getOrElse(NotFound)
+        Evaluation.find(id).map {
+          evaluation ⇒
+            val approver = user.account.person.get
+            val brand = Brand.find(evaluation.event.brandCode).get
+            val certificate = new Certificate(evaluation, renew = true)
+            certificate.generateAndSend(brand, approver)
+            val route = ref match {
+              case Some("index") ⇒ routes.Participants.index().url
+              case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.id.get).url
+              case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
+            }
+            Redirect(route).flashing("success" -> "Certificate was generated")
+        }.getOrElse(NotFound)
   }
 
   /**

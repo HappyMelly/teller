@@ -1,8 +1,8 @@
-@(user: LoginIdentity)(implicit flash: Flash,
+@(user: UserIdentity)(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler)
 
-@main("About", "admin", Some(user)) {
+@main("About", "admin", user) {
 
   <h1>About this application</h1>
 
