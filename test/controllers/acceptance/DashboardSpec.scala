@@ -22,7 +22,7 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package acceptance
+package controllers.acceptance
 
 import controllers.{ Dashboard, Security }
 import helpers.{ EvaluationHelper, PersonHelper, EventHelper }

@@ -22,15 +22,16 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package models
+package models.integration
 
+import _root_.integration.PlayAppSpec
 import helpers.PersonHelper
-import integration.PlayAppSpec
+import models.{ UserIdentity, UserAccount }
 import models.database.{ UserAccounts, UserIdentities }
 import models.service.UserIdentityService
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 import securesocial.core.{ AuthenticationMethod, IdentityId }
 
 class UserIdentityServiceSpec extends PlayAppSpec {

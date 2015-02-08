@@ -22,13 +22,14 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package integration
+package models.integration
 
-import helpers.{ PersonHelper, OrganisationHelper }
+import helpers.{ OrganisationHelper, PersonHelper }
+import integration.PlayAppSpec
 import models.Member
 import models.service.MemberService
-import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
 

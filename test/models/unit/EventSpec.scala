@@ -22,11 +22,11 @@
  * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
  * The Netherlands, 3071 PR
  */
-package unit.models
+package models.unit
 
-import helpers.{ PersonHelper, BrandHelper, EventHelper }
-import integration.PlayAppSpec
 import _root_.models.EventType
+import helpers.{ BrandHelper, EventHelper, PersonHelper }
+import integration.PlayAppSpec
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._

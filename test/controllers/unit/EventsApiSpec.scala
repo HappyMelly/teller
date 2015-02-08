@@ -22,17 +22,19 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package controllers
+package controllers.unit
 
-import helpers.{ PersonHelper, EventHelper }
-import org.specs2.mutable._
+import controllers.{ ApiAuthentication, EventsApi }
+import helpers.{ EventHelper, PersonHelper }
 import models.Event
 import org.scalamock.specs2.MockContext
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import org.specs2.mutable._
 import play.api.libs.json._
 import play.api.mvc._
-import stubs.{ StubEventService, FakeServices, FakeApiAuthentication }
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import stubs.{ FakeApiAuthentication, FakeServices, StubEventService }
+
 import scala.concurrent.Future
 
 class EventsApiSpec extends Specification {

@@ -22,25 +22,26 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package integration
+package models.integration
 
 import java.math.RoundingMode
 
-import controllers.{ Security, Members }
-import helpers.{ PersonHelper, OrganisationHelper }
-import models.service.{ PersonService, OrganisationService }
-import models.{ Person, Organisation, Member }
+import controllers.{ Members, Security }
+import helpers.{ OrganisationHelper, PersonHelper }
+import integration.PlayAppSpec
+import models.service.{ OrganisationService, PersonService }
+import models.{ Member, Organisation, Person }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.mutable.After
+import play.api.Play.current
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
-import play.api.Play.current
-import stubs.{ StubUserIdentity, FakeServices }
+import stubs.{ FakeServices, StubUserIdentity }
 
 import scala.concurrent.Future
-import scala.slick.jdbc.{ StaticQuery ⇒ Q, GetResult }
+import scala.slick.jdbc.{ GetResult, StaticQuery ⇒ Q }
 import scala.slick.session.Session
 
 class TestMembers() extends Members with Security with FakeServices
