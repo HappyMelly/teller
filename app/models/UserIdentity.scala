@@ -25,6 +25,7 @@
 package models
 
 import models.database.{ People, UserAccounts, UserIdentities }
+import models.service.UserIdentityService
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.Crypto
@@ -91,23 +92,18 @@ case class UserIdentity(uid: Option[Long],
   /**
    * Returns the `Person` associated with this identity.
    */
-  def person: Person = _person map { p ⇒ p } getOrElse {
-    val person = DB.withSession { implicit session: Session ⇒
-      (for {
-        account ← accountQuery
-        person ← People if person.id === account.personId
-      } yield person).first
-    }
-    _person = Some(person)
-    _person.get
-  }
+  def person: Person = _person.get
 
   def person_=(person: Person) = _person = Some(person)
 
   /**
    * Returns user account associated with this identity
+   *
+   * @deprecated The whole block of with retrieval of
    */
   def account: UserAccount = _account map { v ⇒ v } getOrElse {
+    //@deprecated
+    //@todo this part should be removed as soon as Teller API is refactored
     val account = DB.withSession { implicit session: Session ⇒
       accountQuery.first
     }
@@ -163,54 +159,8 @@ object UserIdentity {
     Query(UserIdentities).filter(_.apiToken === token).list.headOption
   }
 
-  def findByUid(uid: Long) = DB.withSession { implicit session: Session ⇒
-    val q = for {
-      user ← UserIdentities
-      if user.uid is uid
-    } yield user
-
-    q.firstOption
-  }
-
-  def findByUserId(identityId: IdentityId): Option[UserIdentity] = DB.withSession { implicit session: Session ⇒
-    val q = identityId.providerId match {
-      case TwitterProvider.Twitter ⇒ for {
-        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-        account ← UserAccounts if account.twitterHandle === identity.twitterHandle
-        person ← People if person.id === account.personId
-      } yield (identity, account, person)
-
-      case FacebookProvider.Facebook ⇒ for {
-        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-        account ← UserAccounts if account.facebookUrl like identity.facebookUrl
-        person ← People if person.id === account.personId
-      } yield (identity, account, person)
-
-      case GoogleProvider.Google ⇒ for {
-        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-        account ← UserAccounts if account.googlePlusUrl === identity.googlePlusUrl
-        person ← People if person.id === account.personId
-      } yield (identity, account, person)
-
-      case LinkedInProvider.LinkedIn ⇒ for {
-        identity ← UserIdentities if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-        account ← UserAccounts if account.linkedInUrl like identity.linkedInUrl
-        person ← People if person.id === account.personId
-      } yield (identity, account, person)
-    }
-    val data = q.firstOption
-    data map { d ⇒
-      val account = d._2
-      val roles = UserRole.forName(account.role)
-      account.roles_=(roles.list)
-      d._1.account_=(Some(account))
-      d._1.person_=(d._3)
-      Some(d._1)
-    } getOrElse None
-  }
-
   def save(user: UserIdentity) = DB.withSession { implicit session: Session ⇒
-    findByUserId(user.identityId) match {
+    UserIdentityService.get.findByUserId(user.identityId) match {
       case None ⇒ {
         Activity.insert(user.fullName, Activity.Predicate.SignedUp)
         val uid = UserIdentities.forInsert.insert(user)

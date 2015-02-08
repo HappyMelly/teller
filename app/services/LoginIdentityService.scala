@@ -26,6 +26,7 @@ package services
 
 import LoginIdentityService._
 import models.UserIdentity
+import models.service.UserIdentityService
 import play.api.{ Logger, Application }
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.concurrent.Execution.Implicits._
@@ -44,7 +45,8 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[UserIdentity] = UserIdentity.findByUserId(id)
+  def find(id: IdentityId): Option[UserIdentity] =
+    UserIdentityService.get.findByUserId(id)
 
   def save(user: Identity) = {
     val loginIdentity = user match {

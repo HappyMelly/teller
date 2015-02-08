@@ -64,8 +64,9 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
    * Create an evaluation through API call
    */
   def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
-    val person = identity.person
-    val form: Form[Evaluation] = evaluationForm(identity.person.fullName).bindFromRequest()(request)
+    //@TODO this should be changed as soon as API is refactored
+    val name = "Teller API"
+    val form: Form[Evaluation] = evaluationForm(name).bindFromRequest()(request)
 
     form.fold(
       formWithErrors ⇒ {
@@ -82,7 +83,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
         } else {
           val createdEvaluation = evaluation.create
           val message = "new evaluation for " + createdEvaluation.participant.fullName
-          Activity.insert(person.fullName, Activity.Predicate.Created, message)
+          Activity.insert(name, Activity.Predicate.Created, message)
           Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))
         }
       })

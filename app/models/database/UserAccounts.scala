@@ -42,7 +42,8 @@ private[models] object UserAccounts extends Table[UserAccount]("USER_ACCOUNT") {
 
   def person = foreignKey("PERSON_FK", personId, People)(_.id)
 
-  def * = id.? ~ personId ~ role ~ twitterHandle ~ facebookUrl ~ googlePlusUrl ~ linkedInUrl <> (UserAccount.apply _, UserAccount.unapply _)
+  def * = id.? ~ personId ~ role ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
+    googlePlusUrl <> (UserAccount.apply _, UserAccount.unapply _)
 
   def forInsert = * returning id
 
