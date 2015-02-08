@@ -67,7 +67,7 @@ case class BookingEntry(
   transactionTypeId: Option[Long] = None,
   attachmentKey: Option[String] = None,
 
-  created: DateTime = DateTime.now()) {
+  created: DateTime = DateTime.now()) extends ActivityRecorder {
 
   lazy val from = Account.find(fromId).get
 
@@ -86,6 +86,21 @@ case class BookingEntry(
   lazy val editable = from.active && to.active
 
   lazy val participants = from.participants ++ to.participants
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   */
+  def humanIdentifier: String = summary
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.BookingEntry
 
   /**
    * Checks if the given user has permission to edit this booking entry.

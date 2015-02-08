@@ -42,8 +42,28 @@ import scala.math.BigDecimal.RoundingMode
  * Represents a (financial) Account. An account has an `AccountHolder`, which is either a `Person`, `Organisation` or
  * the `Levy`. Accounts have a currency set upon activation and may only be deactivated when their balance is zero.
  */
-case class Account(id: Option[Long] = None, organisationId: Option[Long] = None, personId: Option[Long] = None,
-  currency: CurrencyUnit = CurrencyUnit.EUR, active: Boolean = false) {
+case class Account(id: Option[Long] = None,
+  organisationId: Option[Long] = None,
+  personId: Option[Long] = None,
+  currency: CurrencyUnit = CurrencyUnit.EUR,
+  active: Boolean = false) extends ActivityRecorder {
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = accountHolder.name
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Account
 
   /** Resolves the holder for this account **/
   def accountHolder = (organisationId, personId) match {

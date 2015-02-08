@@ -159,8 +159,23 @@ object Activity {
   }
 
   object Type extends Enumeration {
-    val Person = "person"
+    val Account = "account"
+    val BookingEntry = "bookingentry"
+    val Brand = "brand"
+    val CertificateTemplate = "certificatetmpl"
+    val Certificate = "certificate"
+    val Contribution = "contribution"
+    val Evaluation = "evaluation"
+    val Event = "event"
+    val EventType = "eventtype"
+    val License = "license"
+    val Member = "member"
     val Org = "organisation"
+    val Participant = "participant"
+    val Person = "person"
+    val Product = "product"
+    val Report = "report"
+    val Translation = "translation"
   }
 
   /**
