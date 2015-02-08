@@ -67,6 +67,10 @@ models.ProductCategory.course.label = label-success
 
 # Activity stream entries
 activity.signup = {0} signed up
+activity.connect = {0} connected {1} to {2}
+activity.disconnect = {0} disconnected {1} from {2}
+activity.sign.upload = {0} uploaded signature for {1}
+activity.sign.delete = {0} deleted signature from {1}
 activity.create = {0} added {1}
 activity.update = {0} updated {1}
 activity.delete = {0} removed {1}

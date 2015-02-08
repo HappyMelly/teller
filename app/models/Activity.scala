@@ -41,13 +41,96 @@ import play.api.i18n.Messages
  * @param predicate The action performed from the possible `Activity.Predicate` values
  * @param activityObject The name of the data the action was
  */
-case class Activity(id: Option[Long], subject: String, predicate: String, activityObject: Option[String], created: DateTime = DateTime.now()) {
+case class Activity(id: Option[Long],
+  subjectId: Long,
+  subject: String,
+  predicate: String,
+  objectType: String,
+  objectId: Long,
+  activityObject: Option[String],
+  supportiveObjectType: Option[String] = None,
+  supportiveObjectId: Option[Long] = None,
+  supportiveObject: Option[String] = None,
+  created: DateTime = DateTime.now()) {
 
   // Full description including subject (current user’s name).
-  def description = Messages("activity." + predicate, subject, activityObject.getOrElse(""))
+  def description = {
+    val who = subject + " (id = %s)".format(subjectId)
+    val what = activityObject map { a ⇒
+      "%s (id = %s) %s".format(objectType, objectId, a)
+    } getOrElse ""
+    supportiveObject map { obj ⇒
+      val whom = "%s (id = %s) %s".format(
+        supportiveObjectType.getOrElse(""),
+        supportiveObjectId.getOrElse(0),
+        obj)
+      Messages("activity." + predicate, who, what, whom)
+    } getOrElse {
+      Messages("activity." + predicate, who, what)
+    }
+  }
 
   // Short description for use in Flash messages.
   override def toString = Messages("activity." + predicate, "", activityObject.getOrElse("")).trim.capitalize
+
+  def insert: Activity = DB.withSession { implicit session: Session ⇒
+    val id = Activities.forInsert.insert(this)
+    this.copy(id = Some(id))
+  }
+}
+
+/**
+ * Class with this trait takes part in operations which should be recorded
+ */
+trait ActivityRecorder {
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String
+
+  /**
+   * Returns activity object with data from a particular object
+   * @param subject Person who does an activity
+   * @param action Name of action
+   * @return
+   */
+  def activity(subject: Person,
+    action: String,
+    supportiveObj: Option[ActivityRecorder] = None): Activity = {
+    supportiveObj map { obj ⇒
+      new Activity(None,
+        subject.id.get,
+        subject.fullName,
+        action.toString,
+        objectType,
+        identifier,
+        Some(humanIdentifier),
+        Some(obj.objectType),
+        Some(obj.identifier),
+        Some(obj.humanIdentifier))
+    } getOrElse {
+      new Activity(None,
+        subject.id.get,
+        subject.fullName,
+        action.toString,
+        objectType,
+        identifier,
+        Some(humanIdentifier))
+    }
+  }
 }
 
 /**
@@ -56,23 +139,29 @@ case class Activity(id: Option[Long], subject: String, predicate: String, activi
 object Activity {
 
   object Predicate extends Enumeration {
-    type Predicate = Value
-    val SignedUp = Value("signup")
-    val Created = Value("create")
-    val Updated = Value("update")
-    val Deleted = Value("delete")
-    val Activated = Value("activate")
-    val Deactivated = Value("deactivate")
-    val Added = Value("add")
-    val Replaced = Value("replace")
-    val BalancedAccounts = Value("balance")
-    val Confirmed = Value("confirm")
-    val Approved = Value("approve")
-    val Rejected = Value("reject")
-    val Sent = Value("send")
+    val SignedUp = "signup"
+    val Created = "create"
+    val Updated = "update"
+    val Deleted = "delete"
+    val Activated = "activate"
+    val Deactivated = "deactivate"
+    val Added = "add"
+    val Replaced = "replace"
+    val BalancedAccounts = "balance"
+    val Confirmed = "confirm"
+    val Approved = "approve"
+    val Rejected = "reject"
+    val Sent = "send"
+    val Connected = "connect"
+    val Disconnected = "disconnect"
+    val UploadedSign = "sign.upload"
+    val DeletedSign = "sign.delete"
   }
 
-  import Predicate.Predicate
+  object Type extends Enumeration {
+    val Person = "person"
+    val Org = "organisation"
+  }
 
   /**
    * Returns all activity stream entries in reverse chronological order.
@@ -92,20 +181,20 @@ object Activity {
     query.sortBy(_.created.desc).list
   }
 
-  def insert(subject: String, predicate: Predicate): Activity = {
+  def insert(subject: String, predicate: String): Activity = {
     insert(subject, predicate, None)
   }
 
-  def insert(subject: String, predicate: Predicate, activityObject: String): Activity = {
+  def insert(subject: String, predicate: String, activityObject: String): Activity = {
     insert(subject, predicate, Some(activityObject))
   }
 
   /** Returns new activity record */
   def create(
     subject: String,
-    predicate: Predicate,
+    predicate: String,
     activityObject: String): Activity = {
-    new Activity(None, subject, predicate.toString, Some(activityObject))
+    new Activity(None, 0L, subject, predicate, "null", 0L, Some(activityObject))
   }
 
   /**
@@ -120,9 +209,13 @@ object Activity {
   /**
    * Inserts a new activity stream entry.
    */
-  private def insert(subject: String, predicate: Predicate, activityObject: Option[String]): Activity = {
+  private def insert(subject: String, predicate: String, activityObject: Option[String]): Activity = {
     DB.withSession { implicit session ⇒
-      val activity = Activity(None, subject, predicate.toString, activityObject)
+      val activity = Activity(None, 0L, subject,
+        predicate,
+        "null",
+        0L,
+        activityObject)
       val id = Activities.forInsert.insert(activity)
       activity.copy(id = Some(id))
     }
