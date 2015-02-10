@@ -475,7 +475,7 @@ object Events extends Controller
     implicit handler ⇒ implicit user ⇒
       eventService.find(id).map {
         event ⇒
-          val updatedEvent = event.copy(id = Some(id))
+          val updatedEvent = event.copy(id = Some(id)).copy(confirmed = true)
           updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
           updatedEvent.facilitatorIds_=(event.facilitatorIds)
           updatedEvent.update
