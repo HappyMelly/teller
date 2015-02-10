@@ -70,9 +70,13 @@ case class Activity(id: Option[Long],
   }
 
   // Short description for use in Flash messages.
-  override def toString = Messages("activity." + predicate,
-    "",
-    objectType + " " + activityObject.getOrElse("")).trim.capitalize
+  override def toString = {
+    val what = objectType + " " + activityObject.getOrElse("")
+    supportiveObject map { obj ⇒
+      val whom = supportiveObjectType.getOrElse("") + " " + obj
+      Messages("activity." + predicate, "", what, whom).trim.capitalize
+    } getOrElse Messages("activity." + predicate, "", what).trim.capitalize
+  }
 
   def insert: Activity = DB.withSession { implicit session: Session ⇒
     val id = Activities.forInsert.insert(this)
@@ -157,6 +161,7 @@ object Activity {
     val UploadedSign = "sign.upload"
     val DeletedSign = "sign.delete"
     val DeletedImage = "img.delete"
+    val Made = "make"
   }
 
   object Type extends Enumeration {
