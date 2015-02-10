@@ -52,9 +52,26 @@ case class Brand(id: Option[Long],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) {
+  updatedBy: String) extends ActivityRecorder {
 
   private var _socialProfile: Option[SocialProfile] = None
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = name
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Brand
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒

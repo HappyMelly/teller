@@ -156,6 +156,7 @@ object Activity {
     val Disconnected = "disconnect"
     val UploadedSign = "sign.upload"
     val DeletedSign = "sign.delete"
+    val DeletedImage = "img.delete"
   }
 
   object Type extends Enumeration {

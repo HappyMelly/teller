@@ -143,15 +143,19 @@ object Brands extends Controller with Security {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 brand.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, brand.name)
+                val activity = brand.activity(
+                  user.person,
+                  Activity.Predicate.Created).insert
                 Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
               }.recover {
                 case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.brand.form(user, None,
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
-              brand.insert
-              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, brand.name)
+              val b = brand.insert
+              val activity = b.activity(
+                user.person,
+                Activity.Predicate.Created).insert
               Future.successful(Redirect(routes.Brands.index()).flashing("success" -> activity.toString))
             }
           }
@@ -173,7 +177,9 @@ object Brands extends Controller with Security {
             Cache.remove(Brand.cacheId(brand.code))
           }
           brand.delete()
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, brand.name)
+          val activity = brand.activity(
+            user.person,
+            Activity.Predicate.Deleted).insert
           Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
   }
@@ -192,8 +198,9 @@ object Brands extends Controller with Security {
           Cache.remove(Brand.cacheId(brandView.brand.code))
         }
         Brand.update(brandView.brand, brandView.brand, None)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted,
-          "image from the brand " + brandView.brand.name)
+        val activity = brandView.brand.activity(
+          user.person,
+          Activity.Predicate.DeletedImage).insert
         Redirect(routes.Brands.details(code)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
   }
@@ -264,8 +271,11 @@ object Brands extends Controller with Security {
                   existingBrandView.brand.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, brand.name)
-                  Redirect(routes.Brands.details(updatedBrand.code)).flashing("success" -> activity.toString)
+                  val activity = brand.activity(
+                    user.person,
+                    Activity.Predicate.Updated).insert
+                  Redirect(routes.Brands.details(updatedBrand.code)).flashing(
+                    "success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
                     BadRequest(views.html.brand.form(user, Some(brand.code),
@@ -273,8 +283,11 @@ object Brands extends Controller with Security {
                 }
               }.getOrElse {
                 val updatedBrand = Brand.update(existingBrandView.brand, brand, existingBrandView.brand.picture)
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, brand.name)
-                Future.successful(Redirect(routes.Brands.details(updatedBrand.code)).flashing("success" -> activity.toString))
+                val activity = updatedBrand.activity(
+                  user.person,
+                  Activity.Predicate.Updated).insert
+                val route = routes.Brands.details(updatedBrand.code)
+                Future.successful(Redirect(route).flashing("success" -> activity.toString))
               }
             }
           })
@@ -322,17 +335,24 @@ object Brands extends Controller with Security {
   /**
    * Returns a list of managed events for the given brand and current user
    */
-  def events(brandCode: String, future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Brand.find(brandCode).map { brand ⇒
-        val account = user.account
-        val events = if (account.editor || brand.brand.coordinatorId == account.personId) {
-          EventService.get.findByParameters(Some(brandCode), future)
-        } else {
-          EventService.get.findByFacilitator(account.personId, Some(brandCode), future, archived = Some(false))
-        }
-        Ok(Json.toJson(events))
-      }.getOrElse(NotFound("Unknown brand"))
+  def events(brandCode: String,
+    future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Brand.find(brandCode).map { brand ⇒
+          val account = user.account
+          val events = if (account.editor ||
+            brand.brand.coordinatorId == account.personId) {
+            EventService.get.findByParameters(Some(brandCode), future)
+          } else {
+            EventService.get.findByFacilitator(
+              account.personId,
+              Some(brandCode),
+              future,
+              archived = Some(false))
+          }
+          Ok(Json.toJson(events))
+        }.getOrElse(NotFound("Unknown brand"))
   }
 
 }
