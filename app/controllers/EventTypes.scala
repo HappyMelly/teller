@@ -80,7 +80,7 @@ object EventTypes extends Controller with Security {
           val et = eventType.insert
           val activity = et.activity(user.person,
             Activity.Predicate.Connected,
-            Some(brand))
+            Some(brand)).insert
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -105,7 +105,7 @@ object EventTypes extends Controller with Security {
           EventType.delete(id)
           val activity = eventType.activity(user.person,
             Activity.Predicate.Disconnected,
-            Some(brand))
+            Some(brand)).insert
           Redirect(route).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)

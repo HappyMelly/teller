@@ -106,7 +106,6 @@ trait ActivityRecorder {
    * Returns activity object with data from a particular object
    * @param subject Person who does an activity
    * @param action Name of action
-   * @return
    */
   def activity(subject: Person,
     action: String,
@@ -132,8 +131,8 @@ trait ActivityRecorder {
         Some(humanIdentifier))
     }
   }
-}
 
+}
 /**
  * The possible activity stream actions, e.g. ‘deleted’.
  */
@@ -199,11 +198,23 @@ object Activity {
   }
 
   def insert(subject: String, predicate: String): Activity = {
-    insert(subject, predicate, None)
+    insert(0L, subject, predicate, None)
+  }
+
+  /**
+   * Inserts new activity record to database
+   * @param subject User
+   * @param predicate Action name
+   * @param activityObject Action description
+   */
+  def insert(subject: Person,
+    predicate: String,
+    activityObject: String): Activity = {
+    insert(subject.id.get, subject.fullName, predicate, Some(activityObject))
   }
 
   def insert(subject: String, predicate: String, activityObject: String): Activity = {
-    insert(subject, predicate, Some(activityObject))
+    insert(0L, subject, predicate, Some(activityObject))
   }
 
   /** Returns new activity record */
@@ -226,9 +237,12 @@ object Activity {
   /**
    * Inserts a new activity stream entry.
    */
-  private def insert(subject: String, predicate: String, activityObject: Option[String]): Activity = {
+  private def insert(subjectId: Long,
+    subject: String,
+    predicate: String,
+    activityObject: Option[String]): Activity = {
     DB.withSession { implicit session ⇒
-      val activity = Activity(None, 0L, subject,
+      val activity = Activity(None, subjectId, subject,
         predicate,
         "null",
         0L,
