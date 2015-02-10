@@ -24,7 +24,7 @@
  */
 package models.unit
 
-import _root_.models.EventType
+import models.{ Activity, EventType }
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import integration.PlayAppSpec
 import org.joda.time.LocalDate
@@ -118,4 +118,16 @@ class EventSpec extends PlayAppSpec {
     }
   }
 
+  "Event" should {
+    "have well-formed activity attributes" in {
+      val eventType = EventHelper.one
+      eventType.objectType must_== Activity.Type.Event
+      eventType.identifier must_== 1
+      eventType.humanIdentifier must_== "One"
+      val eventType2 = EventHelper.two
+      eventType2.objectType must_== Activity.Type.Event
+      eventType2.identifier must_== 2
+      eventType2.humanIdentifier must_== "Two"
+    }
+  }
 }

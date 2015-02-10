@@ -39,7 +39,8 @@ object EventTypes extends Controller with Security {
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "brandId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
+    "brandId" -> nonEmptyText.transform(_.toLong,
+      (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),
     "defaultTitle" -> optional(text(maxLength = 254)))(EventType.apply)(EventType.unapply))
 
@@ -76,9 +77,10 @@ object EventTypes extends Controller with Security {
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
         eventType ⇒ {
-          eventType.insert
-          val activityObject = Messages("activity.eventType.create", brand.name, eventType.name)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
+          val et = eventType.insert
+          val activity = et.activity(user.person,
+            Activity.Predicate.Connected,
+            Some(brand))
           Redirect(route).flashing("success" -> activity.toString)
         })
   }
@@ -101,8 +103,9 @@ object EventTypes extends Controller with Security {
           Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
         } else {
           EventType.delete(id)
-          val activityObject = Messages("activity.eventType.delete", brand.name, eventType.name)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = eventType.activity(user.person,
+            Activity.Predicate.Disconnected,
+            Some(brand))
           Redirect(route).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
