@@ -24,15 +24,12 @@
 
 package controllers
 
-import models.service.Services
-import models.{ ActivityRecorder, Contribution, Activity }
-import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import play.api.data.format.Formatter
-import play.api.i18n.Messages
+import models.service.Services
+import models.{ Activity, ActivityRecorder, Contribution }
+import play.api.data.Forms._
+import play.api.data._
+import play.api.mvc._
 
 object Contributions extends Controller with Security with Services {
 
@@ -63,13 +60,13 @@ object Contributions extends Controller with Security with Services {
       }
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contributor cannot be empty"),
-        contribution ⇒ {
-          val contributor: Option[ActivityRecorder] = if (contribution.isPerson)
-            personService.find(contribution.contributorId)
+        success ⇒ {
+          val contributor: Option[ActivityRecorder] = if (success.isPerson)
+            personService.find(success.contributorId)
           else
-            organisationService.find(contribution.contributorId)
+            organisationService.find(success.contributorId)
           contributor map { c ⇒
-            contribution.insert
+            val contribution = success.insert
             val activity = contribution.activity(
               user.person,
               Activity.Predicate.Connected,

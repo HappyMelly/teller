@@ -21,23 +21,29 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
 package models.unit
 
-import models.{ Activity, Contribution }
+import models.{ EvaluationStatus, Evaluation, Activity }
+import org.joda.time.DateTime
 import org.specs2.mutable._
 
-class ContributionSpec extends Specification {
+class EvaluationSpec extends Specification {
 
-  "Contribution" should {
+  "Evaluation" should {
     "have well-formed activity attributes" in {
-      val contribution = new Contribution(Some(1L), 1L, 2L, true, "Tester")
-      contribution.objectType must_== Activity.Type.Contribution
-      contribution.identifier must_== 1
-      contribution.humanIdentifier must_== "to product with id = 2 as Tester"
-      val contribution2 = new Contribution(Some(2L), 2L, 3L, false, "Funder")
-      contribution2.objectType must_== Activity.Type.Contribution
-      contribution2.identifier must_== 2
-      contribution2.humanIdentifier must_== "to product with id = 3 as Funder"
+      val evaluation = new Evaluation(Some(1L), 1L, 2L, "", "", "", "", "",
+        1, 1, "", EvaluationStatus.Pending, None, None, DateTime.now(), "",
+        DateTime.now(), "")
+      evaluation.objectType must_== Activity.Type.Evaluation
+      evaluation.identifier must_== 1
+      evaluation.humanIdentifier must_== "to event (id = 1) for person (id = 2)"
+      val evaluation2 = new Evaluation(Some(2L), 2L, 3L, "", "", "", "", "",
+        1, 1, "", EvaluationStatus.Pending, None, None, DateTime.now(), "",
+        DateTime.now(), "")
+      evaluation2.objectType must_== Activity.Type.Evaluation
+      evaluation2.identifier must_== 2
+      evaluation2.humanIdentifier must_== "to event (id = 2) for person (id = 3)"
     }
   }
 

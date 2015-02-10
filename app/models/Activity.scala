@@ -21,7 +21,6 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
 import models.database.{ BookingEntryActivities, Activities }
@@ -71,7 +70,9 @@ case class Activity(id: Option[Long],
   }
 
   // Short description for use in Flash messages.
-  override def toString = Messages("activity." + predicate, "", activityObject.getOrElse("")).trim.capitalize
+  override def toString = Messages("activity." + predicate,
+    "",
+    objectType + " " + activityObject.getOrElse("")).trim.capitalize
 
   def insert: Activity = DB.withSession { implicit session: Session ⇒
     val id = Activities.forInsert.insert(this)

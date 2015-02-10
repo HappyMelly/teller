@@ -50,7 +50,7 @@ case class Contribution(
    *
    * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
    */
-  def humanIdentifier: String = "product with id = %s as %s".format(productId, role)
+  def humanIdentifier: String = "to product with id = %s as %s".format(productId, role)
 
   /**
    * Returns type of this object
