@@ -228,8 +228,13 @@ object Events extends Controller
           val coordinator = Brand.find(event.brandCode).get.coordinator
           if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinator.id.get == id })) {
             val addedEvent = event.insert
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, addedEvent.title)
-            sendEmailNotification(addedEvent, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
+            val activity = addedEvent.activity(
+              user.person,
+              Activity.Predicate.Created).insert
+            sendEmailNotification(addedEvent,
+              List.empty,
+              activity,
+              coordinator)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
             val account = user.account
@@ -250,7 +255,9 @@ object Events extends Controller
       eventService.find(id).map { event ⇒
         if (event.deletable) {
           event.delete()
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, event.title)
+          val activity = event.activity(
+            user.person,
+            Activity.Predicate.Deleted).insert
           sendEmailNotification(event, List.empty, activity, Brand.find(event.brandCode).get.coordinator)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
         } else {
@@ -277,6 +284,9 @@ object Events extends Controller
           eventInvoice ⇒ {
             val invoice = EventInvoice.findByEvent(id)
             EventInvoice.update(eventInvoice.copy(id = invoice.id).copy(eventId = invoice.eventId))
+            event.activity(
+              user.person,
+              Activity.Predicate.Updated).insert
             Redirect(routes.Events.details(id)).flashing("success" -> "Invoice data was successfully updated")
           })
       }.getOrElse(NotFound)
@@ -449,13 +459,19 @@ object Events extends Controller
             updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
             updatedEvent.facilitatorIds_=(event.facilitatorIds)
 
-            // it's important to compare before updating as with lazy initialization invoice and facilitators data
+            // it's important to compare before updating as with lazy
+            // initialization invoice and facilitators data
             // for an old event will be destroyed
             val changes = Comparator.compare(existingEvent, updatedEvent)
             updatedEvent.update
 
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, event.title)
-            sendEmailNotification(updatedEvent, changes, activity, Brand.find(event.brandCode).get.coordinator)
+            val activity = updatedEvent.activity(
+              user.person,
+              Activity.Predicate.Updated).insert
+            sendEmailNotification(updatedEvent,
+              changes,
+              activity,
+              coordinator)
 
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
           } else {
@@ -479,7 +495,9 @@ object Events extends Controller
           updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
           updatedEvent.facilitatorIds_=(event.facilitatorIds)
           updatedEvent.update
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Confirmed, event.title)
+          val activity = event.activity(
+            user.person,
+            Activity.Predicate.Confirmed).insert
           Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

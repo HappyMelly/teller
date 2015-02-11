@@ -67,6 +67,11 @@ models.ProductCategory.course.label = label-success
 
 # Activity stream entries
 activity.signup = {0} signed up
+activity.connect = {0} connected {1} to {2}
+activity.disconnect = {0} disconnected {1} from {2}
+activity.sign.upload = {0} uploaded signature for {1}
+activity.sign.delete = {0} deleted signature from {1}
+activity.img.delete = {0} deleted image from {1}
 activity.create = {0} added {1}
 activity.update = {0} updated {1}
 activity.delete = {0} removed {1}
@@ -80,12 +85,13 @@ activity.contribution.create = new contributor ({1}) to {0}
 activity.contribution.delete = a contributor ({1}) from {0}
 activity.eventType.create = new event type ({1}) to {0}
 activity.eventType.delete = an event type ({1}) from {0}
+activity.make = {0} made {2} a {1}
 activity.participant.create = new participant ({0}) to {1}
 activity.participant.delete = a participant ({0}) from {1}
 activity.balance = {0} balanced {1} accounts
-activity.confirm = {0} confirmed {1} event
-activity.approve = {0} approved an evaluation for {1}
-activity.reject = {0} rejected an evaluation for {1}
+activity.confirm = {0} confirmed {1}
+activity.approve = {0} approved {1}
+activity.reject = {0} rejected {1}
 activity.send = {0} sent a request for evaluation for {1} event
 
 # Controller error messages

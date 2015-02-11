@@ -62,11 +62,28 @@ case class Evaluation(
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends EmailSender {
+  updatedBy: String) extends EmailSender with ActivityRecorder {
 
   lazy val event: Event = EventService.get.find(eventId).get
 
   lazy val participant: Person = PersonService.get.find(personId).get
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = "to event (id = %s) for person (id = %s)".format(eventId, personId)
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Evaluation
 
   def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)

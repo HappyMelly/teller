@@ -24,7 +24,7 @@
 package models.unit
 
 import helpers.{ OrganisationHelper, PersonHelper }
-import models.Member
+import models.{ Activity, Member }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -51,5 +51,20 @@ class MemberSpec extends Specification {
       member.memberObj_=(OrganisationHelper.two)
       member.name mustEqual "Two"
     }
+    "have well-formed activity attributes" in {
+      val member = new Member(Some(1L), 0, person = true, funder = true,
+        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)
+      member.objectType must_== Activity.Type.Member
+      member.identifier must_== 1
+      member.humanIdentifier must_== ""
+      val member2 = new Member(Some(2L), 0, person = false, funder = true,
+        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
+        DateTime.now(), 1L, DateTime.now(), 1L)
+      member2.objectType must_== Activity.Type.Member
+      member2.identifier must_== 2
+      member2.humanIdentifier must_== ""
+    }
   }
+
 }

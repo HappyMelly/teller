@@ -79,11 +79,28 @@ case class Event(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) {
+  updatedBy: String) extends ActivityRecorder {
 
   private var _facilitators: Option[List[Person]] = None
   private var _invoice: Option[EventInvoice] = None
   private var _facilitatorIds: Option[List[Long]] = None
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = title
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Event
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators: List[Person] = if (_facilitators.isEmpty) {

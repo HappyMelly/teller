@@ -91,9 +91,8 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          evaluation.create
-
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new evaluation")
+          val eval = evaluation.create
+          val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
   }
@@ -110,7 +109,8 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
       Evaluation.find(id).map {
         evaluation ⇒
           evaluation.delete()
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "evaluation")
+          val activity = evaluation.activity(user.person, Activity.Predicate.Deleted).insert
+
           val route = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
@@ -135,7 +135,9 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
           f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
           eventId ⇒ {
             if (eventId == evaluation.eventId) {
-              val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
+              val activity = evaluation.activity(
+                user.person,
+                Activity.Predicate.Updated).insert
               Ok(Json.obj("success" -> activity.toString))
             } else {
               EventService.get.find(eventId).map { event ⇒
@@ -150,7 +152,9 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
                     oldParticipant.copy(eventId = eventId).update
                   }
                   evaluation.copy(eventId = eventId).update
-                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
+                  val activity = evaluation.activity(
+                    user.person,
+                    Activity.Predicate.Updated).insert
                   Ok(Json.obj("success" -> activity.toString))
                 }.getOrElse(NotFound)
               }.getOrElse(NotFound)
@@ -160,10 +164,9 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
   }
 
   /**
-   * Redner a Details page
+   * Renders a Details page
    *
    * @param id Unique evaluation identifier
-   * @return
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -177,10 +180,9 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
   }
 
   /**
-   * Redner an Edit page
+   * Renders an Edit page
    *
    * @param id Unique evaluation identifier
-   * @return
    */
   def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -216,8 +218,11 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
             BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
-            evaluation.copy(id = Some(id)).update
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "evaluation")
+            val eval = evaluation.copy(id = Some(id)).update
+            val activity = eval.activity(
+              user.person,
+              Activity.Predicate.Updated).insert
+
             Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
           })
       }.getOrElse(NotFound)
@@ -235,9 +240,9 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
 
         ev.approve(user.person)
 
-        val activity = Activity.create(user.fullName,
-          Activity.Predicate.Approved,
-          ev.participant.fullName)
+        val activity = ev.activity(
+          user.person,
+          Activity.Predicate.Approved).insert
 
         val route = ref match {
           case Some("index") ⇒ routes.Participants.index().url
@@ -258,9 +263,10 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
     implicit handler ⇒ implicit user ⇒
       Evaluation.find(id).map { existingEvaluation ⇒
         existingEvaluation.reject()
-        val activity = Activity.create(user.fullName,
-          Activity.Predicate.Rejected,
-          existingEvaluation.participant.fullName)
+
+        val activity = existingEvaluation.activity(
+          user.person,
+          Activity.Predicate.Rejected).insert
 
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant

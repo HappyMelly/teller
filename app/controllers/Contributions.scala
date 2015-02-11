@@ -24,16 +24,14 @@
 
 package controllers
 
-import models.{ Contribution, Activity }
-import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
-import play.api.data.format.Formatter
-import play.api.i18n.Messages
+import models.service.Services
+import models.{ Activity, ActivityRecorder, Contribution }
+import play.api.data.Forms._
+import play.api.data._
+import play.api.mvc._
 
-object Contributions extends Controller with Security {
+object Contributions extends Controller with Security with Services {
 
   /** HTML form mapping for creating and editing. */
   def contributionForm = Form(mapping(
@@ -62,11 +60,21 @@ object Contributions extends Controller with Security {
       }
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contributor cannot be empty"),
-        contribution ⇒ {
-          contribution.insert
-          val activityObject = Messages("activity.contribution.create", contribution.product.title, contribution.role)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
-          Redirect(route).flashing("success" -> activity.toString)
+        success ⇒ {
+          val contributor: Option[ActivityRecorder] = if (success.isPerson)
+            personService.find(success.contributorId)
+          else
+            organisationService.find(success.contributorId)
+          contributor map { c ⇒
+            val contribution = success.insert
+            val activity = contribution.activity(
+              user.person,
+              Activity.Predicate.Connected,
+              contributor).insert
+            Redirect(route).flashing("success" -> activity.toString)
+          } getOrElse {
+            Redirect(route).flashing("error" -> "Contributor does not exist")
+          }
         })
   }
 
@@ -80,19 +88,26 @@ object Contributions extends Controller with Security {
   def delete(id: Long, page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Contribution.find(id).map {
-        contribution ⇒
-          Contribution.delete(id)
-          val activityObject = Messages("activity.contribution.delete", contribution.product.title, contribution.role)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
-          val route = if (page == "organisation") {
-            routes.Organisations.details(contribution.contributorId).url
-          } else if (page == "product") {
-            routes.Products.details(contribution.productId).url
-          } else {
-            routes.People.details(contribution.contributorId).url + "#contributions"
-          }
-          Redirect(route).flashing("success" -> activity.toString)
+      Contribution.find(id).map { contribution ⇒
+        val contributor: ActivityRecorder = if (contribution.isPerson)
+          personService.find(contribution.contributorId).get
+        else
+          organisationService.find(contribution.contributorId).get
+        Contribution.delete(id)
+
+        val activity = contribution.activity(
+          user.person,
+          Activity.Predicate.Disconnected,
+          Some(contributor)).insert
+
+        val route = if (page == "organisation") {
+          routes.Organisations.details(contribution.contributorId).url
+        } else if (page == "product") {
+          routes.Products.details(contribution.productId).url
+        } else {
+          routes.People.details(contribution.contributorId).url + "#contributions"
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 

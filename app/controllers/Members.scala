@@ -146,8 +146,9 @@ trait Members extends Controller with Security with Services {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
               copy(objectId = m.objectId).update
-            val activity = Activity.insert(user.fullName,
-              Activity.Predicate.Updated, "membership data")
+            val activity = updMember.activity(
+              user.person,
+              Activity.Predicate.Updated).insert
             val url: String = if (updMember.person) {
               routes.People.details(updMember.objectId).url
             } else {
@@ -191,15 +192,18 @@ trait Members extends Controller with Security with Services {
           hasErrors ⇒
             BadRequest(views.html.member.newOrg(user, None, hasErrors)),
           success ⇒ {
-            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            member map { m ⇒
+            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+            cached map { m ⇒
               val org = success.insert
+              org.activity(user.person, Activity.Predicate.Created).insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
-              m.copy(objectId = org.id.get).copy(person = false).insert
+              val member = m.copy(objectId = org.id.get).copy(person = false).insert
               Cache.remove(Members.cacheId(user.person.id.get))
-              val activity = Activity.insert(user.fullName,
-                Activity.Predicate.Created, "new member " + success.name)
+              val activity = member.activity(
+                user.person,
+                Activity.Predicate.Made,
+                Some(org)).insert
               Redirect(routes.Organisations.details(org.id.get)).
                 flashing("success" -> activity.toString)
             } getOrElse {
@@ -217,15 +221,16 @@ trait Members extends Controller with Security with Services {
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(user, None, hasErrors)),
         success ⇒ {
-          val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-          member map { m ⇒
+          val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+          cached map { m ⇒
             val person = success.insert
-            m.copy(objectId = person.id.get).copy(person = true).insert
+            person.activity(user.person, Activity.Predicate.Created).insert
+            val member = m.copy(objectId = person.id.get).copy(person = true).insert
             Cache.remove(Members.cacheId(user.person.id.get))
-            val activity = Activity.insert(
-              user.fullName,
-              Activity.Predicate.Created,
-              "new member " + success.name)
+            val activity = member.activity(
+              user.person,
+              Activity.Predicate.Made,
+              Some(person)).insert
             Redirect(routes.People.details(person.id.get)).
               flashing("success" -> activity.toString)
           } getOrElse {
@@ -246,8 +251,8 @@ trait Members extends Controller with Security with Services {
               peopleNonMembers,
               hasErrors)),
           id ⇒ {
-            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            member map { m ⇒
+            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+            cached map { m ⇒
               personService.find(id) map { person ⇒
                 if (person.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.person.member")))
@@ -255,12 +260,12 @@ trait Members extends Controller with Security with Services {
                     peopleNonMembers,
                     personForm))
                 } else {
-                  m.copy(objectId = person.id.get).copy(person = true).insert
+                  val member = m.copy(objectId = person.id.get).copy(person = true).insert
                   Cache.remove(Members.cacheId(user.person.id.get))
-                  val activity = Activity.insert(
-                    user.fullName,
-                    Activity.Predicate.Created,
-                    "new member " + person.fullName)
+                  val activity = member.activity(
+                    user.person,
+                    Activity.Predicate.Made,
+                    Some(person)).insert
                   Redirect(routes.People.details(id)).
                     flashing("success" -> activity.toString)
                 }
@@ -289,8 +294,8 @@ trait Members extends Controller with Security with Services {
               hasErrors))
           },
           id ⇒ {
-            val member = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            member map { m ⇒
+            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+            cached map { m ⇒
               organisationService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
@@ -298,12 +303,12 @@ trait Members extends Controller with Security with Services {
                     orgsNonMembers,
                     orgForm))
                 } else {
-                  m.copy(objectId = org.id.get).copy(person = false).insert
+                  val member = m.copy(objectId = org.id.get).copy(person = false).insert
                   Cache.remove(Members.cacheId(user.person.id.get))
-                  val activity = Activity.insert(
-                    user.fullName,
-                    Activity.Predicate.Created,
-                    "new member " + org.name)
+                  val activity = member.activity(
+                    user.person,
+                    Activity.Predicate.Made,
+                    Some(org)).insert
                   Redirect(routes.Organisations.details(id)).
                     flashing("success" -> activity.toString)
                 }

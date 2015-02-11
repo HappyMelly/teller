@@ -24,7 +24,7 @@ package models.unit
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.BookingEntry
+import models.{ Activity, BookingEntry }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.specs2.mutable.{ Specification, Tables }
 
@@ -48,4 +48,17 @@ class BookingEntrySpec extends Specification with Tables {
     }
   } bt
   // format: ON
+
+  "Booking entry" should {
+    "have well-formed activity attributes" in {
+      val entry = BookingEntry.blank.copy(id = Some(1L)).copy(summary = "Bill One")
+      entry.objectType must_== Activity.Type.BookingEntry
+      entry.identifier must_== 1
+      entry.humanIdentifier must_== "Bill One"
+      val entry2 = BookingEntry.blank.copy(id = Some(2L)).copy(summary = "Bill Two")
+      entry2.objectType must_== Activity.Type.BookingEntry
+      entry2.identifier must_== 2
+      entry2.humanIdentifier must_== "Bill Two"
+    }
+  }
 }

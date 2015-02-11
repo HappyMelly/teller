@@ -38,9 +38,26 @@ case class Member(
   created: DateTime,
   createdBy: Long,
   updated: DateTime,
-  updatedBy: Long) extends Services {
+  updatedBy: Long) extends Services with ActivityRecorder {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = name
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Member
 
   def memberObj_=(person: Person) = {
     _memberObj = (Some(person), None)

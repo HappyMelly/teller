@@ -29,7 +29,27 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
-case class EventType(id: Option[Long], brandId: Long, name: String, defaultTitle: Option[String]) {
+case class EventType(id: Option[Long],
+  brandId: Long,
+  name: String,
+  defaultTitle: Option[String]) extends ActivityRecorder {
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = name
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.EventType
 
   def brand: Brand = DB.withSession { implicit session: Session ⇒
     Brand.find(this.brandId).get

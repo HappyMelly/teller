@@ -62,7 +62,7 @@ case class Organisation(
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends AccountHolder {
+  updatedBy: String) extends AccountHolder with ActivityRecorder {
 
   /**
    * Returns true if this person may be deleted.
@@ -88,6 +88,23 @@ case class Organisation(
   lazy val contributions: List[ContributionView] = {
     ContributionService.get.contributions(this.id.get, isPerson = false)
   }
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = name
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Org
 
   /**
    * Inserts this organisation into the database, with an inactive account.

@@ -38,7 +38,24 @@ case class Contribution(
   contributorId: Long,
   productId: Long,
   isPerson: Boolean,
-  role: String) {
+  role: String) extends ActivityRecorder {
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = "to product with id = %s as %s".format(productId, role)
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Contribution
 
   def product: Product = DB.withSession { implicit session: Session ⇒
     Product.find(this.productId).get

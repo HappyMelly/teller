@@ -24,7 +24,8 @@ package models.unit
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import models.{ Account, AccountSummaryWithAdjustment }
+import helpers.{ OrganisationHelper, PersonHelper }
+import models.{ Activity, Account, AccountSummaryWithAdjustment }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.{ CurrencyUnit, Money }
 import org.specs2.mutable.Specification
@@ -54,4 +55,27 @@ class AccountSpec extends Specification {
     }
   }
 
+  "Account" should {
+    class TestAccount(id: Option[Long],
+      organisationId: Option[Long],
+      personId: Option[Long] = None)
+      extends Account(id, organisationId, personId) {
+      override def accountHolder = {
+        if (id == Some(2L))
+          PersonHelper.one()
+        else
+          OrganisationHelper.two
+      }
+    }
+    "have well-formed activity attributes" in {
+      val account = new TestAccount(Some(1L), Some(1L))
+      account.objectType must_== Activity.Type.Account
+      account.identifier must_== 1
+      account.humanIdentifier must_== "Two"
+      val account2 = new TestAccount(Some(2L), None, Some(2L))
+      account2.objectType must_== Activity.Type.Account
+      account2.identifier must_== 2
+      account2.humanIdentifier must_== "First Tester"
+    }
+  }
 }

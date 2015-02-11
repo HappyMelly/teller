@@ -37,7 +37,24 @@ case class CertificateTemplate(
   brandCode: String,
   language: String,
   oneFacilitator: Array[Byte],
-  twoFacilitators: Array[Byte]) {
+  twoFacilitators: Array[Byte]) extends ActivityRecorder {
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = "for brand %s and lang %s".format(brandCode, language)
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.CertificateTemplate
 
   lazy val brand: Brand = DB.withSession { implicit session: Session ⇒
     Brand.find(brandCode).get.brand

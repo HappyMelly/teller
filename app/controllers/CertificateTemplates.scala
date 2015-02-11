@@ -46,7 +46,8 @@ object CertificateTemplates extends Controller with Security {
   def certificateFileForm = Form(mapping(
     "language" -> nonEmptyText,
     "oneFacilitator" -> optional(text),
-    "twoFacilitators" -> optional(text))(FakeCertificateTemplate.apply)(FakeCertificateTemplate.unapply))
+    "twoFacilitators" -> optional(text))(
+      FakeCertificateTemplate.apply)(FakeCertificateTemplate.unapply))
 
   /**
    * Add page
@@ -76,10 +77,16 @@ object CertificateTemplates extends Controller with Security {
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages, formWithErrors)),
+          formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user,
+            brand.brand,
+            languages,
+            formWithErrors)),
           data ⇒ {
             templates.find(_.language == data.language).map { v ⇒
-              BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages, form.withError("language", "error.template.exist")))
+              BadRequest(views.html.certificateTemplate.form(user,
+                brand.brand,
+                languages,
+                form.withError("language", "error.template.exist")))
             }.getOrElse {
               val template = request.body.asMultipartFormData.get.file("oneFacilitator")
               val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
@@ -87,16 +94,29 @@ object CertificateTemplates extends Controller with Security {
               if (template.isEmpty || templateOneFacilitator.isEmpty
                 || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
                 || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
-                BadRequest(views.html.certificateTemplate.form(user, brand.brand, languages,
-                  form.withError("oneFacilitator", "error.required").withError("twoFacilitators", "error.required")))
+                BadRequest(views.html.certificateTemplate.form(user,
+                  brand.brand,
+                  languages,
+                  form.withError(
+                    "oneFacilitator",
+                    "error.required").withError(
+                      "twoFacilitators",
+                      "error.required")))
               } else {
                 val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)
                 val secondSource = Source.fromFile(templateOneFacilitator.get.ref.file.getPath, encoding)
-                new CertificateTemplate(None, code, data.language, firstSource.toArray.map(_.toByte), secondSource.toArray.map(_.toByte)).insert
+                val tpl = new CertificateTemplate(None,
+                  code,
+                  data.language,
+                  firstSource.toArray.map(_.toByte),
+                  secondSource.toArray.map(_.toByte)).insert
                 firstSource.close()
                 secondSource.close()
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new certificate template")
-                Redirect(routes.Brands.details(code).url + "#templates").flashing("success" -> activity.toString)
+                val activity = tpl.activity(
+                  user.person,
+                  Activity.Predicate.Created).insert
+                Redirect(routes.Brands.details(code).url + "#templates").flashing(
+                  "success" -> activity.toString)
               }
             }
           })
@@ -131,10 +151,13 @@ object CertificateTemplates extends Controller with Security {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      CertificateTemplate.find(id).map { template ⇒
-        template.delete()
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "certificate template")
-        Redirect(routes.Brands.details(template.brandCode).url + "#templates").flashing("success" -> activity.toString)
+      CertificateTemplate.find(id).map { tpl ⇒
+        tpl.delete()
+        val activity = tpl.activity(
+          user.person,
+          Activity.Predicate.Deleted).insert
+        Redirect(routes.Brands.details(tpl.brandCode).url + "#templates").flashing(
+          "success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 }

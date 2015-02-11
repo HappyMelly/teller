@@ -21,7 +21,6 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
@@ -35,12 +34,20 @@ import play.api.db.slick.Config.driver.simple._
 private[models] object Activities extends Table[Activity]("ACTIVITY") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def subjectId = column[Long]("SUBJECT_ID")
   def subject = column[String]("SUBJECT")
-  // TODO Change type from String to custom mapped Activity.Predicate.Value type, like Organisations.category.
   def predicate = column[String]("PREDICATE")
+  def objectType = column[String]("OBJECT_TYPE")
+  def objectId = column[Long]("OBJECT_ID")
   def activityObject = column[Option[String]]("OBJECT")
+  def supportiveObjectType = column[Option[String]]("SUPPORTIVE_OBJECT_TYPE")
+  def supportiveObjectId = column[Option[Long]]("SUPPORTIVE_OBJECT_ID")
+  def supportiveObject = column[Option[String]]("SUPPORTIVE_OBJECT")
   def created = column[DateTime]("CREATED")
-  def * = id.? ~ subject ~ predicate ~ activityObject ~ created <> (Activity.apply _, Activity.unapply _)
+
+  def * = id.? ~ subjectId ~ subject ~ predicate ~ objectType ~ objectId ~
+    activityObject ~ supportiveObjectType ~ supportiveObjectId ~
+    supportiveObject ~ created <> (Activity.apply _, Activity.unapply _)
 
   def forInsert = * returning id
 }

@@ -174,11 +174,17 @@ trait People extends Controller with Security with Services {
           form ⇒ BadRequest("invalid form data"),
           active ⇒ {
             Person.activate(id, active)
-            val activity = Activity.insert(user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, person.fullName)
+            val activity = person.activity(
+              user.person,
+              if (active)
+                Activity.Predicate.Activated
+              else
+                Activity.Predicate.Deactivated).insert
             Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
-        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+        Redirect(routes.People.index()).flashing(
+          "error" -> Messages("error.notFound", Messages("models.Person")))
       }
   }
 
@@ -205,12 +211,17 @@ trait People extends Controller with Security with Services {
             personService.find(personId).map { person ⇒
               organisationService.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
-                val activityObject = Messages("activity.relationship.create", person.fullName, organisation.name)
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
+
+                val activity = person.activity(
+                  user.person,
+                  Activity.Predicate.Connected,
+                  Some(organisation)).insert
 
                 // Redirect to the page we came from - either the person or organisation details page.
-                val action = if (page == "person") routes.People.details(personId).url + "#organizations"
-                else routes.Organisations.details(organisationId).url
+                val action = if (page == "person")
+                  routes.People.details(personId).url + "#organizations"
+                else
+                  routes.Organisations.details(organisationId).url
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
@@ -229,7 +240,9 @@ trait People extends Controller with Security with Services {
         },
         person ⇒ {
           val updatedPerson = person.insert
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, updatedPerson.fullName)
+          val activity = updatedPerson.activity(
+            user.person,
+            Activity.Predicate.Created).insert
           Redirect(routes.People.index()).flashing("success" -> activity.toString)
         })
   }
@@ -247,7 +260,9 @@ trait People extends Controller with Security with Services {
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
           Person.delete(id)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, person.fullName)
+          val activity = person.activity(
+            user.person,
+            Activity.Predicate.Deleted).insert
           Redirect(routes.People.index()).flashing("success" -> activity.toString)
         }
       }.getOrElse(NotFound)
@@ -269,10 +284,14 @@ trait People extends Controller with Security with Services {
         personService.find(personId).map { person ⇒
           organisationService.find(organisationId).map { organisation ⇒
             person.deleteMembership(organisationId)
-            val activityObject = Messages("activity.relationship.delete", person.fullName, organisation.name)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
-            // Redirect to the page we came from - either the person or organisation details page.
+            val activity = person.activity(
+              user.person,
+              Activity.Predicate.Disconnected,
+              Some(organisation)).insert
+
+            // Redirect to the page we came from - either the person or
+            // organisation details page.
             val action = if (page == "person")
               routes.People.details(personId).url + "#organizations"
             else
@@ -326,19 +345,24 @@ trait People extends Controller with Security with Services {
    *
    * @param id Person identifier
    */
-  def update(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      personForm(user).bindFromRequest.fold(
-        formWithErrors ⇒ BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
-        person ⇒ {
-          val updatedPerson = person.copy(id = Some(id))
-          updatedPerson.socialProfile_=(person.socialProfile)
-          updatedPerson.address_=(person.address)
-          updatedPerson.update
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, person.fullName)
-          Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
-        })
+        personForm(user).bindFromRequest.fold(
+          formWithErrors ⇒
+            BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
+          person ⇒ {
+            val updatedPerson = person.copy(id = Some(id))
+            updatedPerson.socialProfile_=(person.socialProfile)
+            updatedPerson.address_=(person.address)
+            updatedPerson.update
+            val activity = updatedPerson.activity(
+              user.person,
+              Activity.Predicate.Updated).insert
+            Redirect(routes.People.details(id)).flashing(
+              "success" -> activity.toString)
+          })
   }
 
   /**
@@ -372,7 +396,9 @@ trait People extends Controller with Security with Services {
           S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
             person.copy(signature = true).update
             Cache.remove(Person.cacheId(id))
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, s"new signature for ${person.fullName}")
+            val activity = person.activity(
+              user.person,
+              Activity.Predicate.UploadedSign).insert
             Redirect(route).flashing("success" -> activity.toString)
           }.recover {
             case S3Exception(status, code, message, originalXml) ⇒
@@ -397,8 +423,9 @@ trait People extends Controller with Security with Services {
           Cache.remove(Person.cacheId(personId))
         }
         person.copy(signature = false).update
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted,
-          "signature from the person " + person.fullName)
+        val activity = person.activity(
+          user.person,
+          Activity.Predicate.DeletedSign).insert
         val route = routes.People.details(personId).url + "#licenses"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)

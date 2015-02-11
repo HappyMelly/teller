@@ -49,10 +49,16 @@ object Accounts extends Controller with Security {
       implicit handler ⇒ implicit user ⇒
         val currentUser = user.account
         Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
-          val activity = Activity.insert(user.fullName,
+          val activity = new Activity(None,
+            user.person.id.get,
+            user.person.fullName,
             Activity.Predicate.BalancedAccounts,
-            bookingEntries.size.toString)
-          Redirect(routes.Accounts.index()).flashing("success" -> activity.toString)
+            "",
+            0L,
+            Some(bookingEntries.size.toString))
+          activity.insert
+          Redirect(routes.Accounts.index()).flashing(
+            "success" -> activity.toString)
         }
   }
 
@@ -96,11 +102,11 @@ object Accounts extends Controller with Security {
               form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
                 account.activate(currency)
-                val activity = Activity.insert(user.fullName,
-                  Activity.Predicate.Activated,
-                  "the account for " + account.accountHolder.name)
+                val activity = account.activity(user.person,
+                  Activity.Predicate.Activated).insert
                 account.accountHolder.updated(user.fullName)
-                Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
+                Redirect(routes.Accounts.details(id)).flashing(
+                  "success" -> activity.toString)
               })
           } else {
             Unauthorized("You are not allowed to activate this account")
@@ -115,11 +121,11 @@ object Accounts extends Controller with Security {
         Account.find(id).map(account ⇒
           if (account.editableBy(user.account)) {
             account.deactivate()
-            val activity = Activity.insert(user.fullName,
-              Activity.Predicate.Deactivated,
-              "the account for " + account.accountHolder.name)
+            val activity = account.activity(user.person,
+              Activity.Predicate.Deactivated).insert
             account.accountHolder.updated(user.fullName)
-            Redirect(routes.Accounts.details(id)).flashing("success" -> activity.toString)
+            Redirect(routes.Accounts.details(id)).flashing(
+              "success" -> activity.toString)
           } else {
             Unauthorized("You are not allowed to deactivate this account")
           }).getOrElse(NotFound)
