@@ -222,7 +222,7 @@ class DashboardSpec extends PlayAppSpec {
           }
         }
 
-      val service = mock[StubLicenseService]
+      val service = mock[FakeLicenseService]
       (service.expiring _).expects().returning(licenses.toList)
       val controller = new TestDashboard()
       controller.licenseService_=(service)
