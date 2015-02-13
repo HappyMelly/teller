@@ -24,8 +24,10 @@
  */
 package models.service
 
-import models.LicenseView
-import models.database.Licenses
+import com.github.tototoshi.slick.JodaSupport._
+import models.{ LicenseLicenseeView, LicenseView }
+import models.database.{ People, Licenses }
+import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -46,6 +48,22 @@ class LicenseService {
     query.sortBy(_._2.name.toLowerCase).list.map {
       case (license, brand) ⇒ LicenseView(brand, license)
     }
+  }
+
+  /**
+   * Returns list of licenses expiring this month
+   */
+  def expiring(): List[LicenseLicenseeView] = DB.withSession {
+    implicit session: Session ⇒
+      val lowerLimit = LocalDate.now().withDayOfMonth(1)
+      val upperLimit = lowerLimit.plusMonths(1)
+      val query = for {
+        license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
+        person ← People if person.id === license.licenseeId
+      } yield (license, person)
+      query.list
+        .map(v ⇒ LicenseLicenseeView(v._1, v._2))
+        .sortBy(_.licensee.fullName)
   }
 }
 

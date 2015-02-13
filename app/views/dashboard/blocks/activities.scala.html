@@ -1,0 +1,20 @@
+@(activities: List[Activity])
+
+@import templates.Formatters._
+
+<div class="col-md-5">
+  <h4>Latest activity</h4>
+  @if(activities.length > 0) {
+    <table class="activity table">
+    @for(activity <- activities) {
+      <tr>
+        <td>
+          <i class="glyphicon glyphicon-activity-@activity.predicate"></i>
+          @activity.description
+          <br><small>@activity.created.format</small>
+        </td>
+      </tr>
+    }
+    </table>
+  }
+</div>
