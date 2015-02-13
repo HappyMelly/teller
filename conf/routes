@@ -109,6 +109,10 @@ GET         /member/:id                                                         
 GET         /member/:id/edit                                                     controllers.Members.edit(id: Long)
 POST        /member/:id                                                          controllers.Members.update(id: Long)
 
+GET         /membership/welcome                                                  controllers.Membership.welcome
+GET         /membership/payment                                                  controllers.Membership.payment
+POST        /membership/payment                                                  controllers.Membership.charge
+
 GET         /organizations                                                       controllers.Organisations.index
 POST        /organizations                                                       controllers.Organisations.create
 GET         /organization/new                                                    controllers.Organisations.add

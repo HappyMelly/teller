@@ -1,4 +1,4 @@
-5000:com.github.mumoshu.play2.memcached.MemcachedPlugin
+#5000:com.github.mumoshu.play2.memcached.MemcachedPlugin
 9994:securesocial.core.DefaultAuthenticatorStore
 9995:securesocial.core.DefaultIdGenerator
 9997:services.SecureSocialTemplatesPlugin

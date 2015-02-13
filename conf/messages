@@ -105,6 +105,7 @@ error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
 error.api.validation = Validation Failed
 error.api.required = Required field
+error.payment.authorisation = Internal error #1001. Please contact the system support
 
 error.brand.invalid = You are not allowed to create events for this brand
 error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
