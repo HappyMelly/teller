@@ -58,6 +58,10 @@ trait Dashboard extends Controller with Security with Services {
         Some(Activity.findAll)
       else
         None
+      val licenses = if (account.admin)
+        licenseService.expiring()
+      else
+        List()
       val events = eventService.findByFacilitator(
         account.personId,
         brand = None)
@@ -70,9 +74,10 @@ trait Dashboard extends Controller with Security with Services {
         findByEvents(pastEvents.map(_.id.get)).
         sortBy(_._3.created.toString())(Ordering[String].reverse).
         slice(0, 10)
-      Ok(views.html.dashboard(user,
+      Ok(views.html.dashboard.index(user,
         upcomingEvents,
         evaluations,
+        licenses,
         activity))
   }
 

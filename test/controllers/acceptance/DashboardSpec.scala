@@ -25,13 +25,15 @@
 package controllers.acceptance
 
 import controllers.{ Dashboard, Security }
-import helpers.{ EvaluationHelper, PersonHelper, EventHelper }
+import helpers.{ BrandHelper, EvaluationHelper, PersonHelper, EventHelper }
 import integration.PlayAppSpec
 import models._
-import org.joda.time.DateTime
+import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
+import org.joda.time.{ LocalDate, DateTime }
+import scala.collection.mutable
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
-import play.api.test.Helpers._
 import stubs._
 
 import scala.concurrent.Future
@@ -56,9 +58,16 @@ class DashboardSpec extends PlayAppSpec {
       not be visible to Viewer                  $e5
       and be visible to Editor                  $e6
 
-    On facilitator's dashboard should be
+    On facilitator's dashboard there should be
       three nearest future events               $e7
       10 latest evaluations                     $e8
+
+    On admin's dashboard there should be
+      a list of facilitators with expiring licenses $e9
+
+    Expiring licenses should
+      not be visible to Viewer                  $e10
+      not be visible to Editor                  $e11
   """
 
   def e1 = {
@@ -191,5 +200,108 @@ class DashboardSpec extends PlayAppSpec {
       contentAsString(result) must contain("/evaluation/10")
       contentAsString(result) must contain("/evaluation/11")
     }
+  }
+
+  def e9 = {
+    new MockContext {
+      val identity = StubUserIdentity.admin
+      val request = prepareSecuredGetRequest(identity, "/")
+
+      val facilitators = Map(1L -> PersonHelper.one(),
+        2L -> PersonHelper.two())
+      val now = LocalDate.now()
+      val licenses = mutable.MutableList[LicenseLicenseeView]()
+      Seq(
+        (1L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
+        (2L, now.minusYears(1), now.dayOfMonth().withMaximumValue())).foreach {
+          case (licenseeId, start, end) ⇒ {
+            val license = new License(None, licenseeId, 1L,
+              "1", LocalDate.now().minusYears(1),
+              start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
+            licenses += LicenseLicenseeView(license, facilitators.get(licenseeId).get)
+          }
+        }
+
+      val service = mock[FakeLicenseService]
+      (service.expiring _).expects().returning(licenses.toList)
+      val controller = new TestDashboard()
+      controller.licenseService_=(service)
+      val result: Future[SimpleResult] = controller.index().apply(request)
+      status(result) must equalTo(OK)
+      val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
+      contentAsString(result) must contain(title)
+      contentAsString(result) must contain("/person/1")
+      contentAsString(result) must contain("/person/2")
+      contentAsString(result) must contain("EUR 100")
+      contentAsString(result) must contain("First Tester")
+      contentAsString(result) must contain("Second Tester")
+      contentAsString(result) must contain(now.dayOfMonth().withMinimumValue().toString)
+      contentAsString(result) must contain(now.dayOfMonth().withMaximumValue().toString)
+      contentAsString(result) must not contain "/person/4"
+      contentAsString(result) must not contain "/person/5"
+    }
+  }
+
+  def e10 = {
+    truncateTables()
+    addLicenseData()
+    val identity = StubUserIdentity.viewer
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val controller = new TestDashboard()
+    val result: Future[SimpleResult] = controller.index().apply(request)
+    status(result) must equalTo(OK)
+    val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
+    contentAsString(result) must not contain title
+  }
+
+  def e11 = {
+    truncateTables()
+    addLicenseData()
+    val identity = StubUserIdentity.editor
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val controller = new TestDashboard()
+    val result: Future[SimpleResult] = controller.index().apply(request)
+    status(result) must equalTo(OK)
+    val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
+    contentAsString(result) must not contain title
+  }
+
+  /**
+   * Returns name of month by its index
+   * @param index Index of month
+   */
+  private def month(index: Int): String = {
+    val months = Map(1 -> "January", 2 -> "February", 3 -> "March", 4 -> "April",
+      5 -> "May", 6 -> "June", 7 -> "July", 8 -> "August", 9 -> "September",
+      10 -> "October", 11 -> "November", 12 -> "December")
+    months.getOrElse(index, "")
+  }
+
+  /**
+   * Adds test data to database
+   */
+  private def addLicenseData() = {
+    val facilitators = Map(1L -> PersonHelper.one(),
+      2L -> PersonHelper.two(),
+      3L -> PersonHelper.make(Some(3L), "Third", "Tester"),
+      4L -> PersonHelper.make(Some(4L), "Fourth", "Tester"),
+      5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"))
+    facilitators.foreach(v ⇒ v._2.insert)
+    BrandHelper.defaultBrand.insert
+    val now = LocalDate.now()
+    Seq(
+      (1L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
+      (2L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
+      (4L, now.minusMonths(6), now.plusMonths(4)),
+      (5L, now.minusMonths(4), now.plusMonths(1))).foreach {
+        case (licenseeId, start, end) ⇒ {
+          val license = new License(None, licenseeId, 1L,
+            "1", LocalDate.now().minusYears(1),
+            start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
+          License.insert(license)
+        }
+      }
   }
 }
