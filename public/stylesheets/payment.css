@@ -82,3 +82,9 @@
 .fee label {
     margin-top: 7px;
 }
+.amount {
+    font-size: 30px;
+}
+.btn-block {
+    margin-top: 10px;
+}

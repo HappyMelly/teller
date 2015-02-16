@@ -27,6 +27,7 @@
  */
 var stripeResponseHandler = function(status, response) {
     var $form = $('#payment-form');
+    $("body").css("cursor", "default");
     if (response.error) {
         // Show the errors on the form
         $form.find('.payment-errors').text(response.error.message);
@@ -94,6 +95,18 @@ var validateAmount = function() {
     }
 };
 
+/**
+ * Updates charged amount field
+ * @param objectId Fee field
+ */
+var updateAmount = function(objectId) {
+    var amount = $(objectId).val();
+    if (amount.length < 1) {
+        amount = "0.00";
+    }
+    $('div.amount > span').text(amount);
+};
+
 jQuery(function($) {
     $('#payment-form').submit(function(e) {
         var $form = $(this);
@@ -102,11 +115,16 @@ jQuery(function($) {
         if (details && amount) {
             // Disable the submit button to prevent repeated clicks
             $form.find('button').prop('disabled', true);
+            $("body").css("cursor", "progress");
             Stripe.card.createToken($form, stripeResponseHandler);
         }
         // Prevent the form from submitting with the default action
         return false;
     });
+    $('#fee_amount').bind('change paste keyup', function() {
+        updateAmount('#fee_amount');
+    });
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');
+    updateAmount('#fee_amount');
 });
