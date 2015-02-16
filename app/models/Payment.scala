@@ -29,33 +29,49 @@ import com.stripe.exception._
 import com.stripe.model.Charge
 import scala.collection.JavaConversions._
 
-class PaymentException(msg: String) extends RuntimeException(msg)
+class RequestException(msg: String, logMsg: Option[String] = None)
+  extends RuntimeException(msg) {
+
+  def log: Option[String] = logMsg
+}
+
+/**
+ * Wrapper around stripe.CardException
+ * @param msg Human-readable message
+ * @param code Unique error code
+ * @param param Optional parameter
+ */
+case class PaymentException(msg: String, code: String, param: String)
+  extends RuntimeException(msg)
 
 /**
  * Contains the logic required for working with payment gateway
  */
 class Payment(apiKey: String) {
 
-  def charge(sum: BigDecimal,
+  def charge(sum: Int,
     payer: Person,
     token: Option[String],
     card: Option[Map[String, String]] = None) = {
-    Stripe.apiKey = apiKey
-    val params = Map("amount" -> Int.box(200),
+    val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
       "card" -> token.getOrElse(card.getOrElse(Map())),
       "description" -> "One Year Membership Fee",
       "receipt_email" -> payer.socialProfile.email)
     try {
+      Stripe.apiKey = apiKey
       val response = Charge.create(params)
     } catch {
-      case e: CardException ⇒ println(e.toString)
-      case e: InvalidRequestException ⇒ println(e.toString)
+      case e: CardException ⇒
+        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
+      case e: InvalidRequestException ⇒
+        throw new RequestException("error.payment.invalid_request", Some(e.toString))
       case e: AuthenticationException ⇒
-        throw new PaymentException("error.payment.authorisation")
-      case e: APIConnectionException ⇒ println(e.toString)
-      case e: APIException ⇒ println(e.toString)
-      case _: Throwable ⇒ println("SHIT")
+        throw new RequestException("error.payment.authorisation")
+      case e: APIConnectionException ⇒
+        throw new RequestException("error.payment.api.connection", Some(e.toString))
+      case e: APIException ⇒
+        throw new RequestException("error.payment.api", Some(e.toString))
     }
   }
 }

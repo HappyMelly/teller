@@ -5,7 +5,6 @@
     flash: Flash)
 
 @import helper.CSRF
-@import org.joda.money.CurrencyUnit
 
 @main("Payment", "membership", user) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
@@ -31,18 +30,17 @@
         <span class="payment-errors"></span>
         <legend>Step 1: Fee</legend>
         <div class="row payment-bottom-space fee">
-          <div class="form-group @if(form("fee.currency").hasErrors || form("fee.amount").hasErrors) {error}" id="fee">
+          <div class="form-group @if(form("fee").hasErrors) {error}">
             <label class="col-md-6" for="fee">One Year Subscription Fee</label>
             <div class="col-md-6">
               <div class="input-group">
-                <label class="input-group-addon">@CurrencyUnit.of("EUR").getCode</label>
-                <input type="hidden" name="@form("fee.currency").name" value="EUR">
-                <input class="form-control" name="@form("fee.amount").name" id="@form("fee.amount").id"
-                type="number" min="0.00" step="0.01" value="@form("fee.amount").value">
+                <label class="input-group-addon">EUR</label>
+                <input class="form-control" name="@form("fee").name" id="@form("fee").id"
+                type="number" min="0" step="1" value="@form("fee").value">
               </div>
-              @if(form("fee.currency").hasErrors || form("fee.amount").hasErrors) {
+              @if(form("fee").hasErrors) {
                 <span class="help-block">
-                  @for(error <- form("fee.currency").errors ++ form("fee.amount").errors) {
+                  @for(error <- form("fee").errors) {
                     @Messages(error.message, error.args: _*)
                   }
                 </span>

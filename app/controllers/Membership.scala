@@ -24,30 +24,25 @@
 
 package controllers
 
-import com.stripe.Stripe
-import com.stripe.exception._
-import com.stripe.model.Charge
-import models.JodaMoney._
+import models.{ PaymentException, Payment, RequestException }
 import models.UserRole.Role._
 import models.service.Services
-import org.joda.money.Money
-import play.api.mvc.Controller
+import play.api.i18n.Messages
+import play.api.mvc.{ Flash, Controller }
 import play.api.data._
 import play.api.data.Forms._
+import play.api.Logger
 import play.api.Play
 import play.api.Play.current
-import scala.collection.JavaConversions._
 
-case class PaymentData(stripeToken: String,
-  fee: Money) {}
+case class PaymentData(token: String,
+  fee: Int) {}
 
 trait Membership extends Controller with Security with Services {
 
   private def form = Form(mapping(
     "token" -> nonEmptyText,
-    "fee" -> jodaMoney().
-      verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
-      verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR")) (PaymentData.apply)(PaymentData.unapply))
+    "fee" -> number(min = 1)) (PaymentData.apply)(PaymentData.unapply))
 
   /**
    * Renders welcome screen with two options: Become a funder and
@@ -72,27 +67,29 @@ trait Membership extends Controller with Security with Services {
       val publicKey = Play.configuration.getString("stripe.public_key").get
       form.bindFromRequest.fold(
         hasError ⇒ Ok(views.html.membership.payment(user, hasError, publicKey)),
-        token ⇒ {
-          Stripe.apiKey = Play.configuration.getString("stripe.secret_key").get
-          // send request to charge
-          val params = Map("amount" -> Int.box(200),
-            "currency" -> "eur",
-            "card" -> token,
-            "description" -> "Supporter fee for %s".format(user.person.fullName),
-            "receipt_email" -> user.person.socialProfile.email)
+        data ⇒ {
           try {
-            println(Charge.create(params).toString)
+            val key = Play.configuration.getString("stripe.secret_key").get
+            val payment = new Payment(key)
+            payment.charge(data.fee, user.person, Some(data.token))
+            Redirect(routes.People.details(user.person.id.get))
           } catch {
-            case e: AuthenticationException ⇒ println(e.toString)
-            case e: InvalidRequestException ⇒ println(e.toString)
-            case e: APIConnectionException ⇒ println(e.toString)
-            case e: CardException ⇒ println(e.toString)
-            case e: APIException ⇒ println(e.toString)
-            case _: Throwable ⇒ println("SHIT")
+            case e: PaymentException ⇒
+              Logger.info("%s: %s, %s".format(e.code, e.getMessage, e.param))
+              val error = e.code match {
+                case "card_declined" ⇒ "error.payment.card_declined"
+                case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+                case "expired_card" ⇒ "error.payment.expired_card"
+                case "processing_error" ⇒ "error.payment.processing_error"
+                case _ ⇒ "error.payment.unexpected_error"
+              }
+              implicit val flash = Flash(Map("error" -> Messages(error)))
+              BadRequest(views.html.membership.payment(user, form, publicKey))
+            case e: RequestException ⇒
+              e.log.foreach(Logger.error(_))
+              implicit val flash = Flash(Map("error" -> Messages(e.getMessage)))
+              BadRequest(views.html.membership.payment(user, form, publicKey))
           }
-          // send request to create subscription
-          // send
-          Redirect(routes.People.details(user.person.id.get))
         })
   }
 }

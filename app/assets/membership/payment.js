@@ -30,7 +30,11 @@ var stripeResponseHandler = function(status, response) {
     $("body").css("cursor", "default");
     if (response.error) {
         // Show the errors on the form
-        $form.find('.payment-errors').text(response.error.message);
+        if (response.error.param == "exp_year") {
+            $('.cc-exp-year').parent().addClass('has-error');
+        } else {
+            $('.cc-exp-year').parent().removeClass('has-error');
+        }
         $form.find('button').prop('disabled', false);
     } else {
         // token contains id, last4, and card type
@@ -85,7 +89,7 @@ var validateDetails = function() {
  * @returns {boolean}
  */
 var validateAmount = function() {
-    var field = $('#fee_amount');
+    var field = $('#fee');
     if (field.val().length < 1 || isNaN(field.val())) {
         field.parent().addClass('has-error');
         return false;
@@ -121,10 +125,10 @@ jQuery(function($) {
         // Prevent the form from submitting with the default action
         return false;
     });
-    $('#fee_amount').bind('change paste keyup', function() {
-        updateAmount('#fee_amount');
+    $('#fee').bind('change paste keyup', function() {
+        updateAmount('#fee');
     });
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');
-    updateAmount('#fee_amount');
+    updateAmount('#fee');
 });

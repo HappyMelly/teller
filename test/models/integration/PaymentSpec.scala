@@ -25,7 +25,7 @@
 package models.integration
 
 import helpers.PersonHelper
-import models.{ PaymentException, Payment }
+import models.{ RequestException, Payment }
 import org.specs2.mutable._
 
 class PaymentSpec extends Specification {
@@ -35,7 +35,7 @@ class PaymentSpec extends Specification {
       val payment = new Payment("wrong_key")
       val payer = PersonHelper.one()
       val msg = "error.payment.authorisation"
-      payment.charge(BigDecimal(200), payer, Some("token")) must throwA[PaymentException](msg)
+      payment.charge(BigDecimal(200), payer, Some("token")) must throwA[RequestException](msg)
     }
     //    "throw PaymentException when the card number is incorrect" in {
     //      val payment = new Payment("")
