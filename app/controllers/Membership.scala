@@ -27,8 +27,10 @@ package controllers
 import com.stripe.Stripe
 import com.stripe.exception._
 import com.stripe.model.Charge
+import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
+import org.joda.money.Money
 import play.api.mvc.Controller
 import play.api.data._
 import play.api.data.Forms._
@@ -36,7 +38,16 @@ import play.api.Play
 import play.api.Play.current
 import scala.collection.JavaConversions._
 
+case class PaymentData(stripeToken: String,
+  fee: Money) {}
+
 trait Membership extends Controller with Security with Services {
+
+  private def form = Form(mapping(
+    "token" -> nonEmptyText,
+    "fee" -> jodaMoney().
+      verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
+      verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR")) (PaymentData.apply)(PaymentData.unapply))
 
   /**
    * Renders welcome screen with two options: Become a funder and
@@ -52,14 +63,15 @@ trait Membership extends Controller with Security with Services {
    */
   def payment = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.membership.payment(user))
+      val publicKey = Play.configuration.getString("stripe.public_key").get
+      Ok(views.html.membership.payment(user, form, publicKey))
   }
 
   def charge = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val form = Form(single("stripeToken" -> nonEmptyText))
+      val publicKey = Play.configuration.getString("stripe.public_key").get
       form.bindFromRequest.fold(
-        hasError ⇒ Ok(views.html.membership.payment(user)),
+        hasError ⇒ Ok(views.html.membership.payment(user, hasError, publicKey)),
         token ⇒ {
           Stripe.apiKey = Play.configuration.getString("stripe.secret_key").get
           // send request to charge

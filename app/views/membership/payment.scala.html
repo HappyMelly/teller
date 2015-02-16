@@ -1,83 +1,120 @@
-@(user: UserIdentity)(implicit request: Request[Any],
+@(user: UserIdentity,
+    form: Form[PaymentData],
+    apiKey: String)(implicit request: Request[Any],
     handler: AuthorisationHandler,
     flash: Flash)
 
 @import helper.CSRF
+@import org.joda.money.CurrencyUnit
 
 @main("Payment", "membership", user) {
+  <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
   <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+  <script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("membership/payment.js")" type="text/javascript"></script>
   <script type="text/javascript">
     // This identifies your website in the createToken call below
-    Stripe.setPublishableKey('pk_test_teNE2hRb1H69qOJt0ppazmrG');
-
-    var stripeResponseHandler = function(status, response) {
-      var $form = $('#payment-form');
-      if (response.error) {
-        // Show the errors on the form
-        $form.find('.payment-errors').text(response.error.message);
-        $form.find('button').prop('disabled', false);
-      } else {
-        // token contains id, last4, and card type
-        var token = response.id;
-        // Insert the token into the form so it gets submitted to the server
-        $form.append($('<input type="hidden" name="stripeToken" />').val(token));
-        // and re-submit
-        $form.get(0).submit();
-      }
-    };
-    jQuery(function($) {
-      $('#payment-form').submit(function(e) {
-        var $form = $(this);
-        // Disable the submit button to prevent repeated clicks
-        $form.find('button').prop('disabled', true);
-        Stripe.card.createToken($form, stripeResponseHandler);
-        // Prevent the form from submitting with the default action
-        return false;
-      });
-    });
+    Stripe.setPublishableKey("@apiKey");
   </script>
 
-  <div class="col-md-12 text-center">
-    <h1>I want to become</h1>
-  </div>
-  <div class="row text-center">
-    <div class="col-md-4 col-md-offset-2">
-      <div class="text-left">
-        <form class="form-inline" action="@CSRF(routes.Membership.charge())" method="POST" id="payment-form">
-          <span class="payment-errors"></span>
-
-          <div class="form-group">
-            <label>
-              <span>Card Number</span>
-              <input type="text" class="form-control" size="20" data-stripe="number"/>
-            </label>
+  <div class="col-md-8 col-md-offset-2">
+    <h1 class="text-center">Become a Supporter</h1>
+    <div class="row">
+      <p class="payment-bottom-space">
+      To be a Happy Melly Supporter all you need is to pay a small yearly
+      membership fee. The minimum fee amount depends on the country you live in.
+      For more information please check chapter "Fees" in <a href="http://www.happymelly.com/constitution"
+      target="_blank">Happy Melly Constitution</a>.
+      </p>
+      <form class="form-inline payment-bottom-space" action="@CSRF(routes.Membership.charge())"
+        method="POST" id="payment-form" autocomplete="on">
+        <span class="payment-errors"></span>
+        <legend>Step 1: Fee</legend>
+        <div class="row payment-bottom-space fee">
+          <div class="form-group @if(form("fee.currency").hasErrors || form("fee.amount").hasErrors) {error}" id="fee">
+            <label class="col-md-6" for="fee">One Year Subscription Fee</label>
+            <div class="col-md-6">
+              <div class="input-group">
+                <label class="input-group-addon">@CurrencyUnit.of("EUR").getCode</label>
+                <input type="hidden" name="@form("fee.currency").name" value="EUR">
+                <input class="form-control" name="@form("fee.amount").name" id="@form("fee.amount").id"
+                type="number" min="0.00" step="0.01" value="@form("fee.amount").value">
+              </div>
+              @if(form("fee.currency").hasErrors || form("fee.amount").hasErrors) {
+                <span class="help-block">
+                  @for(error <- form("fee.currency").errors ++ form("fee.amount").errors) {
+                    @Messages(error.message, error.args: _*)
+                  }
+                </span>
+              }
+            </div>
           </div>
-
-          <div class="form-group">
-            <label>
-              <span>CVC</span>
-              <input type="text" class="form-control" size="4" data-stripe="cvc"/>
-            </label>
+        </div>
+        <legend>Step 2: Payment</legend>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="payment-card">
+              <div class="row">
+                <div class="pull-right payment-icons payment-mastercard"></div>
+                <div class="pull-right payment-icons payment-visa"></div>
+              </div>
+              <div class="form-group payment-wide">
+                <div><span>CARD NUMBER</span></div>
+                <input type="tel" placeholder="•••• •••• •••• ••••" autocompletetype="cc-number"
+                  class="payment-wide form-control cc-number"
+                  data-stripe="number"/>
+              </div>
+              <div class="form-group">
+                <div class="payment-year"><span>MONTH / YEAR </span></div>
+                <span class="valid-thru">VALID THRU</span>
+                <input type="tel" class="form-control cc-exp-month"
+                  size="2" data-stripe="exp-month"/>
+                <span> / </span>
+                <input type="tel" class="form-control cc-exp-year"
+                  size="4" data-stripe="exp-year"/>
+              </div>
+              <div><span>CARD HOLDER</span></div>
+              <div class="form-group payment-wide clearfix">
+                <input type="text" class="form-control cc-name payment-wide"
+                  data-stripe="name"/>
+              </div>
+            </div>
           </div>
-
-          <div class="form-group">
-            <label>
-              <span>Expiration (MM/YYYY)</span>
-              <input type="text" class="form-control" size="2" data-stripe="exp-month"/>
-            </label>
-            <span> / </span>
-            <input type="text" class="form-control" size="4" data-stripe="exp-year"/>
+          <div class="col-md-6">
+            <div class="text-right payment-card">
+              <span class="payment-code-line"></span>
+              <div class="form-group">
+                <span>CVC/CVV</span>
+                <input type="tel" class="form-control cc-cvc" autocomplete="off"
+                  data-stripe="cvc"/>
+              </div>
+            </div>
           </div>
-
-          <button type="submit">Submit Payment</button>
-        </form>
+        </div>
+        <div class="row">
+          <div class="col-md-8"></div>
+          <div class="col-md-4">
+            <button type="submit"
+              class="btn btn-primary btn-lg btn-block">Pay</button>
+          </div>
+        </div>
+      </form>
+      <div class="row">
+        <div class="col-md-2">
+          <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")"/>
+        </div>
+        <div class="col-md-10">
+        <p class="text-muted">Happy Melly does not store your card details. All payments are securily
+        processed by <a href="http://stripe.com" target="_blank">Stripe, Inc.</a>
+        </p>
+        <p class="text-muted">
+          The information transfer is secured and verified by SSL 128 bit certificate
+          issued by RapidSSL. Web site fully satisfies the security standards of
+          Visa and Mastercard (PCI compliancy).
+        </p>
+        </div>
       </div>
     </div>
-    <div class="col-md-4 col-md-offset-1">
-      <h3>Funder</h3>
-    </div>
   </div>
-
-
 
 }
