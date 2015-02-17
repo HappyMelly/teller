@@ -78,7 +78,6 @@ trait Membership extends Controller with Security with Services {
             Ok(Json.obj("redirect" -> routes.People.details(user.person.id.get).url))
           } catch {
             case e: PaymentException ⇒
-              Logger.info("%s: %s, %s".format(e.code, e.getMessage, e.param))
               val error = e.code match {
                 case "card_declined" ⇒ "error.payment.card_declined"
                 case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"

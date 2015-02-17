@@ -22,7 +22,20 @@
                 target="_blank">website</a>.
               </p>
             </div>
-            <a href="@routes.Membership.payment" class="btn btn-success">Become Supporter</a>
+            @user.person.member.map { m =>
+                @if(m.funder) {
+                  <a href="" disabled="disabled" class="btn btn-primary">
+                    You're a Funder
+                  </a>
+                } else {
+                  <a href="" disabled="disabled" class="btn btn-primary">
+                    You're already a Supporter
+                  </a>
+                }
+            }.getOrElse {
+              <a href="@routes.Membership.payment" class="btn btn-success">
+                Become Supporter</a>
+            }
         </div>
         <div class="col-md-4 col-md-offset-1">
             <h3>Funder</h3>

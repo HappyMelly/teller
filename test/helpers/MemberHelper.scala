@@ -22,20 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.integration
+package helpers
 
-import helpers.PersonHelper
-import models.{ RequestException, Payment }
-import org.specs2.mutable._
+import models.Member
+import org.joda.money.Money
+import org.joda.money.CurrencyUnit._
+import org.joda.time.{ DateTime, LocalDate }
 
-class PaymentSpec extends Specification {
+object MemberHelper {
 
-  "Method `charge`" should {
-    "throw PaymentException when API key is wrong" in {
-      val payment = new Payment("wrong_key")
-      val payer = PersonHelper.one()
-      val msg = "error.payment.authorisation"
-      payment.charge(200, payer, Some("token")) must throwA[RequestException](msg)
-    }
+  def make(id: Option[Long] = None,
+    objectId: Long,
+    person: Boolean,
+    funder: Boolean,
+    money: Option[Money] = Some(Money.of(EUR, 100)),
+    since: Option[LocalDate] = Some(LocalDate.now().minusDays(4)),
+    existingObject: Option[Boolean] = Some(false)): Member = {
+    new Member(id, objectId, person, funder, money.get, since.get,
+      existingObject.get, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }
