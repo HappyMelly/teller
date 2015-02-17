@@ -228,7 +228,7 @@ class TellerResourceHandler(account: Option[UserAccount])
               val organisationId = """\d+""".r findFirstIn request.uri
               // A User should have an Editor role or should be a member of the organisation
               existingAccount.editor ||
-                (organisationId.nonEmpty && organisationService.find(organisationId.get.toLong).exists {
+                (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
                   _.members.find(_.id == Some(existingAccount.personId)).nonEmpty
                 })
             case _ ⇒ true

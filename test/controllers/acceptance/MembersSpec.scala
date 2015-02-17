@@ -321,7 +321,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val service = mock[FakeOrganisationService]
     (service.find _).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
-    controller.organisationService_=(service)
+    controller.orgService_=(service)
     val identity = StubUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
       withFormUrlEncodedBody(("id", "1"))
@@ -342,7 +342,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       val service = mock[FakeOrganisationService]
       (service.find _).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
-      controller.organisationService_=(service)
+      controller.orgService_=(service)
       val identity = StubUserIdentity.editor
       val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
         withFormUrlEncodedBody(("id", "1"))

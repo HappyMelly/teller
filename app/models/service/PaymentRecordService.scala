@@ -21,29 +21,32 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import helpers.{ MemberHelper, PersonHelper }
-import models._
-import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
-import org.specs2.mutable._
-import stubs.{ FakeMemberService, FakeServices }
+package models.service
 
-class PersonSpec extends Specification {
+import models.database.PaymentRecords
+import models.PaymentRecord
+import play.api.db.slick._
+import play.api.Play.current
 
-  "Person" should {
-    "return well-formed activity object" in {
-      val person = PersonHelper.one()
-      val subject = PersonHelper.two()
-      val activity = person.activity(subject, Activity.Predicate.Added)
-      activity.subjectId must_== 2
-      activity.subject must_== "Second Tester"
-      activity.objectType must_== Activity.Type.Person
-      activity.objectId must_== 1
-      activity.activityObject must_== Some("First Tester")
-    }
+/** Provides operations with database related to payment records */
+class PaymentRecordService {
 
+  /**
+   * Inserts the given record to database
+   *
+   * @param r Object to insert
+   * @return Returns member object with updated id
+   */
+  def insert(r: PaymentRecord): PaymentRecord = DB.withSession {
+    implicit session ⇒
+      val id: Long = PaymentRecords.forInsert.insert(r)
+      r.copy(id = Some(id))
   }
+}
+
+object PaymentRecordService {
+  private val instance: PaymentRecordService = new PaymentRecordService
+
+  def get: PaymentRecordService = instance
 }

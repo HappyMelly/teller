@@ -28,16 +28,16 @@ import models.service.Services
 
 trait FakeServices extends Services {
 
-  private var _eventService = new StubEventService
-  private var _personService = new FakePersonService
-  private var _licenseService = new StubLicenseService
-  private var _userAccountService = new StubUserAccountService
-  private var _contributionService = new StubContributionService
-  private var _productService = new StubProductService
-  private var _evaluationService = new StubEvaluationService
-  private var _memberService = new FakeMemberService
-  private var _organisationService = new FakeOrganisationService
   private var _brandService = new FakeBrandService
+  private var _contributionService = new StubContributionService
+  private var _evaluationService = new StubEvaluationService
+  private var _eventService = new StubEventService
+  private var _licenseService = new StubLicenseService
+  private var _memberService = new FakeMemberService
+  private var _orgService = new FakeOrganisationService
+  private var _personService = new FakePersonService
+  private var _productService = new StubProductService
+  private var _userAccountService = new StubUserAccountService
 
   def eventService_=(service: StubEventService) = {
     _eventService = service
@@ -87,11 +87,11 @@ trait FakeServices extends Services {
 
   override def memberService: FakeMemberService = _memberService
 
-  def organisationService_=(service: FakeOrganisationService) = {
-    _organisationService = service
+  def orgService_=(service: FakeOrganisationService) = {
+    _orgService = service
   }
 
-  override def organisationService: FakeOrganisationService = _organisationService
+  override def orgService: FakeOrganisationService = _orgService
 
   def brandService_=(service: FakeBrandService) = {
     _brandService = service

@@ -22,11 +22,13 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+package utils
 
 import com.stripe.Stripe
 import com.stripe.exception._
 import com.stripe.model.Charge
+import models.Person
+
 import scala.collection.JavaConversions._
 
 class RequestException(msg: String, logMsg: Option[String] = None)
@@ -47,7 +49,7 @@ case class PaymentException(msg: String, code: String, param: String)
 /**
  * Contains the logic required for working with payment gateway
  */
-class Payment(apiKey: String) {
+class PaymentGatewayWrapper(apiKey: String) {
 
   /**
    * Charges user's card using Stripe

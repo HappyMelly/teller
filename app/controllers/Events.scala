@@ -109,10 +109,10 @@ object Events extends Controller
     "id" -> ignored(Option.empty[Long]),
     "eventId" -> ignored(Option.empty[Long]),
     "invoiceTo" -> longNumber.verifying(
-      "Such organization doesn't exist", (invoiceTo: Long) ⇒ organisationService.find(invoiceTo).isDefined),
+      "Such organization doesn't exist", (invoiceTo: Long) ⇒ orgService.find(invoiceTo).isDefined),
     "invoiceBy" -> optional(longNumber).verifying(
       "Such organization doesn't exist", (invoiceBy: Option[Long]) ⇒ invoiceBy.map { value ⇒
-        organisationService.find(value).isDefined
+        orgService.find(value).isDefined
       }.getOrElse(true)),
     "number" -> optional(nonEmptyText))(EventInvoice.apply)(EventInvoice.unapply)
 

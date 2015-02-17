@@ -69,7 +69,7 @@ object OrganisationsApi extends Controller with ApiAuthentication with Services 
    * Organisation details API.
    */
   def organisation(id: Long) = TokenSecuredAction { implicit request ⇒
-    organisationService.find(id).map { organisation ⇒
+    orgService.find(id).map { organisation ⇒
       Ok(Json.toJson(organisation)(organisationDetailsWrites))
     }.getOrElse(NotFound("Unknown organization"))
   }

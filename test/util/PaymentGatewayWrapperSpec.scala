@@ -22,17 +22,17 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.integration
+package util
 
 import helpers.PersonHelper
-import models.{ RequestException, Payment }
 import org.specs2.mutable._
+import utils.{ PaymentGatewayWrapper, RequestException }
 
-class PaymentSpec extends Specification {
+class PaymentGatewayWrapperSpec extends Specification {
 
   "Method `charge`" should {
     "throw PaymentException when API key is wrong" in {
-      val payment = new Payment("wrong_key")
+      val payment = new PaymentGatewayWrapper("wrong_key")
       val payer = PersonHelper.one()
       val msg = "error.payment.authorisation"
       payment.charge(200, payer, Some("token")) must throwA[RequestException](msg)

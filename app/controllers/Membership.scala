@@ -38,6 +38,7 @@ import play.api.Logger
 import play.api.libs.json._
 import play.api.Play
 import play.api.Play.current
+import utils.{ PaymentException, RequestException, PaymentGatewayWrapper }
 
 case class PaymentData(token: String,
   fee: Int) {}
@@ -79,22 +80,18 @@ trait Membership extends Controller with Security with Services {
           } getOrElse {
             try {
               val key = Play.configuration.getString("stripe.secret_key").get
-              val payment = new Payment(key)
+              val payment = new PaymentGatewayWrapper(key)
               payment.charge(data.fee, user.person, Some(data.token))
               val userId = user.person.id.get
+              val fee = Money.of(EUR, data.fee)
+              PaymentRecord("", userId, userId, person = true,
+                "", fee).insert
               val msg = "User %s (id = %s) paid membership fee EUR %s".format(
                 user.person.fullName,
                 userId,
                 data.fee)
               Logger.info(msg)
-              val member = new Member(None, userId,
-                person = true,
-                funder = false,
-                Money.of(EUR, data.fee),
-                LocalDate.now(),
-                existingObject = true,
-                DateTime.now(), userId, DateTime.now(), userId)
-              member.insert
+              val member = user.person.becomeMember(funder = false, fee)
               member.activity(
                 user.person,
                 Activity.Predicate.BecameSupporter).insert

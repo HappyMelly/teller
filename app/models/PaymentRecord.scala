@@ -21,29 +21,49 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import helpers.{ MemberHelper, PersonHelper }
-import models._
+package models
+
+import models.service.Services
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
-import org.specs2.mutable._
-import stubs.{ FakeMemberService, FakeServices }
+import org.joda.time.DateTime
 
-class PersonSpec extends Specification {
+/**
+ * Contains data of a successful payment
+ */
+case class PaymentRecord(id: Option[Long],
+  remoteId: String,
+  payerId: Long,
+  objectId: Long,
+  person: Boolean,
+  description: String,
+  fee: Money,
+  created: DateTime) extends Services {
 
-  "Person" should {
-    "return well-formed activity object" in {
-      val person = PersonHelper.one()
-      val subject = PersonHelper.two()
-      val activity = person.activity(subject, Activity.Predicate.Added)
-      activity.subjectId must_== 2
-      activity.subject must_== "Second Tester"
-      activity.objectType must_== Activity.Type.Person
-      activity.objectId must_== 1
-      activity.activityObject must_== Some("First Tester")
-    }
+  /**
+   * Adds this payment record to database
+   */
+  def insert: PaymentRecord = paymentRecordService.insert(this)
+}
 
+object PaymentRecord {
+
+  /**
+   * Returns new PaymentRecord object
+   * @param remoteId Remote payment id
+   * @param payerId Payer id
+   * @param objectId Object of the payment
+   * @param person Defines if the object is a person
+   * @param description Description of the payment
+   * @param fee Amount of the payment
+   */
+  def apply(remoteId: String,
+    payerId: Long,
+    objectId: Long,
+    person: Boolean,
+    description: String,
+    fee: Money): PaymentRecord = {
+    new PaymentRecord(None, remoteId, payerId, objectId, person,
+      description, fee, DateTime.now())
   }
 }

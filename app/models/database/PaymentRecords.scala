@@ -21,38 +21,33 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
+import models.PaymentRecord
 import models.JodaMoney._
-import models.Member
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
-private[models] object Members extends Table[Member]("MEMBER") {
+private[models] object PaymentRecords extends Table[PaymentRecord]("PAYMENT_RECORD") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def remoteId = column[String]("REMOTE_ID")
+  def payerId = column[Long]("PAYER_ID")
   def objectId = column[Long]("OBJECT_ID")
   def person = column[Boolean]("PERSON")
-  def funder = column[Boolean]("FUNDER")
+  def description = column[String]("DESCRIPTION")
   def feeCurrency = column[String]("FEE_CURRENCY")
   def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
-  def since = column[LocalDate]("SINCE")
   def created = column[DateTime]("CREATED")
-  def createdBy = column[Long]("CREATED_BY")
-  def updated = column[DateTime]("UPDATED")
-  def updatedBy = column[Long]("UPDATED_BY")
 
-  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~
-    since ~ created ~ createdBy ~ updated ~ updatedBy <> ({
-      m ⇒
-        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, false, m._8, m._9,
-          m._10, m._11)
-    }, {
-      (m: Member) ⇒
-        Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.since, m.created, m.createdBy,
-          m.updated, m.updatedBy)
+  def * = id.? ~ remoteId ~ payerId ~ objectId ~ person ~ description ~
+    feeCurrency ~ fee ~ created <> ({ r ⇒
+      PaymentRecord(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9)
+    }, { (r: PaymentRecord) ⇒
+      Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
+        r.fee.getCurrencyUnit.getCode, r.fee.getAmount, r.created)
     })
 
   def forInsert = * returning id

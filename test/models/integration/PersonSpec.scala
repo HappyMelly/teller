@@ -21,29 +21,46 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import helpers.{ MemberHelper, PersonHelper }
-import models._
+package models.integration
+
+import _root_.integration.PlayAppSpec
+import helpers.PersonHelper
+import models.service.PersonService
+import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
-import org.specs2.mutable._
-import stubs.{ FakeMemberService, FakeServices }
 
-class PersonSpec extends Specification {
+class PersonSpec extends PlayAppSpec {
+
+  def setupDb() {}
+  def cleanupDb() {}
 
   "Person" should {
-    "return well-formed activity object" in {
-      val person = PersonHelper.one()
-      val subject = PersonHelper.two()
-      val activity = person.activity(subject, Activity.Predicate.Added)
-      activity.subjectId must_== 2
-      activity.subject must_== "Second Tester"
-      activity.objectType must_== Activity.Type.Person
-      activity.objectId must_== 1
-      activity.activityObject must_== Some("First Tester")
-    }
+    "become a well-formed supporter" in {
+      val person = PersonHelper.two()
+      val fee = Money.of(EUR, 155)
+      person.becomeMember(funder = false, fee)
 
+      val member = PersonService.get.member(person.id.get)
+      member map { m ⇒
+        m.person must_== true
+        m.funder must_== false
+        m.fee must_== fee
+        m.createdBy must_== 2L
+      } getOrElse ko
+    }
+    "become a well-formed funder" in {
+      val person = PersonHelper.one()
+      val fee = Money.of(EUR, 255)
+      person.becomeMember(funder = true, fee)
+
+      val member = PersonService.get.member(person.id.get)
+      member map { m ⇒
+        m.person must_== true
+        m.funder must_== true
+        m.fee must_== fee
+        m.createdBy must_== 1L
+      } getOrElse ko
+    }
   }
 }

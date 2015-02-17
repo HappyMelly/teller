@@ -26,7 +26,8 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import models.service.{ MemberService, ContributionService, PersonService, SocialProfileService }
+import models.service._
+import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -91,7 +92,9 @@ case class Person(
   blog: Option[String],
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder with ActivityRecorder {
+  dateStamp: DateStamp) extends AccountHolder
+  with ActivityRecorder
+  with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
@@ -336,6 +339,18 @@ case class Person(
 
   def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 
+  /**
+   * Adds member record to database
+   * @param funder Defines if this person becomes a funder
+   * @param fee Amount of membership fee this person paid
+   * @return Returns member object
+   */
+  def becomeMember(funder: Boolean, fee: Money): Member = {
+    val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
+      since = LocalDate.now(), existingObject = true, created = DateTime.now(),
+      id.get, DateTime.now(), id.get)
+    memberService.insert(m)
+  }
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

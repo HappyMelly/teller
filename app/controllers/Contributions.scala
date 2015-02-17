@@ -64,7 +64,7 @@ object Contributions extends Controller with Security with Services {
           val contributor: Option[ActivityRecorder] = if (success.isPerson)
             personService.find(success.contributorId)
           else
-            organisationService.find(success.contributorId)
+            orgService.find(success.contributorId)
           contributor map { c ⇒
             val contribution = success.insert
             val activity = contribution.activity(
@@ -92,7 +92,7 @@ object Contributions extends Controller with Security with Services {
         val contributor: ActivityRecorder = if (contribution.isPerson)
           personService.find(contribution.contributorId).get
         else
-          organisationService.find(contribution.contributorId).get
+          orgService.find(contribution.contributorId).get
         Contribution.delete(id)
 
         val activity = contribution.activity(

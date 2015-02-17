@@ -296,7 +296,7 @@ trait Members extends Controller with Security with Services {
           id ⇒ {
             val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             cached map { m ⇒
-              organisationService.find(id) map { org ⇒
+              orgService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
                   BadRequest(views.html.member.existingOrg(user,
@@ -328,7 +328,7 @@ trait Members extends Controller with Security with Services {
   }
 
   /** Returns ids and names of organisations which are not members */
-  private def orgsNonMembers: List[(String, String)] = organisationService.findNonMembers.
+  private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))
 
   /** Returns ids and names of people which are not members */

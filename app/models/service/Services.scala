@@ -27,25 +27,26 @@ package models.service
 /** Contains references to all services so we can stub them in tests */
 trait Services {
 
-  def eventService: EventService = EventService.get
-
-  def personService: PersonService = PersonService.get
-
-  def orgService: OrganisationService = OrganisationService.get
-
-  def licenseService: LicenseService = LicenseService.get
-
-  def userAccountService: UserAccountService = UserAccountService.get
+  def brandService: BrandService = BrandService.get
 
   def contributionService: ContributionService = ContributionService.get
 
-  def productService: ProductService = ProductService.get
-
   def evaluationService: EvaluationService = EvaluationService.get
+
+  def eventService: EventService = EventService.get
 
   def memberService: MemberService = MemberService.get
 
-  def organisationService: OrganisationService = OrganisationService.get
+  def licenseService: LicenseService = LicenseService.get
 
-  def brandService: BrandService = BrandService.get
+  def orgService: OrganisationService = OrganisationService.get
+
+  def paymentRecordService: PaymentRecordService = PaymentRecordService.get
+
+  def personService: PersonService = PersonService.get
+
+  def productService: ProductService = ProductService.get
+
+  def userAccountService: UserAccountService = UserAccountService.get
+
 }
