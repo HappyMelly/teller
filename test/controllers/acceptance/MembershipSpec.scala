@@ -48,6 +48,9 @@ class MembershipSpec extends PlayAppSpec {
     be active for a non-member                             $e3
     not exist for a supporter                              $e4
     not exist for a funder                                 $e5
+
+  A user should
+    not be charged if she is already a member              $e6
   """
 
   val controller = new TestMembership()
@@ -95,5 +98,16 @@ class MembershipSpec extends PlayAppSpec {
     status(result) must equalTo(OK)
     contentAsString(result) must contain("You're a Funder")
     contentAsString(result) must not contain "Become Supporter"
+  }
+
+  def e6 = {
+    truncateTables()
+    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
+    val req = prepareSecuredPostRequest(StubUserIdentity.viewer, "/").
+      withFormUrlEncodedBody(("token", "stub"), ("fee", "20"))
+    val result: Future[SimpleResult] = controller.charge().apply(req)
+
+    status(result) must equalTo(BAD_REQUEST)
+    contentAsString(result) must contain("You are already a member")
   }
 }

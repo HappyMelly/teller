@@ -162,6 +162,7 @@ object Activity {
     val DeletedSign = "sign.delete"
     val DeletedImage = "img.delete"
     val Made = "make"
+    val BecameSupporter = "become.supporter"
   }
 
   object Type extends Enumeration {

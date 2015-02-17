@@ -49,18 +49,24 @@ case class PaymentException(msg: String, code: String, param: String)
  */
 class Payment(apiKey: String) {
 
+  /**
+   * Charges user's card using Stripe
+   * @param sum Amount to be charged
+   * @param payer User object
+   * @param token Stripe token for a single session
+   * @return Returns Stripe JSON response
+   */
   def charge(sum: Int,
     payer: Person,
-    token: Option[String],
-    card: Option[Map[String, String]] = None) = {
+    token: Option[String]) = {
     val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
-      "card" -> token.getOrElse(card.getOrElse(Map())),
+      "card" -> token.getOrElse(""),
       "description" -> "One Year Membership Fee",
       "receipt_email" -> payer.socialProfile.email)
     try {
       Stripe.apiKey = apiKey
-      val response = Charge.create(params)
+      Charge.create(params)
     } catch {
       case e: CardException ⇒
         throw new PaymentException(e.getMessage, e.getCode, e.getParam)

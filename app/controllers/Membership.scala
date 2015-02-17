@@ -24,9 +24,12 @@
 
 package controllers
 
-import models.{ PaymentException, Payment, RequestException }
+import models._
 import models.UserRole.Role._
 import models.service.Services
+import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
+import org.joda.time.{ DateTime, LocalDate }
 import play.api.i18n.Messages
 import play.api.mvc.{ Flash, Controller }
 import play.api.data._
@@ -71,24 +74,45 @@ trait Membership extends Controller with Security with Services {
       form.bindFromRequest.fold(
         hasError ⇒ BadRequest(hasError.errorsAsJson),
         data ⇒ {
-          try {
-            val key = Play.configuration.getString("stripe.secret_key").get
-            val payment = new Payment(key)
-            payment.charge(data.fee, user.person, Some(data.token))
-            Ok(Json.obj("redirect" -> routes.People.details(user.person.id.get).url))
-          } catch {
-            case e: PaymentException ⇒
-              val error = e.code match {
-                case "card_declined" ⇒ "error.payment.card_declined"
-                case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
-                case "expired_card" ⇒ "error.payment.expired_card"
-                case "processing_error" ⇒ "error.payment.processing_error"
-                case _ ⇒ "error.payment.unexpected_error"
-              }
-              BadRequest(Json.obj("message" -> Messages(error)))
-            case e: RequestException ⇒
-              e.log.foreach(Logger.error(_))
-              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+          user.person.member map { m ⇒
+            BadRequest(Json.obj("error" -> Messages("error.payment.already_member")))
+          } getOrElse {
+            try {
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val payment = new Payment(key)
+              payment.charge(data.fee, user.person, Some(data.token))
+              val userId = user.person.id.get
+              val msg = "User %s (id = %s) paid membership fee EUR %s".format(
+                user.person.fullName,
+                userId,
+                data.fee)
+              Logger.info(msg)
+              val member = new Member(None, userId,
+                person = true,
+                funder = false,
+                Money.of(EUR, data.fee),
+                LocalDate.now(),
+                existingObject = true,
+                DateTime.now(), userId, DateTime.now(), userId)
+              member.insert
+              member.activity(
+                user.person,
+                Activity.Predicate.BecameSupporter).insert
+              Ok(Json.obj("redirect" -> routes.People.details(user.person.id.get).url))
+            } catch {
+              case e: PaymentException ⇒
+                val error = e.code match {
+                  case "card_declined" ⇒ "error.payment.card_declined"
+                  case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+                  case "expired_card" ⇒ "error.payment.expired_card"
+                  case "processing_error" ⇒ "error.payment.processing_error"
+                  case _ ⇒ "error.payment.unexpected_error"
+                }
+                BadRequest(Json.obj("message" -> Messages(error)))
+              case e: RequestException ⇒
+                e.log.foreach(Logger.error(_))
+                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+            }
           }
         })
   }
