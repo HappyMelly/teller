@@ -32,6 +32,7 @@ import play.api.mvc.{ Flash, Controller }
 import play.api.data._
 import play.api.data.Forms._
 import play.api.Logger
+import play.api.libs.json._
 import play.api.Play
 import play.api.Play.current
 
@@ -62,17 +63,19 @@ trait Membership extends Controller with Security with Services {
       Ok(views.html.membership.payment(user, form, publicKey))
   }
 
+  /**
+   * Charges card
+   */
   def charge = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val publicKey = Play.configuration.getString("stripe.public_key").get
       form.bindFromRequest.fold(
-        hasError ⇒ Ok(views.html.membership.payment(user, hasError, publicKey)),
+        hasError ⇒ BadRequest(hasError.errorsAsJson),
         data ⇒ {
           try {
             val key = Play.configuration.getString("stripe.secret_key").get
             val payment = new Payment(key)
             payment.charge(data.fee, user.person, Some(data.token))
-            Redirect(routes.People.details(user.person.id.get))
+            Ok(Json.obj("redirect" -> routes.People.details(user.person.id.get).url))
           } catch {
             case e: PaymentException ⇒
               Logger.info("%s: %s, %s".format(e.code, e.getMessage, e.param))
@@ -83,12 +86,10 @@ trait Membership extends Controller with Security with Services {
                 case "processing_error" ⇒ "error.payment.processing_error"
                 case _ ⇒ "error.payment.unexpected_error"
               }
-              implicit val flash = Flash(Map("error" -> Messages(error)))
-              BadRequest(views.html.membership.payment(user, form, publicKey))
+              BadRequest(Json.obj("message" -> Messages(error)))
             case e: RequestException ⇒
               e.log.foreach(Logger.error(_))
-              implicit val flash = Flash(Map("error" -> Messages(e.getMessage)))
-              BadRequest(views.html.membership.payment(user, form, publicKey))
+              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
           }
         })
   }

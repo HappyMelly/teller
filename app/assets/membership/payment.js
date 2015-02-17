@@ -22,12 +22,18 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+function showError(message) {
+    var obj = $('.alert');
+    obj.show();
+    obj.text("");
+    obj.text(message);
+}
+
 /**
  * If requests was successful, submits data to a server
  */
 var stripeResponseHandler = function(status, response) {
     var $form = $('#payment-form');
-    $("body").css("cursor", "default");
     if (response.error) {
         // Show the errors on the form
         if (response.error.param == "exp_year") {
@@ -40,10 +46,33 @@ var stripeResponseHandler = function(status, response) {
         // token contains id, last4, and card type
         var token = response.id;
         // Insert the token into the form so it gets submitted to the server
+        $('input[name="token"]').remove();
         $form.append($('<input type="hidden" name="token" />').val(token));
-        // and re-submit
-        $form.get(0).submit();
+        console.log(token);
+        $.ajax({
+            type: "POST",
+            url: "/membership/payment",
+            data: $form.serialize()
+        }).done(function(data) {
+            if (data.hasOwnProperty("redirect")) {
+                window.location = data.redirect;
+            } else {
+                var msg = "Internal error #2001. Your card has been charged. ";
+                msg += "Do not make payment again. Please proceed to your profile directly.";
+                showError(msg);
+            }
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showError(error.message);
+            } else {
+                var msg = "Internal error #2000. Your card has not been charged. Please try again.";
+                showError(msg);
+            }
+            $form.find('button').prop('disabled', false);
+        });
     }
+    $("body").css("cursor", "default");
 };
 
 /**
@@ -112,10 +141,12 @@ var updateAmount = function(objectId) {
 };
 
 jQuery(function($) {
+    $('.alert').hide();
     $('#payment-form').submit(function(e) {
         var $form = $(this);
         var details = validateDetails();
         var amount = validateAmount();
+        $('.alert').hide();
         if (details && amount) {
             // Disable the submit button to prevent repeated clicks
             $form.find('button').prop('disabled', true);

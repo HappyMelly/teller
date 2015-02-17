@@ -66,6 +66,8 @@
 }
 .payment-code-line {
     background: -moz-linear-gradient(left center , #232733 0px, #5e616a 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: -webkit-gradient(linear,left top,right top,color-stop(0%,#232733),color-stop(100%,#5e616a));
+    background: -o-linear-gradient(top,#232733 0,#5e616a 100%);
     border-top: 1px solid #93979e;
     display: block;
     height: 45px;
