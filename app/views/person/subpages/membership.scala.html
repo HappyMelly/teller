@@ -1,0 +1,10 @@
+@(person: Person)(implicit request: Request[Any],
+    handler: AuthorisationHandler)
+
+<div class="col-md-10">
+  @person.member.map { m =>
+    @views.html.element.funder(m)
+  }
+
+  <legend>Transactions</legend>
+</div>
