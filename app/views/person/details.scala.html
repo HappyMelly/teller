@@ -5,7 +5,8 @@
     contributions: List[ContributionView],
     licenses: List[LicenseView],
     accountRole: Option[models.UserRole.Role.Role],
-    otherUser: Option[UserAccount]
+    otherUser: Option[UserAccount],
+    payments: Option[List[PaymentRecord]]
     )(implicit request: Request[Any],
         flash: Flash,
         handler: AuthorisationHandler,
@@ -118,6 +119,14 @@
                       <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
                     </div>
                   }
+                  @if(licenses.length == 0) {
+                    @restrict(handler, List(as(Editor.toString))) {
+                      <div class="button">
+                        <a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success">
+                          Make a Facilitator</a>
+                      </div>
+                    }
+                  }
                   @dynamic(handler, "person", "edit") {
                       <div class="button">
                           <a class="btn btn-default" href="@routes.People.edit(person.id.get)">
@@ -173,18 +182,12 @@
           <div class="tab-pane" id="facilitation">
             @views.html.person.subpages.facilitation(person, licenses)
           </div>
-        } else {
-          @restrict(handler, List(as(Editor.toString))) {
-            <div class="col-md-10">
-              <h3>Facilitator
-                <a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success btn-sm">
-                  <i class="glyphicon glyphicon-plus"></i>Add license</a></h3>
-            </div>
-          }
         }
-        <div class="tab-pane" id="membership">
-          @views.html.person.subpages.membership(person)
-        </div>
+        @if(person.member.nonEmpty) {
+          <div class="tab-pane" id="membership">
+            @views.html.person.subpages.membership(person, payments.get)
+          </div>
+        }
       </div>
 
         <script src="@routes.Assets.at("person/details.js")" type="text/javascript"></script>

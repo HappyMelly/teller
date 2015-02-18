@@ -48,19 +48,15 @@ $(document).ready( function() {
         });
     });
 
-    $('#activities a').click(function (e) {
-      e.preventDefault();
-      $(this).tab('show');
-    });
     $('#sidemenu a').click(function (e) {
         e.preventDefault();
         $(this).tab('show');
     });
     var hash = window.location.hash.substring(1);
     if (!hash) {
-        hash = 'organizations';
+        hash = 'personal-details';
     }
-    $('#activities a[href="#' + hash + '"]').tab('show');
+    $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
 });
 

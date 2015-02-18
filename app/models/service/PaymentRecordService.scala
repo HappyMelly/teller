@@ -26,7 +26,9 @@ package models.service
 
 import models.database.PaymentRecords
 import models.PaymentRecord
-import play.api.db.slick._
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+
 import play.api.Play.current
 
 /** Provides operations with database related to payment records */
@@ -42,6 +44,19 @@ class PaymentRecordService {
     implicit session ⇒
       val id: Long = PaymentRecords.forInsert.insert(r)
       r.copy(id = Some(id))
+  }
+
+  /**
+   * Returns list of payment records made by the given person
+   * @param personId Person identifier
+   * @return
+   */
+  def findByPerson(personId: Long): List[PaymentRecord] = DB.withSession {
+    implicit session ⇒
+      Query(PaymentRecords).
+        filter(_.objectId == personId).
+        filter(_.person == true).
+        sortBy(_.created).list
   }
 }
 

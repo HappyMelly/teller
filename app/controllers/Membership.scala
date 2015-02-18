@@ -59,6 +59,14 @@ trait Membership extends Controller with Security with Services {
   }
 
   /**
+   * Renders congratulations screen
+   */
+  def congratulations = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.membership.congratulations(user))
+  }
+
+  /**
    * Renders payment form
    */
   def payment = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -96,7 +104,7 @@ trait Membership extends Controller with Security with Services {
               member.activity(
                 user.person,
                 Activity.Predicate.BecameSupporter).insert
-              Ok(Json.obj("redirect" -> routes.People.details(user.person.id.get).url))
+              Ok(Json.obj("redirect" -> routes.Membership.congratulations().url))
             } catch {
               case e: PaymentException ⇒
                 val error = e.code match {

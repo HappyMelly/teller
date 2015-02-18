@@ -1,0 +1,34 @@
+@(person: Person)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import views.Countries
+
+<div class="col-xs-8">
+  <ul class="list-group">
+    <li class="list-group-item"><b>Countries you work in</b></li>
+    @for(country <- person.countries) {
+      <li class="list-group-item">
+        @Messages("country." + country.country)&nbsp;
+        @dynamic(handler, "person", "edit") {
+          <a class="pull-right" href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">
+            <i class="glyphicon glyphicon-trash"></i></a>
+        }
+      </li>
+    }
+  </ul>
+  @dynamic(handler, "person", "edit") {
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
+      <select name="country" class="form-control input-sm">
+      @for(country <- Countries.all.toList.filterNot(c => person.countries.exists(_.country == c._1))) {
+        <option value="@country._1">@country._2</option>
+      }
+      </select>
+      <button class="btn btn-success btn-sm">
+        <i class="glyphicon glyphicon-plus"></i> Add</button>
+    </form>
+  }
+</div>

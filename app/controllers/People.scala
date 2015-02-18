@@ -219,7 +219,7 @@ trait People extends Controller with Security with Services {
 
                 // Redirect to the page we came from - either the person or organisation details page.
                 val action = if (page == "person")
-                  routes.People.details(personId).url + "#organizations"
+                  routes.People.details(personId).url
                 else
                   routes.Organisations.details(organisationId).url
                 Redirect(action).flashing("success" -> activity.toString)
@@ -293,7 +293,7 @@ trait People extends Controller with Security with Services {
             // Redirect to the page we came from - either the person or
             // organisation details page.
             val action = if (page == "person")
-              routes.People.details(personId).url + "#organizations"
+              routes.People.details(personId).url
             else
               routes.Organisations.details(organisationId).url
             Redirect(action).flashing("success" -> activity.toString)
@@ -316,11 +316,13 @@ trait People extends Controller with Security with Services {
         val accountRole = userAccountService.findRole(id)
         val contributions = contributionService.contributions(id, isPerson = true)
         val duplicated = userAccountService.findDuplicateIdentity(person)
-
+        val payments = person.member map { v ⇒
+          Some(paymentRecordService.findByPerson(id))
+        } getOrElse None
         Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
           contributions,
-          licenses, accountRole, duplicated))
+          licenses, accountRole, duplicated, payments))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -386,7 +388,7 @@ trait People extends Controller with Security with Services {
 
       val encoding = "ISO-8859-1"
       personService.find(id).map { person ⇒
-        val route = routes.People.details(person.id.get).url + "#licenses"
+        val route = routes.People.details(person.id.get).url + "#facilitation"
 
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
           val filename = Person.fullFileName(person.id.get)
@@ -426,7 +428,7 @@ trait People extends Controller with Security with Services {
         val activity = person.activity(
           user.person,
           Activity.Predicate.DeletedSign).insert
-        val route = routes.People.details(personId).url + "#licenses"
+        val route = routes.People.details(personId).url + "#facilitation"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }

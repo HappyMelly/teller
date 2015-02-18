@@ -1,10 +1,33 @@
-@(person: Person)(implicit request: Request[Any],
+@(person: Person,
+    payments: List[PaymentRecord])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
 <div class="col-md-10">
-  @person.member.map { m =>
-    @views.html.element.funder(m)
-  }
+  <div class="col-md-4">
+    @person.member.map { m =>
+      @views.html.element.funder(m)
+    }
+  </div>
 
-  <legend>Transactions</legend>
+  <div class="col-md-12">
+    <legend>Payments</legend>
+    <table class="datatables table table-bordered">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(payment <- payments) {
+          <tr>
+            <td>@payment.description</td>
+            <td>@payment.fee</td>
+            <td>@payment.created</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
 </div>

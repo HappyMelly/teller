@@ -112,6 +112,7 @@ POST        /member/:id                                                         
 GET         /membership/welcome                                                  controllers.Membership.welcome
 GET         /membership/payment                                                  controllers.Membership.payment
 POST        /membership/payment                                                  controllers.Membership.charge
+GET         /membership/congratulations                                          controllers.Membership.congratulations
 
 GET         /organizations                                                       controllers.Organisations.index
 POST        /organizations                                                       controllers.Organisations.create

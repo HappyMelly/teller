@@ -1,0 +1,44 @@
+@(user: UserIdentity)(implicit request: Request[Any],
+    handler: AuthorisationHandler,
+    flash: Flash)
+
+@main("Congratulations", "membership", user) {
+
+  <div class="col-md-12 text-center">
+    <h1>Congratulations!</h1>
+  </div>
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <p>@user.person.fullName, you've just joined the international business
+        network of awesome people and organisations helping others to be happy
+        at work. YOU ROCK!</p>
+      <p>You get most out of your membership if you follow the steps below.</p>
+      <div class="col-md-6">
+        <legend><span class="label label-primary">1</span> Check your mailbox</legend>
+        <p>Your welcome email is already waiting for you with more advices on how to enjoy
+        being a member of <a href="http://happymelly.com" target="_blank">Happy Melly</a>.
+        </p>
+        <p>You will also get a payment receipt as soon as your card is charged.</p>
+      </div>
+      <div class="col-md-6">
+        <legend><span class="label label-primary">2</span> Update your profile</legend>
+        <p>Your profile defines how people will see you on your public <a
+          href="http://happymelly.com/people/#@(user.person.uniqueName)"
+          target="_blank">member page</a>.</p>
+        <p><a href="@routes.People.details(user.person.id.get)">Update</a> your
+          photo and social networks as people want to connect with you. Hey, don't
+          forget to mention why you love Happy Melly ;).</p>
+      </div>
+      <div class="col-md-6">
+        <legend><span class="label label-primary">3</span> Grab your badge</legend>
+        <p>As a proud member of Happy Melly network you are eligible to put
+          Happy Melly badge on your website.</p>
+        <p>Visit <a href="@routes.People.details(user.person.id.get).url#membership">Membership</a>
+          section in your profile to get the code.</p>
+      </div>
+      <div class="col-md-6">
+        <legend><span class="label label-primary">4</span> Learn about others</legend>
+      </div>
+    </div>
+  </div>
+}

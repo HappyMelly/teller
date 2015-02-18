@@ -152,7 +152,9 @@ body.api h3 {
     top: 10px;
     right: 10px;
 }
-
+.block {
+    margin-bottom: 20px;
+}
 .role {
     text-align: left;
 }
