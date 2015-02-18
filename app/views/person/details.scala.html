@@ -13,7 +13,6 @@
 
     @import helper.CSRF
     @import models.UserRole.Role._
-    @import templates.Formatters._
     @import be.objectify.deadbolt.scala.views.html._
     @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
@@ -56,6 +55,16 @@
             </a>
           }
         </div>
+        <div>
+          <ul class="nav nav-stacked" role="tablist" id="sidemenu">
+            <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Personal Details</a></li>
+            <li><a href="#contributions" role="tab" data-toggle="tab">Contributions</a></li>
+            @if(licenses.length > 0) {
+              <li><a href="#facilitation" role="tab" data-toggle="tab">
+                Facilitation</a></li>
+            }
+          </ul>
+        </div>
         @person.member.map { m =>
           @element.funder(m)
         }
@@ -92,7 +101,7 @@
         }
 
       </div>
-      <div class="col-md-9">
+      <div class="col-md-9 tab-content">
         <div class="page-header">
             <h1>
                 @person.fullName
@@ -142,128 +151,15 @@
             <div class="alert alert-warning">
                 <i class="glyphicon glyphicon-warning-sign"></i> This person is <strong>deactivated</strong></div>
         }
-        <div class="col-md-4">
-            <address>
-              <strong>Address</strong><br/>
-              @person.address.street1.map { addressLine =>
-                  @addressLine,
-              }
-              @person.address.street2.map { addressLine =>
-                  @addressLine
-              }
-              @if(person.address.street1.nonEmpty || person.address.street2.nonEmpty) {
-                <br>
-              }
-              @person.address.city.map { addressLine =>
-                  @addressLine,
-              }
-              @person.address.province.map { addressLine =>
-                  @addressLine
-              }
-              @person.address.postCode.map { addressLine =>
-                  @addressLine
-              }
-              <br>
-              @Messages("country." + person.address.countryCode)
-            </address>
-
-            @person.webSite.map { url =>
-                <p><strong>Web site</strong>
-                    <br><a href="@url" target="_blank">@url</a></p>
-            }
-
-            @person.blog.map { url =>
-                <p><strong>Blog</strong>
-                    <br><a href="@url" target="_blank">@url</a></p>
-            }
-
-        </div>
-        <div class="col-md-4">
-            <p><strong>E-mail address</strong>
-            <br>
-              <a href="mailto:@person.socialProfile.email">
-                <i class="glyphicon glyphicon-google_plus"></i>
-              @person.socialProfile.email</a>
-            </p>
-
-            @person.birthday.map { birthday =>
-                <p><strong>Birthday</strong>
-                    <br>@birthday</p>
-            }
-
+        <div class="tab-pane active" id="personal-details">
+          @views.html.person.subpages.details(person, organisations, otherOrganisations)</div>
+        <div class="tab-pane" id="contributions">
+          @views.html.person.subpages.contributions(person, contributions)
         </div>
 
-        <div class="col-md-10">
-            @person.bio.map { text =>
-                <h3>Bio</h3>
-                <p>@text.markdown</p>
-            }
-
-            @person.interests.map { text =>
-                <h3>Interests</h3>
-                <p>@text.markdown</p>
-            }
-        </div>
-
-        <div class="col-md-10">
-          <h3>General</h3>
-          <ul class="nav nav-tabs" id="activities">
-              <li><a href="#organizations">Organizations</a></li>
-              @restrict(handler, List(as(Editor.toString))) {
-                  <li><a href="#finance">Accounting details</a></li>
-              }
-              <li><a href="#contributions">Product Contributions</a></li>
-          </ul>
-
-          <div class="tab-content">
-              <div class="tab-pane active" id="organizations">
-                  @views.html.person.tabs.organisations(person, organisations, otherOrganisations)
-              </div>
-              @restrict(handler, List(as(Editor.toString))) {
-                  <div class="tab-pane" id="finance">
-                      <div class="col-xs-9">
-                          <br/>
-                          <p>
-                              <strong>Financial account</strong>
-                              <br>@if(person.account.active) {Active} else {Inactive}
-                              @if(person.account.editableBy(user.account)) {
-                                  (<a href="@routes.Accounts.details(person.account.id.get)">@if(person.account.active) {Deactivate} else {Activate}</a>)</p>
-                          }
-                          <p><strong>Account history</strong>
-                              <br><a href="@routes.Accounts.bookings(person.account.id.get)">Booking entries</a>
-                          </p>
-                      </div>
-                  </div>
-              }
-            <div class="tab-pane" id="contributions">
-                  @views.html.person.tabs.contributions(person, contributions)
-              </div>
-          </div>
-        </div>
         @if(licenses.length > 0) {
-          <div class="col-md-10">
-            <h3>Facilitator</h3>
-            <ul class="nav nav-tabs" id="activities">
-              <li><a href="#licenses">Licenses</a></li>
-              <li><a href="#signature">Signature</a></li>
-              <li><a href="#languages">Languages</a></li>
-              <li><a href="#countries">Countries</a></li>
-            </ul>
-
-            <div class="tab-content">
-              <div class="tab-pane" id="licenses">
-              @views.html.person.tabs.licenses(person, licenses)
-              </div>
-              <div class="tab-pane" id="signature">
-              @views.html.person.tabs.signature(person)
-              </div>
-              <div class="tab-pane" id="languages">
-              @views.html.person.tabs.languages(person)
-              </div>
-              <div class="tab-pane" id="countries">
-              @views.html.person.tabs.countries(person)
-              </div>
-            </div>
+          <div class="tab-pane" id="facilitation">
+            @views.html.person.subpages.facilitation(person, licenses)
           </div>
         } else {
           @restrict(handler, List(as(Editor.toString))) {

@@ -52,6 +52,10 @@ $(document).ready( function() {
       e.preventDefault();
       $(this).tab('show');
     });
+    $('#sidemenu a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
     var hash = window.location.hash.substring(1);
     if (!hash) {
         hash = 'organizations';

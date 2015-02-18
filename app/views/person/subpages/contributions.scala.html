@@ -1,6 +1,5 @@
 @(person: Person,
   contributions: List[ContributionView])(implicit request: Request[Any],
-    flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
@@ -14,23 +13,27 @@
 } else {
     <table class="datatables table table-bordered">
         <thead>
-            <th>Product</th>
-            <th>Role</th>
-            <th></th>
+          <th>Product</th>
+          <th>Role</th>
+          @restrict(handler, List(as(Editor.toString))) {<th></th>}
         </thead>
         <tbody>
         @for(contribution <- contributions) {
             <tr>
-                <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
-                <td>@contribution.contribution.role</td>
+              <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+              <td>@contribution.contribution.role</td>
+              @restrict(handler, List(as(Editor.toString))) {
                 <td>
-                @restrict(handler, List(as(Editor.toString))) {
                     <a href="@routes.Contributions.delete(contribution.contribution.id.get, "person")">
                         <i class="glyphicon glyphicon-pencil"></i> Remove contribution</a>
-                }
                 </td>
+              }
             </tr>
         }
         </tbody>
     </table>
 }
+  <div class="col-md-12">
+    Visit <a href="@routes.Products.index()">Products</a> page to find a list of
+      products you can use and/or contribute to.
+  </div>

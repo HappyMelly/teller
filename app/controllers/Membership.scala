@@ -79,6 +79,7 @@ trait Membership extends Controller with Security with Services {
             BadRequest(Json.obj("error" -> Messages("error.payment.already_member")))
           } getOrElse {
             try {
+              //@TODO it should go to Payment object
               val key = Play.configuration.getString("stripe.secret_key").get
               val payment = new PaymentGatewayWrapper(key)
               payment.charge(data.fee, user.person, Some(data.token))
