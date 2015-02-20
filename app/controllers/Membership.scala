@@ -90,11 +90,11 @@ trait Membership extends Controller with Security with Services {
               //@TODO it should go to Payment object
               val key = Play.configuration.getString("stripe.secret_key").get
               val payment = new PaymentGatewayWrapper(key)
-              payment.charge(data.fee, user.person, Some(data.token))
+              val response = payment.charge(data.fee, user.person, Some(data.token))
               val userId = user.person.id.get
               val fee = Money.of(EUR, data.fee)
-              PaymentRecord("", userId, userId, person = true,
-                "", fee).insert
+              PaymentRecord(response.getId, userId, userId, person = true,
+                response.getDescription, fee).insert
               val msg = "User %s (id = %s) paid membership fee EUR %s".format(
                 user.person.fullName,
                 userId,

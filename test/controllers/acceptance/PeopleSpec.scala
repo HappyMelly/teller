@@ -50,9 +50,8 @@ class PeopleSpec extends PlayAppSpec {
     not be visible to unauthorized user                                  $e1
     and be visible to authorized user                                    $e2
     not contain accounting details if user is not Editor                 $e3
-    contain accounting details if user is Editor                         $e4
     contain a supporter badge if the person is a supporter               $e5
-    contain a funder badge and paid fee if the person is a funder        $e6
+    contain a funder badge if the person is a funder                     $e6
     contain 'Add license' button if user is Editor and a person has none $e7
   """
   def e1 = {
@@ -94,23 +93,6 @@ class PeopleSpec extends PlayAppSpec {
     }
   }
 
-  def e4 = {
-    new MockContext {
-      val person = PersonHelper.one().insert
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
-
-      status(result) must equalTo(OK)
-      contentAsString(result) must contain("Financial account")
-      contentAsString(result) must contain("Account history")
-    }
-  }
-
   def e5 = {
     new MockContext {
       val person = PersonHelper.one()
@@ -129,7 +111,6 @@ class PeopleSpec extends PlayAppSpec {
 
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Supporter")
-      contentAsString(result) must contain("EUR 500")
       contentAsString(result) must not contain "/member/1/edit"
     }
   }
@@ -153,7 +134,6 @@ class PeopleSpec extends PlayAppSpec {
 
       status(result) must equalTo(OK)
       contentAsString(result) must contain("Funder")
-      contentAsString(result) must contain("EUR 255")
       contentAsString(result) must contain("/member/1/edit")
     }
   }
@@ -172,7 +152,7 @@ class PeopleSpec extends PlayAppSpec {
 
       status(result) must equalTo(OK)
       contentAsString(result) must contain("/person/1/licenses/new")
-      contentAsString(result) must contain("Add license")
+      contentAsString(result) must contain("Make a Facilitator")
     }
   }
 }

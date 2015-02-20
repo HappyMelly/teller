@@ -54,8 +54,8 @@ class PaymentRecordService {
   def findByPerson(personId: Long): List[PaymentRecord] = DB.withSession {
     implicit session ⇒
       Query(PaymentRecords).
-        filter(_.objectId == personId).
-        filter(_.person == true).
+        filter(_.objectId === personId).
+        filter(_.person === true).
         sortBy(_.created).list
   }
 }

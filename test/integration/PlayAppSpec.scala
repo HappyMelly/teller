@@ -138,6 +138,7 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Q.updateNA("TRUNCATE `MEMBER`").execute
     Q.updateNA("TRUNCATE `ORGANISATION`").execute
     Q.updateNA("TRUNCATE `ORGANISATION_MEMBERSHIPS`").execute
+    Q.updateNA("TRUNCATE `PAYMENT_RECORD`").execute
     Q.updateNA("TRUNCATE `PERMANENT_SESSION`").execute
     Q.updateNA("TRUNCATE `PERSON`").execute
     Q.updateNA("TRUNCATE `PRODUCT`").execute
