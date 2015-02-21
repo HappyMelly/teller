@@ -26,7 +26,7 @@ package stubs
 import models.LicenseView
 import models.service.LicenseService
 
-class StubLicenseService extends LicenseService {
+class FakeLicenseService extends LicenseService {
 
   override def licenses(personId: Long): List[LicenseView] = List()
 

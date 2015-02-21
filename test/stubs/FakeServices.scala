@@ -32,7 +32,7 @@ trait FakeServices extends Services {
   private var _contributionService = new FakeContributionService
   private var _evaluationService = new StubEvaluationService
   private var _eventService = new StubEventService
-  private var _licenseService = new StubLicenseService
+  private var _licenseService = new FakeLicenseService
   private var _memberService = new FakeMemberService
   private var _orgService = new FakeOrganisationService
   private var _paymentRecordService = new FakePaymentRecordService
@@ -64,11 +64,11 @@ trait FakeServices extends Services {
 
   override def eventService: StubEventService = _eventService
 
-  def licenseService_=(service: StubLicenseService) = {
+  def licenseService_=(service: FakeLicenseService) = {
     _licenseService = service
   }
 
-  override def licenseService: StubLicenseService = _licenseService
+  override def licenseService: FakeLicenseService = _licenseService
 
   def memberService_=(service: FakeMemberService) = {
     _memberService = service

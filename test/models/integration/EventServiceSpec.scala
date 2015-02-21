@@ -39,10 +39,10 @@ class EventServiceSpec extends PlayAppSpec {
     PersonHelper.two().insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
     PersonHelper.make(Some(5L), "Four", "Tester").insert
-    BrandHelper.defaultBrand.insert
+    BrandHelper.one.insert
     (new EventType(None, 1L, "Type 1", None)).insert
     (new EventType(None, 1L, "Type 2", None)).insert
-    EventHelper.addEvents(BrandHelper.defaultBrand.code)
+    EventHelper.addEvents(BrandHelper.one.code)
     EventHelper.addEvents("MGT30")
   }
 
@@ -65,7 +65,7 @@ class EventServiceSpec extends PlayAppSpec {
 
   "Method findByParameters" should {
     "return 6 events for default brand" in {
-      service.findByParameters(Some(BrandHelper.defaultBrand.code)).length mustEqual 6
+      service.findByParameters(Some(BrandHelper.one.code)).length mustEqual 6
     }
     "return 4 public events" in {
       val events = EventService.get.findByParameters(brandCode = None, public = Some(true))
@@ -126,7 +126,7 @@ class EventServiceSpec extends PlayAppSpec {
     "return 4 events for default brand and facilitator = 1" in {
       val events = service.findByFacilitator(
         1,
-        Some(BrandHelper.defaultBrand.code))
+        Some(BrandHelper.one.code))
       events.length mustEqual 4
     }
     "return 4 events facilitated by facilitator = 2" in {
@@ -141,7 +141,7 @@ class EventServiceSpec extends PlayAppSpec {
   "Method sendConfirmationAlert" should {
     "send 1 email and record an activity" in new MockContext {
       class StubBrandService extends FakeBrandService {
-        override def findAll: List[Brand] = List(BrandHelper.defaultBrand)
+        override def findAll: List[Brand] = List(BrandHelper.one)
       }
       class TestEventService extends EventService with FakeServices {
         override def findByParameters(

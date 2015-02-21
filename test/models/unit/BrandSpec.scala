@@ -31,11 +31,11 @@ class BrandSpec extends Specification {
 
   "Brand" should {
     "have well-formed activity attributes" in {
-      val brand = BrandHelper.defaultBrand.copy(id = Some(1L))
+      val brand = BrandHelper.one.copy(id = Some(1L))
       brand.objectType must_== Activity.Type.Brand
       brand.identifier must_== 1
       brand.humanIdentifier must_== "Test Brand"
-      val brand2 = BrandHelper.defaultBrand.copy(id = Some(2L)).copy(name = "Mgt 30")
+      val brand2 = BrandHelper.one.copy(id = Some(2L)).copy(name = "Mgt 30")
       brand2.objectType must_== Activity.Type.Brand
       brand2.identifier must_== 2
       brand2.humanIdentifier must_== "Mgt 30"

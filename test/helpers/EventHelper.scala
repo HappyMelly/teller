@@ -46,7 +46,7 @@ object EventHelper {
     invoice: Option[EventInvoice] = None,
     facilitatorIds: Option[List[Long]] = None): Event = {
 
-    val code = brandCode.getOrElse(BrandHelper.defaultBrand.code)
+    val code = brandCode.getOrElse(BrandHelper.one.code)
     val invoice = new EventInvoice(None, None, 1, None, None)
     val language = new Language(
       spokenLanguage.getOrElse("DE"),
