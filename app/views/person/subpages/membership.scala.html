@@ -7,68 +7,82 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-<div class="col-md-12">
-  <div class="col-md-4 block">
-    @person.member.map { m =>
-      Member status:
-      @restrict(handler, List(as(Editor.toString))) {
-        <a href="@routes.Members.edit(m.id.getOrElse(0))">
-          <i class="glyphicon glyphicon-pencil"></i></a>
-      }
-      @if(m.funder) {
-        <h2>Funder</h2>
-      } else {
-        <h2>Supporter</h2>
-      }
-      Since <b>@m.since</b>
-    }
-  </div>
-  <div class="col-md-8">
-    <p><b>Public profile:</b> <a href="http://happymelly.com/members/#@(person.uniqueName)"
-      target="_blank">@person.fullName</a>
-    </p>
-    <p><b>Available benefits:</b> <a href="http://happymelly.com/benefits"
-      target="_blank">list</a>
-    </p>
-  </div>
-
-  <div class="col-md-12 block">
-    <table class="payments table table-bordered">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Amount</th>
-          <th>Date</th>
-          @restrict(handler, List(as("admin"))) {
-            <th>Remote link</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for(payment <- payments) {
-          <tr>
-            <td>@payment.description</td>
-            <td>@payment.fee</td>
-            <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
-            @restrict(handler, List(as("admin"))) {
-              <td><a href="https://dashboard.stripe.com/live/payments/@(payment.remoteId)"
-                target="_blank">@payment.remoteId</a> </td>
-            }
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+@person.member.map { m =>
 
   <div class="col-md-12">
-    <legend>Subscription</legend>
-    <p>Your membership will be automatically prolonged at the end of a subscription
-      period. The date of the next prolongation is <b>2015-03-03</b>.
-    </p>
-    <p>You can cancel your subscription any time. In this case your membership
-      will be valid till <b>2015-03-03</b>.</p>
-    @dynamic(handler, "person", "edit") {
-      <button class="btn btn-danger btn-sm" type="submit">Cancel subscription</button>
-    }
+    <div class="col-md-4 block">
+        Member status:
+        @restrict(handler, List(as(Editor.toString))) {
+          <a href="@routes.Members.edit(m.id.getOrElse(0))">
+            <i class="glyphicon glyphicon-pencil"></i></a>
+        }
+        @if(m.funder) {
+          <h2>Funder</h2>
+        } else {
+          <h2>Supporter</h2>
+        }
+        Since <b>@m.since</b>
+    </div>
+    <div class="col-md-8">
+      <p><b>Public profile:</b> <a href="http://happymelly.com/members/#@(person.uniqueName)"
+        target="_blank">@person.fullName</a>
+      </p>
+      <p><b>Available benefits:</b> <a href="http://happymelly.com/benefits"
+        target="_blank">list</a>
+      </p>
+    </div>
+
+    <div class="col-md-12 block">
+      <table class="payments table table-bordered">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+            @restrict(handler, List(as("admin"))) {
+              <th>Remote link</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for(payment <- payments) {
+            <tr>
+              <td>@payment.description</td>
+              <td>@payment.fee</td>
+              <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+              @restrict(handler, List(as("admin"))) {
+                <td><a href="https://dashboard.stripe.com/live/payments/@(payment.remoteId)"
+                  target="_blank">@payment.remoteId</a> </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-md-12">
+      <legend>Subscription</legend>
+      @if(m.subscription) {
+        <p>
+          Your membership will be automatically prolonged at the end of a subscription
+          period. The date of the next prolongation is <b>2015-03-03</b>.
+        </p>
+        <p>
+          You can cancel your subscription any time. In this case your membership
+          will be valid till <b>2015-03-03</b>.</p>
+        @dynamic(handler, "person", "edit") {
+          <button class="btn btn-danger btn-sm" type="submit">
+            Cancel subscription</button>
+        }
+      } else {
+        <div class="alert alert-warning">
+          <i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</div>
+        <p>Your membership ends <b>2015-03-03</b>.</p>
+        @dynamic(handler, "person", "edit") {
+          <button class="btn btn-success btn-sm" type="submit">
+            Renew subscription</button>
+        }
+      }
+    </div>
   </div>
-</div>
+}

@@ -33,6 +33,7 @@ case class Member(
   person: Boolean,
   funder: Boolean,
   fee: Money,
+  subscription: Boolean = true,
   since: LocalDate,
   existingObject: Boolean,
   created: DateTime,

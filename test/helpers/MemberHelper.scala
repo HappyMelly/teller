@@ -36,9 +36,10 @@ object MemberHelper {
     person: Boolean,
     funder: Boolean,
     money: Option[Money] = Some(Money.of(EUR, 100)),
+    subscription: Boolean = true,
     since: Option[LocalDate] = Some(LocalDate.now().minusDays(4)),
     existingObject: Option[Boolean] = Some(false)): Member = {
-    new Member(id, objectId, person, funder, money.get, since.get,
+    new Member(id, objectId, person, funder, money.get, subscription, since.get,
       existingObject.get, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

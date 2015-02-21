@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import controllers._
-import helpers.{ PersonHelper, OrganisationHelper }
+import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import integration.PlayAppSpec
 import models.Member
 import org.joda.money.CurrencyUnit._
@@ -288,8 +288,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (2L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
       (5L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒
-          val member = new Member(None, objectId, person, funder, fee, since,
-            existingObject = false,
+          val member = new Member(None, objectId, person, funder, fee,
+            subscription = false, since, existingObject = false,
             DateTime.now(), createdBy, DateTime.now(), createdBy)
           member.insert
       }
@@ -314,9 +314,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e19 = new MockContext {
     val controller = new TestMembers()
-    val m = new Member(None, 0, person = false, funder = false,
-      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m = MemberHelper.make(None, 0, person = false, funder = false,
+      existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
     val service = mock[FakeOrganisationService]
     (service.find _).expects(*).returning(None)
@@ -334,9 +333,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
   def e20 = new cleanup {
     new MockContext {
       val controller = new TestMembers()
-      val m = new Member(None, 1L, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = false, funder = false,
+        existingObject = Some(true)).insert
       val org = OrganisationHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       val service = mock[FakeOrganisationService]
@@ -383,8 +381,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (2L, true, false, Money.of(EUR, 100), LocalDate.now(), 1L),
       (5L, true, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒
-          val member = new Member(None, objectId, person, funder, fee, since,
-            existingObject = false,
+          val member = new Member(None, objectId, person, funder, fee,
+            subscription = false, since, existingObject = false,
             DateTime.now(), createdBy, DateTime.now(), createdBy)
           member.insert
       }
@@ -409,9 +407,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e23 = new MockContext {
     val controller = new TestMembers()
-    val m = new Member(None, 0, person = true, funder = false,
-      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m = MemberHelper.make(None, 0, person = true, funder = false,
+      existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
     val service = mock[FakePersonService]
     (service.find(_: Long)).expects(*).returning(None)
@@ -429,9 +426,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
   def e24 = new cleanup {
     new MockContext {
       val controller = new TestMembers()
-      val m = new Member(None, 1L, person = true, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = true, funder = false,
+        existingObject = Some(true)).insert
       val person = PersonHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       val service = mock[FakePersonService]
@@ -450,9 +446,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e25 = {
     truncateTables()
-    val m = new Member(None, 1L, person = true, funder = false,
-      Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-      DateTime.now(), 1L, DateTime.now(), 1L).insert
+    val m = MemberHelper.make(None, 1L, person = true, funder = false,
+      existingObject = Some(true)).insert
     val person = PersonHelper.one.insert
 
     val req = prepareSecuredGetRequest(
@@ -479,9 +474,10 @@ class MembersSpec extends PlayAppSpec with DataTables {
         ("funder", "0"), ("fee.currency", "EUR"),
         ("fee.amount", "100"), ("since", "2015-01-31"),
         ("existingObject", "0"))
-    val m = new Member(None, 1L, person = true, funder = true,
-      Money.parse("EUR 200"), LocalDate.parse("2015-01-15"),
-      existingObject = true, DateTime.now(), 1L, DateTime.now(), 1L).insert
+    val m = MemberHelper.make(None, 1L, person = true, funder = true,
+      money = Some(Money.parse("EUR 200")),
+      since = Some(LocalDate.parse("2015-01-15")),
+      existingObject = Some(true)).insert
     PersonHelper.one().insert
 
     val result: Future[SimpleResult] = controller.update(m.id.get).apply(req)
