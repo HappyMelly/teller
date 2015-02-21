@@ -17,16 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional 
+ * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
 package stubs
 
-import models.ContributionView
-import models.service.ContributionService
+import models.service.PaymentRecordService
 
-class StubContributionService extends ContributionService {
+class FakePaymentRecordService extends PaymentRecordService {
 
-  override def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = List()
 }

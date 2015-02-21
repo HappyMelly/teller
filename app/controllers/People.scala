@@ -313,9 +313,12 @@ trait People extends Controller with Security with Services {
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
         val licenses = licenseService.licenses(id)
-        val accountRole = userAccountService.findRole(id)
+        val accountRole = if (user.account.editor)
+          userAccountService.findRole(id) else None
+        val duplicated = if (user.account.editor)
+          userAccountService.findDuplicateIdentity(person)
+        else None
         val contributions = contributionService.contributions(id, isPerson = true)
-        val duplicated = userAccountService.findDuplicateIdentity(person)
         val payments = person.member map { v ⇒
           Some(paymentRecordService.findByPerson(id))
         } getOrElse None

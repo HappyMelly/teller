@@ -1,4 +1,5 @@
-@(person: Person,
+@(user: UserIdentity,
+    person: Person,
     payments: List[PaymentRecord])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
@@ -6,13 +7,12 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-
 <div class="col-md-12">
   <div class="col-md-4 block">
     @person.member.map { m =>
       Member status:
       @restrict(handler, List(as(Editor.toString))) {
-        <a href="@routes.Members.edit(m.id.get)">
+        <a href="@routes.Members.edit(m.id.getOrElse(0))">
           <i class="glyphicon glyphicon-pencil"></i></a>
       }
       @if(m.funder) {
@@ -32,7 +32,6 @@
     </p>
   </div>
 
-
   <div class="col-md-12 block">
     <table class="payments table table-bordered">
       <thead>
@@ -40,6 +39,9 @@
           <th>Description</th>
           <th>Amount</th>
           <th>Date</th>
+          @restrict(handler, List(as("admin"))) {
+            <th>Remote link</th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -48,11 +50,16 @@
             <td>@payment.description</td>
             <td>@payment.fee</td>
             <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+            @restrict(handler, List(as("admin"))) {
+              <td><a href="https://dashboard.stripe.com/live/payments/@(payment.remoteId)"
+                target="_blank">@payment.remoteId</a> </td>
+            }
           </tr>
         }
       </tbody>
     </table>
   </div>
+
   <div class="col-md-12">
     <legend>Subscription</legend>
     <p>Your membership will be automatically prolonged at the end of a subscription

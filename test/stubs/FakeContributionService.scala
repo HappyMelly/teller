@@ -23,14 +23,10 @@
  */
 package stubs
 
-import models.{ Person, UserAccount, UserRole }
-import models.service.UserAccountService
+import models.ContributionView
+import models.service.ContributionService
 
-class StubUserAccountService extends UserAccountService {
+class FakeContributionService extends ContributionService {
 
-  override def findRole(personId: Long): Option[UserRole.Role.Role] =
-    Some(UserRole.forName("viewer").role)
-
-  override def findDuplicateIdentity(person: Person): Option[UserAccount] = None
-
+  override def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = List()
 }
