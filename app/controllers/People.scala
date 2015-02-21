@@ -458,6 +458,24 @@ trait People extends Controller with Security with Services {
       }
     }
   }
+
+  /**
+   * Cancels a subscription for yearly-renewing membership
+   * @param id Person id
+   */
+  def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok("OK")
+  }
+
+  /**
+   * Renews a subscription for yearly-renewing membership
+   * @param id Person id
+   */
+  def renew(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok("OK")
+  }
 }
 
 object People extends People with Security

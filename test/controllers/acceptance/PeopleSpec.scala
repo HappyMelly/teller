@@ -309,6 +309,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("person[/1/cancel")
     contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
   }
@@ -327,6 +328,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("person/1/cancel")
     contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
   }
@@ -346,6 +348,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must contain("person/1/renew")
     contentAsString(result) must contain("Renew subscription")
     contentAsString(result) must contain("Subscription is canceled")
   }
@@ -365,6 +368,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must contain("person/1/renew")
     contentAsString(result) must contain("Renew subscription")
     contentAsString(result) must contain("Subscription is canceled")
   }
@@ -394,6 +398,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must not contain "person/1/cancel"
     contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
   }

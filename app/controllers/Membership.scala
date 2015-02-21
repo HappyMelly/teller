@@ -26,6 +26,7 @@ package controllers
 
 import models._
 import models.UserRole.Role._
+import models.payment.Payment
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -87,19 +88,11 @@ trait Membership extends Controller with Security with Services {
             BadRequest(Json.obj("error" -> Messages("error.payment.already_member")))
           } getOrElse {
             try {
-              //@TODO it should go to Payment object
               val key = Play.configuration.getString("stripe.secret_key").get
-              val payment = new PaymentGatewayWrapper(key)
-              val response = payment.charge(data.fee, user.person, Some(data.token))
-              val userId = user.person.id.get
+              val payment = new Payment(key)
+              val customerId = payment.subscribe(user.person, data.token, data.fee)
+              println(customerId)
               val fee = Money.of(EUR, data.fee)
-              PaymentRecord(response.getId, userId, userId, person = true,
-                response.getDescription, fee).insert
-              val msg = "User %s (id = %s) paid membership fee EUR %s".format(
-                user.person.fullName,
-                userId,
-                data.fee)
-              Logger.info(msg)
               val member = user.person.becomeMember(funder = false, fee)
               member.activity(
                 user.person,
@@ -122,6 +115,7 @@ trait Membership extends Controller with Security with Services {
           }
         })
   }
+
 }
 
 object Membership extends Membership with Security with Services

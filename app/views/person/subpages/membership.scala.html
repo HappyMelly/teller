@@ -3,9 +3,10 @@
     payments: List[PaymentRecord])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
-@import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.Role._
 
 @person.member.map { m =>
 
@@ -71,16 +72,21 @@
           You can cancel your subscription any time. In this case your membership
           will be valid till <b>2015-03-03</b>.</p>
         @dynamic(handler, "person", "edit") {
-          <button class="btn btn-danger btn-sm" type="submit">
-            Cancel subscription</button>
+          <form method="post" action="@CSRF(routes.People.cancel(person.id.getOrElse(0)))">
+            <button class="btn btn-danger btn-sm" type="submit">
+              Cancel subscription</button>
+          </form>
+
         }
       } else {
         <div class="alert alert-warning">
           <i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</div>
         <p>Your membership ends <b>2015-03-03</b>.</p>
         @dynamic(handler, "person", "edit") {
-          <button class="btn btn-success btn-sm" type="submit">
-            Renew subscription</button>
+          <form method="post" action="@CSRF(routes.People.renew(person.id.getOrElse(0)))">
+            <button class="btn btn-success btn-sm" type="submit">
+              Renew subscription</button>
+          </form>
         }
       }
     </div>

@@ -51,6 +51,7 @@ class MembershipSpec extends PlayAppSpec {
 
   A user should
     not be charged if she is already a member              $e6
+
   """
 
   val controller = new TestMembership()
