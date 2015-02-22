@@ -24,26 +24,28 @@
 
 package controllers
 
-import Forms._
+import controllers.Forms._
 import fly.play.s3.{ BucketFile, S3Exception }
-import models._
 import models.UserRole.Role._
+import models._
+import models.payment.{ GatewayWrapper, PaymentException, RequestException }
 import models.service.Services
 import org.joda.time.DateTime
+import play.api.{ Logger, Play }
+import play.api.Play.current
 import play.api.cache.Cache
-import play.api.data.{ FormError, Form }
-import play.api.data.format.Formatter
 import play.api.data.Forms._
+import play.api.data.format.Formatter
 import play.api.data.validation.Constraints
+import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
-import play.api.Play.current
+import scravatar.Gravatar
+import services.S3Bucket
+
 import scala.concurrent.Future
 import scala.io.Source
-import scravatar.Gravatar
-import securesocial.core.SecuredRequest
-import services.S3Bucket
 
 trait People extends Controller with Security with Services {
 
@@ -353,22 +355,24 @@ trait People extends Controller with Security with Services {
   def update(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-
-        personForm(user).bindFromRequest.fold(
-          formWithErrors ⇒
-            BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
-          person ⇒ {
-            //shit!
-            val updatedPerson = person.copy(id = Some(id))
-            updatedPerson.socialProfile_=(person.socialProfile)
-            updatedPerson.address_=(person.address)
-            updatedPerson.update
-            val activity = updatedPerson.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
-            Redirect(routes.People.details(id)).flashing(
-              "success" -> activity.toString)
-          })
+        personService.find(id) map { p ⇒
+          personForm(user).bindFromRequest.fold(
+            formWithErrors ⇒
+              BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
+            person ⇒ {
+              val updatedPerson = person
+                .copy(id = Some(id))
+                .copy(customerId = p.customerId)
+              updatedPerson.socialProfile_=(person.socialProfile)
+              updatedPerson.address_=(person.address)
+              updatedPerson.update
+              val activity = updatedPerson.activity(
+                user.person,
+                Activity.Predicate.Updated).insert
+              Redirect(routes.People.details(id)).flashing(
+                "success" -> activity.toString)
+            })
+        } getOrElse NotFound
   }
 
   /**
@@ -466,16 +470,34 @@ trait People extends Controller with Security with Services {
    */
   def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok("OK")
-  }
-
-  /**
-   * Renews a subscription for yearly-renewing membership
-   * @param id Person id
-   */
-  def renew(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok("OK")
+      personService.find(id) map { person ⇒
+        person.member map { m ⇒
+          if (m.subscription) {
+            val key = Play.configuration.getString("stripe.secret_key").get
+            val gateway = new GatewayWrapper(key)
+            try {
+              gateway.cancel(person.customerId.get)
+              m.copy(subscription = false).update
+            } catch {
+              case e: PaymentException ⇒
+                Redirect(routes.People.details(id).url + "#membership").
+                  flashing("error" -> Messages(e.msg))
+              case e: RequestException ⇒
+                e.log.foreach(Logger.error(_))
+                Redirect(routes.People.details(id).url + "#membership").
+                  flashing("error" -> Messages(e.getMessage))
+            }
+            Redirect(routes.People.details(id).url + "#membership").
+              flashing("success" -> "Subscription was successfully canceled")
+          } else {
+            Redirect(routes.People.details(id).url + "#membership").
+              flashing("error" -> Messages("error.membership.noSubscription"))
+          }
+        } getOrElse {
+          Redirect(routes.People.details(id).url).
+            flashing("error" -> Messages("error.membership.noSubscription"))
+        }
+      } getOrElse NotFound
   }
 }
 

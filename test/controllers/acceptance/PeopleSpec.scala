@@ -69,14 +69,17 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     the owner of the profile                                             $e12
 
   When subscription does not exist, 'Cancel subscription' button should not be
-  visible, 'Renew subscription' and 'No subscription' badge should be visible to
+  visible, 'No subscription' badge should be visible to
     an Editor                                                            $e13
-    the owner of the profile                                             $e14
+    a Viewer                                                             $e14
 
   Viewer should not see subscription-related buttons
-    neither subscription exists                                          $e15
-    nor it does not exist                                                $e16
+    if subscription exists                                               $e15
 
+  On subscription cancelation the system should
+    return 'Not found' if a person does not exists                       $e16
+    return an error if a person is not a member                          $e17
+    return an error if there is not subscription                         $e18
   """
 
   val personService = mock[FakePersonService]
@@ -349,28 +352,37 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
-    contentAsString(result) must contain("person/1/renew")
-    contentAsString(result) must contain("Renew subscription")
+    contentAsString(result) must not contain "person/1/renew"
+    contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must contain("Subscription is canceled")
   }
 
-  def e14 = new ViewerMockContext {
+  def e14 = new MockContext {
+    truncateTables()
+
     // we insert a person object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    person.insert
+    val person = PersonHelper.two().insert
+    val id = 2L
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
       subscription = false)
     person.member_=(member)
 
+    (personService.find(_: Long)) expects id returning Some(person)
+    orgService.findActive _ expects () returning List()
+    licenseService.licenses _ expects id returning List()
+    (accountService.findRole _).expects(id).returning(None).never()
+    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    (paymentService.findByPerson _) expects id returning List()
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
-    contentAsString(result) must contain("person/1/renew")
-    contentAsString(result) must contain("Renew subscription")
     contentAsString(result) must contain("Subscription is canceled")
   }
 
@@ -400,38 +412,50 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Cancel subscription"
     contentAsString(result) must not contain "person/1/cancel"
-    contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
   }
 
   def e16 = new MockContext {
     truncateTables()
+    (personService.find(_: Long)) expects id returning None
+    val controller = fakedController()
 
-    // we insert a person object here to prevent crashing on account retrieval
-    // when @person.deletable is called
-    val person = PersonHelper.two().insert
-    val id = 2L
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+
+  def e17 = new MockContext {
+    truncateTables()
+    val person = PersonHelper.one()
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+    (personService.find(_: Long)) expects id returning Some(person)
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/person/1"))
+  }
+
+  def e18 = new MockContext {
+    truncateTables()
+    val person = PersonHelper.one()
     person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
       subscription = false)
     person.member_=(member)
 
     (personService.find(_: Long)) expects id returning Some(person)
-    orgService.findActive _ expects () returning List()
-    licenseService.licenses _ expects id returning List()
-    (accountService.findRole _).expects(id).returning(None).never()
-    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
-    (contributionService.contributions(_, _)) expects (id, true) returning List()
-    (paymentService.findByPerson _) expects id returning List()
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
-    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
 
-    status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Cancel subscription"
-    contentAsString(result) must not contain "Renew subscription"
-    contentAsString(result) must contain("Subscription is canceled")
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/person/1"))
   }
 
   private def fakedController() = {

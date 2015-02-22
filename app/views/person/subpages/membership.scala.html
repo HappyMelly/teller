@@ -72,22 +72,38 @@
           You can cancel your subscription any time. In this case your membership
           will be valid till <b>@m.end</b>.</p>
         @dynamic(handler, "person", "edit") {
-          <form method="post" action="@CSRF(routes.People.cancel(person.id.getOrElse(0)))">
-            <button class="btn btn-danger btn-sm" type="submit">
-              Cancel subscription</button>
-          </form>
-
+          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
+            data-target=".cancelModal">Cancel subscription</button>
+          <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title" id="myModalLabel">Cancel subscription</h4>
+                </div>
+                <div class="modal-body">
+                  <p>If you cancel your subscription you won't be able to turn it back on.
+                    However this functionality will be available in the future.</p>
+                  <p>Your membership will be valid till <b>@m.end</b></p>
+                </div>
+                <div class="modal-footer">
+                  <form method="post" action="@CSRF(routes.People.cancel(person.id.getOrElse(0)))">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                    <button class="btn btn-danger btn-sm" type="submit">
+                      Cancel subscription</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
         }
+
       } else {
         <div class="alert alert-warning">
-          <i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</div>
+          <p><i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</p>
+          <p>It's not possible to turn your subscription on right now. We're working on it ;).</p>
+        </div>
         <p>Your membership ends <b>@m.end</b>.</p>
-        @dynamic(handler, "person", "edit") {
-          <form method="post" action="@CSRF(routes.People.renew(person.id.getOrElse(0)))">
-            <button class="btn btn-success btn-sm" type="submit">
-              Renew subscription</button>
-          </form>
-        }
       }
     </div>
   </div>

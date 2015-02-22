@@ -42,11 +42,6 @@ class PeopleAccessSpec extends PlayAppSpec {
       be accessible to Editors                               $e7
       be accessible to the owner of the profile              $e8
       not be accessible to Viewers                           $e9
-
-    'Renew' action should
-      be accessible to Editors                               $e10
-      be accessible to the owner of the profile              $e11
-      not be accessible to Viewers                           $e12
   """
 
   val controller = new TestPeople()
@@ -68,27 +63,6 @@ class PeopleAccessSpec extends PlayAppSpec {
   def e9 = {
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/2/cancel")
     val result: Future[SimpleResult] = controller.cancel(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
-  }
-
-  def e10 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
-    val result: Future[SimpleResult] = controller.renew(1L).apply(req)
-
-    status(result) must equalTo(OK)
-  }
-
-  def e11 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/1/renew")
-    val result: Future[SimpleResult] = controller.renew(1L).apply(req)
-
-    status(result) must equalTo(OK)
-  }
-
-  def e12 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/2/renew")
-    val result: Future[SimpleResult] = controller.renew(2L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
   }

@@ -26,7 +26,7 @@ package models.payment
 
 import com.stripe.Stripe
 import com.stripe.exception._
-import com.stripe.model.{ Charge, Customer, Invoice, Plan }
+import com.stripe.model._
 import models.Person
 
 import scala.collection.JavaConversions._
@@ -103,6 +103,30 @@ class GatewayWrapper(apiKey: String) {
       customer.createSubscription(Map("plan" -> plan,
         "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
       customer.getId
+    } catch {
+      case e: CardException ⇒
+        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
+      case e: InvalidRequestException ⇒
+        throw new RequestException("error.payment.invalid_request", Some(e.toString))
+      case e: AuthenticationException ⇒
+        throw new RequestException("error.payment.authorisation")
+      case e: APIConnectionException ⇒
+        throw new RequestException("error.payment.api.connection", Some(e.toString))
+      case e: APIException ⇒
+        throw new RequestException("error.payment.api", Some(e.toString))
+    }
+  }
+
+  /**
+   * Cancels subscriptions
+   * @param customerId Customer
+   * @return
+   */
+  def cancel(customerId: String) = {
+    try {
+      Stripe.apiKey = apiKey
+      val subscriptions = Customer.retrieve(customerId).getSubscriptions.getData
+      subscriptions.foreach(_.cancel(Map[String, AnyRef]()))
     } catch {
       case e: CardException ⇒
         throw new PaymentException(e.getMessage, e.getCode, e.getParam)

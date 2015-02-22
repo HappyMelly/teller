@@ -146,7 +146,6 @@ GET         /person/:id/edit                                                    
 POST        /person/:id/activation                                               controllers.People.activation(id: Long)
 POST        /person/:id/delete                                                   controllers.People.delete(id: Long)
 POST        /person/:id/cancel                                                   controllers.People.cancel(id: Long)
-POST        /person/:id/renew                                                    controllers.People.renew(id: Long)
 
 
 GET         /person/:id/licenses/new                                             controllers.Licenses.add(id: Long)
