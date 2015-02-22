@@ -1,6 +1,6 @@
 @(user: UserIdentity,
     person: Person,
-    payments: List[PaymentRecord])(implicit request: Request[Any],
+    payments: List[payment.Record])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._

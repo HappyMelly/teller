@@ -24,11 +24,11 @@
 
 package models.payment
 
-import models.{ PaymentRecord, Person }
+import models.Person
+import models.payment.GatewayWrapper
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Logger
-import utils.PaymentGatewayWrapper
 import views.Countries
 
 /**
@@ -44,7 +44,7 @@ case class Payment(key: String) {
    * @return Returns remote customer identifier
    */
   def subscribe(person: Person, token: String, amount: Int): String = {
-    val gateway = new PaymentGatewayWrapper(key)
+    val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customer = gateway.customer(person, plan, token)
     val userId = person.id.get
@@ -57,7 +57,7 @@ case class Payment(key: String) {
       invoices(0)
     else
       "Internal error. Please inform the support stuff"
-    PaymentRecord(invoiceId, userId, userId, person = true, Payment.DESC, fee).insert
+    Record(invoiceId, userId, userId, person = true, Payment.DESC, fee).insert
     val msg = "User %s (id = %s) paid membership fee EUR %s".format(
       person.fullName, userId, fee)
     Logger.info(msg)

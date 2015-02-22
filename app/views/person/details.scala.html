@@ -6,13 +6,14 @@
     licenses: List[LicenseView],
     accountRole: Option[models.UserRole.Role.Role],
     otherUser: Option[UserAccount],
-    payments: Option[List[PaymentRecord]]
+    payments: Option[List[payment.Record]]
     )(implicit request: Request[Any],
         flash: Flash,
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
+@import models.payment.Record$
 
-    @import helper.CSRF
+@import helper.CSRF
     @import models.UserRole.Role._
     @import be.objectify.deadbolt.scala.views.html._
     @import be.objectify.deadbolt.core.utils.TemplateUtils._

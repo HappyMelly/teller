@@ -28,6 +28,7 @@ import controllers.{ People, Security }
 import helpers._
 import integration.PlayAppSpec
 import models._
+import models.payment.Record$
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -189,8 +190,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (accountService.findDuplicateIdentity _) expects person returning None
     (contributionService.contributions(_, _)) expects (id, true) returning List()
     val payments = List(
-      PaymentRecord("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
-      PaymentRecord("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
+      Record("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
+      Record("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
     (paymentService.findByPerson _) expects id returning payments
     val controller = fakedController()
 
@@ -276,8 +277,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     accountService.findDuplicateIdentity _ expects person returning None
     (contributionService.contributions(_, _)) expects (id, true) returning List()
     val payments = List(
-      PaymentRecord("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
-      PaymentRecord("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
+      Record("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
+      Record("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
     (paymentService.findByPerson _) expects id returning payments
     val controller = fakedController()
 

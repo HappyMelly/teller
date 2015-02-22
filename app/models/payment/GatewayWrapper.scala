@@ -22,16 +22,12 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package utils
+package models.payment
 
 import com.stripe.Stripe
 import com.stripe.exception._
-import com.stripe.model.{ Customer, Charge, Plan, Invoice }
+import com.stripe.model.{ Charge, Customer, Invoice, Plan }
 import models.Person
-import models.payment.Payment
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
-import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 
@@ -53,7 +49,7 @@ case class PaymentException(msg: String, code: String, param: String)
 /**
  * Contains the logic required for working with payment gateway
  */
-class PaymentGatewayWrapper(apiKey: String) {
+class GatewayWrapper(apiKey: String) {
 
   /**
    * Retrieves plan or creates a plan if the required one doesn't exist

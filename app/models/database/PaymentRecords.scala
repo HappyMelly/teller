@@ -25,12 +25,12 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.PaymentRecord
 import models.JodaMoney._
+import models.payment.Record
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
-private[models] object PaymentRecords extends Table[PaymentRecord]("PAYMENT_RECORD") {
+private[models] object PaymentRecords extends Table[Record]("PAYMENT_RECORD") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def remoteId = column[String]("REMOTE_ID")
@@ -44,8 +44,8 @@ private[models] object PaymentRecords extends Table[PaymentRecord]("PAYMENT_RECO
 
   def * = id.? ~ remoteId ~ payerId ~ objectId ~ person ~ description ~
     feeCurrency ~ fee ~ created <> ({ r ⇒
-      PaymentRecord(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9)
-    }, { (r: PaymentRecord) ⇒
+      Record(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9)
+    }, { (r: Record) ⇒
       Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
         r.fee.getCurrencyUnit.getCode, r.fee.getAmount, r.created)
     })

@@ -25,8 +25,8 @@
 package models.integration
 
 import integration.PlayAppSpec
-import models.PaymentRecord
-import models.service.PaymentRecordService
+import _root_.models.payment.Record
+import _root_.models.service.PaymentRecordService
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.DateTime
@@ -42,7 +42,7 @@ class PaymentRecordServiceSpec extends PlayAppSpec {
       ("5", 2L, true, Money.of(EUR, 10)),
       ("6", 3L, true, Money.of(EUR, 12))).foreach {
         case (remoteId, objectId, person, fee) ⇒
-          val r = new PaymentRecord(None, remoteId, 1L, objectId, person, "",
+          val r = new Record(None, remoteId, 1L, objectId, person, "",
             fee, DateTime.now())
           r.insert
       }

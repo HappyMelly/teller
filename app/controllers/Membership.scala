@@ -26,20 +26,18 @@ package controllers
 
 import models._
 import models.UserRole.Role._
-import models.payment.Payment
+import models.payment.{ PaymentException, RequestException, Payment }
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
 import play.api.i18n.Messages
-import play.api.mvc.{ Flash, Controller }
+import play.api.mvc.Controller
 import play.api.data._
 import play.api.data.Forms._
 import play.api.Logger
 import play.api.libs.json._
 import play.api.Play
 import play.api.Play.current
-import utils.{ PaymentException, RequestException, PaymentGatewayWrapper }
 
 case class PaymentData(token: String,
   fee: Int) {}

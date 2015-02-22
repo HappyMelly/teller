@@ -22,20 +22,48 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package util
+package models.payment
 
-import helpers.PersonHelper
-import org.specs2.mutable._
-import utils.{ PaymentGatewayWrapper, RequestException }
+import models.service.Services
+import org.joda.money.Money
+import org.joda.time.DateTime
 
-class PaymentGatewayWrapperSpec extends Specification {
+/**
+ * Contains data of a successful payment
+ */
+case class Record(id: Option[Long],
+  remoteId: String,
+  payerId: Long,
+  objectId: Long,
+  person: Boolean,
+  description: String,
+  fee: Money,
+  created: DateTime) extends Services {
 
-  "Method `charge`" should {
-    "throw PaymentException when API key is wrong" in {
-      val payment = new PaymentGatewayWrapper("wrong_key")
-      val payer = PersonHelper.one()
-      val msg = "error.payment.authorisation"
-      payment.charge(200, payer, Some("token")) must throwA[RequestException](msg)
-    }
+  /**
+   * Adds this payment record to database
+   */
+  def insert: Record = paymentRecordService.insert(this)
+}
+
+object Record {
+
+  /**
+   * Returns new PaymentRecord object
+   * @param remoteId Remote payment id
+   * @param payerId Payer id
+   * @param objectId Object of the payment
+   * @param person Defines if the object is a person
+   * @param description Description of the payment
+   * @param fee Amount of the payment
+   */
+  def apply(remoteId: String,
+    payerId: Long,
+    objectId: Long,
+    person: Boolean,
+    description: String,
+    fee: Money): Record = {
+    new Record(None, remoteId, payerId, objectId, person,
+      description, fee, DateTime.now())
   }
 }

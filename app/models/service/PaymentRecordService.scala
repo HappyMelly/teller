@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.PaymentRecords
-import models.PaymentRecord
+import models.payment.Record
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
@@ -40,7 +40,7 @@ class PaymentRecordService {
    * @param r Object to insert
    * @return Returns member object with updated id
    */
-  def insert(r: PaymentRecord): PaymentRecord = DB.withSession {
+  def insert(r: Record): Record = DB.withSession {
     implicit session ⇒
       val id: Long = PaymentRecords.forInsert.insert(r)
       r.copy(id = Some(id))
@@ -51,7 +51,7 @@ class PaymentRecordService {
    * @param personId Person identifier
    * @return
    */
-  def findByPerson(personId: Long): List[PaymentRecord] = DB.withSession {
+  def findByPerson(personId: Long): List[Record] = DB.withSession {
     implicit session ⇒
       Query(PaymentRecords).
         filter(_.objectId === personId).
