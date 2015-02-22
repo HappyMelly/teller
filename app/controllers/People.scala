@@ -470,6 +470,7 @@ trait People extends Controller with Security with Services {
    */
   def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
+      val url = routes.People.details(id).url + "#membership"
       personService.find(id) map { person ⇒
         person.member map { m ⇒
           if (m.subscription) {
@@ -480,21 +481,19 @@ trait People extends Controller with Security with Services {
               m.copy(subscription = false).update
             } catch {
               case e: PaymentException ⇒
-                Redirect(routes.People.details(id).url + "#membership").
-                  flashing("error" -> Messages(e.msg))
+                Redirect(url).flashing("error" -> Messages(e.msg))
               case e: RequestException ⇒
                 e.log.foreach(Logger.error(_))
-                Redirect(routes.People.details(id).url + "#membership").
-                  flashing("error" -> Messages(e.getMessage))
+                Redirect(url).flashing("error" -> Messages(e.getMessage))
             }
-            Redirect(routes.People.details(id).url + "#membership").
+            Redirect(url).
               flashing("success" -> "Subscription was successfully canceled")
           } else {
-            Redirect(routes.People.details(id).url + "#membership").
+            Redirect(url).
               flashing("error" -> Messages("error.membership.noSubscription"))
           }
         } getOrElse {
-          Redirect(routes.People.details(id).url).
+          Redirect(url).
             flashing("error" -> Messages("error.membership.noSubscription"))
         }
       } getOrElse NotFound
