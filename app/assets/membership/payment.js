@@ -69,9 +69,10 @@ var stripeResponseHandler = function(status, response) {
                 showError(msg);
             }
             $form.find('button').prop('disabled', false);
+        }).complete(function() {
+            $("body").css("cursor", "default");
         });
     }
-    $("body").css("cursor", "default");
 };
 
 /**

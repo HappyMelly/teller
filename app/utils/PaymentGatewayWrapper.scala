@@ -69,7 +69,7 @@ class PaymentGatewayWrapper(apiKey: String) {
           val params = Map("amount" -> Int.box(amount),
             "interval" -> "year",
             "currency" -> "eur",
-            "name" -> "Custom plan for EUR %s".format(fee),
+            "name" -> "One Year Membership Fee",
             "id" -> "custom_%s".format(fee))
           Plan.create(params)
         }
@@ -132,7 +132,7 @@ class PaymentGatewayWrapper(apiKey: String) {
     val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
       "card" -> token.getOrElse(""),
-      "description" -> "One Year Membership Fee",
+      "description" -> "One Year Membership",
       "receipt_email" -> payer.socialProfile.email)
     try {
       Stripe.apiKey = apiKey

@@ -50,7 +50,7 @@ trait Membership extends Controller with Security with Services {
     "token" -> nonEmptyText,
     "fee" -> number.
       verifying("error.payment.minimum_fee",
-        _ > Payment.countryBasedFees(code)._1))(PaymentData.apply)(PaymentData.unapply))
+        _ >= Payment.countryBasedFees(code)._1))(PaymentData.apply)(PaymentData.unapply))
 
   /**
    * Renders welcome screen with two options: Become a funder and
@@ -87,10 +87,16 @@ trait Membership extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       val code = user.person.address.countryCode
       form(code).bindFromRequest.fold(
-        hasError ⇒ BadRequest(hasError.errorsAsJson),
+        hasError ⇒ {
+          hasError.error("fee").map { e ⇒
+            BadRequest(Json.obj("message" -> Messages(e.message)))
+          } getOrElse {
+            BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error")))
+          }
+        },
         data ⇒ {
           user.person.member map { m ⇒
-            BadRequest(Json.obj("error" -> Messages("error.payment.already_member")))
+            BadRequest(Json.obj("message" -> Messages("error.payment.already_member")))
           } getOrElse {
             try {
               val key = Play.configuration.getString("stripe.secret_key").get
