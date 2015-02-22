@@ -58,7 +58,8 @@ case class Payment(key: String) {
 }
 
 object Payment {
-  val DUTCH_VAT = 21.0
+  private val DUTCH_VAT = 21.0
+  val TAX_PERCENT_AMOUNT = DUTCH_VAT
 
   /**
    * Returns minimum and suggested fees for supporters based on country.

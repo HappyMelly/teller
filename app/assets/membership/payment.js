@@ -48,7 +48,6 @@ var stripeResponseHandler = function(status, response) {
         // Insert the token into the form so it gets submitted to the server
         $('input[name="token"]').remove();
         $form.append($('<input type="hidden" name="token" />').val(token));
-        console.log(token);
         $.ajax({
             type: "POST",
             url: "/membership/payment",
@@ -135,9 +134,15 @@ var validateAmount = function() {
 var updateAmount = function(objectId) {
     var amount = $(objectId).val();
     if (amount.length < 1) {
-        amount = "0.00";
+        amount = 0.00;
+    } else {
+        amount = parseInt(amount);
     }
-    $('div.amount > span').text(amount);
+    var taxPercent = parseFloat($('#fee').data('tax'));
+    var tax = (amount * taxPercent) / 100;
+    var amountWithTax = amount + tax;
+    $('div.amount > span').text(amountWithTax);
+    $('#amount > span').text(tax);
 };
 
 jQuery(function($) {
@@ -158,6 +163,9 @@ jQuery(function($) {
     });
     $('#fee').bind('change paste keyup', function() {
         updateAmount('#fee');
+    });
+    $('input.cc-name').bind('change paste keyup', function() {
+        this.value = this.value.toUpperCase();
     });
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');

@@ -6,6 +6,7 @@
     flash: Flash)
 
 @import helper.CSRF
+@import models.payment.Payment
 @import views.Countries
 
 @main("Payment", "membership", user) {
@@ -38,7 +39,8 @@
               <div class="input-group">
                 <label class="input-group-addon">EUR</label>
                 <input class="form-control" name="@form("fee").name" id="@form("fee").id"
-                type="number" min="@fee._1.toString" placeholder="@fee._2.toString" step="1" value="@form("fee").value">
+                  type="number" min="@fee._1.toString" placeholder="@fee._2.toString"
+                  step="1" value="@form("fee").value" data-tax="@Payment.TAX_PERCENT_AMOUNT">
               </div>
               @if(form("fee").hasErrors) {
                 <span class="help-block">
@@ -104,8 +106,11 @@
         </div>
         <div class="row">
           <div class="col-md-3 col-md-offset-5 ">
-              Amount to pay:
+            Amount to pay:
+            <div id="amount">
               <div class="amount">&euro; <span>0.00</span></div>
+              (incl. tax &euro; <span>0.00</span>)
+            </div>
           </div>
           <div class="col-md-4">
             <button type="submit"

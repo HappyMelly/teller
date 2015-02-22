@@ -103,7 +103,7 @@ class PaymentGatewayWrapper(apiKey: String) {
       Stripe.apiKey = apiKey
       val customer = Customer.create(params)
       customer.createSubscription(Map("plan" -> plan,
-        "tax_percent" -> Payment.DUTCH_VAT.toString))
+        "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
       customer.getId
     } catch {
       case e: CardException ⇒
