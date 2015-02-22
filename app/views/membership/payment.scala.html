@@ -1,10 +1,12 @@
 @(user: UserIdentity,
     form: Form[PaymentData],
-    apiKey: String)(implicit request: Request[Any],
+    apiKey: String,
+    fee: (Int, Int))(implicit request: Request[Any],
     handler: AuthorisationHandler,
     flash: Flash)
 
 @import helper.CSRF
+@import views.Countries
 
 @main("Payment", "membership", user) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
@@ -22,21 +24,21 @@
       <p class="payment-bottom-space">
       To be a Happy Melly Supporter all you need is to pay a small yearly
       membership fee. The minimum fee amount depends on the country you live in.
-      For more information please check chapter "Fees" in <a href="http://www.happymelly.com/constitution"
-      target="_blank">Happy Melly Constitution</a>.
       </p>
       <form class="form-inline payment-bottom-space" action="@CSRF(routes.Membership.charge())"
         method="POST" id="payment-form" autocomplete="on">
         <span class="payment-errors"></span>
         <legend>Step 1: Fee</legend>
         <div class="row payment-bottom-space fee">
-          <div class="form-group @if(form("fee").hasErrors) {error}">
-            <label class="col-md-6" for="fee">One Year Subscription Fee</label>
-            <div class="col-md-6">
+          <div class="form-group col-md-12 @if(form("fee").hasErrors) {error}">
+            <div class="col-md-6 text-right">
+              <label for="fee">One Year Subscription Fee</label>
+            </div>
+            <div class="col-md-3 col-md-offset-3">
               <div class="input-group">
                 <label class="input-group-addon">EUR</label>
                 <input class="form-control" name="@form("fee").name" id="@form("fee").id"
-                type="number" min="0" step="1" value="@form("fee").value">
+                type="number" min="@fee._1.toString" placeholder="@fee._2.toString" step="1" value="@form("fee").value">
               </div>
               @if(form("fee").hasErrors) {
                 <span class="help-block">
@@ -47,6 +49,15 @@
               }
             </div>
           </div>
+          <div class="pull-right text-muted">
+            <p>You are from @Countries.all.toMap.get(user.person.address.countryCode).
+              For your country minimum fee is <b>EUR @fee._1.toString</b>
+              and suggested fee is <b>EUR @fee._2.toString</b>.
+            </p>
+            <p>If you want to know more about Happy Melly membership fees click
+              <a href="#" data-toggle="modal" data-target="#hmfees">here</a>.</p>
+          </div>
+          @views.html.element.fees()
         </div>
         <legend>Step 2: Payment</legend>
         <div class="row">

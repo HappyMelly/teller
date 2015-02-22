@@ -43,7 +43,7 @@ object PersonHelper {
     blog: Option[String] = None,
     virtual: Boolean = false,
     active: Boolean = true): Person = {
-    val address = new Address(id = id, countryCode = "UK")
+    val address = new Address(id = id, countryCode = "GB")
     val realPhoto = new Photo(None, None)
     val dateStamp = new DateStamp(DateTime.now(),
       "Sergey Kotlov",
@@ -71,7 +71,7 @@ object PersonHelper {
     "first_name" -> "First",
     "last_name" -> "Tester",
     "photo" -> None.asInstanceOf[Option[String]],
-    "country" -> "UK")
+    "country" -> "GB")
 
   def twoAsJson(): JsValue = Json.obj(
     "id" -> 2,
@@ -80,5 +80,5 @@ object PersonHelper {
     "first_name" -> "Second",
     "last_name" -> "Tester",
     "photo" -> None.asInstanceOf[Option[String]],
-    "country" -> "UK")
+    "country" -> "GB")
 }

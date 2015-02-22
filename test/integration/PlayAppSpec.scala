@@ -45,7 +45,8 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       "db.default.url" -> "jdbc:mysql://localhost/mellytest",
       "logger.play" -> "ERROR",
       "logger.application" -> "ERROR",
-      "ehcacheplugin" -> "enabled")
+      "ehcacheplugin" -> "enabled",
+      "stripe.public_key" -> "none")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
       "services.LoginIdentityService")
     val withPlugins = List("stubs.StubLoginIdentityService")

@@ -51,7 +51,7 @@ class MembershipSpec extends PlayAppSpec {
 
   A user should
     not be charged if she is already a member              $e6
-
+    see miminum and suggested fees on the payment form     $e7
   """
 
   val controller = new TestMembership()
@@ -110,5 +110,14 @@ class MembershipSpec extends PlayAppSpec {
 
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("You are already a member")
+  }
+
+  def e7 = {
+    truncateTables()
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.payment().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Minimum fee: EUR 20")
+    contentAsString(result) must contain("Suggested fee: EUR 40")
   }
 }

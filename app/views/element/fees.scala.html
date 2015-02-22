@@ -1,0 +1,138 @@
+@import views.Countries
+
+<div class="modal fade" id="hmfees" tabindex="-1" role="dialog" aria-labelledby="feeModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="feeModal">Happy Melly Fees</h4>
+      </div>
+      <div class="modal-body">
+        <p>According to <a href="http://happymelly.com/constitution"
+          target="_blank">Happy Melly Constituion</a> membership fee depends on
+        the country you live in.</p>
+        <legend>Fees</legend>
+        <p>GDP/capita value is used to index countries.</p>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Supporters</th>
+              <th>Minimum fee</th>
+              <th>Suggested fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Top 10 countries</td>
+              <td>€ 25</td>
+              <td>€ 50</td>
+            </tr>
+            <tr>
+              <td>Top 25 countries</td>
+              <td>€ 20</td>
+              <td>€ 40</td>
+            </tr>
+            <tr>
+              <td>Top 50 countries</td>
+              <td>€ 15</td>
+              <td>€ 30</td>
+            </tr>
+            <tr>
+              <td>Top 100 countries</td>
+              <td>€ 10</td>
+              <td>€ 20</td>
+            </tr>
+            <tr>
+              <td>All other countries</td>
+              <td>€ 5</td>
+              <td>€ 10</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Funders</th>
+              <th>Minimum fee</th>
+              <th>Suggested fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Top 10 countries</td>
+              <td>€ 1000</td>
+              <td>€ 2000</td>
+            </tr>
+            <tr>
+              <td>Top 25 countries</td>
+              <td>€ 800</td>
+              <td>€ 1600</td>
+            </tr>
+            <tr>
+              <td>Top 50 countries</td>
+              <td>€ 600</td>
+              <td>€ 1200</td>
+            </tr>
+            <tr>
+              <td>Top 100 countries</td>
+              <td>€ 400</td>
+              <td>€ 800</td>
+            </tr>
+            <tr>
+              <td>All other countries</td>
+              <td>€ 200</td>
+              <td>€ 400</td>
+            </tr>
+          </tbody>
+        </table>
+        <legend>Country index</legend>
+        <p>We use averaged data from two indexes, created by <a href="http://www.imf.org/external/pubs/ft/weo/2014/02/weodata/weorept.aspx?sy=2013&ey=2013&ssd=1&sort=country&ds=.&br=1&pr1.x=16&pr1.y=7&c=512%2C668%2C914%2C672%2C612%2C946%2C614%2C137%2C311%2C962%2C213%2C674%2C911%2C676%2C193%2C548%2C122%2C556%2C912%2C678%2C313%2C181%2C419%2C867%2C513%2C682%2C316%2C684%2C913%2C273%2C124%2C868%2C339%2C921%2C638%2C948%2C514%2C943%2C218%2C686%2C963%2C688%2C616%2C518%2C223%2C728%2C516%2C558%2C918%2C138%2C748%2C196%2C618%2C278%2C522%2C692%2C622%2C694%2C156%2C142%2C624%2C449%2C626%2C564%2C628%2C565%2C228%2C283%2C924%2C853%2C233%2C288%2C632%2C293%2C636%2C566%2C634%2C964%2C238%2C182%2C662%2C453%2C960%2C968%2C423%2C922%2C935%2C714%2C128%2C862%2C611%2C135%2C321%2C716%2C243%2C456%2C248%2C722%2C469%2C942%2C253%2C718%2C642%2C724%2C643%2C576%2C939%2C936%2C644%2C961%2C819%2C813%2C172%2C199%2C132%2C733%2C646%2C184%2C648%2C524%2C915%2C361%2C134%2C362%2C652%2C364%2C174%2C732%2C328%2C366%2C258%2C734%2C656%2C144%2C654%2C146%2C336%2C463%2C263%2C528%2C268%2C923%2C532%2C738%2C944%2C578%2C176%2C537%2C534%2C742%2C536%2C866%2C429%2C369%2C433%2C744%2C178%2C186%2C436%2C925%2C136%2C869%2C343%2C746%2C158%2C926%2C439%2C466%2C916%2C112%2C664%2C111%2C826%2C298%2C542%2C927%2C967%2C846%2C443%2C299%2C917%2C582%2C544%2C474%2C941%2C754%2C446%2C698%2C666&s=PPPPC&grp=0&a="
+          target="_blank">International Monetary Fund</a> and <a href="http://data.worldbank.org/indicator/NY.GDP.PCAP.PP.CD?order=wbapi_data_value_2013+wbapi_data_value+wbapi_data_value-last&sort=desc"
+          target="_blank">World Bank</a>. </p>
+        <div class="list-group">
+          @defining(Countries.gdp.toList.sortBy(_._2)) { countries: List[(String, Int)] =>
+            <div class="list-group-item">
+              <h4 class="list-group-iteem-heading">Top 10 countries</h4>
+              <p class="list-group-item-text">
+                @for(country <- countries.slice(0, 9)) {
+                  @Countries.all.toMap.getOrElse(country._1, country._1),
+                }
+                @Countries.all.toMap.getOrElse(countries(9)._1, "")
+              </p>
+            </div>
+            <div class="list-group-item">
+              <h4 class="list-group-iteem-heading">Top 25 countries</h4>
+              <p class="list-group-item-text">
+                @for(country <- countries.slice(10, 24)) {
+                  @Countries.all.toMap.getOrElse(country._1, country._1),
+                }
+                @Countries.all.toMap.getOrElse(countries(24)._1, "")
+              </p>
+            </div>
+            <div class="list-group-item">
+              <h4 class="list-group-iteem-heading">Top 50 countries</h4>
+              <p class="list-group-item-text">
+                @for(country <- countries.slice(25, 49)) {
+                  @Countries.all.toMap.getOrElse(country._1, country._1),
+                }
+                @Countries.all.toMap.getOrElse(countries(49)._1, "")
+              </p>
+            </div>
+            <div class="list-group-item">
+              <h4 class="list-group-iteem-heading">Top 100 countries</h4>
+              <p class="list-group-item-text">
+                @for(country <- countries.slice(50, 99)) {
+                  @Countries.all.toMap.getOrElse(country._1, country._1),
+                }
+                @Countries.all.toMap.getOrElse(countries(99)._1, "")
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

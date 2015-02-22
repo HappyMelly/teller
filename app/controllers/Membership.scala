@@ -46,9 +46,11 @@ case class PaymentData(token: String,
 
 trait Membership extends Controller with Security with Services {
 
-  private def form = Form(mapping(
+  private def form(code: String) = Form(mapping(
     "token" -> nonEmptyText,
-    "fee" -> number(min = 1)) (PaymentData.apply)(PaymentData.unapply))
+    "fee" -> number.
+      verifying("error.payment.minimum_fee",
+        _ > Payment.countryBasedFees(code)._1))(PaymentData.apply)(PaymentData.unapply))
 
   /**
    * Renders welcome screen with two options: Become a funder and
@@ -73,7 +75,9 @@ trait Membership extends Controller with Security with Services {
   def payment = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val publicKey = Play.configuration.getString("stripe.public_key").get
-      Ok(views.html.membership.payment(user, form, publicKey))
+      val code = user.person.address.countryCode
+      val fee = Payment.countryBasedFees(code)
+      Ok(views.html.membership.payment(user, form(code), publicKey, fee))
   }
 
   /**
@@ -81,7 +85,8 @@ trait Membership extends Controller with Security with Services {
    */
   def charge = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      form.bindFromRequest.fold(
+      val code = user.person.address.countryCode
+      form(code).bindFromRequest.fold(
         hasError ⇒ BadRequest(hasError.errorsAsJson),
         data ⇒ {
           user.person.member map { m ⇒

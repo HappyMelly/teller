@@ -29,6 +29,7 @@ import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Logger
 import utils.PaymentGatewayWrapper
+import views.Countries
 
 /**
  * Contains methods for working with credit cards
@@ -58,4 +59,23 @@ case class Payment(key: String) {
 
 object Payment {
   val DUTCH_VAT = 21.0
+
+  /**
+   * Returns minimum and suggested fees for supporters based on country.
+   * Fee amounts are taken from HM constitution: http://www.happymelly.com/constitution/
+   * @param code Country code
+   */
+  def countryBasedFees(code: String): (Int, Int) = {
+    Countries.gdp.get(code) map { index ⇒
+      if (index <= 10)
+        (25, 50)
+      else if (index <= 25)
+        (20, 40)
+      else if (index <= 50)
+        (15, 30)
+      else if (index <= 100)
+        (10, 20)
+      else (5, 10)
+    } getOrElse (5, 10)
+  }
 }
