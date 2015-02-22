@@ -40,6 +40,6 @@ object MemberHelper {
     since: Option[LocalDate] = Some(LocalDate.now().minusDays(4)),
     existingObject: Option[Boolean] = Some(false)): Member = {
     new Member(id, objectId, person, funder, money.get, subscription, since.get,
-      existingObject.get, DateTime.now(), 1L, DateTime.now(), 1L)
+      since.get.plusYears(1), existingObject.get, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

@@ -25,7 +25,7 @@
 package models.unit.payment
 
 import helpers.PersonHelper
-import models.payment.{GatewayWrapper, RequestException}
+import models.payment.{ GatewayWrapper, RequestException }
 import org.specs2.mutable._
 
 class GatewayWrapperSpec extends Specification {

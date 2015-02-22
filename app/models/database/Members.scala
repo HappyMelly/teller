@@ -39,20 +39,21 @@ private[models] object Members extends Table[Member]("MEMBER") {
   def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
   def subscription = column[Boolean]("SUBSCRIPTION")
   def since = column[LocalDate]("SINCE")
+  def end = column[LocalDate]("END")
   def created = column[DateTime]("CREATED")
   def createdBy = column[Long]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[Long]("UPDATED_BY")
 
   def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~
-    subscription ~ since ~ created ~ createdBy ~ updated ~ updatedBy <> ({
+    subscription ~ since ~ end ~ created ~ createdBy ~ updated ~ updatedBy <> ({
       m ⇒
-        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, false, m._9,
-          m._10, m._11, m._12)
+        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, false,
+          m._10, m._11, m._12, m._13)
     }, {
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.subscription, m.since, m.created, m.createdBy,
+          m.fee.getAmount, m.subscription, m.since, m.end, m.created, m.createdBy,
           m.updated, m.updatedBy)
     })
 

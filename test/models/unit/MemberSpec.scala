@@ -24,10 +24,7 @@
 package models.unit
 
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
-import models.{ Activity, Member }
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import models.Activity
 import org.specs2.mutable._
 
 class MemberSpec extends Specification {

@@ -117,7 +117,7 @@ class MembershipSpec extends PlayAppSpec {
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.payment().apply(req)
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Minimum fee: EUR 20")
-    contentAsString(result) must contain("Suggested fee: EUR 40")
+    contentAsString(result) must contain("minimum fee is <b>EUR 20</b>")
+    contentAsString(result) must contain("suggested fee is <b>EUR 40</b>")
   }
 }

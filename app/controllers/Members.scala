@@ -60,6 +60,7 @@ trait Members extends Controller with Security with Services {
         verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().plusDays(1))),
+      "end" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
@@ -112,7 +113,10 @@ trait Members extends Controller with Security with Services {
           None,
           formWithErrors)),
         member ⇒ {
-          val m = member.copy(id = None).copy(objectId = 0)
+          val m = member.
+            copy(id = None).
+            copy(objectId = 0).
+            copy(end = member.since.plusYears(1))
           Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
@@ -146,7 +150,8 @@ trait Members extends Controller with Security with Services {
           member ⇒ {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
-              copy(objectId = m.objectId).update
+              copy(objectId = m.objectId).
+              copy(end = m.end).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert

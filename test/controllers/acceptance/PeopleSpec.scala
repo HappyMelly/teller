@@ -28,7 +28,7 @@ import controllers.{ People, Security }
 import helpers._
 import integration.PlayAppSpec
 import models._
-import models.payment.Record$
+import models.payment.Record
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -310,7 +310,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Cancel subscription")
-    contentAsString(result) must contain("person[/1/cancel")
+    contentAsString(result) must contain("person/1/cancel")
     contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
   }

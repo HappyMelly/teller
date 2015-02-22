@@ -35,6 +35,7 @@ case class Member(
   fee: Money,
   subscription: Boolean = true,
   since: LocalDate,
+  end: LocalDate,
   existingObject: Boolean,
   created: DateTime,
   createdBy: Long,

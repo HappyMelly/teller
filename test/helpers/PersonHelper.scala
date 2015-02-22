@@ -51,7 +51,7 @@ object PersonHelper {
       "Sergey Kotlov")
     val person = new Person(id, firstName, lastName, birthday, realPhoto,
       signature, address.id.get, bio, interests, PersonRole.NoRole,
-      webSite, blog, virtual, active, dateStamp)
+      webSite, blog, Some("customer"), virtual, active, dateStamp)
     person.address_=(address)
     person.socialProfile_=(new SocialProfile(email = "test@test.ru"))
     person

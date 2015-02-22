@@ -96,12 +96,12 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
       (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
       (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
       (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
-        case (objectId, person, funder, fee, since, createdBy) ⇒ {
+        case (objectId, person, funder, fee, since, createdBy) ⇒
           val member = new Member(None, objectId, person, funder, fee,
-            subscription = false, since, existingObject = false,
-            DateTime.now(), createdBy, DateTime.now(), createdBy)
+            subscription = false, since, since.plusYears(1),
+            existingObject = false, DateTime.now(), createdBy, DateTime.now(),
+            createdBy)
           member.insert
-        }
       }
   }
 }
