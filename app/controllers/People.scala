@@ -148,7 +148,7 @@ trait People extends Controller with Security with Services {
           webSite, blog, active, dateStamp) ⇒
           {
             val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
-              webSite, blog, virtual = false, active, dateStamp)
+              webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
             person.address_=(address)
             person
@@ -358,6 +358,7 @@ trait People extends Controller with Security with Services {
           formWithErrors ⇒
             BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
           person ⇒ {
+            //shit!
             val updatedPerson = person.copy(id = Some(id))
             updatedPerson.socialProfile_=(person.socialProfile)
             updatedPerson.address_=(person.address)

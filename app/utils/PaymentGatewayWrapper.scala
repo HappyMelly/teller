@@ -26,10 +26,12 @@ package utils
 
 import com.stripe.Stripe
 import com.stripe.exception._
-import com.stripe.model.{ Customer, Charge, Plan }
+import com.stripe.model.{ Customer, Charge, Plan, Invoice }
 import models.Person
 import models.payment.Payment
+import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
+import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 
@@ -69,7 +71,7 @@ class PaymentGatewayWrapper(apiKey: String) {
           val params = Map("amount" -> Int.box(amount),
             "interval" -> "year",
             "currency" -> "eur",
-            "name" -> "One Year Membership Fee",
+            "name" -> Payment.DESC,
             "id" -> "custom_%s".format(fee))
           Plan.create(params)
         }
@@ -120,6 +122,29 @@ class PaymentGatewayWrapper(apiKey: String) {
   }
 
   /**
+   * Returns a list of invoices for the given customer
+   * @param customerId Customer
+   * @return
+   */
+  def invoices(customerId: String): List[String] = {
+    try {
+      Stripe.apiKey = apiKey
+      Invoice.all(Map("customer" -> customerId)).getData.map(_.getId).toList
+    } catch {
+      case e: CardException ⇒
+        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
+      case e: InvalidRequestException ⇒
+        throw new RequestException("error.payment.invalid_request", Some(e.toString))
+      case e: AuthenticationException ⇒
+        throw new RequestException("error.payment.authorisation")
+      case e: APIConnectionException ⇒
+        throw new RequestException("error.payment.api.connection", Some(e.toString))
+      case e: APIException ⇒
+        throw new RequestException("error.payment.api", Some(e.toString))
+    }
+  }
+
+  /**
    * Charges user's card using Stripe
    * @param sum Amount to be charged
    * @param payer User object
@@ -132,7 +157,7 @@ class PaymentGatewayWrapper(apiKey: String) {
     val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
       "card" -> token.getOrElse(""),
-      "description" -> "One Year Membership",
+      "description" -> Payment.DESC,
       "receipt_email" -> payer.socialProfile.email)
     try {
       Stripe.apiKey = apiKey

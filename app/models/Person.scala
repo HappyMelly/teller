@@ -90,6 +90,7 @@ case class Person(
   role: PersonRole.Value = PersonRole.Stakeholder,
   webSite: Option[String],
   blog: Option[String],
+  customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
   dateStamp: DateStamp) extends AccountHolder
@@ -287,8 +288,9 @@ case class Person(
       } yield p
       socialQuery.update(socialProfile.copy(objectId = id.get))
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature, bio, interests,
-        role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
+      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
+        bio, interests, role, webSite, blog, customerId, virtual,
+        dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
@@ -347,7 +349,7 @@ case class Person(
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
     val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      subscription = false, since = LocalDate.now(), existingObject = true,
+      subscription = true, since = LocalDate.now(), existingObject = true,
       created = DateTime.now(), id.get, DateTime.now(), id.get)
     memberService.insert(m)
   }

@@ -49,7 +49,15 @@ case class Payment(key: String) {
     val customer = gateway.customer(person, plan, token)
     val userId = person.id.get
     val fee = Money.of(EUR, amount)
-    PaymentRecord("", userId, userId, person = true, "", fee).insert
+    val invoices = gateway.invoices(customer)
+    if (invoices.length != 1) {
+      Logger.error("A number of invoices for a new customer = %s".format(invoices.length))
+    }
+    val invoiceId = if (invoices.length >= 1)
+      invoices(0)
+    else
+      "Internal error. Please inform the support stuff"
+    PaymentRecord(invoiceId, userId, userId, person = true, Payment.DESC, fee).insert
     val msg = "User %s (id = %s) paid membership fee EUR %s".format(
       person.fullName, userId, fee)
     Logger.info(msg)
@@ -60,6 +68,7 @@ case class Payment(key: String) {
 object Payment {
   private val DUTCH_VAT = 21.0
   val TAX_PERCENT_AMOUNT = DUTCH_VAT
+  val DESC = "One Year Membership"
 
   /**
    * Returns minimum and suggested fees for supporters based on country.

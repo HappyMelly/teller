@@ -102,9 +102,9 @@ trait Membership extends Controller with Security with Services {
               val key = Play.configuration.getString("stripe.secret_key").get
               val payment = new Payment(key)
               val customerId = payment.subscribe(user.person, data.token, data.fee)
-              println(customerId)
               val fee = Money.of(EUR, data.fee)
               val member = user.person.becomeMember(funder = false, fee)
+              user.person.copy(customerId = Some(customerId)).update
               member.activity(
                 user.person,
                 Activity.Predicate.BecameSupporter).insert
