@@ -56,7 +56,8 @@ trait Membership extends Controller with Security with Services {
    */
   def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.membership.welcome(user))
+      val orgs = user.person.memberships.filter(_.member.isEmpty)
+      Ok(views.html.membership.welcome(user, orgs))
   }
 
   /**

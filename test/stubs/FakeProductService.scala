@@ -26,7 +26,7 @@ package stubs
 import models.Product
 import models.service.ProductService
 
-class StubProductService extends ProductService {
+class FakeProductService extends ProductService {
 
   override def findAll: List[Product] = List()
 }

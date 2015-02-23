@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import controllers.{ Membership, Security }
-import helpers.MemberHelper
+import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
@@ -44,7 +44,7 @@ class MembershipSpec extends PlayAppSpec {
     not be visible to unauthorized user                  $e1
     be visible to authorized user                        $e2
 
-  On welcome page for person button 'Become Supporter' should
+  On welcome page button 'Become a Supporter' as individual should
     be active for a non-member                             $e3
     not exist for a supporter                              $e4
     not exist for a funder                                 $e5
@@ -52,6 +52,11 @@ class MembershipSpec extends PlayAppSpec {
   A user should
     not be charged if she is already a member              $e6
     see miminum and suggested fees on the payment form     $e7
+
+  On welcome page the block 'My org wants to be a Supporter' should
+    contain a list of non-member orgs where the user works            $e8
+    contain a notice if zero non-member orgs exist                    $e9
+    have active 'Make .. a Supporter' button if at least one non-member org exists $e10
   """
 
   val controller = new TestMembership()
@@ -68,7 +73,7 @@ class MembershipSpec extends PlayAppSpec {
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("I want to become")
+    contentAsString(result) must contain("Join Happy Melly network")
   }
 
   def e3 = {
@@ -76,7 +81,7 @@ class MembershipSpec extends PlayAppSpec {
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Become Supporter")
+    contentAsString(result) must contain("Become a Supporter")
     contentAsString(result) must contain("href=\"/membership/payment\"")
   }
 
@@ -87,7 +92,7 @@ class MembershipSpec extends PlayAppSpec {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("You're already a Supporter")
-    contentAsString(result) must not contain "Become Supporter"
+    contentAsString(result) must not contain "Become a Supporter"
   }
 
   def e5 = {
@@ -98,7 +103,7 @@ class MembershipSpec extends PlayAppSpec {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("You're a Funder")
-    contentAsString(result) must not contain "Become Supporter"
+    contentAsString(result) must not contain "Become a Supporter"
   }
 
   def e6 = {
@@ -119,5 +124,60 @@ class MembershipSpec extends PlayAppSpec {
     status(result) must equalTo(OK)
     contentAsString(result) must contain("minimum fee is <b>EUR 20</b>")
     contentAsString(result) must contain("suggested fee is <b>EUR 40</b>")
+  }
+
+  def e8 = {
+    truncateTables()
+    val person = PersonHelper.one().insert
+    val org1 = OrganisationHelper.one.insert
+    val org2 = OrganisationHelper.two.insert
+    val org3 = OrganisationHelper.make(id = Some(3L), name = "Three").insert
+    person.addMembership(1L)
+    person.addMembership(2L)
+    person.addMembership(3L)
+    //the person and org3 are members
+    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
+    MemberHelper.make(objectId = 3L, person = false, funder = false).insert
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain(">Select organisation<")
+    contentAsString(result) must contain(">One<")
+    contentAsString(result) must contain(">Two<")
+    contentAsString(result) must not contain ">Three<"
+  }
+
+  def e9 = {
+    truncateTables()
+    val person = PersonHelper.one().insert
+    val org1 = OrganisationHelper.one.insert
+    val org2 = OrganisationHelper.two.insert
+    person.addMembership(1L)
+    person.addMembership(2L)
+    //the person and all orgs are members
+    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
+    MemberHelper.make(objectId = 1L, person = false, funder = false).insert
+    MemberHelper.make(objectId = 2L, person = false, funder = false).insert
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain ">Select organisation<"
+    contentAsString(result) must contain("All your organisations are members")
+  }
+
+  def e10 = {
+    truncateTables()
+    val person = PersonHelper.one().insert
+    val org1 = OrganisationHelper.one.insert
+    person.addMembership(1L)
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain(">Select organisation<")
+    contentAsString(result) must contain(">One<")
+    contentAsString(result) must contain("Make My Organisation a Supporter")
   }
 }

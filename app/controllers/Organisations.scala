@@ -140,22 +140,20 @@ trait Organisations extends Controller with Security with Services {
   }
 
   /**
-   * Render a Details page
+   * Renders Details page
    * @param id Organisation ID
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
+      orgService.find(id).map { organisation ⇒
+        val members = organisation.members
+        val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
+        val contributions = contributionService.contributions(id, isPerson = false)
+        val products = productService.findAll
 
-      orgService.find(id).map {
-        organisation ⇒
-          val members = organisation.members
-          val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-          val contributions = contributionService.contributions(id, isPerson = false)
-          val products = productService.findAll
-
-          Ok(views.html.organisation.details(user, organisation,
-            members, otherPeople,
-            contributions, products))
+        Ok(views.html.organisation.details(user, organisation,
+          members, otherPeople,
+          contributions, products))
       }.getOrElse(NotFound)
   }
 

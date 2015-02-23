@@ -25,7 +25,6 @@
 package models.payment
 
 import models.Person
-import models.payment.GatewayWrapper
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Logger

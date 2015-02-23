@@ -23,11 +23,17 @@
       }
     </div>
   </div>
+
   <div class="col-md-9">
     <div class="page-header">
       <h1>
         @organisation.name
           <div class="actions pull-right">
+            @if(organisation.member.isEmpty && members.exists(_.id == user.person.id)) {
+              <div class="button">
+                <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
+              </div>
+            }
             @dynamic(handler, "organisation", "edit") {
               <div class="button">
                 <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">

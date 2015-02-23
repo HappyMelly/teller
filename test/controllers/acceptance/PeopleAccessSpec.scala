@@ -50,14 +50,14 @@ class PeopleAccessSpec extends PlayAppSpec {
     val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
 
-    status(result) must equalTo(OK)
+    status(result) must equalTo(NOT_FOUND)
   }
 
   def e8 = {
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
 
-    status(result) must equalTo(OK)
+    status(result) must equalTo(NOT_FOUND)
   }
 
   def e9 = {

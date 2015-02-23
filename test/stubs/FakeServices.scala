@@ -37,7 +37,7 @@ trait FakeServices extends Services {
   private var _orgService = new FakeOrganisationService
   private var _paymentRecordService = new FakePaymentRecordService
   private var _personService = new FakePersonService
-  private var _productService = new StubProductService
+  private var _productService = new FakeProductService
   private var _userAccountService = new FakeUserAccountService
 
   def brandService_=(service: FakeBrandService) = {
@@ -87,11 +87,11 @@ trait FakeServices extends Services {
 
   override def personService: FakePersonService = _personService
 
-  def productService_=(service: StubProductService) = {
+  def productService_=(service: FakeProductService) = {
     _productService = service
   }
 
-  override def productService: StubProductService = _productService
+  override def productService: FakeProductService = _productService
 
   def orgService_=(service: FakeOrganisationService) = {
     _orgService = service

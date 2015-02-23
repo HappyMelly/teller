@@ -50,7 +50,7 @@ object OrganisationHelper {
       created, createdBy, updated, updatedBy)
   }
 
-  def one: Organisation = make(name = "One")
+  def one: Organisation = make(id = Some(1L), name = "One")
 
-  def two: Organisation = make(name = "Two")
+  def two: Organisation = make(id = Some(2L), name = "Two")
 }

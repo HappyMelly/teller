@@ -1,27 +1,31 @@
-@(user: UserIdentity)(implicit request: Request[Any],
+@(user: UserIdentity,
+    orgs: List[Organisation])(implicit request: Request[Any],
     handler: AuthorisationHandler,
     flash: Flash)
 
 @main("Welcome", "membership", user) {
 
-    <div class="col-md-12 text-center">
-        <h1>I want to become</h1>
-    </div>
-    <div class="row text-center">
-        <div class="col-md-4 col-md-offset-1">
-            <h3>Supporter</h3>
-            <div class="text-left">
-              <p>Love <a href="http://happymelly.com" target="_blank">Happy Melly</a>?
-                Share its purpose? Any individual or organization can apply to
-                become a Supporter of Happy Melly and help people to be happy at
-                their jobs.
-              </p>
-              <p>
-                Supporters enjoy a number of benefits provided by the network. You
-                may find a list of them on Happy Melly <a href="http://happymelly.com/benefits"
-                target="_blank">website</a>.
-              </p>
-            </div>
+  <div class="col-md-12 text-center">
+    <h1>Join Happy Melly network</h1>
+  </div>
+  <div class="row text-center">
+    <div class="col-md-6">
+        <h2>Supporter</h2>
+        <div class="text-left">
+          <p>Love <a href="http://happymelly.com" target="_blank">Happy Melly</a>?
+            Share its purpose? Any individual or organization can apply to
+            become a Supporter of Happy Melly and help people to be happy at
+            their jobs.
+          </p>
+          <p>
+            Supporters enjoy a number of benefits provided by the network. You
+            may find a list of them on Happy Melly <a href="http://happymelly.com/benefits"
+            target="_blank">website</a>.
+          </p>
+        </div>
+        <div class="row">
+          <div class="col-md-5 text-center">
+            <h5>I want to be a Supporter</h5>
             @user.person.member.map { m =>
                 @if(m.funder) {
                   <a href="" disabled="disabled" class="btn btn-primary">
@@ -34,11 +38,43 @@
                 }
             }.getOrElse {
               <a href="@routes.Membership.payment" class="btn btn-success">
-                Become Supporter</a>
+                Become a Supporter</a>
             }
-        </div>
-        <div class="col-md-4 col-md-offset-1">
-            <h3>Funder</h3>
+          </div>
+          <div class="col-md-7 text-center">
+            <h5>My organisation wants to be a Supporter</h5>
+            @if(orgs.length > 0) {
+              <div class="col-md-10 col-md-offset-1">
+                <select class="form-control">
+                  <option value="0">Select organisation</option>
+                  @for(org <- orgs) {
+                    <option value="@org.id.get">@org.name</option>
+                  }
+                </select>
+              </div>
+              <a href="@routes.Membership.payment" class="btn btn-success">
+                Make My Organisation a Supporter</a>
+            } else {
+              <a href="" disabled="disabled" class="btn btn-primary">
+                All your organisations are members
+              </a>
+            }
+          </div>
         </div>
     </div>
+    <div class="col-md-4 col-md-offset-1">
+      <h2>Funder</h2>
+        <div class="text-left">
+          <p>According to <a href="http://happymelly.com/constitution"
+            target="_blank">Happy Melly Constitution</a>, any individual or
+            organization can apply to become a Funder of Happy Melly.</p>
+          <p>Each applicant has to comform with the requirements for Funders which
+             you can also find in <a href="http://happymelly.com/constitution"
+            target="_blank"> the Constitution</a>.</p>
+        </div>
+        <a href="http://happymelly.com/contact" target="_blank" class="btn btn-success text-center">
+          Become a Funder
+        </a>
+    </div>
+  </div>
 }

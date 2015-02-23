@@ -195,8 +195,9 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
+  def addMembership(organisationId: Long): Unit = DB.withSession {
+    implicit session: Session ⇒
+      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
 
   /**
