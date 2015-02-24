@@ -112,7 +112,7 @@ POST        /member/:id                                                         
 GET         /membership/welcome                                                  controllers.Membership.welcome
 GET         /membership/payment                                                  controllers.Membership.payment(orgId: Option[Long] ?= None)
 POST        /membership/payment                                                  controllers.Membership.charge
-GET         /membership/congratulations                                          controllers.Membership.congratulations
+GET         /membership/congratulations                                          controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
 GET         /organizations                                                       controllers.Organisations.index
 POST        /organizations                                                       controllers.Organisations.create

@@ -104,7 +104,7 @@ case class Organisation(
   /** Returns member data if person is a member, false None */
   def member: Option[Member] = _member map { Some(_) } getOrElse {
     id map { i ⇒
-      _member = OrganisationService.get.member(i)
+      _member = orgService.member(i)
       _member
     } getOrElse None
   }

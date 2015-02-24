@@ -111,7 +111,6 @@ error.payment.minimum_fee = Provided amount is less than required minimum fee
 error.payment.unexpected_error = Internal error #1000. Please contact the system support
 error.payment.authorisation = Internal error #1001. Please contact the system support
 error.payment.invalid_request = Internal error #1002. Please contact the system support
-error.payment.already_member = You are already a member.
 error.payment.api = Internal error #1003. Please contact the system support
 error.payment.api.connection = Payment gateway is temporary out of reach. Try again later. Please contact the system support if the error persists.
 error.payment.card_declined = Your card was declined. Please check card details.

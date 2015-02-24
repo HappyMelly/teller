@@ -95,9 +95,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     if subscription exists                                                  $e12
 
   On subscription cancellation the system should
-    return 'Not found' if a person does not exists                       e16
-    return an error if a person is not a member                          e17
-    return an error if there is not subscription                         e18
+    return 'Not found' if an org does not exists                            $e13
+    return an error if an org is not a member                               $e14
+    return an error if there is not subscription                            $e15
   """
 
   def e1 = new ExtendedNonMemberMockContext {
@@ -339,6 +339,46 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must not contain "organization/1/renew"
     contentAsString(result) must not contain "Renew subscription"
     contentAsString(result) must not contain "Subscription is canceled"
+  }
+
+  def e13 = new MockContext {
+    truncateTables()
+    (orgService.find(_: Long)) expects id returning None
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+
+  def e14 = new MockContext {
+    truncateTables()
+    val org = OrganisationHelper.one
+    (orgService.find(_: Long)) expects id returning Some(org)
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/organization/1"))
+  }
+
+  def e15 = new MockContext {
+    truncateTables()
+    val org = OrganisationHelper.one
+    val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
+      subscription = false)
+    org.member_=(member)
+    (orgService.find(_: Long)) expects id returning Some(org)
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/organization/1"))
   }
 
   private def fakedController(): TestOrganisations = {

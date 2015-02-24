@@ -55,8 +55,8 @@
               <img width="30" src="@routes.Assets.at("images/securesocial/google.png")"/>
             </a>
           }
-          @if(person.member.nonEmpty) {
-            <a href="http://happymelly.com/people/#@(person.id.get)" target="_blank">
+          @person.member.map { m =>
+            <a href="http://happymelly.com/members/#@(m.id.get)" target="_blank">
               <img width="30" src="@routes.Assets.at("images/hm-face.jpg")"/>
             </a>
           }

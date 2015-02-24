@@ -35,6 +35,12 @@
 .welcome .button-block .button-line a {
     margin-right: 30px;
 }
+.congratulation {
+    margin-top: 50px;
+}
+.congratulation .text {
+    margin-top: 50px;
+}
 
 .form-group {
     padding-bottom: 10px;

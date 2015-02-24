@@ -123,7 +123,7 @@ class MembershipSpec extends PlayAppSpec {
     val result: Future[SimpleResult] = controller.charge().apply(req)
 
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("You are already a member")
+    contentAsString(result) must contain("This person is already a member")
   }
 
   def e7 = {

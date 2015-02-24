@@ -25,10 +25,11 @@
 package models.unit.controllers
 
 import controllers.{ Membership, PaymentData }
-import helpers.{ OrganisationHelper, PersonHelper }
+import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.{ Organisation, Person }
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.FakeServices
+import stubs.{ FakeOrganisationService, FakeServices }
 
 class MembershipSpec extends Specification {
 
@@ -47,15 +48,6 @@ class MembershipSpec extends Specification {
       val person = PersonHelper.one()
       controller.call(data, person, None) must throwA[Membership.ValidationException]("error.organisation.notExist")
     }
-    "throw an exception if the person is not a member of org" in {
-      val data = new PaymentData("", 20, Some(1L))
-      val person = PersonHelper.one()
-      person.memberships_=(List())
-      val org = OrganisationHelper.one
-
-      controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.person.notOrgMember")
-    }
-
     "throw an exception if fee is less than minimum for the org" in {
       val data = new PaymentData("", 20, Some(1L))
       val person = PersonHelper.one()
@@ -65,11 +57,44 @@ class MembershipSpec extends Specification {
       controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.payment.minimum_fee")
     }
 
+    "throw an exception if the org is already a member" in {
+      val data = new PaymentData("", 50, Some(1L))
+      val person = PersonHelper.one()
+      val org = OrganisationHelper.one
+
+      person.memberships_=(List(org))
+      val member = MemberHelper.make(objectId = 1L, person = false, funder = true)
+      org.member_=(member)
+
+      controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.organisation.member")
+    }
+
+    "throw an exception if the person is not a member of org" in new MockContext {
+      val data = new PaymentData("", 20, Some(1L))
+      val person = PersonHelper.one()
+      person.memberships_=(List())
+      val org = OrganisationHelper.one
+      val orgService = mock[FakeOrganisationService]
+      (orgService.member _).expects(*).returning(None)
+      org.orgService_=(orgService)
+
+      controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.person.notOrgMember")
+    }
+
     "throw an exception if fee is less than minimum for the person" in {
       val data = new PaymentData("", 5, None)
       val person = PersonHelper.one()
 
       controller.call(data, person, None) must throwA[Membership.ValidationException]("error.payment.minimum_fee")
+    }
+
+    "throw an exception if the person is already a member" in {
+      val data = new PaymentData("", 20, None)
+      val person = PersonHelper.one()
+      val member = MemberHelper.make(objectId = 1L, person = true, funder = true)
+      person.member_=(member)
+
+      controller.call(data, person, None) must throwA[Membership.ValidationException]("error.person.member")
     }
   }
 }

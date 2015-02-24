@@ -64,10 +64,13 @@ trait Membership extends Controller with Security with Services {
 
   /**
    * Renders congratulations screen
+   * If orgId is not empty payment is done for the organisation
+   *
+   * @param orgId Organisation identifier
    */
-  def congratulations = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def congratulations(orgId: Option[Long]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.membership.congratulations(user))
+      Ok(views.html.membership.congratulations(user, orgId))
   }
 
   /**
@@ -109,48 +112,44 @@ trait Membership extends Controller with Security with Services {
         hasError ⇒
           BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
         data ⇒ {
-          user.person.member map { m ⇒
-            BadRequest(Json.obj("message" -> Messages("error.payment.already_member")))
-          } getOrElse {
-            try {
-              val org = data.orgId map { orgId ⇒ orgService.find(orgId) } getOrElse None
-              validatePaymentData(data, user.person, org)
+          try {
+            val org = data.orgId map { orgId ⇒ orgService.find(orgId) } getOrElse None
+            validatePaymentData(data, user.person, org)
 
-              val key = Play.configuration.getString("stripe.secret_key").get
-              val payment = new Payment(key)
-              val customerId = payment.subscribe(user.person,
-                org,
-                data.token,
-                data.fee)
+            val key = Play.configuration.getString("stripe.secret_key").get
+            val payment = new Payment(key)
+            val customerId = payment.subscribe(user.person,
+              org,
+              data.token,
+              data.fee)
 
-              val fee = Money.of(EUR, data.fee)
-              val member = org map { o ⇒
-                o.becomeMember(funder = false, fee, user.person.id.get)
-                o.copy(customerId = Some(customerId)).update
-              } getOrElse {
-                user.person.copy(customerId = Some(customerId)).update
-                user.person.becomeMember(funder = false, fee)
-              }
-              member.activity(
-                user.person,
-                Activity.Predicate.BecameSupporter).insert
-              Ok(Json.obj("redirect" -> routes.Membership.congratulations().url))
-            } catch {
-              case e: PaymentException ⇒
-                val error = e.code match {
-                  case "card_declined" ⇒ "error.payment.card_declined"
-                  case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
-                  case "expired_card" ⇒ "error.payment.expired_card"
-                  case "processing_error" ⇒ "error.payment.processing_error"
-                  case _ ⇒ "error.payment.unexpected_error"
-                }
-                BadRequest(Json.obj("message" -> Messages(error)))
-              case e: RequestException ⇒
-                e.log.foreach(Logger.error(_))
-                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
-              case e: ValidationException ⇒
-                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+            val fee = Money.of(EUR, data.fee)
+            val member = org map { o ⇒
+              o.becomeMember(funder = false, fee, user.person.id.get)
+              o.copy(customerId = Some(customerId)).update
+            } getOrElse {
+              user.person.copy(customerId = Some(customerId)).update
+              user.person.becomeMember(funder = false, fee)
             }
+            member.activity(
+              user.person,
+              Activity.Predicate.BecameSupporter).insert
+            Ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
+          } catch {
+            case e: PaymentException ⇒
+              val error = e.code match {
+                case "card_declined" ⇒ "error.payment.card_declined"
+                case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+                case "expired_card" ⇒ "error.payment.expired_card"
+                case "processing_error" ⇒ "error.payment.processing_error"
+                case _ ⇒ "error.payment.unexpected_error"
+              }
+              BadRequest(Json.obj("message" -> Messages(error)))
+            case e: RequestException ⇒
+              e.log.foreach(Logger.error(_))
+              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+            case e: ValidationException ⇒
+              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
           }
         })
   }
@@ -168,17 +167,22 @@ trait Membership extends Controller with Security with Services {
       if (organisation.isEmpty) {
         throw new ValidationException("error.organisation.notExist")
       }
+      if (data.fee < Payment.countryBasedFees(organisation.get.countryCode)._1) {
+        throw new ValidationException("error.payment.minimum_fee")
+      }
+      if (organisation.get.member.nonEmpty) {
+        throw new ValidationException("error.organisation.member")
+      }
       if (!person.memberships.exists(_.id == Some(orgId))) {
         throw new ValidationException("error.person.notOrgMember")
       }
     }
-    organisation map { org ⇒
-      if (data.fee < Payment.countryBasedFees(org.countryCode)._1) {
-        throw new ValidationException("error.payment.minimum_fee")
-      }
-    } getOrElse {
+    if (organisation.isEmpty) {
       if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
         throw new ValidationException("error.payment.minimum_fee")
+      }
+      if (person.member.nonEmpty) {
+        throw new ValidationException("error.person.member")
       }
     }
   }

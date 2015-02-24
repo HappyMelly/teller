@@ -27,13 +27,16 @@ package controllers
 import controllers.Forms._
 import models.UserRole.Role._
 import models._
+import models.payment.{ GatewayWrapper, PaymentException, RequestException }
 import models.service.Services
 import org.joda.time.DateTime
+import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.mvc._
+import play.api.{ Logger, Play }
 
 trait Organisations extends Controller with Security with Services {
 
@@ -220,7 +223,33 @@ trait Organisations extends Controller with Security with Services {
   def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Ok("")
+        val url = routes.Organisations.details(id).url + "#membership"
+        orgService.find(id) map { org ⇒
+          org.member map { m ⇒
+            if (m.subscription) {
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val gateway = new GatewayWrapper(key)
+              try {
+                gateway.cancel(org.customerId.get)
+                m.copy(subscription = false).update
+              } catch {
+                case e: PaymentException ⇒
+                  Redirect(url).flashing("error" -> Messages(e.msg))
+                case e: RequestException ⇒
+                  e.log.foreach(Logger.error(_))
+                  Redirect(url).flashing("error" -> Messages(e.getMessage))
+              }
+              Redirect(url).
+                flashing("success" -> "Subscription was successfully canceled")
+            } else {
+              Redirect(url).
+                flashing("error" -> Messages("error.membership.noSubscription"))
+            }
+          } getOrElse {
+            Redirect(url).
+              flashing("error" -> Messages("error.membership.noSubscription"))
+          }
+        } getOrElse NotFound
   }
 }
 
