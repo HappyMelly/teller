@@ -304,7 +304,7 @@ trait People extends Controller with Security with Services {
   }
 
   /**
-   * Render a Detail page
+   * Render Details page
    *
    * @param id Person identifier
    */
