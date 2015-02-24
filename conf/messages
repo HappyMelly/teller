@@ -106,6 +106,7 @@ error.date.future = Date is in the future
 error.account.noAccess = You do not have access to this account
 error.api.validation = Validation Failed
 error.api.required = Required field
+
 error.payment.minimum_fee = Provided amount is less than required minimum fee
 error.payment.unexpected_error = Internal error #1000. Please contact the system support
 error.payment.authorisation = Internal error #1001. Please contact the system support
@@ -135,7 +136,7 @@ error.membership.wrongStep = You are trying to complete step 2 while adding new 
 error.membership.noSubscription = There is no subscription to cancel
 
 error.organisation.nonDeletable = You cannot delete this organisation because it has members, booking entries or an active account
-error.organisation.notExist = This organisation does not exist
+error.organisation.notExist = The organisation you have chosen does not exist
 error.organisation.member = This organisation is already a member
 
 error.participant.notExist = The person is not a participant of the event
@@ -143,8 +144,10 @@ error.participant.exist = This person already participates in this event
 error.socialProfile.exist = This social profile is already in use
 
 error.person.member = This person is already a member
-error.person.notExist = This person does not exist
 error.person.nonDeletable = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
+error.person.notExist = This person does not exist
+error.person.notOrgMember = You are not a member of this organisation
+
 error.product.nonDeletable = You cannot delete this product because it has contributors or derivative products
 error.retry = {0}. Please try again.
 error.template.exist = The template for this language already exists

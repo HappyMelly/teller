@@ -72,11 +72,13 @@ trait Organisations extends Controller with Security with Services {
     "category" -> optional(categoryMapping),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
+    "customerId" -> optional(text),
     "active" -> ignored(true),
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(user.fullName),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(user.fullName))(Organisation.apply)(Organisation.unapply))
+    "dateStamp" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(user.fullName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))(Organisation.apply)(Organisation.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -91,7 +93,8 @@ trait Organisations extends Controller with Security with Services {
           },
           active ⇒ {
             Organisation.activate(id, active)
-            val activity = Activity.insert(user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+            val activity = Activity.insert(user.fullName,
+              if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
@@ -150,10 +153,12 @@ trait Organisations extends Controller with Security with Services {
         val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
         val contributions = contributionService.contributions(id, isPerson = false)
         val products = productService.findAll
-
+        val payments = organisation.member map { v ⇒
+          paymentRecordService.findByOrganisation(id)
+        } getOrElse List()
         Ok(views.html.organisation.details(user, organisation,
           members, otherPeople,
-          contributions, products))
+          contributions, products, payments))
       }.getOrElse(NotFound)
   }
 
@@ -181,22 +186,42 @@ trait Organisations extends Controller with Security with Services {
   }
 
   /**
-   * Update an organisation
+   * Updates an organisation
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      organisationForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.organisation.form(user, Some(id), formWithErrors)),
-        organisation ⇒ {
-          organisation.copy(id = Some(id)).update
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, organisation.name)
-          Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
-        })
+  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        orgService.find(id).map { org ⇒
+          organisationForm.bindFromRequest.fold(
+            formWithErrors ⇒
+              BadRequest(views.html.organisation.form(
+                user,
+                Some(id),
+                formWithErrors)),
+            organisation ⇒ {
+              val updatedOrg = organisation.
+                copy(id = Some(id)).
+                copy(customerId = org.customerId).
+                update
+              val activity = updatedOrg.activity(
+                user.person,
+                Activity.Predicate.Updated).insert
+              Redirect(routes.Organisations.details(id)).
+                flashing("success" -> activity.toString)
+            })
+        }.getOrElse(NotFound)
   }
 
+  /**
+   * Cancels a subscription for yearly-renewing membership
+   * @param id Organisation id
+   */
+  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Ok("")
+  }
 }
 
 object Organisations extends Organisations with Security with Services

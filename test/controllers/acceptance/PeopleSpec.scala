@@ -76,7 +76,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   Viewer should not see subscription-related buttons
     if subscription exists                                               $e15
 
-  On subscription cancelation the system should
+  On subscription cancellation the system should
     return 'Not found' if a person does not exists                       $e16
     return an error if a person is not a member                          $e17
     return an error if there is not subscription                         $e18

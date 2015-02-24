@@ -86,17 +86,22 @@ class GatewayWrapper(apiKey: String) {
 
   /**
    * Creates a new customer and subscribes him/her to the given plan
-   * @param payer Person object
+   * @param customerName Name of the customer
+   * @param customerId Internal id of the customer
+   * @param payerEmail Email of the person who pays
    * @param plan Plan identifier
    * @param token Card token
    * @return Returns customer identifier
    */
-  def customer(payer: Person, plan: String, token: String): String = {
+  def customer(customerName: String,
+    customerId: Long,
+    payerEmail: String,
+    plan: String,
+    token: String): String = {
     try {
       val params = Map(
-        "description" -> "Customer %s (id = %s) ".format(payer.fullName,
-          payer.id.get),
-        "email" -> payer.socialProfile.email,
+        "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
+        "email" -> payerEmail,
         "source" -> token)
       Stripe.apiKey = apiKey
       val customer = Customer.create(params)

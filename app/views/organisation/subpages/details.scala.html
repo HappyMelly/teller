@@ -1,0 +1,147 @@
+@(user: UserIdentity,
+    organisation: Organisation,
+    members: List[Person],
+    otherPeople: List[Person],
+    contributions: List[ContributionView],
+    products: List[Product])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler, token:
+    play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.Role._
+@import templates.Formatters._
+
+<div class="col-md-4">
+  <address>
+    <strong>Address</strong><br>
+    @organisation.street1.map { addressLine =>
+      @addressLine,
+    }
+    @organisation.street2.map { addressLine =>
+      @addressLine
+    }
+    <br>
+    @organisation.city.map { addressLine =>
+      @addressLine,
+    }
+    @organisation.province.map { addressLine =>
+      @addressLine
+    }
+    @organisation.postCode.map { addressLine =>
+      @addressLine
+    }
+    <br>
+    @Messages("country." + organisation.countryCode)
+  </address>
+
+  @organisation.webSite.map { url =>
+    <p><strong>Web site</strong>
+      <br><a href="@url" target="_blank">@url</a></p>
+  }
+
+  @organisation.blog.map { url =>
+    <p><strong>Blog</strong>
+      <br><a href="@url" target="_blank">@url</a></p>
+  }
+</div>
+
+<div class="col-md-4">
+  @restrict(handler, List(as(Editor.toString))) {
+    <p>
+      <strong>Financial account</strong>
+      <br>@if(organisation.account.active){Active}else{Inactive}
+      @if(organisation.account.editableBy(user.account)) {
+        (<a href="@routes.Accounts.details(organisation.account.id.get)">@if(organisation.account.active){Deactivate}else{Activate}</a>)
+      }
+    </p>
+    <p>
+      <strong>Account history</strong>
+      <br><a href="@routes.Accounts.bookings(organisation.account.id.get)">Booking entries</a>
+    </p>
+  }
+
+  @organisation.vatNumber.map { number =>
+    <p><strong>VAT number</strong>
+      <br>@number</p>
+  }
+
+  @organisation.registrationNumber.map { number =>
+    <p><strong>Company registration</strong>
+      <br>@number</p>
+  }
+</div>
+
+<div class="col-md-10">
+  <legend>Members</legend>
+  @if(members.isEmpty) {
+    @organisation.name has no members.
+  } else {
+    @views.html.person.table(members.map(_.summary)) { person =>
+      @restrict(handler, List(as(Editor.toString))) {
+        <a href="@routes.People.deleteMembership("organisation", person.id, organisation.id.get)">
+          <i class="glyphicon glyphicon-trash"></i> Delete member</a>
+      }
+    }
+  }
+  @restrict(handler, List(as(Editor.toString))) {
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addMembership)">
+      <input type="hidden" name="page" value="organisation">
+      <input type="hidden" name="organisationId" value="@organisation.id.get">
+      <select class="form-control input-sm" name="personId">
+      @for(person <- otherPeople) {
+        <option value="@person.id">@person.fullName</option>
+      }
+      </select>
+      <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i>Add member</button>
+    </form>
+  }
+  <br><br>
+</div>
+
+<div class="col-md-10">
+  <legend>Products Contribution</legend>
+  @if(contributions.isEmpty) {
+    <p>@organisation.name has no contributions.</p>
+  } else {
+    <table  class="datatables table table-bordered">
+      <thead>
+        <th>Product</th>
+        <th>Role</th>
+        <th></th>
+      </thead>
+      <tbody>
+      @for(contribution <- contributions) {
+        <tr>
+          <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+          <td>@contribution.contribution.role</td>
+          <td>
+          @restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.Contributions.delete(contribution.contribution.id.get, "organisation")">
+              <i class="glyphicon glyphicon-trash"></i> Delete contribution</a>
+          }
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
+  }
+  @restrict(handler, List(as(Editor.toString))) {
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Contributions.create("organisation"))">
+      <p>
+        <input type="hidden" name="page" value="organisation">
+        <input type="hidden" name="contributorId" value="@organisation.id.get">
+        <input type="hidden" name="isPerson" value="false">
+        <select class="form-control input-sm" name="productId">
+        @for(product <- products) {
+          <option value="@product.id">@product.title</option>
+        }
+        </select>
+        <input class="form-control input-sm" name="role" placeholder="Role">
+        <button class="btn btn-sm btn-success"><i class="glyphicon glyphicon-plus"></i>Add contribution</button>
+      </p>
+    </form>
+  }
+</div>

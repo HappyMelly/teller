@@ -1,7 +1,8 @@
 @(user: UserIdentity,
     form: Form[PaymentData],
     apiKey: String,
-    fee: (Int, Int))(implicit request: Request[Any],
+    fee: (Int, Int),
+    org: Option[Organisation] = None)(implicit request: Request[Any],
     handler: AuthorisationHandler,
     flash: Flash)
 
@@ -20,7 +21,11 @@
   </script>
 
   <div class="col-md-8 col-md-offset-2">
-    <h1 class="text-center">Become a Supporter</h1>
+    @org.map { organisation =>
+      <h1 class="text-center">Make My Organisation a Supporter</h1>
+    }.getOrElse {
+      <h1 class="text-center">Become a Supporter</h1>
+    }
     <div class="row">
       <p class="payment-bottom-space">
       To be a Happy Melly Supporter all you need is to pay a small yearly
@@ -29,6 +34,9 @@
       <form class="form-inline payment-bottom-space" action="@CSRF(routes.Membership.charge())"
         method="POST" id="payment-form" autocomplete="on">
         <span class="payment-errors"></span>
+        @org.map { organisation =>
+          <input type="hidden" name="orgId" value="@organisation.id.get"/>
+        }
         <legend>Step 1: Fee</legend>
         <div class="row payment-bottom-space fee">
           <div class="form-group col-md-12 @if(form("fee").hasErrors) {error}">
@@ -52,10 +60,17 @@
             </div>
           </div>
           <div class="pull-right text-muted">
-            <p>You are from @Countries.all.toMap.get(user.person.address.countryCode).
-              For your country minimum fee is <b>EUR @fee._1.toString</b>
-              and suggested fee is <b>EUR @fee._2.toString</b>.
-            </p>
+            @org.map { organisation =>
+              <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
+              For this country minimum fee is <b>EUR @fee._1.toString</b>
+                and suggested fee is <b>EUR @fee._2.toString</b>.
+              </p>
+            }.getOrElse {
+              <p>You are from @Countries.all.toMap.get(user.person.address.countryCode).
+                For your country minimum fee is <b>EUR @fee._1.toString</b>
+                and suggested fee is <b>EUR @fee._2.toString</b>.
+              </p>
+            }
             <p>If you want to know more about Happy Melly membership fees click
               <a href="#" data-toggle="modal" data-target="#hmfees">here</a>.</p>
           </div>

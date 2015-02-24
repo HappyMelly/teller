@@ -27,10 +27,11 @@ package controllers.acceptance
 import controllers.{ Membership, Security }
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
+import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
 import scala.concurrent.Future
-import stubs.{ StubUserIdentity, FakeServices }
+import stubs.{ FakeOrganisationService, StubUserIdentity, FakeServices }
 
 class MembershipSpec extends PlayAppSpec {
   class TestMembership() extends Membership with Security with FakeServices
@@ -49,14 +50,22 @@ class MembershipSpec extends PlayAppSpec {
     not exist for a supporter                              $e4
     not exist for a funder                                 $e5
 
-  A user should
+  A payer should
     not be charged if she is already a member              $e6
-    see miminum and suggested fees on the payment form     $e7
+    see minimum and suggested fees on the payment form     $e7
 
   On welcome page the block 'My org wants to be a Supporter' should
     contain a list of non-member orgs where the user works            $e8
     contain a notice if zero non-member orgs exist                    $e9
     have active 'Make .. a Supporter' button if at least one non-member org exists $e10
+
+  A payer should be redirected to welcome page if
+    the org does not exist                                            $e11
+    he is not a member of the org                                     $e12
+
+  A payer on behalf of the org should should
+    see 'Make My Organisation a Supporter'                            $e13
+    see minimum and suggested fees for the org                        $e14
   """
 
   val controller = new TestMembership()
@@ -120,10 +129,11 @@ class MembershipSpec extends PlayAppSpec {
   def e7 = {
     truncateTables()
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.payment().apply(req)
+    val result: Future[SimpleResult] = controller.payment(None).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("minimum fee is <b>EUR 20</b>")
     contentAsString(result) must contain("suggested fee is <b>EUR 40</b>")
+    contentAsString(result) must contain("You are from United Kingdom")
   }
 
   def e8 = {
@@ -179,5 +189,71 @@ class MembershipSpec extends PlayAppSpec {
     contentAsString(result) must contain(">Select organisation<")
     contentAsString(result) must contain(">One<")
     contentAsString(result) must contain("Make My Organisation a Supporter")
+  }
+
+  def e11 = new MockContext {
+    val orgService = mock[FakeOrganisationService]
+    (orgService.find _).expects(1L).returning(None)
+    controller.orgService_=(orgService)
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("membership/welcome"))
+  }
+
+  def e12 = new MockContext {
+    truncateTables()
+
+    val org = OrganisationHelper.one
+    val orgService = mock[FakeOrganisationService]
+    (orgService.find _).expects(1L).returning(Some(org))
+    controller.orgService_=(orgService)
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("membership/welcome"))
+  }
+
+  def e13 = new MockContext {
+    truncateTables()
+
+    val org = OrganisationHelper.one.insert
+    val orgService = mock[FakeOrganisationService]
+    (orgService.find _).expects(1L).returning(Some(org))
+    controller.orgService_=(orgService)
+    val person = PersonHelper.one().insert
+    person.addMembership(1L)
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Make My Organisation a Supporter")
+  }
+
+  def e14 = new MockContext {
+    truncateTables()
+
+    val org = OrganisationHelper.one.copy(countryCode = "NL").insert
+    val orgService = mock[FakeOrganisationService]
+    (orgService.find _).expects(1L).returning(Some(org))
+    controller.orgService_=(orgService)
+    // this person is from United Kingdom
+    val person = PersonHelper.one().insert
+    person.addMembership(1L)
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("One is from Netherlands")
+    contentAsString(result) must not contain "You are from United Kingdom"
+    contentAsString(result) must contain("minimum fee is <b>EUR 25</b>")
+    contentAsString(result) must contain("suggested fee is <b>EUR 50</b>")
+    contentAsString(result) must contain("<input type=\"hidden\" name=\"orgId\" value=\"1\"/>")
   }
 }

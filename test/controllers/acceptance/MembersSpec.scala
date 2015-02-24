@@ -327,7 +327,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val result = controller.updateExistingOrg().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("This organisation does not exist")
+    contentAsString(result) must contain("The organisation you have chosen does not exist")
   }
 
   def e20 = new cleanup {

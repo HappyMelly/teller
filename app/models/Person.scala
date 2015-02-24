@@ -38,19 +38,6 @@ import scala.concurrent.Future
 import scala.slick.lifted.Query
 import services.S3Bucket
 
-/**
- * Represents a date stamp to track when an object was changed/created
- * @param created Date and time when the object was created
- * @param createdBy Name of a person who created the object
- * @param updated Date and time when the object was updated
- * @param updatedBy Name of a person who updated the object
- */
-case class DateStamp(
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String)
-
 case class Photo(id: Option[String], url: Option[String])
 
 object Photo {

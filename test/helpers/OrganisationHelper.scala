@@ -23,7 +23,7 @@
  */
 package helpers
 
-import models.Organisation
+import models.{ DateStamp, Organisation }
 import org.joda.time.DateTime
 
 object OrganisationHelper {
@@ -46,8 +46,8 @@ object OrganisationHelper {
     updated: DateTime = DateTime.now(),
     updatedBy: String = "Sergey Kotlov"): Organisation = {
     new Organisation(id, name, street1, street2, city, province, postCode,
-      countryCode, vatNumber, registrationNumber, None, webSite, blog, active,
-      created, createdBy, updated, updatedBy)
+      countryCode, vatNumber, registrationNumber, None, webSite, blog, Some(""),
+      active, DateStamp(created, createdBy, updated, updatedBy))
   }
 
   def one: Organisation = make(id = Some(1L), name = "One")

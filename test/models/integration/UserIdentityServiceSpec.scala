@@ -115,8 +115,6 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       val url = "https://plus.google.com/tester"
       val account = new UserAccount(None, 1L, "viewer", None,
         None, None, Some(url))
-      println(account.googlePlusUrl.toString)
-      println(account.linkedInUrl.toString)
       DB.withSession { implicit session: Session ⇒
         UserIdentities.forInsert.insert(
           user(googleIdentity, google = Some(url)))

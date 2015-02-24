@@ -110,7 +110,7 @@ GET         /member/:id/edit                                                    
 POST        /member/:id                                                          controllers.Members.update(id: Long)
 
 GET         /membership/welcome                                                  controllers.Membership.welcome
-GET         /membership/payment                                                  controllers.Membership.payment
+GET         /membership/payment                                                  controllers.Membership.payment(orgId: Option[Long] ?= None)
 POST        /membership/payment                                                  controllers.Membership.charge
 GET         /membership/congratulations                                          controllers.Membership.congratulations
 
@@ -122,6 +122,7 @@ GET         /organization/:id                                                   
 POST        /organization/:id                                                    controllers.Organisations.update(id: Long)
 POST        /organization/:id/delete                                             controllers.Organisations.delete(id: Long)
 POST        /organization/:id/activation                                         controllers.Organisations.activation(id: Long)
+POST        /organization/:id/cancel                                             controllers.Organisations.cancel(id: Long)
 
 GET         /participants                                                        controllers.Participants.index
 GET         /participants/brand/:brandCode                                       controllers.Participants.participantsByBrand(brandCode: String)

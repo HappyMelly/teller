@@ -24,7 +24,7 @@
 
 package models.payment
 
-import models.Person
+import models.{ Organisation, Person }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Logger
@@ -36,17 +36,23 @@ import views.Countries
 case class Payment(key: String) {
 
   /**
-   * Subscribes new member
-   * @param person Member
+   * Subscribes new member either a person or an organisation
+   * @param person Person making a payment (also may want to be a member)
+   * @param org Organisation which wants to be a member
    * @param token Card token
    * @param amount Fee amount
    * @return Returns remote customer identifier
    */
-  def subscribe(person: Person, token: String, amount: Int): String = {
+  def subscribe(person: Person,
+    org: Option[Organisation],
+    token: String,
+    amount: Int): String = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
-    val customer = gateway.customer(person, plan, token)
-    val userId = person.id.get
+    val customerName = org map { _.name } getOrElse { person.fullName }
+    val customerId = org map { _.id.get } getOrElse { person.id.get }
+    val email = person.socialProfile.email
+    val customer = gateway.customer(customerName, customerId, email, plan, token)
     val fee = Money.of(EUR, amount)
     val invoices = gateway.invoices(customer)
     if (invoices.length != 1) {
@@ -56,9 +62,15 @@ case class Payment(key: String) {
       invoices(0)
     else
       "Internal error. Please inform the support stuff"
-    Record(invoiceId, userId, userId, person = true, Payment.DESC, fee).insert
-    val msg = "User %s (id = %s) paid membership fee EUR %s".format(
-      person.fullName, userId, fee)
+    val userId = person.id.get
+    Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee).insert
+    val msg = org map { o ⇒
+      "Organisation %s (id = %s) paid membership fee EUR %s".format(
+        customerName, customerId, fee)
+    } getOrElse {
+      "User %s (id = %s) paid membership fee EUR %s".format(
+        customerName, customerId, fee)
+    }
     Logger.info(msg)
     customer
   }

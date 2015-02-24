@@ -58,6 +58,19 @@ class PaymentRecordService {
         filter(_.person === true).
         sortBy(_.created).list
   }
+
+  /**
+   * Returns list of payment records made by the given organisation
+   * @param orgId Organisation identifier
+   * @return
+   */
+  def findByOrganisation(orgId: Long): List[Record] = DB.withSession {
+    implicit session ⇒
+      Query(PaymentRecords).
+        filter(_.objectId === orgId).
+        filter(_.person === false).
+        sortBy(_.created).list
+  }
 }
 
 object PaymentRecordService {

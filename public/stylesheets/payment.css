@@ -21,6 +21,21 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+.welcome .info-block {
+    min-height: 130px;
+}
+.welcome .button-block {
+    min-height: 130px;
+}
+.welcome .button-block .button-line {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+.welcome .button-block .button-line a {
+    margin-right: 30px;
+}
+
 .form-group {
     padding-bottom: 10px;
 }
