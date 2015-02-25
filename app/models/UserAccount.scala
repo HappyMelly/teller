@@ -31,6 +31,7 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import play.libs.Scala
+import scala.collection.JavaConversions._
 
 /**
  * A log-in user account.
@@ -38,9 +39,9 @@ import play.libs.Scala
 case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
   facebookUrl: Option[String], linkedInUrl: Option[String], googlePlusUrl: Option[String]) extends Subject {
 
-  private var _roles: Option[java.util.List[UserRole]] = None
+  private var _roles: Option[List[UserRole]] = None
 
-  def roles_=(roles: java.util.List[UserRole]): Unit = {
+  def roles_=(roles: List[UserRole]): Unit = {
     _roles = Some(roles)
   }
 
@@ -49,7 +50,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
    */
   def getRoles: java.util.List[UserRole] = if (_roles.isEmpty) {
     val accountRole = UserAccountService.get.findRole(personId).map(role ⇒ UserRole(role))
-    roles_=(accountRole.map(_.list).getOrElse(java.util.Collections.emptyList()))
+    roles_=(accountRole.map(_.list).getOrElse(List()))
     _roles.get
   } else {
     _roles.get

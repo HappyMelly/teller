@@ -41,11 +41,11 @@ class MembershipSpec extends PlayAppSpec {
 
   override def is = s2"""
 
-  Welcome page for person should
+  Welcome page should
     not be visible to unauthorized user                  $e1
     be visible to authorized user                        $e2
 
-  On welcome page button 'Become a Supporter' as individual should
+  On Welcome page button 'Become a Supporter' as individual should
     be active for a non-member                             $e3
     not exist for a supporter                              $e4
     not exist for a funder                                 $e5
@@ -66,6 +66,10 @@ class MembershipSpec extends PlayAppSpec {
   A payer on behalf of the org should should
     see 'Make My Organisation a Supporter'                            $e13
     see minimum and suggested fees for the org                        $e14
+
+  'Welcome New User' page should
+    be visible to unauthorized user                                   $e15
+    have three active buttons                                         $e16
   """
 
   val controller = new TestMembership()
@@ -255,5 +259,22 @@ class MembershipSpec extends PlayAppSpec {
     contentAsString(result) must contain("minimum fee is <b>EUR 25</b>")
     contentAsString(result) must contain("suggested fee is <b>EUR 50</b>")
     contentAsString(result) must contain("<input type=\"hidden\" name=\"orgId\" value=\"1\"/>")
+  }
+
+  def e15 = {
+    val result: Future[SimpleResult] = controller.welcomeNewUser().apply(FakeRequest())
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Join Happy Melly network")
+  }
+
+  def e16 = {
+    val result: Future[SimpleResult] = controller.welcomeNewUser().apply(FakeRequest())
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Become a Supporter as Individual")
+    contentAsString(result) must contain("Become a Supporter as Organisation")
+    contentAsString(result) must contain("Become a Funder")
+    contentAsString(result) must contain("Join Happy Melly network")
   }
 }

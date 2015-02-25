@@ -1,6 +1,6 @@
-@(loginForm: Form[(String,String)],
+@(loginForm: Form[(String, String)],
     errorMsg: Option[String] = None)(implicit request: Request[Any],
-        flash: Flash)
+    flash: Flash)
 
 @import securesocial.core.Registry
 @import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
@@ -16,20 +16,20 @@
     </div>
   }
 
-  @defining( Registry.providers.all.values.filter( _.id != UsernamePassword) ) { externalProviders =>
-    @if( externalProviders.size > 0 ) {
+  @defining(Registry.providers.all().values.filter(_.id != UsernamePassword)) { externalProviders =>
+    @if(externalProviders.size > 0) {
       <div class="clearfix">
         <p>
         @for(p <- externalProviders) {
           @provider(p.id)
         }
         </p>
-     </div>
+      </div>
     }
     @if(Registry.providers.all().contains(UsernamePassword)) {
       @Registry.providers.get(UsernamePassword).map { up =>
         <div class="clearfix">
-          @if( externalProviders.size > 0 ) {
+          @if(externalProviders.size > 0) {
             <p>@Messages("securesocial.login.useEmailAndPassword")</p>
           } else {
             <p>@Messages("securesocial.login.useEmailAndPasswordOnly")</p>
@@ -40,6 +40,6 @@
     }
   }
   <div class="cloudbees pull-right">
-   <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
+    <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
   </div>
 }

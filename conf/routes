@@ -110,6 +110,7 @@ GET         /member/:id/edit                                                    
 POST        /member/:id                                                          controllers.Members.update(id: Long)
 
 GET         /membership/welcome                                                  controllers.Membership.welcome
+GET         /membership/welcome/new                                              controllers.Membership.welcomeNewUser
 GET         /membership/payment                                                  controllers.Membership.payment(orgId: Option[Long] ?= None)
 POST        /membership/payment                                                  controllers.Membership.charge
 GET         /membership/congratulations                                          controllers.Membership.congratulations(orgId: Option[Long] ?= None)
@@ -168,6 +169,8 @@ POST        /product/:id/picture/delete                                         
 
 POST        /product/brand/new                                                   controllers.Products.addBrand
 GET         /product/:productId/brand/:brandId/delete                            controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+
+GET         /registration/step1                                                  controllers.Registration.step1
 
 GET         /template/:id                                                        controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET         /template/:id/delete                                                 controllers.CertificateTemplates.delete(id: Long)

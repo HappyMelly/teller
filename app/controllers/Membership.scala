@@ -30,9 +30,8 @@ import models.payment.{ PaymentException, RequestException, Payment }
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import play.api.data.validation.ValidationError
 import play.api.i18n.Messages
-import play.api.mvc.Controller
+import play.api.mvc.{ Controller, Action }
 import play.api.data._
 import play.api.data.Forms._
 import play.api.Logger
@@ -53,13 +52,20 @@ trait Membership extends Controller with Security with Services {
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
   /**
-   * Renders welcome screen with two options: Become a funder and
-   * Become a supporter
+   * Renders welcome screen for existing users with two options:
+   * Become a funder and Become a supporter
    */
   def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val orgs = user.person.memberships.filter(_.member.isEmpty)
       Ok(views.html.membership.welcome(user, orgs))
+  }
+
+  /**
+   * Renders welcome screen for new users
+   */
+  def welcomeNewUser = Action { implicit request ⇒
+    Ok(views.html.membership.welcomeNewUser())
   }
 
   /**

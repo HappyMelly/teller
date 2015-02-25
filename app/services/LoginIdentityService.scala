@@ -45,8 +45,9 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[UserIdentity] =
+  def find(id: IdentityId): Option[UserIdentity] = {
     UserIdentityService.get.findByUserId(id)
+  }
 
   def save(user: Identity) = {
     val loginIdentity = user match {
@@ -58,7 +59,6 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       }
       case li: UserIdentity ⇒ li
     }
-
     try {
       if (loginIdentity.account.viewer) {
         UserIdentity.save(loginIdentity)

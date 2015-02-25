@@ -43,12 +43,12 @@ case class UserRole(role: UserRole.Role.Role) extends Role {
   /**
    * Returns the list of rules implied by this role.
    */
-  def list: java.util.List[UserRole] = {
+  def list: List[UserRole] = {
     val roles = ListBuffer[UserRole]()
     if (viewer) roles += UserRole(Viewer)
     if (editor) roles += UserRole(Editor)
     if (admin) roles += UserRole(Admin)
-    Scala.asJava(roles)
+    roles.toList
   }
 }
 
