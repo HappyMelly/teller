@@ -24,7 +24,7 @@
  */
 package models.integration
 
-import helpers.PersonHelper
+import helpers.{ MemberHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.Member
 import models.service.PersonService
@@ -51,9 +51,7 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
     }
 
     "return 4 non members" in {
-      (new Member(None, 3L, person = false, funder = true,
-        Money.of(EUR, 100), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)).insert
+      MemberHelper.make(None, 3L, person = false, funder = true).insert
       val people = PersonService.get.findNonMembers
 
       people.length must_== 4
@@ -98,12 +96,12 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
       (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
       (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
       (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
-        case (objectId, person, funder, fee, since, createdBy) ⇒ {
-          val member = new Member(None, objectId, person, funder, fee, since,
-            existingObject = false,
-            DateTime.now(), createdBy, DateTime.now(), createdBy)
+        case (objectId, person, funder, fee, since, createdBy) ⇒
+          val member = new Member(None, objectId, person, funder, fee,
+            subscription = false, since, since.plusYears(1),
+            existingObject = false, DateTime.now(), createdBy, DateTime.now(),
+            createdBy)
           member.insert
-        }
       }
   }
 }

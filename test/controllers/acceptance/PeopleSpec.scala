@@ -25,21 +25,22 @@
 package controllers.acceptance
 
 import controllers.{ People, Security }
-import helpers.{ OrganisationHelper, PersonHelper }
+import helpers._
 import integration.PlayAppSpec
 import models._
+import models.payment.Record
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
-import org.scalamock.specs2.MockContext
+import org.joda.time.LocalDate
+import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import stubs.{ StubUserIdentity, FakePersonService, FakeServices }
+import stubs._
 
 import scala.concurrent.Future
 
 class TestPeople() extends People with Security with FakeServices
 
-class PeopleSpec extends PlayAppSpec {
+class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def setupDb() {}
   def cleanupDb() {}
 
@@ -49,15 +50,73 @@ class PeopleSpec extends PlayAppSpec {
 
     not be visible to unauthorized user                                  $e1
     and be visible to authorized user                                    $e2
-    not contain accounting details if user is not Editor                 $e3
-    contain accounting details if user is Editor                         $e4
-    contain a supporter badge if the person is a supporter               $e5
-    contain a funder badge and paid fee if the person is a funder        $e6
-    contain 'Add license' button if user is Editor and a person has none $e7
+    not contain accounting details                                       $e3
+    contain a supporter badge if the person is a supporter               $e4
+    contain a funder badge if the person is a funder                     $e5
+    contain a list of payments if the person is a member                 $e6
+
+  'Make a Facilitator' button should
+    be visible to an Editor if a person has no licenses                  $e7
+    not be visible to an Editor if a person has licenses                 $e8
+    not be visible to a Viewer if a person has no licenses               $e9
+
+  Editor should
+    not see links to remote payments                                     $e10
+
+  When subscription exists, 'Cancel subscription' button should be visible,
+  'Renew subscription' and 'No subscription' badge should not be visible to
+    an Editor                                                            $e11
+    the owner of the profile                                             $e12
+
+  When subscription does not exist, 'Cancel subscription' button should not be
+  visible, 'No subscription' badge should be visible to
+    an Editor                                                            $e13
+    a Viewer                                                             $e14
+
+  Viewer should not see subscription-related buttons
+    if subscription exists                                               $e15
+
+  On subscription cancellation the system should
+    return 'Not found' if a person does not exists                       $e16
+    return an error if a person is not a member                          $e17
+    return an error if there is not subscription                         $e18
   """
+
+  val personService = mock[FakePersonService]
+  val orgService = mock[FakeOrganisationService]
+  val accountService = mock[FakeUserAccountService]
+  val contributionService = mock[FakeContributionService]
+  val paymentService = mock[FakePaymentRecordService]
+  val licenseService = mock[FakeLicenseService]
+  val id = 1L
+  val person = PersonHelper.one()
+  person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+
+  trait DefaultMockContext extends MockContext {
+    truncateTables()
+    (personService.find(_: Long)) expects id returning Some(person)
+    orgService.findActive _ expects () returning List()
+  }
+
+  trait ExtendedMockContext extends DefaultMockContext {
+    licenseService.licenses _ expects (id) returning List()
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    (paymentService.findByPerson _) expects id returning List()
+  }
+
+  trait EditorMockContext extends ExtendedMockContext {
+    (accountService.findRole _).expects(id).returning(None)
+    (accountService.findDuplicateIdentity _).expects(person).returning(None)
+  }
+
+  trait ViewerMockContext extends ExtendedMockContext {
+    (accountService.findRole _).expects(id).returning(None).never()
+    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
+  }
+
   def e1 = {
     val controller = new TestPeople()
-    val result: Future[SimpleResult] = controller.details(1).apply(FakeRequest())
+    val result: Future[SimpleResult] = controller.details(id).apply(FakeRequest())
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("login"))
@@ -68,111 +127,345 @@ class PeopleSpec extends PlayAppSpec {
       val controller = new TestPeople()
       val mockService = mock[FakePersonService]
       // if this method is called it means we have passed a security check
-      (mockService.find(_: Long)) expects 1L returning None
+      (mockService.find(_: Long)) expects id returning None
       controller.personService_=(mockService)
       val identity = StubUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/person/1")
-      controller.details(1).apply(request)
+      controller.details(id).apply(request)
     }
   }
 
-  def e3 = {
-    new MockContext {
-      val person = PersonHelper.one()
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val identity = StubUserIdentity.viewer
-      val request = prepareSecuredGetRequest(identity, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+  def e3 = new EditorMockContext {
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
+    person.member_=(member)
 
-      status(result) must equalTo(OK)
-      contentAsString(result) must not contain "Financial account"
-      contentAsString(result) must not contain "Account history"
-    }
+    val controller = fakedController()
+    val req = prepareSecuredGetRequest(StubUserIdentity.admin, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Financial account"
+    contentAsString(result) must not contain "Account history"
   }
 
-  def e4 = {
-    new MockContext {
-      val person = PersonHelper.one().insert
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+  def e4 = new ViewerMockContext {
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
+    person.member_=(member)
 
-      status(result) must equalTo(OK)
-      contentAsString(result) must contain("Financial account")
-      contentAsString(result) must contain("Account history")
-    }
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Supporter")
+    contentAsString(result) must not contain "/member/1/edit"
   }
 
-  def e5 = {
-    new MockContext {
-      val person = PersonHelper.one()
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val member = new Member(None, 1L, person = true, funder = false,
-        Money.parse("EUR 500"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L)
-      person.member_=(member)
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val identity = StubUserIdentity.viewer
-      val request = prepareSecuredGetRequest(identity, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+  def e5 = new EditorMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
 
-      status(result) must equalTo(OK)
-      contentAsString(result) must contain("Supporter")
-      contentAsString(result) must contain("EUR 500")
-      contentAsString(result) must not contain "/member/1/edit"
-    }
+    val controller = fakedController()
+
+    val request = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Funder")
+    contentAsString(result) must contain("/member/1/edit")
   }
 
-  def e6 = {
+  def e6 = new DefaultMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    licenseService.licenses _ expects (id) returning List()
+    (accountService.findRole _) expects id returning None
+    (accountService.findDuplicateIdentity _) expects person returning None
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    val payments = List(
+      Record("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
+      Record("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
+    (paymentService.findByPerson _) expects id returning payments
+    val controller = fakedController()
+
+    val identity = StubUserIdentity.admin
+    val request = prepareSecuredGetRequest(identity, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("One Year Membership Fee")
+    contentAsString(result) must contain("EUR 100")
+    contentAsString(result) must contain(">remote1<")
+    contentAsString(result) must contain("https://dashboard.stripe.com/live/payments/remote1")
+    contentAsString(result) must contain("One Year Membership Fee 2")
+    contentAsString(result) must contain("EUR 200")
+    contentAsString(result) must contain(">remote2<")
+    contentAsString(result) must contain("https://dashboard.stripe.com/live/payments/remote2")
+  }
+
+  def e7 = new EditorMockContext {
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("/person/1/licenses/new")
+    contentAsString(result) must contain("Make a Facilitator")
+  }
+
+  def e8 = new DefaultMockContext {
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val license = new License(Some(1L), id, 1L, "1",
+      LocalDate.now(), LocalDate.now(), LocalDate.now().plusYears(1), true,
+      Money.parse("EUR 10"), None)
+    val licenses = List(LicenseView(BrandHelper.one, license))
+
+    licenseService.licenses _ expects id returning licenses
+    accountService.findRole _ expects id returning None
+    accountService.findDuplicateIdentity _ expects person returning None
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    paymentService.findByPerson _ expects id returning List()
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("/person/1/licenses/new")
+    contentAsString(result) must not contain "Make a Facilitator"
+  }
+
+  def e9 = new ViewerMockContext {
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "/person/1/licenses/new"
+    contentAsString(result) must not contain "Make a Facilitator"
+  }
+
+  def e10 = new DefaultMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    licenseService.licenses _ expects id returning List()
+    accountService.findRole _ expects id returning None
+    accountService.findDuplicateIdentity _ expects person returning None
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    val payments = List(
+      Record("remote1", 1L, 1L, person = true, "One Year Membership Fee", Money.parse("EUR 100")),
+      Record("remote2", 1L, 1L, person = true, "One Year Membership Fee 2", Money.parse("EUR 200")))
+    (paymentService.findByPerson _) expects id returning payments
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("One Year Membership Fee")
+    contentAsString(result) must contain("EUR 100")
+    contentAsString(result) must not contain ">remote1<"
+    contentAsString(result) must not contain "https://dashboard.stripe.com/live/payments/remote1"
+    contentAsString(result) must contain("One Year Membership Fee 2")
+    contentAsString(result) must contain("EUR 200")
+    contentAsString(result) must not contain ">remote2<"
+    contentAsString(result) must not contain "https://dashboard.stripe.com/live/payments/remote2"
+  }
+
+  def e11 = new EditorMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("person/1/cancel")
+    contentAsString(result) must not contain "Renew subscription"
+    contentAsString(result) must not contain "Subscription is canceled"
+  }
+
+  def e12 = new ViewerMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("person/1/cancel")
+    contentAsString(result) must not contain "Renew subscription"
+    contentAsString(result) must not contain "Subscription is canceled"
+  }
+
+  def e13 = new EditorMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
+      subscription = false)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must not contain "person/1/renew"
+    contentAsString(result) must not contain "Renew subscription"
+    contentAsString(result) must contain("Subscription is canceled")
+  }
+
+  def e14 = new MockContext {
     truncateTables()
-    new MockContext {
-      val person = PersonHelper.one().insert
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val member = new Member(None, 1L, person = true, funder = true,
-        Money.parse("EUR 255"), LocalDate.now(), existingObject = false,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
-      person.member_=(member)
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val identity = StubUserIdentity.editor
-      val request = prepareSecuredGetRequest(identity, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
-      status(result) must equalTo(OK)
-      contentAsString(result) must contain("Funder")
-      contentAsString(result) must contain("EUR 255")
-      contentAsString(result) must contain("/member/1/edit")
-    }
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    val person = PersonHelper.two().insert
+    val id = 2L
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
+      subscription = false)
+    person.member_=(member)
+
+    (personService.find(_: Long)) expects id returning Some(person)
+    orgService.findActive _ expects () returning List()
+    licenseService.licenses _ expects id returning List()
+    (accountService.findRole _).expects(id).returning(None).never()
+    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    (paymentService.findByPerson _) expects id returning List()
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must contain("Subscription is canceled")
   }
 
-  def e7 = {
+  def e15 = new MockContext {
     truncateTables()
-    new MockContext {
-      val person = PersonHelper.one().insert
-      person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-      val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
-      (mockService.find(_: Long)) expects 1L returning Some(person)
-      controller.personService_=(mockService)
-      val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
-      val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
-      status(result) must equalTo(OK)
-      contentAsString(result) must contain("/person/1/licenses/new")
-      contentAsString(result) must contain("Add license")
-    }
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    val person = PersonHelper.two().insert
+    val id = 2L
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    (personService.find(_: Long)) expects id returning Some(person)
+    orgService.findActive _ expects () returning List()
+    licenseService.licenses _ expects id returning List()
+    (accountService.findRole _).expects(id).returning(None).never()
+    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
+    (contributionService.contributions(_, _)) expects (id, true) returning List()
+    (paymentService.findByPerson _) expects id returning List()
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must not contain "person/1/cancel"
+    contentAsString(result) must not contain "Subscription is canceled"
+  }
+
+  def e16 = new MockContext {
+    truncateTables()
+    (personService.find(_: Long)) expects id returning None
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+
+  def e17 = new MockContext {
+    truncateTables()
+    val person = PersonHelper.one()
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+    (personService.find(_: Long)) expects id returning Some(person)
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/person/1"))
+  }
+
+  def e18 = new MockContext {
+    truncateTables()
+    val person = PersonHelper.one()
+    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
+      subscription = false)
+    person.member_=(member)
+
+    (personService.find(_: Long)) expects id returning Some(person)
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome.which(_.contains("/person/1"))
+  }
+
+  private def fakedController() = {
+    val controller = new TestPeople()
+    controller.personService_=(personService)
+    controller.orgService_=(orgService)
+    controller.userAccountService_=(accountService)
+    controller.contributionService_=(contributionService)
+    controller.paymentRecordService_=(paymentService)
+    controller.licenseService_=(licenseService)
+    controller
   }
 }

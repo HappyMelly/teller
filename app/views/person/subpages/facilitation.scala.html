@@ -1,0 +1,26 @@
+@(person: Person,
+    licenses: List[LicenseView])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+<div class="col-md-10">
+  <div class="row block">
+    @views.html.person.blocks.licenses(person, licenses)
+  </div>
+  <div class="row block">
+    <legend>Signature</legend>
+    @views.html.person.blocks.signature(person)
+  </div>
+  <div class="row">
+    <legend>Languages & Countries</legend>
+    <p>
+      By selecting countries and languages you influence how users find you
+      on a brand's website. For example, on <a href="http://www.management30.com/facilitators/overview/"
+        target="_blank">management30.com</a> facilitators could be filtered by language
+      and country. These data are taken from the settings below.
+    </p>
+    @views.html.person.blocks.languages(person)
+    @views.html.person.blocks.countries(person)
+  </div>
+</div>

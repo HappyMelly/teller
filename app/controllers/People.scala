@@ -24,26 +24,28 @@
 
 package controllers
 
-import Forms._
+import controllers.Forms._
 import fly.play.s3.{ BucketFile, S3Exception }
-import models._
 import models.UserRole.Role._
+import models._
+import models.payment.{ GatewayWrapper, PaymentException, RequestException }
 import models.service.Services
 import org.joda.time.DateTime
+import play.api.{ Logger, Play }
+import play.api.Play.current
 import play.api.cache.Cache
-import play.api.data.{ FormError, Form }
-import play.api.data.format.Formatter
 import play.api.data.Forms._
+import play.api.data.format.Formatter
 import play.api.data.validation.Constraints
+import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
-import play.api.Play.current
+import scravatar.Gravatar
+import services.S3Bucket
+
 import scala.concurrent.Future
 import scala.io.Source
-import scravatar.Gravatar
-import securesocial.core.SecuredRequest
-import services.S3Bucket
 
 trait People extends Controller with Security with Services {
 
@@ -148,7 +150,7 @@ trait People extends Controller with Security with Services {
           webSite, blog, active, dateStamp) ⇒
           {
             val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
-              webSite, blog, virtual = false, active, dateStamp)
+              webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
             person.address_=(address)
             person
@@ -209,7 +211,7 @@ trait People extends Controller with Security with Services {
         {
           case (page, personId, organisationId) ⇒
             personService.find(personId).map { person ⇒
-              organisationService.find(organisationId).map { organisation ⇒
+              orgService.find(organisationId).map { organisation ⇒
                 person.addMembership(organisationId)
 
                 val activity = person.activity(
@@ -219,7 +221,7 @@ trait People extends Controller with Security with Services {
 
                 // Redirect to the page we came from - either the person or organisation details page.
                 val action = if (page == "person")
-                  routes.People.details(personId).url + "#organizations"
+                  routes.People.details(personId).url
                 else
                   routes.Organisations.details(organisationId).url
                 Redirect(action).flashing("success" -> activity.toString)
@@ -282,7 +284,7 @@ trait People extends Controller with Security with Services {
       implicit handler ⇒ implicit user ⇒
 
         personService.find(personId).map { person ⇒
-          organisationService.find(organisationId).map { organisation ⇒
+          orgService.find(organisationId).map { organisation ⇒
             person.deleteMembership(organisationId)
 
             val activity = person.activity(
@@ -293,7 +295,7 @@ trait People extends Controller with Security with Services {
             // Redirect to the page we came from - either the person or
             // organisation details page.
             val action = if (page == "person")
-              routes.People.details(personId).url + "#organizations"
+              routes.People.details(personId).url
             else
               routes.Organisations.details(organisationId).url
             Redirect(action).flashing("success" -> activity.toString)
@@ -302,7 +304,7 @@ trait People extends Controller with Security with Services {
   }
 
   /**
-   * Render a Detail page
+   * Render Details page
    *
    * @param id Person identifier
    */
@@ -313,14 +315,19 @@ trait People extends Controller with Security with Services {
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
         val licenses = licenseService.licenses(id)
-        val accountRole = userAccountService.findRole(id)
+        val accountRole = if (user.account.editor)
+          userAccountService.findRole(id) else None
+        val duplicated = if (user.account.editor)
+          userAccountService.findDuplicateIdentity(person)
+        else None
         val contributions = contributionService.contributions(id, isPerson = true)
-        val duplicated = userAccountService.findDuplicateIdentity(person)
-
+        val payments = person.member map { v ⇒
+          Some(paymentRecordService.findByPerson(id))
+        } getOrElse None
         Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
           contributions,
-          licenses, accountRole, duplicated))
+          licenses, accountRole, duplicated, payments))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -348,21 +355,24 @@ trait People extends Controller with Security with Services {
   def update(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-
-        personForm(user).bindFromRequest.fold(
-          formWithErrors ⇒
-            BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
-          person ⇒ {
-            val updatedPerson = person.copy(id = Some(id))
-            updatedPerson.socialProfile_=(person.socialProfile)
-            updatedPerson.address_=(person.address)
-            updatedPerson.update
-            val activity = updatedPerson.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
-            Redirect(routes.People.details(id)).flashing(
-              "success" -> activity.toString)
-          })
+        personService.find(id) map { p ⇒
+          personForm(user).bindFromRequest.fold(
+            formWithErrors ⇒
+              BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
+            person ⇒ {
+              val updatedPerson = person
+                .copy(id = Some(id))
+                .copy(customerId = p.customerId)
+              updatedPerson.socialProfile_=(person.socialProfile)
+              updatedPerson.address_=(person.address)
+              updatedPerson.update
+              val activity = updatedPerson.activity(
+                user.person,
+                Activity.Predicate.Updated).insert
+              Redirect(routes.People.details(id)).flashing(
+                "success" -> activity.toString)
+            })
+        } getOrElse NotFound
   }
 
   /**
@@ -386,7 +396,7 @@ trait People extends Controller with Security with Services {
 
       val encoding = "ISO-8859-1"
       personService.find(id).map { person ⇒
-        val route = routes.People.details(person.id.get).url + "#licenses"
+        val route = routes.People.details(person.id.get).url + "#facilitation"
 
         request.body.asMultipartFormData.get.file("signature").map { picture ⇒
           val filename = Person.fullFileName(person.id.get)
@@ -426,7 +436,7 @@ trait People extends Controller with Security with Services {
         val activity = person.activity(
           user.person,
           Activity.Predicate.DeletedSign).insert
-        val route = routes.People.details(personId).url + "#licenses"
+        val route = routes.People.details(personId).url + "#facilitation"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -452,6 +462,41 @@ trait People extends Controller with Security with Services {
           Ok(value).as(contentType)
       }
     }
+  }
+
+  /**
+   * Cancels a subscription for yearly-renewing membership
+   * @param id Person id
+   */
+  def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val url = routes.People.details(id).url + "#membership"
+      personService.find(id) map { person ⇒
+        person.member map { m ⇒
+          if (m.subscription) {
+            val key = Play.configuration.getString("stripe.secret_key").get
+            val gateway = new GatewayWrapper(key)
+            try {
+              gateway.cancel(person.customerId.get)
+              m.copy(subscription = false).update
+            } catch {
+              case e: PaymentException ⇒
+                Redirect(url).flashing("error" -> Messages(e.msg))
+              case e: RequestException ⇒
+                e.log.foreach(Logger.error(_))
+                Redirect(url).flashing("error" -> Messages(e.getMessage))
+            }
+            Redirect(url).
+              flashing("success" -> "Subscription was successfully canceled")
+          } else {
+            Redirect(url).
+              flashing("error" -> Messages("error.membership.noSubscription"))
+          }
+        } getOrElse {
+          Redirect(url).
+            flashing("error" -> Messages("error.membership.noSubscription"))
+        }
+      } getOrElse NotFound
   }
 }
 

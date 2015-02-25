@@ -17,20 +17,30 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional 
+ * If you have questions concerning this license or the applicable additional
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
 
-import models.{ Person, UserAccount, UserRole }
-import models.service.UserAccountService
-
-class StubUserAccountService extends UserAccountService {
-
-  override def findRole(personId: Long): Option[UserRole.Role.Role] =
-    Some(UserRole.forName("viewer").role)
-
-  override def findDuplicateIdentity(person: Person): Option[UserAccount] = None
-
+/**
+ * Updates a state of a button depending on a chosen organisation
+ */
+function updateButtonState() {
+    var orgId = $('#org').find(':selected').val();
+    if (orgId == "" || orgId == "0") {
+        $('#orgSupporter').attr('disabled', 'disabled');
+    } else {
+        $('#orgSupporter').removeAttr('disabled');
+    }
 }
+
+jQuery(function($) {
+    updateButtonState();
+    $('#org').on('change', updateButtonState);
+    $('#orgSupporter').on('click', function() {
+        var href = $(this).attr('href');
+        var orgId = $('#org').find(':selected').val();
+        window.location = href + '?orgId=' + orgId;
+        return false;
+    });
+});

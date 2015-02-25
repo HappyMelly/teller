@@ -23,9 +23,13 @@
  */
 package models.unit
 
-import helpers.PersonHelper
-import models.Activity
+import helpers.{ MemberHelper, PersonHelper }
+import models._
+import org.joda.money.Money
+import org.joda.time.{ DateTime, LocalDate }
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
+import stubs.{ FakeMemberService, FakeServices }
 
 class PersonSpec extends Specification {
 
@@ -40,5 +44,6 @@ class PersonSpec extends Specification {
       activity.objectId must_== 1
       activity.activityObject must_== Some("First Tester")
     }
+
   }
 }

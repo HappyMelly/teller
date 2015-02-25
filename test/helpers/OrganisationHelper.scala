@@ -23,8 +23,28 @@
  */
 package helpers
 
-import models.Organisation
+import models.{ DateStamp, Organisation }
 import org.joda.time.DateTime
+import stubs.FakeServices
+
+class TestOrganisation(
+  id: Option[Long],
+  name: String,
+  street1: Option[String],
+  street2: Option[String],
+  city: Option[String],
+  province: Option[String],
+  postCode: Option[String],
+  countryCode: String,
+  vatNumber: Option[String],
+  registrationNumber: Option[String],
+  webSite: Option[String],
+  blog: Option[String],
+  customerId: Option[String] = None,
+  active: Boolean = true,
+  dateStamp: DateStamp) extends Organisation(id, name, street1, street2, city,
+  province, postCode, countryCode, vatNumber, registrationNumber, None, webSite,
+  blog, customerId, active, dateStamp) with FakeServices
 
 object OrganisationHelper {
 
@@ -44,13 +64,13 @@ object OrganisationHelper {
     created: DateTime = DateTime.now(),
     createdBy: String = "Sergey Kotlov",
     updated: DateTime = DateTime.now(),
-    updatedBy: String = "Sergey Kotlov"): Organisation = {
-    new Organisation(id, name, street1, street2, city, province, postCode,
-      countryCode, vatNumber, registrationNumber, None, webSite, blog, active,
-      created, createdBy, updated, updatedBy)
+    updatedBy: String = "Sergey Kotlov"): TestOrganisation = {
+    new TestOrganisation(id, name, street1, street2, city, province, postCode,
+      countryCode, vatNumber, registrationNumber, webSite, blog, Some(""),
+      active, DateStamp(created, createdBy, updated, updatedBy))
   }
 
-  def one: Organisation = make(name = "One")
+  def one: TestOrganisation = make(id = Some(1L), name = "One")
 
-  def two: Organisation = make(name = "Two")
+  def two: TestOrganisation = make(id = Some(2L), name = "Two")
 }

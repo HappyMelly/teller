@@ -26,8 +26,9 @@ package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
 import models.database.Organisations._
-import models.service.{ MemberService, OrganisationService, ContributionService }
-import org.joda.time.DateTime
+import models.service.{ Services, MemberService, OrganisationService, ContributionService }
+import org.joda.money.Money
+import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -58,29 +59,70 @@ case class Organisation(
   category: Option[OrganisationCategory.Value],
   webSite: Option[String],
   blog: Option[String],
+  customerId: Option[String] = None,
   active: Boolean = true,
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends AccountHolder with ActivityRecorder {
+  dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
+
+  /** Contains a list of people working in this organisation */
+  private var _members: Option[List[Person]] = None
+  private var _member: Option[Member] = None
 
   /**
    * Returns true if this person may be deleted.
    */
   lazy val deletable: Boolean = account.deletable && contributions.isEmpty && members.isEmpty
 
-  lazy val members: List[Person] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      membership ← OrganisationMemberships if membership.organisationId === this.id
-      person ← membership.person
-    } yield person
-    query.sortBy(_.lastName.toLowerCase).list
+  /**
+   * Sets a new list of members
+   * @param members Members
+   */
+  def members_=(members: List[Person]) = {
+    _members = Some(members)
   }
 
-  /** Returns member data if org is a member, false None */
-  def member: Option[Member] = id map {
-    OrganisationService.get.member _
-  } getOrElse None
+  /**
+   * Returns a list of people working in this organisation
+   */
+  def members: List[Person] = _members getOrElse {
+    val members = DB.withSession { implicit session: Session ⇒
+      val query = for {
+        membership ← OrganisationMemberships if membership.organisationId === this.id
+        person ← membership.person
+      } yield person
+      query.sortBy(_.lastName.toLowerCase).list
+    }
+    members_=(members)
+    members
+  }
+
+  /**
+   * Sets member data
+   * @param member Member data
+   */
+  def member_=(member: Member): Unit = _member = Some(member)
+
+  /** Returns member data if person is a member, false None */
+  def member: Option[Member] = _member map { Some(_) } getOrElse {
+    id map { i ⇒
+      _member = orgService.member(i)
+      _member
+    } getOrElse None
+  }
+
+  /**
+   * Adds member record to database
+   * @param funder Defines if this org becomes a funder
+   * @param fee Amount of membership fee this org paid
+   * @param userId Id of the user executing the action
+   * @return Returns member object
+   */
+  def becomeMember(funder: Boolean, fee: Money, userId: Long): Member = {
+    val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
+      subscription = true, since = LocalDate.now(),
+      end = LocalDate.now().plusYears(1), existingObject = true,
+      created = DateTime.now(), userId, DateTime.now(), userId)
+    memberService.insert(m)
+  }
 
   /**
    * Returns a list of this organisation's contributions.
@@ -122,8 +164,9 @@ case class Organisation(
     val q = filter.map { org ⇒ org.forUpdate }
 
     // Skip the created, createdBy and active fields.
-    val updateTuple = (id, name, street1, street2, city, province, postCode, countryCode, vatNumber, registrationNumber,
-      category, webSite, blog, updated, updatedBy)
+    val updateTuple = (id, name, street1, street2, city, province, postCode,
+      countryCode, vatNumber, registrationNumber, category, webSite, blog,
+      customerId, dateStamp.updated, dateStamp.updatedBy)
     q.update(updateTuple)
     this
   }

@@ -3,10 +3,10 @@
 @import scala.collection.JavaConverters._
 @import org.joda.money.CurrencyUnit
 
-@label = @{ args.toMap.get('_label).getOrElse(play.api.i18n.Messages(amountField.name)) }
-
 <div class="form-group @args.toMap.get('_class) @if(codeField.hasErrors || amountField.hasErrors) {error}" id="@id">
-  <label class="control-label col-sm-3" for="@id">@label</label>
+  @args.toMap.get('_label).map { label =>
+    <label class="control-label col-sm-3" for="@id">@label</label>
+  }
   <div class="col-sm-9">
     @if(args.toMap.contains('_currency)) {
       <div class="input-group">

@@ -1,7 +1,7 @@
 @(person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation]
-    )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+    )(implicit request: Request[Any], handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._

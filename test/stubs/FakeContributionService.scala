@@ -26,7 +26,7 @@ package stubs
 import models.ContributionView
 import models.service.ContributionService
 
-class StubContributionService extends ContributionService {
+class FakeContributionService extends ContributionService {
 
   override def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = List()
 }

@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -29,34 +29,39 @@ $(document).ready( function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
 
-    // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
     $('.datatables').each(function() {
         $(this).dataTable( {
             "sPaginationType": "bootstrap",
             "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
             "order": [[ 0, "asc" ]],
-            "iDisplayLength": 100,
-            "asStripeClasses":[],
-            "aaSorting": [],
             "bFilter": false,
             "bInfo": false,
             "bLengthChange": false,
             "bPaginate": false
         });
     });
+    $('.payments').dataTable( {
+        "sPaginationType": "bootstrap",
+        "order": [[ 2, "desc" ]],
+        "columnDefs": [
+            { "orderable": false, "targets": 0 },
+            { "orderable": false, "targets": 1 }
+        ],
+        "bFilter": false,
+        "bInfo": false,
+        "bLengthChange": false,
+        "bPaginate": false
+    });
 
-    $('#activities a').click(function (e) {
-      e.preventDefault();
-      $(this).tab('show');
+    $('#sidemenu a').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
     });
     var hash = window.location.hash.substring(1);
     if (!hash) {
-        hash = 'organizations';
+        hash = 'personal-details';
     }
-    $('#activities a[href="#' + hash + '"]').tab('show');
+    $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
 });
 

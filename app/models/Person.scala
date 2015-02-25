@@ -26,7 +26,8 @@ package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
-import models.service.{ MemberService, ContributionService, PersonService, SocialProfileService }
+import models.service._
+import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -36,19 +37,6 @@ import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import scala.slick.lifted.Query
 import services.S3Bucket
-
-/**
- * Represents a date stamp to track when an object was changed/created
- * @param created Date and time when the object was created
- * @param createdBy Name of a person who created the object
- * @param updated Date and time when the object was updated
- * @param updatedBy Name of a person who updated the object
- */
-case class DateStamp(
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String)
 
 case class Photo(id: Option[String], url: Option[String])
 
@@ -89,9 +77,12 @@ case class Person(
   role: PersonRole.Value = PersonRole.Stakeholder,
   webSite: Option[String],
   blog: Option[String],
+  customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder with ActivityRecorder {
+  dateStamp: DateStamp) extends AccountHolder
+  with ActivityRecorder
+  with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
@@ -191,8 +182,9 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
+  def addMembership(organisationId: Long): Unit = DB.withSession {
+    implicit session: Session ⇒
+      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
 
   /**
@@ -284,8 +276,9 @@ case class Person(
       } yield p
       socialQuery.update(socialProfile.copy(objectId = id.get))
       // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature, bio, interests,
-        role, webSite, blog, virtual, dateStamp.updated, dateStamp.updatedBy)
+      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
+        bio, interests, role, webSite, blog, customerId, virtual,
+        dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)
 
@@ -336,6 +329,18 @@ case class Person(
 
   def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 
+  /**
+   * Adds member record to database
+   * @param funder Defines if this person becomes a funder
+   * @param fee Amount of membership fee this person paid
+   * @return Returns member object
+   */
+  def becomeMember(funder: Boolean, fee: Money): Member = {
+    val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
+      subscription = true, since = LocalDate.now(), end = LocalDate.now().plusYears(1),
+      existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
+    memberService.insert(m)
+  }
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

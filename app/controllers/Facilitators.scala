@@ -94,7 +94,7 @@ object Facilitators extends Controller with Security {
                 person.fullName)
               val activity = Activity.insert(user.person, Activity.Predicate.Created, desc)
 
-              Redirect(routes.People.details(id).url + "#languages").
+              Redirect(routes.People.details(id).url + "#facilitation").
                 flashing("success" -> activity.toString)
             }.getOrElse(NotFound)
         })
@@ -118,7 +118,7 @@ object Facilitators extends Controller with Security {
           val desc = Messages("activity.relationship.delete", languageName, person.fullName)
           val activity = Activity.insert(user.person, Activity.Predicate.Deleted, desc)
 
-          Redirect(routes.People.details(id).url + "#languages").
+          Redirect(routes.People.details(id).url + "#facilitation").
             flashing("success" -> activity.toString)
         }.getOrElse(NotFound)
   }
@@ -149,7 +149,7 @@ object Facilitators extends Controller with Security {
                   Activity.Predicate.Created,
                   desc)
 
-                Redirect(routes.People.details(id).url + "#countries").
+                Redirect(routes.People.details(id).url + "#facilitation").
                   flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
           })
@@ -176,7 +176,7 @@ object Facilitators extends Controller with Security {
             Activity.Predicate.Deleted,
             desc)
 
-          Redirect(routes.People.details(id).url + "#countries").
+          Redirect(routes.People.details(id).url + "#facilitation").
             flashing("success" -> activity.toString)
         }.getOrElse(NotFound)
   }

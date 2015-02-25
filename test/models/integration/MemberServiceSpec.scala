@@ -24,7 +24,7 @@
  */
 package models.integration
 
-import helpers.{ OrganisationHelper, PersonHelper }
+import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.Member
 import models.service.MemberService
@@ -73,9 +73,10 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
         (3L, false, false, Money.of(EUR, 50), LocalDate.now(), 1L),
         (5L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
           case (objectId, person, funder, fee, since, createdBy) ⇒ {
-            val member = new Member(None, objectId, person, funder, fee, since,
-              existingObject = false,
-              DateTime.now(), createdBy, DateTime.now(), createdBy)
+            val member = new Member(None, objectId, person, funder, fee,
+              subscription = false, since, since.plusYears(1),
+              existingObject = false, DateTime.now(), createdBy, DateTime.now(),
+              createdBy)
             member.insert
           }
         }
@@ -93,9 +94,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
   "Method find" should {
     "return only membership data" in {
       truncateTables()
-      val m = new Member(None, 1L, person = true, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = true, funder = false).insert
       val data = MemberService.get.find(1L)
       data map { v ⇒
         v.objectId must_== m.objectId
@@ -111,9 +110,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     }
     "return membership data with person object" in {
       truncateTables()
-      val m = new Member(None, 1L, person = true, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = true, funder = false).insert
       PersonHelper.one().insert
       val data = MemberService.get.find(1L, withObject = true)
       data map { v ⇒
@@ -125,9 +122,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     }
     "return membership data with org object" in {
       truncateTables()
-      val m = new Member(None, 1L, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       OrganisationHelper.one.insert
       val data = MemberService.get.find(1L, withObject = true)
       data map { v ⇒
@@ -141,17 +136,13 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
   "Method `delete`" should {
     "delete membership data" in {
       truncateTables()
-      val m = new Member(None, 1L, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       MemberService.get.delete(m.objectId, person = false)
       MemberService.get.find(m.id.get) must_== None
     }
     "not delete membership data" in {
       truncateTables()
-      val m = new Member(None, 1L, person = false, funder = false,
-        Money.parse("EUR 100"), LocalDate.now(), existingObject = true,
-        DateTime.now(), 1L, DateTime.now(), 1L).insert
+      val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       MemberService.get.delete(m.objectId, person = true)
       MemberService.get.find(m.id.get) must_!= None
     }

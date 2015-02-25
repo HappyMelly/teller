@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ OrganisationCategory, Organisation }
+import models.{ DateStamp, OrganisationCategory, Organisation }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -54,6 +54,7 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
 
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
+  def customerId = column[Option[String]]("CUSTOMER_ID")
 
   def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
@@ -61,11 +62,22 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    category ~ webSite ~ blog ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (Organisation.apply _, Organisation.unapply _)
+  def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
+    countryCode ~ vatNumber ~ registrationNumber ~ category ~ webSite ~ blog ~
+    customerId ~ active ~ created ~ createdBy ~ updated ~
+    updatedBy <> ({ o ⇒
+      Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
+        o._11, o._12, o._13, o._14, o._15, DateStamp(o._16, o._17, o._18, o._19))
+    }, { (o: Organisation) ⇒
+      Some(o.id, o.name, o.street1, o.street2, o.city,
+        o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
+        o.category, o.webSite, o.blog, o.customerId, o.active, o.dateStamp.created,
+        o.dateStamp.createdBy, o.dateStamp.updated, o.dateStamp.updatedBy)
+    })
 
   def forInsert = * returning id
 
-  def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode ~ vatNumber ~ registrationNumber ~
-    category ~ webSite ~ blog ~ updated ~ updatedBy
+  def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
+    countryCode ~ vatNumber ~ registrationNumber ~ category ~ webSite ~ blog ~
+    customerId ~ updated ~ updatedBy
 }

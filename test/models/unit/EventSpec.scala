@@ -38,10 +38,10 @@ class EventSpec extends PlayAppSpec {
     PersonHelper.two().insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
     PersonHelper.make(Some(5L), "Four", "Tester").insert
-    BrandHelper.defaultBrand.insert
+    BrandHelper.one.insert
     (new EventType(None, 1L, "Type 1", None)).insert
     (new EventType(None, 1L, "Type 2", None)).insert
-    EventHelper.addEvents(BrandHelper.defaultBrand.code)
+    EventHelper.addEvents(BrandHelper.one.code)
     EventHelper.addEvents("MGT30")
   }
 

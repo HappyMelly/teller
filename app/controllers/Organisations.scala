@@ -24,17 +24,19 @@
 
 package controllers
 
-import Forms._
-import models.service.{ Services, ContributionService }
-import models._
-import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
-import play.api.i18n.Messages
-import org.joda.time.DateTime
+import controllers.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
+import models._
+import models.payment.{ GatewayWrapper, PaymentException, RequestException }
+import models.service.Services
+import org.joda.time.DateTime
+import play.api.Play.current
+import play.api.data.Forms._
+import play.api.data._
 import play.api.data.format.Formatter
+import play.api.i18n.Messages
+import play.api.mvc._
+import play.api.{ Logger, Play }
 
 trait Organisations extends Controller with Security with Services {
 
@@ -73,11 +75,13 @@ trait Organisations extends Controller with Security with Services {
     "category" -> optional(categoryMapping),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
+    "customerId" -> optional(text),
     "active" -> ignored(true),
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(user.fullName),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(user.fullName))(Organisation.apply)(Organisation.unapply))
+    "dateStamp" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(user.fullName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))(Organisation.apply)(Organisation.unapply))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -85,14 +89,15 @@ trait Organisations extends Controller with Security with Services {
   def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      organisationService.find(id).map { organisation ⇒
+      orgService.find(id).map { organisation ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           form ⇒ {
             BadRequest("invalid form data")
           },
           active ⇒ {
             Organisation.activate(id, active)
-            val activity = Activity.insert(user.fullName, if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
+            val activity = Activity.insert(user.fullName,
+              if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
           })
       } getOrElse {
@@ -132,7 +137,7 @@ trait Organisations extends Controller with Security with Services {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      organisationService.find(id).map {
+      orgService.find(id).map {
         organisation ⇒
           Organisation.delete(id)
           val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
@@ -141,22 +146,22 @@ trait Organisations extends Controller with Security with Services {
   }
 
   /**
-   * Render a Details page
+   * Renders Details page
    * @param id Organisation ID
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      organisationService.find(id).map {
-        organisation ⇒
-          val members = organisation.members
-          val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
-          val contributions = contributionService.contributions(id, isPerson = false)
-          val products = productService.findAll
-
-          Ok(views.html.organisation.details(user, organisation,
-            members, otherPeople,
-            contributions, products))
+      orgService.find(id).map { organisation ⇒
+        val members = organisation.members
+        val otherPeople = Person.findActive.filterNot(person ⇒ members.contains(person))
+        val contributions = contributionService.contributions(id, isPerson = false)
+        val products = productService.findAll
+        val payments = organisation.member map { v ⇒
+          paymentRecordService.findByOrganisation(id)
+        } getOrElse List()
+        Ok(views.html.organisation.details(user, organisation,
+          members, otherPeople,
+          contributions, products, payments))
       }.getOrElse(NotFound)
   }
 
@@ -167,7 +172,7 @@ trait Organisations extends Controller with Security with Services {
   def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      organisationService.find(id).map {
+      orgService.find(id).map {
         organisation ⇒
           Ok(views.html.organisation.form(user, Some(id), organisationForm.fill(organisation)))
       }.getOrElse(NotFound)
@@ -184,22 +189,68 @@ trait Organisations extends Controller with Security with Services {
   }
 
   /**
-   * Update an organisation
+   * Updates an organisation
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      organisationForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.organisation.form(user, Some(id), formWithErrors)),
-        organisation ⇒ {
-          organisation.copy(id = Some(id)).update
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, organisation.name)
-          Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
-        })
+  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        orgService.find(id).map { org ⇒
+          organisationForm.bindFromRequest.fold(
+            formWithErrors ⇒
+              BadRequest(views.html.organisation.form(
+                user,
+                Some(id),
+                formWithErrors)),
+            organisation ⇒ {
+              val updatedOrg = organisation.
+                copy(id = Some(id)).
+                copy(customerId = org.customerId).
+                update
+              val activity = updatedOrg.activity(
+                user.person,
+                Activity.Predicate.Updated).insert
+              Redirect(routes.Organisations.details(id)).
+                flashing("success" -> activity.toString)
+            })
+        }.getOrElse(NotFound)
   }
 
+  /**
+   * Cancels a subscription for yearly-renewing membership
+   * @param id Organisation id
+   */
+  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val url = routes.Organisations.details(id).url + "#membership"
+        orgService.find(id) map { org ⇒
+          org.member map { m ⇒
+            if (m.subscription) {
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val gateway = new GatewayWrapper(key)
+              try {
+                gateway.cancel(org.customerId.get)
+                m.copy(subscription = false).update
+              } catch {
+                case e: PaymentException ⇒
+                  Redirect(url).flashing("error" -> Messages(e.msg))
+                case e: RequestException ⇒
+                  e.log.foreach(Logger.error(_))
+                  Redirect(url).flashing("error" -> Messages(e.getMessage))
+              }
+              Redirect(url).
+                flashing("success" -> "Subscription was successfully canceled")
+            } else {
+              Redirect(url).
+                flashing("error" -> Messages("error.membership.noSubscription"))
+            }
+          } getOrElse {
+            Redirect(url).
+              flashing("error" -> Messages("error.membership.noSubscription"))
+          }
+        } getOrElse NotFound
+  }
 }
 
 object Organisations extends Organisations with Security with Services

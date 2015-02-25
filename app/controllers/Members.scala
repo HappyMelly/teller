@@ -53,12 +53,14 @@ trait Members extends Controller with Security with Services {
       "fee" -> jodaMoney().
         verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
         verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR"),
+      "subscription" -> boolean,
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
         verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().plusDays(1))),
+      "end" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
@@ -111,7 +113,10 @@ trait Members extends Controller with Security with Services {
           None,
           formWithErrors)),
         member ⇒ {
-          val m = member.copy(id = None).copy(objectId = 0)
+          val m = member.
+            copy(id = None).
+            copy(objectId = 0).
+            copy(end = member.since.plusYears(1))
           Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
@@ -145,7 +150,8 @@ trait Members extends Controller with Security with Services {
           member ⇒ {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
-              copy(objectId = m.objectId).update
+              copy(objectId = m.objectId).
+              copy(end = m.end).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
@@ -296,7 +302,7 @@ trait Members extends Controller with Security with Services {
           id ⇒ {
             val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             cached map { m ⇒
-              organisationService.find(id) map { org ⇒
+              orgService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
                   implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
                   BadRequest(views.html.member.existingOrg(user,
@@ -328,7 +334,7 @@ trait Members extends Controller with Security with Services {
   }
 
   /** Returns ids and names of organisations which are not members */
-  private def orgsNonMembers: List[(String, String)] = organisationService.findNonMembers.
+  private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))
 
   /** Returns ids and names of people which are not members */

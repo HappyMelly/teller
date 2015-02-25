@@ -230,7 +230,7 @@ object Participant {
     val active = false
     val person = Person(None, data.firstName, data.lastName, data.birthday,
       Photo(None, None), signature = false, 0, None, None, PersonRole.NoRole,
-      None, None, virtual, active,
+      None, None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
     person.socialProfile_=(SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress))
     person.address_=(data.address)

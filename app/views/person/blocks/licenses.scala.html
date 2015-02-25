@@ -1,0 +1,29 @@
+@(person: Person,
+  licenses: List[LicenseView]
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+  @for(license <- licenses) {
+    <div class="panel panel-default">
+      <div class="panel-heading">@license.brand.name
+        @restrict(handler, List(as(Editor.toString))) {
+          <a class="btn btn-default btn-sm pull-right"
+            href="@routes.Licenses.edit(license.license.id.getOrElse(0))">
+            <i class="glyphicon glyphicon-pencil"></i> Edit</a>
+        }
+      </div>
+      <div class="panel-body">
+        <p class="text-success">Expires on <b>@license.license.end</b></p>
+        <p class="text-muted">Version: @license.license.version,
+          Signed: @license.license.signed, Start: @license.license.start,
+          Fee: @license.license.fee</p>
+      </div>
+    </div>
+  }
+  @restrict(handler, List(as(Editor.toString))) {
+      <p><a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success btn-sm pull-right">
+          <i class="glyphicon glyphicon-plus"></i> Add Content License</a></p>
+  }

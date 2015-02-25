@@ -53,6 +53,7 @@ private[models] object People extends Table[Person]("PERSON") {
 
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
+  def customerId = column[Option[String]]("CUSTOMER_ID")
 
   def virtual = column[Boolean]("VIRTUAL")
   def active = column[Boolean]("ACTIVE")
@@ -64,20 +65,21 @@ private[models] object People extends Table[Person]("PERSON") {
   def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
 
   // Note that this projection does not include the address and social profile, which must be joined in queries.
-  def * = id.? ~ firstName ~ lastName ~ birthday ~ photo ~ signature ~ addressId ~ bio ~ interests ~
-    role ~ webSite ~ blog ~ virtual ~ active ~ created ~ createdBy ~ updated ~ updatedBy <> (
+  def * = id.? ~ firstName ~ lastName ~ birthday ~ photo ~ signature ~ addressId ~
+    bio ~ interests ~ role ~ webSite ~ blog ~ customerId ~ virtual ~ active ~
+    created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
         Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, p._7, p._8, p._9, p._10,
-          p._11, p._12, p._13, p._14, DateStamp(p._15, p._16, p._17, p._18))
+          p._11, p._12, p._13, p._14, p._15, DateStamp(p._16, p._17, p._18, p._19))
       },
       { (p: Person) ⇒
         Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url, p.signature, p.addressId, p.bio,
-          p.interests, p.role, p.webSite, p.blog, p.virtual, p.active,
+          p.interests, p.role, p.webSite, p.blog, p.customerId, p.virtual, p.active,
           p.dateStamp.created, p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
       })
 
   def forInsert = * returning id
 
   def forUpdate = firstName ~ lastName ~ birthday ~ photo ~ signature ~ bio ~ interests ~
-    role ~ webSite ~ blog ~ virtual ~ updated ~ updatedBy
+    role ~ webSite ~ blog ~ customerId ~ virtual ~ updated ~ updatedBy
 }

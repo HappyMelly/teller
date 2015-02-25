@@ -45,7 +45,8 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       "db.default.url" -> "jdbc:mysql://localhost/mellytest",
       "logger.play" -> "ERROR",
       "logger.application" -> "ERROR",
-      "ehcacheplugin" -> "enabled")
+      "ehcacheplugin" -> "enabled",
+      "stripe.public_key" -> "none")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
       "services.LoginIdentityService")
     val withPlugins = List("stubs.StubLoginIdentityService")
@@ -138,6 +139,7 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Q.updateNA("TRUNCATE `MEMBER`").execute
     Q.updateNA("TRUNCATE `ORGANISATION`").execute
     Q.updateNA("TRUNCATE `ORGANISATION_MEMBERSHIPS`").execute
+    Q.updateNA("TRUNCATE `PAYMENT_RECORD`").execute
     Q.updateNA("TRUNCATE `PERMANENT_SESSION`").execute
     Q.updateNA("TRUNCATE `PERSON`").execute
     Q.updateNA("TRUNCATE `PRODUCT`").execute

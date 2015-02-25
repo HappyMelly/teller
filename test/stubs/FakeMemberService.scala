@@ -24,7 +24,7 @@
  */
 package stubs
 
-import helpers.{ OrganisationHelper, PersonHelper }
+import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.Member
 import models.service.MemberService
 import org.joda.money.Money
@@ -34,21 +34,17 @@ import org.joda.time.{ DateTime, LocalDate }
 class FakeMemberService extends MemberService {
 
   override def findAll: List[Member] = {
-    val m1 = new Member(Some(1L), 1L, person = true, funder = true,
-      eur(200), LocalDate.parse("2015-01-01"), existingObject = false,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m1 = MemberHelper.make(Some(1L), 1L, person = true, funder = true,
+      money = Some(eur(200)))
     m1.memberObj_=(PersonHelper.one())
-    val m2 = new Member(Some(2L), 2L, person = true, funder = false,
-      eur(20), LocalDate.parse("2015-01-10"), existingObject = false,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m2 = MemberHelper.make(Some(2L), 2L, person = true, funder = true,
+      money = Some(eur(20)))
     m2.memberObj_=(PersonHelper.two())
-    val m3 = new Member(Some(3L), 1L, person = false, funder = true,
-      eur(2000), LocalDate.parse("2015-01-11"), existingObject = false,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m3 = MemberHelper.make(Some(3L), 1L, person = false, funder = true,
+      money = Some(eur(2000)))
     m3.memberObj_=(OrganisationHelper.one)
-    val m4 = new Member(Some(4L), 2L, person = false, funder = false,
-      eur(40), LocalDate.parse("2015-01-15"), existingObject = false,
-      DateTime.now(), 1L, DateTime.now(), 1L)
+    val m4 = MemberHelper.make(Some(4L), 2L, person = false, funder = true,
+      money = Some(eur(40)))
     m4.memberObj_=(OrganisationHelper.two)
     List(m1, m2, m3, m4)
   }

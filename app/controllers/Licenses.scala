@@ -101,7 +101,7 @@ object Licenses extends Controller with Security {
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
-            val route = routes.People.details(personId).url + "#licenses"
+            val route = routes.People.details(personId).url + "#facilitation"
             Redirect(route).flashing("success" -> activity.toString)
           })
       } getOrElse {
@@ -121,7 +121,7 @@ object Licenses extends Controller with Security {
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
         val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
-        val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#licenses"
+        val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#facilitation"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -142,7 +142,7 @@ object Licenses extends Controller with Security {
 
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
-            val route = routes.People.details(view.licensee.id.get).url + "#licenses"
+            val route = routes.People.details(view.licensee.id.get).url + "#facilitation"
             Redirect(route).flashing("success" -> activity.toString)
           })
       } getOrElse {
