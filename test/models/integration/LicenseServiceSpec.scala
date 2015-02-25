@@ -49,7 +49,7 @@ class LicenseServiceSpec extends PlayAppSpec {
         4L -> PersonHelper.make(Some(4L), "Fourth", "Tester"),
         5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"))
       facilitators.foreach(v ⇒ v._2.insert)
-      BrandHelper.defaultBrand.insert
+      BrandHelper.one.insert
       val now = LocalDate.now()
       Seq(
         (4L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
