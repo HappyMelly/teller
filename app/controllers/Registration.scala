@@ -26,6 +26,7 @@ package controllers
 
 import models.service.Services
 import play.api.mvc._
+import securesocial.core.SecureSocial
 
 /**
  * Contains actions for a registration process
@@ -33,9 +34,37 @@ import play.api.mvc._
 class Registration extends Controller with Security with Services {
 
   /**
+   * The authentication flow for all providers starts here.
+   *
+   * @param provider The id of the provider that needs to handle the call
+   */
+  def authenticate(provider: String) = Action { implicit request ⇒
+    val session = request.session -
+      SecureSocial.OriginalUrlKey +
+      (SecureSocial.OriginalUrlKey -> routes.Registration.step2.url)
+    Redirect("/authenticate/" + provider).withSession(session)
+  }
+
+  /**
    * Renders step 1 page of the registration process
    */
   def step1 = Action { implicit request ⇒
+    Ok(views.html.registration.step1())
+  }
+
+  /**
+   * Renders step 2 page of the registration process
+   * @return
+   */
+  def step2 = Action { implicit request ⇒
+    Ok(views.html.registration.step1())
+  }
+
+  /**
+   * Renders step 3 page of the registration process
+   * @return
+   */
+  def step3 = Action { implicit request ⇒
     Ok(views.html.registration.step1())
   }
 }

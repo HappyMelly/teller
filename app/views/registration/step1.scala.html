@@ -12,7 +12,8 @@
       @for(provider <- Registry.providers.all().values) {
         @if(provider.authMethod == OAuth1 || provider.authMethod == OAuth2) {
           @defining("images/securesocial/%s.png".format(provider.id)) { imageUrl: String =>
-            <a class="btn btn-default btn-login btn-lg btn-block" href="@provider.authenticationUrl">
+            <a class="btn btn-default btn-login btn-lg btn-block"
+              href="@routes.Registration.authenticate(provider.id)">
               <img src="@RoutesHelper.at(imageUrl)" width="40px"/> Log in with @provider.id.capitalize
             </a>
           }

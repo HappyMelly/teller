@@ -171,6 +171,10 @@ POST        /product/brand/new                                                  
 GET         /product/:productId/brand/:brandId/delete                            controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
 GET         /registration/step1                                                  controllers.Registration.step1
+GET         /registration/step2                                                  controllers.Registration.step2
+GET         /registration/step3                                                  controllers.Registration.step3
+GET         /registration/authenticate/:provider                                 controllers.Registration.authenticate(provider)
+
 
 GET         /template/:id                                                        controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET         /template/:id/delete                                                 controllers.CertificateTemplates.delete(id: Long)
