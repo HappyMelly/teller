@@ -82,21 +82,21 @@ object Payment {
   val DESC = "One Year Membership"
 
   /**
-   * Returns minimum and suggested fees for supporters based on country.
+   * Returns minimum, suggested and elite fees for supporters based on country.
    * Fee amounts are taken from HM constitution: http://www.happymelly.com/constitution/
    * @param code Country code
    */
-  def countryBasedFees(code: String): (Int, Int) = {
+  def countryBasedFees(code: String): (Int, Int, Int) = {
     Countries.gdp.get(code) map { index ⇒
       if (index <= 10)
-        (25, 50)
+        (25, 50, 100)
       else if (index <= 25)
-        (20, 40)
+        (20, 40, 80)
       else if (index <= 50)
-        (15, 30)
+        (15, 30, 60)
       else if (index <= 100)
-        (10, 20)
-      else (5, 10)
-    } getOrElse (5, 10)
+        (10, 20, 40)
+      else (5, 10, 20)
+    } getOrElse (5, 10, 20)
   }
 }
