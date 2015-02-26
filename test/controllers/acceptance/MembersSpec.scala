@@ -167,11 +167,17 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e8 = {
     val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
-    val uReq = addMemberData(req, since = LocalDate.now().plusDays(3).toString)
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
 
-    status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Membership date cannot be later than today")
+    val now = LocalDate.now()
+    val firstDay = now.dayOfMonth().withMaximumValue().plusDays(1)
+
+    val req1 = addMemberData(req, since = firstDay.plusDays(3).toString)
+    val result1: Future[SimpleResult] = controller.create().apply(req1)
+    status(result1) must equalTo(BAD_REQUEST)
+    contentAsString(result1) must contain("Membership date cannot be later than the first day of the next month")
+    val req2 = addMemberData(req, since = firstDay.toString)
+    val result2: Future[SimpleResult] = controller.create().apply(req2)
+    status(result2) must equalTo(SEE_OTHER)
   }
 
   def e9 = new cleanup {

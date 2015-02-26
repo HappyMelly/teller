@@ -119,7 +119,7 @@ case class Organisation(
   def becomeMember(funder: Boolean, fee: Money, userId: Long): Member = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       subscription = true, since = LocalDate.now(),
-      end = LocalDate.now().plusYears(1), existingObject = true,
+      until = LocalDate.now().plusYears(1), existingObject = true,
       created = DateTime.now(), userId, DateTime.now(), userId)
     memberService.insert(m)
   }

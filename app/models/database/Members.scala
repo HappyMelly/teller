@@ -53,7 +53,7 @@ private[models] object Members extends Table[Member]("MEMBER") {
     }, {
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.subscription, m.since, m.end, m.created, m.createdBy,
+          m.fee.getAmount, m.subscription, m.since, m.until, m.created, m.createdBy,
           m.updated, m.updatedBy)
     })
 

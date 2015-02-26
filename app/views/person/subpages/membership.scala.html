@@ -23,7 +23,7 @@
           <h2>Supporter</h2>
         }
         since <b>@m.since</b><br/>
-        until <b>@m.end</b>
+        until <b>@m.until</b>
     </div>
     <div class="col-md-8">
       <p><b>Public profile:</b> <a href="http://happymelly.com/members/#@(m.id.get)"
@@ -67,11 +67,11 @@
       @if(m.subscription) {
         <p>
           Your membership will be automatically prolonged at the end of a subscription
-          period. The date of the next prolongation is <b>@m.end</b>.
+          period. The date of the next prolongation is <b>@m.until</b>.
         </p>
         <p>
           You can cancel your subscription any time. In this case your membership
-          will be valid till <b>@m.end</b>.</p>
+          will be valid till <b>@m.until</b>.</p>
         @dynamic(handler, "person", "edit") {
           <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
             data-target=".cancelModal">Cancel subscription</button>
@@ -85,7 +85,7 @@
                 <div class="modal-body">
                   <p>If you cancel your subscription you won't be able to turn it back on.
                     However this functionality will be available in the future.</p>
-                  <p>Your membership will be valid till <b>@m.end</b></p>
+                  <p>Your membership will be valid till <b>@m.until</b></p>
                 </div>
                 <div class="modal-footer">
                   <form method="post" action="@CSRF(routes.People.cancel(person.id.getOrElse(0)))">
@@ -104,7 +104,7 @@
           <p><i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</p>
           <p>It's not possible to turn your subscription on right now. We're working on it ;).</p>
         </div>
-        <p>Your membership ends <b>@m.end</b>.</p>
+        <p>Your membership ends <b>@m.until</b>.</p>
       }
     </div>
   </div>

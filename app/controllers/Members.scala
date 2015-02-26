@@ -59,7 +59,7 @@ trait Members extends Controller with Security with Services {
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
         verifying(
           "error.membership.tooLate",
-          _.isBefore(LocalDate.now().plusDays(1))),
+          _.isBefore(LocalDate.now().dayOfMonth().withMaximumValue().plusDays(2))),
       "end" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
@@ -79,7 +79,7 @@ trait Members extends Controller with Security with Services {
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val members = memberService.findAll
+      val members = memberService.findAll.filter(_.active)
       val fee = members.find(m ⇒
         m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
@@ -116,7 +116,7 @@ trait Members extends Controller with Security with Services {
           val m = member.
             copy(id = None).
             copy(objectId = 0).
-            copy(end = member.since.plusYears(1))
+            copy(until = member.since.plusYears(1))
           Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
@@ -151,7 +151,7 @@ trait Members extends Controller with Security with Services {
             val updMember = member.copy(id = m.id).
               copy(person = m.person).
               copy(objectId = m.objectId).
-              copy(end = m.end).update
+              copy(until = m.until).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert

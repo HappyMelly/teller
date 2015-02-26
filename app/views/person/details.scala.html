@@ -62,7 +62,9 @@
           }
         </div>
         @person.member.map { m =>
-          @element.funder(m)
+          @if(m.active) {
+            @element.funder(m)
+          }
         }
         <div class="panel">
           <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
