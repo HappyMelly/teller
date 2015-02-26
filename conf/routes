@@ -152,8 +152,8 @@ POST        /person/:id/cancel                                                  
 GET         /person/:id/licenses/new                                             controllers.Licenses.add(id: Long)
 POST        /person/:id/licenses/new                                             controllers.Licenses.create(id: Long)
 
-POST        /person/membership/new                                               controllers.People.addMembership
-GET         /person/:personId/membership/:organisationId/delete                  controllers.People.deleteMembership(page: String, personId: Long, organisationId: Long)
+POST        /person/relation/new                                                 controllers.People.addRelationship
+GET         /person/:personId/relation/:organisationId/delete                    controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
 GET         /products                                                            controllers.Products.index
 GET         /product/new                                                         controllers.Products.add

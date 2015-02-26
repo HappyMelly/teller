@@ -44,7 +44,7 @@ class PaymentSpec extends Specification {
       nl._2 must_== 50
       nl._3 must_== 100
     }
-    "be 20/40 for Ireland, Belgium, Italy" in {
+    "be 20/40/80 for Ireland, Belgium, Italy" in {
       val ie = Payment.countryBasedFees("IE")
       ie._1 must_== 20
       ie._2 must_== 40
@@ -58,7 +58,7 @@ class PaymentSpec extends Specification {
       it._2 must_== 40
       it._3 must_== 80
     }
-    "be 15/30 for New Zealand, Israel and Antigua and Barbuda" in {
+    "be 15/30/60 for New Zealand, Israel and Antigua and Barbuda" in {
       val nz = Payment.countryBasedFees("NZ")
       nz._1 must_== 15
       nz._2 must_== 30
@@ -72,7 +72,7 @@ class PaymentSpec extends Specification {
       ag._2 must_== 30
       ag._3 must_== 60
     }
-    "be 10/20 for Saint Kitts and Nevis, Jordan and Jamaica" in {
+    "be 10/20/40 for Saint Kitts and Nevis, Jordan and Jamaica" in {
       val kn = Payment.countryBasedFees("KN")
       kn._1 must_== 10
       kn._2 must_== 20
@@ -86,7 +86,7 @@ class PaymentSpec extends Specification {
       jm._2 must_== 20
       jm._3 must_== 40
     }
-    "be 5/10 for Ukraine, Barbados and Turks and Caicos Islands" in {
+    "be 5/10/20 for Ukraine, Barbados and Turks and Caicos Islands" in {
       val ua = Payment.countryBasedFees("UA")
       ua._1 must_== 5
       ua._2 must_== 10

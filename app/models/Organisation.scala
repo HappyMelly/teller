@@ -64,35 +64,35 @@ case class Organisation(
   dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
 
   /** Contains a list of people working in this organisation */
-  private var _members: Option[List[Person]] = None
+  private var _people: Option[List[Person]] = None
   private var _member: Option[Member] = None
 
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && members.isEmpty
+  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && people.isEmpty
 
   /**
-   * Sets a new list of members
-   * @param members Members
+   * Sets a new list of employees
+   * @param people New employees
    */
-  def members_=(members: List[Person]) = {
-    _members = Some(members)
+  def people_=(people: List[Person]) = {
+    _people = Some(people)
   }
 
   /**
    * Returns a list of people working in this organisation
    */
-  def members: List[Person] = _members getOrElse {
-    val members = DB.withSession { implicit session: Session ⇒
+  def people: List[Person] = _people getOrElse {
+    val people = DB.withSession { implicit session: Session ⇒
       val query = for {
-        membership ← OrganisationMemberships if membership.organisationId === this.id
-        person ← membership.person
+        relation ← OrganisationMemberships if relation.organisationId === this.id
+        person ← relation.person
       } yield person
       query.sortBy(_.lastName.toLowerCase).list
     }
-    members_=(members)
-    members
+    people_=(people)
+    people
   }
 
   /**

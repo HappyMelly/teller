@@ -84,7 +84,7 @@ case class Account(id: Option[Long] = None,
    * where the board members are ‘participants’ of the levy account.
    */
   def participants: Set[Person] = accountHolder match {
-    case organisation: Organisation ⇒ organisation.members.toSet
+    case organisation: Organisation ⇒ organisation.people.toSet
     case person: Person ⇒ Set(person)
     case Levy ⇒ Person.findBoardMembers
   }
@@ -99,7 +99,7 @@ case class Account(id: Option[Long] = None,
    */
   def editableBy(user: UserAccount) = {
     accountHolder match {
-      case organisation: Organisation ⇒ user.admin || organisation.members.map(_.id.get).contains(user.personId)
+      case organisation: Organisation ⇒ user.admin || organisation.people.map(_.id.get).contains(user.personId)
       case person: Person ⇒ user.admin || person.id.get == user.personId
       case Levy ⇒ user.admin
     }

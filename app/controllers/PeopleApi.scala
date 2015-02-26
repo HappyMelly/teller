@@ -89,7 +89,7 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
         "website" -> person.webSite,
         "blog" -> person.blog,
         "active" -> person.active,
-        "organizations" -> person.memberships,
+        "organizations" -> person.organisations,
         "licenses" -> person.licenses,
         "contributions" -> person.contributions)
     }

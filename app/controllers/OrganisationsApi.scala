@@ -60,7 +60,7 @@ object OrganisationsApi extends Controller with ApiAuthentication with Services 
         "vat_number" -> organisation.vatNumber,
         "registration_number" -> organisation.registrationNumber,
         "website" -> organisation.webSite,
-        "members" -> organisation.members,
+        "members" -> organisation.people,
         "contributions" -> organisation.contributions)
     }
   }

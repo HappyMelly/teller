@@ -143,9 +143,9 @@ class MembershipSpec extends PlayAppSpec {
     val org1 = OrganisationHelper.one.insert
     val org2 = OrganisationHelper.two.insert
     val org3 = OrganisationHelper.make(id = Some(3L), name = "Three").insert
-    person.addMembership(1L)
-    person.addMembership(2L)
-    person.addMembership(3L)
+    person.addRelation(1L)
+    person.addRelation(2L)
+    person.addRelation(3L)
     //the person and org3 are members
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
     MemberHelper.make(objectId = 3L, person = false, funder = false).insert
@@ -164,8 +164,8 @@ class MembershipSpec extends PlayAppSpec {
     val person = PersonHelper.one().insert
     val org1 = OrganisationHelper.one.insert
     val org2 = OrganisationHelper.two.insert
-    person.addMembership(1L)
-    person.addMembership(2L)
+    person.addRelation(1L)
+    person.addRelation(2L)
     //the person and all orgs are members
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
     MemberHelper.make(objectId = 1L, person = false, funder = false).insert
@@ -182,7 +182,7 @@ class MembershipSpec extends PlayAppSpec {
     truncateTables()
     val person = PersonHelper.one().insert
     val org1 = OrganisationHelper.one.insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
@@ -227,7 +227,7 @@ class MembershipSpec extends PlayAppSpec {
     (orgService.find _).expects(1L).returning(Some(org))
     controller.orgService_=(orgService)
     val person = PersonHelper.one().insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
@@ -245,7 +245,7 @@ class MembershipSpec extends PlayAppSpec {
     controller.orgService_=(orgService)
     // this person is from United Kingdom
     val person = PersonHelper.one().insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)

@@ -104,7 +104,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
     org.insert
-    org.members_=(List(PersonHelper.one()))
+    org.people_=(List(PersonHelper.one()))
 
     val controller = fakedController()
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
@@ -119,7 +119,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
     org.insert
-    org.members_=(List())
+    org.people_=(List())
     val controller = fakedController()
     val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(id).apply(req)
@@ -133,7 +133,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
     org.insert
-    org.members_=(List())
+    org.people_=(List())
     val controller = fakedController()
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(id).apply(req)
@@ -149,7 +149,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = false)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
@@ -167,7 +167,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
@@ -185,7 +185,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val payments = List(
       Record("remote1", 1L, 1L, person = false, "One Year Membership Fee", Money.parse("EUR 100")),
@@ -214,7 +214,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val payments = List(
       Record("remote1", 1L, 1L, person = false, "One Year Membership Fee", Money.parse("EUR 100")),
@@ -243,7 +243,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
@@ -264,8 +264,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     val person = PersonHelper.one().insert
-    person.addMembership(id)
-    org.members_=(List(person))
+    person.addRelation(id)
+    org.people_=(List(person))
 
     val controller = fakedController()
 
@@ -286,7 +286,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
       subscription = false)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
@@ -307,7 +307,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
       subscription = false)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
@@ -327,7 +327,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
-    org.members_=(List())
+    org.people_=(List())
 
     val controller = fakedController()
 
