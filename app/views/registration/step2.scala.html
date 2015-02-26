@@ -1,0 +1,28 @@
+@(user: UserIdentity,
+    form: Form[User])(implicit request: Request[Any], flash: Flash)
+
+@import helper.CSRF
+@import views.Countries
+@import views.ViewHelpers._
+
+@secure.unauthorized("Welcome") {
+  <div class="col-md-6 col-md-offset-3 text-center">
+    <h1>Become a Supporter</h1>
+    <div class="form-block text-left">
+      <legend>Step 2: Add Personal Data</legend>
+      @html.form(action = CSRF(routes.Registration.savePerson())) {
+        @html.text(form("firstName"), '_label -> "First name", '_help -> "")
+        @html.text(form("lastName"), '_label -> "Last name", '_help -> "")
+        @html.email(form("email"), '_label -> "E-mail address")
+        @html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+
+        <div class="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

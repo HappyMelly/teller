@@ -46,7 +46,7 @@ case class PaymentData(token: String,
 trait Membership extends Controller with Security with Services {
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
-  private def form = Form(mapping(
+  def form = Form(mapping(
     "token" -> nonEmptyText,
     "fee" -> number,
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))

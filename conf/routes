@@ -172,6 +172,7 @@ GET         /product/:productId/brand/:brandId/delete                           
 
 GET         /registration/step1                                                  controllers.Registration.step1
 GET         /registration/step2                                                  controllers.Registration.step2
+POST        /registration/save/person                                            controllers.Registration.savePerson
 GET         /registration/step3                                                  controllers.Registration.step3
 GET         /registration/authenticate/:provider                                 controllers.Registration.authenticate(provider)
 

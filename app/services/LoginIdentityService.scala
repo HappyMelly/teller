@@ -25,9 +25,11 @@
 package services
 
 import LoginIdentityService._
-import models.UserIdentity
+import models.{ Person, UserRole, UserAccount, UserIdentity }
 import models.service.UserIdentityService
 import play.api.{ Logger, Application }
+import play.api.cache.Cache
+import play.api.Play.current
 import play.api.libs.ws.{ Response, WS }
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
@@ -46,7 +48,15 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @return
    */
   def find(id: IdentityId): Option[UserIdentity] = {
-    UserIdentityService.get.findByUserId(id)
+    val identity: Option[UserIdentity] = Cache.getAs[UserIdentity](cacheId(id))
+    identity map { i ⇒
+      val account = new UserAccount(None, 0, "", None, None, None, None)
+      account.roles_=(List(UserRole.forName(UserRole.Role.Unregistered.toString)))
+      i.account_=(Some(account))
+      Some(i)
+    } getOrElse {
+      UserIdentityService.get.findByUserId(id)
+    }
   }
 
   def save(user: Identity) = {
@@ -67,9 +77,10 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
         throw new AccessDeniedException
       }
     } catch {
-      case e: NoSuchElementException ⇒ {
-        throw new AccessDeniedException
-      }
+      case e: NoSuchElementException ⇒
+        val id = cacheId(loginIdentity.identityId)
+        Cache.set(id, loginIdentity, 600)
+        loginIdentity
     }
   }
 
@@ -79,6 +90,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   def findToken(token: String) = None
   def deleteToken(uuid: String) {}
   def deleteExpiredTokens() {}
+
+  /**
+   * Returns cache identifier for IdentityId object
+   * @param id IdentityId object
+   */
+  private def cacheId(id: IdentityId): String = {
+    id.providerId + "_" + id.userId
+  }
 
   /**
    * Returns the Facebook profile URL for the Secure Social identity being used to log in, or throws an authentication error.

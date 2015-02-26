@@ -24,14 +24,31 @@
 
 package controllers
 
+import models.{ Address, DateStamp, Photo, Person }
+import models.UserRole.Role._
+import models.payment.Payment
 import models.service.Services
+import org.joda.time.DateTime
+import play.api.Play
+import play.api.Play.current
+import play.api.cache.Cache
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.mvc._
-import securesocial.core.SecureSocial
+import securesocial.core.{ IdentityId, SecureSocial }
+
+case class User(firstName: String, lastName: String, email: String, country: String)
 
 /**
  * Contains actions for a registration process
  */
-class Registration extends Controller with Security with Services {
+trait Registration extends Controller with Security with Services {
+
+  private def userForm = Form(mapping(
+    "firstName" -> nonEmptyText,
+    "lastName" -> nonEmptyText,
+    "email" -> email,
+    "country" -> nonEmptyText)(User.apply)(User.unapply))
 
   /**
    * The authentication flow for all providers starts here.
@@ -42,7 +59,8 @@ class Registration extends Controller with Security with Services {
     val session = request.session -
       SecureSocial.OriginalUrlKey +
       (SecureSocial.OriginalUrlKey -> routes.Registration.step2.url)
-    Redirect("/authenticate/" + provider).withSession(session)
+    val route = securesocial.controllers.routes.ProviderController.authenticate(provider)
+    Redirect(route).withSession(session)
   }
 
   /**
@@ -56,16 +74,56 @@ class Registration extends Controller with Security with Services {
    * Renders step 2 page of the registration process
    * @return
    */
-  def step2 = Action { implicit request ⇒
-    Ok(views.html.registration.step1())
+  def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.registration.step2(user, userForm))
   }
 
+  /**
+   * Saves new person to cache
+   */
+  def savePerson = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      userForm.bindFromRequest.fold(
+        hasErrors ⇒ {
+          Ok(views.html.registration.step2(user, hasErrors))
+        },
+        p ⇒ {
+          val id = personCacheId(user.identityId)
+          Cache.set(id, p, 900)
+          Redirect(routes.Registration.step3())
+        })
+  }
   /**
    * Renders step 3 page of the registration process
    * @return
    */
-  def step3 = Action { implicit request ⇒
-    Ok(views.html.registration.step1())
+  def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val publicKey = Play.configuration.getString("stripe.public_key").get
+      Cache.getAs[User](personCacheId(user.identityId)) map { u ⇒
+        val photo = new Photo(None, None)
+        val dateStamp = new DateStamp(DateTime.now(), "", DateTime.now(), "")
+        val person = new Person(None, u.firstName, u.lastName, None, photo,
+          false, 0, None, None, webSite = None, blog = None,
+          dateStamp = dateStamp)
+        val address = new Address(countryCode = u.country)
+        person.address_=(address)
+
+        val code = u.country
+        val fee = Payment.countryBasedFees(code)
+        Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
+      } getOrElse {
+        Ok("Shit")
+      }
+  }
+
+  /**
+   * Returns an unique cache id for a person object of current user
+   * @param id Identity object
+   */
+  private def personCacheId(id: IdentityId): String = {
+    "user_" + id.userId
   }
 }
 
