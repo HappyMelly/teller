@@ -25,13 +25,13 @@
 package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
-import models.database.Organisations._
-import models.service.{ Services, MemberService, OrganisationService, ContributionService }
+import models.service.{ ContributionService, MemberService, OrganisationService, Services }
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
+
 import scala.slick.lifted.Query
 
 /**
@@ -128,7 +128,7 @@ case class Organisation(
    * Returns a list of this organisation's contributions.
    */
   lazy val contributions: List[ContributionView] = {
-    ContributionService.get.contributions(this.id.get, isPerson = false)
+    contributionService.contributions(this.id.get, isPerson = false)
   }
 
   /**

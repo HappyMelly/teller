@@ -13,10 +13,6 @@
   <div class="col-md-12">
     <div class="col-md-4 block">
         Member status:
-        @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.Members.edit(m.id.getOrElse(0))">
-            <i class="glyphicon glyphicon-pencil"></i></a>
-        }
         @if(m.funder) {
           <h2>Funder</h2>
         } else {
@@ -107,5 +103,8 @@
         <p>Your membership ends <b>@m.until</b>.</p>
       }
     </div>
+    @restrict(handler, List(as(Editor.toString))) {
+      @views.html.element.administration(m)
+    }
   </div>
 }

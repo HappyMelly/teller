@@ -93,6 +93,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   Editor should
     be able to update membership data                              $e26
+    be able to delete a membership from the existing member        $e27
   """
 
   val controller = new TestMembers()
@@ -491,6 +492,21 @@ class MembersSpec extends PlayAppSpec with DataTables {
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location") map { loc ⇒
       loc must_== "/person/" + m.id.get.toString
+    } getOrElse failure
+  }
+
+  def e27 = new MockContext {
+    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val memberService = mock[FakeMemberService]
+    val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
+    (memberService.find(_, _)).expects(1L, false).returning(Some(member))
+    (memberService.delete(_, _)).expects(2L, true)
+    controller.memberService_=(memberService)
+
+    val result: Future[SimpleResult] = controller.delete(1L).apply(req)
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location") map { loc ⇒
+      loc must_== "/person/2"
     } getOrElse failure
   }
 

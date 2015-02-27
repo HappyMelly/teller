@@ -98,6 +98,10 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     return 'Not found' if an org does not exists                            $e13
     return an error if an org is not a member                               $e14
     return an error if there is not subscription                            $e15
+
+  'Edit Membership' and 'Delete Membership' buttons should
+    not be visible to Viewers                                               $e16
+    be visible to Editors                                                   $e17
   """
 
   def e1 = new ExtendedNonMemberMockContext {
@@ -379,6 +383,46 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/organization/1"))
+  }
+
+  def e16 = new ExtendedMemberMockContext {
+    // we insert a org object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    org.insert
+    val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
+    org.member_=(member)
+    org.people_=(List())
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Edit Membership"
+    contentAsString(result) must not contain "member/1/edit"
+    contentAsString(result) must not contain "Delete Membership"
+    contentAsString(result) must not contain "member/1/delete"
+  }
+
+  def e17 = new ExtendedMemberMockContext {
+    // we insert a org object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    org.insert
+    val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
+    org.member_=(member)
+    org.people_=(List())
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Edit Membership")
+    contentAsString(result) must contain("member/1/edit")
+    contentAsString(result) must contain("Delete Membership")
+    contentAsString(result) must contain("member/1/delete")
   }
 
   private def fakedController(): TestOrganisations = {

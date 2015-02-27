@@ -165,6 +165,24 @@ trait Members extends Controller with Security with Services {
       } getOrElse NotFound
   }
 
+  /**
+   * Removes a membership of the given member
+   * @param id Member id
+   */
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      memberService.find(id, withObject = false) map { m ⇒
+        memberService.delete(m.objectId, m.person)
+        val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
+        val url: String = if (m.person) {
+          routes.People.details(m.objectId).url
+        } else {
+          routes.Organisations.details(m.objectId).url
+        }
+        Redirect(url).flashing("success" -> activty.toString)
+      } getOrElse NotFound
+  }
+
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒

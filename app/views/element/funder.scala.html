@@ -1,15 +1,7 @@
 @(m: Member)(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-
 <div class="panel panel-success">
-  @restrict(handler, List(as(Editor.toString))) {
-    <a href="@routes.Members.edit(m.id.get)">
-      <i class="glyphicon glyphicon-pencil"></i></a>
-  }
   <div class="panel-body">
     @if(m.funder) {
       <h2>Funder</h2>

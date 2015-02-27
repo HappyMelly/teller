@@ -108,6 +108,7 @@ POST        /member/existing/person/                                            
 GET         /member/:id                                                          controllers.Members.details(id: Long)
 GET         /member/:id/edit                                                     controllers.Members.edit(id: Long)
 POST        /member/:id                                                          controllers.Members.update(id: Long)
+POST        /member/:id/delete                                                   controllers.Members.delete(id: Long)
 
 GET         /membership/welcome                                                  controllers.Membership.welcome
 GET         /membership/payment                                                  controllers.Membership.payment(orgId: Option[Long] ?= None)
