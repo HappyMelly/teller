@@ -25,13 +25,13 @@
 package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
-import models.database.Organisations._
-import models.service.{ Services, MemberService, OrganisationService, ContributionService }
+import models.service.{ ContributionService, MemberService, OrganisationService, Services }
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
+
 import scala.slick.lifted.Query
 
 /**
@@ -64,35 +64,35 @@ case class Organisation(
   dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
 
   /** Contains a list of people working in this organisation */
-  private var _members: Option[List[Person]] = None
+  private var _people: Option[List[Person]] = None
   private var _member: Option[Member] = None
 
   /**
    * Returns true if this person may be deleted.
    */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && members.isEmpty
+  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && people.isEmpty
 
   /**
-   * Sets a new list of members
-   * @param members Members
+   * Sets a new list of employees
+   * @param people New employees
    */
-  def members_=(members: List[Person]) = {
-    _members = Some(members)
+  def people_=(people: List[Person]) = {
+    _people = Some(people)
   }
 
   /**
    * Returns a list of people working in this organisation
    */
-  def members: List[Person] = _members getOrElse {
-    val members = DB.withSession { implicit session: Session ⇒
+  def people: List[Person] = _people getOrElse {
+    val people = DB.withSession { implicit session: Session ⇒
       val query = for {
-        membership ← OrganisationMemberships if membership.organisationId === this.id
-        person ← membership.person
+        relation ← OrganisationMemberships if relation.organisationId === this.id
+        person ← relation.person
       } yield person
       query.sortBy(_.lastName.toLowerCase).list
     }
-    members_=(members)
-    members
+    people_=(people)
+    people
   }
 
   /**
@@ -119,7 +119,7 @@ case class Organisation(
   def becomeMember(funder: Boolean, fee: Money, userId: Long): Member = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       subscription = true, since = LocalDate.now(),
-      end = LocalDate.now().plusYears(1), existingObject = true,
+      until = LocalDate.now().plusYears(1), existingObject = true,
       created = DateTime.now(), userId, DateTime.now(), userId)
     memberService.insert(m)
   }
@@ -128,7 +128,7 @@ case class Organisation(
    * Returns a list of this organisation's contributions.
    */
   lazy val contributions: List[ContributionView] = {
-    ContributionService.get.contributions(this.id.get, isPerson = false)
+    contributionService.contributions(this.id.get, isPerson = false)
   }
 
   /**

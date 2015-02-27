@@ -13,13 +13,13 @@
 } else {
     @views.html.organisation.table(organisations) { organisation =>
         @restrict(handler, List(as(Editor.toString))) {
-            <a href="@routes.People.deleteMembership("person", person.id.get, organisation.id.get)">
-                <i class="glyphicon glyphicon-pencil"></i> Remove membership</a>
+            <a href="@routes.People.deleteRelationship("person", person.id.get, organisation.id.get)">
+                <i class="glyphicon glyphicon-pencil"></i> Remove relation</a>
         }
     }
 }
 @restrict(handler, List(as(Editor.toString))) {
-    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addMembership())">
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addRelationship())">
         <p>
             <input type="hidden" name="page" value="person">
             <input type="hidden" name="personId" value="@person.id.get">
@@ -29,7 +29,7 @@
             }
             </select>
             <button class="btn btn-success btn-sm">
-                <i class="glyphicon glyphicon-plus"></i>Add Membership</button>
+                <i class="glyphicon glyphicon-plus"></i>Add Relation</button>
         </p>
     </form>
 }

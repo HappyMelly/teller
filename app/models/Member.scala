@@ -35,7 +35,7 @@ case class Member(
   fee: Money,
   subscription: Boolean = true,
   since: LocalDate,
-  end: LocalDate,
+  until: LocalDate,
   existingObject: Boolean,
   created: DateTime,
   createdBy: Long,
@@ -43,6 +43,12 @@ case class Member(
   updatedBy: Long) extends Services with ActivityRecorder {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
+
+  /** Returns true if membership starts before current date and ends after */
+  lazy val active: Boolean = {
+    val now = LocalDate.now()
+    (since.isBefore(now) || since.isEqual(now)) && (until.isAfter(now) || until.isEqual(now))
+  }
 
   /**
    * Returns identifier of the object

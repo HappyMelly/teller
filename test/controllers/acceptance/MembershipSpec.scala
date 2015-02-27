@@ -51,8 +51,8 @@ class MembershipSpec extends PlayAppSpec {
     not exist for a funder                                 $e5
 
   A payer should
-    not be charged if she is already a member              $e6
-    see minimum and suggested fees on the payment form     $e7
+    not be charged if she is already a member                   $e6
+    see minimum, regular and elite fees on the payment form     $e7
 
   On welcome page the block 'My org wants to be a Supporter' should
     contain a list of non-member orgs where the user works            $e8
@@ -65,7 +65,7 @@ class MembershipSpec extends PlayAppSpec {
 
   A payer on behalf of the org should should
     see 'Make My Organisation a Supporter'                            $e13
-    see minimum and suggested fees for the org                        $e14
+    see minimum, regular and elite fees for the org                   $e14
   """
 
   val controller = new TestMembership()
@@ -131,8 +131,9 @@ class MembershipSpec extends PlayAppSpec {
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.payment(None).apply(req)
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("minimum fee is <b>EUR 20</b>")
-    contentAsString(result) must contain("suggested fee is <b>EUR 40</b>")
+    contentAsString(result) must contain("the minimum fee is <b>EUR 20</b>")
+    contentAsString(result) must contain("the regular fee is <b>EUR 40</b>")
+    contentAsString(result) must contain("the elite fee is <b>EUR 80</b>")
     contentAsString(result) must contain("You are from United Kingdom")
   }
 
@@ -142,9 +143,9 @@ class MembershipSpec extends PlayAppSpec {
     val org1 = OrganisationHelper.one.insert
     val org2 = OrganisationHelper.two.insert
     val org3 = OrganisationHelper.make(id = Some(3L), name = "Three").insert
-    person.addMembership(1L)
-    person.addMembership(2L)
-    person.addMembership(3L)
+    person.addRelation(1L)
+    person.addRelation(2L)
+    person.addRelation(3L)
     //the person and org3 are members
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
     MemberHelper.make(objectId = 3L, person = false, funder = false).insert
@@ -163,8 +164,8 @@ class MembershipSpec extends PlayAppSpec {
     val person = PersonHelper.one().insert
     val org1 = OrganisationHelper.one.insert
     val org2 = OrganisationHelper.two.insert
-    person.addMembership(1L)
-    person.addMembership(2L)
+    person.addRelation(1L)
+    person.addRelation(2L)
     //the person and all orgs are members
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
     MemberHelper.make(objectId = 1L, person = false, funder = false).insert
@@ -181,7 +182,7 @@ class MembershipSpec extends PlayAppSpec {
     truncateTables()
     val person = PersonHelper.one().insert
     val org1 = OrganisationHelper.one.insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
@@ -226,7 +227,7 @@ class MembershipSpec extends PlayAppSpec {
     (orgService.find _).expects(1L).returning(Some(org))
     controller.orgService_=(orgService)
     val person = PersonHelper.one().insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
@@ -244,7 +245,7 @@ class MembershipSpec extends PlayAppSpec {
     controller.orgService_=(orgService)
     // this person is from United Kingdom
     val person = PersonHelper.one().insert
-    person.addMembership(1L)
+    person.addRelation(1L)
 
     val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
@@ -252,8 +253,9 @@ class MembershipSpec extends PlayAppSpec {
     status(result) must equalTo(OK)
     contentAsString(result) must contain("One is from Netherlands")
     contentAsString(result) must not contain "You are from United Kingdom"
-    contentAsString(result) must contain("minimum fee is <b>EUR 25</b>")
-    contentAsString(result) must contain("suggested fee is <b>EUR 50</b>")
+    contentAsString(result) must contain("the minimum fee is <b>EUR 25</b>")
+    contentAsString(result) must contain("the regular fee is <b>EUR 50</b>")
+    contentAsString(result) must contain("the elite fee is <b>EUR 100</b>")
     contentAsString(result) must contain("<input type=\"hidden\" name=\"orgId\" value=\"1\"/>")
   }
 }

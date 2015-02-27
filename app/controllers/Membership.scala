@@ -58,7 +58,7 @@ trait Membership extends Controller with Security with Services {
    */
   def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val orgs = user.person.memberships.filter(_.member.isEmpty)
+      val orgs = user.person.organisations.filter(_.member.isEmpty)
       Ok(views.html.membership.welcome(user, orgs))
   }
 
@@ -85,7 +85,7 @@ trait Membership extends Controller with Security with Services {
         val publicKey = Play.configuration.getString("stripe.public_key").get
         orgId map { id ⇒
           orgService.find(id) map { org ⇒
-            if (user.person.memberships.exists(_.id == org.id)) {
+            if (user.person.organisations.exists(_.id == org.id)) {
               val fee = Payment.countryBasedFees(org.countryCode)
               Ok(views.html.membership.payment(user, form, publicKey, fee, Some(org)))
             } else {
@@ -173,7 +173,7 @@ trait Membership extends Controller with Security with Services {
       if (organisation.get.member.nonEmpty) {
         throw new ValidationException("error.organisation.member")
       }
-      if (!person.memberships.exists(_.id == Some(orgId))) {
+      if (!person.organisations.exists(_.id == Some(orgId))) {
         throw new ValidationException("error.person.notOrgMember")
       }
     }

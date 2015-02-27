@@ -1,7 +1,7 @@
 @(user: UserIdentity,
     form: Form[PaymentData],
     apiKey: String,
-    fee: (Int, Int),
+    fee: (Int, Int, Int),
     org: Option[Organisation] = None)(implicit request: Request[Any],
     handler: AuthorisationHandler,
     flash: Flash)
@@ -28,8 +28,8 @@
     }
     <div class="row">
       <p class="payment-bottom-space">
-      To be a Happy Melly Supporter all you need is to pay a small yearly
-      membership fee. The minimum fee amount depends on the country you live in.
+        To be a Happy Melly Supporter, all you need is to do is pay a small annual membership fee.
+        The minimum fee amount depends on the country you live in.
       </p>
       <form class="form-inline payment-bottom-space" action="@CSRF(routes.Membership.charge())"
         method="POST" id="payment-form" autocomplete="on">
@@ -47,7 +47,7 @@
               <div class="input-group">
                 <label class="input-group-addon">EUR</label>
                 <input class="form-control" name="@form("fee").name" id="@form("fee").id"
-                  type="number" min="@fee._1.toString" placeholder="@fee._2.toString"
+                  type="number" min="@fee._1" placeholder="@fee._2"
                   step="1" value="@form("fee").value" data-tax="@Payment.TAX_PERCENT_AMOUNT">
               </div>
               @if(form("fee").hasErrors) {
@@ -62,13 +62,13 @@
           <div class="pull-right text-muted">
             @org.map { organisation =>
               <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
-              For this country minimum fee is <b>EUR @fee._1.toString</b>
-                and suggested fee is <b>EUR @fee._2.toString</b>.
+              For this country the minimum fee is <b>EUR @fee._1</b>,
+                the regular fee is <b>EUR @fee._2</b> and the elite fee is <b>EUR @fee._3</b>.
               </p>
             }.getOrElse {
               <p>You are from @Countries.all.toMap.get(user.person.address.countryCode).
-                For your country minimum fee is <b>EUR @fee._1.toString</b>
-                and suggested fee is <b>EUR @fee._2.toString</b>.
+                For your country the minimum fee is <b>EUR @fee._1.toString</b>,
+                the regular fee is <b>EUR @fee._2</b> and the elite fee is <b>EUR @fee._3</b>.
               </p>
             }
             <p>If you want to know more about Happy Melly membership fees click
@@ -124,7 +124,7 @@
             Amount to pay:
             <div id="amount">
               <div class="amount">&euro; <span>0.00</span></div>
-              (incl. tax &euro; <span>0.00</span>)
+              (incl. @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span>0.00</span>)
             </div>
           </div>
           <div class="col-md-4">

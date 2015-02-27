@@ -93,6 +93,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   Editor should
     be able to update membership data                              $e26
+    be able to delete a membership from the existing member        $e27
   """
 
   val controller = new TestMembers()
@@ -167,11 +168,17 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e8 = {
     val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
-    val uReq = addMemberData(req, since = LocalDate.now().plusDays(3).toString)
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
 
-    status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Membership date cannot be later than today")
+    val now = LocalDate.now()
+    val firstDay = now.dayOfMonth().withMaximumValue().plusDays(1)
+
+    val req1 = addMemberData(req, since = firstDay.plusDays(3).toString)
+    val result1: Future[SimpleResult] = controller.create().apply(req1)
+    status(result1) must equalTo(BAD_REQUEST)
+    contentAsString(result1) must contain("Membership date cannot be later than the first day of the next month")
+    val req2 = addMemberData(req, since = firstDay.toString)
+    val result2: Future[SimpleResult] = controller.create().apply(req2)
+    status(result2) must equalTo(SEE_OTHER)
   }
 
   def e9 = new cleanup {
@@ -485,6 +492,21 @@ class MembersSpec extends PlayAppSpec with DataTables {
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location") map { loc ⇒
       loc must_== "/person/" + m.id.get.toString
+    } getOrElse failure
+  }
+
+  def e27 = new MockContext {
+    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val memberService = mock[FakeMemberService]
+    val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
+    (memberService.find(_, _)).expects(1L, false).returning(Some(member))
+    (memberService.delete(_, _)).expects(2L, true)
+    controller.memberService_=(memberService)
+
+    val result: Future[SimpleResult] = controller.delete(1L).apply(req)
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location") map { loc ⇒
+      loc must_== "/person/2"
     } getOrElse failure
   }
 

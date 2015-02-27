@@ -74,6 +74,11 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   Add existing person form should
     not be accessible to Viewers                         $e22
     be accessible to Editors                             $e23
+
+  Delete action should
+    not be accessible to Viewers                         $e24
+    be accessible to Editors                             $e25
+
   """
 
   val controller = new TestMembers()
@@ -214,6 +219,25 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add member")
     contentAsString(result) must contain("Step 2: Existing person")
+  }
+
+  def e24 = {
+    val req = prepareSecuredPostRequest(StubUserIdentity.viewer, "/")
+    val result: Future[SimpleResult] = controller.delete(1L).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+    header("Location", result) must beSome("/")
+  }
+
+  def e25 = new MockContext {
+    val memberService = mock[FakeMemberService]
+    // the existance of call itself proves that the authentication passed
+    (memberService.find(_, _)).expects(1L, false).returning(None)
+    controller.memberService_=(memberService)
+    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val result: Future[SimpleResult] = controller.delete(1L).apply(req)
+
+    status(result) must equalTo(NOT_FOUND)
   }
 }
 

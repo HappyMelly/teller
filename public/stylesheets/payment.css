@@ -24,8 +24,14 @@
 .welcome .info-block {
     min-height: 130px;
 }
+.welcome .right .info-block {
+    min-height: 87px;
+}
 .welcome .button-block {
     min-height: 130px;
+}
+.welcome .right .button-block {
+    min-height: 87px;
 }
 .welcome .button-block .button-line {
     position: absolute;

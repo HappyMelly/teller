@@ -80,6 +80,10 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     return 'Not found' if a person does not exists                       $e16
     return an error if a person is not a member                          $e17
     return an error if there is not subscription                         $e18
+
+  'Edit Membership' and 'Delete Membership' buttons should
+    not be visible to Viewers                                            $e19
+    be visible to Editors                                                $e20
   """
 
   val personService = mock[FakePersonService]
@@ -456,6 +460,44 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/person/1"))
+  }
+
+  def e19 = new ViewerMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must not contain "Edit Membership"
+    contentAsString(result) must not contain "member/1/edit"
+    contentAsString(result) must not contain "Delete Membership"
+    contentAsString(result) must not contain "member/1/delete"
+  }
+
+  def e20 = new EditorMockContext {
+    // we insert a person object here to prevent crashing on account retrieval
+    // when @person.deletable is called
+    person.insert
+    val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
+    person.member_=(member)
+
+    val controller = fakedController()
+
+    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
+
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Edit Membership")
+    contentAsString(result) must contain("member/1/edit")
+    contentAsString(result) must contain("Delete Membership")
+    contentAsString(result) must contain("member/1/delete")
   }
 
   private def fakedController() = {

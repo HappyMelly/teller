@@ -25,6 +25,7 @@ package models.unit
 
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.Activity
+import org.joda.time.LocalDate
 import org.specs2.mutable._
 
 class MemberSpec extends Specification {
@@ -53,6 +54,24 @@ class MemberSpec extends Specification {
       member2.objectType must_== Activity.Type.Member
       member2.identifier must_== 2
       member2.humanIdentifier must_== ""
+    }
+    "be active during the time of his membership" in {
+      val now = LocalDate.now()
+      val m = MemberHelper.make(None, 0, person = true, funder = true,
+        since = Some(now.minusDays(4)), until = Some(now.plusDays(10)))
+      m.active must_== true
+      val m2 = m.copy(since = now)
+      m2.active must_== true
+      val m3 = m2.copy(until = now)
+      m3.active must_== true
+    }
+    "be inactive before or after the time of her membership" in {
+      val now = LocalDate.now()
+      val m = MemberHelper.make(None, 0, person = true, funder = true,
+        since = Some(now.plusDays(4)), until = Some(now.plusDays(10)))
+      m.active must_== false
+      val m2 = m.copy(since = now.minusDays(4), until = now.minusDays(2))
+      m2.active must_== false
     }
   }
 
