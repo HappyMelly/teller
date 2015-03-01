@@ -3,7 +3,7 @@
     handler: AuthorisationHandler,
     flash: Flash)
 
-@main("Congratulations", "membership", user) {
+@main("Congratulations", "membership", user, false) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
 
   <div class="congratulation">

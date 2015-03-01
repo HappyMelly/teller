@@ -10,7 +10,7 @@
 @import models.payment.Payment
 @import views.Countries
 
-@main("Payment", "membership", user) {
+@main("Payment", "membership", user, false) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
   <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
   <script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
