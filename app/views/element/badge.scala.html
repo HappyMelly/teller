@@ -1,0 +1,36 @@
+@(member: Member)(implicit request: Request[Any])
+
+<div class="col-md-12 block">
+  <script src="@routes.Assets.at("element/badge.js")" type="text/javascript"></script>
+  <legend>Badge</legend>
+  <div class="row">
+    <div class="col-md-3">
+      <div class="list-group" id="badge-selector">
+        <a href="#" data-value="pink" class="list-group-item">
+          <img src="@routes.Assets.at("images/badges/pink.png")" width="40px"/>
+          <b>Pink</b>
+        </a>
+        <a href="#" data-value="yellow" class="list-group-item">
+          <img src="@routes.Assets.at("images/badges/yellow.png")" width="40px"/>
+          <b>Yellow</b>
+        </a>
+        <a href="#" data-value="grey" class="list-group-item">
+          <img src="@routes.Assets.at("images/badges/grey.png")" width="40px"/>
+          <b>Grey</b>
+        </a>
+        <a href="#" data-value="green" class="list-group-item">
+          <img src="@routes.Assets.at("images/badges/green.png")" width="40px"/>
+          <b>Green</b>
+        </a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <img data-src="@routes.Assets.at("images/badges/")" id="badge-picture"
+      src="@routes.Assets.at("images/badges/pink.png")"/>
+    </div>
+    <div class="col-md-5 form-group">
+      <label>Copy the code</label>
+      <textarea class="form-control" cols="30" rows="5" id="badge-code" data-src="http://bit.ly/hm_badge_"><a href="http://happymelly.com/members#@member.id.get" target="_blank"><img src="http://bit.ly/hm_badge_pink"/></a></textarea>
+    </div>
+  </div>
+</div>
