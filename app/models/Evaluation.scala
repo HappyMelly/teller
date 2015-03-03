@@ -30,7 +30,7 @@ import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.EmailSender
+import services.notifiers.Email
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -62,7 +62,7 @@ case class Evaluation(
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends EmailSender with ActivityRecorder {
+  updatedBy: String) extends Email with ActivityRecorder {
 
   lazy val event: Event = EventService.get.find(eventId).get
 

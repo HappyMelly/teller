@@ -16,3 +16,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.2.1")
 addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "0.1.4")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.1")
+
+addSbtPlugin("com.orrsella" % "sbt-sublime" % "1.0.9")

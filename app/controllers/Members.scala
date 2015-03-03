@@ -27,8 +27,10 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
 import models.{ Activity, Member }
+import services.notifiers.Notifiers
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
@@ -37,7 +39,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Controller with Security with Services {
+trait Members extends Controller with Security with Services with Notifiers {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -228,8 +230,10 @@ trait Members extends Controller with Security with Services {
                 user.person,
                 Activity.Predicate.Made,
                 Some(org)).insert
-              Redirect(routes.Organisations.details(org.id.get)).
-                flashing("success" -> activity.toString)
+              val profileUrl = routes.Organisations.details(org.id.get).url
+              val text = slackMessage(member, org.name, profileUrl)
+              slack.send(text)
+              Redirect(profileUrl).flashing("success" -> activity.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.newOrg(user, None, orgForm))
@@ -255,8 +259,10 @@ trait Members extends Controller with Security with Services {
               user.person,
               Activity.Predicate.Made,
               Some(person)).insert
-            Redirect(routes.People.details(person.id.get)).
-              flashing("success" -> activity.toString)
+            val profileUrl = routes.People.details(person.id.get).url
+            val text = slackMessage(member, person.fullName, profileUrl)
+            slack.send(text)
+            Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
             BadRequest(views.html.member.newPerson(user, None, personForm))
@@ -290,8 +296,10 @@ trait Members extends Controller with Security with Services {
                     user.person,
                     Activity.Predicate.Made,
                     Some(person)).insert
-                  Redirect(routes.People.details(id)).
-                    flashing("success" -> activity.toString)
+                  val profileUrl = routes.People.details(person.id.get).url
+                  val text = slackMessage(member, person.fullName, profileUrl)
+                  slack.send(text)
+                  Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
@@ -333,8 +341,10 @@ trait Members extends Controller with Security with Services {
                     user.person,
                     Activity.Predicate.Made,
                     Some(org)).insert
-                  Redirect(routes.Organisations.details(id)).
-                    flashing("success" -> activity.toString)
+                  val profileUrl = routes.Organisations.details(org.id.get).url
+                  val text = slackMessage(member, org.name, profileUrl)
+                  slack.send(text)
+                  Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
@@ -351,6 +361,18 @@ trait Members extends Controller with Security with Services {
           })
   }
 
+  /**
+   * Returns a well-formed Slack notification message
+   * @param member Member object
+   * @param name Name of a new member either an organisation or a person
+   * @param url Profile url
+   */
+  protected def slackMessage(member: Member, name: String, url: String): String = {
+    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+    val typeName = if (member.funder) "Funder" else "Supporter"
+    "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
+      typeName, name, member.fee.toString, fullUrl)
+  }
   /** Returns ids and names of organisations which are not members */
   private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))

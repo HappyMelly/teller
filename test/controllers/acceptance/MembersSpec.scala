@@ -40,13 +40,17 @@ import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
 import stubs._
+import stubs.services.FakeNotifiers
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
 import scala.slick.session.Session
 
 class MembersSpec extends PlayAppSpec with DataTables {
-  class TestMembers() extends Members with Security with FakeServices
+  class TestMembers() extends Members
+    with Security
+    with FakeServices
+    with FakeNotifiers
 
   def setupDb() {}
   def cleanupDb() {}

@@ -39,12 +39,13 @@ import play.api.Logger
 import play.api.libs.json._
 import play.api.Play
 import play.api.Play.current
+import services.notifiers.Notifiers
 
 case class PaymentData(token: String,
   fee: Int,
   orgId: Option[Long] = None) {}
 
-trait Membership extends Controller with Security with Services {
+trait Membership extends Controller with Security with Services with Notifiers {
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
   private def form = Form(mapping(
@@ -131,9 +132,22 @@ trait Membership extends Controller with Security with Services {
               user.person.copy(customerId = Some(customerId)).update
               user.person.becomeMember(funder = false, fee)
             }
+            val url = org map { o ⇒
+              routes.Organisations.details(o.id.get).url
+            } getOrElse {
+              routes.People.details(user.person.id.get).url
+            }
+            val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+            val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+              org map { o ⇒ o.name } getOrElse { user.person.fullName },
+              fee.toString,
+              fullUrl)
+            slack.send(text)
+
             member.activity(
               user.person,
               Activity.Predicate.BecameSupporter).insert
+
             Ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
           } catch {
             case e: PaymentException ⇒

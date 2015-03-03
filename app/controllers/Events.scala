@@ -37,12 +37,12 @@ import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
-import services.EmailSender
+import services.notifiers.Notifiers
 
 object Events extends Controller
   with Security
   with Services
-  with EmailSender {
+  with Notifiers {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -174,7 +174,7 @@ object Events extends Controller
   def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
-    send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
+    email.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
   }
 
   /**
@@ -533,7 +533,7 @@ object Events extends Controller
                 val participant = PersonService.get.find(id).get
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
-                send(Set(participant), None, None, subject,
+                email.send(Set(participant), None, None, subject,
                   mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
               }
 

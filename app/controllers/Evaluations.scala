@@ -31,9 +31,9 @@ import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json.Json
-import services.EmailSender
+import services.notifiers.Notifiers
 
-object Evaluations extends EvaluationsController with Security with EmailSender {
+object Evaluations extends EvaluationsController with Security with Notifiers {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -271,7 +271,7 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
         val brand = Brand.find(existingEvaluation.event.brandCode).get
         val participant = existingEvaluation.participant
         val subject = s"Your ${brand.brand.name} certificate"
-        send(Set(participant),
+        email.send(Set(participant),
           Some(existingEvaluation.event.facilitators.toSet),
           Some(Set(brand.coordinator)), subject,
           mail.html.rejected(brand.brand, participant, user.person).toString(),
