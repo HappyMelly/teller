@@ -157,11 +157,7 @@ trait Members extends Controller with Security with Services with Notifiers {
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
-            val url: String = if (updMember.person) {
-              routes.People.details(updMember.objectId).url
-            } else {
-              routes.Organisations.details(updMember.objectId).url
-            }
+            val url = profileUrl(updMember)
             Redirect(url).flashing("success" -> activity.toString)
           })
       } getOrElse NotFound
@@ -173,14 +169,13 @@ trait Members extends Controller with Security with Services with Notifiers {
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = false) map { m ⇒
+      memberService.find(id, withObject = true) map { m ⇒
         memberService.delete(m.objectId, m.person)
         val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
-        val url: String = if (m.person) {
-          routes.People.details(m.objectId).url
-        } else {
-          routes.Organisations.details(m.objectId).url
-        }
+        val url = profileUrl(m)
+        val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
+          m.name, fullUrl(url))
+        slack.send(msg)
         Redirect(url).flashing("success" -> activty.toString)
       } getOrElse NotFound
   }
@@ -362,17 +357,36 @@ trait Members extends Controller with Security with Services with Notifiers {
   }
 
   /**
+   * Return profile url based on what member is: person or organisation
+   * @param member Member object
+   */
+  protected def profileUrl(member: Member): String = {
+    if (member.person)
+      routes.People.details(member.objectId).url
+    else
+      routes.Organisations.details(member.objectId).url
+  }
+
+  /**
    * Returns a well-formed Slack notification message
    * @param member Member object
    * @param name Name of a new member either an organisation or a person
    * @param url Profile url
    */
   protected def slackMessage(member: Member, name: String, url: String): String = {
-    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
     val typeName = if (member.funder) "Funder" else "Supporter"
     "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
-      typeName, name, member.fee.toString, fullUrl)
+      typeName, name, member.fee.toString, fullUrl(url))
   }
+
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  private def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
+  }
+
   /** Returns ids and names of organisations which are not members */
   private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))

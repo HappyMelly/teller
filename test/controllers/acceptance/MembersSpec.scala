@@ -503,7 +503,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
     val memberService = mock[FakeMemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
-    (memberService.find(_, _)).expects(1L, false).returning(Some(member))
+    (memberService.find(_, _)).expects(1L, true).returning(Some(member))
     (memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
 
