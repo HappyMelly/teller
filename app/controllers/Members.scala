@@ -144,20 +144,23 @@ trait Members extends Controller with Security with Services with Notifiers {
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = true) map { m ⇒
+      memberService.find(id, withObject = true) map { member ⇒
         form(user.person.id.get).bindFromRequest.fold(
           formWithErrors ⇒ BadRequest(views.html.member.form(user,
-            Some(m),
+            Some(member),
             formWithErrors)),
-          member ⇒ {
-            val updMember = member.copy(id = m.id).
-              copy(person = m.person).
-              copy(objectId = m.objectId).
-              copy(until = m.until).update
+          data ⇒ {
+            val updMember = data.copy(id = member.id).
+              copy(person = member.person).
+              copy(objectId = member.objectId).
+              copy(until = member.until).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
             val url = profileUrl(updMember)
+            updatedMemberMsg(member, updMember, url) map { msg ⇒
+              slack.send(msg)
+            }
             Redirect(url).flashing("success" -> activity.toString)
           })
       } getOrElse NotFound
@@ -226,7 +229,7 @@ trait Members extends Controller with Security with Services with Notifiers {
                 Activity.Predicate.Made,
                 Some(org)).insert
               val profileUrl = routes.Organisations.details(org.id.get).url
-              val text = slackMessage(member, org.name, profileUrl)
+              val text = newMemberMsg(member, org.name, profileUrl)
               slack.send(text)
               Redirect(profileUrl).flashing("success" -> activity.toString)
             } getOrElse {
@@ -255,7 +258,7 @@ trait Members extends Controller with Security with Services with Notifiers {
               Activity.Predicate.Made,
               Some(person)).insert
             val profileUrl = routes.People.details(person.id.get).url
-            val text = slackMessage(member, person.fullName, profileUrl)
+            val text = newMemberMsg(member, person.fullName, profileUrl)
             slack.send(text)
             Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
@@ -292,7 +295,7 @@ trait Members extends Controller with Security with Services with Notifiers {
                     Activity.Predicate.Made,
                     Some(person)).insert
                   val profileUrl = routes.People.details(person.id.get).url
-                  val text = slackMessage(member, person.fullName, profileUrl)
+                  val text = newMemberMsg(member, person.fullName, profileUrl)
                   slack.send(text)
                   Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
@@ -337,7 +340,7 @@ trait Members extends Controller with Security with Services with Notifiers {
                     Activity.Predicate.Made,
                     Some(org)).insert
                   val profileUrl = routes.Organisations.details(org.id.get).url
-                  val text = slackMessage(member, org.name, profileUrl)
+                  val text = newMemberMsg(member, org.name, profileUrl)
                   slack.send(text)
                   Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
@@ -357,6 +360,29 @@ trait Members extends Controller with Security with Services with Notifiers {
   }
 
   /**
+   * Returns an update message
+   * @param before Initial member object
+   * @param after Updated member object
+   * @param url Profile url
+   */
+  protected def updatedMemberMsg(before: Member, after: Member, url: String): Option[String] = {
+    val fields = List(
+      compareValues("Since", before.since.toString, after.since.toString),
+      compareValues("Funder",
+        if (before.funder) "funder" else "supporter",
+        if (after.funder) "funder" else "supporter"),
+      compareValues("Fee", before.fee.toString, after.fee.toString))
+    val changedFields = fields.filter(_.nonEmpty)
+    if (changedFields.length > 0) {
+      var msg = "Hey @channel, member %s was updated.".format(before.name)
+      changedFields.foreach(v ⇒ msg += " %s.".format(v.get))
+      msg += " <%s|View profile>".format(fullUrl(url))
+      Some(msg)
+    } else
+      None
+  }
+
+  /**
    * Return profile url based on what member is: person or organisation
    * @param member Member object
    */
@@ -373,10 +399,24 @@ trait Members extends Controller with Security with Services with Notifiers {
    * @param name Name of a new member either an organisation or a person
    * @param url Profile url
    */
-  protected def slackMessage(member: Member, name: String, url: String): String = {
+  protected def newMemberMsg(member: Member, name: String, url: String): String = {
     val typeName = if (member.funder) "Funder" else "Supporter"
     "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
       typeName, name, member.fee.toString, fullUrl(url))
+  }
+
+  /**
+   * Returns a comparison message if fields are different, otherwise - None
+   * @param field Field name
+   * @param before Initial field value
+   * @param after Updated field value
+   */
+  private def compareValues(field: String,
+    before: String,
+    after: String): Option[String] = {
+    if (before != after)
+      Some("Field *%s* has changed from '%s' to '%s'".format(field, before, after))
+    else None
   }
 
   /**

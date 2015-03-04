@@ -25,9 +25,10 @@ package stubs
 
 import play.api.Application
 import securesocial.core.{ Identity, IdentityId }
+import _root_.services.LoginIdentityService
 
 class StubLoginIdentityService(application: Application)
-  extends services.LoginIdentityService(application) {
+  extends LoginIdentityService(application) {
 
   override def find(id: IdentityId) = {
     val identityId = id

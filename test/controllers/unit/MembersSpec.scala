@@ -29,8 +29,7 @@ import integration.PlayAppSpec
 import helpers.{ PersonHelper, MemberHelper }
 import models.Member
 import org.joda.money.Money
-import org.scalamock.specs2.MockContext
-import org.specs2.mutable._
+import org.joda.time.LocalDate
 import services.notifiers.Slack
 import stubs._
 import stubs.services.FakeSlack
@@ -44,11 +43,15 @@ class TestMembers extends Members with FakeServices {
     slackInstance
   }
 
-  def callSlackMessage(member: Member, name: String, url: String): String = {
-    slackMessage(member, name, url)
+  def callNewMemberMsg(member: Member, name: String, url: String): String = {
+    newMemberMsg(member, name, url)
   }
 
   def callProfileUrl(member: Member): String = profileUrl(member)
+
+  def callUpdatedMemberMsg(before: Member, after: Member): Option[String] = {
+    updatedMemberMsg(before, after, "")
+  }
 }
 
 class MembersSpec extends PlayAppSpec {
@@ -64,16 +67,77 @@ class MembersSpec extends PlayAppSpec {
         person = true,
         funder = true,
         money = Some(Money.parse("EUR 100")))
-      val msg1 = controller.callSlackMessage(m1, "One", "/person/1")
+      val msg1 = controller.callNewMemberMsg(m1, "One", "/person/1")
       msg1 must_== "Hey @channel, we have *new Funder*. One, EUR 100.00. <http://localhost:9000/person/1|View profile>"
       val m2 = MemberHelper.make(Some(2L), 2L,
         person = false,
         funder = false,
         money = Some(Money.parse("EUR 200")))
-      val msg2 = controller.callSlackMessage(m2, "Two", "/organisation/2")
+      val msg2 = controller.callNewMemberMsg(m2, "Two", "/organisation/2")
       msg2 must_== "Hey @channel, we have *new Supporter*. Two, EUR 200.00. <http://localhost:9000/organisation/2|View profile>"
     }
   }
+
+  "Slack messages for updated members" should {
+    "contain info about changed date if Since field changed" in {
+      val person = PersonHelper.one()
+      val before = MemberHelper.make(
+        Some(1L),
+        1L,
+        person = true,
+        funder = true,
+        since = Some(LocalDate.parse("2015-01-15")))
+      before.memberObj_=(person)
+      val after = before.copy(since = LocalDate.parse("2015-01-01"))
+      val msg = controller.callUpdatedMemberMsg(before, after)
+      msg map { m ⇒
+        m must_== "Hey @channel, member First Tester was updated. Field *Since* has changed from '2015-01-15' to '2015-01-01'. <http://localhost:9000|View profile>"
+      } getOrElse ko
+    }
+    "contain info about changed membership type if Funder field changed" in {
+      val person = PersonHelper.one()
+      val before = MemberHelper.make(Some(1L), 1L, person = true, funder = true)
+      before.memberObj_=(person)
+      val after = before.copy(funder = false)
+      val msg = controller.callUpdatedMemberMsg(before, after)
+      msg map { m ⇒
+        m must_== "Hey @channel, member First Tester was updated. Field *Funder* has changed from 'funder' to 'supporter'. <http://localhost:9000|View profile>"
+      } getOrElse ko
+    }
+    "contain info about changed fee if Fee field changed" in {
+      val person = PersonHelper.one()
+      val before = MemberHelper.make(Some(1L),
+        1L,
+        person = true,
+        funder = true,
+        money = Some(Money.parse("EUR 100")))
+      before.memberObj_=(person)
+      val after = before.copy(fee = Money.parse("EUR 200"))
+      val msg = controller.callUpdatedMemberMsg(before, after)
+      msg map { m ⇒
+        m must_== "Hey @channel, member First Tester was updated. Field *Fee* has changed from 'EUR 100.00' to 'EUR 200.00'. <http://localhost:9000|View profile>"
+      } getOrElse ko
+    }
+    "contain info about changed fee and date if Fee and Since fields changed" in {
+      val person = PersonHelper.one()
+      val before = MemberHelper.make(Some(1L),
+        1L,
+        person = true,
+        funder = true,
+        money = Some(Money.parse("EUR 100")),
+        since = Some(LocalDate.parse("2015-01-15")))
+      before.memberObj_=(person)
+      val after = before.
+        copy(fee = Money.parse("EUR 200")).
+        copy(since = LocalDate.parse("2015-01-01"))
+      val msg = controller.callUpdatedMemberMsg(before, after)
+      msg map { m ⇒
+        m must contain("Field *Fee* has changed from 'EUR 100.00' to 'EUR 200.00'")
+        m must contain("Field *Since* has changed from '2015-01-15' to '2015-01-01")
+      } getOrElse ko
+    }
+  }
+
   "Profile url" should {
     "direct to Organisation details page" in {
       val m = MemberHelper.make(Some(1L), 3L, person = false, funder = true)
@@ -86,45 +150,4 @@ class MembersSpec extends PlayAppSpec {
       url must_== "/person/2"
     }
   }
-
-  "Delete action" should {
-    "send Slack notification" in new MockContext {
-      val memberService = mock[FakeMemberService]
-      val person = PersonHelper.one()
-      val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
-      member.memberObj_=(person)
-      (memberService.find(_, _)).expects(2L, true).returning(Some(member))
-      (memberService.delete(_, _)).expects(1L, true)
-      controller.memberService_=(memberService)
-      controller.counter = 0
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
-      val result = controller.delete(2L).apply(req)
-      status(result) must equalTo(SEE_OTHER)
-      controller.counter must_== 1
-      val msg = "Hey @channel, First Tester is not a member anymore. <http://localhost:9000/person/1|View profile>"
-      controller.slackInstance.message must_== msg
-    }
-  }
-  // "In Update action Slack notification should be sent" >> {
-  //   "when since date is changed" in new MockContext {
-  //     val memberService = mock[FakeMemberService]
-  //     val person = PersonHelper.one()
-  //     val member = MemberHelper.make(Some(2L),
-  //       1L,
-  //       person = true,
-  //       funder = false).insert
-  //     member.memberObj_=(person)
-  //     (memberService.find(_, _)).expects(2L, true).returning(Some(member))
-  //     (memberService.delete(_, _)).expects(1L, true)
-  //     val controller = new TestMembers
-  //     controller.memberService_=(memberService)
-  //     controller.counter = 0
-  //     val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
-  //     val result = controller.delete(2L).apply(req)
-  //     status(result) must equalTo(SEE_OTHER)
-  //     controller.counter must_== 1
-  //     val msg = "Hey @channel, First Tester is not a member anymore. <http://localhost:9000/person/1|View profile>"
-  //     controller.slackInstance.message must_== msg
-  //   }
-  // }
 }
