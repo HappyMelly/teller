@@ -19,4 +19,3 @@ run-server.sh
 .tags*
 .ensime
 .ensime_lucene/
-*.sublime-*
