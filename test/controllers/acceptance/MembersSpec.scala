@@ -40,13 +40,17 @@ import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
 import stubs._
+import stubs.services.FakeNotifiers
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
 import scala.slick.session.Session
 
 class MembersSpec extends PlayAppSpec with DataTables {
-  class TestMembers() extends Members with Security with FakeServices
+  class TestMembers() extends Members
+    with Security
+    with FakeServices
+    with FakeNotifiers
 
   def setupDb() {}
   def cleanupDb() {}
@@ -499,7 +503,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
     val memberService = mock[FakeMemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
-    (memberService.find(_, _)).expects(1L, false).returning(Some(member))
+    (memberService.find(_, _)).expects(1L, true).returning(Some(member))
     (memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
 

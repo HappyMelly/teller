@@ -38,12 +38,13 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc.{ SimpleResult, _ }
-import services.{ CurrencyConverter, EmailSender, S3Bucket }
+import services.notifiers.Notifiers
+import services.{ CurrencyConverter, S3Bucket }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object BookingEntries extends Controller with Security with EmailSender {
+object BookingEntries extends Controller with Security with Notifiers {
 
   def bookingEntryForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -147,7 +148,8 @@ object BookingEntries extends Controller with Security with EmailSender {
   def sendEmailNotification(entry: BookingEntry, changes: List[BookingEntry.FieldChange], activity: Activity,
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
-    send(recipients.filter(_.active), None, None, subject, mail.html.booking(entry, changes).toString,
+    email.send(recipients.filter(_.active), None, None, subject,
+      mail.html.booking(entry, changes).toString,
       richMessage = true)
   }
 

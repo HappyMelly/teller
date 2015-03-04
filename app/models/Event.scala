@@ -30,9 +30,9 @@ import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
+import services.notifiers.EmailService
 import scala.language.postfixOps
 import scala.slick.lifted.Query
-import services.EmailService
 import views.Languages
 
 /**

@@ -31,7 +31,8 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import services.{ EmailSender, S3Bucket }
+import services.S3Bucket
+import services.notifiers.Notifiers
 
 import scala.concurrent.Future
 import scala.language.postfixOps
@@ -41,7 +42,7 @@ import scala.language.postfixOps
  */
 case class Certificate(
   evaluation: Evaluation,
-  renew: Boolean = false) extends EmailSender {
+  renew: Boolean = false) extends Notifiers {
 
   val id = evaluation.certificateId
 
@@ -73,7 +74,7 @@ case class Certificate(
     val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
     val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
-    send(Set(evaluation.participant),
+    email.send(Set(evaluation.participant),
       Some(evaluation.event.facilitators.toSet),
       Some(Set(brand.coordinator)),
       subject,

@@ -27,24 +27,38 @@ package models.integration
 import java.math.RoundingMode
 
 import controllers.{ Members, Security }
-import helpers.{ OrganisationHelper, PersonHelper }
+import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
 import models.service.{ OrganisationService, PersonService }
 import models.{ Member, Organisation, Person }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable.After
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
-import stubs.{ FakeServices, StubUserIdentity }
+import services.notifiers.Slack
+import stubs.{ FakeServices, StubUserIdentity, FakeMemberService }
+import stubs.services.{ FakeNotifiers, FakeSlack }
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ GetResult, StaticQuery ⇒ Q }
 import scala.slick.session.Session
 
-class TestMembers() extends Members with Security with FakeServices
+class TestMembers() extends Members
+  with Security
+  with FakeServices {
+
+  val slackInstance = new FakeSlack
+  var counter: Int = 0
+
+  override def slack: Slack = {
+    counter += 1
+    slackInstance
+  }
+}
 
 class MembersSpec extends PlayAppSpec {
   def setupDb() {}
@@ -57,6 +71,12 @@ class MembersSpec extends PlayAppSpec {
       existingObject = false,
       DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
       DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
+
+  trait cleanDb extends After {
+    def after = DB.withSession { implicit session: Session ⇒
+      truncateTables()
+    }
+  }
 
   val controller = new TestMembers()
 
@@ -285,6 +305,108 @@ class MembersSpec extends PlayAppSpec {
     }
   }
 
+  "Slack notification should be sent" >> {
+    "when a new organisation becomes a member" in {
+      truncateTables()
+      val m = member(person = false)
+      val oldList = Organisation.findAll
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      Cache.set(Members.cacheId(1L), m, 1800)
+
+      controller.counter = 0
+      val result = controller.createNewOrganisation().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("Test")
+    }
+    "when a new person becomes a member" in {
+      val m = member().copy(funder = true)
+      val oldList = Person.findAll
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
+          ("address.country", "RU"), ("firstName", "Test"),
+          ("lastName", "Buddy"), ("signature", "false"),
+          ("role", "0"))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      controller.counter = 0
+      val result = controller.createNewPerson().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("Test Buddy")
+    }
+    "when an existing organisation becomes a member" in {
+      truncateTables()
+      val m = member(person = false)
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+        withFormUrlEncodedBody(("id", "1"))
+      val org = OrganisationHelper.one.copy(id = Some(1L)).insert
+      Cache.set(Members.cacheId(1L), m, 1800)
+      OrganisationService.get.find(1L) map { o ⇒
+        o.member must_== None
+      } getOrElse failure
+      controller.counter = 0
+      val result = controller.updateExistingOrg().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      headers(result).get("Location").get must contain("/organization/1")
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("One")
+    }
+    "when an existing person becomes a member" in {
+      truncateTables()
+      val m = member(person = true)
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+        withFormUrlEncodedBody(("id", "1"))
+      val person = PersonHelper.one().insert
+      Cache.set(Members.cacheId(1L), m, 1800)
+      PersonService.get.find(1L) map { p ⇒
+        p.member must_== None
+      } getOrElse failure
+      controller.counter = 0
+      val result = controller.updateExistingPerson().apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      headers(result).get("Location").get must contain("/person/1")
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("First Tester")
+    }
+    "membership is revoked" in new MockContext {
+      val memberService = mock[FakeMemberService]
+      val person = PersonHelper.one()
+      val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
+      member.memberObj_=(person)
+      (memberService.find(_, _)).expects(2L, true).returning(Some(member))
+      (memberService.delete(_, _)).expects(1L, true)
+      controller.memberService_=(memberService)
+      controller.counter = 0
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+      val result = controller.delete(2L).apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("First Tester")
+    }
+    "when membership is changed" in new MockContext {
+      val memberService = mock[FakeMemberService]
+      val person = PersonHelper.one()
+      val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false).insert
+      member.memberObj_=(person)
+      (memberService.find(_, _)).expects(2L, true).returning(Some(member))
+      val controller = new TestMembers
+      controller.memberService_=(memberService)
+      controller.counter = 0
+      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+        withFormUrlEncodedBody(
+          ("objectId", member.objectId.toString), ("person", "1"),
+          ("funder", "1"), ("fee.currency", "EUR"),
+          ("fee.amount", "200"), ("subscription", member.subscription.toString),
+          ("since", "2015-01-01"), ("end", member.until.toString),
+          ("existingObject", "1"))
+      val result = controller.update(2L).apply(req)
+      status(result) must equalTo(SEE_OTHER)
+      controller.counter must_== 1
+      controller.slackInstance.message must contain("First Tester")
+    }
+  }
+
   /**
    * Retrieves member from database if it exists
    * @param id Id of related object
@@ -303,8 +425,3 @@ class MembersSpec extends PlayAppSpec {
   }
 }
 
-trait cleanDb extends After {
-  def after = DB.withSession { implicit session: Session ⇒
-    Q.updateNA("TRUNCATE `MEMBER`").execute
-  }
-}

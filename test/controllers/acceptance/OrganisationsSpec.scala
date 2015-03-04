@@ -130,7 +130,6 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Become a Member"
-    contentAsString(result) must not contain "/membership/welcome"
   }
 
   def e3 = new ExtendedNonMemberMockContext {
@@ -144,7 +143,6 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Become a Member"
-    contentAsString(result) must not contain "/membership/welcome"
   }
 
   def e4 = new ExtendedMemberMockContext {
