@@ -52,7 +52,7 @@ class MembershipSpec extends Specification {
       val data = new PaymentData("", 20, Some(1L))
       val person = PersonHelper.one()
       val org = OrganisationHelper.one.copy(countryCode = "NL")
-      person.memberships_=(List(org))
+      person.organisations_=(List(org))
 
       controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.payment.minimum_fee")
     }
@@ -62,7 +62,7 @@ class MembershipSpec extends Specification {
       val person = PersonHelper.one()
       val org = OrganisationHelper.one
 
-      person.memberships_=(List(org))
+      person.organisations_=(List(org))
       val member = MemberHelper.make(objectId = 1L, person = false, funder = true)
       org.member_=(member)
 
@@ -72,7 +72,7 @@ class MembershipSpec extends Specification {
     "throw an exception if the person is not a member of org" in new MockContext {
       val data = new PaymentData("", 20, Some(1L))
       val person = PersonHelper.one()
-      person.memberships_=(List())
+      person.organisations_=(List())
       val org = OrganisationHelper.one
       val orgService = mock[FakeOrganisationService]
       (orgService.member _).expects(*).returning(None)

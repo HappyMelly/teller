@@ -27,8 +27,10 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
 import models.{ Activity, Member }
+import services.notifiers.Notifiers
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
@@ -37,7 +39,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Controller with Security with Services {
+trait Members extends Controller with Security with Services with Notifiers {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -59,7 +61,7 @@ trait Members extends Controller with Security with Services {
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
         verifying(
           "error.membership.tooLate",
-          _.isBefore(LocalDate.now().plusDays(1))),
+          _.isBefore(LocalDate.now().dayOfMonth().withMaximumValue().plusDays(2))),
       "end" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
@@ -79,7 +81,7 @@ trait Members extends Controller with Security with Services {
   /** Renders a list of all members */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val members = memberService.findAll
+      val members = memberService.findAll.filter(_.active)
       val fee = members.find(m ⇒
         m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
@@ -116,7 +118,7 @@ trait Members extends Controller with Security with Services {
           val m = member.
             copy(id = None).
             copy(objectId = 0).
-            copy(end = member.since.plusYears(1))
+            copy(until = member.since.plusYears(1))
           Cache.set(Members.cacheId(user.person.id.get), m, 1800)
           (member.person, member.existingObject) match {
             case (true, false) ⇒ Redirect(routes.Members.addPerson())
@@ -142,26 +144,42 @@ trait Members extends Controller with Security with Services {
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = true) map { m ⇒
+      memberService.find(id, withObject = true) map { member ⇒
         form(user.person.id.get).bindFromRequest.fold(
           formWithErrors ⇒ BadRequest(views.html.member.form(user,
-            Some(m),
+            Some(member),
             formWithErrors)),
-          member ⇒ {
-            val updMember = member.copy(id = m.id).
-              copy(person = m.person).
-              copy(objectId = m.objectId).
-              copy(end = m.end).update
+          data ⇒ {
+            val updMember = data.copy(id = member.id).
+              copy(person = member.person).
+              copy(objectId = member.objectId).
+              copy(until = member.until).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
-            val url: String = if (updMember.person) {
-              routes.People.details(updMember.objectId).url
-            } else {
-              routes.Organisations.details(updMember.objectId).url
+            val url = profileUrl(updMember)
+            updatedMemberMsg(member, updMember, url) map { msg ⇒
+              slack.send(msg)
             }
             Redirect(url).flashing("success" -> activity.toString)
           })
+      } getOrElse NotFound
+  }
+
+  /**
+   * Removes a membership of the given member
+   * @param id Member id
+   */
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      memberService.find(id, withObject = true) map { m ⇒
+        memberService.delete(m.objectId, m.person)
+        val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
+        val url = profileUrl(m)
+        val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
+          m.name, fullUrl(url))
+        slack.send(msg)
+        Redirect(url).flashing("success" -> activty.toString)
       } getOrElse NotFound
   }
 
@@ -210,8 +228,10 @@ trait Members extends Controller with Security with Services {
                 user.person,
                 Activity.Predicate.Made,
                 Some(org)).insert
-              Redirect(routes.Organisations.details(org.id.get)).
-                flashing("success" -> activity.toString)
+              val profileUrl = routes.Organisations.details(org.id.get).url
+              val text = newMemberMsg(member, org.name, profileUrl)
+              slack.send(text)
+              Redirect(profileUrl).flashing("success" -> activity.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.newOrg(user, None, orgForm))
@@ -237,8 +257,10 @@ trait Members extends Controller with Security with Services {
               user.person,
               Activity.Predicate.Made,
               Some(person)).insert
-            Redirect(routes.People.details(person.id.get)).
-              flashing("success" -> activity.toString)
+            val profileUrl = routes.People.details(person.id.get).url
+            val text = newMemberMsg(member, person.fullName, profileUrl)
+            slack.send(text)
+            Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
             BadRequest(views.html.member.newPerson(user, None, personForm))
@@ -272,8 +294,10 @@ trait Members extends Controller with Security with Services {
                     user.person,
                     Activity.Predicate.Made,
                     Some(person)).insert
-                  Redirect(routes.People.details(id)).
-                    flashing("success" -> activity.toString)
+                  val profileUrl = routes.People.details(person.id.get).url
+                  val text = newMemberMsg(member, person.fullName, profileUrl)
+                  slack.send(text)
+                  Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
@@ -315,8 +339,10 @@ trait Members extends Controller with Security with Services {
                     user.person,
                     Activity.Predicate.Made,
                     Some(org)).insert
-                  Redirect(routes.Organisations.details(id)).
-                    flashing("success" -> activity.toString)
+                  val profileUrl = routes.Organisations.details(org.id.get).url
+                  val text = newMemberMsg(member, org.name, profileUrl)
+                  slack.send(text)
+                  Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
@@ -331,6 +357,74 @@ trait Members extends Controller with Security with Services {
                 orgForm))
             }
           })
+  }
+
+  /**
+   * Returns an update message
+   * @param before Initial member object
+   * @param after Updated member object
+   * @param url Profile url
+   */
+  protected def updatedMemberMsg(before: Member, after: Member, url: String): Option[String] = {
+    val fields = List(
+      compareValues("Since", before.since.toString, after.since.toString),
+      compareValues("Funder",
+        if (before.funder) "funder" else "supporter",
+        if (after.funder) "funder" else "supporter"),
+      compareValues("Fee", before.fee.toString, after.fee.toString))
+    val changedFields = fields.filter(_.nonEmpty)
+    if (changedFields.length > 0) {
+      var msg = "Hey @channel, member %s was updated.".format(before.name)
+      changedFields.foreach(v ⇒ msg += " %s.".format(v.get))
+      msg += " <%s|View profile>".format(fullUrl(url))
+      Some(msg)
+    } else
+      None
+  }
+
+  /**
+   * Return profile url based on what member is: person or organisation
+   * @param member Member object
+   */
+  protected def profileUrl(member: Member): String = {
+    if (member.person)
+      routes.People.details(member.objectId).url
+    else
+      routes.Organisations.details(member.objectId).url
+  }
+
+  /**
+   * Returns a well-formed Slack notification message
+   * @param member Member object
+   * @param name Name of a new member either an organisation or a person
+   * @param url Profile url
+   */
+  protected def newMemberMsg(member: Member, name: String, url: String): String = {
+    val typeName = if (member.funder) "Funder" else "Supporter"
+    "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
+      typeName, name, member.fee.toString, fullUrl(url))
+  }
+
+  /**
+   * Returns a comparison message if fields are different, otherwise - None
+   * @param field Field name
+   * @param before Initial field value
+   * @param after Updated field value
+   */
+  private def compareValues(field: String,
+    before: String,
+    after: String): Option[String] = {
+    if (before != after)
+      Some("Field *%s* has changed from '%s' to '%s'".format(field, before, after))
+    else None
+  }
+
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  private def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 
   /** Returns ids and names of organisations which are not members */

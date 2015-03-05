@@ -61,6 +61,11 @@
             </a>
           }
         </div>
+        @person.member.map { m =>
+          @if(m.active) {
+            @element.funder(m)
+          }
+        }
         <div class="panel">
           <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
             <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Personal Details</a></li>

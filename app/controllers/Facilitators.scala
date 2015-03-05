@@ -54,7 +54,7 @@ object Facilitators extends Controller with Security {
         "last_name" -> data._1.lastName,
         "coordinator" -> data._2,
         "id" -> data._1.id.get,
-        "memberships" -> data._1.memberships)
+        "memberships" -> data._1.organisations)
     }
   }
 

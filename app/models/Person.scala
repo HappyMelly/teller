@@ -88,7 +88,7 @@ case class Person(
   private var _address: Option[Address] = None
   private var _languages: Option[List[FacilitatorLanguage]] = None
   private var _countries: Option[List[FacilitatorCountry]] = None
-  private var _memberships: Option[List[Organisation]] = None
+  private var _organisations: Option[List[Organisation]] = None
   private var _member: Option[Member] = None
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
@@ -146,15 +146,15 @@ case class Person(
   /**
    * Returns a list of organisations this person is a member of
    */
-  def memberships: List[Organisation] = if (_memberships.isEmpty) {
-    memberships_=(PersonService.get.memberships(this))
-    _memberships.get
+  def organisations: List[Organisation] = if (_organisations.isEmpty) {
+    organisations_=(PersonService.get.memberships(this))
+    _organisations.get
   } else {
-    _memberships.get
+    _organisations.get
   }
 
-  def memberships_=(memberships: List[Organisation]): Unit = {
-    _memberships = Some(memberships)
+  def organisations_=(organisations: List[Organisation]): Unit = {
+    _organisations = Some(organisations)
   }
 
   def fullName: String = firstName + " " + lastName
@@ -182,7 +182,7 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addMembership(organisationId: Long): Unit = DB.withSession {
+  def addRelation(organisationId: Long): Unit = DB.withSession {
     implicit session: Session ⇒
       OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
   }
@@ -197,16 +197,19 @@ case class Person(
    */
   lazy val deletable: Boolean = account.deletable &&
     contributions.isEmpty &&
-    memberships.isEmpty &&
+    organisations.isEmpty &&
     licenses.isEmpty
 
   /**
-   * Removes this person’s membership in the given organisation
+   * Deletes a relationship between this person and the given organisation
    *
    * @param organisationId Organisation identifier
    */
-  def deleteMembership(organisationId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    OrganisationMemberships.filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).mutate(_.delete)
+  def deleteRelation(organisationId: Long): Unit = DB.withSession {
+    implicit session: Session ⇒
+      OrganisationMemberships.
+        filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).
+        mutate(_.delete)
   }
 
   /**
@@ -337,7 +340,7 @@ case class Person(
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
     val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      subscription = true, since = LocalDate.now(), end = LocalDate.now().plusYears(1),
+      subscription = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
       existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
     memberService.insert(m)
   }
@@ -554,6 +557,6 @@ object PeopleCollection {
       organisation ← membership.organisation
     } yield (membership.personId, organisation)
     val organisations = query.list.groupBy(_._1).map(o ⇒ (o._1, o._2.map(_._2)))
-    people.foreach(p ⇒ p.memberships_=(organisations.getOrElse(p.id.get, List())))
+    people.foreach(p ⇒ p.organisations_=(organisations.getOrElse(p.id.get, List())))
   }
 }

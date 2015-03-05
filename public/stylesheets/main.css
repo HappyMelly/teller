@@ -165,3 +165,13 @@ body.api h3 {
 .cloudbees {
     padding-top: 10%;
 }
+.banner {
+    font-size: 18px;
+    background-color: transparent;
+}
+.banner img {
+    width: 80px;
+}
+.banner a {
+    margin-top: 15px;
+}

@@ -30,6 +30,8 @@ import models._
 import models.service.EventService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
+import services.notifiers.{ Notifiers, Email }
+import stubs.services.FakeNotifiers
 import stubs.{ FakeBrandService, FakeServices }
 
 class EventServiceSpec extends PlayAppSpec {
@@ -143,16 +145,7 @@ class EventServiceSpec extends PlayAppSpec {
       class StubBrandService extends FakeBrandService {
         override def findAll: List[Brand] = List(BrandHelper.one)
       }
-      class TestEventService extends EventService with FakeServices {
-        override def findByParameters(
-          brandCode: Option[String],
-          future: Option[Boolean] = None,
-          public: Option[Boolean] = None,
-          archived: Option[Boolean] = None,
-          confirmed: Option[Boolean] = None,
-          country: Option[String] = None,
-          eventType: Option[Long] = None): List[Event] = List(EventHelper.one)
-
+      class FakeEmail extends Email {
         override def send(to: Set[Person],
           cc: Option[Set[Person]] = None,
           bcc: Option[Set[Person]] = None,
@@ -168,6 +161,18 @@ class EventServiceSpec extends PlayAppSpec {
           bcc must_== None
           subject must_== "Confirm your event One"
         }
+      }
+      class TestEventService extends EventService with FakeServices {
+        override def findByParameters(
+          brandCode: Option[String],
+          future: Option[Boolean] = None,
+          public: Option[Boolean] = None,
+          archived: Option[Boolean] = None,
+          confirmed: Option[Boolean] = None,
+          country: Option[String] = None,
+          eventType: Option[Long] = None): List[Event] = List(EventHelper.one)
+
+        override def email = new FakeEmail
       }
       val service = new TestEventService
       val brand = new StubBrandService

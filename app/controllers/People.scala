@@ -201,18 +201,20 @@ trait People extends Controller with Security with Services {
   /**
    * Assign a person to an organisation
    */
-  def addMembership() = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def addRelationship() = SecuredDynamicAction("person", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val membershipForm = Form(tuple("page" -> text, "personId" -> longNumber, "organisationId" -> longNumber))
+      val relationshipForm = Form(tuple("page" -> text,
+        "personId" -> longNumber,
+        "organisationId" -> longNumber))
 
-      membershipForm.bindFromRequest.fold(
+      relationshipForm.bindFromRequest.fold(
         errors ⇒ BadRequest("organisationId missing"),
         {
           case (page, personId, organisationId) ⇒
             personService.find(personId).map { person ⇒
               orgService.find(organisationId).map { organisation ⇒
-                person.addMembership(organisationId)
+                person.addRelation(organisationId)
 
                 val activity = person.activity(
                   user.person,
@@ -271,13 +273,13 @@ trait People extends Controller with Security with Services {
   }
 
   /**
-   * Delete a membership of a person in an organisation
+   * Delete a relationthip of a person and an organisation
    *
    * @param page Page identifier where the action was requested from
    * @param personId Person identifier
    * @param organisationId Org identifier
    */
-  def deleteMembership(page: String,
+  def deleteRelationship(page: String,
     personId: Long,
     organisationId: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
@@ -285,7 +287,7 @@ trait People extends Controller with Security with Services {
 
         personService.find(personId).map { person ⇒
           orgService.find(organisationId).map { organisation ⇒
-            person.deleteMembership(organisationId)
+            person.deleteRelation(organisationId)
 
             val activity = person.activity(
               user.person,
@@ -311,7 +313,7 @@ trait People extends Controller with Security with Services {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
-        val memberships = person.memberships
+        val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
         val licenses = licenseService.licenses(id)

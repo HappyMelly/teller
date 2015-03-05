@@ -229,7 +229,7 @@ class TellerResourceHandler(account: Option[UserAccount])
               // A User should have an Editor role or should be a member of the organisation
               existingAccount.editor ||
                 (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
-                  _.members.find(_.id == Some(existingAccount.personId)).nonEmpty
+                  _.people.find(_.id == Some(existingAccount.personId)).nonEmpty
                 })
             case _ ⇒ true
           }

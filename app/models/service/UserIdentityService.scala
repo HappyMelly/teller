@@ -24,13 +24,15 @@
  */
 package models.service
 
-import models.{ UserIdentity, UserRole }
-import models.database.{ People, UserAccounts, UserIdentities }
+import models._
+import models.JodaMoney._
+import models.database.{ Members, People, UserAccounts, UserIdentities }
+import org.joda.time.DateTime
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 import securesocial.core.IdentityId
-import securesocial.core.providers.{ LinkedInProvider, GoogleProvider, FacebookProvider, TwitterProvider }
+import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
 
 class UserIdentityService {
 
@@ -48,30 +50,30 @@ class UserIdentityService {
         case TwitterProvider.Twitter ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-          account ← UserAccounts if account.twitterHandle === identity.twitterHandle
-          person ← People if person.id === account.personId
-        } yield (identity, account, person)
+          a ← UserAccounts if a.twitterHandle === identity.twitterHandle
+          (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
 
         case FacebookProvider.Facebook ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-          account ← UserAccounts if account.facebookUrl like identity.facebookUrl
-          person ← People if person.id === account.personId
-        } yield (identity, account, person)
+          a ← UserAccounts if a.facebookUrl like identity.facebookUrl
+          (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
 
         case GoogleProvider.Google ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-          account ← UserAccounts if account.googlePlusUrl === identity.googlePlusUrl
-          person ← People if person.id === account.personId
-        } yield (identity, account, person)
+          a ← UserAccounts if a.googlePlusUrl === identity.googlePlusUrl
+          (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
 
         case LinkedInProvider.LinkedIn ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
-          account ← UserAccounts if account.linkedInUrl like identity.linkedInUrl
-          person ← People if person.id === account.personId
-        } yield (identity, account, person)
+          a ← UserAccounts if a.linkedInUrl like identity.linkedInUrl
+          (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
       }
       val data = q.firstOption
       data map { d ⇒
@@ -80,7 +82,15 @@ class UserIdentityService {
         account.roles_=(roles.list)
 
         d._1.account_=(Some(account))
-        d._1.person_=(d._3)
+        val person: Person = d._3
+        if (d._4.nonEmpty) {
+          val member = new Member(d._4, person.id.get, person = true,
+            funder = d._5.get, "EUR" -> d._6.get, d._7.get,
+            d._8.get, d._9.get, existingObject = true, DateTime.now(), 0L,
+            DateTime.now(), 0L)
+          person.member_=(member)
+        }
+        d._1.person_=(person)
         Some(d._1)
       } getOrElse None
   }

@@ -1,10 +1,12 @@
 @(title: String,
   menu: String,
-  user: UserIdentity)(
+  user: UserIdentity,
+  showJoinBanner: Boolean = true)(
   content: Html)(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
 
+@import models.payment.Payment
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -77,17 +79,27 @@
           </div>
       </div>
       <div class="container">
-          @alert(alertType: String) = {
-            @flash.get(alertType).map { message =>
-              <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-                  <button type="button" class="close" data-dismiss="alert">&times;</button>
-                  @message
-              </div>
-            }
+        @if(showJoinBanner && user.person.member.isEmpty) {
+          @defining(Payment.countryBasedFees(user.person.address.countryCode)._2) { fee: Int =>
+            <div class="alert alert-danger banner">
+              <img src="@routes.Assets.at("images/melly_tongue.gif")"/>
+              Getting rid of this annoying banner will cost you only € @fee, and it will make you a Supporter too!
+              <a class="btn btn-success pull-right btn-lg" href="@routes.Membership.welcome()">
+                Become a Supporter</a>
+            </div>
           }
-          @alert("error")
-          @alert("success")
-          @content
+        }
+        @alert(alertType: String) = {
+          @flash.get(alertType).map { message =>
+            <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                @message
+            </div>
+          }
+        }
+        @alert("error")
+        @alert("success")
+        @content
       </div>
       <footer>
           <div class="container"></div>

@@ -35,21 +35,21 @@ class UserRoleSpec extends Specification {
       role.viewer must_== true
       role.editor must_== false
       role.admin must_== false
-      role.unregistered must_== false
+      role.unregistered must_== true
     }
     "not be Admin or Unregistered if he is an Editor" in {
       val role = new UserRole(UserRole.Role.Editor)
       role.viewer must_== true
       role.editor must_== true
       role.admin must_== false
-      role.unregistered must_== false
+      role.unregistered must_== true
     }
     "not be Unregistered if he is an Admin" in {
       val role = new UserRole(UserRole.Role.Admin)
       role.viewer must_== true
       role.editor must_== true
       role.admin must_== true
-      role.unregistered must_== false
+      role.unregistered must_== true
     }
     "not be Editor, Admin or Viewer if she is unregistered" in {
       val role = new UserRole(UserRole.Role.Unregistered)
@@ -60,22 +60,24 @@ class UserRoleSpec extends Specification {
     }
   }
   "List of roles" should {
-    "contain only Viewer role if a user is a Viewer" in {
+    "contain Viewer and Unregistered role if a user is a Viewer" in {
       val role = new UserRole(UserRole.Role.Viewer)
-      role.list.length must_== 1
-      role.list.exists(_.viewer == true) must_== true
-    }
-    "contain Viewer and Editor roles if a user is an Editor" in {
-      val role = new UserRole(UserRole.Role.Editor)
       role.list.length must_== 2
+      role.list.exists(_.viewer == true) must_== true
+      role.list.exists(_.unregistered == true) must_== true
+    }
+    "contain Unregistered, Viewer and Editor roles if a user is an Editor" in {
+      val role = new UserRole(UserRole.Role.Editor)
+      role.list.length must_== 3
       role.list.exists(_.editor == true) must_== true
       role.list.exists(_.admin == true) must_== false
+      role.list.exists(_.unregistered == true) must_== true
     }
-    "contain Viewer, Editor and Admin roles if a user is an Admin" in {
+    "contain Unregistered, Viewer, Editor and Admin roles if a user is an Admin" in {
       val role = new UserRole(UserRole.Role.Admin)
-      role.list.length must_== 3
+      role.list.length must_== 4
       role.list.exists(_.admin == true) must_== true
-      role.list.exists(_.unregistered == true) must_== false
+      role.list.exists(_.unregistered == true) must_== true
     }
     "contain only Unregistered role if a user is unregistered" in {
       val role = new UserRole(UserRole.Role.Unregistered)

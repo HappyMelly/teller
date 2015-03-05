@@ -20,6 +20,11 @@
     <div class="page-header">
       <img width="64" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png"
         align="baseline">
+      @organisation.member.map { m =>
+        @if(m.active) {
+          @element.funder(m)
+        }
+      }
     </div>
     <div class="panel">
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">

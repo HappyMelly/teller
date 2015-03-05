@@ -21,19 +21,22 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package services
+package services.notifiers
 
-import akka.actor.{ Props, Actor }
+import akka.actor.{ Actor, Props }
 import models.Person
-import play.api.{ Logger, Play }
-import play.api.libs.concurrent.Akka
+import org.apache.commons._
 import play.api.Play.current
-import services.EmailService.EmailMessage
+import play.api.libs.concurrent.Akka
+import play.api.{ Logger, Play }
+import services.notifiers.EmailService.EmailMessage
+
+import scala.util.Try
 
 /**
  * Service to asynchronously send e-mail using an Akka actor.
  */
-trait EmailSender {
+class Email {
 
   /**
    * Sends an e-mail message asynchronously using an actor.
@@ -77,19 +80,17 @@ object EmailService {
 
     def receive = {
       case message: EmailMessage ⇒ {
-        import org.apache.commons.mail._
-        import scala.util.Try
 
-        val commonsMail: Email = if (message.attachment.isDefined) {
-          val attachment = new EmailAttachment()
+        val commonsMail: mail.Email = if (message.attachment.isDefined) {
+          val attachment = new mail.EmailAttachment()
           attachment.setPath(message.attachment.get._1)
-          attachment.setDisposition(EmailAttachment.ATTACHMENT)
+          attachment.setDisposition(mail.EmailAttachment.ATTACHMENT)
           attachment.setName(message.attachment.get._2)
-          new HtmlEmail().attach(attachment).setMsg(message.body.trim)
+          new mail.HtmlEmail().attach(attachment).setMsg(message.body.trim)
         } else if (message.richMessage) {
-          new HtmlEmail().setHtmlMsg(message.body.trim)
+          new mail.HtmlEmail().setHtmlMsg(message.body.trim)
         } else {
-          new SimpleEmail().setMsg(message.body.trim)
+          new mail.SimpleEmail().setMsg(message.body.trim)
         }
 
         message.to.foreach(commonsMail.addTo(_))
@@ -106,7 +107,7 @@ object EmailService {
         } else {
           preparedMail.setSSL(true)
           preparedMail.setHostName(Play.configuration.getString("smtp.host").get)
-          preparedMail.setAuthenticator(new DefaultAuthenticator(
+          preparedMail.setAuthenticator(new mail.DefaultAuthenticator(
             Play.configuration.getString("smtp.user").get,
             Play.configuration.getString("smtp.password").get))
           // Send the email and check for exceptions
@@ -115,4 +116,5 @@ object EmailService {
       }
     }
   }
+
 }

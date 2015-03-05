@@ -33,6 +33,10 @@ import play.api.Play.current
 /** Provides operations with database related to members */
 class MemberService {
 
+  /**
+   * Returns a list of people and organisations which have member profiles
+   *  both active and inactive
+   */
   def findAll: List[Member] = DB.withSession { implicit session ⇒
     val peopleQuery = for {
       m ← Members if m.person === true
