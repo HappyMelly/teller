@@ -64,6 +64,12 @@ trait Registration extends Controller with Security with Services {
   }
 
   /**
+   * Renders welcome page for new users
+   */
+  def welcome = Action { implicit request ⇒
+    Ok(views.html.registration.welcome())
+  }
+  /**
    * Renders step 1 page of the registration process
    */
   def step1 = Action { implicit request ⇒

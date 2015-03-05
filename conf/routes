@@ -171,6 +171,7 @@ POST        /product/:id/picture/delete                                         
 POST        /product/brand/new                                                   controllers.Products.addBrand
 GET         /product/:productId/brand/:brandId/delete                            controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
+GET         /registration/welcome                                                controllers.Registration.welcome
 GET         /registration/step1                                                  controllers.Registration.step1
 GET         /registration/step2                                                  controllers.Registration.step2
 POST        /registration/save/person                                            controllers.Registration.savePerson

@@ -30,7 +30,7 @@
                         ("", "Choose a brand coordinator") :: Person.findActive.map(p => (p.id.get.toString, p.fullName)),
                         '_label -> "Coordinator")
                     @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
-                        '_help -> views.html.markdownHelp())
+                        '_help -> views.html.element.markdownHelp())
                     @html.file(form("picture"), '_label -> "Picture")
                     @html.text(form("webSite"), '_label -> "Web site")
                     @html.text(form("blog"), '_label -> "Blog")

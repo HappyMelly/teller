@@ -1,6 +1,6 @@
 @()(implicit request: Request[Any], flash: Flash)
 
-@secure.unauthorized("Welcome") {
+@layout.unauthorized("Welcome") {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
 
   <div class="col-md-12 text-center">

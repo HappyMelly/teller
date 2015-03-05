@@ -22,7 +22,7 @@
         align="baseline">
       @organisation.member.map { m =>
         @if(m.active) {
-          @element.funder(m)
+          @element.membershipPanel(m)
         }
       }
     </div>

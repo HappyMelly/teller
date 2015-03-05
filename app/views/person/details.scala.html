@@ -63,7 +63,7 @@
         </div>
         @person.member.map { m =>
           @if(m.active) {
-            @element.funder(m)
+            @element.membershipPanel(m)
           }
         }
         <div class="panel">

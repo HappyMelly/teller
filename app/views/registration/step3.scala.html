@@ -6,6 +6,6 @@
     handler: AuthorisationHandler,
     flash: Flash)
 
-@secure.unauthorized("Welcome") {
+@layout.unauthorized("Welcome") {
   @views.html.element.payment(form, person, apiKey, fee, org)
 }

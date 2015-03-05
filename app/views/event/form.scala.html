@@ -60,9 +60,9 @@
           "Country & City", help = ""
         )
         @html.textarea(form("details.description"), '_label -> "Description",
-          'rows -> 3, '_help -> views.html.markdownHelp())
+          'rows -> 3, '_help -> views.html.element.markdownHelp())
         @html.textarea(form("details.specialAttention"), '_label -> "Special attention",
-          'rows -> 3, '_help -> views.html.markdownHelp())
+          'rows -> 3, '_help -> views.html.element.markdownHelp())
 
         <div id="facilitatorIds_field" class="form-group @if(form.error("facilitatorIds").isDefined) {has-error} ">
           <label for="facilitatorIds" class="control-label col-sm-3">Facilitators</label>
