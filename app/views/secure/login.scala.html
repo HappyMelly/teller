@@ -2,44 +2,41 @@
     errorMsg: Option[String] = None)(implicit request: Request[Any],
     flash: Flash)
 
+@import securesocial.core.AuthenticationMethod._
 @import securesocial.core.Registry
-@import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
+@import securesocial.core.providers.utils.RoutesHelper
 
 @secure.unauthorized("Sign in") {
-  <div class="page-header">
-    <h1>Sign in</h1>
-  </div>
-
   @errorMsg.map { msg =>
     <div class="alert alert-danger">
       @Messages(msg)
     </div>
   }
 
-  @defining(Registry.providers.all().values.filter(_.id != UsernamePassword)) { externalProviders =>
-    @if(externalProviders.size > 0) {
-      <div class="clearfix">
-        <p>
-        @for(p <- externalProviders) {
-          @provider(p.id)
-        }
-        </p>
-      </div>
-    }
-    @if(Registry.providers.all().contains(UsernamePassword)) {
-      @Registry.providers.get(UsernamePassword).map { up =>
-        <div class="clearfix">
-          @if(externalProviders.size > 0) {
-            <p>@Messages("securesocial.login.useEmailAndPassword")</p>
-          } else {
-            <p>@Messages("securesocial.login.useEmailAndPasswordOnly")</p>
+  <div class="col-md-6">
+    <img src="@routes.Assets.at("images/Melly-Shum-hates-her-job.jpg")"/>
+  </div>
+  <div class="col-md-4 col-md-offset-1 text-center">
+    <div class="form-block text-left">
+      @for(provider <- Registry.providers.all().values) {
+        @if(provider.authMethod == OAuth1 || provider.authMethod == OAuth2) {
+          @defining("images/securesocial/%s.png".format(provider.id)) { imageUrl: String =>
+            <a class="btn btn-default btn-login btn-lg btn-block"
+            href="@provider.authenticationUrl">
+              <img src="@RoutesHelper.at(imageUrl)" width="40px"/> Sign in with @provider.id.capitalize
+            </a>
           }
-          @provider("userpass", Some(loginForm))
-        </div>
+        }
       }
-    }
-  }
-  <div class="cloudbees pull-right">
-    <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
+    </div>
+    <div>
+      <a href="@routes.Registration.step1()">Become a Member</a>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <div class="cloudbees pull-right">
+      <img src="http://www.cloudbees.com/sites/default/files/Button-Built-on-CB-1.png"/>
+    </div>
   </div>
 }
