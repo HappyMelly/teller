@@ -90,10 +90,23 @@ trait Registration extends Controller
    */
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val form = userForm.bind(Map(("firstName", user.firstName),
-        ("lastName", user.lastName),
-        ("email", user.email.getOrElse(""))))
-      Ok(views.html.registration.step2(user, form))
+      if (user.account.viewer) {
+        Redirect(routes.Dashboard.index())
+      } else {
+        val (firstName, lastName) = if (user.firstName.length == 0) {
+          val tokens: Array[String] = user.fullName.split(" ")
+          tokens.length match {
+            case 0 ⇒ ("", "")
+            case 1 ⇒ (tokens(0), "")
+            case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
+          }
+        } else
+          (user.firstName, user.lastName)
+        val form = userForm.bind(Map(("firstName", firstName),
+          ("lastName", lastName),
+          ("email", user.email.getOrElse(""))))
+        Ok(views.html.registration.step2(user, form))
+      }
   }
 
   /**
@@ -101,92 +114,109 @@ trait Registration extends Controller
    */
   def savePerson = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      userForm.bindFromRequest.fold(
-        hasErrors ⇒ {
-          Ok(views.html.registration.step2(user, hasErrors))
-        },
-        p ⇒ {
-          val id = personCacheId(user.identityId)
-          Cache.set(id, p, 900)
-          Redirect(routes.Registration.step3())
-        })
+      if (user.account.viewer) {
+        Redirect(routes.Dashboard.index())
+      } else {
+        userForm.bindFromRequest.fold(
+          hasErrors ⇒ {
+            Ok(views.html.registration.step2(user, hasErrors))
+          },
+          p ⇒ {
+            val id = personCacheId(user.identityId)
+            Cache.set(id, p, 900)
+            Redirect(routes.Registration.step3())
+          })
+      }
   }
   /**
    * Renders step 3 page of the registration process
    */
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val publicKey = Play.configuration.getString("stripe.public_key").get
-      Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
-        val person = unregisteredPerson(userData, user)
-        val code = userData.country
-        val fee = Payment.countryBasedFees(code)
-        Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
-      } getOrElse {
-        Ok("Shit")
+      if (user.account.viewer) {
+        Redirect(routes.Dashboard.index())
+      } else {
+        val publicKey = Play.configuration.getString("stripe.public_key").get
+        Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+          val person = unregisteredPerson(userData, user)
+          val code = userData.country
+          val fee = Payment.countryBasedFees(code)
+          Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
+        } getOrElse {
+          Redirect(routes.Registration.step2()).
+            flashing("error" -> Messages("login.noUserData"))
+        }
       }
   }
 
   def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
-        val person = unregisteredPerson(userData, user).insert
-        Membership.form.bindFromRequest.fold(
-          hasError ⇒
-            BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
-          data ⇒ {
-            try {
-              if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
-                throw new ValidationException("error.payment.minimum_fee")
-              }
-              val key = Play.configuration.getString("stripe.secret_key").get
-              val payment = new Payment(key)
-              val customerId = payment.subscribe(person,
-                None,
-                data.token,
-                data.fee)
-
-              val fee = Money.of(EUR, data.fee)
-              println(customerId.toString)
-
-              person.copy(customerId = Some(customerId)).copy(active = true).update
-              val account = UserAccount(None, person.id.get, "viewer",
-                person.socialProfile.twitterHandle,
-                person.socialProfile.facebookUrl,
-                person.socialProfile.googlePlusUrl,
-                person.socialProfile.linkedInUrl)
-              UserAccount.insert(account)
-
-              val member = person.becomeMember(funder = false, fee)
-              val url = routes.People.details(person.id.get).url
-              val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-              val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
-                person.fullName,
-                fee.toString,
-                fullUrl)
-              slack.send(text)
-
-              member.activity(person, Activity.Predicate.BecameSupporter).insert
-
-              Ok(Json.obj("redirect" -> routes.Registration.congratulations().url))
-            } catch {
-              case e: PaymentException ⇒
-                val error = e.code match {
-                  case "card_declined" ⇒ "error.payment.card_declined"
-                  case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
-                  case "expired_card" ⇒ "error.payment.expired_card"
-                  case "processing_error" ⇒ "error.payment.processing_error"
-                  case _ ⇒ "error.payment.unexpected_error"
+      if (user.account.viewer) {
+        Redirect(routes.Dashboard.index())
+      } else {
+        Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+          val person = unregisteredPerson(userData, user).insert
+          Membership.form.bindFromRequest.fold(
+            hasError ⇒
+              BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
+            data ⇒ {
+              try {
+                if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
+                  throw new ValidationException("error.payment.minimum_fee")
                 }
-                BadRequest(Json.obj("message" -> Messages(error)))
-              case e: RequestException ⇒
-                e.log.foreach(Logger.error(_))
-                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
-              case e: ValidationException ⇒
-                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
-            }
-          })
-      } getOrElse Ok("Shit")
+                val key = Play.configuration.getString("stripe.secret_key").get
+                val payment = new Payment(key)
+                val customerId = payment.subscribe(person,
+                  None,
+                  data.token,
+                  data.fee)
+
+                val fee = Money.of(EUR, data.fee)
+
+                person.copy(customerId = Some(customerId)).copy(active = true).update
+                val account = UserAccount(None, person.id.get, "viewer",
+                  person.socialProfile.twitterHandle,
+                  person.socialProfile.facebookUrl,
+                  person.socialProfile.googlePlusUrl,
+                  person.socialProfile.linkedInUrl)
+                UserAccount.insert(account)
+
+                val member = person.becomeMember(funder = false, fee)
+                val url = routes.People.details(person.id.get).url
+                val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+                val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+                  person.fullName,
+                  fee.toString,
+                  fullUrl)
+                slack.send(text)
+
+                member.activity(person, Activity.Predicate.BecameSupporter).insert
+
+                Ok(Json.obj("redirect" -> routes.Registration.congratulations().url))
+              } catch {
+                case e: PaymentException ⇒
+                  val error = e.code match {
+                    case "card_declined" ⇒ "error.payment.card_declined"
+                    case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+                    case "expired_card" ⇒ "error.payment.expired_card"
+                    case "processing_error" ⇒ "error.payment.processing_error"
+                    case _ ⇒ "error.payment.unexpected_error"
+                  }
+                  Person.delete(person.id.get)
+                  BadRequest(Json.obj("message" -> Messages(error)))
+                case e: RequestException ⇒
+                  Person.delete(person.id.get)
+                  e.log.foreach(Logger.error(_))
+                  BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+                case e: ValidationException ⇒
+                  Person.delete(person.id.get)
+                  BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+              }
+            })
+        } getOrElse {
+          Ok(Json.obj("redirect" -> routes.Registration.step2().url))
+        }
+      }
   }
 
   /**

@@ -440,6 +440,7 @@ object Person {
     PersonService.get.find(id).map(_.account).map(_.delete())
     MemberService.get.delete(id, person = true)
     Participants.where(_.personId === id).mutate(_.delete())
+    SocialProfileService.delete(id, ProfileType.Person)
     People.where(_.id === id).mutate(_.delete())
   }
 
