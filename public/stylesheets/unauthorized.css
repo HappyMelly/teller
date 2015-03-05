@@ -21,6 +21,32 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
+/* Sign-in page */
+body.signin {
+    background-image: url(../images/Melly-Shum-hates-her-job.jpg);
+    background-repeat: no-repeat;
+    background-position: left 0;
+    padding-top : 0;
+    height: 100%;
+}
+div.signin {
+    padding-top: 30px;
+    height: 100%;
+    background: none repeat scroll 0 0 #FFF;
+    position: fixed;
+}
+.footer {
+    bottom: 30px;
+    position: absolute;
+    color: #cccccc;
+}
+.footer a {
+    color: rgba(0, 0, 0, 0.53);
+}
+
+
+/* Button block */
 .form-block {
     margin-top: 50px;
 }
