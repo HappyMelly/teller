@@ -30,8 +30,9 @@
       To be a Happy Melly Supporter, all you need is to do is pay a small annual membership fee.
       The minimum fee amount depends on the country you live in.
     </p>
-    <form class="form-inline payment-bottom-space" action="@CSRF(routes.Membership.charge())"
-    method="POST" id="payment-form" autocomplete="on">
+    <form class="form-inline payment-bottom-space"
+      action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
+      method="POST" id="payment-form" autocomplete="on">
       <span class="payment-errors"></span>
       @org.map { organisation =>
         <input type="hidden" name="orgId" value="@organisation.id.get"/>

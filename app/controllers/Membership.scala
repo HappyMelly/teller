@@ -44,7 +44,11 @@ case class PaymentData(token: String,
   fee: Int,
   orgId: Option[Long] = None) {}
 
-trait Membership extends Controller with Security with Services with Notifiers {
+trait Membership extends Controller
+  with Security
+  with Services
+  with Notifiers {
+
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
   def form = Form(mapping(
@@ -60,13 +64,6 @@ trait Membership extends Controller with Security with Services with Notifiers {
     implicit handler ⇒ implicit user ⇒
       val orgs = user.person.organisations.filter(_.member.isEmpty)
       Ok(views.html.membership.welcome(user, orgs))
-  }
-
-  /**
-   * Renders welcome screen for new users
-   */
-  def welcomeNewUser = Action { implicit request ⇒
-    Ok(views.html.membership.welcomeNewUser())
   }
 
   /**

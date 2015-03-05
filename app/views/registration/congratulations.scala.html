@@ -1,0 +1,26 @@
+@()(implicit request: Request[Any], flash: Flash)
+
+@layout.unauthorized("Congratulations") {
+  <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
+
+  <div class="congratulation">
+    <div class="col-md-4 col-md-offset-1">
+      <img src="@routes.Assets.at("images/HM-character.png")" height="500px"/>
+    </div>
+    <div class="col-md-5 col-md-offset-1 text">
+      <div class="col-md-12 text-center block">
+        <h1>Congratulations!</h1>
+      </div>
+      <div class="block">
+        <p>You joined the international business
+          network of awesome people and organizations helping others to be happy
+          at work. YOU ROCK!</p>
+        <p>Check your mailbox! Your welcome email is already waiting for you with
+          more advice on how to enjoy
+          being a member of <a href="http://happymelly.com" target="_blank">Happy Melly</a>.
+        </p>
+      </div>
+      <a class="btn btn-success" href="@(routes.Dashboard.profile().url)#membership">Go to Profile &rarr;</a>
+    </div>
+  </div>
+}

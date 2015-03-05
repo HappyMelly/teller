@@ -81,5 +81,5 @@ private[models] object People extends Table[Person]("PERSON") {
   def forInsert = * returning id
 
   def forUpdate = firstName ~ lastName ~ birthday ~ photo ~ signature ~ bio ~ interests ~
-    role ~ webSite ~ blog ~ customerId ~ virtual ~ updated ~ updatedBy
+    role ~ webSite ~ blog ~ customerId ~ virtual ~ active ~ updated ~ updatedBy
 }

@@ -24,30 +24,38 @@
 
 package controllers
 
-import models.{ Address, DateStamp, Photo, Person }
+import models._
 import models.UserRole.Role._
-import models.payment.Payment
+import models.payment.{ RequestException, PaymentException, Payment }
 import models.service.Services
+import org.joda.money.CurrencyUnit._
+import org.joda.money.Money
 import org.joda.time.DateTime
-import play.api.Play
+import play.api.{ Logger, Play }
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.Messages
+import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.core.{ IdentityId, SecureSocial }
+import services.notifiers.Notifiers
 
 case class User(firstName: String, lastName: String, email: String, country: String)
 
 /**
  * Contains actions for a registration process
  */
-trait Registration extends Controller with Security with Services {
+trait Registration extends Controller
+  with Security with Services with Notifiers {
+
+  class ValidationException(msg: String) extends RuntimeException(msg) {}
 
   private def userForm = Form(mapping(
     "firstName" -> nonEmptyText,
     "lastName" -> nonEmptyText,
-    "email" -> email,
+    "email" -> play.api.data.Forms.email,
     "country" -> nonEmptyText)(User.apply)(User.unapply))
 
   /**
@@ -58,7 +66,7 @@ trait Registration extends Controller with Security with Services {
   def authenticate(provider: String) = Action { implicit request ⇒
     val session = request.session -
       SecureSocial.OriginalUrlKey +
-      (SecureSocial.OriginalUrlKey -> routes.Registration.step2.url)
+      (SecureSocial.OriginalUrlKey -> routes.Registration.step2().url)
     val route = securesocial.controllers.routes.ProviderController.authenticate(provider)
     Redirect(route).withSession(session)
   }
@@ -82,7 +90,10 @@ trait Registration extends Controller with Security with Services {
    */
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.registration.step2(user, userForm))
+      val form = userForm.bind(Map(("firstName", user.firstName),
+        ("lastName", user.lastName),
+        ("email", user.email.getOrElse(""))))
+      Ok(views.html.registration.step2(user, form))
   }
 
   /**
@@ -102,26 +113,108 @@ trait Registration extends Controller with Security with Services {
   }
   /**
    * Renders step 3 page of the registration process
-   * @return
    */
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val publicKey = Play.configuration.getString("stripe.public_key").get
-      Cache.getAs[User](personCacheId(user.identityId)) map { u ⇒
-        val photo = new Photo(None, None)
-        val dateStamp = new DateStamp(DateTime.now(), "", DateTime.now(), "")
-        val person = new Person(None, u.firstName, u.lastName, None, photo,
-          false, 0, None, None, webSite = None, blog = None,
-          dateStamp = dateStamp)
-        val address = new Address(countryCode = u.country)
-        person.address_=(address)
-
-        val code = u.country
+      Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+        val person = unregisteredPerson(userData, user)
+        val code = userData.country
         val fee = Payment.countryBasedFees(code)
         Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
       } getOrElse {
         Ok("Shit")
       }
+  }
+
+  def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+        val person = unregisteredPerson(userData, user).insert
+        Membership.form.bindFromRequest.fold(
+          hasError ⇒
+            BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
+          data ⇒ {
+            try {
+              if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
+                throw new ValidationException("error.payment.minimum_fee")
+              }
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val payment = new Payment(key)
+              val customerId = payment.subscribe(person,
+                None,
+                data.token,
+                data.fee)
+
+              val fee = Money.of(EUR, data.fee)
+              println(customerId.toString)
+
+              person.copy(customerId = Some(customerId)).copy(active = true).update
+              val account = UserAccount(None, person.id.get, "viewer",
+                person.socialProfile.twitterHandle,
+                person.socialProfile.facebookUrl,
+                person.socialProfile.googlePlusUrl,
+                person.socialProfile.linkedInUrl)
+              UserAccount.insert(account)
+
+              val member = person.becomeMember(funder = false, fee)
+              val url = routes.People.details(person.id.get).url
+              val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+              val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+                person.fullName,
+                fee.toString,
+                fullUrl)
+              slack.send(text)
+
+              member.activity(person, Activity.Predicate.BecameSupporter).insert
+
+              Ok(Json.obj("redirect" -> routes.Registration.congratulations().url))
+            } catch {
+              case e: PaymentException ⇒
+                val error = e.code match {
+                  case "card_declined" ⇒ "error.payment.card_declined"
+                  case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+                  case "expired_card" ⇒ "error.payment.expired_card"
+                  case "processing_error" ⇒ "error.payment.processing_error"
+                  case _ ⇒ "error.payment.unexpected_error"
+                }
+                BadRequest(Json.obj("message" -> Messages(error)))
+              case e: RequestException ⇒
+                e.log.foreach(Logger.error(_))
+                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+              case e: ValidationException ⇒
+                BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+            }
+          })
+      } getOrElse Ok("Shit")
+  }
+
+  /**
+   * Renders congratulations screen
+   */
+  def congratulations = Action { implicit request ⇒
+    Ok(views.html.registration.congratulations())
+  }
+
+  /**
+   * Returns a person created from registration data
+   * @param user User object
+   */
+  private def unregisteredPerson(user: User, remoteUser: UserIdentity): Person = {
+    val photo = new Photo(None, None)
+    val dateStamp = new DateStamp(DateTime.now(), "", DateTime.now(), "")
+    val person = new Person(None, user.firstName, user.lastName, None, photo,
+      false, 0, None, None, webSite = None, blog = None, active = false,
+      dateStamp = dateStamp)
+    val address = new Address(countryCode = user.country)
+    person.address_=(address)
+    val socialProfile = new SocialProfile(email = user.email,
+      twitterHandle = remoteUser.twitterHandle,
+      facebookUrl = remoteUser.facebookUrl,
+      googlePlusUrl = remoteUser.googlePlusUrl,
+      linkedInUrl = remoteUser.linkedInUrl)
+    person.socialProfile_=(socialProfile)
+    person
   }
 
   /**

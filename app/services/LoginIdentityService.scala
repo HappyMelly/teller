@@ -48,18 +48,20 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
    * @return
    */
   def find(id: IdentityId): Option[UserIdentity] = {
-    val identity: Option[UserIdentity] = Cache.getAs[UserIdentity](cacheId(id))
-    identity map { i ⇒
-      val account = new UserAccount(None, 0, "", None, None, None, None)
-      account.roles_=(List(UserRole.forName(UserRole.Role.Unregistered.toString)))
-      i.account_=(Some(account))
-      Some(i)
-    } getOrElse {
-      UserIdentityService.get.findByUserId(id)
-    }
+    val identity = UserIdentityService.get.findByUserId(id)
+    if (identity.isEmpty) {
+      val cachedIdentity: Option[UserIdentity] = Cache.getAs[UserIdentity](cacheId(id))
+      cachedIdentity map { i ⇒
+        val account = new UserAccount(None, 0, "", None, None, None, None)
+        account.roles_=(List(UserRole.forName(UserRole.Role.Unregistered.toString)))
+        i.account_=(Some(account))
+        Some(i)
+      } getOrElse None
+    } else identity
   }
 
   def save(user: Identity) = {
+    println(user.toString)
     val loginIdentity = user match {
       case su: SocialUser ⇒ su.identityId.providerId match {
         case TwitterProvider.Twitter ⇒ UserIdentity.forTwitterHandle(su, findTwitterHandle(su))

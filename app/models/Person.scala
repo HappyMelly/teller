@@ -91,6 +91,34 @@ case class Person(
   private var _organisations: Option[List[Organisation]] = None
   private var _member: Option[Member] = None
 
+  def copy(id: Option[Long] = id,
+    firstName: String = firstName,
+    lastName: String = lastName,
+    birthday: Option[LocalDate] = birthday,
+    photo: Photo = photo,
+    signature: Boolean = signature,
+    addressId: Long = addressId,
+    bio: Option[String] = bio,
+    interests: Option[String] = interests,
+    role: PersonRole.Value = role,
+    webSite: Option[String] = webSite,
+    blog: Option[String] = blog,
+    customerId: Option[String] = customerId,
+    virtual: Boolean = virtual,
+    active: Boolean = active,
+    dateStamp: DateStamp = dateStamp): Person = {
+    val person = Person(id, firstName, lastName, birthday, photo,
+      signature, addressId, bio, interests, role, webSite, blog,
+      customerId, virtual, active, dateStamp)
+    this._socialProfile map { p ⇒
+      person.socialProfile_=(this.socialProfile)
+    }
+    this._address map { a ⇒
+      person.address_=(this.address)
+    }
+    person
+  }
+
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
       socialProfile_=(SocialProfileService.find(id.getOrElse(0), ProfileType.Person))
@@ -258,7 +286,11 @@ case class Person(
     val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
     SocialProfileService.insert(socialProfile.copy(objectId = personId))
     Accounts.insert(Account(personId = Some(personId)))
-    this.copy(id = Some(personId))
+
+    val person = this.copy(id = Some(personId))
+    person.address_=(newAddress)
+    person.socialProfile_=(this.socialProfile)
+    person
   }
 
   /**
@@ -277,10 +309,12 @@ case class Person(
       val socialQuery = for {
         p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
       } yield p
+
       socialQuery.update(socialProfile.copy(objectId = id.get))
+
       // Skip the id, created, createdBy and active fields.
       val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-        bio, interests, role, webSite, blog, customerId, virtual,
+        bio, interests, role, webSite, blog, customerId, virtual, active,
         dateStamp.updated, dateStamp.updatedBy)
       val updateQuery = People.filter(_.id === id).map(_.forUpdate)
       updateQuery.update(personUpdateTuple)

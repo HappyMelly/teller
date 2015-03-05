@@ -50,7 +50,7 @@ var stripeResponseHandler = function(status, response) {
         $form.append($('<input type="hidden" name="token" />').val(token));
         $.ajax({
             type: "POST",
-            url: "/membership/payment",
+            url: $("form").attr("action"),
             data: $form.serialize()
         }).done(function(data) {
             if (data.hasOwnProperty("redirect")) {
