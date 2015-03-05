@@ -26,6 +26,7 @@ package controllers
 
 import models.service.Services
 import org.joda.time.LocalDate
+import play.api.i18n.Messages
 import play.api.mvc._
 import models.UserRole.Role._
 import models._
@@ -81,7 +82,7 @@ trait Dashboard extends Controller with Security with Services {
           licenses,
           activity))
       } else {
-        Redirect(securesocial.controllers.routes.LoginPage.logout())
+        Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
       }
   }
 

@@ -24,6 +24,7 @@
 
 # SecureSocial
 securesocial.login.accessDenied = Sorry, your social network account is not granted the right privileges to access this application. Please contact the person who added your account to this system and ask that person to assign the Viewer role to your account.
+login.unregistered = Sorry, your social network account is not registered in this application. Please contact the support if you believe it is a mistake.
 
 # Models
 models.BookingEntry.name = booking entry {0}

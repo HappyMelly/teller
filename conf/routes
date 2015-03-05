@@ -225,7 +225,7 @@ GET         /assets/*file                                                       
 
 ## SecureSocial
 GET         /login                                                               securesocial.controllers.LoginPage.login
-GET         /logout                                                              securesocial.controllers.LoginPage.logout
+GET         /logout                                                              controllers.LoginPage.logout(error: Option[String] ?= None)
 
 
 # OAuth entry points

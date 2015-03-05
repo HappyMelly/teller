@@ -19,12 +19,12 @@
   <body class="signin">
     <div class="col-md-5 col-md-offset-7 text-center signin">
       @alert(alertType: String) = {
-      @flash.get(alertType).map { message =>
-        <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          @message
-        </div>
-      }
+        @flash.get(alertType).map { message =>
+          <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            @message
+          </div>
+        }
       }
       @alert("error")
       @alert("success")
