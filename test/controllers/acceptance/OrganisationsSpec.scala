@@ -111,7 +111,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.people_=(List(PersonHelper.one()))
 
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(id).apply(req)
 
     status(result) must equalTo(OK)
@@ -125,7 +125,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     org.people_=(List())
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(id).apply(req)
 
     status(result) must equalTo(OK)
@@ -138,7 +138,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.insert
     org.people_=(List())
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(id).apply(req)
 
     status(result) must equalTo(OK)
@@ -155,7 +155,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -173,7 +173,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val request = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val request = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(request)
 
     status(result) must equalTo(OK)
@@ -195,7 +195,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByOrganisation _) expects id returning payments
     val controller = fakedController()
 
-    val identity = StubUserIdentity.admin
+    val identity = FakeUserIdentity.admin
     val req = prepareSecuredGetRequest(identity, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
@@ -224,7 +224,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByOrganisation _) expects id returning payments
     val controller = fakedController()
 
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val req = prepareSecuredGetRequest(identity, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
@@ -249,7 +249,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -271,7 +271,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -292,7 +292,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -313,7 +313,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -333,7 +333,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -348,7 +348,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (orgService.find(_: Long)) expects id returning None
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
@@ -360,7 +360,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -376,7 +376,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organization/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -393,7 +393,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -413,7 +413,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/organisation/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
 
     status(result) must equalTo(OK)

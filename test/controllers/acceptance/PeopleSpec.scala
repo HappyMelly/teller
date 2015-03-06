@@ -133,7 +133,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects id returning None
       controller.personService_=(mockService)
-      val identity = StubUserIdentity.viewer
+      val identity = FakeUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/person/1")
       controller.details(id).apply(request)
     }
@@ -145,7 +145,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.member_=(member)
 
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(StubUserIdentity.admin, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.admin, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -160,7 +160,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -177,7 +177,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val request = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val request = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
     status(result) must equalTo(OK)
@@ -202,7 +202,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByPerson _) expects id returning payments
     val controller = fakedController()
 
-    val identity = StubUserIdentity.admin
+    val identity = FakeUserIdentity.admin
     val request = prepareSecuredGetRequest(identity, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
@@ -224,7 +224,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -249,7 +249,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     paymentService.findByPerson _ expects id returning List()
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -264,7 +264,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -289,7 +289,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByPerson _) expects id returning payments
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -312,7 +312,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -331,7 +331,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -351,7 +351,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -382,7 +382,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByPerson _) expects id returning List()
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/2")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -410,7 +410,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByPerson _) expects id returning List()
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/2")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/2")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -424,7 +424,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects id returning None
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
@@ -437,7 +437,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects id returning Some(person)
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -455,7 +455,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects id returning Some(person)
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(person.id.get).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -471,7 +471,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
@@ -490,7 +490,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/person/1")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)

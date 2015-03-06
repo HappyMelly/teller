@@ -104,7 +104,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   val MSG = "You are trying to complete step 2 while adding new member without completing step 1"
 
   def e1 = {
-    val identity = StubUserIdentity.viewer
+    val identity = FakeUserIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/members")
 
     val result: Future[SimpleResult] = controller.index().apply(request)
@@ -117,7 +117,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e6 = {
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
 
     "objectId" || "person" | "funder" | "currency" | "amount" | "since" | "existingObject" |
       // empty currency
@@ -162,7 +162,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e7 = {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val uReq = addMemberData(req, since = "2014-01-01")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
@@ -171,7 +171,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e8 = {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
 
     val now = LocalDate.now()
     val firstDay = now.dayOfMonth().withMaximumValue().plusDays(1)
@@ -186,7 +186,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e9 = new cleanup {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val uReq = addMemberData(req, person = "0")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
@@ -196,7 +196,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e10 = new cleanup {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val uReq = addMemberData(req, person = "1")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
@@ -206,7 +206,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e11 = new cleanup {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val uReq = addMemberData(req, person = "0", existingObject = "1")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
@@ -216,7 +216,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e12 = new cleanup {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val uReq = addMemberData(req, person = "1", existingObject = "1")
     val result: Future[SimpleResult] = controller.create().apply(uReq)
 
@@ -226,7 +226,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e13 = {
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/organisation").
       withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
     val result = controller.createNewOrganisation().apply(request)
@@ -236,7 +236,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e14 = {
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/person").
       withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"), ("address.country", "RU"),
         ("firstName", "Test"), ("lastName", "Test"), ("signature", "false"),
@@ -248,7 +248,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e15 = {
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingOrg().apply(request)
@@ -258,7 +258,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e16 = {
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/existing/person").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingPerson().apply(request)
@@ -269,7 +269,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e17 = {
     val req = prepareSecuredGetRequest(
-      StubUserIdentity.editor,
+      FakeUserIdentity.editor,
       "/member/existing/organisation")
     val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
 
@@ -306,7 +306,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       }
 
     val req = prepareSecuredGetRequest(
-      StubUserIdentity.editor,
+      FakeUserIdentity.editor,
       "/member/existing/organisation")
     val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
 
@@ -332,7 +332,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     (service.find _).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.orgService_=(service)
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingOrg().apply(request)
@@ -352,7 +352,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (service.find _).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
       controller.orgService_=(service)
-      val identity = StubUserIdentity.editor
+      val identity = FakeUserIdentity.editor
       val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
         withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingOrg().apply(request)
@@ -364,7 +364,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e21 = {
     val req = prepareSecuredGetRequest(
-      StubUserIdentity.editor,
+      FakeUserIdentity.editor,
       "/member/existing/person")
     val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
 
@@ -399,7 +399,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       }
 
     val req = prepareSecuredGetRequest(
-      StubUserIdentity.editor,
+      FakeUserIdentity.editor,
       "/member/existing/person")
     val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
 
@@ -425,7 +425,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     (service.find(_: Long)).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.personService_=(service)
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredPostRequest(identity, "/member/existing/person").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingPerson().apply(request)
@@ -445,7 +445,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (service.find(_: Long)).expects(*).returning(Some(person))
       (service.findNonMembers _).expects().returning(List())
       controller.personService_=(service)
-      val identity = StubUserIdentity.editor
+      val identity = FakeUserIdentity.editor
       val request = prepareSecuredPostRequest(identity, "/member/existing/person").
         withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingPerson().apply(request)
@@ -462,7 +462,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val person = PersonHelper.one.insert
 
     val req = prepareSecuredGetRequest(
-      StubUserIdentity.editor,
+      FakeUserIdentity.editor,
       "/member/1")
     val result: Future[SimpleResult] = controller.edit(1L).apply(req)
 
@@ -479,7 +479,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
 
   def e26 = new MockContext {
     truncateTables()
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody(
         ("objectId", "0"), ("person", "0"),
         ("funder", "0"), ("fee.currency", "EUR"),
@@ -500,7 +500,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e27 = new MockContext {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val memberService = mock[FakeMemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
     (memberService.find(_, _)).expects(1L, true).returning(Some(member))

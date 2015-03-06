@@ -28,6 +28,7 @@ import controllers.Registration
 import integration.PlayAppSpec
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
+import stubs.FakeUserIdentity
 
 import scala.concurrent.Future
 
@@ -42,6 +43,12 @@ class RegistrationSpec extends PlayAppSpec {
   Step 1 should
     be visible to anyone                           $e1
     contain all social login buttons               $e2
+
+  Step 2 should
+    be visible to an unregistered user             $e3
+    redirect Viewers to Main page                  $e4
+    not be visible to unauthorized user            $e5
+    fill in fields 'First name', 'Last name' and 'Email' if they are available $e6
   """
 
   val controller = new TestRegistration()
@@ -60,4 +67,35 @@ class RegistrationSpec extends PlayAppSpec {
     contentAsString(result) must contain("Log in with Linkedin")
   }
 
+  def e3 = {
+    val identity = FakeUserIdentity.unregistered
+    val req = prepareSecuredGetRequest(identity, "/registration/step2")
+    val result: Future[SimpleResult] = controller.step2().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Step 2")
+  }
+
+  def e4 = {
+    val identity = FakeUserIdentity.viewer
+    val req = prepareSecuredGetRequest(identity, "/registration/step2")
+    val result: Future[SimpleResult] = controller.step2().apply(req)
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location").get must_== "/"
+  }
+
+  def e5 = {
+    val result: Future[SimpleResult] = controller.step2().apply(FakeRequest())
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location").get must contain("/login")
+  }
+
+  def e6 = {
+    val identity = FakeUserIdentity.unregistered
+    val req = prepareSecuredGetRequest(identity, "/registration/step2")
+    val result: Future[SimpleResult] = controller.step2().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Sergey")
+    contentAsString(result) must contain("Kotlov")
+    contentAsString(result) must contain("Invalid e-mail address")
+  }
 }

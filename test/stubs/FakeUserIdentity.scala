@@ -28,7 +28,7 @@ import models.{ UserRole, UserAccount }
 import securesocial.core.AuthenticationMethod
 import securesocial.core.IdentityId
 
-class StubUserIdentity(
+class FakeUserIdentity(
   override val uid: Option[Long],
   override val identityId: IdentityId,
   override val firstName: String,
@@ -50,7 +50,8 @@ class StubUserIdentity(
 
 }
 
-object StubUserIdentity {
+object FakeUserIdentity {
+  def unregistered: IdentityId = new IdentityId("unregistered", "twitter")
   def viewer: IdentityId = new IdentityId("viewer", "twitter")
   def editor: IdentityId = new IdentityId("editor", "twitter")
   def admin: IdentityId = new IdentityId("admin", "twitter")

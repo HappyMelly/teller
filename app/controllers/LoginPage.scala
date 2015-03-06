@@ -30,6 +30,11 @@ import play.api.Play.current
 import securesocial.core._
 import securesocial.core.providers.utils.RoutesHelper
 
+/**
+ * This controller is a partial copy of securesocial.controllers.LoginPage
+ *
+ * Its logout method allows to pass error message to login page
+ */
 object LoginPage extends Controller {
 
   /**
@@ -39,9 +44,13 @@ object LoginPage extends Controller {
 
   /**
    * Logs out the user by clearing the credentials from the session.
-   * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
+   * The browser is redirected either to the login page or to the page specified
+   * in the onLogoutGoTo property.
    *
-   * @param error Message which will be redirected to login page
+   * The difference between this method and the one in securesocial.controllers.LoginPage
+   * is that this method passes error message to login page using Flash object
+   *
+   * @param error Message which will be passed to login page
    */
   def logout(error: Option[String] = None) = Action { implicit request ⇒
     val to = Play.configuration.getString(onLogoutGoTo).getOrElse(RoutesHelper.login().absoluteURL(IdentityProvider.sslEnabled))

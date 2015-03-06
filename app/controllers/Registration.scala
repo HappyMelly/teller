@@ -42,6 +42,13 @@ import play.api.mvc._
 import securesocial.core.{ IdentityId, SecureSocial }
 import services.notifiers.Notifiers
 
+/**
+ * Contains registration data required to create a person object
+ * @param firstName First name
+ * @param lastName Last name
+ * @param email Email address
+ * @param country Country where the person lives
+ */
 case class User(firstName: String, lastName: String, email: String, country: String)
 
 /**
@@ -90,6 +97,7 @@ trait Registration extends Controller
    */
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
+      println(user.toString)
       if (user.account.viewer) {
         Redirect(routes.Dashboard.index())
       } else {
@@ -225,6 +233,12 @@ trait Registration extends Controller
   def congratulations = Action { implicit request ⇒
     Ok(views.html.registration.congratulations())
   }
+
+  /**
+   * Returns first and last names of the given user
+   * @param user User object
+   */
+  protected def userNames(user: UserIdentity): (String, String) = ("", "")
 
   /**
    * Returns a person created from registration data
