@@ -53,7 +53,6 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
     "question8" -> nonEmptyText,
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
-    "certificate" -> optional(nonEmptyText),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now),
@@ -234,23 +233,24 @@ object Evaluations extends EvaluationsController with Security with EmailSender 
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Evaluation.find(id).map { ev ⇒
+  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Evaluation.find(id).map { ev ⇒
 
-        ev.approve(user.person)
+          ev.approve(user.person)
 
-        val activity = ev.activity(
-          user.person,
-          Activity.Predicate.Approved).insert
+          val activity = ev.activity(
+            user.person,
+            Activity.Predicate.Approved).insert
 
-        val route = ref match {
-          case Some("index") ⇒ routes.Participants.index().url
-          case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-          case _ ⇒ routes.Events.details(ev.eventId).url + "#participant"
-        }
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case Some("evaluation") ⇒ routes.Evaluations.details(id).url
+            case _ ⇒ routes.Events.details(ev.eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
   }
 
   /**

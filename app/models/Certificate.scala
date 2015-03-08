@@ -40,19 +40,22 @@ import scala.language.postfixOps
  * An certificate which a participant gets after an event
  */
 case class Certificate(
-  evaluation: Evaluation,
+  issued: Option[LocalDate],
+  event: Event,
+  participant: Person,
   renew: Boolean = false) extends EmailSender {
 
-  val id = evaluation.certificateId
+  val id = {
+    issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"
+  }
 
   def generateAndSend(brand: BrandView, approver: Person) {
     val contentType = "application/pdf"
-    val pdf = generate(evaluation)
+    val pdf = generate(issued, event, participant)
     if (renew) {
       Certificate.removeFromCloud(id)
     }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
-      evaluation.copy(certificate = Some(id)).update
       sendEmail(brand, approver, pdf)
     }.recover {
       case S3Exception(status, code, message, originalXml) ⇒ {}
@@ -60,7 +63,7 @@ case class Certificate(
   }
 
   def send(brand: BrandView, approver: Person) {
-    val pdf = Certificate.downloadFromCloud(evaluation.certificateId)
+    val pdf = Certificate.downloadFromCloud(id)
     pdf.map {
       case value ⇒
         sendEmail(brand, approver, value)
@@ -71,10 +74,10 @@ case class Certificate(
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
     val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
-    val body = mail.html.approved(brand.brand, evaluation.participant, approver).toString()
+    val body = mail.html.approved(brand.brand, participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
-    send(Set(evaluation.participant),
-      Some(evaluation.event.facilitators.toSet),
+    send(Set(participant),
+      Some(event.facilitators.toSet),
       Some(Set(brand.coordinator)),
       subject,
       body,
@@ -82,28 +85,10 @@ case class Certificate(
       Some((file.getPath, name)))
   }
 
-  /**
-   * Get a raw certificate template
-   *
-   * @param evaluation Target evaluation
-   * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
-   * @return
-   */
-  private def template(evaluation: Evaluation, twoFacilitators: Boolean): Image = {
-    val event = EventService.get.find(evaluation.eventId).get
-    val templates = CertificateTemplate.findByBrand(event.brandCode)
-    val data = templates.find(_.language == event.language.spoken).map { template ⇒
-      if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
-    }.getOrElse {
-      templates.find(_.language == "EN").map { template ⇒
-        if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
-      }.getOrElse(Array[Byte]())
-    }
-    Image.getInstance(data)
-  }
-
   /** Generate a Management 3.0 certificate (the only one supported right now) */
-  private def generate(ev: Evaluation): Array[Byte] = {
+  private def generate(handledDate: Option[LocalDate],
+    event: Event,
+    participant: Person): Array[Byte] = {
     import java.io.ByteArrayOutputStream
 
     import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
@@ -120,9 +105,9 @@ case class Certificate(
     val output = new ByteArrayOutputStream()
     val writer = PdfWriter.getInstance(document, output)
     document.open()
-    val facilitators = ev.event.facilitators
+    val facilitators = event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
-    val img = template(ev, cofacilitator)
+    val img = template(event, cofacilitator)
     img.setAbsolutePosition(7, 10)
     img.scalePercent(55)
     document.add(img)
@@ -130,18 +115,18 @@ case class Certificate(
     val font = new Font(baseFont, 20)
     font.setColor(0, 181, 228)
 
-    val name = new Phrase(ev.participant.fullName, font)
-    val title = new Phrase(ev.event.title, font)
-    val dateString = if (ev.event.schedule.start == ev.event.schedule.end) {
-      ev.event.schedule.end.toString("d MMMM yyyy")
+    val name = new Phrase(participant.fullName, font)
+    val title = new Phrase(event.title, font)
+    val dateString = if (event.schedule.start == event.schedule.end) {
+      event.schedule.end.toString("d MMMM yyyy")
     } else {
-      ev.event.schedule.start.toString("d + ") + ev.event.schedule.end.toString("d MMMM yyyy")
+      event.schedule.start.toString("d + ") + event.schedule.end.toString("d MMMM yyyy")
     }
     val eventDate = new Phrase(dateString, font)
-    val location = new Phrase(ev.event.location.city + ", " +
-      Messages("country." + ev.event.location.countryCode), font)
-    val date = new Phrase(ev.handled.map(_.toString("dd MMMM yyyy")).getOrElse(""), font)
-    val certificateIdBlock = new Phrase(ev.certificateId, font)
+    val location = new Phrase(event.location.city + ", " +
+      Messages("country." + event.location.countryCode), font)
+    val date = new Phrase(handledDate.map(_.toString("dd MMMM yyyy")).getOrElse(""), font)
+    val certificateIdBlock = new Phrase(id, font)
 
     val canvas = writer.getDirectContent
     canvas.saveState()
@@ -192,9 +177,28 @@ case class Certificate(
       }
     }
     canvas.restoreState
-    document.close();
+    document.close()
 
     output.toByteArray
+  }
+
+  /**
+   * Get a raw certificate template
+   *
+   * @param event Event
+   * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
+   * @return
+   */
+  private def template(event: Event, twoFacilitators: Boolean): Image = {
+    val templates = CertificateTemplate.findByBrand(event.brandCode)
+    val data = templates.find(_.language == event.language.spoken).map { template ⇒
+      if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+    }.getOrElse {
+      templates.find(_.language == "EN").map { template ⇒
+        if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
+      }.getOrElse(Array[Byte]())
+    }
+    Image.getInstance(data)
   }
 }
 
