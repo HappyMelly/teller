@@ -287,32 +287,30 @@ case class Person(
   /**
    * Updates this person in the database and returns the saved person.
    */
-  def update: Person = DB.withSession { implicit session: Session ⇒
-    session.withTransaction {
-      import models.database.SocialProfiles._
-      val addressId = People.filter(_.id === this.id).map(_.addressId).first
+  def update: Person = DB.withTransaction { implicit session: Session ⇒
+    import models.database.SocialProfiles._
+    val addressId = People.filter(_.id === this.id).map(_.addressId).first
 
-      val addressQuery = for {
-        address ← Addresses if address.id === addressId
-      } yield address
-      addressQuery.update(address.copy(id = Some(addressId)))
+    val addressQuery = for {
+      address ← Addresses if address.id === addressId
+    } yield address
+    addressQuery.update(address.copy(id = Some(addressId)))
 
-      val socialQuery = for {
-        p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
-      } yield p
+    val socialQuery = for {
+      p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
+    } yield p
 
-      socialQuery.update(socialProfile.copy(objectId = id.get))
+    socialQuery.update(socialProfile.copy(objectId = id.get))
 
-      // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-        bio, interests, role, webSite, blog, customerId, virtual, active,
-        dateStamp.updated, dateStamp.updatedBy)
-      val updateQuery = People.filter(_.id === id).map(_.forUpdate)
-      updateQuery.update(personUpdateTuple)
+    // Skip the id, created, createdBy and active fields.
+    val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
+      bio, interests, role, webSite, blog, customerId, virtual, active,
+      dateStamp.updated, dateStamp.updatedBy)
+    val updateQuery = People.filter(_.id === id).map(_.forUpdate)
+    updateQuery.update(personUpdateTuple)
 
-      UserAccount.updateSocialNetworkProfiles(this)
-      this
-    }
+    UserAccount.updateSocialNetworkProfiles(this)
+    this
   }
 
   /**

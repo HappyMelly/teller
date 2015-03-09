@@ -170,8 +170,8 @@ trait Registration extends Controller
                 val account = UserAccount(None, person.id.get, "viewer",
                   person.socialProfile.twitterHandle,
                   person.socialProfile.facebookUrl,
-                  person.socialProfile.googlePlusUrl,
-                  person.socialProfile.linkedInUrl)
+                  person.socialProfile.linkedInUrl,
+                  person.socialProfile.googlePlusUrl)
                 UserAccount.insert(account)
 
                 val member = person.becomeMember(funder = false, fee)
