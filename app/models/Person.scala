@@ -279,19 +279,10 @@ case class Person(
   def objectType: String = Activity.Type.Person
 
   /**
-   * Inserts this person into the database and returns the saved Person, with the ID added.
+   * Inserts this person into the database and returns the saved Person,
+   * with the ID added
    */
-  def insert: Person = DB.withTransaction { implicit session: Session ⇒
-    val newAddress = Address.insert(this.address)
-    val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
-    SocialProfileService.insert(socialProfile.copy(objectId = personId))
-    Accounts.insert(Account(personId = Some(personId)))
-
-    val person = this.copy(id = Some(personId))
-    person.address_=(newAddress)
-    person.socialProfile_=(this.socialProfile)
-    person
-  }
+  def insert: Person = personService.insert(this)
 
   /**
    * Updates this person in the database and returns the saved person.
@@ -428,20 +419,6 @@ object Person {
     People.filter(_.id === id)
       .map(p ⇒ p.active ~ p.virtual)
       .update((active, false))
-  }
-
-  /**
-   * Deletes the person with the given ID and their account.
-   *
-   * @param id Person Identifier
-   */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    import models.service.PersonService
-    PersonService.get.find(id).map(_.account).map(_.delete())
-    MemberService.get.delete(id, person = true)
-    Participants.where(_.personId === id).mutate(_.delete())
-    SocialProfileService.delete(id, ProfileType.Person)
-    People.where(_.id === id).mutate(_.delete())
   }
 
   /**

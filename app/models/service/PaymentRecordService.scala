@@ -35,6 +35,18 @@ import play.api.Play.current
 class PaymentRecordService {
 
   /**
+   * Deletes a record from database
+   * @param objectId Object id
+   * @param person If true, object is a person, otherwise - org
+   */
+  def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
+    implicit session: Session ⇒
+      PaymentRecords.
+        filter(_.objectId === objectId).
+        filter(_.person === person).delete
+  }
+
+  /**
    * Inserts the given record to database
    *
    * @param r Object to insert

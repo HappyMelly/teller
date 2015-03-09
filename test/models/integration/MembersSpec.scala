@@ -137,10 +137,6 @@ class MembersSpec extends PlayAppSpec {
       controller.createNewPerson().apply(request)
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
-
-      Person.findAll.diff(oldList).headOption map { p ⇒
-        Person.delete(p.id); success
-      } getOrElse failure
     }
 
     "be destroyed after successful creation of an organisation" in new cleanDb {
@@ -204,10 +200,6 @@ class MembersSpec extends PlayAppSpec {
         retrieveMember(person.id.toString) map { upd ⇒
           upd.person must_== true
         } getOrElse failure
-
-        // clean up. We don't need this organisation anymore
-        Person.delete(person.id)
-        success
       } getOrElse failure
     }
   }
@@ -258,10 +250,6 @@ class MembersSpec extends PlayAppSpec {
         val updatedM = retrieveMember(person.id.toString)
         updatedM.nonEmpty must_== true
         updatedM.get.objectId must_== person.id
-
-        // clean up. We don't need this person anymore
-        Person.delete(person.id)
-        success
       } getOrElse failure
     }
   }

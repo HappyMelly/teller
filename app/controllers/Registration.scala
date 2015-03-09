@@ -195,14 +195,14 @@ trait Registration extends Controller
                     case "processing_error" ⇒ "error.payment.processing_error"
                     case _ ⇒ "error.payment.unexpected_error"
                   }
-                  Person.delete(person.id.get)
+                  personService.delete(person.id.get)
                   BadRequest(Json.obj("message" -> Messages(error)))
                 case e: RequestException ⇒
-                  Person.delete(person.id.get)
+                  personService.delete(person.id.get)
                   e.log.foreach(Logger.error(_))
                   BadRequest(Json.obj("message" -> Messages(e.getMessage)))
                 case e: ValidationException ⇒
-                  Person.delete(person.id.get)
+                  personService.delete(person.id.get)
                   BadRequest(Json.obj("message" -> Messages(e.getMessage)))
               }
             })

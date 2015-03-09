@@ -26,19 +26,25 @@ package models.integration
 
 import helpers.{ MemberHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.Member
-import models.service.PersonService
+import models.{ UserAccount, ProfileType, Member }
+import models.payment.Record
+import models.service.{ SocialProfileService, PaymentRecordService, PersonService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
-import org.specs2.matcher.DataTables
+import play.api.Play.current
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
 
-class PersonServiceSpec extends PlayAppSpec with DataTables {
+class PersonServiceSpec extends PlayAppSpec {
+
   def setupDb(): Unit = {
     addPeople()
     add()
   }
   def cleanupDb() {}
+
+  val service = PersonService.get
 
   "Method findNonMembers" should {
     "return 4 non members" in {
@@ -73,6 +79,36 @@ class PersonServiceSpec extends PlayAppSpec with DataTables {
         m.funder must_== false
         m.createdBy must_== 1L
       } getOrElse ko
+    }
+  }
+
+  "Method `delete`" should {
+    "delete account, membership, social profile, address, evaluation data" in {
+      //setup
+      truncateTables()
+      val id = 1L
+      val person = PersonHelper.one().insert
+      val member = MemberHelper.make(objectId = id,
+        person = true,
+        funder = false).insert
+      Record("123", id, id, person = true, "desc", Money.parse("EUR 100")).insert
+      Record("234", id, id, person = true, "desc", Money.parse("EUR 200")).insert
+      UserAccount.insert(UserAccount(None, id, "viewer", Some("test"), None, None, None))
+      //test
+      val addressId = person.address.id.get
+      service.delete(id)
+
+      //check
+      DB.withSession { implicit session: Session ⇒
+        import models.database._
+        Accounts.where(_.personId === id).firstOption must_== None
+        Addresses.where(_.id === addressId).firstOption must_== None
+        Members.where(_.objectId === id).where(_.person === true).firstOption must_== None
+        PaymentRecords.where(_.objectId === id).where(_.person === true).list must_== List()
+        // we can skip a type check here as there's only one record in database
+        SocialProfiles.where(_.objectId === id).firstOption must_== None
+        UserAccounts.where(_.personId === id).firstOption must_== None
+      }
     }
   }
 

@@ -263,7 +263,7 @@ trait People extends Controller with Security with Services {
         if (!person.deletable) {
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
-          Person.delete(id)
+          personService.delete(id)
           val activity = person.activity(
             user.person,
             Activity.Predicate.Deleted).insert

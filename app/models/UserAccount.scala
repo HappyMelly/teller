@@ -63,13 +63,9 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 
-  def facilitator: Boolean = {
-    !licenses.isEmpty || !brands.isEmpty
-  }
+  def facilitator: Boolean = licenses.nonEmpty || brands.nonEmpty
 
-  def coordinator: Boolean = {
-    !brands.isEmpty
-  }
+  def coordinator: Boolean = brands.nonEmpty
 
   lazy val person: Option[Person] = PersonService.get.find(personId)
   lazy val account: Option[Account] = Account.findByPerson(personId)
