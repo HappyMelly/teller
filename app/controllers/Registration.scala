@@ -41,6 +41,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.core.{ IdentityId, SecureSocial }
 import services.notifiers.Notifiers
+import views.Countries
 
 /**
  * Contains registration data required to create a person object
@@ -63,7 +64,9 @@ trait Registration extends Controller
     "firstName" -> nonEmptyText,
     "lastName" -> nonEmptyText,
     "email" -> play.api.data.Forms.email,
-    "country" -> nonEmptyText)(User.apply)(User.unapply))
+    "country" -> nonEmptyText.verifying(
+      "error.unknown_country",
+      (value: String) ⇒ Countries.all.exists(_._1 == value)))(User.apply)(User.unapply))
 
   /**
    * The authentication flow for all providers starts here.
@@ -97,19 +100,8 @@ trait Registration extends Controller
    */
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      println(user.toString)
-      if (user.account.viewer) {
-        Redirect(routes.Dashboard.index())
-      } else {
-        val (firstName, lastName) = if (user.firstName.length == 0) {
-          val tokens: Array[String] = user.fullName.split(" ")
-          tokens.length match {
-            case 0 ⇒ ("", "")
-            case 1 ⇒ (tokens(0), "")
-            case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
-          }
-        } else
-          (user.firstName, user.lastName)
+      redirectViewer {
+        val (firstName, lastName) = userNames(user)
         val form = userForm.bind(Map(("firstName", firstName),
           ("lastName", lastName),
           ("email", user.email.getOrElse(""))))
@@ -122,16 +114,12 @@ trait Registration extends Controller
    */
   def savePerson = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      if (user.account.viewer) {
-        Redirect(routes.Dashboard.index())
-      } else {
+      redirectViewer {
         userForm.bindFromRequest.fold(
-          hasErrors ⇒ {
-            Ok(views.html.registration.step2(user, hasErrors))
-          },
-          p ⇒ {
+          errForm ⇒ BadRequest(views.html.registration.step2(user, errForm)),
+          data ⇒ {
             val id = personCacheId(user.identityId)
-            Cache.set(id, p, 900)
+            Cache.set(id, data, 900)
             Redirect(routes.Registration.step3())
           })
       }
@@ -141,14 +129,11 @@ trait Registration extends Controller
    */
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      if (user.account.viewer) {
-        Redirect(routes.Dashboard.index())
-      } else {
-        val publicKey = Play.configuration.getString("stripe.public_key").get
+      redirectViewer {
         Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+          val publicKey = Play.configuration.getString("stripe.public_key").get
           val person = unregisteredPerson(userData, user)
-          val code = userData.country
-          val fee = Payment.countryBasedFees(code)
+          val fee = Payment.countryBasedFees(userData.country)
           Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
         } getOrElse {
           Redirect(routes.Registration.step2()).
@@ -235,10 +220,38 @@ trait Registration extends Controller
   }
 
   /**
+   * Returns an unique cache id for a person object of current user
+   * @param id Identity object
+   */
+  protected def personCacheId(id: IdentityId): String = {
+    "user_" + id.userId
+  }
+
+  /**
+   * Redirects Viewer to an index page. Otherwise - run action
+   */
+  protected def redirectViewer(f: SimpleResult)(implicit request: Request[Any],
+    handler: AuthorisationHandler,
+    user: UserIdentity): SimpleResult = if (user.account.viewer)
+    Redirect(routes.Dashboard.index())
+  else
+    f
+
+  /**
    * Returns first and last names of the given user
    * @param user User object
    */
-  protected def userNames(user: UserIdentity): (String, String) = ("", "")
+  protected def userNames(user: UserIdentity): (String, String) = {
+    if (user.firstName.length == 0) {
+      val tokens: Array[String] = user.fullName.split(" ")
+      tokens.length match {
+        case 0 ⇒ ("", "")
+        case 1 ⇒ (tokens(0), "")
+        case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
+      }
+    } else
+      (user.firstName, user.lastName)
+  }
 
   /**
    * Returns a person created from registration data
@@ -259,14 +272,6 @@ trait Registration extends Controller
       linkedInUrl = remoteUser.linkedInUrl)
     person.socialProfile_=(socialProfile)
     person
-  }
-
-  /**
-   * Returns an unique cache id for a person object of current user
-   * @param id Identity object
-   */
-  private def personCacheId(id: IdentityId): String = {
-    "user_" + id.userId
   }
 }
 

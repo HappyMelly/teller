@@ -61,7 +61,6 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   }
 
   def save(user: Identity) = {
-    println(user.toString)
     val loginIdentity = user match {
       case su: SocialUser ⇒ su.identityId.providerId match {
         case TwitterProvider.Twitter ⇒ UserIdentity.forTwitterHandle(su, findTwitterHandle(su))
@@ -71,6 +70,7 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
       }
       case li: UserIdentity ⇒ li
     }
+
     try {
       if (loginIdentity.account.viewer) {
         UserIdentity.save(loginIdentity)

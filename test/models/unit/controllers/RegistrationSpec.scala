@@ -27,6 +27,7 @@ package models.unit.controllers
 import controllers.Registration
 import models.UserIdentity
 import org.specs2.mutable._
+import securesocial.core.{ AuthenticationMethod, IdentityId }
 
 class TestRegistration extends Registration {
 
@@ -35,4 +36,30 @@ class TestRegistration extends Registration {
 
 class RegistrationSpec extends Specification {
 
+  val controller = new TestRegistration
+
+  "Method 'userNames'" should {
+    "return first and last names if they are set in identity object" in {
+      val identity = new IdentityId("123", "twitter")
+      val user = new UserIdentity(None, identity, "First", "Tester", "",
+        email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
+        oAuth1Info = None, oAuth2Info = None, passwordInfo = None,
+        apiToken = "test", twitterHandle = None, facebookUrl = None,
+        googlePlusUrl = None, linkedInUrl = None)
+      val names = controller.callUserNames(user)
+      names._1 must_== "First"
+      names._2 must_== "Tester"
+    }
+    "return first and last names if full name set in identity object" in {
+      val identity = new IdentityId("123", "twitter")
+      val user = new UserIdentity(None, identity, "", "", "First Tester Andre",
+        email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
+        oAuth1Info = None, oAuth2Info = None, passwordInfo = None,
+        apiToken = "test", twitterHandle = None, facebookUrl = None,
+        googlePlusUrl = None, linkedInUrl = None)
+      controller.callUserNames(user) must_== ("First", "Tester Andre")
+      controller.callUserNames(user.copy(fullName = "FirstTester")) must_== ("FirstTester", "")
+      controller.callUserNames(user.copy(fullName = "")) must_== ("", "")
+    }
+  }
 }
