@@ -33,13 +33,13 @@ class EvaluationSpec extends Specification {
   "Evaluation" should {
     "have well-formed activity attributes" in {
       val evaluation = new Evaluation(Some(1L), 1L, 2L, "", "", "", "", "",
-        1, 1, "", EvaluationStatus.Pending, None, None, DateTime.now(), "",
+        1, 1, "", EvaluationStatus.Pending, None, DateTime.now(), "",
         DateTime.now(), "")
       evaluation.objectType must_== Activity.Type.Evaluation
       evaluation.identifier must_== 1
       evaluation.humanIdentifier must_== "to event (id = 1) for person (id = 2)"
       val evaluation2 = new Evaluation(Some(2L), 2L, 3L, "", "", "", "", "",
-        1, 1, "", EvaluationStatus.Pending, None, None, DateTime.now(), "",
+        1, 1, "", EvaluationStatus.Pending, None, DateTime.now(), "",
         DateTime.now(), "")
       evaluation2.objectType must_== Activity.Type.Evaluation
       evaluation2.identifier must_== 2
