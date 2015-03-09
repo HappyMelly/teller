@@ -154,7 +154,10 @@ object Participant {
     implicit session: Session ⇒
 
       val baseQuery = for {
-        (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
+        (((part, p), e), ev) ← Participants innerJoin
+          People on (_.personId === _.id) innerJoin
+          Events on (_._1.eventId === _.id) leftJoin
+          Evaluations on (_._1._1.evaluationId === _.id)
       } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
 
       val brandQuery = brandCode.map { value ⇒

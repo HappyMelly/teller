@@ -40,35 +40,27 @@ trait Reports extends Controller with Security with Services {
    * @param brandCode filter events by a brand
    * @param eventId a selected event
    * @param status  filter events by their statuses
-   * @param byMe only the events where the user is a facilitator will be retrieved
    * @return
    */
-  def create(brandCode: String, eventId: Long, status: Int, byMe: Boolean) = SecuredRestrictedAction(Viewer) {
+  def create(brandCode: String, eventId: Long, status: Int) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Brand.find(brandCode).map { brand ⇒
           val account = user.account
-          val events = if (eventId > 0) {
-            EventService.get.find(eventId).map { event ⇒
-              if (byMe) {
-                if (event.facilitatorIds.contains(account.personId)) {
-                  event :: Nil
-                } else {
-                  Nil
-                }
-              } else {
-                event :: Nil
-              }
-              event :: Nil
-            }.getOrElse(Nil)
-          } else {
-            if (byMe) {
-              EventService.get.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
-            } else {
-              EventService.get.findByParameters(Some(brandCode))
-            }
-          }
-          val eventIds = events.map(e ⇒ e.id.get)
+
+          val personId = account.personId
+          val events =
+            if (account.editor || brand.brand.coordinatorId == personId) {
+              eventService.findByParameters(Some(brandCode))
+            } else if (License.licensedSince(personId, brandCode).nonEmpty) {
+              eventService.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
+            } else
+              List()
+          val filteredEvents = if (eventId > 0)
+            events.filter(_.id == Some(eventId))
+          else
+            events
+          val eventIds = filteredEvents.map(e ⇒ e.id.get)
           val evaluations = evaluationService.findByEvents(eventIds)
           val participants = if (status >= 0) {
             // no participant without an evaluation

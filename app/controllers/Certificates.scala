@@ -57,7 +57,6 @@ object Certificates extends Controller with Security {
           val person = participant.person.get
           val issued = participant.issued getOrElse LocalDate.now()
           val certificate = new Certificate(Some(issued), event, person, renew = true)
-          println(certificate.id)
           certificate.generateAndSend(brand, approver)
           participant.copy(
             certificate = Some(certificate.id),
