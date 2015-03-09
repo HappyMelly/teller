@@ -25,15 +25,15 @@
 package services
 
 import models.service.Services
-import models.{UserAccount, UserIdentity, UserRole}
+import models.{ UserAccount, UserIdentity, UserRole }
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.oauth.{OAuthCalculator, RequestToken}
-import play.api.libs.ws.{Response, WS}
-import play.api.{Application, Logger}
+import play.api.libs.oauth.{ OAuthCalculator, RequestToken }
+import play.api.libs.ws.{ Response, WS }
+import play.api.{ Application, Logger }
 import securesocial.core._
-import securesocial.core.providers.{FacebookProvider, GoogleProvider, LinkedInProvider, Token, TwitterProvider}
+import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, Token, TwitterProvider }
 import services.LoginIdentityService._
 
 import scala.concurrent.Await

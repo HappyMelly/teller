@@ -374,7 +374,7 @@ case class Person(
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
     val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      subscription = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
+      renewal = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
       existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
     memberService.insert(m)
   }

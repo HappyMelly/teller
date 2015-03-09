@@ -300,7 +300,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (5L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒
           val member = new Member(None, objectId, person, funder, fee,
-            subscription = false, since, since.plusYears(1), existingObject = false,
+            renewal = false, since, since.plusYears(1), existingObject = false,
             DateTime.now(), createdBy, DateTime.now(), createdBy)
           member.insert
       }
@@ -393,7 +393,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (5L, true, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
         case (objectId, person, funder, fee, since, createdBy) ⇒
           val member = new Member(None, objectId, person, funder, fee,
-            subscription = false, since, since.plusYears(1), existingObject = false,
+            renewal = false, since, since.plusYears(1), existingObject = false,
             DateTime.now(), createdBy, DateTime.now(), createdBy)
           member.insert
       }

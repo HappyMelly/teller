@@ -63,20 +63,20 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   Editor should
     not see links to remote payments                                     $e10
 
-  When subscription exists, 'Cancel subscription' button should be visible,
-  'Renew subscription' and 'No subscription' badge should not be visible to
+  When subscription exists, 'Stop automatic...' button should be visible,
+      'No automatic renewal' badge should not be visible to
     an Editor                                                            $e11
     the owner of the profile                                             $e12
 
-  When subscription does not exist, 'Cancel subscription' button should not be
-  visible, 'No subscription' badge should be visible to
+  When subscription does not exist, 'Stop automatic...' button should not be
+  visible, 'No automatic renewal' badge should be visible to
     an Editor                                                            $e13
     a Viewer                                                             $e14
 
   Viewer should not see subscription-related buttons
     if subscription exists                                               $e15
 
-  On subscription cancellation the system should
+  On automatic renewal cancellation the system should
     return 'Not found' if a person does not exists                       $e16
     return an error if a person is not a member                          $e17
     return an error if there is not subscription                         $e18
@@ -316,10 +316,10 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("Stop automatic renewal")
     contentAsString(result) must contain("person/1/cancel")
     contentAsString(result) must not contain "Renew subscription"
-    contentAsString(result) must not contain "Subscription is canceled"
+    contentAsString(result) must not contain "Automatic renewal is stopped"
   }
 
   def e12 = new ViewerMockContext {
@@ -335,10 +335,10 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Cancel subscription")
+    contentAsString(result) must contain("Stop automatic renewal")
     contentAsString(result) must contain("person/1/cancel")
     contentAsString(result) must not contain "Renew subscription"
-    contentAsString(result) must not contain "Subscription is canceled"
+    contentAsString(result) must not contain "Automatic renewal is stopped"
   }
 
   def e13 = new EditorMockContext {
@@ -346,7 +346,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     // when @person.deletable is called
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
-      subscription = false)
+      renewal = false)
     person.member_=(member)
 
     val controller = fakedController()
@@ -355,10 +355,10 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must not contain "Stop automatic renewal"
     contentAsString(result) must not contain "person/1/renew"
     contentAsString(result) must not contain "Renew subscription"
-    contentAsString(result) must contain("Subscription is canceled")
+    contentAsString(result) must contain("Automatic renewal is stopped")
   }
 
   def e14 = new MockContext {
@@ -370,7 +370,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val id = 2L
     person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
-      subscription = false)
+      renewal = false)
     person.member_=(member)
 
     (personService.find(_: Long)) expects id returning Some(person)
@@ -386,8 +386,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Cancel subscription"
-    contentAsString(result) must contain("Subscription is canceled")
+    contentAsString(result) must not contain "Stop automatic renewal"
+    contentAsString(result) must contain("Automatic renewal is stopped")
   }
 
   def e15 = new MockContext {
@@ -414,9 +414,9 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Cancel subscription"
+    contentAsString(result) must not contain "Stop automatic renewal"
     contentAsString(result) must not contain "person/1/cancel"
-    contentAsString(result) must not contain "Subscription is canceled"
+    contentAsString(result) must not contain "Automatic renewal is stopped"
   }
 
   def e16 = new MockContext {
@@ -449,7 +449,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.one()
     person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
-      subscription = false)
+      renewal = false)
     person.member_=(member)
 
     (personService.find(_: Long)) expects id returning Some(person)

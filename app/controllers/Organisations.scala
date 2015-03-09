@@ -226,12 +226,12 @@ trait Organisations extends Controller with Security with Services {
         val url = routes.Organisations.details(id).url + "#membership"
         orgService.find(id) map { org ⇒
           org.member map { m ⇒
-            if (m.subscription) {
+            if (m.renewal) {
               val key = Play.configuration.getString("stripe.secret_key").get
               val gateway = new GatewayWrapper(key)
               try {
                 gateway.cancel(org.customerId.get)
-                m.copy(subscription = false).update
+                m.copy(renewal = false).update
               } catch {
                 case e: PaymentException ⇒
                   Redirect(url).flashing("error" -> Messages(e.msg))

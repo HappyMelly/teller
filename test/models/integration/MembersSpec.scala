@@ -397,7 +397,7 @@ class MembersSpec extends PlayAppSpec {
         withFormUrlEncodedBody(
           ("objectId", member.objectId.toString), ("person", "1"),
           ("funder", "1"), ("fee.currency", "EUR"),
-          ("fee.amount", "200"), ("subscription", member.subscription.toString),
+          ("fee.amount", "200"), ("subscription", member.renewal.toString),
           ("since", "2015-01-01"), ("end", member.until.toString),
           ("existingObject", "1"))
       val result = controller.update(2L).apply(req)
@@ -420,7 +420,7 @@ class MembersSpec extends PlayAppSpec {
 
   private def member(person: Boolean = true, existingObject: Boolean = false): Member = {
     new Member(None, 0, person = person, funder = false,
-      Money.parse("EUR 100"), subscription = false, LocalDate.now(), LocalDate.now(),
+      Money.parse("EUR 100"), renewal = false, LocalDate.now(), LocalDate.now(),
       existingObject = existingObject, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

@@ -59,27 +59,27 @@
     </div>
     @views.html.element.badge(m)
     <div class="col-md-12 block">
-      <legend>Subscription</legend>
-      @if(m.subscription) {
+      <legend>Membership Renewal</legend>
+      @if(m.renewal) {
         <p>
-          Your membership will be automatically prolonged at the end of a subscription
-          period. The date of the next prolongation is <b>@m.until</b>.
+          Your membership will be automatically renewed at the end of a renewal
+          period. The date of the next renewal is <b>@m.until</b>.
         </p>
         <p>
-          You can cancel your subscription any time. In this case your membership
+          You can stop automatic renewal any time. In this case your membership
           will be valid till <b>@m.until</b>.</p>
         @dynamic(handler, "organisation", "edit") {
           <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
-          data-target=".cancelModal">Cancel subscription</button>
+          data-target=".cancelModal">Stop automatic renewal</button>
           <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
             <div class="modal-dialog modal-sm">
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  <h4 class="modal-title" id="myModalLabel">Cancel subscription</h4>
+                  <h4 class="modal-title" id="myModalLabel">Stop automatic renewal</h4>
                 </div>
                 <div class="modal-body">
-                  <p>If you cancel your subscription you won't be able to turn it back on.
+                  <p>If you stop automatic renewal you won't be able to start it again.
                     However this functionality will be available in the future.</p>
                   <p>Your membership will be valid till <b>@m.until</b></p>
                 </div>
@@ -87,7 +87,7 @@
                   <form method="post" action="@CSRF(routes.Organisations.cancel(org.id.getOrElse(0)))">
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
                     <button class="btn btn-danger btn-sm" type="submit">
-                      Cancel subscription</button>
+                      Stop automatic renewal</button>
                   </form>
                 </div>
               </div>
@@ -97,8 +97,8 @@
 
       } else {
         <div class="alert alert-warning">
-          <p><i class="glyphicon glyphicon-warning-sign"></i> Subscription is canceled.</p>
-          <p>It's not possible to turn your subscription on right now. We're working on it ;).</p>
+          <p><i class="glyphicon glyphicon-warning-sign"></i> Automatic renewal is stopped.</p>
+          <p>It's not possible to turn automatic renewals on right now. We're working on it ;).</p>
         </div>
         <p>Your membership ends <b>@m.until</b>.</p>
       }

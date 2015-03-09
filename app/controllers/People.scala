@@ -475,12 +475,12 @@ trait People extends Controller with Security with Services {
       val url = routes.People.details(id).url + "#membership"
       personService.find(id) map { person ⇒
         person.member map { m ⇒
-          if (m.subscription) {
+          if (m.renewal) {
             val key = Play.configuration.getString("stripe.secret_key").get
             val gateway = new GatewayWrapper(key)
             try {
               gateway.cancel(person.customerId.get)
-              m.copy(subscription = false).update
+              m.copy(renewal = false).update
             } catch {
               case e: PaymentException ⇒
                 Redirect(url).flashing("error" -> Messages(e.msg))
