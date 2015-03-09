@@ -418,7 +418,7 @@ object Person {
   }
 
   /**
-   * Activates the organisation, if the parameter is true, or deactivates it.
+   * Activates the person, if the parameter is true, or deactivates it.
    * During activization, a person also becomes a real person
    *
    * @param id Person identifier
