@@ -37,13 +37,13 @@ object Certificates extends Controller with Security {
   /**
    * Generate new certificate
    *
-   * @param personId Person identifier
    * @param eventId Event identifier
+   * @param personId Person identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def create(personId: Long,
-    eventId: Long,
-    ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+  def create(eventId: Long,
+    personId: Long,
+    ref: Option[String] = None) = SecuredDynamicAction("event", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Participant.find(personId, eventId) map { participant ⇒

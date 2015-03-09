@@ -46,7 +46,7 @@ GET         /brand/:code/template                                               
 POST        /brand/:code/template                                                controllers.CertificateTemplates.create(code: String)
 
 GET         /certificate/:id                                                     controllers.Certificates.certificate(id: String)
-GET         /certificate/new/:personId/:eventId                                  controllers.Certificates.create(personId: Long, eventId: Long, ref: Option[String])
+GET         /certificate/new/:eventId/:personId                                  controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
 
 POST        /contribution/new                                                    controllers.Contributions.create(page: String)
 GET         /contribution/:id/delete                                             controllers.Contributions.delete(id: Long, page: String)

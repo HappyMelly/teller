@@ -395,7 +395,7 @@ object Participants extends Controller with Security {
     Json.obj(
       "generate" -> {
         if (brand.generateCert)
-          routes.Certificates.create(data.person.id.get, data.event.id.get, Some(page)).url
+          routes.Certificates.create(data.event.id.get, data.person.id.get, Some(page)).url
         else ""
       })
   }
