@@ -51,7 +51,6 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
   def question8 = column[String]("QUESTION_8")
   def status = column[EvaluationStatus.Value]("STATUS")
   def handled = column[Option[LocalDate]]("HANDLED")
-  def certificate = column[Option[String]]("CERTIFICATE")
 
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
@@ -59,13 +58,15 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def * = id.? ~ eventId ~ personId ~ question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8 ~ status ~ handled ~ certificate ~
-    created ~ createdBy ~ updated ~ updatedBy <> (Evaluation.apply _, Evaluation.unapply _)
+  def * = id.? ~ eventId ~ personId ~ question1 ~ question2 ~ question3 ~
+    question4 ~ question5 ~ question6 ~ question7 ~ question8 ~ status ~
+    handled ~ created ~ createdBy ~ updated ~
+    updatedBy <> (Evaluation.apply _, Evaluation.unapply _)
 
   def forInsert = * returning id
 
-  def forUpdate = eventId ~ personId ~ question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8 ~ status ~ handled ~ certificate ~ updated ~ updatedBy
+  def forUpdate = eventId ~ personId ~ question1 ~ question2 ~ question3 ~
+    question4 ~ question5 ~ question6 ~ question7 ~ question8 ~ status ~
+    handled ~ updated ~ updatedBy
 
 }

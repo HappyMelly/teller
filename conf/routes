@@ -46,7 +46,7 @@ GET         /brand/:code/template                                               
 POST        /brand/:code/template                                                controllers.CertificateTemplates.create(code: String)
 
 GET         /certificate/:id                                                     controllers.Certificates.certificate(id: String)
-GET         /certificate/new/:evaluationId                                       controllers.Certificates.create(evaluationId: Long, ref: Option[String])
+GET         /certificate/new/:eventId/:personId                                  controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
 
 POST        /contribution/new                                                    controllers.Contributions.create(page: String)
 GET         /contribution/:id/delete                                             controllers.Contributions.delete(id: Long, page: String)
@@ -61,7 +61,7 @@ GET         /evaluation/:id                                                     
 POST        /evaluation/:id                                                      controllers.Evaluations.update(id: Long)
 GET         /evaluation/:id/delete                                               controllers.Evaluations.delete(id: Long, ref: Option[String])
 
-GET         /report/create/:code/event/:eventId/status/:status/byMe/:byMe        controllers.Reports.create(code: String, eventId: Long, status: Int, byMe: Boolean)
+GET         /report/create/:code/event/:eventId/status/:status                   controllers.Reports.create(code: String, eventId: Long, status: Int)
 
 GET         /events                                                              controllers.Events.index
 GET         /events/filtered                                                     controllers.Events.events(brandCode: Option[String], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
@@ -199,8 +199,6 @@ GET         /api/v1/brand/:code                                                 
 GET         /api/v1/brand/:code/events                                           controllers.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
 GET         /api/v1/brand/:code/facilitators                                     controllers.FacilitatorsApi.facilitators(code: String)
 GET         /api/v1/brand/:code/types                                            controllers.EventTypesApi.types(code: String)
-
-POST        /api/v1/certificate/:evaluationId                                    controllers.CertificatesApi.create(evaluationId: Long)
 
 POST        /api/v1/evaluation                                                   controllers.EvaluationsApi.create
 

@@ -47,6 +47,8 @@ case class Participant(
   eventId: Long,
   personId: Long,
   evaluationId: Option[Long],
+  certificate: Option[String],
+  issued: Option[LocalDate],
   organisation: Option[String],
   comment: Option[String]) {
 
@@ -59,7 +61,7 @@ case class Participant(
    * @return
    */
   def update: Participant = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventId, evaluationId)
+    val updateTuple = (eventId, evaluationId, certificate, issued)
     val updateQuery = Participants.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
@@ -94,7 +96,7 @@ case class ParticipantView(person: Person,
   status: Option[EvaluationStatus.Value],
   date: Option[DateTime],
   handled: Option[Option[LocalDate]],
-  certificate: Option[Option[String]]) {
+  certificate: Option[String]) {
 
   override def equals(other: Any): Boolean =
     other match {
@@ -148,19 +150,24 @@ object Participant {
    * @param brandCode Brand code
    * @return
    */
-  def findByBrand(brandCode: Option[String]): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
-    val baseQuery = for {
-      (((part, p), e), ev) ← Participants innerJoin People on (_.personId === _.id) innerJoin Events on (_._1.eventId === _.id) leftJoin Evaluations on (_._1._1.evaluationId === _.id)
-    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+  def findByBrand(brandCode: Option[String]): List[ParticipantView] = DB.withSession {
+    implicit session: Session ⇒
 
-    val brandQuery = brandCode.map { value ⇒
-      baseQuery.filter(_._2.brandCode === value)
-    }.getOrElse(baseQuery)
-    val rawList = brandQuery.mapResult(ParticipantView.tupled).list
-    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
-    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
-    withEvaluation.union(withoutEvaluation.distinct)
+      val baseQuery = for {
+        (((part, p), e), ev) ← Participants innerJoin
+          People on (_.personId === _.id) innerJoin
+          Events on (_._1.eventId === _.id) leftJoin
+          Evaluations on (_._1._1.evaluationId === _.id)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
+
+      val brandQuery = brandCode.map { value ⇒
+        baseQuery.filter(_._2.brandCode === value)
+      }.getOrElse(baseQuery)
+      val rawList = brandQuery.mapResult(ParticipantView.tupled).list
+      val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+      val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
+      withEvaluation.union(withoutEvaluation.distinct)
   }
 
   /**
@@ -175,13 +182,13 @@ object Participant {
           People on (_.personId === _.id) innerJoin
           Events on (_._1.eventId === _.id) leftJoin
           Evaluations on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
 
       val eventQuery = baseQuery.filter(_._2.id inSet events)
       val rawList = eventQuery.mapResult(ParticipantView.tupled).list
       val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
       val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
+        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
       withEvaluation.union(withoutEvaluation.distinct)
   }
 
@@ -196,13 +203,13 @@ object Participant {
         People on (_.personId === _.id) innerJoin
         Events on (_._1.eventId === _.id) leftJoin
         Evaluations on (_._1._1.evaluationId === _.id)
-    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, ev.certificate.?)
+    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
 
     val eventQuery = baseQuery.filter(_._2.id === eventId)
     val rawList = eventQuery.mapResult(ParticipantView.tupled).list
     val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, None))
+      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
     withEvaluation.union(withoutEvaluation.distinct)
   }
 
@@ -225,17 +232,26 @@ object Participant {
    * @param data Data containing records about a person and an event
    * @return
    */
-  def create(data: ParticipantData): Participant = DB.withSession { implicit session: Session ⇒
+  def create(data: ParticipantData): Participant = {
     val virtual = true
     val active = false
     val person = Person(None, data.firstName, data.lastName, data.birthday,
       Photo(None, None), signature = false, 0, None, None, PersonRole.NoRole,
       None, None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
-    person.socialProfile_=(SocialProfile(objectId = 0, objectType = ProfileType.Person, email = data.emailAddress))
+    val profile = SocialProfile(objectId = 0,
+      objectType = ProfileType.Person,
+      email = data.emailAddress)
+    person.socialProfile_=(profile)
     person.address_=(data.address)
     val newPerson = person.insert
-    val eventParticipant = Participant(None, data.eventId, newPerson.id.get, evaluationId = None, data.organisation,
+    val eventParticipant = Participant(None,
+      data.eventId,
+      newPerson.id.get,
+      evaluationId = None,
+      certificate = None,
+      issued = None,
+      data.organisation,
       data.comment)
     Participant.insert(eventParticipant)
   }

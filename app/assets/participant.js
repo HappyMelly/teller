@@ -135,7 +135,6 @@ function buildExportLink(detailsPage) {
     var brandCode = '';
     var eventId = 0;
     var status = -1;
-    var facilitatedByMe = false;
     if (detailsPage) {
         brandCode = $('#brandCode').val();
         eventId = $('#eventId').val();
@@ -149,9 +148,8 @@ function buildExportLink(detailsPage) {
         if (status == 'all') {
             status = -1;
         }
-        facilitatedByMe = $('#facilitatedByMe').is(':checked');
     }
-    var suffix = brandCode + '/event/' + eventId + '/status/' + status + '/byMe/' + facilitatedByMe;
+    var suffix = brandCode + '/event/' + eventId + '/status/' + status;
     $("#exportLink").attr("href", "/report/create/" + suffix);
 }
 

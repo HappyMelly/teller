@@ -58,7 +58,6 @@ case class Evaluation(
   question8: String,
   status: EvaluationStatus.Value,
   handled: Option[LocalDate],
-  certificate: Option[String],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -109,51 +108,64 @@ case class Evaluation(
   }
 
   def update: Evaluation = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventId, personId, question1, question2, question3, question4, question5,
-      question6, question7, question8, status, handled, certificate, updated, updatedBy)
+    val updateTuple = (eventId, personId, question1, question2, question3,
+      question4, question5, question6, question7, question8, status,
+      handled, updated, updatedBy)
     val updateQuery = Evaluations.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
   }
 
-  def certificateId: String = handled.map(_.toString("yyMM")).getOrElse("") + f"$personId%03d"
-
   def approve(approver: Person): Evaluation = {
 
-    val evaluation = this.copy(status = EvaluationStatus.Approved).copy(handled = Some(LocalDate.now)).update
+    val ev = this.
+      copy(status = EvaluationStatus.Approved).
+      copy(handled = Some(LocalDate.now)).update
 
-    val brand = Brand.find(evaluation.event.brandCode).get
-    if ((evaluation.certificate.isEmpty && brand.brand.generateCert)) {
-      val cert = new Certificate(evaluation)
-      cert.generateAndSend(brand, approver)
-    } else if (evaluation.certificate.isEmpty) {
-      val body = mail.html.approvedNoCert(brand.brand, evaluation.participant, approver).toString()
-      val subject = s"Your ${brand.brand.name} event's evaluation approval"
-      send(Set(evaluation.participant), Some(evaluation.event.facilitators.toSet),
-        Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
-    } else {
-      val cert = new Certificate(evaluation, renew = true)
-      cert.send(brand, approver)
+    val brand = Brand.find(ev.event.brandCode).get
+    Participant.find(ev.personId, ev.eventId) map { data ⇒
+      if (data.certificate.isEmpty && brand.brand.generateCert) {
+        val cert = new Certificate(ev.handled, ev.event, ev.participant)
+        cert.generateAndSend(brand, approver)
+        data.copy(certificate = Some(cert.id), issued = cert.issued).update
+      } else if (data.certificate.isEmpty) {
+        val body = mail.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
+        val subject = s"Your ${brand.brand.name} event's evaluation approval"
+        send(Set(ev.participant), Some(ev.event.facilitators.toSet),
+          Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+      } else {
+        val cert = new Certificate(ev.handled, ev.event, ev.participant, renew = true)
+        cert.send(brand, approver)
+      }
+
     }
 
-    evaluation
+    ev
   }
 
+  /**
+   * Sets the evaluation to a Rejected state
+   */
   def reject(): Evaluation = {
-    Certificate.removeFromCloud(this.certificateId)
-    this.copy(status = EvaluationStatus.Rejected).copy(handled = Some(LocalDate.now)).copy(certificate = None).update
+    this
+      .copy(status = EvaluationStatus.Rejected)
+      .copy(handled = Some(LocalDate.now)).update
   }
 
 }
 
 object Evaluation {
 
-  def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).filter(_.personId === personId).filter(_.eventId === eventId).firstOption
+  def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
+    implicit session: Session ⇒
+      Query(Evaluations).
+        filter(_.personId === personId).
+        filter(_.eventId === eventId).firstOption
   }
 
-  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).filter(_.eventId === eventId).list
+  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Evaluations).filter(_.eventId === eventId).list
   }
 
   def find(id: Long) = DB.withSession { implicit session: Session ⇒

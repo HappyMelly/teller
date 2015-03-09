@@ -75,9 +75,12 @@ object Participants extends Controller with Security {
         (participantId: Long) ⇒ PersonService.get.find(participantId).nonEmpty),
       "evaluationId" -> optional(longNumber))({
         (id, brandId, eventId, participantId, evaluationId) ⇒
-          Participant(id, eventId, participantId, evaluationId, organisation = None, comment = None)
+          Participant(id, eventId, participantId, evaluationId,
+            certificate = None, issued = None, organisation = None, comment = None)
       })({
-        (p: Participant) ⇒ Some(p.id, p.event.get.brandCode, p.eventId, p.personId, p.evaluationId)
+        (p: Participant) ⇒
+          Some(p.id, p.event.get.brandCode, p.eventId,
+            p.personId, p.evaluationId)
       }))
   }
 
@@ -123,11 +126,12 @@ object Participants extends Controller with Security {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(id, brand.brand, data, "index"),
+                    "certificate" -> certificateActions(brand.brand, data, "index"),
                     "evaluation" -> evaluationActions(id, brand.brand, data, account, "index"),
                     "participant" -> participantActions(data, account, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
+                      "certificate" -> certificateActions(brand.brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
                           if (account.editor || brand.brand.coordinatorId == account.personId) {
@@ -177,11 +181,12 @@ object Participants extends Controller with Security {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(id, brand.brand, data, "event"),
+                    "certificate" -> certificateActions(brand.brand, data, "event"),
                     "evaluation" -> evaluationActions(id, brand.brand, data, account, "event"),
                     "participant" -> participantActions(data, account, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
+                      "certificate" -> certificateActions(brand.brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
                           if (account.editor || brand.brand.coordinatorId == account.personId) {
@@ -378,21 +383,19 @@ object Participants extends Controller with Security {
           "value" -> status.id)),
       "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
       "handled" -> data.handled.map(_.get.toString),
-      "certificate" -> data.status.map(status ⇒
-        if (status == EvaluationStatus.Approved) {
-          data.certificate.map(id ⇒
-            Json.obj(
-              "id" -> id.get,
-              "url" -> routes.Certificates.certificate(id.get).url)).getOrElse(Json.obj())
-        } else Json.obj()))
+      "certificate" -> data.certificate.map { id: String ⇒
+        Json.obj(
+          "id" -> id,
+          "url" -> routes.Certificates.certificate(id).url)
+      })
   }
 
   /** Return a list of possible actions for a certificate */
-  private def certificateActions(evaluationId: Long, brand: Brand, data: ParticipantView, page: String): JsValue = {
+  private def certificateActions(brand: Brand, data: ParticipantView, page: String): JsValue = {
     Json.obj(
       "generate" -> {
-        if (data.status.get == EvaluationStatus.Approved && brand.generateCert)
-          routes.Certificates.create(evaluationId, Some(page)).url
+        if (brand.generateCert)
+          routes.Certificates.create(data.event.id.get, data.person.id.get, Some(page)).url
         else ""
       })
   }
