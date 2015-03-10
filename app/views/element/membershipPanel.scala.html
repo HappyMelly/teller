@@ -1,0 +1,13 @@
+@(m: Member)(implicit request: Request[Any],
+    handler: AuthorisationHandler)
+
+<div class="panel panel-success">
+  <div class="panel-body">
+    @if(m.funder) {
+      <h2>Funder</h2>
+    }else{
+      <h2>Supporter</h2>
+    }
+  <br/><span class="label label-info">@m.fee</span>
+  </div>
+</div>

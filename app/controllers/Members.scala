@@ -55,7 +55,7 @@ trait Members extends Controller with Security with Services with Notifiers {
       "fee" -> jodaMoney().
         verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
         verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR"),
-      "subscription" -> boolean,
+      "renewal" -> boolean,
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).

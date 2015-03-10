@@ -44,6 +44,37 @@ class PersonSpec extends Specification {
       activity.objectId must_== 1
       activity.activityObject must_== Some("First Tester")
     }
-
+    "change any field on 'copy'" in {
+      val person = PersonHelper.one()
+      person.copy(id = Some(5L)).id must_== Some(5L)
+      person.copy(firstName = "Name").firstName must_== "Name"
+      person.copy(lastName = "LastName").lastName must_== "LastName"
+      val date = LocalDate.now()
+      person.copy(birthday = Some(date)).birthday must_== Some(date)
+      val photo = Photo(Some("photo"), Some("url"))
+      person.photo must_!= photo
+      person.copy(photo = photo).photo must_== photo
+      person.copy(signature = true).signature must_== true
+      person.copy(addressId = 4L).addressId must_== 4L
+      person.copy(bio = Some("bio")).bio must_== Some("bio")
+      person.copy(interests = Some("interests")).interests must_== Some("interests")
+      person.copy(webSite = Some("url")).webSite must_== Some("url")
+      person.copy(blog = Some("blog")).blog must_== Some("blog")
+      person.copy(customerId = Some("ID")).customerId must_== Some("ID")
+      person.copy(virtual = true).virtual must_== true
+      person.copy(active = false).active must_== false
+      val dateStamp = DateStamp(DateTime.parse("2015-01-01"),
+        "Me",
+        DateTime.parse("2015-02-01"),
+        "Me")
+      person.copy(dateStamp = dateStamp).dateStamp must_== dateStamp
+      // check that address and social profile are also copied
+      val address = Address(id = Some(7L), countryCode = "GE")
+      person.address_=(address)
+      person.copy(active = false).address must_== address
+      val socialProfile = SocialProfile(email = "indigo@mail.com")
+      person.socialProfile_=(socialProfile)
+      person.copy(active = false).socialProfile must_== socialProfile
+    }
   }
 }

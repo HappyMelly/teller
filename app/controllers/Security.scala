@@ -42,7 +42,7 @@ trait Security extends SecureSocial with DeadboltActions {
    * removed their own account while logged in
    */
   val MissingUserAccountResult = Future.successful(
-    Redirect(securesocial.controllers.routes.LoginPage.logout()))
+    Redirect(routes.LoginPage.logout()))
 
   /**
    * Authenticates using SecureSocial, and uses Deadbolt to restrict access to

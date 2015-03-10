@@ -31,7 +31,7 @@ import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
 import scala.concurrent.Future
-import stubs.{ FakeOrganisationService, StubUserIdentity, FakeServices }
+import stubs.{ FakeOrganisationService, FakeUserIdentity, FakeServices }
 
 class MembershipSpec extends PlayAppSpec {
   class TestMembership() extends Membership with Security with FakeServices
@@ -78,7 +78,7 @@ class MembershipSpec extends PlayAppSpec {
   }
 
   def e2 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
@@ -86,7 +86,7 @@ class MembershipSpec extends PlayAppSpec {
   }
 
   def e3 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
@@ -96,7 +96,7 @@ class MembershipSpec extends PlayAppSpec {
 
   def e4 = {
     MemberHelper.make(objectId = 1L, person = true, funder = false).insert
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
@@ -107,7 +107,7 @@ class MembershipSpec extends PlayAppSpec {
   def e5 = {
     truncateTables()
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
 
     status(result) must equalTo(OK)
@@ -118,7 +118,7 @@ class MembershipSpec extends PlayAppSpec {
   def e6 = {
     truncateTables()
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    val req = prepareSecuredPostRequest(StubUserIdentity.viewer, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/").
       withFormUrlEncodedBody(("token", "stub"), ("fee", "20"))
     val result: Future[SimpleResult] = controller.charge().apply(req)
 
@@ -128,7 +128,7 @@ class MembershipSpec extends PlayAppSpec {
 
   def e7 = {
     truncateTables()
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.payment(None).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("the minimum fee is <b>EUR 20</b>")
@@ -150,7 +150,7 @@ class MembershipSpec extends PlayAppSpec {
     MemberHelper.make(objectId = 1L, person = true, funder = true).insert
     MemberHelper.make(objectId = 3L, person = false, funder = false).insert
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain(">Select organisation<")
@@ -171,7 +171,7 @@ class MembershipSpec extends PlayAppSpec {
     MemberHelper.make(objectId = 1L, person = false, funder = false).insert
     MemberHelper.make(objectId = 2L, person = false, funder = false).insert
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must not contain ">Select organisation<"
@@ -184,7 +184,7 @@ class MembershipSpec extends PlayAppSpec {
     val org1 = OrganisationHelper.one.insert
     person.addRelation(1L)
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.welcome().apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain(">Select organisation<")
@@ -197,7 +197,7 @@ class MembershipSpec extends PlayAppSpec {
     (orgService.find _).expects(1L).returning(None)
     controller.orgService_=(orgService)
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -212,7 +212,7 @@ class MembershipSpec extends PlayAppSpec {
     (orgService.find _).expects(1L).returning(Some(org))
     controller.orgService_=(orgService)
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -229,7 +229,7 @@ class MembershipSpec extends PlayAppSpec {
     val person = PersonHelper.one().insert
     person.addRelation(1L)
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
 
     status(result) must equalTo(OK)
@@ -247,7 +247,7 @@ class MembershipSpec extends PlayAppSpec {
     val person = PersonHelper.one().insert
     person.addRelation(1L)
 
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
     val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
 
     status(result) must equalTo(OK)

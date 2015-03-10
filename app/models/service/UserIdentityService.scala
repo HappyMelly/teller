@@ -52,28 +52,28 @@ class UserIdentityService {
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
           a ← UserAccounts if a.twitterHandle === identity.twitterHandle
           (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case FacebookProvider.Facebook ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
           a ← UserAccounts if a.facebookUrl like identity.facebookUrl
           (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case GoogleProvider.Google ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
           a ← UserAccounts if a.googlePlusUrl === identity.googlePlusUrl
           (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case LinkedInProvider.LinkedIn ⇒ for {
           identity ← UserIdentities
           if (identity.userId is identityId.userId) && (identity.providerId is identityId.providerId)
           a ← UserAccounts if a.linkedInUrl like identity.linkedInUrl
           (p, m) ← People leftJoin Members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.subscription.?, m.since.?, m.until.?)
+        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
       }
       val data = q.firstOption
       data map { d ⇒

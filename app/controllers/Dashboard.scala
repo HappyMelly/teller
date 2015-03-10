@@ -26,6 +26,7 @@ package controllers
 
 import models.service.Services
 import org.joda.time.LocalDate
+import play.api.i18n.Messages
 import play.api.mvc._
 import models.UserRole.Role._
 import models._
@@ -51,34 +52,38 @@ trait Dashboard extends Controller with Security with Services {
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account
-      val activity = if (account.editor)
-        Some(Activity.findAll)
-      else
-        None
-      val licenses = if (account.admin)
-        licenseService.expiring()
-      else
-        List()
-      val events = eventService.findByFacilitator(
-        account.personId,
-        brand = None)
-      val upcomingEvents = events.
-        filter(_.schedule.end.toString >= LocalDate.now().toString).
-        slice(0, 3)
-      val pastEvents = events.
-        filter(_.schedule.end.toString < LocalDate.now().toString)
-      val evaluations = evaluationService.
-        findByEvents(pastEvents.map(_.id.get)).
-        sortBy(_._3.created.toString())(Ordering[String].reverse).
-        slice(0, 10)
-      Ok(views.html.dashboard.index(user,
-        upcomingEvents,
-        evaluations,
-        licenses,
-        activity))
+      if (account.viewer) {
+        val activity = if (account.editor)
+          Some(Activity.findAll)
+        else
+          None
+        val licenses = if (account.admin)
+          licenseService.expiring()
+        else
+          List()
+        val events = eventService.findByFacilitator(
+          account.personId,
+          brand = None)
+        val upcomingEvents = events.
+          filter(_.schedule.end.toString >= LocalDate.now().toString).
+          slice(0, 3)
+        val pastEvents = events.
+          filter(_.schedule.end.toString < LocalDate.now().toString)
+        val evaluations = evaluationService.
+          findByEvents(pastEvents.map(_.id.get)).
+          sortBy(_._3.created.toString())(Ordering[String].reverse).
+          slice(0, 10)
+        Ok(views.html.dashboard.index(user,
+          upcomingEvents,
+          evaluations,
+          licenses,
+          activity))
+      } else {
+        Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
+      }
   }
 
   /**

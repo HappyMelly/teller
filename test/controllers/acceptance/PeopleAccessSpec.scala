@@ -27,7 +27,7 @@ package controllers.acceptance
 import controllers.{ Security, People }
 import integration.PlayAppSpec
 import play.api.mvc.SimpleResult
-import stubs.{ StubUserIdentity, FakeServices }
+import stubs.{ FakeUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -47,21 +47,21 @@ class PeopleAccessSpec extends PlayAppSpec {
   val controller = new TestPeople()
 
   def e7 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e8 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/1/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/membership/1/cancel")
     val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e9 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/membership/2/cancel")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/membership/2/cancel")
     val result: Future[SimpleResult] = controller.cancel(2L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)

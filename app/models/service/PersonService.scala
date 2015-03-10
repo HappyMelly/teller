@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.{ Organisation, Person, Member }
-import models.database.{ Members, OrganisationMemberships, People }
+import models._
+import models.database._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -35,15 +35,40 @@ import scala.slick.lifted.Query
 class PersonService {
 
   /**
-   * Returns list of organizations this person is a member of
-   * @param person Person object
+   * Deletes the person with the given ID and their account.
+   *
+   * @param id Person Identifier
    */
-  def memberships(person: Person): List[Organisation] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      membership ← OrganisationMemberships if membership.personId === person.id.get
-      organisation ← membership.organisation
-    } yield organisation
-    query.sortBy(_.name.toLowerCase).list
+  def delete(id: Long): Unit = DB.withTransaction { implicit session: Session ⇒
+    find(id) map { person ⇒
+      Accounts.where(_.personId === id).mutate(_.delete())
+      MemberService.get.delete(id, person = true)
+      PaymentRecordService.get.delete(id, person = true)
+      UserAccount.delete(id)
+      //TODO add evaluation removal
+      Participants.where(_.personId === id).mutate(_.delete())
+      SocialProfileService.delete(id, ProfileType.Person)
+      People.where(_.id === id).mutate(_.delete())
+      Addresses.where(_.id === person.address.id.get).mutate(_.delete())
+    }
+  }
+
+  /**
+   * Inserts new person object into database
+   * @param person Person object
+   * @return Returns saved person
+   */
+  def insert(person: Person): Person = DB.withTransaction {
+    implicit session: Session ⇒
+      val address = Address.insert(person.address)
+      val id = People.forInsert.insert(person.copy(addressId = address.id.get))
+      SocialProfileService.insert(person.socialProfile.copy(objectId = id))
+      Accounts.insert(Account(personId = Some(id)))
+
+      val saved = person.copy(id = Some(id))
+      saved.address_=(address)
+      saved.socialProfile_=(person.socialProfile)
+      saved
   }
 
   /**
@@ -91,6 +116,19 @@ class PersonService {
       filter(_.objectId === id).
       filter(_.person === true).firstOption
   }
+
+  /**
+   * Returns list of organizations this person is a member of
+   * @param person Person object
+   */
+  def memberships(person: Person): List[Organisation] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      membership ← OrganisationMemberships if membership.personId === person.id.get
+      organisation ← membership.organisation
+    } yield organisation
+    query.sortBy(_.name.toLowerCase).list
+  }
+
 }
 
 object PersonService {

@@ -72,7 +72,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e1 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.viewer
+    val identity = FakeUserIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/about")
     val result: Future[SimpleResult] = controller.about().apply(request)
     status(result) must equalTo(SEE_OTHER)
@@ -80,7 +80,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e2 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredGetRequest(identity, "/about")
     val result: Future[SimpleResult] = controller.about().apply(request)
     status(result) must equalTo(OK)
@@ -88,7 +88,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e3 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.viewer
+    val identity = FakeUserIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/api")
     val result: Future[SimpleResult] = controller.api().apply(request)
     status(result) must equalTo(SEE_OTHER)
@@ -96,7 +96,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e4 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredGetRequest(identity, "/api")
     val result: Future[SimpleResult] = controller.api().apply(request)
     status(result) must equalTo(OK)
@@ -104,7 +104,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e5 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.viewer
+    val identity = FakeUserIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/")
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
@@ -113,7 +113,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e6 = {
     val controller = new TestDashboard()
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredGetRequest(identity, "/")
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
@@ -123,7 +123,7 @@ class DashboardSpec extends PlayAppSpec {
   def e7 = {
     new MockContext {
       //@TODO use FakeSecurity here
-      val identity = StubUserIdentity.viewer
+      val identity = FakeUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/")
 
       val events = List(EventHelper.future(1, 1), EventHelper.future(2, 2),
@@ -149,7 +149,7 @@ class DashboardSpec extends PlayAppSpec {
   def e8 = {
     new MockContext {
       //@TODO use FakeSecurity here
-      val identity = StubUserIdentity.viewer
+      val identity = FakeUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/")
 
       val evaluationService = stub[StubEvaluationService]
@@ -204,7 +204,7 @@ class DashboardSpec extends PlayAppSpec {
 
   def e9 = {
     new MockContext {
-      val identity = StubUserIdentity.admin
+      val identity = FakeUserIdentity.admin
       val request = prepareSecuredGetRequest(identity, "/")
 
       val facilitators = Map(1L -> PersonHelper.one(),
@@ -245,7 +245,7 @@ class DashboardSpec extends PlayAppSpec {
   def e10 = {
     truncateTables()
     addLicenseData()
-    val identity = StubUserIdentity.viewer
+    val identity = FakeUserIdentity.viewer
     val request = prepareSecuredGetRequest(identity, "/")
 
     val controller = new TestDashboard()
@@ -258,7 +258,7 @@ class DashboardSpec extends PlayAppSpec {
   def e11 = {
     truncateTables()
     addLicenseData()
-    val identity = StubUserIdentity.editor
+    val identity = FakeUserIdentity.editor
     val request = prepareSecuredGetRequest(identity, "/")
 
     val controller = new TestDashboard()

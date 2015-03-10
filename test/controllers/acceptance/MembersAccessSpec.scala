@@ -30,7 +30,7 @@ import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import stubs.{ FakeMemberService, StubUserIdentity, FakeServices }
+import stubs.{ FakeMemberService, FakeUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -92,7 +92,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
 
   def e2 = {
     new MockContext {
-      val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+      val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
       val service = mock[FakeMemberService]
       (service.findAll _).expects().returning(List()).once()
       controller.memberService_=(service)
@@ -103,7 +103,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e4 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.add().apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -111,7 +111,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e5 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.add().apply(req)
 
     status(result) must equalTo(OK)
@@ -119,7 +119,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e6 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.edit(1L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -127,7 +127,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e7 = new MockContext {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val service = mock[FakeMemberService]
     (service.find _).expects(1L, true).returning(None)
     controller.memberService_=(service)
@@ -136,7 +136,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     status(result) must equalTo(NOT_FOUND)
   }
   def e8 = {
-    val req = prepareSecuredPostRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.update(1L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -144,7 +144,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e9 = new MockContext {
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val service = mock[FakeMemberService]
     (service.find _).expects(1L, true).returning(None)
     controller.memberService_=(service)
@@ -154,7 +154,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e15 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.addOrganisation().apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -162,7 +162,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e16 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.addOrganisation().apply(req)
 
     status(result) must equalTo(OK)
@@ -171,7 +171,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e17 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.addOrganisation().apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -179,7 +179,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e18 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.addPerson().apply(req)
 
     status(result) must equalTo(OK)
@@ -188,7 +188,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e20 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -196,7 +196,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e21 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
 
     status(result) must equalTo(OK)
@@ -205,7 +205,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e22 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -213,7 +213,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e23 = {
-    val req = prepareSecuredGetRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
 
     status(result) must equalTo(OK)
@@ -222,7 +222,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e24 = {
-    val req = prepareSecuredPostRequest(StubUserIdentity.viewer, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/")
     val result: Future[SimpleResult] = controller.delete(1L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
@@ -232,9 +232,9 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e25 = new MockContext {
     val memberService = mock[FakeMemberService]
     // the existance of call itself proves that the authentication passed
-    (memberService.find(_, _)).expects(1L, false).returning(None)
+    (memberService.find(_, _)).expects(1L, true).returning(None)
     controller.memberService_=(memberService)
-    val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.delete(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)

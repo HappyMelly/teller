@@ -82,7 +82,8 @@ trait ParticipantsApi extends ApiAuthentication with Services {
         "error.person.notExist",
         (personId: Long) ⇒ personService.find(personId).nonEmpty))({
         (id, event_id, person_id) ⇒
-          Participant(id = None, event_id, person_id, evaluationId = None, organisation = None, comment = None)
+          Participant(id = None, event_id, person_id, certificate = None,
+            issued = None, evaluationId = None, organisation = None, comment = None)
       })({
         (p: Participant) ⇒ Some(p.id, p.eventId, p.personId)
       }))

@@ -25,7 +25,7 @@
           @html.text(form("subtitle"), '_label -> "Subtitle")
           @html.text(form("url"), '_label -> "URL", '_placeholder -> "http://", '_help -> "Web site URL")
           @html.textarea(form("description"), '_label -> "Description", 'rows -> 5,
-            '_help -> views.html.markdownHelp())
+            '_help -> views.html.element.markdownHelp())
           @html.text(form("callToActionUrl"), '_label -> "Call To Action URL", '_placeholder -> "http://",
             '_help -> "URL for a Call To Action button")
           @html.text(form("callToActionText"), '_label -> "Button text", '_placeholder -> "Buy Now",

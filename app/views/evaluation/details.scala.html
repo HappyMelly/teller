@@ -1,144 +1,143 @@
 @(user: UserIdentity,
-        evaluation: Evaluation,
-        en: Translation,
-        brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+    evaluation: Evaluation,
+    en: Translation,
+    brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
 
 @main("Evaluation for %s".format(evaluation.participant.fullName), "participants", user) {
 
-    @html.evaluationActions()
-    <div class="page-header">
-        <h1>
-            Evaluation for @evaluation.participant.fullName
-            <div class="actions pull-right">
-                @dynamic(handler, "evaluation", "edit") {
-                    <div class="button">
-                        <a class="btn btn-default" href="@routes.Evaluations.edit(evaluation.id.get)">
-                            <i class="glyphicon glyphicon-pencil"></i> Edit
-                        </a>
-                    </div>
-                }
-                @dynamic(handler, "evaluation", "manage") {
-                    <div class="button">
-                        @if(evaluation.status == EvaluationStatus.Approved && brand.generateCert) {
-                            <button class="btn btn-default" tabindex="-1"
-                            href="@CSRF(routes.Certificates.create(evaluation.id.getOrElse(0), Some("evaluation")))"
-                            type="submit">
-                                <i class="glyphicon glyphicon-white glyphicon-file"></i> Generate Certificate
-                            </button>
-                        }
-                        <button class="move btn btn-success" tabindex="-1" href="#move"
-                        data-href="@routes.Evaluations.move(evaluation.id.getOrElse(0))"
-                        data-brand="@evaluation.event.brandCode"
-                        data-toggle="modal" type="submit">
-                            <i class="glyphicon glyphicon-white glyphicon-random"></i> Move
-                        </button>
-                        @if(evaluation.status != EvaluationStatus.Approved) {
-                            <button class="approve btn btn-success" tabindex="-1" href="#approve"
-                            data-href="@CSRF(routes.Evaluations.approve(evaluation.id.getOrElse(0), Some("evaluation")))"
-                            data-toggle="modal" type="submit">
-                                <i class="glyphicon glyphicon-white glyphicon-thumbs-up"></i> Approve
-                            </button>
-                        }
-                        @if(evaluation.status != EvaluationStatus.Rejected) {
-                            <button class="reject btn btn-warning" tabindex="-1" href="#reject"
-                            data-href="@CSRF(routes.Evaluations.reject(evaluation.id.getOrElse(0), Some("evaluation")))"
-                            data-toggle="modal" type="submit">
-                                <i class="glyphicon glyphicon-white glyphicon-thumbs-down"></i> Reject
-                            </button>
-                        }
-                    </div>
-                    <div class="button">
-                        <form class="delete" class="form-inline" method="get" text="evaluation"
-                        action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0), Some("event")))">
-                            <button class="btn btn-danger" type="submit">
-                                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                            </button>
-                        </form>
-                    </div>
-                }
-            </div>
-        </h1>
-    </div>
-    @if(evaluation.status == EvaluationStatus.Rejected) {
-        <div class="alert alert-warning">
-            <i class="glyphicon glyphicon-warning-sign"></i> This evaluation is <strong>rejected</strong></div>
-    }
-    @if(evaluation.status == EvaluationStatus.Approved) {
-        <div class="alert alert-success">
-            <i class="glyphicon glyphicon-ok-sign"></i> This evaluation is <strong>approved</strong></div>
-    }
-
-    <div class="col-md-8">
-        <div class="col-xs-3">
-            <p>
-                <strong>Event</strong><br/>
-                <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
-            </p>
-        </div>
-        <div class="col-xs-2">
-            <p>
-                <strong>@en.questions.question6</strong><br/>
-                @en.impressions.value(evaluation.question6)
-            </p>
-            <p>
-                <strong>Recommendation</strong><br/>
-                @en.recommendations.value(evaluation.question7)
-            </p>
-        </div>
-        <div class="col-xs-2">
-        @if(evaluation.status == "2") {
-            @evaluation.handled.map { value =>
-                <p>
-                    <strong>Handled Date</strong><br/>@value
-                </p>
-            }
-            @evaluation.certificate.map { value =>
-                <p>
-                    <strong>Certificate #</strong><br/>
-                    <a href="@routes.Certificates.certificate(value)" target="_blank">@value</a>
-                </p>
-            }
+  @element.evaluationActions()
+  <div class="page-header">
+    <h1>
+      Evaluation for @evaluation.participant.fullName
+      <div class="actions pull-right">
+        @dynamic(handler, "evaluation", "edit") {
+          <div class="button">
+            <a class="btn btn-default" href="@routes.Evaluations.edit(evaluation.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit
+            </a>
+          </div>
         }
-        </div>
+        @dynamic(handler, "evaluation", "manage") {
+          <div class="button">
+            @if(brand.generateCert) {
+              <button class="btn btn-default" tabindex="-1"
+              href="@CSRF(routes.Certificates.create(evaluation.eventId, evaluation.personId, Some("evaluation")))"
+              type="submit">
+                <i class="glyphicon glyphicon-white glyphicon-file"></i>
+                Generate Certificate
+              </button>
+            }
+            <button class="move btn btn-success" tabindex="-1" href="#move"
+            data-href="@routes.Evaluations.move(evaluation.id.getOrElse(0))"
+            data-brand="@evaluation.event.brandCode"
+            data-toggle="modal" type="submit">
+              <i class="glyphicon glyphicon-white glyphicon-random"></i> Move
+            </button>
+            @if(evaluation.status != EvaluationStatus.Approved) {
+              <button class="approve btn btn-success" tabindex="-1" href="#approve"
+              data-href="@CSRF(routes.Evaluations.approve(evaluation.id.getOrElse(0), Some("evaluation")))"
+              data-toggle="modal" type="submit">
+                <i class="glyphicon glyphicon-white glyphicon-thumbs-up"></i>
+                Approve
+              </button>
+            }
+            @if(evaluation.status != EvaluationStatus.Rejected) {
+              <button class="reject btn btn-warning" tabindex="-1" href="#reject"
+              data-href="@CSRF(routes.Evaluations.reject(evaluation.id.getOrElse(0), Some("evaluation")))"
+              data-toggle="modal" type="submit">
+                <i class="glyphicon glyphicon-white glyphicon-thumbs-down"></i>
+                Reject
+              </button>
+            }
+          </div>
+          <div class="button">
+            <form class="delete" class="form-inline" method="get" text="evaluation"
+            action="@CSRF(routes.Evaluations.delete(evaluation.id.getOrElse(0), Some("event")))">
+              <button class="btn btn-danger" type="submit">
+                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+              </button>
+            </form>
+          </div>
+        }
+      </div>
+    </h1>
+  </div>
+  @if(evaluation.status == EvaluationStatus.Rejected) {
+    <div class="alert alert-warning">
+      <i class="glyphicon glyphicon-warning-sign"></i> This evaluation is <strong>
+      rejected</strong></div>
+  }
+  @if(evaluation.status == EvaluationStatus.Approved) {
+    <div class="alert alert-success">
+      <i class="glyphicon glyphicon-ok-sign"></i> This evaluation is <strong>
+      approved</strong></div>
+  }
+
+  <div class="col-md-8">
+    <div class="col-xs-3">
+      <p>
+        <strong>Event</strong><br/>
+        <a href="@routes.Events.details(evaluation.event.id.get)">@evaluation.event.title</a>
+      </p>
     </div>
-    <div class="col-md-12">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Question</th>
-                    <th>Answer</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>@en.questions.question1</td>
-                    <td>@evaluation.question1</td>
-                </tr>
-                <tr>
-                    <td>@en.questions.question2</td>
-                    <td>@evaluation.question2</td>
-                </tr>
-                <tr>
-                    <td>@en.questions.question3</td>
-                    <td>@evaluation.question3</td>
-                </tr>
-                <tr>
-                    <td>@en.questions.question4</td>
-                    <td>@evaluation.question4</td>
-                </tr>
-                <tr>
-                    <td>@en.questions.question5</td>
-                    <td>@evaluation.question5</td>
-                </tr>
-                <tr>
-                    <td>@en.questions.question8</td>
-                    <td>@evaluation.question8</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="col-xs-2">
+      <p>
+        <strong>@en.questions.question6</strong><br/>
+        @en.impressions.value(evaluation.question6)
+      </p>
+      <p>
+        <strong>Recommendation</strong><br/>
+        @en.recommendations.value(evaluation.question7)
+      </p>
     </div>
-    <script src="@routes.Assets.at("evaluation/details.js")" type="text/javascript"></script>
+    <div class="col-xs-2">
+    @if(evaluation.status == "2") {
+      @evaluation.handled.map { value =>
+        <p>
+          <strong>Handled Date</strong><br/>@value
+        </p>
+      }
+    }
+    </div>
+  </div>
+  <div class="col-md-12">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Question</th>
+          <th>Answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>@en.questions.question1</td>
+          <td>@evaluation.question1</td>
+        </tr>
+        <tr>
+          <td>@en.questions.question2</td>
+          <td>@evaluation.question2</td>
+        </tr>
+        <tr>
+          <td>@en.questions.question3</td>
+          <td>@evaluation.question3</td>
+        </tr>
+        <tr>
+          <td>@en.questions.question4</td>
+          <td>@evaluation.question4</td>
+        </tr>
+        <tr>
+          <td>@en.questions.question5</td>
+          <td>@evaluation.question5</td>
+        </tr>
+        <tr>
+          <td>@en.questions.question8</td>
+          <td>@evaluation.question8</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script src="@routes.Assets.at("evaluation/details.js")" type="text/javascript"></script>
 }

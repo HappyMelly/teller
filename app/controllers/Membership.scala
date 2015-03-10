@@ -30,9 +30,8 @@ import models.payment.{ PaymentException, RequestException, Payment }
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import play.api.data.validation.ValidationError
 import play.api.i18n.Messages
-import play.api.mvc.Controller
+import play.api.mvc.{ Controller, Action }
 import play.api.data._
 import play.api.data.Forms._
 import play.api.Logger
@@ -45,17 +44,21 @@ case class PaymentData(token: String,
   fee: Int,
   orgId: Option[Long] = None) {}
 
-trait Membership extends Controller with Security with Services with Notifiers {
+trait Membership extends Controller
+  with Security
+  with Services
+  with Notifiers {
+
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
-  private def form = Form(mapping(
+  def form = Form(mapping(
     "token" -> nonEmptyText,
     "fee" -> number,
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
   /**
-   * Renders welcome screen with two options: Become a funder and
-   * Become a supporter
+   * Renders welcome screen for existing users with two options:
+   * Become a funder and Become a supporter
    */
   def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒

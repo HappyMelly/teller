@@ -24,7 +24,8 @@
 
 package controllers
 
-import models.{ UserIdentity$, Brand, Certificate, Evaluation }
+import models._
+import org.joda.time.LocalDate
 import play.api.mvc._
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
@@ -36,27 +37,37 @@ object Certificates extends Controller with Security {
   /**
    * Generate new certificate
    *
-   * @param id Certificate identifier
+   * @param eventId Event identifier
+   * @param personId Person identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def create(id: Long,
-    ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+  def create(eventId: Long,
+    personId: Long,
+    ref: Option[String] = None) = SecuredDynamicAction("event", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-
-        Evaluation.find(id).map {
-          evaluation ⇒
-            val approver = user.person
-            val brand = Brand.find(evaluation.event.brandCode).get
-            val certificate = new Certificate(evaluation, renew = true)
-            certificate.generateAndSend(brand, approver)
-            val route = ref match {
-              case Some("index") ⇒ routes.Participants.index().url
-              case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.id.get).url
-              case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
-            }
-            Redirect(route).flashing("success" -> "Certificate was generated")
-        }.getOrElse(NotFound)
+        Participant.find(personId, eventId) map { participant ⇒
+          val approver = user.person
+          val evaluation = if (participant.evaluationId.nonEmpty)
+            participant.evaluation
+          else
+            None
+          val event = participant.event.get
+          val brand = Brand.find(event.brandCode).get
+          val person = participant.person.get
+          val issued = participant.issued getOrElse LocalDate.now()
+          val certificate = new Certificate(Some(issued), event, person, renew = true)
+          certificate.generateAndSend(brand, approver)
+          participant.copy(
+            certificate = Some(certificate.id),
+            issued = Some(issued)).update
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
+            case _ ⇒ routes.Events.details(eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> "Certificate was generated")
+        } getOrElse NotFound
   }
 
   /**

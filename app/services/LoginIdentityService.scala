@@ -24,29 +24,43 @@
 
 package services
 
-import LoginIdentityService._
-import models.UserIdentity
-import models.service.UserIdentityService
-import play.api.{ Logger, Application }
-import play.api.libs.ws.{ Response, WS }
+import models.service.Services
+import models.{ UserAccount, UserIdentity, UserRole }
+import play.api.Play.current
+import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
+import play.api.libs.oauth.{ OAuthCalculator, RequestToken }
+import play.api.libs.ws.{ Response, WS }
+import play.api.{ Application, Logger }
 import securesocial.core._
-import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider, Token }
+import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, Token, TwitterProvider }
+import services.LoginIdentityService._
+
 import scala.concurrent.Await
 
 /**
  * Used by SecureSocial to look up and save authentication data.
  */
-class LoginIdentityService(application: Application) extends UserServicePlugin(application) {
+class LoginIdentityService(application: Application)
+  extends UserServicePlugin(application) with Services {
 
   /**
    * Returns login identity if it exists, otherwise - None
    * @param id Identity identifier
    * @return
    */
-  def find(id: IdentityId): Option[UserIdentity] =
-    UserIdentityService.get.findByUserId(id)
+  def find(id: IdentityId): Option[UserIdentity] = {
+    val identity = userIdentityService.findByUserId(id)
+    if (identity.isEmpty) {
+      val cachedIdentity: Option[UserIdentity] = Cache.getAs[UserIdentity](cacheId(id))
+      cachedIdentity map { i ⇒
+        val account = new UserAccount(None, 0, "", None, None, None, None)
+        account.roles_=(List(UserRole.forName(UserRole.Role.Unregistered.toString)))
+        i.account_=(Some(account))
+        Some(i)
+      } getOrElse None
+    } else identity
+  }
 
   def save(user: Identity) = {
     val loginIdentity = user match {
@@ -67,9 +81,10 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
         throw new AccessDeniedException
       }
     } catch {
-      case e: NoSuchElementException ⇒ {
-        throw new AccessDeniedException
-      }
+      case e: NoSuchElementException ⇒
+        val id = cacheId(loginIdentity.identityId)
+        Cache.set(id, loginIdentity, 600)
+        loginIdentity
     }
   }
 
@@ -79,6 +94,14 @@ class LoginIdentityService(application: Application) extends UserServicePlugin(a
   def findToken(token: String) = None
   def deleteToken(uuid: String) {}
   def deleteExpiredTokens() {}
+
+  /**
+   * Returns cache identifier for IdentityId object
+   * @param id IdentityId object
+   */
+  private def cacheId(id: IdentityId): String = {
+    id.providerId + "_" + id.userId
+  }
 
   /**
    * Returns the Facebook profile URL for the Secure Social identity being used to log in, or throws an authentication error.

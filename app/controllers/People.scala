@@ -29,7 +29,7 @@ import fly.play.s3.{ BucketFile, S3Exception }
 import models.UserRole.Role._
 import models._
 import models.payment.{ GatewayWrapper, PaymentException, RequestException }
-import models.service.Services
+import models.service.{ SocialProfileService, Services }
 import org.joda.time.DateTime
 import play.api.{ Logger, Play }
 import play.api.Play.current
@@ -44,6 +44,7 @@ import play.api.mvc._
 import scravatar.Gravatar
 import services.S3Bucket
 
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.io.Source
 
@@ -263,7 +264,7 @@ trait People extends Controller with Security with Services {
         if (!person.deletable) {
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
-          Person.delete(id)
+          personService.delete(id)
           val activity = person.activity(
             user.person,
             Activity.Predicate.Deleted).insert
@@ -362,17 +363,27 @@ trait People extends Controller with Security with Services {
             formWithErrors ⇒
               BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
             person ⇒ {
-              val updatedPerson = person
-                .copy(id = Some(id))
-                .copy(customerId = p.customerId)
-              updatedPerson.socialProfile_=(person.socialProfile)
-              updatedPerson.address_=(person.address)
-              updatedPerson.update
-              val activity = updatedPerson.activity(
-                user.person,
-                Activity.Predicate.Updated).insert
-              Redirect(routes.People.details(id)).flashing(
-                "success" -> activity.toString)
+              val base = person.socialProfile.copy(
+                objectId = id,
+                objectType = ProfileType.Person)
+              SocialProfileService.findDuplicate(base) map { duplicate ⇒
+                var form = personForm(user).fill(person)
+                compareSocialProfiles(duplicate, base).
+                  foreach(err ⇒ form = form.withError(err))
+                BadRequest(views.html.person.form(user, Some(id), form))
+              } getOrElse {
+                val updatedPerson = person
+                  .copy(id = Some(id))
+                  .copy(customerId = p.customerId)
+                updatedPerson.socialProfile_=(person.socialProfile)
+                updatedPerson.address_=(person.address)
+                updatedPerson.update
+                val activity = updatedPerson.activity(
+                  user.person,
+                  Activity.Predicate.Updated).insert
+                Redirect(routes.People.details(id)).flashing(
+                  "success" -> activity.toString)
+              }
             })
         } getOrElse NotFound
   }
@@ -475,12 +486,12 @@ trait People extends Controller with Security with Services {
       val url = routes.People.details(id).url + "#membership"
       personService.find(id) map { person ⇒
         person.member map { m ⇒
-          if (m.subscription) {
+          if (m.renewal) {
             val key = Play.configuration.getString("stripe.secret_key").get
             val gateway = new GatewayWrapper(key)
             try {
               gateway.cancel(person.customerId.get)
-              m.copy(subscription = false).update
+              m.copy(renewal = false).update
             } catch {
               case e: PaymentException ⇒
                 Redirect(url).flashing("error" -> Messages(e.msg))
@@ -499,6 +510,31 @@ trait People extends Controller with Security with Services {
             flashing("error" -> Messages("error.membership.noSubscription"))
         }
       } getOrElse NotFound
+  }
+
+  /**
+   * Compares social profiles and returns a list of errors for a form
+   * @param left Social profile object
+   * @param right Social profile object
+   */
+  protected def compareSocialProfiles(left: SocialProfile,
+    right: SocialProfile): List[FormError] = {
+
+    val list = mutable.MutableList[FormError]()
+    val msg = Messages("error.socialProfile.exist")
+    if (left.twitterHandle.nonEmpty && left.twitterHandle == right.twitterHandle) {
+      list += FormError("profile.twitterHandle", msg)
+    }
+    if (left.facebookUrl.nonEmpty && left.facebookUrl == right.facebookUrl) {
+      list += FormError("profile.facebookUrl", msg)
+    }
+    if (left.linkedInUrl.nonEmpty && left.linkedInUrl == right.linkedInUrl) {
+      list += FormError("profile.linkedInUrl", msg)
+    }
+    if (left.googlePlusUrl.nonEmpty && left.googlePlusUrl == right.googlePlusUrl) {
+      list += FormError("profile.googlePlusUrl", msg)
+    }
+    list.toList
   }
 }
 

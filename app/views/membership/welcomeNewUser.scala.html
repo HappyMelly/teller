@@ -1,0 +1,60 @@
+@()(implicit request: Request[Any], flash: Flash)
+
+@layout.unauthorized("Welcome") {
+  <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
+
+  <div class="col-md-12 text-center">
+    <h1>Join Happy Melly network</h1>
+  </div>
+  <div class="row text-center welcome">
+    <div class="col-md-6">
+      <h2>Supporter</h2>
+      <div class="text-left info-block">
+        <p>Love <a href="http://happymelly.com" target="_blank">Happy Melly</a>?
+          Share its purpose? Any individual or organization can apply to
+          become a Supporter of Happy Melly and help people to be happy at
+          their jobs.
+        </p>
+        <p>
+          Supporters enjoy a number of benefits provided by the network. You
+          may find a list of them on Happy Melly <a href="http://happymelly.com/benefits"
+        target="_blank">website</a>.
+        </p>
+      </div>
+      <div class="row">
+        <div class="col-md-5 text-center button-block">
+          <div class="button-line text-center">
+            <a href="@routes.Membership.payment(None)" class="btn btn-success">
+              Become a Supporter as Individual</a>
+          </div>
+        </div>
+        <div class="col-md-7 text-center button-block">
+          <div class="button-line text-center">
+            <a href="@routes.Membership.payment(None)" class="btn btn-success">
+              Become a Supporter as Organisation</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-md-offset-1">
+      <h2>Funder</h2>
+      <div class="text-left info-block">
+        <p>According to <a href="http://happymelly.com/constitution"
+        target="_blank">Happy Melly Constitution</a>, any individual or
+          organization can apply to become a Funder of Happy Melly.</p>
+        <p>Each applicant has to comform with the requirements for Funders which
+          you can also find in <a href="http://happymelly.com/constitution"
+        target="_blank"> the Constitution</a>.</p>
+      </div>
+      <div class="row">
+        <div class="col-md-12 button-block">
+          <div class="button-line text-center">
+            <a href="http://happymelly.com/contact" target="_blank" class="btn btn-success text-center">
+              Become a Funder
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

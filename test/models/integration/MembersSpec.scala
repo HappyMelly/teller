@@ -40,7 +40,7 @@ import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
 import services.notifiers.Slack
-import stubs.{ FakeServices, StubUserIdentity, FakeMemberService }
+import stubs.{ FakeServices, FakeUserIdentity, FakeMemberService }
 import stubs.services.{ FakeNotifiers, FakeSlack }
 
 import scala.concurrent.Future
@@ -84,7 +84,7 @@ class MembersSpec extends PlayAppSpec {
     "reset objectId and id to 0/None to prevent cheating" in new cleanDb {
       val m = member()
       val fakeId = 400
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "0"),
@@ -101,7 +101,7 @@ class MembersSpec extends PlayAppSpec {
     }
     "pass all fields from form to object" in new cleanDb {
       val fakeId = 400
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "1"),
@@ -127,7 +127,7 @@ class MembersSpec extends PlayAppSpec {
     "be destroyed after successful creation of a person" in new cleanDb {
       val m = member()
       val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val request = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -137,16 +137,12 @@ class MembersSpec extends PlayAppSpec {
       controller.createNewPerson().apply(request)
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
-
-      Person.findAll.diff(oldList).headOption map { p ⇒
-        Person.delete(p.id); success
-      } getOrElse failure
     }
 
     "be destroyed after successful creation of an organisation" in new cleanDb {
       val m = member()
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -170,7 +166,7 @@ class MembersSpec extends PlayAppSpec {
     "after the creation of related new organisation" in new cleanDb {
       val m = member(person = true)
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
       Cache.set(Members.cacheId(1L), m, 1800)
       val result = controller.createNewOrganisation().apply(req)
@@ -190,7 +186,7 @@ class MembersSpec extends PlayAppSpec {
     "after the creation of related new person" in new cleanDb {
       val m = member(person = false, existingObject = true)
       val oldList = Person.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -204,10 +200,6 @@ class MembersSpec extends PlayAppSpec {
         retrieveMember(person.id.toString) map { upd ⇒
           upd.person must_== true
         } getOrElse failure
-
-        // clean up. We don't need this organisation anymore
-        Person.delete(person.id)
-        success
       } getOrElse failure
     }
   }
@@ -216,7 +208,7 @@ class MembersSpec extends PlayAppSpec {
     "be connected with member data" in new cleanDb {
       val m = member()
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -242,7 +234,7 @@ class MembersSpec extends PlayAppSpec {
     "be connected with member data" in new cleanDb {
       val m = member()
       val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val request = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
@@ -258,10 +250,6 @@ class MembersSpec extends PlayAppSpec {
         val updatedM = retrieveMember(person.id.toString)
         updatedM.nonEmpty must_== true
         updatedM.get.objectId must_== person.id
-
-        // clean up. We don't need this person anymore
-        Person.delete(person.id)
-        success
       } getOrElse failure
     }
   }
@@ -269,7 +257,7 @@ class MembersSpec extends PlayAppSpec {
   "On step 2 an existing organisation " should {
     "be linked to a member object" in new cleanDb {
       val m = member(person = false)
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val org = OrganisationHelper.one.copy(id = Some(1L)).insert
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -289,7 +277,7 @@ class MembersSpec extends PlayAppSpec {
     "be linked to a member object" in new cleanDb {
       truncateTables()
       val m = member(person = true)
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val person = PersonHelper.one().insert
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -310,7 +298,7 @@ class MembersSpec extends PlayAppSpec {
       truncateTables()
       val m = member(person = false)
       val oldList = Organisation.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
       Cache.set(Members.cacheId(1L), m, 1800)
 
@@ -323,7 +311,7 @@ class MembersSpec extends PlayAppSpec {
     "when a new person becomes a member" in {
       val m = member().copy(funder = true)
       val oldList = Person.findAll
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Buddy"), ("signature", "false"),
@@ -338,7 +326,7 @@ class MembersSpec extends PlayAppSpec {
     "when an existing organisation becomes a member" in {
       truncateTables()
       val m = member(person = false)
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val org = OrganisationHelper.one.copy(id = Some(1L)).insert
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -355,7 +343,7 @@ class MembersSpec extends PlayAppSpec {
     "when an existing person becomes a member" in {
       truncateTables()
       val m = member(person = true)
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("id", "1"))
       val person = PersonHelper.one().insert
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -378,7 +366,7 @@ class MembersSpec extends PlayAppSpec {
       (memberService.delete(_, _)).expects(1L, true)
       controller.memberService_=(memberService)
       controller.counter = 0
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/")
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
       val result = controller.delete(2L).apply(req)
       status(result) must equalTo(SEE_OTHER)
       controller.counter must_== 1
@@ -393,11 +381,11 @@ class MembersSpec extends PlayAppSpec {
       val controller = new TestMembers
       controller.memberService_=(memberService)
       controller.counter = 0
-      val req = prepareSecuredPostRequest(StubUserIdentity.editor, "/").
+      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(
           ("objectId", member.objectId.toString), ("person", "1"),
           ("funder", "1"), ("fee.currency", "EUR"),
-          ("fee.amount", "200"), ("subscription", member.subscription.toString),
+          ("fee.amount", "200"), ("subscription", member.renewal.toString),
           ("since", "2015-01-01"), ("end", member.until.toString),
           ("existingObject", "1"))
       val result = controller.update(2L).apply(req)
@@ -420,7 +408,7 @@ class MembersSpec extends PlayAppSpec {
 
   private def member(person: Boolean = true, existingObject: Boolean = false): Member = {
     new Member(None, 0, person = person, funder = false,
-      Money.parse("EUR 100"), subscription = false, LocalDate.now(), LocalDate.now(),
+      Money.parse("EUR 100"), renewal = false, LocalDate.now(), LocalDate.now(),
       existingObject = existingObject, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

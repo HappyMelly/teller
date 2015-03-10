@@ -39,16 +39,18 @@ case class UserRole(role: UserRole.Role.Role) extends Role {
   def admin: Boolean = role == Admin
   def editor: Boolean = role == Editor || admin
   def viewer: Boolean = role == Viewer || editor
+  def unregistered: Boolean = role == Unregistered || viewer
 
   /**
    * Returns the list of rules implied by this role.
    */
-  def list: java.util.List[UserRole] = {
+  def list: List[UserRole] = {
     val roles = ListBuffer[UserRole]()
     if (viewer) roles += UserRole(Viewer)
     if (editor) roles += UserRole(Editor)
     if (admin) roles += UserRole(Admin)
-    Scala.asJava(roles)
+    if (unregistered) roles += UserRole(Unregistered)
+    roles.toList
   }
 }
 
@@ -56,6 +58,7 @@ object UserRole {
 
   object Role extends Enumeration {
     type Role = Value
+    val Unregistered = Value("unregistered")
     val Viewer = Value("viewer")
     val Editor = Value("editor")
     val Admin = Value("admin")

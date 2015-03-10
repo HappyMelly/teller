@@ -91,6 +91,34 @@ case class Person(
   private var _organisations: Option[List[Organisation]] = None
   private var _member: Option[Member] = None
 
+  def copy(id: Option[Long] = id,
+    firstName: String = firstName,
+    lastName: String = lastName,
+    birthday: Option[LocalDate] = birthday,
+    photo: Photo = photo,
+    signature: Boolean = signature,
+    addressId: Long = addressId,
+    bio: Option[String] = bio,
+    interests: Option[String] = interests,
+    role: PersonRole.Value = role,
+    webSite: Option[String] = webSite,
+    blog: Option[String] = blog,
+    customerId: Option[String] = customerId,
+    virtual: Boolean = virtual,
+    active: Boolean = active,
+    dateStamp: DateStamp = dateStamp): Person = {
+    val person = Person(id, firstName, lastName, birthday, photo,
+      signature, addressId, bio, interests, role, webSite, blog,
+      customerId, virtual, active, dateStamp)
+    this._socialProfile map { p ⇒
+      person.socialProfile_=(this.socialProfile)
+    }
+    this._address map { a ⇒
+      person.address_=(this.address)
+    }
+    person
+  }
+
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
       socialProfile_=(SocialProfileService.find(id.getOrElse(0), ProfileType.Person))
@@ -251,43 +279,38 @@ case class Person(
   def objectType: String = Activity.Type.Person
 
   /**
-   * Inserts this person into the database and returns the saved Person, with the ID added.
+   * Inserts this person into the database and returns the saved Person,
+   * with the ID added
    */
-  def insert: Person = DB.withTransaction { implicit session: Session ⇒
-    val newAddress = Address.insert(this.address)
-    val personId = People.forInsert.insert(this.copy(addressId = newAddress.id.get))
-    SocialProfileService.insert(socialProfile.copy(objectId = personId))
-    Accounts.insert(Account(personId = Some(personId)))
-    this.copy(id = Some(personId))
-  }
+  def insert: Person = personService.insert(this)
 
   /**
    * Updates this person in the database and returns the saved person.
    */
-  def update: Person = DB.withSession { implicit session: Session ⇒
-    session.withTransaction {
-      import models.database.SocialProfiles._
-      val addressId = People.filter(_.id === this.id).map(_.addressId).first
+  def update: Person = DB.withTransaction { implicit session: Session ⇒
+    import models.database.SocialProfiles._
+    val addressId = People.filter(_.id === this.id).map(_.addressId).first
 
-      val addressQuery = for {
-        address ← Addresses if address.id === addressId
-      } yield address
-      addressQuery.update(address.copy(id = Some(addressId)))
+    val addressQuery = for {
+      address ← Addresses if address.id === addressId
+    } yield address
+    addressQuery.update(address.copy(id = Some(addressId)))
 
-      val socialQuery = for {
-        p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
-      } yield p
-      socialQuery.update(socialProfile.copy(objectId = id.get))
-      // Skip the id, created, createdBy and active fields.
-      val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-        bio, interests, role, webSite, blog, customerId, virtual,
-        dateStamp.updated, dateStamp.updatedBy)
-      val updateQuery = People.filter(_.id === id).map(_.forUpdate)
-      updateQuery.update(personUpdateTuple)
+    val socialQuery = for {
+      p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
+    } yield p
 
-      UserAccount.updateSocialNetworkProfiles(this)
-      this
-    }
+    socialQuery.update(socialProfile.copy(objectId = id.get))
+
+    // Skip the id, created, createdBy and active fields.
+    val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
+      bio, interests, role, webSite, blog, customerId, virtual, active,
+      dateStamp.updated, dateStamp.updatedBy)
+    val updateQuery = People.filter(_.id === id).map(_.forUpdate)
+    updateQuery.update(personUpdateTuple)
+
+    UserAccount.updateSocialNetworkProfiles(this)
+    this
   }
 
   /**
@@ -340,7 +363,7 @@ case class Person(
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
     val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      subscription = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
+      renewal = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
       existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
     memberService.insert(m)
   }
@@ -384,7 +407,7 @@ object Person {
   }
 
   /**
-   * Activates the organisation, if the parameter is true, or deactivates it.
+   * Activates the person, if the parameter is true, or deactivates it.
    * During activization, a person also becomes a real person
    *
    * @param id Person identifier
@@ -394,19 +417,6 @@ object Person {
     People.filter(_.id === id)
       .map(p ⇒ p.active ~ p.virtual)
       .update((active, false))
-  }
-
-  /**
-   * Deletes the person with the given ID and their account.
-   *
-   * @param id Person Identifier
-   */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    import models.service.PersonService
-    PersonService.get.find(id).map(_.account).map(_.delete())
-    MemberService.get.delete(id, person = true)
-    Participants.where(_.personId === id).mutate(_.delete())
-    People.where(_.id === id).mutate(_.delete())
   }
 
   /**

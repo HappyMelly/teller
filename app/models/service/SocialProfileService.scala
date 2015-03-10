@@ -73,6 +73,27 @@ object SocialProfileService {
     Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
   }
 
+  /**
+   * Returns the social profile which has a duplicate social network
+   * identity, if there is one
+   *
+   * @param profile Social profile object
+   */
+  def findDuplicate(profile: SocialProfile): Option[SocialProfile] = DB.withSession {
+    implicit session: Session ⇒
+      val query = Query(SocialProfiles).
+        filter(_.objectId =!= profile.objectId).
+        filter(_.objectType === profile.objectType).
+        filter { p ⇒
+          p.twitterHandle.toLowerCase === profile.twitterHandle.map(_.toLowerCase) ||
+            p.googlePlusUrl === profile.googlePlusUrl ||
+            (p.facebookUrl like "https?".r.replaceFirstIn(profile.facebookUrl.getOrElse(""), "%")) ||
+            (p.linkedInUrl like "https?".r.replaceFirstIn(profile.linkedInUrl.getOrElse(""), "%"))
+        }
+
+      query.firstOption
+  }
+
   def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
     SocialProfiles.insert(socialProfile)
     socialProfile
