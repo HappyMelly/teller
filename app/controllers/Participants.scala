@@ -158,7 +158,7 @@ object Participants extends Controller with Security {
             List[ParticipantView]()
           }
         Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
-      }.getOrElse(NotFound("Unknown brand"))
+      }.getOrElse(Ok(Json.toJson(List[String]())))
   }
 
   /**

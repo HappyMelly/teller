@@ -20,6 +20,7 @@
     <script src="@routes.Assets.at("main.js")" type="text/javascript"></script>
   </head>
   <body class='@title.split(" ").last.toLowerCase'>
+    <div id="wrapper">
       <div class="navbar navbar-inverse navbar-fixed-top" role="nagivation">
           <div class="container">
               <a class="navbar-brand" href="/">Happy Melly</a>
@@ -78,7 +79,7 @@
               </div> <!--/.navbar-collapse -->
           </div>
       </div>
-      <div class="container">
+      <div class="container" id="content">
         @if(showJoinBanner && user.person.member.isEmpty) {
           @defining(Payment.countryBasedFees(user.person.address.countryCode)._2) { fee: Int =>
             <div class="alert alert-danger banner">
@@ -101,8 +102,10 @@
         @alert("success")
         @content
       </div>
-      <footer>
-          <div class="container"></div>
-      </footer>
+      <div id="footer">
+        <img width="50px" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+        Made with love at <a href="http://happymelly.com" target="_blank">Happy Melly</a>
+      </div>
+    </div>
   </body>
 </html>
