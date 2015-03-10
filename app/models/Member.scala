@@ -51,6 +51,11 @@ case class Member(
   }
 
   /**
+   * Returns a link to public profile on Happy Melly website
+   */
+  def profileUrl: String = "http://happymelly.com/members#%s".format(id.getOrElse(0))
+
+  /**
    * Returns identifier of the object
    */
   def identifier: Long = id.getOrElse(0)

@@ -129,8 +129,8 @@ trait Membership extends Controller
 
             val fee = Money.of(EUR, data.fee)
             val member = org map { o ⇒
-              o.becomeMember(funder = false, fee, user.person.id.get)
               o.copy(customerId = Some(customerId)).update
+              o.becomeMember(funder = false, fee, user.person.id.get)
             } getOrElse {
               user.person.copy(customerId = Some(customerId)).update
               user.person.becomeMember(funder = false, fee)
@@ -146,6 +146,10 @@ trait Membership extends Controller
               fee.toString,
               fullUrl)
             slack.send(text)
+            email.send(Set(user.person),
+              subject = "Welcome to Happy Melly network",
+              body = mail.html.welcome(fullUrl, member.profileUrl, user.person.firstName).toString(),
+              richMessage = true)
 
             member.activity(
               user.person,

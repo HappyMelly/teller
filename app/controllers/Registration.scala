@@ -182,6 +182,10 @@ trait Registration extends Controller
                   fee.toString,
                   fullUrl)
                 slack.send(text)
+                email.send(Set(person),
+                  subject = "Welcome to Happy Melly network",
+                  body = mail.html.welcome(fullUrl, member.profileUrl, person.firstName).toString(),
+                  richMessage = true)
 
                 member.activity(person, Activity.Predicate.BecameSupporter).insert
 
