@@ -1,0 +1,72 @@
+@(profileUrl: String,
+  publicProfileUrl: String,
+    name: String)
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table cellpadding="0" cellspacing="0" border="0"
+    style="margin:0px;padding:0px;width:100%!important;line-height:100%!important;font-family: Helvetica;color: #606060;">
+      <tbody>
+        <tr>
+          <td valign="top">
+            <table cellpadding="15" cellspacing="0" border="0" align="center"
+            width="550" style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204)">
+              <tbody>
+                <tr>
+                  <td valign="top" style="background-color:#F4A7AF; color: #000;text-align: center;padding-top: 20px">
+                    <img src="https://stripe-images.s3.amazonaws.com/emails/acct_15UuoaBoZAd076OP/5/circular_icon.png"/>
+                    <h3 style="font-size:20px;font-weight:normal">Welcome to Happy Melly network</h3>
+                  </td>
+                </tr>
+                <tr style="color: #606060;font-size: 15px; line-height: 150% ;">
+                  <td valign="top" style="padding-top:30px;">
+                    <h2>Hi @name,</h2>
+                    <p>you have just joined Happy Melly, the international business network,
+                      made up of awesome people and organisations, whose mission it is to help others
+                      be happy at work. You officially rock!</p>
+
+                    <p>To get most out of your membership, follow the steps below:</p>
+                    <h3>Update your profile</h3>
+                    <p><a href="@profileUrl" target="_blank" style="color: #6DC6DD;">Your profile</a> defines
+                      how people view you on your <a href="@publicProfileUrl" target="_blank" style="color: #6DC6DD;">public member page</a>.</p>
+                    <p>We recommend you update your photo and social networks, so that people may connect with you.
+                      And hey, don't forget to mention why you love Happy Melly 8-)</p>
+                    <h3>Grab your badge</h3>
+                    <p>As a proud member of the Happy Melly network you are eligible
+                      to add a Happy Melly badge to your website.</p>
+                    <p>Visit the <a href="@(profileUrl)#membership" target="_blank" style="color: #6DC6DD;">Membership section</a>
+                      in your profile area to get the code. </p>
+                    <h3>Join Slack discussions</h3>
+                    <p>During next two-three days you will receive an invitation to join Happy Melly
+                    at Slack. Go forward and meet many like-minded people!</p>
+                    <p>Find first what is happening in the network, share your idea and get feedback.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                     @mail.html.share()
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table cellpadding="0" cellspacing="0" border="0" align="center"
+            style="margin-top:10px;width:550px">
+              <tbody>
+                <tr>
+                  <td valign="top"
+                  style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px;width:50%"> THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">HAPPY MELLY TELLER</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br><br><br><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
