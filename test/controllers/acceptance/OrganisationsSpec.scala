@@ -26,7 +26,7 @@ package controllers.acceptance
 
 import controllers.Organisations
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import models.payment.Record
 import models.{ Organisation, Person, SocialProfile }
 import org.joda.money.Money

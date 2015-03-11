@@ -21,14 +21,15 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.api
 
+import controllers.EvaluationsController
 import models._
 import org.joda.time.DateTime
-import play.api.data.Forms._
-import play.api.mvc._
 import play.api.data.Form
+import play.api.data.Forms._
 import play.api.libs.json._
+import play.api.mvc._
 
 /**
  * Evaluations API

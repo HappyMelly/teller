@@ -21,31 +21,29 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
 
-import play.mvc.Controller
+package controllers.api
+
+import models.{ ContributionView, ContributorView }
 import play.api.libs.json._
-import models.{ Brand, EventType }
+import play.mvc.Controller
 
-/**
- * Event types API
- */
-object EventTypesApi extends Controller with ApiAuthentication {
+object ContributionsApi extends Controller with ApiAuthentication {
 
-  implicit val eventTypeWrites = new Writes[EventType] {
-    def writes(eventType: EventType): JsValue = {
-      Json.obj(
-        "id" -> eventType.id,
-        "brand" -> eventType.brand.code,
-        "name" -> eventType.name,
-        "defaultTitle" -> eventType.defaultTitle)
-    }
+  import ProductsApi.productWrites
+
+  implicit val contributionWrites = new Writes[ContributionView] {
+    def writes(contribution: ContributionView) = Json.obj(
+      "product" -> contribution.product,
+      "role" -> contribution.contribution.role)
   }
 
-  /**
-   * Event types list API.
-   */
-  def types(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Ok(Json.prettyPrint(Json.toJson(EventType.findByBrand(Brand.find(brandCode).map(_.brand.id.get).getOrElse(0)))))
+  implicit val contributorWrites = new Writes[ContributorView] {
+    def writes(contributor: ContributorView) = Json.obj(
+      "name" -> contributor.name,
+      "href" -> routes.PeopleApi.person(contributor.id.toString).url,
+      "unique_name" -> contributor.uniqueName,
+      "photo" -> contributor.photo,
+      "role" -> contributor.contribution.role)
   }
 }

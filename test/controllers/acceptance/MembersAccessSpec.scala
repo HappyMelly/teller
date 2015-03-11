@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import controllers._
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import play.api.mvc.SimpleResult
@@ -129,7 +129,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e7 = new MockContext {
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val service = mock[FakeMemberService]
-    (service.find _).expects(1L, true).returning(None)
+    (service.find _).expects(1L).returning(None)
     controller.memberService_=(service)
     val result: Future[SimpleResult] = controller.edit(1L).apply(req)
 
@@ -146,7 +146,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e9 = new MockContext {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val service = mock[FakeMemberService]
-    (service.find _).expects(1L, true).returning(None)
+    (service.find _).expects(1L).returning(None)
     controller.memberService_=(service)
     val result: Future[SimpleResult] = controller.update(1L).apply(req)
 
@@ -232,7 +232,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e25 = new MockContext {
     val memberService = mock[FakeMemberService]
     // the existance of call itself proves that the authentication passed
-    (memberService.find(_, _)).expects(1L, true).returning(None)
+    (memberService.find _).expects(1L).returning(None)
     controller.memberService_=(memberService)
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val result: Future[SimpleResult] = controller.delete(1L).apply(req)

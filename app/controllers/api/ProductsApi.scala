@@ -22,20 +22,20 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.api
 
 import models.service.Services
-import play.api.mvc.Controller
-import play.api.libs.json._
-import models.{ ProductsCollection, Product }
+import models.{ Product, ProductsCollection }
 import play.api.i18n.Messages
+import play.api.libs.json._
+import play.api.mvc.Controller
 
 /**
  * Products API.
  */
 trait ProductsApi extends Controller with ApiAuthentication with Services {
 
-  import BrandsApi.brandWrites
+  import controllers.api.BrandsApi.brandWrites
 
   implicit val productWrites = new Writes[Product] {
     def writes(product: Product): JsValue = {
@@ -43,13 +43,13 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
         "href" -> product.id.map(productId ⇒ routes.ProductsApi.product(productId).url),
         "title" -> product.title,
         "subtitle" -> product.subtitle,
-        "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
+        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
         "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
   }
 
-  import ContributionsApi.contributorWrites
+  import controllers.api.ContributionsApi.contributorWrites
 
   val productDetailsWrites = new Writes[Product] {
     def writes(product: Product): JsValue = {
@@ -60,7 +60,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
         "description" -> product.description,
         "cta_url" -> product.callToActionUrl,
         "cta_text" -> product.callToActionText,
-        "image" -> product.picture.map(picture ⇒ routes.Products.picture(product.id.get).url),
+        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
         "brands" -> product.brands,
         "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
         "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),

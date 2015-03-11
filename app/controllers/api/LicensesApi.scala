@@ -22,13 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.api
 
 import models.service.Services
+import models.{ Brand, License, Person }
 import org.joda.time.LocalDate
+import play.api.libs.json.{ JsValue, Json, Writes }
 import play.api.mvc.Controller
-import play.api.libs.json.{ JsValue, Writes, Json }
-import models.{ License, Brand, Person }
+
 import scala.util.{ Failure, Success, Try }
 
 /**

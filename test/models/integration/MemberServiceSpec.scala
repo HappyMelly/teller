@@ -39,38 +39,13 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
 
   "Method findAll" should {
     "return 6 members" in {
-      Seq(
-        (Some(1L), "First org", "DE"),
-        (Some(2L), "Second org", "DE"),
-        (Some(3L), "Third org", "DE"),
-        (Some(4L), "Fourth org", "DE"),
-        (Some(5L), "Fifth org", "DE"),
-        (Some(6L), "Sixth org", "DE")).foreach {
-          case (id, name, country) ⇒
-            val org = OrganisationHelper.make(
-              id = id,
-              name = name,
-              countryCode = country)
-            org.insert
-        }
-      Seq(
-        (Some(1L), "First", "Tester"),
-        (Some(2L), "Second", "Tester"),
-        (Some(3L), "Third", "Tester"),
-        (Some(4L), "Fourth", "Tester"),
-        (Some(5L), "Fifth", "Tester"),
-        (Some(6L), "Sixth", "Tester")).foreach {
-          case (id, firstName, lastName) ⇒
-            val person = PersonHelper.make(id = id, firstName = firstName,
-              lastName = lastName)
-            person.insert
-        }
+      addOrgsAndPeople()
       Seq(
         (1L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
         (2L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L),
+        (3L, false, false, Money.of(EUR, 50), LocalDate.now(), 1L),
         (1L, true, false, Money.of(EUR, 50), LocalDate.now(), 1L),
         (2L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L),
-        (3L, false, false, Money.of(EUR, 50), LocalDate.now(), 1L),
         (5L, true, true, Money.of(EUR, 1000), LocalDate.now(), 1L)).foreach {
           case (objectId, person, funder, fee, since, createdBy) ⇒ {
             val member = new Member(None, objectId, person, funder, fee,
@@ -92,17 +67,6 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
   }
 
   "Method find" should {
-    "return only membership data" in {
-      truncateTables()
-      val m = MemberHelper.make(None, 1L, person = true, funder = false).insert
-      val data = MemberService.get.find(1L)
-      data map { v ⇒
-        v.objectId must_== m.objectId
-        v.person must_== m.person
-        v.funder must_== m.funder
-        v.memberObj must_== (None, None)
-      } getOrElse ko
-    }
     "return empty data" in {
       truncateTables()
       val data = MemberService.get.find(2L)
@@ -112,7 +76,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
       truncateTables()
       val m = MemberHelper.make(None, 1L, person = true, funder = false).insert
       PersonHelper.one().insert
-      val data = MemberService.get.find(1L, withObject = true)
+      val data = MemberService.get.find(1L)
       data map { v ⇒
         v.objectId must_== m.objectId
         v.person must_== m.person
@@ -124,7 +88,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
       truncateTables()
       val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       OrganisationHelper.one.insert
-      val data = MemberService.get.find(1L, withObject = true)
+      val data = MemberService.get.find(1L)
       data map { v ⇒
         v.objectId must_== m.objectId
         v.person must_== m.person
@@ -142,9 +106,39 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     }
     "not delete membership data" in {
       truncateTables()
+      OrganisationHelper.one.insert
       val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       MemberService.get.delete(m.objectId, person = true)
       MemberService.get.find(m.id.get) must_!= None
     }
+  }
+
+  private def addOrgsAndPeople() = {
+    Seq(
+      (Some(1L), "First org", "DE"),
+      (Some(2L), "Second org", "DE"),
+      (Some(3L), "Third org", "DE"),
+      (Some(4L), "Fourth org", "DE"),
+      (Some(5L), "Fifth org", "DE"),
+      (Some(6L), "Sixth org", "DE")).foreach {
+        case (id, name, country) ⇒
+          val org = OrganisationHelper.make(
+            id = id,
+            name = name,
+            countryCode = country)
+          org.insert
+      }
+    Seq(
+      (Some(1L), "First", "Tester"),
+      (Some(2L), "Second", "Tester"),
+      (Some(3L), "Third", "Tester"),
+      (Some(4L), "Fourth", "Tester"),
+      (Some(5L), "Fifth", "Tester"),
+      (Some(6L), "Sixth", "Tester")).foreach {
+        case (id, firstName, lastName) ⇒
+          val person = PersonHelper.make(id = id, firstName = firstName,
+            lastName = lastName)
+          person.insert
+      }
   }
 }

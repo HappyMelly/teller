@@ -22,13 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.api
 
 import java.net.URLDecoder
+
 import models._
 import models.service.Services
-import play.mvc.Controller
 import play.api.libs.json._
+import play.mvc.Controller
 
 trait PeopleApi extends Controller with ApiAuthentication with Services {
 
@@ -45,7 +46,7 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  import OrganisationsApi.organisationWrites
+  import controllers.api.OrganisationsApi.organisationWrites
 
   implicit val licenseSummaryWrites = new Writes[LicenseView] {
     def writes(license: LicenseView) = {
@@ -66,7 +67,7 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
       "country" -> address.countryCode)
   }
 
-  import ContributionsApi.contributionWrites
+  import controllers.api.ContributionsApi.contributionWrites
 
   val personDetailsWrites = new Writes[Person] {
     def writes(person: Person) = {

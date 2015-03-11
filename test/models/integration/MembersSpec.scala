@@ -362,7 +362,7 @@ class MembersSpec extends PlayAppSpec {
       val person = PersonHelper.one()
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find(_, _)).expects(2L, true).returning(Some(member))
+      (memberService.find _).expects(2L).returning(Some(member))
       (memberService.delete(_, _)).expects(1L, true)
       controller.memberService_=(memberService)
       controller.counter = 0
@@ -377,7 +377,7 @@ class MembersSpec extends PlayAppSpec {
       val person = PersonHelper.one()
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false).insert
       member.memberObj_=(person)
-      (memberService.find(_, _)).expects(2L, true).returning(Some(member))
+      (memberService.find _).expects(2L).returning(Some(member))
       val controller = new TestMembers
       controller.memberService_=(memberService)
       controller.counter = 0
