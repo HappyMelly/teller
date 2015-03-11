@@ -21,11 +21,11 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.api
 
-import play.mvc.Controller
+import models.{ Brand, PeopleCollection, Person }
 import play.api.libs.json._
-import models.{ PeopleCollection, Person, Brand }
+import play.mvc.Controller
 import views.Languages
 
 /**

@@ -22,12 +22,12 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.api
 
-import play.api.mvc._
-import play.api.cache.Cache
-import play.api.Play.current
 import models.UserIdentity
+import play.api.Play.current
+import play.api.cache.Cache
+import play.api.mvc._
 
 /**
  * Provides token-based authentication for API actions.

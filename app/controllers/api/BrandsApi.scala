@@ -21,11 +21,11 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.api
 
-import play.mvc.Controller
-import play.api.libs.json._
 import models.{ Brand, BrandView }
+import play.api.libs.json._
+import play.mvc.Controller
 
 /**
  * Brands API
@@ -47,7 +47,8 @@ object BrandsApi extends Controller with ApiAuthentication {
         "href" -> routes.BrandsApi.brand(brandView.brand.code).url,
         "unique_name" -> brandView.brand.uniqueName,
         "name" -> brandView.brand.name,
-        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
+        "image" -> brandView.brand.picture.map(picture ⇒
+          controllers.routes.Brands.picture(brandView.brand.code).url),
         "tagline" -> brandView.brand.tagLine,
         "products" -> brandView.brand.products.length)
     }
@@ -64,7 +65,8 @@ object BrandsApi extends Controller with ApiAuthentication {
         "name" -> brandView.brand.name,
         "tagline" -> brandView.brand.tagLine,
         "description" -> brandView.brand.description,
-        "image" -> brandView.brand.picture.map(picture ⇒ routes.Brands.picture(brandView.brand.code).url),
+        "image" -> brandView.brand.picture.map(picture ⇒
+          controllers.routes.Brands.picture(brandView.brand.code).url),
         "coordinator" -> brandView.coordinator,
         "contact_info" -> Json.obj(
           "email" -> brandView.brand.socialProfile.email,

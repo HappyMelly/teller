@@ -22,12 +22,12 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.api
 
 import models.service.Services
-import play.api.mvc.Controller
-import play.api.libs.json._
 import models.{ Address, Organisation }
+import play.api.libs.json._
+import play.api.mvc.Controller
 
 /**
  * Organisations API.
@@ -46,7 +46,7 @@ object OrganisationsApi extends Controller with ApiAuthentication with Services 
   }
 
   import PeopleApi.personWrites
-  import ContributionsApi.contributionWrites
+  import controllers.api.ContributionsApi.contributionWrites
 
   val organisationDetailsWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {

@@ -24,7 +24,7 @@
  */
 package stubs
 
-import controllers.ApiAuthentication
+import controllers.api.ApiAuthentication
 import play.api.mvc._
 
 /** Stubs api authentication */

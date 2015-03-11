@@ -62,7 +62,7 @@ trait Members extends Controller with Security with Services with Notifiers {
         verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().dayOfMonth().withMaximumValue().plusDays(2))),
-      "end" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
+      "until" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
