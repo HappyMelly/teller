@@ -1,234 +1,236 @@
 # Application pages
 
-GET         /                                                                    controllers.Dashboard.index
-GET         /about                                                               controllers.Dashboard.about
-GET         /api                                                                 controllers.Dashboard.api
-GET         /profile                                                             controllers.Dashboard.profile
+GET         /                                                         controllers.Dashboard.index
+GET         /about                                                    controllers.Dashboard.about
+GET         /api                                                      controllers.Dashboard.api
+GET         /profile                                                  controllers.Dashboard.profile
 
-GET         /accounts                                                            controllers.Accounts.index
-GET         /accounts/balance                                                    controllers.Accounts.previewBalance
-POST        /accounts/balance                                                    controllers.Accounts.balanceAccounts
+GET         /accounts                                                 controllers.Accounts.index
+GET         /accounts/balance                                         controllers.Accounts.previewBalance
+POST        /accounts/balance                                         controllers.Accounts.balanceAccounts
 
-GET         /account/:id                                                         controllers.Accounts.details(id: Long)
-GET         /account/:id/bookings                                                controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
-POST        /account/:id/activate                                                controllers.Accounts.activate(id: Long)
-POST        /account/:id/deactivate                                              controllers.Accounts.deactivate(id: Long)
+GET         /account/:id                                              controllers.Accounts.details(id: Long)
+GET         /account/:id/bookings                                     controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
+POST        /account/:id/activate                                     controllers.Accounts.activate(id: Long)
+POST        /account/:id/deactivate                                   controllers.Accounts.deactivate(id: Long)
 
-GET         /admin/settings                                                      controllers.Administration.settings
-POST        /admin/transactiontype/new                                           controllers.Administration.createTransactionType
-POST        /admin/transactiontype/:id/delete                                    controllers.Administration.deleteTransactionType(id: Long)
-GET         /admin/translations                                                  controllers.Translations.index
+GET         /admin/settings                                           controllers.Administration.settings
+POST        /admin/transactiontype/new                                controllers.Administration.createTransactionType
+POST        /admin/transactiontype/:id/delete                         controllers.Administration.deleteTransactionType(id: Long)
+GET         /admin/translations                                       controllers.Translations.index
 
-GET         /bookings                                                            controllers.BookingEntries.index
-GET         /booking/new                                                         controllers.BookingEntries.add
-POST        /booking/new                                                         controllers.BookingEntries.create
-GET         /booking/:bookingNumber                                              controllers.BookingEntries.details(bookingNumber: Int)
-POST        /booking/:bookingNumber                                              controllers.BookingEntries.update(bookingNumber: Int)
-GET         /booking/:bookingNumber/edit                                         controllers.BookingEntries.edit(bookingNumber: Int)
-POST        /booking/:bookingNumber/delete                                       controllers.BookingEntries.delete(bookingNumber: Int)
+GET         /bookings                                                 controllers.BookingEntries.index
+GET         /booking/new                                              controllers.BookingEntries.add
+POST        /booking/new                                              controllers.BookingEntries.create
+GET         /booking/:bookingNumber                                   controllers.BookingEntries.details(bookingNumber: Int)
+POST        /booking/:bookingNumber                                   controllers.BookingEntries.update(bookingNumber: Int)
+GET         /booking/:bookingNumber/edit                              controllers.BookingEntries.edit(bookingNumber: Int)
+POST        /booking/:bookingNumber/delete                            controllers.BookingEntries.delete(bookingNumber: Int)
 
-GET         /booking/:bookingNumber/attachment                                   controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
-GET         /booking/:bookingNumber/attachment                                   controllers.BookingEntries.s3Callback(bookingNumber: Int)
-POST        /booking/:bookingNumber/attachment/delete                            controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
+GET         /booking/:bookingNumber/attachment                        controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
+GET         /booking/:bookingNumber/attachment                        controllers.BookingEntries.s3Callback(bookingNumber: Int)
+POST        /booking/:bookingNumber/attachment/delete                 controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
-GET         /brands                                                              controllers.Brands.index
-GET         /brand/new                                                           controllers.Brands.add
-POST        /brand/new                                                           controllers.Brands.create
-GET         /brand/:code                                                         controllers.Brands.details(code)
-POST        /brand/:code                                                         controllers.Brands.update(code)
-GET         /brand/:code/events                                                  controllers.Brands.events(code, future: Option[Boolean])
-GET         /brand/:code/edit                                                    controllers.Brands.edit(code)
-POST        /brand/:code/delete                                                  controllers.Brands.delete(code)
-GET         /brand/:code/picture                                                 controllers.Brands.picture(code: String)
-POST        /brand/:code/picture/delete                                          controllers.Brands.deletePicture(code: String)
+GET         /brands                                                   controllers.Brands.index
+GET         /brand/new                                                controllers.Brands.add
+POST        /brand/new                                                controllers.Brands.create
+GET         /brand/:code                                              controllers.Brands.details(code)
+POST        /brand/:code                                              controllers.Brands.update(code)
+GET         /brand/:code/events                                       controllers.Brands.events(code, future: Option[Boolean])
+GET         /brand/:code/edit                                         controllers.Brands.edit(code)
+POST        /brand/:code/delete                                       controllers.Brands.delete(code)
+GET         /brand/:code/picture                                      controllers.Brands.picture(code: String)
+POST        /brand/:code/picture/delete                               controllers.Brands.deletePicture(code: String)
 
-GET         /brand/:code/template                                                controllers.CertificateTemplates.add(code: String)
-POST        /brand/:code/template                                                controllers.CertificateTemplates.create(code: String)
+GET         /brand/:code/template                                     controllers.CertificateTemplates.add(code: String)
+POST        /brand/:code/template                                     controllers.CertificateTemplates.create(code: String)
 
-GET         /certificate/:id                                                     controllers.Certificates.certificate(id: String)
-GET         /certificate/new/:eventId/:personId                                  controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
+GET         /certificate/:id                                          controllers.Certificates.certificate(id: String)
+GET         /certificate/new/:eventId/:personId                       controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
 
-POST        /contribution/new                                                    controllers.Contributions.create(page: String)
-GET         /contribution/:id/delete                                             controllers.Contributions.delete(id: Long, page: String)
+POST        /contribution/new                                         controllers.Contributions.create(page: String)
+GET         /contribution/:id/delete                                  controllers.Contributions.delete(id: Long, page: String)
 
-POST        /evaluation/                                                         controllers.Evaluations.create
-GET         /evaluation/new/                                                     controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
-GET         /evaluation/:id/approve                                              controllers.Evaluations.approve(id: Long, ref: Option[String])
-GET         /evaluation/:id/reject                                               controllers.Evaluations.reject(id: Long, ref: Option[String])
-POST        /evaluation/:id/move                                                 controllers.Evaluations.move(id: Long)
-GET         /evaluation/:id/edit                                                 controllers.Evaluations.edit(id: Long)
-GET         /evaluation/:id                                                      controllers.Evaluations.details(id: Long)
-POST        /evaluation/:id                                                      controllers.Evaluations.update(id: Long)
-GET         /evaluation/:id/delete                                               controllers.Evaluations.delete(id: Long, ref: Option[String])
+POST        /evaluation/                                              controllers.Evaluations.create
+GET         /evaluation/new/                                          controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
+GET         /evaluation/:id/approve                                   controllers.Evaluations.approve(id: Long, ref: Option[String])
+GET         /evaluation/:id/reject                                    controllers.Evaluations.reject(id: Long, ref: Option[String])
+POST        /evaluation/:id/move                                      controllers.Evaluations.move(id: Long)
+GET         /evaluation/:id/edit                                      controllers.Evaluations.edit(id: Long)
+GET         /evaluation/:id                                           controllers.Evaluations.details(id: Long)
+POST        /evaluation/:id                                           controllers.Evaluations.update(id: Long)
+GET         /evaluation/:id/delete                                    controllers.Evaluations.delete(id: Long, ref: Option[String])
 
-GET         /report/create/:code/event/:eventId/status/:status                   controllers.Reports.create(code: String, eventId: Long, status: Int)
+GET         /report/create/:code/event/:eventId/status/:status        controllers.Reports.create(code: String, eventId: Long, status: Int)
 
-GET         /events                                                              controllers.Events.index
-GET         /events/filtered                                                     controllers.Events.events(brandCode: Option[String], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
-POST        /event                                                               controllers.Events.create
-GET         /events/new/                                                         controllers.Events.add
-GET         /event/:id/duplicate                                                 controllers.Events.duplicate(id: Long)
-GET         /event/:id/edit                                                      controllers.Events.edit(id: Long)
-GET         /event/:id                                                           controllers.Events.details(id: Long)
-POST        /event/:id                                                           controllers.Events.update(id: Long)
-POST        /event/:id/confirm                                                   controllers.Events.confirm(id: Long)
-POST        /event/:id/delete                                                    controllers.Events.delete(id: Long)
-POST        /event/:id/invoice                                                   controllers.Events.invoice(id: Long)
-POST        /event/:id/send                                                      controllers.Events.sendRequest(id: Long)
+GET         /events                                                   controllers.Events.index
+GET         /events/filtered                                          controllers.Events.events(brandCode: Option[String], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
+POST        /event                                                    controllers.Events.create
+GET         /events/new/                                              controllers.Events.add
+GET         /event/:id/duplicate                                      controllers.Events.duplicate(id: Long)
+GET         /event/:id/edit                                           controllers.Events.edit(id: Long)
+GET         /event/:id                                                controllers.Events.details(id: Long)
+POST        /event/:id                                                controllers.Events.update(id: Long)
+POST        /event/:id/confirm                                        controllers.Events.confirm(id: Long)
+POST        /event/:id/delete                                         controllers.Events.delete(id: Long)
+POST        /event/:id/invoice                                        controllers.Events.invoice(id: Long)
+POST        /event/:id/send                                           controllers.Events.sendRequest(id: Long)
 
-GET         /eventtypes/:brandCode                                               controllers.EventTypes.index(brandCode: String)
-POST        /eventtype/new                                                       controllers.EventTypes.create
-GET         /eventtype/:id/delete                                                controllers.EventTypes.delete(id: Long)
+GET         /eventtypes/:brandCode                                    controllers.EventTypes.index(brandCode: String)
+POST        /eventtype/new                                            controllers.EventTypes.create
+GET         /eventtype/:id/delete                                     controllers.EventTypes.delete(id: Long)
 
-GET         /exchangerate                                                        controllers.ExchangeRates.rate
-GET         /exchangerate/:target/:amount                                        controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
-GET         /exchangerates/:base                                                 controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
+GET         /exchangerate                                             controllers.ExchangeRates.rate
+GET         /exchangerate/:target/:amount                             controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
+GET         /exchangerates/:base                                      controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
 
-GET         /facilitators/:brandCode                                             controllers.Facilitators.index(brandCode: String)
-POST        /facilitator/:id/country                                             controllers.Facilitators.addCountry(id: Long)
-POST        /facilitator/:id/language                                            controllers.Facilitators.addLanguage(id: Long)
-GET         /facilitator/:id/country/:country/delete                             controllers.Facilitators.deleteCountry(id: Long, country: String)
-GET         /facilitator/:id/language/:lang/delete                               controllers.Facilitators.deleteLanguage(id: Long, lang: String)
+GET         /facilitators/:brandCode                                  controllers.Facilitators.index(brandCode: String)
+POST        /facilitator/:id/country                                  controllers.Facilitators.addCountry(id: Long)
+POST        /facilitator/:id/language                                 controllers.Facilitators.addLanguage(id: Long)
+GET         /facilitator/:id/country/:country/delete                  controllers.Facilitators.deleteCountry(id: Long, country: String)
+GET         /facilitator/:id/language/:lang/delete                    controllers.Facilitators.deleteLanguage(id: Long, lang: String)
 
-GET         /license/:id/edit                                                    controllers.Licenses.edit(id: Long)
-POST        /license/:id                                                         controllers.Licenses.update(id: Long)
-POST        /license/:id/delete                                                  controllers.Licenses.delete(id: Long)
+GET         /license/:id/edit                                         controllers.Licenses.edit(id: Long)
+POST        /license/:id                                              controllers.Licenses.update(id: Long)
+POST        /license/:id/delete                                       controllers.Licenses.delete(id: Long)
 
-GET         /members                                                             controllers.Members.index
-GET         /member/new                                                          controllers.Members.add
-GET         /member/new/organisation                                             controllers.Members.addOrganisation
-GET         /member/new/person                                                   controllers.Members.addPerson
-GET         /member/existing/organisation                                        controllers.Members.addExistingOrganisation
-GET         /member/existing/person                                              controllers.Members.addExistingPerson
-POST        /member                                                              controllers.Members.create
-POST        /member/organisation                                                 controllers.Members.createNewOrganisation
-POST        /member/person                                                       controllers.Members.createNewPerson
-POST        /member/existing/organisation/                                       controllers.Members.updateExistingOrg
-POST        /member/existing/person/                                             controllers.Members.updateExistingPerson
-GET         /member/:id                                                          controllers.Members.details(id: Long)
-GET         /member/:id/edit                                                     controllers.Members.edit(id: Long)
-POST        /member/:id                                                          controllers.Members.update(id: Long)
-POST        /member/:id/delete                                                   controllers.Members.delete(id: Long)
+GET         /members                                                  controllers.Members.index
+GET         /member/new                                               controllers.Members.add
+GET         /member/new/organisation                                  controllers.Members.addOrganisation
+GET         /member/new/person                                        controllers.Members.addPerson
+GET         /member/existing/organisation                             controllers.Members.addExistingOrganisation
+GET         /member/existing/person                                   controllers.Members.addExistingPerson
+POST        /member                                                   controllers.Members.create
+POST        /member/organisation                                      controllers.Members.createNewOrganisation
+POST        /member/person                                            controllers.Members.createNewPerson
+POST        /member/existing/organisation/                            controllers.Members.updateExistingOrg
+POST        /member/existing/person/                                  controllers.Members.updateExistingPerson
+GET         /member/:id/edit                                          controllers.Members.edit(id: Long)
+POST        /member/:id                                               controllers.Members.update(id: Long)
+POST        /member/:id/delete                                        controllers.Members.delete(id: Long)
 
-GET         /membership/welcome                                                  controllers.Membership.welcome
-GET         /membership/payment                                                  controllers.Membership.payment(orgId: Option[Long] ?= None)
-POST        /membership/payment                                                  controllers.Membership.charge
-GET         /membership/congratulations                                          controllers.Membership.congratulations(orgId: Option[Long] ?= None)
+GET         /membership/welcome                                       controllers.Membership.welcome
+GET         /membership/payment                                       controllers.Membership.payment(orgId: Option[Long] ?= None)
+POST        /membership/payment                                       controllers.Membership.charge
+GET         /membership/congratulations                               controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
-GET         /organizations                                                       controllers.Organisations.index
-POST        /organizations                                                       controllers.Organisations.create
-GET         /organization/new                                                    controllers.Organisations.add
-GET         /organization/:id/edit                                               controllers.Organisations.edit(id: Long)
-GET         /organization/:id                                                    controllers.Organisations.details(id: Long)
-POST        /organization/:id                                                    controllers.Organisations.update(id: Long)
-POST        /organization/:id/delete                                             controllers.Organisations.delete(id: Long)
-POST        /organization/:id/activation                                         controllers.Organisations.activation(id: Long)
-POST        /organization/:id/cancel                                             controllers.Organisations.cancel(id: Long)
+GET         /organizations                                            controllers.Organisations.index
+POST        /organizations                                            controllers.Organisations.create
+GET         /organization/new                                         controllers.Organisations.add
+GET         /organization/:id/edit                                    controllers.Organisations.edit(id: Long)
+GET         /organization/:id                                         controllers.Organisations.details(id: Long)
+POST        /organization/:id                                         controllers.Organisations.update(id: Long)
+POST        /organization/:id/delete                                  controllers.Organisations.delete(id: Long)
+POST        /organization/:id/activation                              controllers.Organisations.activation(id: Long)
+POST        /organization/:id/cancel                                  controllers.Organisations.cancel(id: Long)
 
-GET         /participants                                                        controllers.Participants.index
-GET         /participants/brand/:brandCode                                       controllers.Participants.participantsByBrand(brandCode: String)
-GET         /participants/event/:eventId                                         controllers.Participants.participantsByEvent(eventId: Long)
-GET         /participants/:eventId                                               controllers.Participants.participants(eventId: Long)
-GET         /participant/new/                                                    controllers.Participants.add(brandCode: Option[String], eventId: Option[Long], ref: Option[String])
-POST        /participant                                                         controllers.Participants.create(ref: Option[String])
-POST        /participant/person                                                  controllers.Participants.createParticipantAndPerson(ref: Option[String])
-GET         /participant/:eventId/:personId/delete/                              controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
+GET         /participants                                             controllers.Participants.index
+GET         /participants/brand/:brandCode                            controllers.Participants.participantsByBrand(brandCode: String)
+GET         /participants/event/:eventId                              controllers.Participants.participantsByEvent(eventId: Long)
+GET         /participants/:eventId                                    controllers.Participants.participants(eventId: Long)
+GET         /participant/new/                                         controllers.Participants.add(brandCode: Option[String], eventId: Option[Long], ref: Option[String])
+POST        /participant                                              controllers.Participants.create(ref: Option[String])
+POST        /participant/person                                       controllers.Participants.createParticipantAndPerson(ref: Option[String])
+GET         /participant/:eventId/:personId/delete/                   controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
 
-GET         /people                                                              controllers.People.index
+GET         /people                                                   controllers.People.index
 
-POST        /person/:personId/signature                                          controllers.People.uploadSignature(personId: Long)
-GET         /person/:personId/signature                                          controllers.People.signature(personId: Long)
-POST        /person/:personId/signature/delete                                   controllers.People.deleteSignature(personId: Long)
+POST        /person/:personId/signature                               controllers.People.uploadSignature(personId: Long)
+GET         /person/:personId/signature                               controllers.People.signature(personId: Long)
+POST        /person/:personId/signature/delete                        controllers.People.deleteSignature(personId: Long)
 
-GET         /person/new                                                          controllers.People.add
-POST        /person/new                                                          controllers.People.create
-GET         /person/:id                                                          controllers.People.details(id: Long)
-POST        /person/:id                                                          controllers.People.update(id: Long)
-GET         /person/:id/edit                                                     controllers.People.edit(id: Long)
-POST        /person/:id/activation                                               controllers.People.activation(id: Long)
-POST        /person/:id/delete                                                   controllers.People.delete(id: Long)
-POST        /person/:id/cancel                                                   controllers.People.cancel(id: Long)
-
-
-GET         /person/:id/licenses/new                                             controllers.Licenses.add(id: Long)
-POST        /person/:id/licenses/new                                             controllers.Licenses.create(id: Long)
-
-POST        /person/relation/new                                                 controllers.People.addRelationship
-GET         /person/:personId/relation/:organisationId/delete                    controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
-
-GET         /products                                                            controllers.Products.index
-GET         /product/new                                                         controllers.Products.add
-POST        /product/new                                                         controllers.Products.create
-GET         /product/:id                                                         controllers.Products.details(id: Long)
-POST        /product/:id                                                         controllers.Products.update(id: Long)
-GET         /product/:id/edit                                                    controllers.Products.edit(id: Long)
-POST        /product/:id/delete                                                  controllers.Products.delete(id: Long)
-
-GET         /product/:id/picture                                                 controllers.Products.picture(id: Long)
-POST        /product/:id/picture/delete                                          controllers.Products.deletePicture(id: Long)
-
-POST        /product/brand/new                                                   controllers.Products.addBrand
-GET         /product/:productId/brand/:brandId/delete                            controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
-
-GET         /registration/welcome                                                controllers.Registration.welcome
-GET         /registration/step1                                                  controllers.Registration.step1
-GET         /registration/step2                                                  controllers.Registration.step2
-POST        /registration/save/person                                            controllers.Registration.savePerson
-GET         /registration/step3                                                  controllers.Registration.step3
-POST        /registration/payment                                                controllers.Registration.charge
-GET         /registration/authenticate/:provider                                 controllers.Registration.authenticate(provider)
-GET         /registration/congratulations                                        controllers.Registration.congratulations
+GET         /person/new                                               controllers.People.add
+POST        /person/new                                               controllers.People.create
+GET         /person/:id                                               controllers.People.details(id: Long)
+POST        /person/:id                                               controllers.People.update(id: Long)
+GET         /person/:id/edit                                          controllers.People.edit(id: Long)
+POST        /person/:id/activation                                    controllers.People.activation(id: Long)
+POST        /person/:id/delete                                        controllers.People.delete(id: Long)
+POST        /person/:id/cancel                                        controllers.People.cancel(id: Long)
 
 
-GET         /template/:id                                                        controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET         /template/:id/delete                                                 controllers.CertificateTemplates.delete(id: Long)
+GET         /person/:id/licenses/new                                  controllers.Licenses.add(id: Long)
+POST        /person/:id/licenses/new                                  controllers.Licenses.create(id: Long)
 
-GET         /translation/new                                                     controllers.Translations.add(lang: String)
-POST        /translation/new                                                     controllers.Translations.create(lang: String)
-GET         /translation/:lang                                                   controllers.Translations.details(lang: String)
-GET         /translation/:lang/edit                                              controllers.Translations.edit(lang: String)
-POST        /translation/:lang                                                   controllers.Translations.update(lang: String)
-POST        /translation/:lang/delete                                            controllers.Translations.delete(lang: String)
+POST        /person/relation/new                                      controllers.People.addRelationship
+GET         /person/:personId/relation/:organisationId/delete         controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
-POST        /user                                                                controllers.UserAccounts.update
+GET         /products                                                 controllers.Products.index
+GET         /product/new                                              controllers.Products.add
+POST        /product/new                                              controllers.Products.create
+GET         /product/:id                                              controllers.Products.details(id: Long)
+POST        /product/:id                                              controllers.Products.update(id: Long)
+GET         /product/:id/edit                                         controllers.Products.edit(id: Long)
+POST        /product/:id/delete                                       controllers.Products.delete(id: Long)
+
+GET         /product/:id/picture                                      controllers.Products.picture(id: Long)
+POST        /product/:id/picture/delete                               controllers.Products.deletePicture(id: Long)
+
+POST        /product/brand/new                                        controllers.Products.addBrand
+GET         /product/:productId/brand/:brandId/delete                 controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+
+GET         /registration/welcome                                     controllers.Registration.welcome
+GET         /registration/step1                                       controllers.Registration.step1
+GET         /registration/step2                                       controllers.Registration.step2
+POST        /registration/save/person                                 controllers.Registration.savePerson
+GET         /registration/step3                                       controllers.Registration.step3
+POST        /registration/payment                                     controllers.Registration.charge
+GET         /registration/authenticate/:provider                      controllers.Registration.authenticate(provider)
+GET         /registration/congratulations                             controllers.Registration.congratulations
+
+
+GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)
+GET         /template/:id/delete                                      controllers.CertificateTemplates.delete(id: Long)
+
+GET         /translation/new                                          controllers.Translations.add(lang: String)
+POST        /translation/new                                          controllers.Translations.create(lang: String)
+GET         /translation/:lang                                        controllers.Translations.details(lang: String)
+GET         /translation/:lang/edit                                   controllers.Translations.edit(lang: String)
+POST        /translation/:lang                                        controllers.Translations.update(lang: String)
+POST        /translation/:lang/delete                                 controllers.Translations.delete(lang: String)
+
+POST        /user                                                     controllers.UserAccounts.update
 
 
 # API (v1)
-GET         /api/v1/brands                                                       controllers.api.BrandsApi.brands
-GET         /api/v1/brand/:code                                                  controllers.api.BrandsApi.brand(code: String)
-GET         /api/v1/brand/:code/events                                           controllers.api.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
-GET         /api/v1/brand/:code/facilitators                                     controllers.api.FacilitatorsApi.facilitators(code: String)
-GET         /api/v1/brand/:code/types                                            controllers.api.EventTypesApi.types(code: String)
+GET         /api/v1/brands                                            controllers.api.BrandsApi.brands
+GET         /api/v1/brand/:code                                       controllers.api.BrandsApi.brand(code: String)
+GET         /api/v1/brand/:code/events                                controllers.api.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
+GET         /api/v1/brand/:code/facilitators                          controllers.api.FacilitatorsApi.facilitators(code: String)
+GET         /api/v1/brand/:code/types                                 controllers.api.EventTypesApi.types(code: String)
 
-POST        /api/v1/evaluation                                                   controllers.api.EvaluationsApi.create
+POST        /api/v1/evaluation                                        controllers.api.EvaluationsApi.create
 
-GET         /api/v1/event/:id                                                    controllers.api.EventsApi.event(id: Long)
-GET         /api/v1/event/:id/participants                                       controllers.api.ParticipantsApi.participants(id: Long)
+GET         /api/v1/event/:id                                         controllers.api.EventsApi.event(id: Long)
+GET         /api/v1/event/:id/participants                            controllers.api.ParticipantsApi.participants(id: Long)
 
-GET         /api/v1/licensees/:brandCode                                         controllers.api.LicensesApi.licensees(brandCode: String, date: Option[String])
-GET         /api/v1/licensee/:licenseeId/brand/:brandCode                        controllers.api.LicensesApi.licensee(licenseeId: Long, brandCode: String)
+GET         /api/v1/licensees/:brandCode                              controllers.api.LicensesApi.licensees(brandCode: String, date: Option[String])
+GET         /api/v1/licensee/:licenseeId/brand/:brandCode             controllers.api.LicensesApi.licensee(licenseeId: Long, brandCode: String)
 
-POST        /api/v1/participant                                                  controllers.api.ParticipantsApi.create
+POST        /api/v1/participant                                       controllers.api.ParticipantsApi.create
 
-GET         /api/v1/people                                                       controllers.api.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean], active: Option[Boolean], q: Option[String])
-GET         /api/v1/person/:identifier                                           controllers.api.PeopleApi.person(identifier: String)
+GET         /api/v1/members                                           controllers.api.MembersApi.members(funder: Option[Boolean] ?= None)
+GET         /api/v1/member/:id                                        controllers.api.MembersApi.member(id: Long)
 
-GET         /api/v1/organizations                                                controllers.api.OrganisationsApi.organisations
-GET         /api/v1/organization/:id                                             controllers.api.OrganisationsApi.organisation(id: Long)
+GET         /api/v1/people                                            controllers.api.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean], active: Option[Boolean], q: Option[String])
+GET         /api/v1/person/:identifier                                controllers.api.PeopleApi.person(identifier: String)
 
-GET         /api/v1/products                                                     controllers.api.ProductsApi.products
-GET         /api/v1/product/:id                                                  controllers.api.ProductsApi.product(id: Long)
+GET         /api/v1/organizations                                     controllers.api.OrganisationsApi.organisations
+GET         /api/v1/organization/:id                                  controllers.api.OrganisationsApi.organisation(id: Long)
+
+GET         /api/v1/products                                          controllers.api.ProductsApi.products
+GET         /api/v1/product/:id                                       controllers.api.ProductsApi.product(id: Long)
 
 
 # Public assets
-GET         /assets/*file                                                        controllers.Assets.at(path="/public", file)
+GET         /assets/*file                                             controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
-GET         /login                                                               securesocial.controllers.LoginPage.login
-GET         /logout                                                              controllers.LoginPage.logout(error: Option[String] ?= None)
+GET         /login                                                    securesocial.controllers.LoginPage.login
+GET         /logout                                                   controllers.LoginPage.logout(error: Option[String] ?= None)
 
 
 # OAuth entry points
-GET         /authenticate/:provider                                              securesocial.controllers.ProviderController.authenticate(provider)
-POST        /authenticate/:provider                                              securesocial.controllers.ProviderController.authenticateByPost(provider)
-GET         /not-authorized                                                      securesocial.controllers.ProviderController.notAuthorized
+GET         /authenticate/:provider                                   securesocial.controllers.ProviderController.authenticate(provider)
+POST        /authenticate/:provider                                   securesocial.controllers.ProviderController.authenticateByPost(provider)
+GET         /not-authorized                                           securesocial.controllers.ProviderController.notAuthorized

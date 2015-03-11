@@ -89,15 +89,6 @@ trait Members extends Controller with Security with Services with Notifiers {
       Ok(views.html.member.index(user, members, fee, totalFee))
   }
 
-  /**
-   * Renders detailed info about a member
-   * @param id Member identifier
-   */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok("")
-  }
-
   /** Renders Add form */
   def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -132,7 +123,7 @@ trait Members extends Controller with Security with Services with Notifiers {
   /** Renders Edit form */
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = true) map { m ⇒
+      memberService.find(id) map { m ⇒
         val formWithData = form(user.person.id.get).fill(m)
         Ok(views.html.member.form(user, Some(m), formWithData))
       } getOrElse NotFound
@@ -144,7 +135,7 @@ trait Members extends Controller with Security with Services with Notifiers {
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = true) map { member ⇒
+      memberService.find(id) map { member ⇒
         form(user.person.id.get).bindFromRequest.fold(
           formWithErrors ⇒ BadRequest(views.html.member.form(user,
             Some(member),
@@ -172,7 +163,7 @@ trait Members extends Controller with Security with Services with Notifiers {
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id, withObject = true) map { m ⇒
+      memberService.find(id) map { m ⇒
         memberService.delete(m.objectId, m.person)
         val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
         val url = profileUrl(m)

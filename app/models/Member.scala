@@ -89,6 +89,12 @@ case class Member(
     _memberObj._2.get.name
   else ""
 
+  /** Returns a link to avatar/logo of this member depending on its type */
+  def image: Option[String] = if (person && _memberObj._1.nonEmpty)
+    _memberObj._1.get.photo.url
+  else
+    None
+
   /** Records this member to database */
   def insert: Member = memberService.insert(this)
 

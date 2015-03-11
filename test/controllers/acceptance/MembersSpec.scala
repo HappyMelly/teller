@@ -26,7 +26,7 @@ package controllers.acceptance
 
 import controllers._
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import models.Member
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -503,7 +503,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val memberService = mock[FakeMemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
-    (memberService.find(_, _)).expects(1L, true).returning(Some(member))
+    (memberService.find _).expects(1L).returning(Some(member))
     (memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
 

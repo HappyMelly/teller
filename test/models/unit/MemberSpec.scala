@@ -24,7 +24,7 @@
 package models.unit
 
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
-import models.Activity
+import models.{ Photo, Activity }
 import org.joda.time.LocalDate
 import org.specs2.mutable._
 
@@ -72,6 +72,19 @@ class MemberSpec extends Specification {
       m.active must_== false
       val m2 = m.copy(since = now.minusDays(4), until = now.minusDays(2))
       m2.active must_== false
+    }
+    "have a link to avatar if it's a person" in {
+      val member = MemberHelper.make(None, 0, person = true, funder = true)
+      member.memberObj_=(PersonHelper.one())
+      member.image must_== None
+      val photo = Photo(Some("gravatar"), Some("url"))
+      member.memberObj_=(PersonHelper.two().copy(photo = photo))
+      member.image must_== Some("url")
+    }
+    "have no image if it's an organisation" in {
+      val member = MemberHelper.make(None, 0, person = false, funder = true)
+      member.memberObj_=(OrganisationHelper.one)
+      member.image must_== None
     }
   }
 

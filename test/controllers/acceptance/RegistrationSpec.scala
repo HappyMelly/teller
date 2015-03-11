@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import controllers.{ Registration, User }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.mvc.SimpleResult

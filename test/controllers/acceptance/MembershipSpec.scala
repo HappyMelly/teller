@@ -26,7 +26,7 @@ package controllers.acceptance
 
 import controllers.{ Membership, Security }
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest

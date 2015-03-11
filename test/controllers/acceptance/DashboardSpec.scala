@@ -26,7 +26,7 @@ package controllers.acceptance
 
 import controllers.{ Dashboard, Security }
 import helpers.{ BrandHelper, EvaluationHelper, PersonHelper, EventHelper }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import models._
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money

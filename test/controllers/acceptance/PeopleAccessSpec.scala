@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import controllers.{ Security, People }
-import integration.PlayAppSpec
+import _root_.integration.PlayAppSpec
 import play.api.mvc.SimpleResult
 import stubs.{ FakeUserIdentity, FakeServices }
 
