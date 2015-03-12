@@ -1,0 +1,9 @@
+language: scala
+scala:
+  - "2.10.3"
+  - "2.11.1"
+  - "2.11.2"
+jdk:
+  - oraclejdk7
+before_script:
+  - mysql -e 'create database teller_test;'
