@@ -402,7 +402,7 @@ class MembersSpec extends PlayAppSpec {
    */
   private def retrieveMember(id: String) = DB.withSession {
     implicit session: Session ⇒
-      val q = Q.queryNA[Member]("SELECT * FROM member WHERE OBJECT_ID = " + id)
+      val q = Q.queryNA[Member]("SELECT * FROM MEMBER WHERE OBJECT_ID = " + id)
       q.firstOption
   }
 
@@ -412,4 +412,3 @@ class MembersSpec extends PlayAppSpec {
       existingObject = existingObject, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }
-
