@@ -157,7 +157,7 @@ case class Event(
     printableTitle + " / " + location.city + " / " + schedule.start.toString
   }
 
-  val materialsLanguage = Languages.all.get(language.materials.getOrElse(""))
+  val materialsLanguage = Languages.all.get(language.materials.getOrElse("English"))
 
   lazy val spokenLanguage: String = if (language.secondSpoken.isEmpty)
     Languages.all.getOrElse(language.spoken, "")

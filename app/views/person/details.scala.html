@@ -27,12 +27,7 @@
 
   <div class="col-md-3 info">
         <div class="page-header">
-          @person.photo.url.map { photo =>
-            <img width="200" class="img-rounded photo" src="@photo"/>
-          }.getOrElse {
-            <img width="200" class="img-rounded photo"
-              src="@routes.Assets.at("images/happymelly-face-white.png")"/>
-          }
+          @element.photo(person, "200")
         </div>
         <div class="social">
           @person.socialProfile.twitterHandle.map { handle =>

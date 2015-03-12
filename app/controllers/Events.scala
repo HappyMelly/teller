@@ -80,7 +80,7 @@ object Events extends Controller
         try {
           val brandCode = data.get("brandCode").get
           if (EventType.exists(eventTypeId)) {
-            val event = EventType.find(eventTypeId).get
+            val event = eventTypeService.find(eventTypeId).get
             if (event.brand.code == brandCode) {
               Right(eventTypeId)
             } else {
@@ -299,14 +299,16 @@ object Events extends Controller
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id).map {
-        event ⇒
-          //@TODO only funders must be retrieved
-          val funders = Organisation.findAll
-          val acc = user.account
-          val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-          Ok(views.html.event.details(user, canFacilitate, funders, event))
-      }.getOrElse(NotFound)
+      eventService.find(id) map { event ⇒
+        //@TODO only funders must be retrieved
+        val funders = Organisation.findAll
+        val acc = user.account
+        val typeName = eventTypeService.find(event.eventTypeId) map {
+          _.name
+        } getOrElse ""
+        val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
+        Ok(views.html.event.details(user, canFacilitate, funders, event, typeName))
+      } getOrElse NotFound
   }
 
   /**
@@ -473,7 +475,7 @@ object Events extends Controller
               activity,
               coordinator)
 
-            Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+            Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
           } else {
             val account = user.account
             val brands = Brand.findByUser(account)

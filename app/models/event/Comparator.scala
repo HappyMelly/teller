@@ -26,16 +26,12 @@ package models.event
 import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
-import models.service.{ OrganisationService, PersonService }
-
-import models.{ Event, Brand, EventType, Organisation, Person }
-import models.database.{ EventFacilitators, EventInvoices }
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.service.{ EventTypeService, OrganisationService, PersonService }
+import models.{ Brand, Event }
 import play.api.i18n.Messages
-import play.api.Play.current
-import scala.language.postfixOps
 import views.Languages
+
+import scala.language.postfixOps
 
 object Comparator {
 
@@ -69,8 +65,8 @@ object Comparator {
     }
 
     override def printable(): (String, String, String) = {
-      val oldEventType = EventType.find(oldValue).get.name
-      val newEventType = EventType.find(newValue).get.name
+      val oldEventType = EventTypeService.get.find(oldValue).get.name
+      val newEventType = EventTypeService.get.find(newValue).get.name
       (label, newEventType, oldEventType)
     }
   }

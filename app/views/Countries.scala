@@ -26,6 +26,12 @@ package views
 
 object Countries {
 
+  /**
+   * Returns country name by its code
+   * @param code Country code
+   */
+  def name(code: String): String = all.find(_._1 == code) map { _._2 } getOrElse ""
+
   val all =
     List(("AF", "Afghanistan"),
       ("AL", "Albania"),
