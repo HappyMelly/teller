@@ -14,3 +14,5 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.5")
 addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.2.1")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.1")
+
+addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0.BETA1")
