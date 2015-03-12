@@ -8,4 +8,4 @@ Since 2008 Jurgen writes a popular blog at [www.noop.nl](http://www.noop.nl/), t
 
 # --- !Downs
 
-delete from person where EMAIL_ADDRESS = 'jurgen@noop.nl';
+delete from PERSON where EMAIL_ADDRESS = 'jurgen@noop.nl';

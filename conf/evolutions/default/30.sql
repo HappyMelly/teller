@@ -2,7 +2,7 @@
 
 # --- !Ups
 
-create table `Exchange_Rate` (
+create table `EXCHANGE_RATE` (
 `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `base` VARCHAR(254) NOT NULL,
 `counter` VARCHAR(254) NOT NULL,
@@ -11,4 +11,4 @@ create table `Exchange_Rate` (
 
 # --- !Downs
 
-drop table `ExchangeRate`;
+drop table `EXCHANGE_RATE`;
