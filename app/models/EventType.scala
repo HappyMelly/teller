@@ -78,13 +78,6 @@ object EventType {
     Query(EventTypes).filter(_.brandId === brandId).list
   }
 
-  /**
-   * Finds a event type by ID.
-   */
-  def find(id: Long): Option[EventType] = DB.withSession { implicit session: Session ⇒
-    Query(EventTypes).filter(_.id === id).firstOption
-  }
-
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
     EventTypes.filter(_.id === id).mutate(_.delete)
   }

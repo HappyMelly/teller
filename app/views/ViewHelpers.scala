@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -24,10 +24,28 @@
 
 package views
 
+import org.joda.time.LocalDate
 import views.html.helper.FieldConstructor
 
 object ViewHelpers {
 
   implicit val fields = FieldConstructor(views.html.fieldConstructor.f)
   val asIs = FieldConstructor(views.html.html.asIsConstructor.f)
+
+  /**
+   * Returns well-formatted date interval
+   * @param start Start date
+   * @param end End date
+   */
+  def dateInterval(start: LocalDate, end: LocalDate): String = {
+    if (start == end)
+      start.toString("d MMM yyyy")
+    else if (start.year() == end.year())
+      if (start.monthOfYear() == end.monthOfYear())
+        start.toString("d - ") + end.toString("d MMM yyyy")
+      else
+        start.toString("d MMM - ") + end.toString("d MMM yyyy")
+    else
+      start.toString("d MMM yyyy - ") + end.toString("d MMM yyyy")
+  }
 }

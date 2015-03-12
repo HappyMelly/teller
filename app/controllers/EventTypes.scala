@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.service.EventService
+import models.service.{ Services, EventService }
 import models.{ Event, Brand, EventType, Activity }
 import play.api.mvc._
 import play.api.data._
@@ -34,7 +34,7 @@ import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 
-object EventTypes extends Controller with Security {
+object EventTypes extends Controller with Security with Services {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
@@ -93,7 +93,7 @@ object EventTypes extends Controller with Security {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      EventType.find(id).map { eventType ⇒
+      eventTypeService.find(id).map { eventType ⇒
         val brand = eventType.brand
         val route = routes.Brands.details(brand.code).url + "#eventTypes"
         val events = EventService.get.findByParameters(

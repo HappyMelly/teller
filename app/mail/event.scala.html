@@ -2,7 +2,7 @@
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML
-@import views.Languages
+@import models.service.EventTypeService
 
 <html>
     <head>
@@ -20,7 +20,6 @@
                                     <td valign="top"
                                     style="text-transform: uppercase; color: rgb(153, 153, 153); font-size: 11px">
                                         A COPY HAS BEEN SENT TO THE BRAND MANAGER</td>
-                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -85,7 +84,7 @@
                                                 </tr>
                                                 <tr>
                                                     <td width="150"><strong>Event Type</strong></td>
-                                                    <td>@EventType.find(event.eventTypeId).get.name</td>
+                                                    <td>@EventTypeService.get.find(event.eventTypeId).get.name</td>
                                                 </tr>
                                                 <tr>
                                                     <td width="150"><strong>Spoken Languages</strong></td>

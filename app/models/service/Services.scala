@@ -35,6 +35,8 @@ trait Services {
 
   def eventService: EventService = EventService.get
 
+  def eventTypeService: EventTypeService = EventTypeService.get
+
   def memberService: MemberService = MemberService.get
 
   def licenseService: LicenseService = LicenseService.get
