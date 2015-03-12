@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/HappyMelly/teller.svg?branch=master)](https://travis-ci.org/HappyMelly/teller)
+[![Coverage Status](https://coveralls.io/repos/HappyMelly/teller/badge.svg?branch=master)](https://coveralls.io/r/HappyMelly/teller?branch=master)
+
 # Happy Melly Teller
 
 **Happy Melly Teller** is a web system which supports [Happy Melly](http://happymelly.com)'s
