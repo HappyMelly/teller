@@ -156,15 +156,17 @@ object Events extends Controller
       { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
         invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
         {
-          val event = Event(id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic,
-            archived, confirmed, created, createdBy, updated, updatedBy)
+          val event = Event(id, eventTypeId, brandCode, title, language,
+            location, details, schedule, notPublic,
+            archived, confirmed, None, created, createdBy, updated, updatedBy)
           event.invoice_=(invoice)
           event.facilitatorIds_=(facilitatorIds)
           event
         }
       })({ (e: Event) ⇒
-        Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language, e.location, e.details, e.schedule, e.notPublic,
-          e.archived, e.confirmed, e.invoice, e.created, e.createdBy, e.updated, e.updatedBy, e.facilitatorIds))
+        Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language, e.location,
+          e.details, e.schedule, e.notPublic, e.archived, e.confirmed, e.invoice,
+          e.created, e.createdBy, e.updated, e.updatedBy, e.facilitatorIds))
 
       }))
 
@@ -187,8 +189,10 @@ object Events extends Controller
       val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
-      val default = Event(None, 0, "", "", Language("", None, Some("English")), Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false, DateTime.now(), "", DateTime.now(), "")
+      val default = Event(None, 0, "", "", Language("", None, Some("English")),
+        Location("", ""), defaultDetails, defaultSchedule,
+        notPublic = false, archived = false, confirmed = false,
+        None, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
       val account = user.account
       val brands = Brand.findByUser(account)

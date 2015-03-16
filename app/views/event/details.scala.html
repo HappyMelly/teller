@@ -63,7 +63,8 @@
   @if(event.confirmed) {
     <div class="alert alert-info">
       <i class="glyphicon glyphicon-info-sign"></i> This event is
-        <span class="label label-success">confirmed</span>
+        <span class="label label-success">confirmed</span>.
+      @event.fee.map { fee => License event fee is @fee  }
     </div>
   }
 
@@ -121,6 +122,12 @@
           </dd>
         }
       </dl>
+      @event.fee.map { fee =>
+        <dl>
+          <dt>License Event Fee</dt>
+          <dd>@fee</dd>
+        </dl>
+      }
     </div>
   </div>
   <div class="col-md-3 col-md-offset-1x">

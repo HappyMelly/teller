@@ -26,12 +26,14 @@ package models
 
 import models.database.{ EventFacilitators, Participants, Events }
 import models.service.EventService
+import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 import services.notifiers.EmailService
 import scala.language.postfixOps
+import scala.math.BigDecimal.RoundingMode
 import scala.slick.lifted.Query
 import views.Languages
 
@@ -76,6 +78,7 @@ case class Event(
   notPublic: Boolean = false,
   archived: Boolean = false,
   confirmed: Boolean = false,
+  fee: Option[Money] = None,
   created: DateTime = DateTime.now(),
   createdBy: String,
   updated: DateTime,
@@ -241,6 +244,17 @@ case class Event(
 }
 
 object Event {
+
+  /**
+   * Returns new event with a fee calculated the given one and a number of hours
+   * @param event Source event
+   * @param fee Country Fee for 16-hours event
+   */
+  def withFee(event: Event, fee: Money): Event = {
+    val hours = event.schedule.totalHours.toLong
+    val eventFee = fee.multipliedBy(hours).dividedBy(16L, java.math.RoundingMode.UNNECESSARY)
+    event.copy(fee = Some(eventFee))
+  }
 
   /**
    * Returns true if and only if a user is allowed to manage this event.

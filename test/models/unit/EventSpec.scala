@@ -27,7 +27,9 @@ package models.unit
 import models.Activity
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import integration.PlayAppSpec
+import models.Event
 import models.brand.EventType
+import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._
@@ -129,6 +131,17 @@ class EventSpec extends PlayAppSpec {
       eventType2.objectType must_== Activity.Type.Event
       eventType2.identifier must_== 2
       eventType2.humanIdentifier must_== "Two"
+    }
+  }
+
+  "Event singleton" should {
+    "make an event without fee" in {
+      val event = EventHelper.one
+      val fee = Money.parse("EUR 160")
+      // total hours = 1
+      Event.withFee(event, fee).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 10L
+      } getOrElse ko
     }
   }
 }
