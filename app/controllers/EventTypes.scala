@@ -24,8 +24,9 @@
 
 package controllers
 
+import models.brand.EventType
 import models.service.{ Services, EventService }
-import models.{ Event, Brand, EventType, Activity }
+import models.{ Event, Brand, Activity }
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._

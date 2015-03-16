@@ -22,26 +22,24 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.brand
 
-import com.github.tototoshi.slick.JodaSupport._
-import models.PermanentSession
-import org.joda.time.DateTime
+import models.brand.EventType
+import models.database.Brands
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * 'PermanentSession' table mapping
+ * `EventType` database table mapping.
  */
-private[models] object PermanentSessions extends Table[PermanentSession]("PERMANENT_SESSION") {
+private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brandId = column[Long]("BRAND_ID")
+  def name = column[String]("NAME")
+  def defaultTitle = column[Option[String]]("DEFAULT_TITLE")
 
-  def id = column[String]("ID")
-  def userId = column[String]("USER_ID")
-  def providerId = column[String]("PROVIDER_ID")
-  def creationDate = column[DateTime]("CREATION_DATE")
-  def lastUsed = column[DateTime]("LAST_USED")
-  def expirationDate = column[DateTime]("EXPIRATION_DATE")
+  def brand = foreignKey("EVENT_BRAND_FK", brandId, Brands)(_.id)
 
-  def * = id ~ userId ~ providerId ~ creationDate ~ lastUsed ~ expirationDate <> (PermanentSession.apply _, PermanentSession.unapply _)
+  def * = id.? ~ brandId ~ name ~ defaultTitle <> (EventType.apply _, EventType.unapply _)
 
-  def forUpdate = lastUsed ~ expirationDate
+  def forInsert = * returning id
 }

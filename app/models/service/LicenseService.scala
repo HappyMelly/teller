@@ -25,12 +25,12 @@
 package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
+import models.database.{ Licenses, People }
 import models.{ LicenseLicenseeView, LicenseView }
-import models.database.{ People, Licenses }
 import org.joda.time.LocalDate
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 class LicenseService {
 

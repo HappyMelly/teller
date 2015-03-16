@@ -24,9 +24,10 @@
  */
 package models.unit
 
-import models.{ Activity, EventType }
+import models.Activity
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import integration.PlayAppSpec
+import models.brand.EventType
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._

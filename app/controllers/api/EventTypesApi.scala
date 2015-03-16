@@ -23,7 +23,8 @@
  */
 package controllers.api
 
-import models.{ Brand, EventType }
+import models.Brand
+import models.brand.EventType
 import play.api.libs.json._
 import play.mvc.Controller
 

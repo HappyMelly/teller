@@ -26,6 +26,7 @@ package controllers
 
 import controllers.Forms._
 import models.UserRole.Role._
+import models.brand.EventType
 import models.event.Comparator
 import models.event.Comparator.FieldChange
 import models.service.{ EventService, PersonService, Services }

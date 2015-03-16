@@ -27,6 +27,7 @@ package models.integration
 import _root_.integration.PlayAppSpec
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
+import models.brand.EventType
 import models.service.EventService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext

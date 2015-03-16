@@ -22,23 +22,24 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.brand
 
-import models.EventType
+import models.brand.CertificateTemplate
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `EventType` database table mapping.
+ * `CertificateTemplates` database table mapping.
  */
-private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
+private[models] object CertificateTemplates extends Table[CertificateTemplate]("CERTIFICATE_TEMPLATE") {
+
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandId = column[Long]("BRAND_ID")
-  def name = column[String]("NAME")
-  def defaultTitle = column[Option[String]]("DEFAULT_TITLE")
+  def brandCode = column[String]("BRAND_CODE")
+  def language = column[String]("LANGUAGE")
+  def oneFacilitator = column[Array[Byte]]("ONE_FACILITATOR")
+  def twoFacilitators = column[Array[Byte]]("TWO_FACILITATORS")
 
-  def brand = foreignKey("EVENT_BRAND_FK", brandId, Brands)(_.id)
-
-  def * = id.? ~ brandId ~ name ~ defaultTitle <> (EventType.apply _, EventType.unapply _)
+  def * = id.? ~ brandCode ~ language ~ oneFacilitator ~ twoFacilitators <> (CertificateTemplate.apply _, CertificateTemplate.unapply _)
 
   def forInsert = * returning id
+
 }

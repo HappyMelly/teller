@@ -22,13 +22,13 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.service
+package models.service.brand
 
-import models.EventType
-import models.database.EventTypes
+import models.brand.EventType
+import models.database.brand.EventTypes
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 class EventTypeService {
 

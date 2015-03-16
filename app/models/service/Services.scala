@@ -24,6 +24,8 @@
  */
 package models.service
 
+import models.service.brand.EventTypeService
+
 /** Contains references to all services so we can stub them in tests */
 trait Services {
 

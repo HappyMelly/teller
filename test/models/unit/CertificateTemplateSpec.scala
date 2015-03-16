@@ -23,7 +23,8 @@
  */
 package models.unit
 
-import models.{ CertificateTemplate, Activity }
+import models.Activity
+import models.brand.CertificateTemplate
 import org.specs2.mutable._
 
 class CertificateTemplateSpec extends Specification {

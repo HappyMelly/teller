@@ -24,7 +24,8 @@
 
 package models.unit
 
-import models.{ Activity, EventType }
+import models.Activity
+import models.brand.EventType
 import org.specs2.mutable._
 
 class EventTypeSpec extends Specification {
