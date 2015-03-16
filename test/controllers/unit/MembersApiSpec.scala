@@ -49,7 +49,7 @@ class MembersApiSpec extends Specification {
     "return a list of members with some details in JSON format" in new MockContext {
       val photo = Photo(Some("gravatar"), Some("link"))
       memberOne.memberObj_=(PersonHelper.one().copy(photo = photo))
-      memberTwo.memberObj_=(OrganisationHelper.two)
+      memberTwo.memberObj_=(OrganisationHelper.two.copy(name = "Apple"))
 
       val service = mock[FakeMemberService]
       (service.findAll _).expects().returning(List(memberOne, memberTwo))
@@ -60,17 +60,17 @@ class MembersApiSpec extends Specification {
       val data = contentAsJson(res).as[JsArray]
       data.value.length must_== 2
       data.value(0) must_== Json.obj(
+        "id" -> 2,
+        "name" -> "Apple",
+        "type" -> "org",
+        "funder" -> true,
+        "image" -> None.asInstanceOf[Option[String]])
+      data.value(1) must_== Json.obj(
         "id" -> 1,
         "name" -> "First Tester",
         "type" -> "person",
         "funder" -> false,
         "image" -> "link")
-      data.value(1) must_== Json.obj(
-        "id" -> 2,
-        "name" -> "Two",
-        "type" -> "org",
-        "funder" -> true,
-        "image" -> None.asInstanceOf[Option[String]])
     }
     "return a list of active members only" in new MockContext {
       val inactiveOne = MemberHelper.make(Some(3L), 2L,

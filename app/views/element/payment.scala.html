@@ -46,9 +46,11 @@
           <div class="col-md-3 col-md-offset-3">
             <div class="input-group">
               <label class="input-group-addon">EUR</label>
-              <input class="form-control" name="@form("fee").name" id="@form("fee").id"
-              type="number" min="@fee._1" placeholder="@fee._2"
-              step="1" value="@form("fee").value" data-tax="@Payment.TAX_PERCENT_AMOUNT">
+              @defining(if (form("fee").value.isEmpty) { fee._2 } else { form("fee").value }) { amount =>
+                <input class="form-control" name="@form("fee").name" id="@form("fee").id"
+                type="number" min="@fee._1"
+                step="1" value="@amount" data-tax="@Payment.TAX_PERCENT_AMOUNT">
+              }
             </div>
             @if(form("fee").hasErrors) {
               <span class="help-block">

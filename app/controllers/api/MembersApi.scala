@@ -79,7 +79,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     val members = memberService.findAll.filter(_.active)
     val filteredMembers = funder map { value ⇒ members.filter(_.funder == value)
     } getOrElse members
-    Ok(Json.prettyPrint(Json.toJson(filteredMembers)))
+    Ok(Json.prettyPrint(Json.toJson(filteredMembers.sortBy(_.name))))
   }
 
   /**
