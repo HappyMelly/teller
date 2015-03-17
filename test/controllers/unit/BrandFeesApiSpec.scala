@@ -24,28 +24,28 @@
 
 package controllers.unit
 
-import controllers.api.FeesApi
-import models.brand.EventFee
+import controllers.api.BrandFeesApi
+import models.brand.BrandFee
 import org.joda.money.Money
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import play.api.libs.json.{ Json, JsArray }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeServices, FakeApiAuthentication, FakeEventFeeService }
+import stubs.{ FakeServices, FakeApiAuthentication, FakeBrandFeeService }
 
-class FeesApiSpec extends Specification {
+class BrandFeesApiSpec extends Specification {
 
-  class TestFeesApi extends FeesApi with FakeApiAuthentication with FakeServices
+  class TestBrandFeesApi extends BrandFeesApi with FakeApiAuthentication with FakeServices
 
   "Method 'fees'" should {
     "return 2 fees in the correct JSON format" in new MockContext {
       val fees = List(
-        EventFee(Some(1), "TEST", "RU", Money.parse("RUB 100")),
-        EventFee(Some(2), "TEST", "DE", Money.parse("EUR 50")))
-      val service = mock[FakeEventFeeService]
+        BrandFee(Some(1), "TEST", "RU", Money.parse("RUB 100")),
+        BrandFee(Some(2), "TEST", "DE", Money.parse("EUR 50")))
+      val service = mock[FakeBrandFeeService]
       (service.findByBrand _).expects("TEST").returning(fees)
-      val controller = new TestFeesApi
+      val controller = new TestBrandFeesApi
       controller.feeService_=(service)
 
       val res = controller.fees("TEST").apply(FakeRequest())

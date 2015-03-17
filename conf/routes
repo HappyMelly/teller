@@ -204,7 +204,7 @@ POST        /api/v1/evaluation                                        controller
 GET         /api/v1/event/:id                                         controllers.api.EventsApi.event(id: Long)
 GET         /api/v1/event/:id/participants                            controllers.api.ParticipantsApi.participants(id: Long)
 
-GET         /api/v1/fees/:brand                                       controllers.api.FeesApi.fees(brand: String)
+GET         /api/v1/fees/:brand                                       controllers.api.BrandFeesApi.fees(brand: String)
 
 GET         /api/v1/licensees/:brandCode                              controllers.api.LicensesApi.licensees(brandCode: String, date: Option[String])
 GET         /api/v1/licensee/:licenseeId/brand/:brandCode             controllers.api.LicensesApi.licensee(licenseeId: Long, brandCode: String)

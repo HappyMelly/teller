@@ -24,8 +24,8 @@
 
 package stubs
 
-import models.service.brand.EventFeeService
+import models.service.brand.BrandFeeService
 
-class FakeEventFeeService extends EventFeeService {
+class FakeBrandFeeService extends BrandFeeService {
 
 }

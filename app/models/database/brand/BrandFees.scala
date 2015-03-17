@@ -22,35 +22,31 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.integration
+package models.database.brand
 
-import integration.PlayAppSpec
-import models.brand.EventFee
-import models.service.brand.EventFeeService
-import org.joda.money.Money
+import models.JodaMoney._
+import models.brand.BrandFee
+import play.api.db.slick.Config.driver.simple._
 
-class EventFeeServiceSpec extends PlayAppSpec {
-  def setupDb() {}
-  def cleanupDb() {}
+/**
+ * Connects EventFee object with its database representation
+ */
+private[models] object BrandFees extends Table[BrandFee]("BRAND_FEE") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brand = column[String]("BRAND", O.DBType("CHAR(5)"))
+  def country = column[String]("COUNTRY", O.DBType("CHAR(2)"))
+  def feeCurrency = column[String]("FEE_CURRENCY", O.DBType("CHAR(3)"))
+  def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
 
-  "Method 'findByBrand'" should {
-    "return 2 fees for the brand TEST" in {
-      val m1 = Money.parse("RUB 100")
-      val m2 = Money.parse("EUR 300")
-      Seq(
-        ("TEST", "RU", m1),
-        ("TEST", "DE", m2),
-        ("MGT", "US", Money.parse("USD 100")),
-        ("MGT", "HK", Money.parse("USD 100"))).foreach {
-          case (brand, country, fee) ⇒
-            EventFee(None, brand, country, fee).insert()
-        }
-
-      val service = new EventFeeService
-      val result = service.findByBrand("TEST")
-      result.length must_== 2
-      result.exists(x ⇒ x.country == "RU" && x.fee == m1) must_== true
-      result.exists(x ⇒ x.country == "DE" && x.fee == m2) must_== true
+  def * = id.? ~ brand ~ country ~ feeCurrency ~ feeAmount <> ({
+    _ match {
+      case (id, brand, country, feeCurrency, feeAmount) ⇒
+        BrandFee(id, brand, country, feeCurrency -> feeAmount)
     }
-  }
+  }, { (f: BrandFee) ⇒
+    Some(f.id, f.brand, f.country, f.fee.getCurrencyUnit.getCode, f.fee.getAmount)
+  })
+
+  def forInsert = * returning id
+
 }

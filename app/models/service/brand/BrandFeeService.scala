@@ -22,40 +22,37 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.api
+package models.service.brand
 
-import models.brand.EventFee
-import models.service.Services
-import play.api.mvc.Controller
-import play.api.libs.json._
-import views.Countries
+import models.brand.BrandFee
+import models.database.brand.BrandFees
+import play.api.db.slick.DB
+import play.api.db.slick.Config.driver.simple._
+import play.api.Play.current
 
-/**
- * Provides API for working with event fees
- */
-trait FeesApi extends Controller with ApiAuthentication with Services {
+class BrandFeeService {
 
   /**
-   * EventFee to JSON converter
+   * Returns a list of fees belonged to the given brand
+   * @param brand Brand code
    */
-  implicit val feeWrites = new Writes[EventFee] {
-    def writes(fee: EventFee): JsValue = {
-      Json.obj(
-        "id" -> fee.id.get,
-        "brand" -> fee.brand,
-        "country" -> fee.country,
-        "fee" -> fee.fee.toString)
-    }
+  def findByBrand(brand: String): List[BrandFee] = DB.withSession {
+    implicit session ⇒
+      Query(BrandFees).filter(_.brand === brand).list
   }
 
   /**
-   * Returns list of fees for the given brand in JSON format
-   * @param brand Brand code
+   * Inserts the given fee into database and returns the updated fee with ID
+   * @param fee Fee
    */
-  def fees(brand: String) = TokenSecuredAction { implicit request ⇒
-    val fees = feeService.findByBrand(brand)
-    Ok(Json.prettyPrint(Json.toJson(fees)))
+  def insert(fee: BrandFee): BrandFee = DB.withSession { implicit session ⇒
+    val id = BrandFees.forInsert.insert(fee)
+    fee.copy(id = Some(id))
   }
 }
 
-object FeesApi extends FeesApi with ApiAuthentication with Services
+object BrandFeeService {
+  private val instance = new BrandFeeService
+
+  def get: BrandFeeService = instance
+}

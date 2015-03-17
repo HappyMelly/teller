@@ -22,37 +22,30 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.service.brand
+package controllers.acceptance
 
-import models.brand.EventFee
-import models.database.brand.EventFees
-import play.api.db.slick.DB
-import play.api.db.slick.Config.driver.simple._
-import play.api.Play.current
+import controllers.api.{ BrandFeesApi, ApiAuthentication }
+import org.specs2.mutable.Specification
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import stubs.FakeServices
 
-class EventFeeService {
+class BrandFeesApiSpec extends Specification {
 
-  /**
-   * Returns a list of fees belonged to the given brand
-   * @param brand Brand code
-   */
-  def findByBrand(brand: String): List[EventFee] = DB.withSession {
-    implicit session ⇒
-      Query(EventFees).filter(_.brand === brand).list
+  /** Test controller with api authentication and with stubbed services */
+  class TestBrandFeesApi() extends BrandFeesApi with ApiAuthentication with FakeServices
+
+  override def is = s2"""
+
+  If api_token is not provided 401 error should be returned
+    on 'fees' call                                          $e1
+  """
+
+  def e1 = {
+    val controller = new TestBrandFeesApi()
+    val result = controller.fees("TEST").apply(FakeRequest())
+    status(result) must equalTo(UNAUTHORIZED)
+    contentAsString(result) mustEqual "Unauthorized"
   }
 
-  /**
-   * Inserts the given fee into database and returns the updated fee with ID
-   * @param fee Fee
-   */
-  def insert(fee: EventFee): EventFee = DB.withSession { implicit session ⇒
-    val id = EventFees.forInsert.insert(fee)
-    fee.copy(id = Some(id))
-  }
-}
-
-object EventFeeService {
-  private val instance = new EventFeeService
-
-  def get: EventFeeService = instance
 }

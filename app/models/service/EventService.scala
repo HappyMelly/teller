@@ -27,7 +27,7 @@ package models.service
 import com.github.tototoshi.slick.JodaSupport._
 import models.JodaMoney._
 import models._
-import models.database.brand.EventFees
+import models.database.brand.BrandFees
 import models.database.{ EventFacilitators, EventInvoices, Events }
 import org.joda.time.LocalDate
 import play.api.Play.current
@@ -59,7 +59,7 @@ class EventService extends Notifiers with Services {
     implicit session: Session ⇒
       val query = for {
         (event, fee) ← Events leftJoin
-          EventFees on ((e, f) ⇒ e.brandCode === f.brand && e.countryCode === f.country) if event.id === id
+          BrandFees on ((e, f) ⇒ e.brandCode === f.brand && e.countryCode === f.country) if event.id === id
       } yield (event, fee.feeCurrency.?, fee.feeAmount.?)
       query.list.headOption map { v ⇒
         val e = v._2 map { currency ⇒ Event.withFee(v._1, currency -> v._3.get)
