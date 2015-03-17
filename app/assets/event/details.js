@@ -76,7 +76,6 @@ function toggleSentButton() {
 }
 
 $(document).ready( function() {
-
     // Delete links.
     $('form.delete').submit(function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');

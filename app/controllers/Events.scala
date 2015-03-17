@@ -39,6 +39,7 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
 import services.notifiers.Notifiers
+import views.Countries
 
 object Events extends Controller
   with Security
@@ -312,7 +313,10 @@ object Events extends Controller
           _.name
         } getOrElse ""
         val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-        Ok(views.html.event.details(user, canFacilitate, funders, event, typeName))
+        val fees = feeService.findByBrand(event.brandCode).
+          map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+          sortBy(_._1)
+        Ok(views.html.event.details(user, canFacilitate, funders, event, typeName, fees))
       } getOrElse NotFound
   }
 
