@@ -1,0 +1,46 @@
+@(user: UserIdentity)
+
+<h3 id="members">Fees</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>A list of event license fees for the given brand</td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v1/fees/:brand</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td><code>brand</code> - brand code, ex. MGT30</td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of fee objects, with properties:</p>
+      <ul>
+        <li><code>id</code></li>
+        <li><code>brand</code></li>
+        <li><code>country</code> - ISO 8166-2 country code</li>
+        <li><code>fee</code> - fee currency and amount, ex. EUR 100.00</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Example</th>
+    <td><a href="/api/v1/fees/mgt30?api_token=@user.apiToken">GET /api/v1/fees/mgt30</a>
+  </tr>
+</table>

@@ -47,4 +47,6 @@ private[models] object EventFees extends Table[EventFee]("EVENT_FEE") {
     Some(f.id, f.brand, f.country, f.fee.getCurrencyUnit.getCode, f.fee.getAmount)
   })
 
+  def forInsert = * returning id
+
 }

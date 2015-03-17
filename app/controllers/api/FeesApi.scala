@@ -22,25 +22,40 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.brand
+package controllers.api
 
+import models.brand.EventFee
 import models.service.Services
-import org.joda.money.Money
+import play.api.mvc.Controller
+import play.api.libs.json._
+import views.Countries
 
 /**
- * Represents fee for 16-hours event per country
- * @param id Fee identifier
- * @param brand Brand code
- * @param country Country code
- * @param fee Fee
+ * Provides API for working with event fees
  */
-case class EventFee(id: Option[Long],
-  brand: String,
-  country: String,
-  fee: Money) extends Services {
+trait FeesApi extends Controller with ApiAuthentication with Services {
 
   /**
-   * Inserts current fee into database and returns the updated fee with ID
+   * EventFee to JSON converter
    */
-  def insert(): EventFee = feeService.insert(this)
+  implicit val feeWrites = new Writes[EventFee] {
+    def writes(fee: EventFee): JsValue = {
+      Json.obj(
+        "id" -> fee.id.get,
+        "brand" -> fee.brand,
+        "country" -> fee.country,
+        "fee" -> fee.fee.toString)
+    }
+  }
+
+  /**
+   * Returns list of fees for the given brand in JSON format
+   * @param brand Brand code
+   */
+  def fees(brand: String) = TokenSecuredAction { implicit request ⇒
+    val fees = feeService.findByBrand(brand)
+    Ok(Json.prettyPrint(Json.toJson(fees)))
+  }
 }
+
+object FeesApi extends FeesApi with ApiAuthentication with Services

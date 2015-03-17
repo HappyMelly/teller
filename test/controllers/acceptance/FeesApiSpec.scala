@@ -22,25 +22,30 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.brand
+package controllers.acceptance
 
-import models.service.Services
-import org.joda.money.Money
+import controllers.api.{ FeesApi, ApiAuthentication }
+import org.specs2.mutable.Specification
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import stubs.FakeServices
 
-/**
- * Represents fee for 16-hours event per country
- * @param id Fee identifier
- * @param brand Brand code
- * @param country Country code
- * @param fee Fee
- */
-case class EventFee(id: Option[Long],
-  brand: String,
-  country: String,
-  fee: Money) extends Services {
+class FeesApiSpec extends Specification {
 
-  /**
-   * Inserts current fee into database and returns the updated fee with ID
-   */
-  def insert(): EventFee = feeService.insert(this)
+  /** Test controller with api authentication and with stubbed services */
+  class TestFeesApi() extends FeesApi with ApiAuthentication with FakeServices
+
+  override def is = s2"""
+
+  If api_token is not provided 401 error should be returned
+    on 'fees' call                                          $e1
+  """
+
+  def e1 = {
+    val controller = new TestFeesApi()
+    val result = controller.fees("TEST").apply(FakeRequest())
+    status(result) must equalTo(UNAUTHORIZED)
+    contentAsString(result) mustEqual "Unauthorized"
+  }
+
 }

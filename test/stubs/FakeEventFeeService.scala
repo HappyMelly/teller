@@ -22,25 +22,10 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.brand
+package stubs
 
-import models.service.Services
-import org.joda.money.Money
+import models.service.brand.EventFeeService
 
-/**
- * Represents fee for 16-hours event per country
- * @param id Fee identifier
- * @param brand Brand code
- * @param country Country code
- * @param fee Fee
- */
-case class EventFee(id: Option[Long],
-  brand: String,
-  country: String,
-  fee: Money) extends Services {
+class FakeEventFeeService extends EventFeeService {
 
-  /**
-   * Inserts current fee into database and returns the updated fee with ID
-   */
-  def insert(): EventFee = feeService.insert(this)
 }

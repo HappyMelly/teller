@@ -22,25 +22,37 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.brand
+package models.service.brand
 
-import models.service.Services
-import org.joda.money.Money
+import models.brand.EventFee
+import models.database.brand.EventFees
+import play.api.db.slick.DB
+import play.api.db.slick.Config.driver.simple._
+import play.api.Play.current
 
-/**
- * Represents fee for 16-hours event per country
- * @param id Fee identifier
- * @param brand Brand code
- * @param country Country code
- * @param fee Fee
- */
-case class EventFee(id: Option[Long],
-  brand: String,
-  country: String,
-  fee: Money) extends Services {
+class EventFeeService {
 
   /**
-   * Inserts current fee into database and returns the updated fee with ID
+   * Returns a list of fees belonged to the given brand
+   * @param brand Brand code
    */
-  def insert(): EventFee = feeService.insert(this)
+  def findByBrand(brand: String): List[EventFee] = DB.withSession {
+    implicit session ⇒
+      Query(EventFees).filter(_.brand === brand).list
+  }
+
+  /**
+   * Inserts the given fee into database and returns the updated fee with ID
+   * @param fee Fee
+   */
+  def insert(fee: EventFee): EventFee = DB.withSession { implicit session ⇒
+    val id = EventFees.forInsert.insert(fee)
+    fee.copy(id = Some(id))
+  }
+}
+
+object EventFeeService {
+  private val instance = new EventFeeService
+
+  def get: EventFeeService = instance
 }

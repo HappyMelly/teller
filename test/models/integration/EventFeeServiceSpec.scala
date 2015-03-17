@@ -22,25 +22,35 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.brand
+package models.integration
 
-import models.service.Services
+import integration.PlayAppSpec
+import models.brand.EventFee
+import models.service.brand.EventFeeService
 import org.joda.money.Money
 
-/**
- * Represents fee for 16-hours event per country
- * @param id Fee identifier
- * @param brand Brand code
- * @param country Country code
- * @param fee Fee
- */
-case class EventFee(id: Option[Long],
-  brand: String,
-  country: String,
-  fee: Money) extends Services {
+class EventFeeServiceSpec extends PlayAppSpec {
+  def setupDb() {}
+  def cleanupDb() {}
 
-  /**
-   * Inserts current fee into database and returns the updated fee with ID
-   */
-  def insert(): EventFee = feeService.insert(this)
+  "Method 'findByBrand'" should {
+    "return 2 fees for the brand TEST" in {
+      val m1 = Money.parse("RUB 100")
+      val m2 = Money.parse("EUR 300")
+      Seq(
+        ("TEST", "RU", m1),
+        ("TEST", "DE", m2),
+        ("MGT", "US", Money.parse("USD 100")),
+        ("MGT", "HK", Money.parse("USD 100"))).foreach {
+          case (brand, country, fee) ⇒
+            EventFee(None, brand, country, fee).insert()
+        }
+
+      val service = new EventFeeService
+      val result = service.findByBrand("TEST")
+      result.length must_== 2
+      result.exists(x ⇒ x.country == "RU" && x.fee == m1) must_== true
+      result.exists(x ⇒ x.country == "DE" && x.fee == m2) must_== true
+    }
+  }
 }
