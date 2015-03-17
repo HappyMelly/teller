@@ -22,29 +22,30 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.service
+package controllers.acceptance
 
-import models.EventType
-import models.database.EventTypes
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import controllers.api.{ BrandFeesApi, ApiAuthentication }
+import org.specs2.mutable.Specification
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import stubs.FakeServices
 
-class EventTypeService {
+class BrandFeesApiSpec extends Specification {
 
-  /**
-   * Returns an event type if it exists, otherwise - None
-   * @param id Event type id
-   * @return
-   */
-  def find(id: Long): Option[EventType] = DB.withSession {
-    implicit session: Session ⇒
-      Query(EventTypes).filter(_.id === id).firstOption
+  /** Test controller with api authentication and with stubbed services */
+  class TestBrandFeesApi() extends BrandFeesApi with ApiAuthentication with FakeServices
+
+  override def is = s2"""
+
+  If api_token is not provided 401 error should be returned
+    on 'fees' call                                          $e1
+  """
+
+  def e1 = {
+    val controller = new TestBrandFeesApi()
+    val result = controller.fees("TEST").apply(FakeRequest())
+    status(result) must equalTo(UNAUTHORIZED)
+    contentAsString(result) mustEqual "Unauthorized"
   }
-}
 
-object EventTypeService {
-  private val instance = new EventTypeService
-
-  def get: EventTypeService = instance
 }

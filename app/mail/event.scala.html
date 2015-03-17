@@ -1,10 +1,10 @@
 @(event: Event, changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
+@import models.service.brand.EventTypeService
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML
-@import models.service.EventTypeService
 
-<html>
+    <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     </head>

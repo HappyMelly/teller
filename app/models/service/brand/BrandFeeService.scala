@@ -22,25 +22,37 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package models.service.brand
 
-import models.Activity
-import models.brand.EventType
-import org.specs2.mutable._
+import models.brand.BrandFee
+import models.database.brand.BrandFees
+import play.api.db.slick.DB
+import play.api.db.slick.Config.driver.simple._
+import play.api.Play.current
 
-class EventTypeSpec extends Specification {
+class BrandFeeService {
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
-    }
+  /**
+   * Returns a list of fees belonged to the given brand
+   * @param brand Brand code
+   */
+  def findByBrand(brand: String): List[BrandFee] = DB.withSession {
+    implicit session ⇒
+      Query(BrandFees).filter(_.brand === brand).list
   }
 
+  /**
+   * Inserts the given fee into database and returns the updated fee with ID
+   * @param fee Fee
+   */
+  def insert(fee: BrandFee): BrandFee = DB.withSession { implicit session ⇒
+    val id = BrandFees.forInsert.insert(fee)
+    fee.copy(id = Some(id))
+  }
+}
+
+object BrandFeeService {
+  private val instance = new BrandFeeService
+
+  def get: BrandFeeService = instance
 }

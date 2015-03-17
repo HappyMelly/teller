@@ -55,9 +55,10 @@ object EventHelper {
     var event = new Event(id, eventTypeId.getOrElse(1), code, title.getOrElse("Test event"),
       language, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
       new Details(None, None, None, None),
-      new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())), endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
+      new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())),
+        endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
-      DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+      None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
     event.facilitatorIds_=(facilitatorIds.getOrElse(1 :: Nil))
     event.invoice_=(invoice)
 

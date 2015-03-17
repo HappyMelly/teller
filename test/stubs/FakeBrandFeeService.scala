@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -17,28 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package stubs
 
-import models.EventType
-import play.api.db.slick.Config.driver.simple._
+import models.service.brand.BrandFeeService
 
-/**
- * `EventType` database table mapping.
- */
-private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
-  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandId = column[Long]("BRAND_ID")
-  def name = column[String]("NAME")
-  def defaultTitle = column[Option[String]]("DEFAULT_TITLE")
+class FakeBrandFeeService extends BrandFeeService {
 
-  def brand = foreignKey("EVENT_BRAND_FK", brandId, Brands)(_.id)
-
-  def * = id.? ~ brandId ~ name ~ defaultTitle <> (EventType.apply _, EventType.unapply _)
-
-  def forInsert = * returning id
 }

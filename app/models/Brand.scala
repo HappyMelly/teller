@@ -26,6 +26,7 @@ package models
 
 import java.text.Collator
 import java.util.Locale
+import models.brand.CertificateTemplate
 import models.database._
 import models.service.SocialProfileService
 import org.joda.time.{ LocalDate, DateTime }

@@ -2,7 +2,8 @@
     canFacilitate: Boolean,
     funders: List[Organisation],
     event: Event,
-    typeName: String)(implicit
+    typeName: String,
+    fees: List[(String, String)])(implicit
     request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
@@ -63,7 +64,8 @@
   @if(event.confirmed) {
     <div class="alert alert-info">
       <i class="glyphicon glyphicon-info-sign"></i> This event is
-        <span class="label label-success">confirmed</span>
+        <span class="label label-success">confirmed</span>.
+      @event.fee.map { fee => License event fee is @fee  }
     </div>
   }
 
@@ -121,8 +123,18 @@
           </dd>
         }
       </dl>
+      <dl>
+        <dt>License Event Fee</dt>
+        <dd>
+          @event.fee.map { fee => @fee }.getOrElse {
+            Fee for this country is not defined yet. Please contact the brand manager.
+          }
+          <a href="#" data-toggle="modal" data-target="#brandfees"><i class="glyphicon glyphicon-info-sign"></i></a>
+        </dd>
+      </dl>
     </div>
   </div>
+  @views.html.element.brandFees(event.brandCode, fees)
   <div class="col-md-3 col-md-offset-1x">
     <legend>Invoice</legend>
     <p>

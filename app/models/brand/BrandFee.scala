@@ -22,25 +22,25 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package models.brand
 
-import models.Activity
-import models.brand.EventType
-import org.specs2.mutable._
+import models.service.Services
+import org.joda.money.Money
 
-class EventTypeSpec extends Specification {
+/**
+ * Represents fee for 16-hours event per country
+ * @param id Fee identifier
+ * @param brand Brand code
+ * @param country Country code
+ * @param fee Fee
+ */
+case class BrandFee(id: Option[Long],
+  brand: String,
+  country: String,
+  fee: Money) extends Services {
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
-    }
-  }
-
+  /**
+   * Inserts current fee into database and returns the updated fee with ID
+   */
+  def insert(): BrandFee = feeService.insert(this)
 }

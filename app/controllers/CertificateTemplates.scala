@@ -26,6 +26,7 @@ package controllers
 
 import models._
 import models.UserRole.Role._
+import models.brand.CertificateTemplate
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._

@@ -22,25 +22,31 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package models.database.brand
 
-import models.Activity
-import models.brand.EventType
-import org.specs2.mutable._
+import models.JodaMoney._
+import models.brand.BrandFee
+import play.api.db.slick.Config.driver.simple._
 
-class EventTypeSpec extends Specification {
+/**
+ * Connects EventFee object with its database representation
+ */
+private[models] object BrandFees extends Table[BrandFee]("BRAND_FEE") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brand = column[String]("BRAND", O.DBType("CHAR(5)"))
+  def country = column[String]("COUNTRY", O.DBType("CHAR(2)"))
+  def feeCurrency = column[String]("FEE_CURRENCY", O.DBType("CHAR(3)"))
+  def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
+  def * = id.? ~ brand ~ country ~ feeCurrency ~ feeAmount <> ({
+    _ match {
+      case (id, brand, country, feeCurrency, feeAmount) ⇒
+        BrandFee(id, brand, country, feeCurrency -> feeAmount)
     }
-  }
+  }, { (f: BrandFee) ⇒
+    Some(f.id, f.brand, f.country, f.fee.getCurrencyUnit.getCode, f.fee.getAmount)
+  })
+
+  def forInsert = * returning id
 
 }

@@ -22,25 +22,29 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package models.service.brand
 
-import models.Activity
 import models.brand.EventType
-import org.specs2.mutable._
+import models.database.brand.EventTypes
+import play.api.Play.current
+import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
 
-class EventTypeSpec extends Specification {
+class EventTypeService {
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
-    }
+  /**
+   * Returns an event type if it exists, otherwise - None
+   * @param id Event type id
+   * @return
+   */
+  def find(id: Long): Option[EventType] = DB.withSession {
+    implicit session: Session ⇒
+      Query(EventTypes).filter(_.id === id).firstOption
   }
+}
 
+object EventTypeService {
+  private val instance = new EventTypeService
+
+  def get: EventTypeService = instance
 }

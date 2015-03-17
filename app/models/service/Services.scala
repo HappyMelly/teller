@@ -24,6 +24,8 @@
  */
 package models.service
 
+import models.service.brand.{ BrandFeeService, EventTypeService }
+
 /** Contains references to all services so we can stub them in tests */
 trait Services {
 
@@ -36,6 +38,8 @@ trait Services {
   def eventService: EventService = EventService.get
 
   def eventTypeService: EventTypeService = EventTypeService.get
+
+  def feeService: BrandFeeService = BrandFeeService.get
 
   def memberService: MemberService = MemberService.get
 

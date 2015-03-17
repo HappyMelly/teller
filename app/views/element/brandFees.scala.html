@@ -1,0 +1,39 @@
+@(brand: String,
+    fees: List[(String, String)])
+
+<div class="modal fade" id="brandfees" tabindex="-1" role="dialog" aria-labelledby="feeModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="feeModal">License Event Fees for @brand</h4>
+      </div>
+      <div class="modal-body">
+        <p>The fees in this list are used as annual subscription fees (based on the location of the LCA)
+          and as standard license fees for 2-day events (based on the location of the event). Fees for
+          other countries can be obtained from Happy Melly upon request.</p>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for(fee <- fees) {
+              <tr>
+                <td>@fee._1</td>
+                <td>@fee._2</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          Close</button>
+      </div>
+    </div>
+  </div>
+</div>

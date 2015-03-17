@@ -26,6 +26,7 @@ package models
 
 import com.itextpdf.text.Image
 import fly.play.s3.{ BucketFile, S3Exception }
+import models.brand.CertificateTemplate
 import models.service.EventService
 import org.joda.time.LocalDate
 import play.api.Play.current

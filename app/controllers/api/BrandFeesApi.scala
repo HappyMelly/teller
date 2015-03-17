@@ -22,25 +22,40 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package controllers.api
 
-import models.Activity
-import models.brand.EventType
-import org.specs2.mutable._
+import models.brand.BrandFee
+import models.service.Services
+import play.api.mvc.Controller
+import play.api.libs.json._
+import views.Countries
 
-class EventTypeSpec extends Specification {
+/**
+ * Provides API for working with event fees
+ */
+trait BrandFeesApi extends Controller with ApiAuthentication with Services {
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
+  /**
+   * EventFee to JSON converter
+   */
+  implicit val feeWrites = new Writes[BrandFee] {
+    def writes(fee: BrandFee): JsValue = {
+      Json.obj(
+        "id" -> fee.id.get,
+        "brand" -> fee.brand,
+        "country" -> fee.country,
+        "fee" -> fee.fee.toString)
     }
   }
 
+  /**
+   * Returns list of fees for the given brand in JSON format
+   * @param brand Brand code
+   */
+  def fees(brand: String) = TokenSecuredAction { implicit request ⇒
+    val fees = feeService.findByBrand(brand)
+    Ok(Json.prettyPrint(Json.toJson(fees)))
+  }
 }
+
+object BrandFeesApi extends BrandFeesApi with ApiAuthentication with Services

@@ -22,25 +22,35 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit
+package models.integration
 
-import models.Activity
-import models.brand.EventType
-import org.specs2.mutable._
+import integration.PlayAppSpec
+import models.brand.BrandFee
+import models.service.brand.BrandFeeService
+import org.joda.money.Money
 
-class EventTypeSpec extends Specification {
+class BrandFeeServiceSpec extends PlayAppSpec {
+  def setupDb() {}
+  def cleanupDb() {}
 
-  "Event type" should {
-    "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None)
-      eventType.objectType must_== Activity.Type.EventType
-      eventType.identifier must_== 1
-      eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None)
-      eventType2.objectType must_== Activity.Type.EventType
-      eventType2.identifier must_== 2
-      eventType2.humanIdentifier must_== "Boogy"
+  "Method 'findByBrand'" should {
+    "return 2 fees for the brand TEST" in {
+      val m1 = Money.parse("RUB 100")
+      val m2 = Money.parse("EUR 300")
+      Seq(
+        ("TEST", "RU", m1),
+        ("TEST", "DE", m2),
+        ("MGT", "US", Money.parse("USD 100")),
+        ("MGT", "HK", Money.parse("USD 100"))).foreach {
+          case (brand, country, fee) ⇒
+            BrandFee(None, brand, country, fee).insert()
+        }
+
+      val service = new BrandFeeService
+      val result = service.findByBrand("TEST")
+      result.length must_== 2
+      result.exists(x ⇒ x.country == "RU" && x.fee == m1) must_== true
+      result.exists(x ⇒ x.country == "DE" && x.fee == m2) must_== true
     }
   }
-
 }
