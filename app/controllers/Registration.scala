@@ -49,8 +49,21 @@ import views.Countries
  * @param lastName Last name
  * @param email Email address
  * @param country Country where the person lives
+ * @param org Related organization
  */
-case class User(firstName: String, lastName: String, email: String, country: String)
+case class User(firstName: String,
+  lastName: String,
+  email: String,
+  country: String,
+  org: Option[OrgData] = None)
+
+object User {
+
+  def apply(firstName: String,
+    lastName: String,
+    email: String,
+    country: String): User = User(firstName, lastName, email, country)
+}
 
 /**
  * Contains registration data required to create an organization
@@ -75,7 +88,9 @@ trait Registration extends Controller
     "email" -> play.api.data.Forms.email,
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
-      (value: String) ⇒ Countries.all.exists(_._1 == value)))(User.apply)(User.unapply))
+      (value: String) ⇒ Countries.all.exists(_._1 == value)))(User.apply)({
+      (u: User) ⇒ Some(u.firstName, u.lastName, u.email, u.country)
+    }))
 
   private def orgForm = Form(mapping(
     "name" -> nonEmptyText,
@@ -109,11 +124,12 @@ trait Registration extends Controller
    * @param org Defines if a new Supporter is an organization or a person
    */
   def step1(org: Boolean = false) = Action { implicit request ⇒
+    val cookie = Cookie(REGISTRATION_COOKIE, "org")
+    val discardingCookie = DiscardingCookie(REGISTRATION_COOKIE)
     if (org)
-      Ok(views.html.registration.step1()).
-        withCookies(Cookie(REGISTRATION_COOKIE, "org"))
+      Ok(views.html.registration.step1()).withCookies(cookie)
     else
-      Ok(views.html.registration.step1())
+      Ok(views.html.registration.step1()).discardingCookies(discardingCookie)
   }
 
   /**
@@ -170,19 +186,30 @@ trait Registration extends Controller
    */
   def saveOrg = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Redirect(routes.Registration.payment())
+      redirectViewer {
+        orgForm.bindFromRequest.fold(
+          errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
+          data ⇒ {
+            val id = orgCacheId(user.identityId)
+            Cache.set(id, data, 900)
+            Redirect(routes.Registration.payment())
+          })
+      }
   }
 
   /**
    * Renders Payment page of the registration process
+   *
+   * @param org Defines if a new Supporter is an organization or a person
    */
-  def payment = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+  def payment(org: Boolean = false) = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
         Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
           val publicKey = Play.configuration.getString("stripe.public_key").get
           val person = unregisteredPerson(userData, user)
-          val fee = Payment.countryBasedFees(userData.country)
+          val country = userData.org map { _.country } getOrElse userData.country
+          val fee = Payment.countryBasedFees(country)
           Ok(views.html.registration.payment(Membership.form, person, publicKey, fee))
         } getOrElse {
           Redirect(routes.Registration.step2()).
@@ -191,7 +218,11 @@ trait Registration extends Controller
       }
   }
 
-  def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+  /**
+   *
+   * @param org Defines if a new Supporter is an organization or a person
+   */
+  def charge(org: Boolean = false) = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.viewer) {
         Redirect(routes.Dashboard.index())
@@ -267,8 +298,10 @@ trait Registration extends Controller
 
   /**
    * Renders congratulations screen
+   *
+   * @param org Defines if a new Supporter is an organization or a person
    */
-  def congratulations = Action { implicit request ⇒
+  def congratulations(org: Boolean = false) = Action { implicit request ⇒
     Ok(views.html.registration.congratulations())
   }
 
@@ -278,6 +311,14 @@ trait Registration extends Controller
    */
   protected def personCacheId(id: IdentityId): String = {
     "user_" + id.userId
+  }
+
+  /**
+   * Returns an unique cache id for an org object of current user
+   * @param id Identity object
+   */
+  protected def orgCacheId(id: IdentityId): String = {
+    "org_" + id.userId
   }
 
   /**

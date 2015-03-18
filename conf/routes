@@ -175,10 +175,10 @@ GET         /registration/step2                                       controller
 GET         /registration/step3                                       controllers.Registration.step3
 POST        /registration/save/person                                 controllers.Registration.savePerson
 POST        /registration/save/org                                    controllers.Registration.saveOrg
-GET         /registration/payment                                     controllers.Registration.payment
-POST        /registration/payment                                     controllers.Registration.charge
+GET         /registration/payment                                     controllers.Registration.payment(org: Boolean ?= false)
+POST        /registration/payment                                     controllers.Registration.charge(org: Boolean ?= false)
 GET         /registration/authenticate/:provider                      controllers.Registration.authenticate(provider)
-GET         /registration/congratulations                             controllers.Registration.congratulations
+GET         /registration/congratulations                             controllers.Registration.congratulations(org: Boolean ?= false)
 
 
 GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)
