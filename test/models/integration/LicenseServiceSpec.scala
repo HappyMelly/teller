@@ -34,13 +34,6 @@ import org.joda.time.LocalDate
 
 class LicenseServiceSpec extends PlayAppSpec {
 
-  def cleanupDb() {
-    truncateTables()
-  }
-  def setupDb() {
-    truncateTables()
-  }
-
   "Method `expiring`" should {
     "return only licenses expiring this month" in {
       val facilitators = Map(1L -> PersonHelper.one(),

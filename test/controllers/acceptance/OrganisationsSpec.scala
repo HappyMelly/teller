@@ -40,9 +40,6 @@ class TestOrganisations() extends Organisations with FakeServices
 
 class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   val personService = mock[FakePersonService]
   val orgService = mock[FakeOrganisationService]
   val productService = mock[FakeProductService]

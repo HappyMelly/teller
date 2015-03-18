@@ -30,8 +30,6 @@ import models.service.brand.BrandFeeService
 import org.joda.money.Money
 
 class BrandFeeServiceSpec extends PlayAppSpec {
-  def setupDb() {}
-  def cleanupDb() {}
 
   "Method 'findByBrand'" should {
     "return 2 fees for the brand TEST" in {

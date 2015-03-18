@@ -38,11 +38,10 @@ import play.api.db.slick.DB
 
 class PersonServiceSpec extends PlayAppSpec {
 
-  def setupDb(): Unit = {
+  override def setupDb(): Unit = {
     addPeople()
     add()
   }
-  def cleanupDb() {}
 
   val service = PersonService.get
 

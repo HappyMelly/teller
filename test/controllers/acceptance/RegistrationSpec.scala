@@ -42,10 +42,6 @@ class RegistrationSpec extends PlayAppSpec {
     def callPersonCacheId(id: IdentityId): String = personCacheId(id)
   }
 
-  def setupDb() {}
-
-  def cleanupDb() {}
-
   override def is = s2"""
 
   Step 1 should

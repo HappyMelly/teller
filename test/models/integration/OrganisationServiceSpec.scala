@@ -34,11 +34,11 @@ import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
 
 class OrganisationServiceSpec extends PlayAppSpec with DataTables {
-  def setupDb(): Unit = {
+
+  override def setupDb(): Unit = {
     addOrgs()
     add()
   }
-  def cleanupDb() {}
 
   "Method findNonMembers" should {
     "return 4 non members" in {

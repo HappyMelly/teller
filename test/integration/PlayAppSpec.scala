@@ -69,8 +69,8 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Play.stop()
   }
 
-  def setupDb()
-  def cleanupDb()
+  def setupDb() {}
+  def cleanupDb() {}
 
   /**
    * Returns a secured GET request object and sets authenticator object to cache
@@ -122,6 +122,7 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Q.updateNA("TRUNCATE `ACTIVITY`").execute
     Q.updateNA("TRUNCATE `ADDRESS`").execute
     Q.updateNA("TRUNCATE `BRAND`").execute
+    Q.updateNA("TRUNCATE `BRAND_FEE`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
     Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
     Q.updateNA("TRUNCATE `EVALUATION`").execute

@@ -41,8 +41,6 @@ import scala.concurrent.Future
 class TestDashboard() extends Dashboard with Security with FakeServices
 
 class DashboardSpec extends PlayAppSpec {
-  def setupDb() {}
-  def cleanupDb() {}
 
   override def is = s2"""
 

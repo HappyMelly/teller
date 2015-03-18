@@ -22,42 +22,10 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.integration
+package controllers.integration
 
-import _root_.integration.PlayAppSpec
-import helpers.PersonHelper
-import models.service.PersonService
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
+import integration.PlayAppSpec
 
-class PersonSpec extends PlayAppSpec {
+class RegistrationSpec extends PlayAppSpec {
 
-  "Person" should {
-    "become a well-formed supporter" in {
-      val person = PersonHelper.two()
-      val fee = Money.of(EUR, 155)
-      person.becomeMember(funder = false, fee)
-
-      val member = PersonService.get.member(person.id.get)
-      member map { m ⇒
-        m.person must_== true
-        m.funder must_== false
-        m.fee must_== fee
-        m.createdBy must_== 2L
-      } getOrElse ko
-    }
-    "become a well-formed funder" in {
-      val person = PersonHelper.one()
-      val fee = Money.of(EUR, 255)
-      person.becomeMember(funder = true, fee)
-
-      val member = PersonService.get.member(person.id.get)
-      member map { m ⇒
-        m.person must_== true
-        m.funder must_== true
-        m.fee must_== fee
-        m.createdBy must_== 1L
-      } getOrElse ko
-    }
-  }
 }

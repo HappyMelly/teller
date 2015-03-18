@@ -37,7 +37,7 @@ import stubs.{ FakeBrandService, FakeServices }
 
 class EventServiceSpec extends PlayAppSpec {
 
-  def setupDb() {
+  override def setupDb() {
     PersonHelper.one().insert
     PersonHelper.two().insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
@@ -48,8 +48,6 @@ class EventServiceSpec extends PlayAppSpec {
     EventHelper.addEvents(BrandHelper.one.code)
     EventHelper.addEvents("MGT30")
   }
-
-  def cleanupDb() {}
 
   lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),

@@ -33,7 +33,7 @@ import org.joda.time.DateTime
 
 class PaymentRecordServiceSpec extends PlayAppSpec {
 
-  def setupDb(): Unit = {
+  override def setupDb(): Unit = {
     Seq(
       ("1", 1L, true, Money.of(EUR, 4)),
       ("2", 1L, true, Money.of(EUR, 5)),
@@ -47,7 +47,6 @@ class PaymentRecordServiceSpec extends PlayAppSpec {
           r.insert
       }
   }
-  def cleanupDb() {}
 
   "Method 'findByPerson`" should {
     "return 2 records belonged to the person with id = 1" in {

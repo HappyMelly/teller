@@ -34,9 +34,6 @@ import stubs.{ FakeApiAuthentication, FakeMemberService, FakeServices }
 
 class MembersApiSpec extends PlayAppSpec {
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   class TestMembersApi() extends MembersApi
     with FakeApiAuthentication
     with FakeServices
