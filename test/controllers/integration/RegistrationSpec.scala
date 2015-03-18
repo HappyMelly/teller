@@ -24,8 +24,26 @@
 
 package controllers.integration
 
+import controllers.Registration
 import integration.PlayAppSpec
+import play.api.mvc.Cookie
+import play.api.test.FakeRequest
 
 class RegistrationSpec extends PlayAppSpec {
 
+  class TestRegistration extends Registration
+
+  "On step1 the system" should {
+    "set cookie 'registration'=org if org parameter is true" in {
+      val controller = new TestRegistration
+      val res = controller.step1(org = true).apply(FakeRequest())
+      cookies(res).get("registration") map { _.value must_== "org" } getOrElse ko
+    }
+    "discard cookie 'registration' if org parameter is false" in {
+      val controller = new TestRegistration
+      val cookie = Cookie(Registration.REGISTRATION_COOKIE, "org")
+      val res = controller.step1(org = false).apply(FakeRequest().withCookies(cookie))
+      cookies(res).get("registration") must_== None
+    }
+  }
 }

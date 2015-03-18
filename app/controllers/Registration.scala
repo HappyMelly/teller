@@ -53,10 +53,19 @@ import views.Countries
 case class User(firstName: String, lastName: String, email: String, country: String)
 
 /**
+ * Contains registration data required to create an organization
+ * @param name Name
+ * @param country Country where the organization is registered
+ */
+case class OrgData(name: String, country: String)
+
+/**
  * Contains actions for a registration process
  */
 trait Registration extends Controller
   with Security with Services with Notifiers {
+
+  val REGISTRATION_COOKIE = "registration"
 
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
@@ -67,6 +76,12 @@ trait Registration extends Controller
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
       (value: String) ⇒ Countries.all.exists(_._1 == value)))(User.apply)(User.unapply))
+
+  private def orgForm = Form(mapping(
+    "name" -> nonEmptyText,
+    "country" -> nonEmptyText.verifying(
+      "error.unknown_country",
+      (value: String) ⇒ Countries.all.exists(_._1 == value)))(OrgData.apply)(OrgData.unapply))
 
   /**
    * The authentication flow for all providers starts here.
@@ -87,11 +102,18 @@ trait Registration extends Controller
   def welcome = Action { implicit request ⇒
     Ok(views.html.registration.welcome())
   }
+
   /**
    * Renders step 1 page of the registration process
+   *
+   * @param org Defines if a new Supporter is an organization or a person
    */
-  def step1 = Action { implicit request ⇒
-    Ok(views.html.registration.step1())
+  def step1(org: Boolean = false) = Action { implicit request ⇒
+    if (org)
+      Ok(views.html.registration.step1()).
+        withCookies(Cookie(REGISTRATION_COOKIE, "org"))
+    else
+      Ok(views.html.registration.step1())
   }
 
   /**
@@ -110,6 +132,17 @@ trait Registration extends Controller
   }
 
   /**
+   * Renders step 3 page of the registration process
+   * @return
+   */
+  def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      redirectViewer {
+        Ok(views.html.registration.step3(user, orgForm))
+      }
+  }
+
+  /**
    * Saves new person to cache
    */
   def savePerson = SecuredRestrictedAction(Unregistered) { implicit request ⇒
@@ -120,21 +153,37 @@ trait Registration extends Controller
           data ⇒ {
             val id = personCacheId(user.identityId)
             Cache.set(id, data, 900)
-            Redirect(routes.Registration.step3())
+            val paymentUrl = routes.Registration.payment().url
+            val url = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
+              if (x.value == "org")
+                routes.Registration.step3().url
+              else
+                paymentUrl
+            } getOrElse paymentUrl
+            Redirect(url)
           })
       }
   }
+
   /**
-   * Renders step 3 page of the registration process
+   * Saves new org to cache
    */
-  def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+  def saveOrg = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Redirect(routes.Registration.payment())
+  }
+
+  /**
+   * Renders Payment page of the registration process
+   */
+  def payment = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
         Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
           val publicKey = Play.configuration.getString("stripe.public_key").get
           val person = unregisteredPerson(userData, user)
           val fee = Payment.countryBasedFees(userData.country)
-          Ok(views.html.registration.step3(Membership.form, person, publicKey, fee))
+          Ok(views.html.registration.payment(Membership.form, person, publicKey, fee))
         } getOrElse {
           Redirect(routes.Registration.step2()).
             flashing("error" -> Messages("login.noUserData"))

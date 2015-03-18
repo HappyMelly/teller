@@ -28,7 +28,7 @@ import controllers.{ Registration, User }
 import _root_.integration.PlayAppSpec
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.mvc.SimpleResult
+import play.api.mvc.{ Cookie, SimpleResult }
 import play.api.test.FakeRequest
 import securesocial.core.IdentityId
 import stubs.FakeUserIdentity
@@ -59,6 +59,11 @@ class RegistrationSpec extends PlayAppSpec {
     redirect Viewers to Main page                     $e8
     generate errors if not all fields are filled      $e10
     save person data to cache                         $e11
+    redirect to Step3 if a new member is an organisation $e12
+
+  Step 3 should
+    be visible to an unregistered user             $e13
+    redirect Viewers to Main page                  $e14
   """
 
   val controller = new TestRegistration()
@@ -142,7 +147,7 @@ class RegistrationSpec extends PlayAppSpec {
         ("lastName", "Tester"), ("email", "tt@ttt.ru"), ("country", "RU"))
     val result: Future[SimpleResult] = controller.savePerson().apply(req)
     status(result) must equalTo(SEE_OTHER)
-    headers(result).get("Location").get must contain("/step3")
+    headers(result).get("Location").get must contain("/registration/payment")
     val cacheId = controller.callPersonCacheId(identity)
     Cache.getAs[User](cacheId) map { userData ⇒
       userData.firstName must_== "First"
@@ -150,5 +155,34 @@ class RegistrationSpec extends PlayAppSpec {
       userData.email must_== "tt@ttt.ru"
       userData.country must_== "RU"
     } getOrElse ko
+  }
+
+  def e12 = {
+    val identity = FakeUserIdentity.unregistered
+    val cookie = Cookie(Registration.REGISTRATION_COOKIE, "org")
+
+    val req = prepareSecuredPostRequest(identity, "").
+      withFormUrlEncodedBody(("firstName", "First"),
+        ("lastName", "Tester"), ("email", "tt@ttt.ru"), ("country", "RU")).
+        withCookies(cookie)
+    val result: Future[SimpleResult] = controller.savePerson().apply(req)
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location").get must contain("/registration/step3")
+  }
+
+  def e13 = {
+    val identity = FakeUserIdentity.unregistered
+    val req = prepareSecuredGetRequest(identity, "/registration/step3")
+    val result: Future[SimpleResult] = controller.step3().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Step 3")
+  }
+
+  def e14 = {
+    val identity = FakeUserIdentity.viewer
+    val req = prepareSecuredGetRequest(identity, "/registration/step3")
+    val result: Future[SimpleResult] = controller.step3().apply(req)
+    status(result) must equalTo(SEE_OTHER)
+    headers(result).get("Location").get must_== "/"
   }
 }
