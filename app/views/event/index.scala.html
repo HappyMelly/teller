@@ -14,6 +14,23 @@
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Event</a>
     }
   }
+  <div id="delete" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="rejectLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+          <h4>Delete Event</h4>
+        </div>
+        <div class="modal-body">
+          <b>Attention:</b> you cannot undo this action.
+        </div>
+        <div class="modal-footer">
+          <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+          <a id="deleteLink" class="btn btn-danger" href="#">Delete Event</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="col-md-12">
     <input type="hidden" id="userId" value="@userId"/>

@@ -90,16 +90,18 @@
             </div>
           }
         }
-        @alert(alertType: String) = {
-          @flash.get(alertType).map { message =>
-            <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                @message
-            </div>
+        <div class="alert-block">
+          @alert(alertType: String) = {
+            @flash.get(alertType).map { message =>
+              <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+                  <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  @message
+              </div>
+            }
           }
-        }
-        @alert("error")
-        @alert("success")
+          @alert("error")
+          @alert("success")
+        </div>
         @content
       </div>
       <div id="footer">
