@@ -204,7 +204,7 @@ trait Organisations extends Controller with Security with Services {
                 formWithErrors)),
             organisation ⇒ {
               val updatedOrg = organisation.
-                copy(id = Some(id)).
+                copy(id = Some(id), active = org.active).
                 copy(customerId = org.customerId).
                 update
               val activity = updatedOrg.activity(

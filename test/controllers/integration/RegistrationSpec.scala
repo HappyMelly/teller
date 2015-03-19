@@ -143,6 +143,7 @@ class RegistrationSpec extends PlayAppSpec {
       person map { x ⇒
         x.lastName must_== "Member"
         x.customerId must_== Some("customerId")
+        x.active must_== true
         val member = PersonService.get.member(x.id.get)
         member map { m ⇒
           m.funder must_== false
@@ -162,6 +163,7 @@ class RegistrationSpec extends PlayAppSpec {
       org map { x ⇒
         x.name must_== "OneMember"
         x.customerId must_== Some("customerId")
+        x.active must_== true
         val member = OrganisationService.get.member(x.id.get)
         member map { m ⇒
           m.funder must_== false

@@ -166,7 +166,7 @@ case class Organisation(
     // Skip the created, createdBy and active fields.
     val updateTuple = (id, name, street1, street2, city, province, postCode,
       countryCode, vatNumber, registrationNumber, category, webSite, blog,
-      customerId, dateStamp.updated, dateStamp.updatedBy)
+      customerId, active, dateStamp.updated, dateStamp.updatedBy)
     q.update(updateTuple)
     this
   }
