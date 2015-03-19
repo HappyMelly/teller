@@ -6,7 +6,6 @@
     handler: AuthorisationHandler,
     flash: Flash)
 
-@import helper.CSRF
 @import models.payment.Payment
 @import views.Countries
 
@@ -35,7 +34,7 @@
       method="POST" id="payment-form" autocomplete="on">
       <span class="payment-errors"></span>
       @org.map { organisation =>
-        <input type="hidden" name="orgId" value="@organisation.id.get"/>
+        <input type="hidden" name="orgId" value="@organisation.id.getOrElse(0)"/>
       }
       <legend>Step 1: Fee</legend>
       <div class="row payment-bottom-space fee">

@@ -35,8 +35,6 @@ import play.api.db.slick.DB
 import securesocial.core.{ AuthenticationMethod, IdentityId }
 
 class UserIdentityServiceSpec extends PlayAppSpec {
-  def setupDb() {}
-  def cleanupDb() {}
 
   val twitterIdentity = new IdentityId("1", "twitter")
 

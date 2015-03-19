@@ -61,8 +61,6 @@ class TestMembers() extends Members
 }
 
 class MembersSpec extends PlayAppSpec {
-  def setupDb() {}
-  def cleanupDb() {}
 
   implicit val getMemberResult = GetResult(r ⇒
     Member(r.<<, r.<<, r.<<, r.<<,

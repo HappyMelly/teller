@@ -56,9 +56,6 @@ class TestMembers extends Members with FakeServices {
 
 class MembersSpec extends PlayAppSpec {
 
-  def cleanupDb() {}
-  def setupDb() {}
-
   val controller = new TestMembers
 
   "Slack messages for new members" should {

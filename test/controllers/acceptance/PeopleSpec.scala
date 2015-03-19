@@ -41,8 +41,6 @@ import scala.concurrent.Future
 class TestPeople() extends People with Security with FakeServices
 
 class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
-  def setupDb() {}
-  def cleanupDb() {}
 
   override def is = s2"""
 

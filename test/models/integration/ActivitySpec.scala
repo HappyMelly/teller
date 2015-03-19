@@ -28,8 +28,6 @@ import integration.PlayAppSpec
 import models.Activity
 
 class ActivitySpec extends PlayAppSpec {
-  def cleanupDb() {}
-  def setupDb() {}
 
   "Activity" should {
     "generate good description without supportive object" in {

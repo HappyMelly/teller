@@ -36,7 +36,7 @@ import org.specs2.execute._
 
 class EventSpec extends PlayAppSpec {
 
-  def setupDb() {
+  override def setupDb() {
     PersonHelper.one().insert
     PersonHelper.two().insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
@@ -47,8 +47,6 @@ class EventSpec extends PlayAppSpec {
     EventHelper.addEvents(BrandHelper.one.code)
     EventHelper.addEvents("MGT30")
   }
-
-  def cleanupDb() {}
 
   lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),

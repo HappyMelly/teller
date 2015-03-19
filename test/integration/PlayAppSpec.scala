@@ -26,7 +26,7 @@ package integration
 
 import org.joda.time.DateTime
 import org.specs2.mutable._
-import org.specs2.specification._
+import org.specs2.specification.Fragments
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.AnyContentAsEmpty
@@ -69,8 +69,10 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Play.stop()
   }
 
-  def setupDb()
-  def cleanupDb()
+  def truncateTables() = PlayAppSpec.truncate()
+
+  def setupDb() {}
+  def cleanupDb() {}
 
   /**
    * Returns a secured GET request object and sets authenticator object to cache
@@ -112,9 +114,29 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       body = AnyContentAsEmpty,
       tags = csrfTag).withCookies(authenticator.toCookie)
   }
+}
+import org.specs2.specification.Step
+
+trait BeforeAllAfterAll extends Specification {
+  // see http://bit.ly/11I9kFM (specs2 User Guide)
+  override def map(fragments: ⇒ Fragments) = {
+    Step(beforeAll) ^ fragments ^ Step(afterAll)
+  }
+
+  protected def beforeAll()
+  protected def afterAll()
+}
+
+trait TruncateBefore extends Before {
+  def before = {
+    PlayAppSpec.truncate()
+  }
+}
+
+object PlayAppSpec {
 
   /** Cleans all records from database */
-  def truncateTables() = DB.withSession { implicit session: Session ⇒
+  def truncate() = DB.withSession { implicit session: Session ⇒
     Q.updateNA("SET FOREIGN_KEY_CHECKS = 0;").execute
     Q.updateNA("TRUNCATE `BOOKING_ENTRY`").execute
     Q.updateNA("TRUNCATE `BOOKING_ENTRY_ACTIVITY`").execute
@@ -122,6 +144,7 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Q.updateNA("TRUNCATE `ACTIVITY`").execute
     Q.updateNA("TRUNCATE `ADDRESS`").execute
     Q.updateNA("TRUNCATE `BRAND`").execute
+    Q.updateNA("TRUNCATE `BRAND_FEE`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
     Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
     Q.updateNA("TRUNCATE `EVALUATION`").execute
@@ -151,15 +174,4 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
     Q.updateNA("TRUNCATE `USER_ACCOUNT`").execute
     Q.updateNA("SET FOREIGN_KEY_CHECKS = 1;").execute
   }
-}
-import org.specs2.specification.Step
-
-trait BeforeAllAfterAll extends Specification {
-  // see http://bit.ly/11I9kFM (specs2 User Guide)
-  override def map(fragments: ⇒ Fragments) = {
-    Step(beforeAll) ^ fragments ^ Step(afterAll)
-  }
-
-  protected def beforeAll()
-  protected def afterAll()
 }

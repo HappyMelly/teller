@@ -34,9 +34,6 @@ import scala.concurrent.Future
 class PeopleAccessSpec extends PlayAppSpec {
   class TestPeople() extends People with Security with FakeServices
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   override def is = s2"""
     'Cancel' action should
       be accessible to Editors                               $e7

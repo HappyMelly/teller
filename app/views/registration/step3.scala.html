@@ -1,11 +1,26 @@
-@(form: Form[PaymentData],
-    person: Person,
-    apiKey: String,
-    fee: (Int, Int, Int),
-    org: Option[Organisation] = None)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
-    flash: Flash)
+@(user: UserIdentity,
+    form: Form[OrgData])(implicit request: Request[Any], flash: Flash)
+
+@import helper.CSRF
+@import views.Countries
+@import views.ViewHelpers._
 
 @layout.unauthorized("Welcome") {
-  @views.html.element.payment(form, person, apiKey, fee, org)
+  <div class="col-md-6 col-md-offset-3 text-center">
+    <h1>Become a Supporter</h1>
+    <div class="form-block text-left">
+      <legend>Step 3: Add Organisation Data</legend>
+      @html.form(action = CSRF(routes.Registration.saveOrg())) {
+        @html.text(form("name"), '_label -> "Name", '_help -> "")
+        @html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+
+        <div class="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-primary btn-block pull-right" type="submit">Save</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
 }

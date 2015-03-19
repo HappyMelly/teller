@@ -52,9 +52,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
     with FakeServices
     with FakeNotifiers
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   override def is = s2"""
 
   Page with a list of members should

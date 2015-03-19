@@ -373,7 +373,7 @@ trait People extends Controller with Security with Services {
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
-                  .copy(id = Some(id))
+                  .copy(id = Some(id), active = p.active)
                   .copy(customerId = p.customerId)
                 updatedPerson.socialProfile_=(person.socialProfile)
                 updatedPerson.address_=(person.address)

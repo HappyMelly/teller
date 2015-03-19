@@ -38,9 +38,6 @@ import scala.concurrent.Future
 class MembersAccessSpec extends PlayAppSpec with DataTables {
   class TestMembers() extends Members with Security with FakeServices
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   override def is = s2"""
 
   Page with a list of members should

@@ -32,9 +32,6 @@ import org.joda.money.Money
 
 class PersonSpec extends PlayAppSpec {
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   "Person" should {
     "become a well-formed supporter" in {
       val person = PersonHelper.two()

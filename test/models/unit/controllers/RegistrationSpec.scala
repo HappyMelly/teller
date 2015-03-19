@@ -28,13 +28,14 @@ import controllers.Registration
 import models.UserIdentity
 import org.specs2.mutable._
 import securesocial.core.{ AuthenticationMethod, IdentityId }
-
-class TestRegistration extends Registration {
-
-  def callUserNames(user: UserIdentity) = userNames(user)
-}
+import stubs.services.FakeNotifiers
 
 class RegistrationSpec extends Specification {
+
+  class TestRegistration extends Registration with FakeNotifiers {
+
+    def callUserNames(user: UserIdentity) = userNames(user)
+  }
 
   val controller = new TestRegistration
 

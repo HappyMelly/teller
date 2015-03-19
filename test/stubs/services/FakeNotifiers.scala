@@ -24,7 +24,8 @@
 */
 package stubs.services
 
-import _root_.services.notifiers.{ Notifiers, Slack }
+import _root_.services.notifiers.{ Notifiers, Slack, Email }
+import models.Person
 
 /**
  * Stub class for Slack service
@@ -41,8 +42,38 @@ class FakeSlack
   }
 }
 
-trait FakeNotifiers extends Notifiers {
+/**
+ * Stub class for Email service
+ */
+class FakeEmail extends Email {
+  var to: Set[Person] = Set()
+  var cc: Option[Set[Person]] = None
+  var bcc: Option[Set[Person]] = None
+  var subject: String = ""
+  var body: String = ""
 
-  /** Returns a fake Slack profile */
-  override def slack: Slack = new FakeSlack
+  override def send(to: Set[Person],
+    cc: Option[Set[Person]] = None,
+    bcc: Option[Set[Person]] = None,
+    subject: String,
+    body: String,
+    richMessage: Boolean = false,
+    attachment: Option[(String, String)] = None): Unit = {
+    this.to = to
+    this.cc = cc
+    this.bcc = bcc
+    this.subject = subject
+    this.body = body
+  }
+}
+
+trait FakeNotifiers extends Notifiers {
+  val slackInstance = new FakeSlack
+  val emailInstance = new FakeEmail
+
+  /** Returns a fake Slack notifier */
+  override def slack: FakeSlack = slackInstance
+
+  /** Returns a fake Email notifier */
+  override def email: FakeEmail = emailInstance
 }

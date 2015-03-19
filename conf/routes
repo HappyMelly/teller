@@ -170,13 +170,15 @@ POST        /product/brand/new                                        controller
 GET         /product/:productId/brand/:brandId/delete                 controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
 GET         /registration/welcome                                     controllers.Registration.welcome
-GET         /registration/step1                                       controllers.Registration.step1
+GET         /registration/step1                                       controllers.Registration.step1(org: Boolean ?= false)
 GET         /registration/step2                                       controllers.Registration.step2
-POST        /registration/save/person                                 controllers.Registration.savePerson
 GET         /registration/step3                                       controllers.Registration.step3
+POST        /registration/save/person                                 controllers.Registration.savePerson
+POST        /registration/save/org                                    controllers.Registration.saveOrg
+GET         /registration/payment                                     controllers.Registration.payment
 POST        /registration/payment                                     controllers.Registration.charge
 GET         /registration/authenticate/:provider                      controllers.Registration.authenticate(provider)
-GET         /registration/congratulations                             controllers.Registration.congratulations
+GET         /registration/congratulations                             controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
 
 GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)

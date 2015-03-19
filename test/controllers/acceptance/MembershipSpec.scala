@@ -36,9 +36,6 @@ import stubs.{ FakeOrganisationService, FakeUserIdentity, FakeServices }
 class MembershipSpec extends PlayAppSpec {
   class TestMembership() extends Membership with Security with FakeServices
 
-  def setupDb() {}
-  def cleanupDb() {}
-
   override def is = s2"""
 
   Welcome page for person should

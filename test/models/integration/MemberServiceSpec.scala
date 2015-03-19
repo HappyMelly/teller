@@ -34,8 +34,6 @@ import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
 
 class MemberServiceSpec extends PlayAppSpec with DataTables {
-  def setupDb() {}
-  def cleanupDb() {}
 
   "Method findAll" should {
     "return 6 members" in {

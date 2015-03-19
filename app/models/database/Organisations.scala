@@ -79,5 +79,5 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
 
   def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
     countryCode ~ vatNumber ~ registrationNumber ~ category ~ webSite ~ blog ~
-    customerId ~ updated ~ updatedBy
+    customerId ~ active ~ updated ~ updatedBy
 }
