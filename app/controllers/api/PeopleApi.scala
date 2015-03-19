@@ -79,8 +79,6 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
         "email_address" -> person.socialProfile.email,
         "photo" -> person.photo.url,
         "address" -> person.address,
-        "stakeholder" -> (person.role == PersonRole.Stakeholder),
-        "board_member" -> (person.role == PersonRole.BoardMember),
         "bio" -> person.bio,
         "interests" -> person.interests,
         "twitter_handle" -> person.socialProfile.twitterHandle,
@@ -98,19 +96,14 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
 
   /**
    * Get a list of people
-   * @param stakeholdersOnly If true only stakeholders are retrieved
-   * @param boardmembersOnly If true only board members are retrieved
    * @param active If true only active members are retrieved
    * @param query Retrieve only people whose name meets the pattern
    * @return
    */
-  def people(stakeholdersOnly: Option[Boolean],
-    boardmembersOnly: Option[Boolean],
-    active: Option[Boolean],
+  def people(active: Option[Boolean],
     query: Option[String]) = TokenSecuredAction { implicit request ⇒
 
-    val people: List[Person] = Person.findByParameters(stakeholdersOnly.getOrElse(false),
-      boardmembersOnly.getOrElse(false), active, query)
+    val people: List[Person] = Person.findByParameters(active, query)
     PeopleCollection.addresses(people)
     Ok(Json.prettyPrint(Json.toJson(people)))
   }

@@ -52,16 +52,6 @@ object Photo {
 }
 
 /**
- * Currently there're two roles for a person: stakeholer or board member
- */
-object PersonRole extends Enumeration {
-  val NoRole = Value("0")
-  val Stakeholder = Value("1")
-  val BoardMember = Value("2")
-
-}
-
-/**
  * A person, such as the owner or employee of an organisation.
  */
 case class Person(
@@ -74,7 +64,6 @@ case class Person(
   addressId: Long,
   bio: Option[String],
   interests: Option[String],
-  role: PersonRole.Value = PersonRole.Stakeholder,
   webSite: Option[String],
   blog: Option[String],
   customerId: Option[String] = None,
@@ -100,7 +89,6 @@ case class Person(
     addressId: Long = addressId,
     bio: Option[String] = bio,
     interests: Option[String] = interests,
-    role: PersonRole.Value = role,
     webSite: Option[String] = webSite,
     blog: Option[String] = blog,
     customerId: Option[String] = customerId,
@@ -108,7 +96,7 @@ case class Person(
     active: Boolean = active,
     dateStamp: DateStamp = dateStamp): Person = {
     val person = Person(id, firstName, lastName, birthday, photo,
-      signature, addressId, bio, interests, role, webSite, blog,
+      signature, addressId, bio, interests, webSite, blog,
       customerId, virtual, active, dateStamp)
     this._socialProfile map { p ⇒
       person.socialProfile_=(this.socialProfile)
@@ -304,7 +292,7 @@ case class Person(
 
     // Skip the id, created, createdBy and active fields.
     val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-      bio, interests, role, webSite, blog, customerId, virtual, active,
+      bio, interests, webSite, blog, customerId, virtual, active,
       dateStamp.updated, dateStamp.updatedBy)
     val updateQuery = People.filter(_.id === id).map(_.forUpdate)
     updateQuery.update(personUpdateTuple)
@@ -420,17 +408,14 @@ object Person {
   }
 
   /**
-   * Finds people, filtered by stakeholder, board member status and/or first/last name query
+   * Finds people, filtered by first/last name query
    *
-   * @param stakeholdersOnly Only stakeholders will be returned
-   * @param boardMembersOnly Only board members will be returned
    * @param active Only active members will be returned
    * @param query Only members with suitable name will be returned
    * @return
    */
-  def findByParameters(stakeholdersOnly: Boolean, boardMembersOnly: Boolean, active: Option[Boolean],
+  def findByParameters(active: Option[Boolean],
     query: Option[String]): List[Person] = DB.withSession {
-    import models.database.People.personRoleTypeMapper
 
     implicit session: Session ⇒
       val baseQuery = query.map { q ⇒
@@ -439,35 +424,7 @@ object Person {
       val activeQuery = active.map { value ⇒
         baseQuery.filter(_.active === value)
       }.getOrElse(baseQuery)
-      val stakeholderFilteredQuery = if (stakeholdersOnly)
-        baseQuery.filter(_.role === PersonRole.Stakeholder)
-      else
-        baseQuery
-      val boardMembersFilteredQuery = if (boardMembersOnly)
-        stakeholderFilteredQuery.filter(_.role === PersonRole.BoardMember)
-      else
-        stakeholderFilteredQuery
-      boardMembersFilteredQuery.sortBy(_.firstName.toLowerCase).list
-  }
-
-  /**
-   * Finds all active people, filtered by stakeholder and/or board member status
-   *
-   * @param stakeholdersOnly Only active stakeholders will be returned
-   * @param boardMembersOnly Only active board members will be returned
-   * @return
-   */
-  def findActive(stakeholdersOnly: Boolean, boardMembersOnly: Boolean): List[Person] = DB.withSession {
-    import models.database.People._
-    implicit session: Session ⇒
-      val baseQuery = Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase)
-      if (boardMembersOnly) {
-        baseQuery.filter(_.role === PersonRole.BoardMember).list
-      } else if (stakeholdersOnly) {
-        baseQuery.filter(_.role =!= PersonRole.NoRole).list
-      } else {
-        baseQuery.list
-      }
+      activeQuery.sortBy(_.firstName.toLowerCase).list
   }
 
   /**
@@ -479,15 +436,6 @@ object Person {
       person ← People if person.id === account.personId
     } yield person
     query.list.toSet
-  }
-
-  /**
-   * Find all board members
-   * @return
-   */
-  def findBoardMembers: Set[Person] = DB.withSession { implicit session: Session ⇒
-    import models.database.People._
-    Query(People).filter(_.role === PersonRole.BoardMember).list.toSet
   }
 
   /**

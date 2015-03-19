@@ -86,7 +86,7 @@ case class Account(id: Option[Long] = None,
   def participants: Set[Person] = accountHolder match {
     case organisation: Organisation ⇒ organisation.people.toSet
     case person: Person ⇒ Set(person)
-    case Levy ⇒ Person.findBoardMembers
+    case Levy ⇒ Person.findActiveAdmins
   }
 
   def balance: Money = Account.findBalance(id.get, currency)
