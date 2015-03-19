@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ OrgData, User, Registration }
+import controllers.{ OrgData, UserData, Registration }
 import play.api.mvc.{ Cookie, SimpleResult }
 import play.api.test.FakeRequest
 import securesocial.core.IdentityId
@@ -235,7 +235,7 @@ class RegistrationSpec extends PlayAppSpec {
     val identity = FakeUserIdentity.unregistered
     val req = prepareSecuredGetRequest(identity, "/")
     val cacheId = controller.callPersonCacheId(identity)
-    val userData = User("First", "Tester", "t@ttt.ru", "RU")
+    val userData = UserData("First", "Tester", "t@ttt.ru", "RU")
     Cache.set(cacheId, userData, 900)
     val result: Future[SimpleResult] = controller.payment().apply(req)
     status(result) must equalTo(OK)
@@ -246,7 +246,7 @@ class RegistrationSpec extends PlayAppSpec {
     val identity = FakeUserIdentity.unregistered
     val req = prepareSecuredGetRequest(identity, "/")
     val cacheId = controller.callPersonCacheId(identity)
-    val userData = User("First", "Tester", "t@ttt.ru", "RU", true, OrgData("One", "DE"))
+    val userData = UserData("First", "Tester", "t@ttt.ru", "RU", true, OrgData("One", "DE"))
     Cache.set(cacheId, userData, 900)
     val result: Future[SimpleResult] = controller.payment().apply(req)
     status(result) must equalTo(OK)

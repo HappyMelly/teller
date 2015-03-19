@@ -50,7 +50,7 @@ import views.Countries
  * @param email Email address
  * @param country Country where the person lives
  */
-case class User(firstName: String,
+case class UserData(firstName: String,
   lastName: String,
   email: String,
   country: String,
@@ -82,7 +82,7 @@ trait Registration extends Controller
       "error.unknown_country",
       (value: String) ⇒ Countries.all.exists(_._1 == value)),
     "org" -> ignored(false),
-    "orgData" -> ignored(OrgData("", "")))(User.apply)(User.unapply))
+    "orgData" -> ignored(OrgData("", "")))(UserData.apply)(UserData.unapply))
 
   private def orgForm = Form(mapping(
     "name" -> nonEmptyText,
@@ -141,7 +141,6 @@ trait Registration extends Controller
 
   /**
    * Renders step 3 page of the registration process
-   * @return
    */
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -217,7 +216,7 @@ trait Registration extends Controller
   def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+        Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
           val person = unregisteredPerson(userData, user).insert
           val org = if (userData.org)
             Some(unregisteredOrg(userData).insert)
@@ -362,10 +361,10 @@ trait Registration extends Controller
   /**
    * Checks if person data are in cache and redirects to a person data form if not
    */
-  protected def checkPersonData(f: User ⇒ SimpleResult)(implicit request: Request[Any],
+  protected def checkPersonData(f: UserData ⇒ SimpleResult)(implicit request: Request[Any],
     handler: AuthorisationHandler,
     user: UserIdentity): SimpleResult = {
-    Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+    Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
       f(userData)
     } getOrElse {
       Redirect(routes.Registration.step2()).
@@ -394,7 +393,7 @@ trait Registration extends Controller
    * @param userData User data
    * @param user Social identity
    */
-  private def unregisteredPerson(userData: User, user: UserIdentity): Person = {
+  private def unregisteredPerson(userData: UserData, user: UserIdentity): Person = {
     val photo = new Photo(None, None)
     val fullName = userData.firstName + " " + userData.lastName
     val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)
@@ -417,7 +416,7 @@ trait Registration extends Controller
    * @param userData User data
    * @return
    */
-  private def unregisteredOrg(userData: User): Organisation = {
+  private def unregisteredOrg(userData: UserData): Organisation = {
     val org = Organisation(userData.orgData.name, userData.orgData.country)
     val fullName = userData.firstName + " " + userData.lastName
     val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)

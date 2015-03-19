@@ -24,7 +24,7 @@
 
 package controllers.integration
 
-import controllers.{ OrgData, PaymentData, Registration, User }
+import controllers.{ OrgData, PaymentData, Registration, UserData }
 import helpers.{ OrganisationHelper, MemberHelper, PersonHelper }
 import integration.{ TruncateBefore, PlayAppSpec }
 import models.service.{ OrganisationService, PersonService }
@@ -91,7 +91,7 @@ class RegistrationSpec extends PlayAppSpec {
       status(result) must equalTo(SEE_OTHER)
       headers(result).get("Location").get must contain("/registration/payment")
       val cacheId = controller.callPersonCacheId(identity)
-      Cache.getAs[User](cacheId) map { userData ⇒
+      Cache.getAs[UserData](cacheId) map { userData ⇒
         userData.firstName must_== "First"
         userData.lastName must_== "Tester"
         userData.email must_== "tt@ttt.ru"
@@ -116,12 +116,12 @@ class RegistrationSpec extends PlayAppSpec {
       val req = prepareSecuredPostRequest(identity, "").
         withFormUrlEncodedBody(("name", "One"), ("country", "RU"))
       val cacheId = controller.callPersonCacheId(identity)
-      val userData = User("First", "Tester", "t@ttt.ru", "RU")
+      val userData = UserData("First", "Tester", "t@ttt.ru", "RU")
       Cache.set(cacheId, userData, 900)
       val result: Future[SimpleResult] = controller.saveOrg().apply(req)
       status(result) must equalTo(SEE_OTHER)
       headers(result).get("Location").get must contain("/registration/payment")
-      Cache.getAs[User](cacheId) map { userData ⇒
+      Cache.getAs[UserData](cacheId) map { userData ⇒
         userData.org must_== true
         userData.orgData.name must_== "One"
         userData.orgData.country must_== "RU"
@@ -131,7 +131,7 @@ class RegistrationSpec extends PlayAppSpec {
   "On charging the system" should {
     val identity = FakeUserIdentity.unregistered
     val cacheId = controller.callPersonCacheId(identity)
-    val userData = User("First", "Member", "t@ttt.ru", "RU")
+    val userData = UserData("First", "Member", "t@ttt.ru", "RU")
     "create a new person and make her a member" in new TruncateBefore {
       Cache.set(cacheId, userData, 900)
       val req = prepareSecuredPostRequest(identity, "").
