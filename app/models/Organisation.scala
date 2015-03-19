@@ -176,6 +176,17 @@ case class Organisation(
 object Organisation {
 
   /**
+   * Returns an organisation with only two required fields filled
+   * @param name Organisation name
+   * @param countryCode Country of residence
+   */
+  def apply(name: String, countryCode: String): Organisation = {
+    val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
+    Organisation(None, name, None, None, None, None, None, countryCode, None,
+      None, None, None, None, None, active = false, date)
+  }
+
+  /**
    * Activates the organisation, if the parameter is true, or deactivates it.
    */
   def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒

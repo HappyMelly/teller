@@ -72,7 +72,12 @@ class RegistrationSpec extends PlayAppSpec {
   'Payment' should
     redirect Viewers to Main page                      $e19
     redirect users to Step 2 if user data is not found $e20
-    redirect users to Step 3 if org data is not found  $e21
+    render payment form for a person if a new member is a person $e21
+    render payment form for an org if a new member is an organization $e22
+
+  'Charge' should
+    redirect Viewers to Main page                      $e23
+    redirect users to Step 2 if user data is not found $e24
   """
 
   val controller = new TestRegistration()
@@ -229,11 +234,40 @@ class RegistrationSpec extends PlayAppSpec {
   def e21 = {
     val identity = FakeUserIdentity.unregistered
     val req = prepareSecuredGetRequest(identity, "/")
-    val userData = User("First", "Test", "t@ttt.ru", "RU")
-    val personCacheId = controller.callPersonCacheId(identity)
-    Cache.set(personCacheId, userData)
-    val result: Future[SimpleResult] = controller.payment(org = true).apply(req)
+    val cacheId = controller.callPersonCacheId(identity)
+    val userData = User("First", "Tester", "t@ttt.ru", "RU")
+    Cache.set(cacheId, userData, 900)
+    val result: Future[SimpleResult] = controller.payment().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("You are from Russia")
+  }
+
+  def e22 = {
+    val identity = FakeUserIdentity.unregistered
+    val req = prepareSecuredGetRequest(identity, "/")
+    val cacheId = controller.callPersonCacheId(identity)
+    val userData = User("First", "Tester", "t@ttt.ru", "RU", true, OrgData("One", "DE"))
+    Cache.set(cacheId, userData, 900)
+    val result: Future[SimpleResult] = controller.payment().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("One is from Germany")
+  }
+
+  def e23 = {
+    val identity = FakeUserIdentity.viewer
+    val req = prepareSecuredPostRequest(identity, "/")
+    val result: Future[SimpleResult] = controller.charge().apply(req)
     status(result) must equalTo(SEE_OTHER)
-    headers(result).get("Location").get must_== "/registration/step3"
+    headers(result).get("Location").get must_== "/"
+  }
+
+  def e24 = {
+    val identity = FakeUserIdentity.unregistered
+    val req = prepareSecuredPostRequest(identity, "/")
+    val cacheId = controller.callPersonCacheId(identity)
+    Cache.remove(cacheId)
+    val result: Future[SimpleResult] = controller.charge().apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("/registration/step2")
   }
 }

@@ -49,21 +49,13 @@ import views.Countries
  * @param lastName Last name
  * @param email Email address
  * @param country Country where the person lives
- * @param org Related organization
  */
 case class User(firstName: String,
   lastName: String,
   email: String,
   country: String,
-  org: Option[OrgData] = None)
-
-object User {
-
-  def apply(firstName: String,
-    lastName: String,
-    email: String,
-    country: String): User = User(firstName, lastName, email, country)
-}
+  org: Boolean = false,
+  orgData: OrgData = OrgData("", ""))
 
 /**
  * Contains registration data required to create an organization
@@ -88,9 +80,9 @@ trait Registration extends Controller
     "email" -> play.api.data.Forms.email,
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
-      (value: String) ⇒ Countries.all.exists(_._1 == value)))(User.apply)({
-      (u: User) ⇒ Some(u.firstName, u.lastName, u.email, u.country)
-    }))
+      (value: String) ⇒ Countries.all.exists(_._1 == value)),
+    "org" -> ignored(false),
+    "orgData" -> ignored(OrgData("", "")))(User.apply)(User.unapply))
 
   private def orgForm = Form(mapping(
     "name" -> nonEmptyText,
@@ -187,48 +179,50 @@ trait Registration extends Controller
   def saveOrg = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        orgForm.bindFromRequest.fold(
-          errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
-          data ⇒ {
-            val id = orgCacheId(user.identityId)
-            Cache.set(id, data, 900)
-            Redirect(routes.Registration.payment())
-          })
-      }
-  }
-
-  /**
-   * Renders Payment page of the registration process
-   *
-   * @param org Defines if a new Supporter is an organization or a person
-   */
-  def payment(org: Boolean = false) = SecuredRestrictedAction(Unregistered) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      redirectViewer {
-        Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
-          val publicKey = Play.configuration.getString("stripe.public_key").get
-          val person = unregisteredPerson(userData, user)
-          val country = userData.org map { _.country } getOrElse userData.country
-          val fee = Payment.countryBasedFees(country)
-          Ok(views.html.registration.payment(Membership.form, person, publicKey, fee))
-        } getOrElse {
-          Redirect(routes.Registration.step2()).
-            flashing("error" -> Messages("login.noUserData"))
+        checkPersonData { implicit userData ⇒
+          orgForm.bindFromRequest.fold(
+            errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
+            data ⇒ {
+              val id = personCacheId(user.identityId)
+              Cache.set(id, userData.copy(org = true, orgData = data), 900)
+              Redirect(routes.Registration.payment())
+            })
         }
       }
   }
 
   /**
-   *
-   * @param org Defines if a new Supporter is an organization or a person
+   * Renders Payment page of the registration process
    */
-  def charge(org: Boolean = false) = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+  def payment = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      if (user.account.viewer) {
-        Redirect(routes.Dashboard.index())
-      } else {
+      redirectViewer {
+        checkPersonData { implicit userData ⇒
+          val publicKey = Play.configuration.getString("stripe.public_key").get
+          val person = unregisteredPerson(userData, user)
+          val country = if (userData.org) userData.orgData.country else userData.country
+          val org = if (userData.org)
+            Some(Organisation(userData.orgData.name, userData.orgData.country))
+          else
+            None
+          val fee = Payment.countryBasedFees(country)
+          Ok(views.html.registration.payment(Membership.form, person, publicKey, fee, org))
+        }
+      }
+  }
+
+  /**
+   * Makes a transaction and creates all objects
+   */
+  def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      redirectViewer {
         Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
           val person = unregisteredPerson(userData, user).insert
+          val org = if (userData.org)
+            Some(unregisteredOrg(userData).insert)
+          else None
+
           Membership.form.bindFromRequest.fold(
             hasError ⇒
               BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
@@ -237,36 +231,22 @@ trait Registration extends Controller
                 if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
                   throw new ValidationException("error.payment.minimum_fee")
                 }
-                val key = Play.configuration.getString("stripe.secret_key").get
-                val payment = new Payment(key)
-                val customerId = payment.subscribe(person,
-                  None,
-                  data.token,
-                  data.fee)
-
+                val customerId = subscribe(person, org, data)
+                org map { x ⇒
+                  x.copy(customerId = Some(customerId), active = true).update
+                  person.copy(active = true).update
+                  person.addRelation(x.id.get)
+                } getOrElse {
+                  person.copy(customerId = Some(customerId), active = true).update
+                }
+                insertAccount(person)
                 val fee = Money.of(EUR, data.fee)
-
-                person.copy(customerId = Some(customerId)).copy(active = true).update
-                val account = UserAccount(None, person.id.get, "viewer",
-                  person.socialProfile.twitterHandle,
-                  person.socialProfile.facebookUrl,
-                  person.socialProfile.linkedInUrl,
-                  person.socialProfile.googlePlusUrl)
-                UserAccount.insert(account)
-
-                val member = person.becomeMember(funder = false, fee)
-                val url = routes.People.details(person.id.get).url
-                val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-                val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
-                  person.fullName,
-                  fee.toString,
-                  fullUrl)
-                slack.send(text)
-                email.send(Set(person),
-                  subject = "Welcome to Happy Melly network",
-                  body = mail.html.welcome(fullUrl, member.profileUrl, person.firstName).toString(),
-                  richMessage = true)
-
+                val member = org map { x ⇒
+                  x.becomeMember(funder = false, fee, person.id.get)
+                } getOrElse {
+                  person.becomeMember(funder = false, fee)
+                }
+                notify(person, org, fee, member)
                 member.activity(person, Activity.Predicate.BecameSupporter).insert
 
                 Ok(Json.obj("redirect" -> routes.Registration.congratulations().url))
@@ -279,14 +259,14 @@ trait Registration extends Controller
                     case "processing_error" ⇒ "error.payment.processing_error"
                     case _ ⇒ "error.payment.unexpected_error"
                   }
-                  personService.delete(person.id.get)
+                  clean(person, org)
                   BadRequest(Json.obj("message" -> Messages(error)))
                 case e: RequestException ⇒
-                  personService.delete(person.id.get)
+                  clean(person, org)
                   e.log.foreach(Logger.error(_))
                   BadRequest(Json.obj("message" -> Messages(e.getMessage)))
                 case e: ValidationException ⇒
-                  personService.delete(person.id.get)
+                  clean(person, org)
                   BadRequest(Json.obj("message" -> Messages(e.getMessage)))
               }
             })
@@ -306,19 +286,64 @@ trait Registration extends Controller
   }
 
   /**
+   * Makes a payment through the payment gateway and creates
+   * an yearly subscription
+   *
+   * @param person Person making all membership-related actions
+   * @param org Organisation which want to become a member
+   * @param data Payment data
+   * @return Returns customer identifier in the payment system
+   */
+  protected def subscribe(person: Person,
+    org: Option[Organisation],
+    data: PaymentData): String = {
+    val key = Play.configuration.getString("stripe.secret_key").get
+    val payment = new Payment(key)
+    payment.subscribe(person, org, data.token, data.fee)
+  }
+
+  protected def insertAccount(person: Person) = {
+    val account = UserAccount(None, person.id.get, "viewer",
+      person.socialProfile.twitterHandle,
+      person.socialProfile.facebookUrl,
+      person.socialProfile.linkedInUrl,
+      person.socialProfile.googlePlusUrl)
+    UserAccount.insert(account)
+  }
+
+  /**
+   * Sends Slack and email notifications
+   * @param person Person making all membership-related actions
+   * @param org Organisation which want to become a member
+   * @param fee Membership fee
+   * @param member Member data
+   */
+  protected def notify(person: Person,
+    org: Option[Organisation],
+    fee: Money,
+    member: Member) = {
+    val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
+    } getOrElse routes.People.details(person.id.get).url
+    val name = org map (_.name) getOrElse person.fullName
+    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+    val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+      name,
+      fee.toString,
+      fullUrl)
+    slack.send(text)
+    val shortName = org map (_.name) getOrElse person.firstName
+    email.send(Set(person),
+      subject = "Welcome to Happy Melly network",
+      body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
+      richMessage = true)
+  }
+
+  /**
    * Returns an unique cache id for a person object of current user
    * @param id Identity object
    */
   protected def personCacheId(id: IdentityId): String = {
     "user_" + id.userId
-  }
-
-  /**
-   * Returns an unique cache id for an org object of current user
-   * @param id Identity object
-   */
-  protected def orgCacheId(id: IdentityId): String = {
-    "org_" + id.userId
   }
 
   /**
@@ -330,6 +355,20 @@ trait Registration extends Controller
     Redirect(routes.Dashboard.index())
   else
     f
+
+  /**
+   * Checks if person data are in cache and redirects to a person data form if not
+   */
+  protected def checkPersonData(f: User ⇒ SimpleResult)(implicit request: Request[Any],
+    handler: AuthorisationHandler,
+    user: UserIdentity): SimpleResult = {
+    Cache.getAs[User](personCacheId(user.identityId)) map { userData ⇒
+      f(userData)
+    } getOrElse {
+      Redirect(routes.Registration.step2()).
+        flashing("error" -> Messages("login.noUserData"))
+    }
+  }
 
   /**
    * Returns first and last names of the given user
@@ -349,23 +388,50 @@ trait Registration extends Controller
 
   /**
    * Returns a person created from registration data
-   * @param user User object
+   * @param userData User data
+   * @param user Social identity
    */
-  private def unregisteredPerson(user: User, remoteUser: UserIdentity): Person = {
+  private def unregisteredPerson(userData: User, user: UserIdentity): Person = {
     val photo = new Photo(None, None)
-    val dateStamp = new DateStamp(DateTime.now(), "", DateTime.now(), "")
-    val person = new Person(None, user.firstName, user.lastName, None, photo,
+    val fullName = userData.firstName + " " + userData.lastName
+    val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)
+    val person = new Person(None, userData.firstName, userData.lastName, None, photo,
       false, 0, None, None, webSite = None, blog = None, active = false,
       dateStamp = dateStamp)
-    val address = new Address(countryCode = user.country)
+    val address = new Address(countryCode = userData.country)
     person.address_=(address)
-    val socialProfile = new SocialProfile(email = user.email,
-      twitterHandle = remoteUser.twitterHandle,
-      facebookUrl = remoteUser.facebookUrl,
-      googlePlusUrl = remoteUser.googlePlusUrl,
-      linkedInUrl = remoteUser.linkedInUrl)
+    val socialProfile = new SocialProfile(email = userData.email,
+      twitterHandle = user.twitterHandle,
+      facebookUrl = user.facebookUrl,
+      googlePlusUrl = user.googlePlusUrl,
+      linkedInUrl = user.linkedInUrl)
     person.socialProfile_=(socialProfile)
     person
+  }
+
+  /**
+   * Returns an org created from registration data
+   * @param userData User data
+   * @return
+   */
+  private def unregisteredOrg(userData: User): Organisation = {
+    val org = Organisation(userData.orgData.name, userData.orgData.country)
+    val fullName = userData.firstName + " " + userData.lastName
+    val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)
+    org.copy(dateStamp = dateStamp)
+  }
+
+  /**
+   * Deletes person and org objects if something goes wrong during registration
+   * process
+   * @param person Person
+   * @param org Organisation
+   */
+  private def clean(person: Person, org: Option[Organisation]) = {
+    personService.delete(person.id.get)
+    org map { x ⇒
+      Organisation.delete(x.id.get)
+    }
   }
 }
 
