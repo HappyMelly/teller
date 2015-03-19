@@ -43,7 +43,7 @@ class TestOrganisation(
   customerId: Option[String] = None,
   active: Boolean = true,
   dateStamp: DateStamp) extends Organisation(id, name, street1, street2, city,
-  province, postCode, countryCode, vatNumber, registrationNumber, None, webSite,
+  province, postCode, countryCode, vatNumber, registrationNumber, webSite,
   blog, customerId, active, dateStamp) with FakeServices
 
 object OrganisationHelper {

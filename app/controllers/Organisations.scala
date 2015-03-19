@@ -41,24 +41,6 @@ import play.api.{ Logger, Play }
 trait Organisations extends Controller with Security with Services {
 
   /**
-   * Formatter used to define a form mapping for the `OrganisationCategory` enumeration.
-   */
-  implicit def categoryFormat: Formatter[OrganisationCategory.Value] = new Formatter[OrganisationCategory.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(OrganisationCategory.withName(_)).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: OrganisationCategory.Value) = Map(key -> value.toString)
-  }
-
-  val categoryMapping = of[OrganisationCategory.Value]
-
-  /**
    * HTML form mapping for creating and editing.
    */
   def organisationForm(implicit user: UserIdentity) = Form(mapping(
@@ -72,7 +54,6 @@ trait Organisations extends Controller with Security with Services {
     "country" -> nonEmptyText,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
-    "category" -> optional(categoryMapping),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "customerId" -> optional(text),

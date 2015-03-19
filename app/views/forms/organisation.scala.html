@@ -13,8 +13,6 @@
 @html.text(form("province"), '_label -> "Province or state")
 @html.text(form("vatNumber"), '_label -> "VAT number")
 @html.text(form("registrationNumber"), '_label -> "Registration number")
-<input type="hidden" id="category" name="category"
-  value="@form("category").value.getOrElse("")"/>
 @html.text(form("webSite"), '_label -> "Web site",
   'placeholder -> "http://", '_help -> "Web site URL")
 @html.text(form("blog"), '_label -> "Blog",
