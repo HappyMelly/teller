@@ -249,7 +249,8 @@ trait Registration extends Controller
                 notify(person, org, fee, member)
                 member.activity(person, Activity.Predicate.BecameSupporter).insert
 
-                Ok(Json.obj("redirect" -> routes.Registration.congratulations().url))
+                val orgId = org map (_.id) getOrElse None
+                Ok(Json.obj("redirect" -> routes.Registration.congratulations(orgId).url))
               } catch {
                 case e: PaymentException ⇒
                   val error = e.code match {
@@ -279,10 +280,12 @@ trait Registration extends Controller
   /**
    * Renders congratulations screen
    *
-   * @param org Defines if a new Supporter is an organization or a person
+   * @param orgId Organisation identifier
    */
-  def congratulations(org: Boolean = false) = Action { implicit request ⇒
-    Ok(views.html.registration.congratulations())
+  def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
+    val url = orgId map { id ⇒ routes.Organisations.details(id).url
+    } getOrElse routes.Dashboard.profile().url
+    Ok(views.html.registration.congratulations(url))
   }
 
   /**

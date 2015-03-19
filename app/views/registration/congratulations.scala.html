@@ -1,4 +1,4 @@
-@()(implicit request: Request[Any], flash: Flash)
+@(url: String)(implicit request: Request[Any], flash: Flash)
 
 @layout.unauthorized("Congratulations") {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
@@ -20,7 +20,7 @@
           being a member of <a href="http://happymelly.com" target="_blank">Happy Melly</a>.
         </p>
       </div>
-      <a class="btn btn-success" href="@(routes.Dashboard.profile().url)#membership">Go to Profile &rarr;</a>
+      <a class="btn btn-success" href="@(url)#membership">Go to Profile &rarr;</a>
     </div>
   </div>
 }

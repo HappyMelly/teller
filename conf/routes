@@ -178,7 +178,7 @@ POST        /registration/save/org                                    controller
 GET         /registration/payment                                     controllers.Registration.payment
 POST        /registration/payment                                     controllers.Registration.charge
 GET         /registration/authenticate/:provider                      controllers.Registration.authenticate(provider)
-GET         /registration/congratulations                             controllers.Registration.congratulations(org: Boolean ?= false)
+GET         /registration/congratulations                             controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
 
 GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)
