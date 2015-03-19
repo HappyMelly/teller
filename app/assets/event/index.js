@@ -23,6 +23,18 @@
  */
 
 /**
+ * Show success message
+ * @param message {string}
+ */
+function showSuccess(message) {
+    $('.alert-block').append(
+        $('<div class="alert alert-success">')
+            .text(message)
+            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+    );
+}
+
+/**
  * Set a facilitator filter to current user (if exists)
  */
 function initFacilitatorsFilter() {
@@ -69,7 +81,7 @@ function updateFacilitatorsFilter(brand) {
     $('#facilitators').empty().append('<option value="all">All</option>');
     records.sort(function(a, b) {
         return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
-    })
+    });
     for(var i = 0; i < records.length; i++) {
         if (records[i].name) {
             var option = $("<option></option>").attr("value", records[i].id).text(records[i].name);
@@ -110,6 +122,41 @@ function makeRequestUrl() {
         request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
     }
     return request;
+}
+
+/**
+ * Render a dropdown with actions for an event
+ *
+ * @param data {object}
+ * @returns {string}
+ */
+function renderDropdown(data) {
+    var emptyDropdown = true;
+    var html = '<div class="dropdown">';
+    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
+    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
+    if ('edit' in data && data.edit) {
+        if ('edit' in data && data.edit) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + data.edit;
+            html += '" title="Edit Event"><i class="glyphicon glyphicon-pencil"></i> Edit</a></li>';
+        }
+        if ('duplicate' in data && data.duplicate) {
+            emptyDropdown = false;
+            html += '<li><a tabindex="-1" href="' + data.duplicate;
+            html += '" title="Duplicate Event"><i class="glyphicon glyphicon-edit"></i> Duplicate</a></li>';
+        }
+        if ('remove' in data && data.remove) {
+            emptyDropdown = false;
+            html += '<li><a class="delete" tabindex="-1" href="#delete" data-href="' + data.remove;
+            html += '" data-toggle="modal" title="Delete Event"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
+        }
+    }
+    html += '</ul></div>';
+    if (emptyDropdown) {
+        return '';
+    }
+    return html;
 }
 
 $(document).ready( function() {
@@ -182,12 +229,7 @@ $(document).ready( function() {
             "targets": 8
         },{
             "render": function(data) {
-                var html = '';
-                if ('edit' in data && data.edit.length > 0) {
-                    html += '<a href="' + data.edit + '"><i class="glyphicon glyphicon-pencil"></i> Edit</a><br/>';
-                    html += '<a href="' + data.duplicate + '"><i class="glyphicon glyphicon-edit"></i> Duplicate</a><br/>';
-                }
-                return html;
+                return renderDropdown(data);
             },
             "targets": 9
         }]
@@ -220,4 +262,19 @@ $(document).ready( function() {
     $('#facilitators').on('change', function() { updateTable(); });
 
     events.fnDraw();
+
+    $("#events").on('click', '.delete', function(){
+        $("#deleteLink").attr('href', $(this).data('href'));
+    });
+    $('#deleteLink').on('click', function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr("href")
+        }).done(function(data){
+            updateTable();
+            $("#delete").modal('hide');
+            showSuccess("You successfully deleted the event")
+        });
+    });
 });

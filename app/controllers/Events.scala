@@ -440,6 +440,11 @@ object Events extends Controller
                   if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
                     routes.Events.duplicate(data.id.get).url
                   } else ""
+                },
+                "remove" -> {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.delete(data.id.get).url
+                  } else ""
                 })
             })
         }
