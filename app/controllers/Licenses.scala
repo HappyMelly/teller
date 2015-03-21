@@ -24,22 +24,20 @@
 
 package controllers
 
-import models._
 import models.JodaMoney.jodaMoney
-import models.service.PersonService
-import org.joda.time.LocalDate
+import models.UserRole.Role._
+import models._
+import models.service.{ PersonService, Services }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
-import scala.util.{ Failure, Success, Try }
-import models.UserRole.Role._
 
 /**
  * Content license pages and API.
  */
-object Licenses extends Controller with Security {
+object Licenses extends Controller with Security with Services {
 
   /**
    * HTML form mapping for creating and editing.
@@ -97,7 +95,7 @@ object Licenses extends Controller with Security {
           form ⇒ BadRequest(views.html.license.form(user, None, form, person)),
           license ⇒ {
             val newLicense = License.insert(license.copy(licenseeId = personId))
-            val brand = Brand.find(newLicense.brandId).get
+            val brand = brandService.find(newLicense.brandId).get
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)

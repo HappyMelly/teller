@@ -18,40 +18,14 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.service
 
-import models.Brand
-import models.database.Brands
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+package stubs
 
-import scala.slick.lifted.Query
+import models.service.brand.EventTypeService
 
-class BrandService {
+class FakeEventTypeService extends EventTypeService {
 
-  /**
-   * Returns brand if it exists, otherwise - None
-   * @param id Brand identifier
-   */
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.id === id).firstOption
-  }
-
-  /**
-   * Returns a list of all brands
-   */
-  def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
-    Query(Brands).sortBy(_.name.toLowerCase).list
-  }
-}
-
-object BrandService {
-  private val instance = new BrandService
-
-  def get: BrandService = instance
 }

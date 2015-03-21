@@ -27,7 +27,7 @@ package controllers
 import controllers.Forms._
 import models._
 import models.brand.EventType
-import models.service.EventService
+import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.data.validation.Constraints
 import play.api.mvc._
@@ -45,7 +45,7 @@ import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 
-object Brands extends Controller with Security {
+object Brands extends Controller with Security with Services {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -216,7 +216,7 @@ object Brands extends Controller with Security {
     implicit handler ⇒ implicit user ⇒
       Brand.find(code).map {
         case BrandView(brand, coordinator, licenseIds) ⇒ {
-          val eventTypes = EventType.findByBrand(brand.id.get)
+          val eventTypes = eventTypeService.findByBrand(brand.id.get)
           Ok(views.html.brand.details(user, brand, coordinator, eventTypes))
         }
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))

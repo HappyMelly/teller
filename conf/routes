@@ -41,6 +41,8 @@ GET         /brand/:code/edit                                         controller
 POST        /brand/:code/delete                                       controllers.Brands.delete(code)
 GET         /brand/:code/picture                                      controllers.Brands.picture(code: String)
 POST        /brand/:code/picture/delete                               controllers.Brands.deletePicture(code: String)
+GET         /brand/:code/eventtypes                                   controllers.EventTypes.index(code: String)
+
 
 GET         /brand/:code/template                                     controllers.CertificateTemplates.add(code: String)
 POST        /brand/:code/template                                     controllers.CertificateTemplates.create(code: String)
@@ -76,8 +78,8 @@ POST        /event/:id/delete                                         controller
 POST        /event/:id/invoice                                        controllers.Events.invoice(id: Long)
 POST        /event/:id/send                                           controllers.Events.sendRequest(id: Long)
 
-GET         /eventtypes/:brandCode                                    controllers.EventTypes.index(brandCode: String)
 POST        /eventtype/new                                            controllers.EventTypes.create
+POST        /eventtype/:id                                            controllers.EventTypes.update(id: Long)
 GET         /eventtype/:id/delete                                     controllers.EventTypes.delete(id: Long)
 
 GET         /exchangerate                                             controllers.ExchangeRates.rate

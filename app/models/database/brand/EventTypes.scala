@@ -42,4 +42,5 @@ private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
   def * = id.? ~ brandId ~ name ~ defaultTitle <> (EventType.apply _, EventType.unapply _)
 
   def forInsert = * returning id
+  def forUpdate = name ~ defaultTitle
 }
