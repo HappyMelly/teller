@@ -129,6 +129,8 @@ error.event.nofacilitators = An event should have at least one facilitator
 error.event.wrongFacilitators = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete this event type because there are several events of this type
 error.eventType.nameWrongLength = A name of event type should not be empty or more than 254 characters long
+event.eventType.nameExists = An event with the given name already exists
+event.eventType.notFound = The event type you try to update is not found
 error.language.unknown = Unknown language
 
 error.membership.tooEarly = Membership date cannot be earlier than 2015-01-01

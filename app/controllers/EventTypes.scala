@@ -35,21 +35,21 @@ import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 
-object EventTypes extends Controller with Security with Services {
+trait EventTypes extends Controller with Security with Services {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "brandId" -> nonEmptyText.transform(_.toLong,
-      (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ Brand.find(brandId).isDefined),
+      (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ brandService.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),
-    "defaultTitle" -> optional(text(maxLength = 254)))(EventType.apply)(EventType.unapply))
+    "title" -> optional(text(maxLength = 254)))(EventType.apply)(EventType.unapply))
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(data: EventType): JsValue = {
       Json.obj(
         "name" -> data.name,
-        "defaultTitle" -> data.defaultTitle,
+        "title" -> data.defaultTitle,
         "id" -> data.id.get)
     }
   }
@@ -62,7 +62,7 @@ object EventTypes extends Controller with Security with Services {
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Brand.find(brandCode).map { brand ⇒
-        Ok(Json.toJson(EventType.findByBrand(brand.brand.id.get)))
+        Ok(Json.toJson(eventTypeService.findByBrand(brand.brand.id.get)))
       }.getOrElse(NotFound("Unknown brand"))
   }
 
@@ -73,7 +73,7 @@ object EventTypes extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
-      val brand = Brand.find(boundForm.data("brandId").toLong).get
+      val brand = brandService.find(boundForm.data("brandId").toLong).get
       val route = routes.Brands.details(brand.code).url + "#eventTypes"
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
@@ -84,6 +84,34 @@ object EventTypes extends Controller with Security with Services {
             Some(brand)).insert
           Redirect(route).flashing("success" -> activity.toString)
         })
+  }
+
+  /**
+   * Updates the given event type
+   * @param id Event type identifier
+   */
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      eventTypeService.find(id) map { x ⇒
+        eventTypeForm.bindFromRequest.fold(
+          hasErrors ⇒ {
+            println(hasErrors.errors.toString)
+            BadRequest(Json.toJson(Json.obj(
+              "message" -> Messages("event.eventType.notFound"))))
+          },
+          updated ⇒ {
+            val types = eventTypeService.findByBrand(updated.brandId)
+            if (types.exists(y ⇒ y.name == updated.name && y.id.get != id)) {
+              BadRequest(Json.toJson(Json.obj(
+                "message" -> Messages("event.eventType.nameExists"))))
+            } else {
+              eventTypeService.update(updated.copy(id = Some(id)))
+              Ok(Json.obj("message" -> "success"))
+            }
+          })
+      } getOrElse
+        NotFound(Json.toJson(Json.obj(
+          "message" -> Messages("event.eventType.notFound"))))
   }
 
   /**
@@ -113,3 +141,5 @@ object EventTypes extends Controller with Security with Services {
   }
 
 }
+
+object EventTypes extends EventTypes

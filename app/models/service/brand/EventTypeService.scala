@@ -41,6 +41,28 @@ class EventTypeService {
     implicit session: Session ⇒
       Query(EventTypes).filter(_.id === id).firstOption
   }
+
+  /**
+   * Returns a list of event types for the given brand
+   *
+   * @param brandId Brand identifier
+   */
+  def findByBrand(brandId: Long): List[EventType] = DB.withSession {
+    implicit session: Session ⇒
+      Query(EventTypes).filter(_.brandId === brandId).list
+  }
+
+  /**
+   * Updates the given event type in database
+   * @param value Event type object
+   * @return Returns the updated object
+   */
+  def update(value: EventType): EventType = DB.withSession {
+    implicit session: Session ⇒
+      val tuple = (value.name, value.defaultTitle)
+      Query(EventTypes).filter(_.id === value.id).map(_.forUpdate).update(tuple)
+      value
+  }
 }
 
 object EventTypeService {

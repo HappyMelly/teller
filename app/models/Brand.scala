@@ -229,11 +229,6 @@ object Brand {
     (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName.toLowerCase)(ord)
   }
 
-  /** Finds a brand by ID **/
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.id === id).firstOption
-  }
-
   /** Finds all brands belonging to one coordinator **/
   def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
     Query(Brands).filter(_.coordinatorId === coordinatorId).list

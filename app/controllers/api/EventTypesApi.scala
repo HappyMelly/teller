@@ -25,13 +25,14 @@ package controllers.api
 
 import models.Brand
 import models.brand.EventType
+import models.service.Services
 import play.api.libs.json._
 import play.mvc.Controller
 
 /**
  * Event types API
  */
-object EventTypesApi extends Controller with ApiAuthentication {
+object EventTypesApi extends Controller with ApiAuthentication with Services {
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(eventType: EventType): JsValue = {
@@ -47,6 +48,6 @@ object EventTypesApi extends Controller with ApiAuthentication {
    * Event types list API.
    */
   def types(brandCode: String) = TokenSecuredAction { implicit request ⇒
-    Ok(Json.prettyPrint(Json.toJson(EventType.findByBrand(Brand.find(brandCode).map(_.brand.id.get).getOrElse(0)))))
+    Ok(Json.prettyPrint(Json.toJson(eventTypeService.findByBrand(Brand.find(brandCode).map(_.brand.id.get).getOrElse(0)))))
   }
 }
