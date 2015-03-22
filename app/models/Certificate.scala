@@ -24,18 +24,22 @@
 
 package models
 
-import com.itextpdf.text.Image
+import java.io.ByteArrayOutputStream
+
+import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
+import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.brand.CertificateTemplate
-import models.service.EventService
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.cache.Cache
+import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
 import services.notifiers.Notifiers
 
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
@@ -47,13 +51,20 @@ case class Certificate(
   participant: Person,
   renew: Boolean = false) extends Notifiers {
 
-  val id = {
+  val id =
     issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"
-  }
 
+  /**
+   * Creates and sends new certificate to a participant
+   * @param brand Brand data
+   * @param approver Person who generates the certificate
+   */
   def generateAndSend(brand: BrandView, approver: Person) {
     val contentType = "application/pdf"
-    val pdf = generate(issued, event, participant)
+    val pdf = if (brand.brand.code == "LCM")
+      lcmCertificate(event, participant)
+    else
+      m30Certificate(issued, event, participant)
     if (renew) {
       Certificate.removeFromCloud(id)
     }
@@ -75,7 +86,12 @@ case class Certificate(
   private def sendEmail(brand: BrandView, approver: Person, data: Array[Byte]) {
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
-    val name = "your-management-3-0-certificate-" + LocalDate.now().toString + ".pdf"
+    val brandName = brand.brand.code match {
+      case "LCM" ⇒ "lean-change-management-"
+      case "MGT30" ⇒ "management-3-0-"
+      case _ ⇒ ""
+    }
+    val name = "your-%scertificate-%s.pdf".format(brandName, LocalDate.now().toString)
     val body = mail.html.approved(brand.brand, participant, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
     email.send(Set(participant),
@@ -87,21 +103,102 @@ case class Certificate(
       Some((file.getPath, name)))
   }
 
-  /** Generate a Management 3.0 certificate (the only one supported right now) */
-  private def generate(handledDate: Option[LocalDate],
-    event: Event,
-    participant: Person): Array[Byte] = {
-    import java.io.ByteArrayOutputStream
-
-    import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
-    import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
-    import play.api.i18n.Messages
-
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
+  /**
+   * Returns new generated LCM certificate
+   * @param event Event
+   * @param participant Participant
+   */
+  private def lcmCertificate(event: Event, participant: Person): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
-    val baseFont = BaseFont.createFont("reports/MGT30/DejaVuSerif.ttf",
+    val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
+      BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+
+    val output = new ByteArrayOutputStream()
+    val writer = PdfWriter.getInstance(document, output)
+    document.open()
+    val facilitators = event.facilitators
+    val cofacilitator = if (facilitators.length > 1) true else false
+    val img = template(event, cofacilitator)
+    img.setAbsolutePosition(28, 0)
+    img.scalePercent(77)
+    document.add(img)
+
+    val font = new Font(baseFont, 40)
+    font.setColor(0, 0, 0)
+
+    val name = new Phrase(participant.fullName, font)
+    val title = new Phrase(event.title, font)
+    val dateString = if (event.schedule.start == event.schedule.end) {
+      event.schedule.end.toString("MMMM d")
+    } else {
+      event.schedule.start.toString("MMMM d, ") + event.schedule.end.toString("d")
+    }
+    val location = "%s in %s, %s".format(dateString, event.location.city,
+      Messages("country." + event.location.countryCode))
+    val locationPhrase = new Phrase(location, font)
+
+    val canvas = writer.getDirectContent
+    canvas.saveState()
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 320, 0)
+    font.setSize(30)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, locationPhrase, PageSize.A4.getHeight / 2, 178, 0)
+    font.setSize(18)
+
+    if (cofacilitator) {
+      val firstFacilitator = facilitators.head
+      val secondFacilitator = facilitators.last
+      val firstName = new Phrase(firstFacilitator.fullName, font)
+      val secondName = new Phrase(secondFacilitator.fullName, font)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 160, 15, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 685, 15, 0)
+      if (firstFacilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(firstFacilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.setAbsolutePosition(120, 45)
+        signature.scaleToFit(150, 50)
+        document.add(signature)
+      }
+      if (secondFacilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(secondFacilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.setAbsolutePosition(650, 45)
+        signature.scaleToFit(150, 50)
+        document.add(signature)
+      }
+    } else {
+      val facilitator = facilitators.head
+      val name = new Phrase(facilitator.fullName, font)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 685, 15, 0)
+      if (facilitator.signature) {
+        val imageData = Await.result(Person.downloadFromCloud(facilitator.id.get),
+          5 seconds)
+        val signature = Image.getInstance(imageData, true)
+        signature.scaleToFit(150, 50)
+        signature.setAbsolutePosition(650, 45)
+        document.add(signature)
+      }
+    }
+    canvas.restoreState
+    document.close()
+
+    output.toByteArray
+  }
+
+  /**
+   * Returns new generated M30 certificate for the given participant
+   * @param handledDate The date participant's evaluation was approved
+   * @param event Event
+   * @param participant Participant
+   */
+  private def m30Certificate(handledDate: Option[LocalDate],
+    event: Event,
+    participant: Person): Array[Byte] = {
+
+    val document = new Document(PageSize.A4.rotate)
+    val baseFont = BaseFont.createFont("reports/fonts/DejaVuSerif.ttf",
       BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
 
     val output = new ByteArrayOutputStream()
@@ -193,12 +290,12 @@ case class Certificate(
    */
   private def template(event: Event, twoFacilitators: Boolean): Image = {
     val templates = CertificateTemplate.findByBrand(event.brandCode)
-    val data = templates.find(_.language == event.language.spoken).map { template ⇒
-      if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
-    }.getOrElse {
-      templates.find(_.language == "EN").map { template ⇒
-        if (twoFacilitators) template.twoFacilitators else template.oneFacilitator
-      }.getOrElse(Array[Byte]())
+    val data = templates.find(_.language == event.language.spoken) map { tpl ⇒
+      if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
+    } getOrElse {
+      templates.find(_.language == "EN") map { tpl ⇒
+        if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
+      } getOrElse Array[Byte]()
     }
     Image.getInstance(data)
   }
