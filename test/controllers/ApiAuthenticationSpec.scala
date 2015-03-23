@@ -29,6 +29,8 @@ import controllers.api.ApiAuthentication
 import models.admin.ApiToken
 import models.service.admin.ApiTokenService
 import org.scalamock.specs2.IsolatedMockFactory
+import play.api.mvc.{ AnyContent, Request, Result, SimpleResult }
+import play.api.mvc.Results._
 import play.api.test.FakeRequest
 import stubs.FakeServices
 
@@ -38,8 +40,9 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
   A user should
     get Unauthorized if api token is not present in a query string $e1
     get Unauthorized if token does not exists                      $e2
-    get Unauthorized if token is found in db but not authorized to run the action $e3
-    get OK if token is found in db and is authorized to run the action $e4
+    get Unauthorized if token is unauthorized to run the action    $e3
+    get OK if token is authorized to run the action                $e4
+    get OK if token is found in db and is authorized to run the action $e5
   """
 
   class TestApiAuthentication extends ApiAuthentication with FakeServices {
@@ -51,6 +54,10 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
     def readWrite = TokenSecuredAction(readWrite = true) { implicit request ⇒
       Ok("ok")
     }
+
+    def callAuthorize(readWrite: Boolean,
+      token: ApiToken)(f: Request[AnyContent] ⇒ Result)(implicit request: Request[AnyContent]): Result =
+      authorize(readWrite, token)(f)(request)
   }
 
   val controller = new TestApiAuthentication
@@ -71,13 +78,21 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val req = FakeRequest("GET", "readwrite?api_token=test")
-    val token = Some(ApiToken(None, "test", "test", "", None, readWrite = false))
-    (apiTokenService.find(_: String)).expects("test").returning(token)
-    val res = controller.readWrite().apply(req)
-    status(res) must_== UNAUTHORIZED
+    val token = ApiToken(None, "test", "test", "", None, readWrite = false)
+    val res: Result = controller.callAuthorize(readWrite = true, token)(_ ⇒ Ok("ok"))(req)
+    res must beAnInstanceOf[SimpleResult]
+    res.asInstanceOf[SimpleResult].header.status must_== UNAUTHORIZED
   }
 
   def e4 = {
+    val req = FakeRequest("GET", "readwrite?api_token=test")
+    val token = ApiToken(None, "test", "test", "", None, readWrite = true)
+    val res: Result = controller.callAuthorize(readWrite = false, token)(_ ⇒ Ok("ok"))(req)
+    res must beAnInstanceOf[SimpleResult]
+    res.asInstanceOf[SimpleResult].header.status must_== OK
+  }
+
+  def e5 = {
     val req = FakeRequest("GET", "readwrite?api_token=test")
     val token = Some(ApiToken(None, "test", "test", "", None, readWrite = true))
     (apiTokenService.find(_: String)).expects("test").returning(token)

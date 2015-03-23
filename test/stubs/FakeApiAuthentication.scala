@@ -34,4 +34,9 @@ trait FakeApiAuthentication extends ApiAuthentication {
     implicit request ⇒
       f(request)
   }
+
+  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] => Result) = Action {
+    implicit request =>
+      f(request)
+  }
 }

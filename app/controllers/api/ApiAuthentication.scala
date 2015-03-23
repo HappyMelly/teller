@@ -82,18 +82,31 @@ trait ApiAuthentication extends Controller with Services {
     implicit request ⇒
       request.getQueryString(ApiTokenParam) map { value ⇒
         Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
-          if (token.authorized(readWrite))
-            f(request)
-          else
-            Unauthorized("Unauthorized")
+          authorize(readWrite, token)(f)
         } getOrElse {
           apiTokenService.find(value) map { token ⇒
-            if (token.authorized(readWrite))
-              f(request)
-            else
-              Unauthorized("Unauthorized")
-          } getOrElse Unauthorized("Unauthorized")
+            authorize(readWrite, token)(f)
+          } getOrElse NotAuthorized
         }
-      } getOrElse Unauthorized("Unauthorized")
+      } getOrElse NotAuthorized
   }
+
+  /**
+   * Checks if token is authorized to run the given function and runs it
+   *  if the check is successful
+   * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
+   * @param token Token of interest
+   * @param f Function to run
+   * @param request Request object
+   * @return Returns the result of function execution or Unauthorized
+   */
+  protected def authorize(readWrite: Boolean,
+    token: ApiToken)(f: Request[AnyContent] ⇒ Result)(implicit request: Request[AnyContent]): Result = {
+    if (token.authorized(readWrite))
+      f(request)
+    else
+      NotAuthorized
+  }
+
+  protected def NotAuthorized = Unauthorized("Unauthorized")
 }
