@@ -22,7 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.unit.controllers
+package controllers.unit
 
 import controllers.Registration
 import models.UserIdentity

@@ -25,6 +25,8 @@
 package controllers.api
 
 import models.UserIdentity
+import models.admin.ApiToken
+import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.mvc._
@@ -32,11 +34,15 @@ import play.api.mvc._
 /**
  * Provides token-based authentication for API actions.
  */
-trait ApiAuthentication extends Controller {
+trait ApiAuthentication extends Controller with Services {
 
-  /** Make an action require token authentication **/
+  /**
+   * Make an action require token authentication
+   *
+   * @deprecated
+   */
   def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap { token ⇒
+    request.getQueryString(ApiTokenParam).flatMap { token ⇒
       Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
         Some(f(request))
       }.getOrElse {
@@ -48,9 +54,12 @@ trait ApiAuthentication extends Controller {
     }.getOrElse(Unauthorized("Unauthorized"))
   }
 
-  /** Make an action require token authentication **/
+  /**
+   * Make an action require token authentication
+   * @deprecated
+   */
   def TokenSecuredActionWithIdentity(f: (Request[AnyContent], UserIdentity) ⇒ Result) = Action { implicit request ⇒
-    request.getQueryString(ApiToken).flatMap { token ⇒
+    request.getQueryString(ApiTokenParam).flatMap { token ⇒
       Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
         Some(f(request, identity))
       }.getOrElse {
@@ -62,6 +71,29 @@ trait ApiAuthentication extends Controller {
     }.getOrElse(Unauthorized("Unauthorized"))
   }
 
-  val ApiToken = "api_token"
+  val ApiTokenParam = "api_token"
 
+  /**
+   * Checks token authorization
+   * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
+   * @param f Function to run
+   */
+  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
+    implicit request ⇒
+      request.getQueryString(ApiTokenParam) map { value ⇒
+        Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
+          if (token.authorized(readWrite))
+            f(request)
+          else
+            Unauthorized("Unauthorized")
+        } getOrElse {
+          apiTokenService.find(value) map { token ⇒
+            if (token.authorized(readWrite))
+              f(request)
+            else
+              Unauthorized("Unauthorized")
+          } getOrElse Unauthorized("Unauthorized")
+        }
+      } getOrElse Unauthorized("Unauthorized")
+  }
 }

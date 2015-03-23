@@ -25,9 +25,11 @@
 package stubs
 
 import models.service.Services
+import models.service.admin.ApiTokenService
 
 trait FakeServices extends Services {
 
+  private var _apiTokenService = new ApiTokenService
   private var _brandService = new FakeBrandService
   private var _contributionService = new FakeContributionService
   private var _evaluationService = new StubEvaluationService
@@ -41,6 +43,9 @@ trait FakeServices extends Services {
   private var _personService = new FakePersonService
   private var _productService = new FakeProductService
   private var _userAccountService = new FakeUserAccountService
+
+  def apiTokenService_=(service: ApiTokenService) = _apiTokenService = service
+  override def apiTokenService: ApiTokenService = _apiTokenService
 
   def brandService_=(service: FakeBrandService) = {
     _brandService = service

@@ -41,7 +41,6 @@ class APIError(val code: ErrorCode.Value,
   val message: String,
   val field: Option[String] = None,
   val subErrors: Option[Seq[APIError]] = None) {
-
 }
 
 object ErrorCode extends Enumeration {
