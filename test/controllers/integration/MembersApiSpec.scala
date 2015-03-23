@@ -24,7 +24,7 @@
 
 package controllers.integration
 
-import controllers.api.MembersApi
+import controllers.apiv2.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import org.scalamock.specs2.MockContext

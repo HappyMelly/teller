@@ -22,15 +22,15 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.api.ApiAuthentication
+import controllers.apiv2.ApiAuthentication
 import models.admin.ApiToken
 import models.service.admin.ApiTokenService
 import org.scalamock.specs2.IsolatedMockFactory
-import play.api.mvc.{ AnyContent, Request, Result, SimpleResult }
 import play.api.mvc.Results._
+import play.api.mvc.{ AnyContent, Request, Result, SimpleResult }
 import play.api.test.FakeRequest
 import stubs.FakeServices
 

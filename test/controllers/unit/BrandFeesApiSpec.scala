@@ -24,7 +24,7 @@
 
 package controllers.unit
 
-import controllers.api.BrandFeesApi
+import controllers.apiv2.BrandFeesApi
 import models.brand.BrandFee
 import org.joda.money.Money
 import org.scalamock.specs2.MockContext

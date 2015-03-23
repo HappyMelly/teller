@@ -25,7 +25,6 @@
 package controllers.api
 
 import models.UserIdentity
-import models.admin.ApiToken
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
@@ -72,41 +71,4 @@ trait ApiAuthentication extends Controller with Services {
   }
 
   val ApiTokenParam = "api_token"
-
-  /**
-   * Checks token authorization
-   * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
-   * @param f Function to run
-   */
-  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
-    implicit request ⇒
-      request.getQueryString(ApiTokenParam) map { value ⇒
-        Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
-          authorize(readWrite, token)(f)
-        } getOrElse {
-          apiTokenService.find(value) map { token ⇒
-            authorize(readWrite, token)(f)
-          } getOrElse NotAuthorized
-        }
-      } getOrElse NotAuthorized
-  }
-
-  /**
-   * Checks if token is authorized to run the given function and runs it
-   *  if the check is successful
-   * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
-   * @param token Token of interest
-   * @param f Function to run
-   * @param request Request object
-   * @return Returns the result of function execution or Unauthorized
-   */
-  protected def authorize(readWrite: Boolean,
-    token: ApiToken)(f: Request[AnyContent] ⇒ Result)(implicit request: Request[AnyContent]): Result = {
-    if (token.authorized(readWrite))
-      f(request)
-    else
-      NotAuthorized
-  }
-
-  protected def NotAuthorized = Unauthorized("Unauthorized")
 }

@@ -24,7 +24,7 @@
 
 package controllers.acceptance
 
-import controllers.api.{ ApiAuthentication, MembersApi }
+import controllers.apiv2.{ ApiAuthentication, MembersApi }
 import org.specs2.mutable._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._

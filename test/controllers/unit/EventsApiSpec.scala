@@ -24,7 +24,7 @@
 */
 package controllers.unit
 
-import controllers.api.{ ApiAuthentication, EventsApi }
+import controllers.apiv2.{ ApiAuthentication, EventsApi }
 import helpers.{ EventHelper, PersonHelper }
 import models.Event
 import org.scalamock.specs2.MockContext

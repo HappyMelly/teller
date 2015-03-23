@@ -24,19 +24,16 @@
  */
 package stubs
 
-import controllers.api.ApiAuthentication
+import controllers.apiv2.ApiAuthentication
 import play.api.mvc._
 
 /** Stubs api authentication */
 trait FakeApiAuthentication extends ApiAuthentication {
+  var readWrite: Boolean = false
 
-  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
+  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
     implicit request ⇒
-      f(request)
-  }
-
-  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] => Result) = Action {
-    implicit request =>
+      this.readWrite = readWrite
       f(request)
   }
 }
