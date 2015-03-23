@@ -26,6 +26,7 @@ package stubs
 
 import models.service.Services
 import models.service.admin.ApiTokenService
+import models.service.brand.BrandFeeService
 
 trait FakeServices extends Services {
 
@@ -35,7 +36,7 @@ trait FakeServices extends Services {
   private var _evaluationService = new StubEvaluationService
   private var _eventService = new StubEventService
   private var _eventTypeService = new FakeEventTypeService
-  private var _feeService = new FakeBrandFeeService
+  private var _feeService = new BrandFeeService
   private var _licenseService = new FakeLicenseService
   private var _memberService = new FakeMemberService
   private var _orgService = new FakeOrganisationService
@@ -73,8 +74,8 @@ trait FakeServices extends Services {
   def eventTypeService_=(service: FakeEventTypeService) = _eventTypeService = service
   override def eventTypeService: FakeEventTypeService = _eventTypeService
 
-  def feeService_=(service: FakeBrandFeeService) = _feeService = service
-  override def feeService: FakeBrandFeeService = _feeService
+  def feeService_=(service: BrandFeeService) = _feeService = service
+  override def feeService: BrandFeeService = _feeService
 
   def licenseService_=(service: FakeLicenseService) = {
     _licenseService = service

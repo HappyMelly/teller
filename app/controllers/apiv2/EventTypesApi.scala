@@ -21,11 +21,38 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package controllers.apiv2
 
-package stubs
+import models.Brand
+import models.brand.EventType
+import models.service.Services
+import play.api.libs.json._
+import play.mvc.Controller
 
-import models.service.brand.BrandFeeService
+/**
+ * Event types API
+ */
+trait EventTypesApi extends Controller with ApiAuthentication with Services {
 
-class FakeBrandFeeService extends BrandFeeService {
+  implicit val eventTypeWrites = new Writes[EventType] {
+    def writes(eventType: EventType): JsValue = {
+      Json.obj(
+        "id" -> eventType.id,
+        "brand" -> eventType.brand.code,
+        "name" -> eventType.name,
+        "title" -> eventType.defaultTitle)
+    }
+  }
 
+  /**
+   * Returns a list of event types for the given brand in JSON format
+   * @param code Brand code
+   */
+  def types(code: String) = TokenSecuredAction(readWrite = false) {
+    implicit request ⇒
+      val brandId = Brand.find(code) map (_.brand.id.get) getOrElse 0L
+      jsonOk(Json.toJson(eventTypeService.findByBrand(brandId)))
+  }
 }
+
+object EventTypesApi extends EventTypesApi with ApiAuthentication

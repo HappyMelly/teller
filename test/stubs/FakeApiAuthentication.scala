@@ -29,11 +29,23 @@ import play.api.mvc._
 
 /** Stubs api authentication */
 trait FakeApiAuthentication extends ApiAuthentication {
+
+  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
+    implicit request ⇒
+      f(request)
+  }
+}
+
+/**
+ * This trait is used to test that API methods have valid read/write token
+ *  authentication
+ */
+trait FakeNoCallApiAuthentication extends ApiAuthentication {
   var readWrite: Boolean = false
 
   override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
     implicit request ⇒
       this.readWrite = readWrite
-      f(request)
+      Ok("test")
   }
 }

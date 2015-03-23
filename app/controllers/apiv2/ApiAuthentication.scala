@@ -24,11 +24,11 @@
 
 package controllers.apiv2
 
-import models.UserIdentity
 import models.admin.ApiToken
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
+import play.api.libs.json._
 import play.api.mvc._
 
 /**
@@ -51,9 +51,9 @@ trait ApiAuthentication extends Controller with Services {
         } getOrElse {
           apiTokenService.find(value) map { token ⇒
             authorize(readWrite, token)(f)
-          } getOrElse NotAuthorized
+          } getOrElse jsonUnauthorized
         }
-      } getOrElse NotAuthorized
+      } getOrElse jsonUnauthorized
   }
 
   /**
@@ -70,8 +70,14 @@ trait ApiAuthentication extends Controller with Services {
     if (token.authorized(readWrite))
       f(request)
     else
-      NotAuthorized
+      jsonUnauthorized
   }
 
-  protected def NotAuthorized = Unauthorized("Unauthorized")
+  protected def jsonUnauthorized = Unauthorized("Unauthorized")
+
+  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
+
+  protected def jsonNotFound(msg: String) = NotFound(msg)
+
+  protected def jsonBadRequest(msg: String) = BadRequest(msg)
 }

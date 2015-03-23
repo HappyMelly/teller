@@ -85,12 +85,6 @@ class EventsApiSpec extends Specification {
       contentType(result) must beSome("text/plain")
       contentAsString(result) mustEqual "Unknown event"
     }
-    "return 401 error if api_token is not provided" in {
-      val controller = new AnotherTestEventsApi()
-      val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
-      status(result) must equalTo(UNAUTHORIZED)
-      contentAsString(result) mustEqual "Unauthorized"
-    }
   }
 
   "Events API call" should {
@@ -158,19 +152,6 @@ class EventsApiSpec extends Specification {
       contentAsJson(result) mustEqual Json.arr(
         EventHelper.oneAsJson,
         EventHelper.twoAsJson)
-    }
-    "return 401 error if api_token is not provided" in {
-      val controller = new AnotherTestEventsApi()
-      val result: Future[SimpleResult] = controller.events(
-        "TEST",
-        future = None,
-        public = Some(true),
-        archived = Some(false),
-        facilitatorId = Some(1),
-        countryCode = Some("UK"),
-        eventType = Some(1)).apply(FakeRequest())
-      status(result) must equalTo(UNAUTHORIZED)
-      contentAsString(result) mustEqual "Unauthorized"
     }
   }
 

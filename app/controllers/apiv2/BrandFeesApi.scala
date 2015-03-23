@@ -54,7 +54,7 @@ trait BrandFeesApi extends Controller with ApiAuthentication with Services {
   def fees(brand: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       val fees = feeService.findByBrand(brand)
-      Ok(Json.prettyPrint(Json.toJson(fees)))
+      jsonOk(Json.toJson(fees))
   }
 }
 

@@ -23,7 +23,6 @@
  */
 package controllers.apiv2
 
-import controllers.api.PeopleApi
 import models.Event
 import models.service.Services
 import play.api.libs.json._
@@ -90,8 +89,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
   def event(id: Long) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       eventService find id map { event ⇒
-        Ok(Json.prettyPrint(Json.toJson(event)(eventDetailsWrites)))
-      } getOrElse NotFound("Unknown event")
+        jsonOk(Json.toJson(event)(eventDetailsWrites))
+      } getOrElse jsonNotFound("Unknown event")
   }
 
   /**
@@ -132,7 +131,7 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
           eventType)
       }
       eventService.applyFacilitators(events)
-      Ok(Json.prettyPrint(Json.toJson(events)))
+      jsonOk(Json.toJson(events))
   }
 }
 

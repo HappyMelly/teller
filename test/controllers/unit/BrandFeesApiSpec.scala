@@ -26,13 +26,14 @@ package controllers.unit
 
 import controllers.apiv2.BrandFeesApi
 import models.brand.BrandFee
+import models.service.brand.BrandFeeService
 import org.joda.money.Money
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import play.api.libs.json.{ Json, JsArray }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeServices, FakeApiAuthentication, FakeBrandFeeService }
+import stubs.{ FakeServices, FakeApiAuthentication }
 
 class BrandFeesApiSpec extends Specification {
 
@@ -43,7 +44,7 @@ class BrandFeesApiSpec extends Specification {
       val fees = List(
         BrandFee(Some(1), "TEST", "RU", Money.parse("RUB 100")),
         BrandFee(Some(2), "TEST", "DE", Money.parse("EUR 50")))
-      val service = mock[FakeBrandFeeService]
+      val service = mock[BrandFeeService]
       (service.findByBrand _).expects("TEST").returning(fees)
       val controller = new TestBrandFeesApi
       controller.feeService_=(service)

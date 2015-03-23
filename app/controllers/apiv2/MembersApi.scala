@@ -24,8 +24,6 @@
 
 package controllers.apiv2
 
-import java.net.URLDecoder
-
 import models._
 import models.service.Services
 import play.api.libs.json._
@@ -47,7 +45,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  import controllers.api.PeopleApi.personDetailsWrites
+  import PeopleApi.personDetailsWrites
 
   val personMemberWrites = new Writes[Member] {
     def writes(member: Member): JsValue = {
@@ -59,7 +57,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  import controllers.api.OrganisationsApi.organisationDetailsWrites
+  import OrganisationsApi.organisationDetailsWrites
 
   val orgMemberWrites = new Writes[Member] {
     def writes(member: Member): JsValue = {
@@ -73,6 +71,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
 
   /**
    * Returns a list of active members in JSON format
+   *
    * @param funder If true, returns funders; false - supporters; none - all
    */
   def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) {
@@ -80,7 +79,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
       val members = memberService.findAll.filter(_.active)
       val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
       } getOrElse members
-      Ok(Json.prettyPrint(Json.toJson(filteredMembers.sortBy(_.name))))
+      jsonOk(Json.toJson(filteredMembers.sortBy(_.name)))
   }
 
   /**
@@ -91,10 +90,10 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     implicit request ⇒
       memberService.find(id) map { member ⇒
         if (member.person)
-          Ok(Json.prettyPrint(Json.toJson(member)(personMemberWrites)))
+          jsonOk(Json.toJson(member)(personMemberWrites))
         else
-          Ok(Json.prettyPrint(Json.toJson(member)(orgMemberWrites)))
-      } getOrElse BadRequest(Json.obj("error" -> "Not found"))
+          jsonOk(Json.toJson(member)(orgMemberWrites))
+      } getOrElse jsonNotFound("Member does not exist")
   }
 
   /**

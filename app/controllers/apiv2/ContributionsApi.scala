@@ -22,30 +22,27 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.acceptance
+package controllers.apiv2
 
-import controllers.apiv2.{ BrandFeesApi, ApiAuthentication }
-import org.specs2.mutable.Specification
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import stubs.FakeServices
+import models.{ ContributionView, ContributorView }
+import play.api.libs.json._
 
-class BrandFeesApiSpec extends Specification {
+object ContributionsApi {
 
-  /** Test controller with api authentication and with stubbed services */
-  class TestBrandFeesApi() extends BrandFeesApi with ApiAuthentication with FakeServices
+  import ProductsApi.productWrites
 
-  override def is = s2"""
-
-  If api_token is not provided 401 error should be returned
-    on 'fees' call                                          $e1
-  """
-
-  def e1 = {
-    val controller = new TestBrandFeesApi()
-    val result = controller.fees("TEST").apply(FakeRequest())
-    status(result) must equalTo(UNAUTHORIZED)
-    contentAsString(result) mustEqual "Unauthorized"
+  implicit val contributionWrites = new Writes[ContributionView] {
+    def writes(contribution: ContributionView) = Json.obj(
+      "product" -> contribution.product,
+      "role" -> contribution.contribution.role)
   }
 
+  implicit val contributorWrites = new Writes[ContributorView] {
+    def writes(contributor: ContributorView) = Json.obj(
+      "id" -> contributor.id,
+      "name" -> contributor.name,
+      "unique_name" -> contributor.uniqueName,
+      "photo" -> contributor.photo,
+      "role" -> contributor.contribution.role)
+  }
 }
