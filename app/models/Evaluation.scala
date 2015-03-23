@@ -24,6 +24,7 @@
 
 package models
 
+import models.admin.Translation
 import models.database.Evaluations
 import models.service.{ EventService, PersonService }
 import org.joda.time.{ DateTime, LocalDate }

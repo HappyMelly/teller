@@ -22,9 +22,9 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.admin
 
-import models.EvaluationImpression
+import models.admin.EvaluationImpression
 import play.api.db.slick.Config.driver.simple._
 
 /**

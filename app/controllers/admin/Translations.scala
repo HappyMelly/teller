@@ -22,14 +22,16 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.admin
 
+import controllers.Security
+import models.UserRole.Role._
 import models._
-import play.api.i18n.Messages
-import play.api.mvc._
+import models.admin._
 import play.api.data.Form
 import play.api.data.Forms._
-import models.UserRole.Role._
+import play.api.i18n.Messages
+import play.api.mvc._
 import views.Languages
 
 object Translations extends Controller with Security {
@@ -121,7 +123,8 @@ object Translations extends Controller with Security {
           Translation.find(lang).map { v ⇒
             val en = Translation.find("EN")
             en.map { value ⇒
-              BadRequest(views.html.translation.form(user, None, lang, value, form)).flashing("error" -> Messages("error.translation.exist"))
+              BadRequest(views.html.translation.form(user, None, lang, value, form))
+                .flashing("error" -> Messages("error.translation.exist"))
             }.getOrElse(InternalServerError)
           }.getOrElse {
             translation.create

@@ -28,6 +28,7 @@ import com.github.tototoshi.slick.JodaSupport._
 import java.math.RoundingMode
 import java.net.URLEncoder
 import models.JodaMoney._
+import models.admin.TransactionType
 import models.database._
 import models.service.{ BrandService, PersonService }
 import org.joda.time.{ Days, DateTime, LocalDate }

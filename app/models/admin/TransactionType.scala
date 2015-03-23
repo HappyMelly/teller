@@ -22,12 +22,13 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
+package models.admin
 
-import models.database.{ BookingEntries, TransactionTypes }
+import models.database.BookingEntries
+import models.database.admin.TransactionTypes
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A category for a `BookingEntry`.

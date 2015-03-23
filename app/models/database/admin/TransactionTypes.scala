@@ -22,30 +22,22 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.admin
 
-import models.EvaluationQuestion
+import models.admin.TransactionType
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `EvaluationQuestions` database table mapping.
+ * `TransactionType` database table mapping.
  */
-private[models] object EvaluationQuestions extends Table[EvaluationQuestion]("EVALUATION_QUESTION") {
+private[models] object TransactionTypes extends Table[TransactionType]("TRANSACTION_TYPE") {
 
-  def language = column[String]("LANGUAGE", O.PrimaryKey)
-  def question1 = column[String]("QUESTION_1")
-  def question2 = column[String]("QUESTION_2")
-  def question3 = column[String]("QUESTION_3")
-  def question4 = column[String]("QUESTION_4")
-  def question5 = column[String]("QUESTION_5")
-  def question6 = column[String]("QUESTION_6")
-  def question7 = column[String]("QUESTION_7")
-  def question8 = column[String]("QUESTION_8")
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def name = column[String]("NAME")
 
-  def * = language ~ question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8 <> (EvaluationQuestion.apply _, EvaluationQuestion.unapply _)
+  def * = id.? ~ name <> (TransactionType.apply _, TransactionType.unapply _)
 
-  def forUpdate = question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8
+  def forInsert = * returning id
 
+  def uniqueName = index("IDX_NAME", name, unique = true)
 }

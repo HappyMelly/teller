@@ -1,8 +1,8 @@
 @(user: UserIdentity,
-  translation: Option[Translation],
+  translation: Option[models.admin.Translation],
   language: String,
-  en: Translation,
-  form: Form[Translation])(implicit flash: Flash,
+  en: models.admin.Translation,
+  form: Form[models.admin.Translation])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
@@ -24,7 +24,8 @@
         <div class="page-header">
           <h1>@title</h1>
         </div>
-        @html.form(action = CSRF(translation.map(t => routes.Translations.update(language)).getOrElse(routes.Translations.create(language)))) {
+        @html.form(action = CSRF(translation.map(t => controllers.admin.routes.Translations.update(language))
+            .getOrElse(controllers.admin.routes.Translations.create(language)))) {
           <input type="hidden" name="language" value="@language"/>
           <input type="hidden" name="questions.language" value="@language"/>
           <input type="hidden" name="recommendations.language" value="@language"/>

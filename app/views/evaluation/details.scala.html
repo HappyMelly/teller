@@ -1,7 +1,10 @@
 @(user: UserIdentity,
     evaluation: Evaluation,
-    en: Translation,
-    brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+    en: models.admin.Translation,
+    brand: Brand)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._

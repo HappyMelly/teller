@@ -26,6 +26,7 @@ package controllers
 
 import models._
 import models.UserRole.Role._
+import models.admin.Translation
 import models.service.EventService
 import org.joda.time._
 import play.api.data._

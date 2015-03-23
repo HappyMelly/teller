@@ -1,10 +1,11 @@
 @(user: UserIdentity,
-    translations: Map[String, Translation])(implicit flash: Flash,
+    translations: Map[String, models.admin.Translation])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
 
-    @import views.Languages
+@import controllers.admin.routes.Translations
+@import views.Languages
 
 @main("Translations", "admin", user) {
 
@@ -26,18 +27,20 @@
     @for(language <- Languages.all.toList.sortBy(_._2)) {
       <tr>
         @translations.get(language._1).map { value =>
-          <td><a href="@routes.Translations.details(language._1)">@language._2</a></td>
+          <td><a href="@Translations.details(language._1)">@language._2</a></td>
           <td><span class="label label-success">yes</span></td>
           <td>
             @if(value.changeable) {
-              <a href="@routes.Translations.edit(language._1)" class="input-sm"><i class="glyphicon glyphicon-pencil"></i> Edit Translation</a>
+              <a href="@Translations.edit(language._1)"
+                class="input-sm"><i class="glyphicon glyphicon-pencil"></i> Edit Translation</a>
             }
           </td>
         }.getOrElse {
           <td>@language._2</td>
           <td><span class="label label-danger">no</span></td>
           <td>
-            <a href="@routes.Translations.add(language._1)" class="input-sm"><i class="glyphicon glyphicon-plus"></i> Add Translation</a>
+            <a href="@Translations.add(language._1)"
+              class="input-sm"><i class="glyphicon glyphicon-plus"></i> Add Translation</a>
           </td>
         }
       </tr>

@@ -22,14 +22,16 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.admin
 
-import play.api.mvc.Controller
+import controllers.Security
+import models.Activity
 import models.UserRole.Role._
-import models.{ Brand, Activity, TransactionType }
+import models.admin.TransactionType
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
+import play.api.mvc.Controller
 
 /**
  * Pages for application configuration and administration.
@@ -64,7 +66,8 @@ object Administration extends Controller with Security {
             TransactionType.insert(transactionType)
             val activityObject = Messages("models.TransactionType.name", transactionType)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
-            Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
+            Redirect(routes.Administration.settings()).
+              flashing("success" -> activity.toString)
           }
         })
   }
@@ -78,7 +81,8 @@ object Administration extends Controller with Security {
         TransactionType.delete(id)
         val activityObject = Messages("models.TransactionType.name", transactionType.name)
         val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
-        Redirect(routes.Administration.settings).flashing("success" -> activity.toString)
+        Redirect(routes.Administration.settings()).
+          flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 }

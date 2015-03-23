@@ -17,38 +17,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have scores concerning this license or the applicable additional terms, you may contact
+ * If you have questions concerning this license or the applicable additional terms, you may contact
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.admin
 
-import models.EvaluationRecommendation
+import models.admin.EvaluationQuestion
 import play.api.db.slick.Config.driver.simple._
 
 /**
  * `EvaluationQuestions` database table mapping.
  */
-private[models] object EvaluationRecommendations extends Table[EvaluationRecommendation]("EVALUATION_RECOMMENDATION") {
+private[models] object EvaluationQuestions extends Table[EvaluationQuestion]("EVALUATION_QUESTION") {
 
   def language = column[String]("LANGUAGE", O.PrimaryKey)
-  def score0 = column[String]("SCORE_0")
-  def score1 = column[String]("SCORE_1")
-  def score2 = column[String]("SCORE_2")
-  def score3 = column[String]("SCORE_3")
-  def score4 = column[String]("SCORE_4")
-  def score5 = column[String]("SCORE_5")
-  def score6 = column[String]("SCORE_6")
-  def score7 = column[String]("SCORE_7")
-  def score8 = column[String]("SCORE_8")
-  def score9 = column[String]("SCORE_9")
-  def score10 = column[String]("SCORE_10")
+  def question1 = column[String]("QUESTION_1")
+  def question2 = column[String]("QUESTION_2")
+  def question3 = column[String]("QUESTION_3")
+  def question4 = column[String]("QUESTION_4")
+  def question5 = column[String]("QUESTION_5")
+  def question6 = column[String]("QUESTION_6")
+  def question7 = column[String]("QUESTION_7")
+  def question8 = column[String]("QUESTION_8")
 
-  def * = language ~ score0 ~ score1 ~ score2 ~ score3 ~ score4 ~ score5 ~
-    score6 ~ score7 ~ score8 ~ score9 ~ score10 <> (EvaluationRecommendation.apply _, EvaluationRecommendation.unapply _)
+  def * = language ~ question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
+    question6 ~ question7 ~ question8 <> (EvaluationQuestion.apply _, EvaluationQuestion.unapply _)
 
-  def forUpdate = score0 ~ score1 ~ score2 ~ score3 ~ score4 ~ score5 ~
-    score6 ~ score7 ~ score8 ~ score9 ~ score10
+  def forUpdate = question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
+    question6 ~ question7 ~ question8
 
 }

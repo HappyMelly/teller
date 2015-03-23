@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.admin.Translation
 import models.service.{ PersonService, EventService }
 import org.joda.time.DateTime
 import play.api.data._

@@ -14,10 +14,10 @@ GET         /account/:id/bookings                                     controller
 POST        /account/:id/activate                                     controllers.Accounts.activate(id: Long)
 POST        /account/:id/deactivate                                   controllers.Accounts.deactivate(id: Long)
 
-GET         /admin/settings                                           controllers.Administration.settings
-POST        /admin/transactiontype/new                                controllers.Administration.createTransactionType
-POST        /admin/transactiontype/:id/delete                         controllers.Administration.deleteTransactionType(id: Long)
-GET         /admin/translations                                       controllers.Translations.index
+GET         /admin/settings                                           controllers.admin.Administration.settings
+POST        /admin/transactiontype/new                                controllers.admin.Administration.createTransactionType
+POST        /admin/transactiontype/:id/delete                         controllers.admin.Administration.deleteTransactionType(id: Long)
+GET         /admin/translations                                       controllers.admin.Translations.index
 
 GET         /bookings                                                 controllers.BookingEntries.index
 GET         /booking/new                                              controllers.BookingEntries.add
@@ -186,12 +186,12 @@ GET         /registration/congratulations                             controller
 GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET         /template/:id/delete                                      controllers.CertificateTemplates.delete(id: Long)
 
-GET         /translation/new                                          controllers.Translations.add(lang: String)
-POST        /translation/new                                          controllers.Translations.create(lang: String)
-GET         /translation/:lang                                        controllers.Translations.details(lang: String)
-GET         /translation/:lang/edit                                   controllers.Translations.edit(lang: String)
-POST        /translation/:lang                                        controllers.Translations.update(lang: String)
-POST        /translation/:lang/delete                                 controllers.Translations.delete(lang: String)
+GET         /translation/new                                          controllers.admin.Translations.add(lang: String)
+POST        /translation/new                                          controllers.admin.Translations.create(lang: String)
+GET         /translation/:lang                                        controllers.admin.Translations.details(lang: String)
+GET         /translation/:lang/edit                                   controllers.admin.Translations.edit(lang: String)
+POST        /translation/:lang                                        controllers.admin.Translations.update(lang: String)
+POST        /translation/:lang/delete                                 controllers.admin.Translations.delete(lang: String)
 
 POST        /user                                                     controllers.UserAccounts.update
 
