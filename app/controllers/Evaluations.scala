@@ -27,14 +27,17 @@ package controllers
 import models._
 import models.UserRole.Role._
 import models.admin.Translation
-import models.service.EventService
+import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json.Json
 import services.notifiers.Notifiers
 
-object Evaluations extends EvaluationsController with Security with Notifiers {
+object Evaluations extends EvaluationsController
+  with Security
+  with Notifiers
+  with Services {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -171,10 +174,10 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { evaluation ⇒
-        val brand = Brand.find(evaluation.event.brandCode).get
+      evaluationService.find(id).map { x ⇒
+        val brand = Brand.find(x.event.brandCode).get.brand
         val en = Translation.find("EN").get
-        Ok(views.html.evaluation.details(user, evaluation, en, brand.brand))
+        Ok(views.html.evaluation.details(user, x, en, brand.generateCert))
       }.getOrElse(NotFound)
 
   }

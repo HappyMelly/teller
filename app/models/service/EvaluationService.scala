@@ -24,12 +24,27 @@
  */
 package models.service
 
+import models.EvaluationPair
 import models.database.{ Evaluations, People, Participants, Events }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 class EvaluationService {
+
+  /**
+   * Returns evaluation with related event if exists; otherwise, None
+   * @param id Evaluation id
+   * @return
+   */
+  def find(id: Long): Option[EvaluationPair] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← Evaluations if x.id === id
+        y ← Events if y.id === x.eventId
+      } yield (x, y)
+      query.firstOption.map(EvaluationPair.tupled)
+  }
 
   /**
    * Returns a list of evaluations for the given events

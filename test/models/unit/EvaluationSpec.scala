@@ -30,14 +30,15 @@ import org.specs2.mutable._
 
 class EvaluationSpec extends Specification {
 
+  val eval = Evaluation(Some(1L), 1L, 2L, "", "", "", "", "",
+    1, 1, "", EvaluationStatus.Pending, None, DateTime.now(), "",
+    DateTime.now(), "")
+
   "Evaluation" should {
     "have well-formed activity attributes" in {
-      val evaluation = new Evaluation(Some(1L), 1L, 2L, "", "", "", "", "",
-        1, 1, "", EvaluationStatus.Pending, None, DateTime.now(), "",
-        DateTime.now(), "")
-      evaluation.objectType must_== Activity.Type.Evaluation
-      evaluation.identifier must_== 1
-      evaluation.humanIdentifier must_== "to event (id = 1) for person (id = 2)"
+      eval.objectType must_== Activity.Type.Evaluation
+      eval.identifier must_== 1
+      eval.humanIdentifier must_== "to event (id = 1) for person (id = 2)"
       val evaluation2 = new Evaluation(Some(2L), 2L, 3L, "", "", "", "", "",
         1, 1, "", EvaluationStatus.Pending, None, DateTime.now(), "",
         DateTime.now(), "")
@@ -46,5 +47,31 @@ class EvaluationSpec extends Specification {
       evaluation2.humanIdentifier must_== "to event (id = 2) for person (id = 3)"
     }
   }
-
+  "If a participant hasn't finished evaluation process, the evaluation" should {
+    "not be approvable or rejectable" in {
+      val e1 = eval.copy(status = EvaluationStatus.InProgress)
+      e1.approvable must_== false
+      e1.rejectable must_== false
+    }
+  }
+  "If an evaluation is pending, it" should {
+    "be approvable and rejectable" in {
+      eval.approvable must_== true
+      eval.rejectable must_== true
+    }
+  }
+  "If an evaluation is approved it" should {
+    "be rejectable but not approvable" in {
+      val e1 = eval.copy(status = EvaluationStatus.Approved)
+      e1.rejectable must_== true
+      e1.approvable must_== false
+    }
+  }
+  "If an evaluation is rejected it" should {
+    "be approvable but not rejectable" in {
+      val e1 = eval.copy(status = EvaluationStatus.Rejected)
+      e1.rejectable must_== false
+      e1.approvable must_== true
+    }
+  }
 }

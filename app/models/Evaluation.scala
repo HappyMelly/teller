@@ -35,12 +35,27 @@ import services.notifiers.Email
 
 /**
  * A status of an evaluation which a participant gives to an event
+ *
+ *  - Evaluation is in progress when a participant created it but hasn't approved
+ *  - Evaluation is pending when it's approved by a participant but not by
+ *    a facilitator
  */
 object EvaluationStatus extends Enumeration {
+  val InProgress = Value("0")
   val Pending = Value("1")
   val Approved = Value("2")
   val Rejected = Value("3")
 }
+
+/**
+ * In most cases event data is required along with evaluation data. To decrease
+ * a number of requests to database some requests return evalution with companion
+ * objects
+ *
+ * @param eval Evaluation
+ * @param event Related event
+ */
+case class EvaluationPair(eval: Evaluation, event: Event)
 
 /**
  * An evaluation which a participant gives to an event
@@ -84,6 +99,20 @@ case class Evaluation(
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Evaluation
+
+  /**
+   * Returns true if the evaluation can be approved
+   */
+  def approvable: Boolean = status == EvaluationStatus.Pending ||
+    status == EvaluationStatus.Rejected
+
+  /**
+   * Returns true if the evaluation can be rejected
+   */
+  def rejectable: Boolean = status == EvaluationStatus.Pending ||
+    status == EvaluationStatus.Approved
+
+  def approved: Boolean = status == EvaluationStatus.Approved
 
   def create: Evaluation = DB.withSession { implicit session: Session ⇒
     val id = Evaluations.forInsert.insert(this)
