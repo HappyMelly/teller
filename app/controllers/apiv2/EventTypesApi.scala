@@ -50,8 +50,9 @@ trait EventTypesApi extends Controller with ApiAuthentication with Services {
    */
   def types(code: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      val brandId = Brand.find(code) map (_.brand.id.get) getOrElse 0L
-      jsonOk(Json.toJson(eventTypeService.findByBrand(brandId)))
+      implicit token ⇒
+        val brandId = Brand.find(code) map (_.brand.id.get) getOrElse 0L
+        jsonOk(Json.toJson(eventTypeService.findByBrand(brandId)))
   }
 }
 

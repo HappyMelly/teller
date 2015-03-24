@@ -1,0 +1,71 @@
+@(user: UserIdentity)
+
+<h3 id="event">Event</h3>
+
+<p>The <em>event details</em> resource provides more details about an entry in the <a href="#events">list</a>.</p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v2/event/{eventId}</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+      <p><code>eventId</code> unique identifier for the event, e.g. <code>42</code></p>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters (optional)</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of events objects, with properties:</p>
+      <ul>
+        <li><code>brand</code> - a code for a brand</li>
+        <li><code>type</code> - see <a href="#eventtypes">Event Types</a></li>
+        <li><code>title</code></li>
+        <li><code>description</code></li>
+        <li><code>spokenLanguages</code> - an array of languages</li>
+        <li><code>materialsLanguage</code></li>
+        <li><code>start</code></li>
+        <li><code>end</code></li>
+        <li><code>hoursPerDay</code></li>
+        <li><code>totalHours</code></li>
+        <li><code>facilitators</code> - an array of objects
+          <ul>
+            <li><code>href</code> - URL of the <a href="#person">person details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+            <li><code>name</code></li>
+            <li><code>photo</code></li>
+            <li><code>city</code></li>
+            <li><code>country</code> - ISO 8166-2 country code</li>
+          </ul>
+        </li>
+        <li><code>city</code></li>
+        <li><code>country</code> - ISO 8166-2 country code</li>
+        <li><code>website</code></li>
+        <li><code>registrationPage</code></li>
+        <li><code>public</code> - <code>true</code> if the event is public</li>
+        <li><code>archived</code> - <code>true</code> if the event is archived</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>404 Not Found</code> if the given brand code is not defined</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Examples</th>
+    <td>
+      <a href="/api/v2/event/1?api_token=@user.apiToken">GET /api/v2/event/1</a>
+    </td>
+  </tr>
+</table>

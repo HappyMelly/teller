@@ -43,7 +43,7 @@ trait ApiAuthentication extends Controller with Services {
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param f Function to run
    */
-  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Result) = Action {
+  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result) = Action {
     implicit request ⇒
       request.getQueryString(ApiTokenParam) map { value ⇒
         Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
@@ -66,9 +66,9 @@ trait ApiAuthentication extends Controller with Services {
    * @return Returns the result of function execution or Unauthorized
    */
   protected def authorize(readWrite: Boolean,
-    token: ApiToken)(f: Request[AnyContent] ⇒ Result)(implicit request: Request[AnyContent]): Result = {
+    token: ApiToken)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result)(implicit request: Request[AnyContent]): Result = {
     if (token.authorized(readWrite))
-      f(request)
+      f(request)(token)
     else
       jsonUnauthorized
   }

@@ -1,0 +1,66 @@
+@(user: UserIdentity)
+
+<h3 id="participant">Participant creation</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>Add new participant to the system </td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>POST /api/v2/participant</code></td>
+  </tr>
+  <tr>
+    <th>Request POST parameters (not member)</th>
+    <td>
+      <ul>
+        <li><code>event_id</code> unique identifier for the event, <i>numeric</i></li>
+        <li><code>email</code> <i>string</i></li>
+        <li><code>first_name</code> <i>string</i></li>
+        <li><code>last_name</code> <i>string</i></li>
+        <li><code>birthday</code> <i>string, YYYY-mm-DD</i></li>
+        <li><code>organisation</code> <i>string</i></li>
+        <li><code>comment</code> <i>string</i></li>
+        <li><code>country</code> - ISO 8166-2 country code, <i>string</i></li>
+        <li><code>city</code> <i>string</i></li>
+        <li><code>street_1</code> <i>string</i></li>
+        <li><code>street_2</code> <i>string</i></li>
+        <li><code>province</code> <i>string</i></li>
+        <li><code>postcode</code> <i>string</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request POST parameters (member)</th>
+    <td>
+      <ul>
+        <li><code>event_id</code> unique identifier for the event, <i>numeric</i></li>
+        <li><code>person_id</code> unique identifier for the person, <i>numeric</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON object with properties:</p>
+      <ul>
+        <li><code>participant_id</code> - unique identifier for a created participant</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>400 Bad Request</code> if parameters are wrong, with a JSON object, containing errors for all parameters</p>
+    </td>
+  </tr>
+</table>

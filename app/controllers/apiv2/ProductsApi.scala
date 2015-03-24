@@ -72,18 +72,20 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
    */
   def product(id: Long) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      Product.find(id) map { product ⇒
-        jsonOk(Json.toJson(product)(productDetailsWrites))
-      } getOrElse jsonNotFound("Unknown product")
+      implicit token ⇒
+        Product.find(id) map { product ⇒
+          jsonOk(Json.toJson(product)(productDetailsWrites))
+        } getOrElse jsonNotFound("Unknown product")
   }
 
   /**
    * Returns list of products in JSON format
    */
   def products = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    val products = productService.findAll
-    ProductsCollection.brands(products)
-    jsonOk(Json.toJson(products))
+    implicit token ⇒
+      val products = productService.findAll
+      ProductsCollection.brands(products)
+      jsonOk(Json.toJson(products))
   }
 }
 

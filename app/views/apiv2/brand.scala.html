@@ -1,0 +1,98 @@
+@(user: UserIdentity)
+
+<h3 id="brand">Brand details</h3>
+
+<p>The <em>brand details</em> resource provides more details about an entry in the <a href="#brands">list</a>.</p>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Request</th>
+        <td>
+            <code>GET /api/v2/brand/{brandCode}</code><br/>
+            <code>GET /api/v2/brand/{brandUniqueName}</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>
+            <code>brandCode</code> unique identifier for the brand, e.g. <code>DARE</code><br/>
+            <code>brandUniqueName</code> unique identifier for the brand, e.g. <code>management30</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON object, with brand properties:</p>
+            <ul>
+                <li><code>code</code></li>
+                <li><code>unique_name</code></li>
+                <li><code>name</code></li>
+                <li><code>tagline</code></li>
+                <li><code>image</code> - URL of a brand's logo, excluding protocol/host</li>
+                <li><code>description</code></li>
+                <li><code>coordinator</code> - a JSON object with <a href="#person">person's</a> properties:
+                    <ul>
+                        <li><code>href</code> - URL of the <a href="#person">person details</a>
+                            resource, excluding protocol/host and starting with <code>/api</code></li>
+                        <li><code>name</code></li>
+                        <li><code>photo</code></li>
+                        <li><code>city</code></li>
+                        <li><code>country</code> - ISO 8166-2 country code</li>
+                    </ul>
+                </li>
+                <li><code>contact_info</code> - a JSON object with properties:
+                    <ul>
+                        <li><code>email</code></li>
+                        <li><code>skype</code></li>
+                        <li><code>phone</code></li>
+                    </ul>
+                </li>
+                <li><code>social_profile</code> - a JSON object with properties:
+                    <ul>
+                        <li><code>facebook</code></li>
+                        <li><code>twitter</code></li>
+                        <li><code>google_plus</code></li>
+                        <li><code>linkedin</code></li>
+                    </ul>
+                </li>
+                <li><code>website</code></li>
+                <li><code>blog</code></li>
+                <li><code>products</code> - a list of JSON objects
+                    <ul>
+                        <li><code>href</code> - URL of the <a href="#product">product details</a>
+                            resource, excluding protocol/host and starting with <code>/api</code></li>
+                        <li><code>title</code></li>
+                        <li><code>image</code> - URL of a product's image, excluding protocol/host</li>
+                        <li><code>brands</code> - array of objects with properties:
+                            <ul>
+                                <li><code>code</code>
+                                <li><code>name</code></li>
+                            </ul>
+                        </li>
+                        <li><code>category</code></li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>
+            <p><code>404 Not Found</code> if the specified brand is not found</p>
+        </td>
+    </tr>
+    <tr>
+        <th>Examples</th>
+        <td>
+            <a href="/api/v2/brand/mgt30?api_token=@user.apiToken">GET /api/v2/brand/mgt30</a>
+        </td>
+    </tr>
+</table>

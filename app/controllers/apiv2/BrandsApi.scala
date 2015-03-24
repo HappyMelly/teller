@@ -87,20 +87,22 @@ trait BrandsApi extends Controller with ApiAuthentication {
    */
   def brand(code: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      Brand.find(code) map { data ⇒
-        jsonOk(Json.toJson(data)(brandViewDetailsWrites))
-      } getOrElse {
-        Brand.findByName(code) map { data ⇒
+      implicit token ⇒
+        Brand.find(code) map { data ⇒
           jsonOk(Json.toJson(data)(brandViewDetailsWrites))
-        } getOrElse jsonNotFound("Unknown brand")
-      }
+        } getOrElse {
+          Brand.findByName(code) map { data ⇒
+            jsonOk(Json.toJson(data)(brandViewDetailsWrites))
+          } getOrElse jsonNotFound("Unknown brand")
+        }
   }
 
   /**
    * Returns a list of brands in JSON format
    */
   def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    jsonOk(Json.toJson(Brand.findAllWithCoordinator))
+    implicit token ⇒
+      jsonOk(Json.toJson(Brand.findAllWithCoordinator))
   }
 }
 

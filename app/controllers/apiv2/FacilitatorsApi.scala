@@ -53,13 +53,14 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
    */
   def facilitators(code: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      Brand.find(code) map { brand ⇒
-        val facilitators = Brand.findFacilitators(code, brand.coordinator)
-        PeopleCollection.countries(facilitators)
-        PeopleCollection.languages(facilitators)
-        PeopleCollection.addresses(facilitators)
-        jsonOk(Json.toJson(facilitators))
-      } getOrElse jsonNotFound("Unknown brand")
+      implicit token ⇒
+        Brand.find(code) map { brand ⇒
+          val facilitators = Brand.findFacilitators(code, brand.coordinator)
+          PeopleCollection.countries(facilitators)
+          PeopleCollection.languages(facilitators)
+          PeopleCollection.addresses(facilitators)
+          jsonOk(Json.toJson(facilitators))
+        } getOrElse jsonNotFound("Unknown brand")
   }
 }
 

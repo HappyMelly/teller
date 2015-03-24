@@ -76,10 +76,11 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
    */
   def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      val members = memberService.findAll.filter(_.active)
-      val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
-      } getOrElse members
-      jsonOk(Json.toJson(filteredMembers.sortBy(_.name)))
+      implicit token ⇒
+        val members = memberService.findAll.filter(_.active)
+        val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
+        } getOrElse members
+        jsonOk(Json.toJson(filteredMembers.sortBy(_.name)))
   }
 
   /**
@@ -88,12 +89,13 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
    */
   def member(id: Long) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      memberService.find(id) map { member ⇒
-        if (member.person)
-          jsonOk(Json.toJson(member)(personMemberWrites))
-        else
-          jsonOk(Json.toJson(member)(orgMemberWrites))
-      } getOrElse jsonNotFound("Member does not exist")
+      implicit token ⇒
+        memberService.find(id) map { member ⇒
+          if (member.person)
+            jsonOk(Json.toJson(member)(personMemberWrites))
+          else
+            jsonOk(Json.toJson(member)(orgMemberWrites))
+        } getOrElse jsonNotFound("Member does not exist")
   }
 
   /**

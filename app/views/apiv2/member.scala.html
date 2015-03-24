@@ -1,0 +1,49 @@
+@(user: UserIdentity)
+
+<h3 id="member">Member details</h3>
+
+<p>The <em>member details</em> resource provides more details about an entry in the <a href="#members">list</a>.</p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v2/member/{memberId}</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td><code>memberId</code> unique identifier for the member, e.g. <code>42</code></td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON object, with member properties:</p>
+      <ul>
+        <li><code>id</code></li>
+        <li><code>type</code> - "person" or "org"</li>
+        <li><code>funder</code></li>
+        <li><code>org</code> - if a member is an organization, this attribute contains <a href="#organization">Organization details</a> </li>
+        <li><code>person</code> - if a member is a person, this attribute contains <a href="#person">Person details</a> </li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>404 Not Found</code> if the specified member is not found</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Examples</th>
+    <td>
+      <a href="/api/v2/member/1?api_token=@user.apiToken">GET /api/v2/member/1</a>
+    </td>
+  </tr>
+</table>

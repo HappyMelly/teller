@@ -69,16 +69,18 @@ trait OrganisationsApi extends Controller with ApiAuthentication with Services {
    */
   def organisation(id: Long) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
-      orgService.find(id) map { organisation ⇒
-        jsonOk(Json.toJson(organisation)(organisationDetailsWrites))
-      } getOrElse jsonNotFound("Unknown organization")
+      implicit token ⇒
+        orgService.find(id) map { organisation ⇒
+          jsonOk(Json.toJson(organisation)(organisationDetailsWrites))
+        } getOrElse jsonNotFound("Unknown organization")
   }
 
   /**
    * Returns list of organisations in JSON format
    */
   def organisations = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    jsonOk(Json.toJson(Organisation.findAll))
+    implicit token ⇒
+      jsonOk(Json.toJson(Organisation.findAll))
   }
 }
 

@@ -1,0 +1,47 @@
+@(user: UserIdentity)
+
+<h3 id="brands">Brands</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Description</th>
+        <td>A list of Happy Melly brands</td>
+    </tr>
+    <tr>
+        <th>Request</th>
+        <td><code>GET /api/v2/brands</code></td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON array of brand objects, with properties:</p>
+            <ul>
+                <li><code>unique_name</code></li>
+                <li><code>name</code></li>
+                <li><code>image</code> - URL of a brand's logo, excluding protocol/host</li>
+                <li><code>tagline</code></li>
+                <li><code>products</code> - a number of products belongs to the brand</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Example</th>
+        <td><a href="/api/v2/brands?api_token=@user.apiToken">GET /api/v2/brands</a>
+    </tr>
+</table>

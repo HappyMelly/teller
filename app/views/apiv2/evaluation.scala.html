@@ -1,0 +1,54 @@
+@(user: UserIdentity)
+
+<h3 id="evaluation">Evaluation creation</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>Add new evaluation to the system in <code>Pending</code> state and notify the event facilitators and a brand owner</td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>POST /api/v2/evaluation</code></td>
+  </tr>
+  <tr>
+    <th>Request POST parameters</th>
+    <td>
+      <ul>
+        <li><code>eventId</code> - unique identifier for the event, <i>numeric</i></li>
+        <li><code>participantId</code> - unique identifier for the person who participated in the event, <i>numeric</i></li>
+        <li><code>question1</code> - What triggered you to register for this event?, <i>string</i></li>
+        <li><code>question2</code> - Which action items did you take away from the event?, <i>string</i></li>
+        <li><code>question3</code> - What do you suggest to add or change to the program?, <i>string</i></li>
+        <li><code>question4</code> - What were specific qualities of the trainer/facilitator?, <i>string</i></li>
+        <li><code>question5</code> - What can be improved about the event location?, <i>string</i></li>
+        <li><code>question6</code> - General Impression, <i>numeric, [0,10]</i></li>
+        <li><code>question7</code> - How likely are you to recommend this event to others?, <i>numeric, [0,10]</i></li>
+        <li><code>question8</code> - How could the trainer/facilitator have made the event better?, <i>string</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON object with properties:</p>
+      <ul>
+        <li><code>evaluationId</code> - unique identifier for a created evaluation</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>400 Bad Request</code> if parameters are wrong, with a JSON object, containing errors for all parameters</p>
+    </td>
+  </tr>
+</table>
