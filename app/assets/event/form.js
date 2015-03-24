@@ -51,7 +51,7 @@ function showError(message) {
  */
 function getEventTypes(brandCode, currentEventType) {
     $.ajax({
-        url: '/eventtypes/' + brandCode,
+        url: '/brand/' + brandCode + '/eventtypes',
         dataType: "json"
     }).done(function(data) {
             var selector = "#eventTypeId";
@@ -62,7 +62,7 @@ function getEventTypes(brandCode, currentEventType) {
             for(var i = 0; i < data.length; i++) {
                 var option = $("<option></option>")
                     .attr("value", data[i].id)
-                    .attr("defaultTitle", data[i].defaultTitle)
+                    .attr("defaultTitle", data[i].title)
                     .text(data[i].name);
                 if (value == data[i].id) {
                     option.attr('selected', 'selected');
