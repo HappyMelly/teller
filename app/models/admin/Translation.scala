@@ -142,23 +142,6 @@ case class Translation(language: String,
 object Translation {
 
   /**
-   * Find a translation object related to a particular language
-   *
-   * @param language An unique two-letters language identifier
-   * @return
-   */
-  def find(language: String): Option[Translation] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      question ← EvaluationQuestions if question.language === language
-      recommendation ← EvaluationRecommendations if recommendation.language === language
-      impression ← EvaluationImpressions if impression.language === language
-    } yield (question, recommendation, impression)
-    query.firstOption.map { v ⇒
-      Translation(language, v._1, v._2, v._3)
-    }
-  }
-
-  /**
    * Find all translation objects
    *
    * @return

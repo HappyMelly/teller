@@ -28,12 +28,11 @@ import _root_.integration.PlayAppSpec
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
-import models.service.EventService
+import models.service.{ BrandService, EventService }
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
-import services.notifiers.{ Notifiers, Email }
-import stubs.services.FakeNotifiers
-import stubs.{ FakeBrandService, FakeServices }
+import services.notifiers.Email
+import stubs.FakeServices
 
 class EventServiceSpec extends PlayAppSpec {
 
@@ -141,7 +140,7 @@ class EventServiceSpec extends PlayAppSpec {
 
   "Method sendConfirmationAlert" should {
     "send 1 email and record an activity" in new MockContext {
-      class StubBrandService extends FakeBrandService {
+      class StubBrandService extends BrandService {
         override def findAll: List[Brand] = List(BrandHelper.one)
       }
       class FakeEmail extends Email {

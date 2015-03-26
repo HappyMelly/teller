@@ -26,7 +26,7 @@ package models
 
 import models.admin.Translation
 import models.database.Evaluations
-import models.service.{ EventService, PersonService }
+import models.service.{ TranslationService, EventService, PersonService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -36,12 +36,12 @@ import services.notifiers.Email
 /**
  * A status of an evaluation which a participant gives to an event
  *
- *  - Evaluation is in progress when a participant created it but hasn't approved
+ *  - Evaluation is in progress when a participant created it but hasn't validated
  *  - Evaluation is pending when it's approved by a participant but not by
  *    a facilitator
  */
 object EvaluationStatus extends Enumeration {
-  val InProgress = Value("0")
+  val Unvalidated = Value("0")
   val Pending = Value("1")
   val Approved = Value("2")
   val Rejected = Value("3")
@@ -121,7 +121,7 @@ case class Evaluation(
     val created = this.copy(id = Some(id))
 
     val brand = Brand.find(event.brandCode).get
-    val en = Translation.find("EN").get
+    val en = TranslationService.get.find("EN").get
     val impression = en.impressions.value(question6)
     val subject = s"New evaluation (General impression: $impression)"
     send(event.facilitators.toSet,

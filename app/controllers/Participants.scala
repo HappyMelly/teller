@@ -24,20 +24,19 @@
 
 package controllers
 
+import models.UserRole.Role._
 import models._
 import models.admin.Translation
-import models.service.{ PersonService, EventService }
+import models.service.{ EventService, PersonService, Services }
 import org.joda.time.DateTime
-import play.api.data._
 import play.api.data.Forms._
-import models.UserRole.Role._
-import securesocial.core.SecuredRequest
+import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Countries
 
-object Participants extends Controller with Security {
+object Participants extends Controller with Security with Services {
 
   def newPersonForm(account: UserAccount, userName: String) = {
     Form(mapping(
@@ -105,7 +104,7 @@ object Participants extends Controller with Security {
       // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
         val account = user.account
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -170,7 +169,7 @@ object Participants extends Controller with Security {
       EventService.get.find(eventId).map { event ⇒
         val account = user.account
         val brand = Brand.find(event.brandCode).get
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(

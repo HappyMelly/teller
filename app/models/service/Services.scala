@@ -56,6 +56,8 @@ trait Services {
 
   def productService: ProductService = ProductService.get
 
+  def translationService: TranslationService = TranslationService.get
+
   def userAccountService: UserAccountService = UserAccountService.get
 
   def userIdentityService: UserIdentityService = UserIdentityService.get

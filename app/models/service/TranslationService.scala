@@ -21,10 +21,37 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
 
-import models.service.EvaluationService
+package models.service
 
-class StubEvaluationService extends EvaluationService {
+import models.admin.Translation
+import models.database.admin.{ EvaluationImpressions, EvaluationRecommendations, EvaluationQuestions }
+import play.api.db.slick.DB
+import play.api.db.slick.Config.driver.simple._
+import play.api.Play.current
 
+class TranslationService {
+
+  /**
+   * Find a translation object related to a particular language
+   *
+   * @param language An unique two-letters language identifier
+   * @return
+   */
+  def find(language: String): Option[Translation] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        q ← EvaluationQuestions if q.language === language
+        r ← EvaluationRecommendations if r.language === language
+        i ← EvaluationImpressions if i.language === language
+      } yield (q, r, i)
+      query.firstOption.map { v ⇒
+        Translation(language, v._1, v._2, v._3)
+      }
+  }
+}
+
+object TranslationService {
+  private val instance = new TranslationService
+  def get: TranslationService = instance
 }

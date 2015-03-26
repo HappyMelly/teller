@@ -34,7 +34,7 @@ import play.api.data.Forms._
 import play.api.libs.json.Json
 import services.notifiers.Notifiers
 
-object Evaluations extends EvaluationsController
+trait Evaluations extends EvaluationsController
   with Security
   with Notifiers
   with Services {
@@ -74,7 +74,7 @@ object Evaluations extends EvaluationsController
       implicit handler ⇒ implicit user ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         Ok(views.html.evaluation.form(user, None, evaluationForm(user.fullName), events, eventId, participantId, en))
   }
 
@@ -90,7 +90,7 @@ object Evaluations extends EvaluationsController
         formWithErrors ⇒ {
           val account = user.account
           val events = findEvents(account)
-          val en = Translation.find("EN").get
+          val en = translationService.find("EN").get
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
@@ -167,18 +167,22 @@ object Evaluations extends EvaluationsController
   }
 
   /**
-   * Renders a Details page
+   * Renders an evaluation page
    *
    * @param id Unique evaluation identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      evaluationService.find(id).map { x ⇒
-        val brand = Brand.find(x.event.brandCode).get.brand
-        val en = Translation.find("EN").get
-        Ok(views.html.evaluation.details(user, x, en, brand.generateCert))
-      }.getOrElse(NotFound)
+      evaluationService.find(id) map { x ⇒
+        val brand = brandService.find(x.event.brandCode).get
+        val en = translationService.find("EN").get
+        val participant = personService.find(x.eval.personId).get
+        Ok(views.html.evaluation.details(user, x,
+          participant.fullName,
+          en,
+          brand.generateCert))
+      } getOrElse NotFound
 
   }
 
@@ -193,7 +197,7 @@ object Evaluations extends EvaluationsController
       Evaluation.find(id).map { evaluation ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
 
         Ok(views.html.evaluation.form(user, Some(evaluation),
           evaluationForm(user.fullName).fill(evaluation), events, None, None, en))
@@ -216,7 +220,7 @@ object Evaluations extends EvaluationsController
           formWithErrors ⇒ {
             val account = user.account
             val events = findEvents(account)
-            val en = Translation.find("EN").get
+            val en = translationService.find("EN").get
 
             BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
@@ -316,3 +320,5 @@ object Evaluations extends EvaluationsController
     }
   }
 }
+
+object Evaluations extends Evaluations

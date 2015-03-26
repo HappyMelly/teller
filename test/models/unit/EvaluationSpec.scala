@@ -49,7 +49,7 @@ class EvaluationSpec extends Specification {
   }
   "If a participant hasn't finished evaluation process, the evaluation" should {
     "not be approvable or rejectable" in {
-      val e1 = eval.copy(status = EvaluationStatus.InProgress)
+      val e1 = eval.copy(status = EvaluationStatus.Unvalidated)
       e1.approvable must_== false
       e1.rejectable must_== false
     }

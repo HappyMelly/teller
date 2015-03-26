@@ -1,5 +1,6 @@
 @(user: UserIdentity,
     pair: EvaluationPair,
+    participantName: String,
     en: models.admin.Translation,
     withCertificate: Boolean)(implicit request: Request[Any],
     flash: Flash,
@@ -9,12 +10,12 @@
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
 
-@main("Evaluation for %s".format(pair.eval.participant.fullName), "participants", user) {
+@main("Evaluation for %s".format(participantName), "participants", user) {
 
   @element.evaluationActions()
   <div class="page-header">
     <h1>
-      Evaluation for @pair.eval.participant.fullName
+      Evaluation for @participantName
       <div class="actions pull-right">
         @dynamic(handler, "evaluation", "edit") {
           <div class="button">
