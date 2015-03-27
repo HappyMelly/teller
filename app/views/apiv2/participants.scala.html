@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="participants">Participants</h3>
 
@@ -46,8 +46,34 @@
     </td>
   </tr>
   <tr>
-        <th>Examples</th>
-        <td><a href="/api/v2/event/40/participants?api_token=@user.apiToken">
-            GET /api/v2/event/40/participants</a><br>
-    </tr>
+    <th>Example request</th>
+    <td>GET /api/v2/event/40/participants?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "id" : 1,
+  "unique_name" : "santjago.de.cuba",
+  "first_name" : "Santjago",
+  "last_name" : "de Cuba",
+  "photo" : null,
+  "country" : "BR"
+}, {
+  "id" : 2,
+  "unique_name" : "rodrigo.marces",
+  "first_name" : "Rodrigo",
+  "last_name" : "Marces",
+  "photo" : null,
+  "country" : "BR"
+}, {
+  "id" : 3,
+  "unique_name" : "sergey.kotlov",
+  "first_name" : "Sergey",
+  "last_name" : "Kotlov",
+  "photo" : null,
+  "country" : "BR"
+}]
+    </pre></td>
+  </tr>
 </table>

@@ -191,8 +191,8 @@ class EventService extends Notifiers with Services {
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title
-        val url = Play.configuration.getString("application.baseUrl")
-        val body = mail.txt.confirm(event, brand).toString()
+        val url = Play.configuration.getString("application.baseUrl").getOrElse("")
+        val body = mail.html.confirm(event, brand, url).toString()
         email.send(
           event.facilitators.toSet,
           None,

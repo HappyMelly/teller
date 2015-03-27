@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="organizations">Organizations</h3>
 
@@ -41,7 +41,43 @@
     <td>none</td>
   </tr>
   <tr>
-    <th>Example</th>
-    <td><a href="/api/v2/organizations?api_token=@user.apiToken">GET /api/v2/organizations</a>
+    <th>Example request</th>
+    <td>GET /api/v2/organizations?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "name" : "AdaptWorks",
+  "city" : "São Paulo",
+  "country" : "BR",
+  "website" : "http://www.adaptworks.com.br/"
+}, {
+  "name" : "Agile Experts e.U.",
+  "city" : "Vienna",
+  "country" : "AT",
+  "website" : "http://www.agileexperts.at/"
+}, {
+  "name" : "Agile Technologies LLC",
+  "city" : null,
+  "country" : "RU",
+  "website" : null
+}, {
+  "name" : "Agilecraft Oy",
+  "city" : "Kotka",
+  "country" : "FI",
+  "website" : "http://agilecraft.wordpress.com/"
+}, {
+  "name" : "Agiled Inc",
+  "city" : null,
+  "country" : "US",
+  "website" : null
+}, {
+  "name" : "AgileHQ",
+  "city" : null,
+  "country" : "CA",
+  "website" : null
+}]
+    </pre></td>
   </tr>
 </table>

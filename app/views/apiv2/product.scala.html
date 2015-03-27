@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="product">Product details</h3>
 
@@ -60,9 +60,39 @@
     </td>
   </tr>
   <tr>
-    <th>Examples</th>
-    <td>
-      <a href="/api/v2/product/1?api_token=@user.apiToken">GET /api/v2/product/1</a>
-    </td>
+    <th>Example request</th>
+    <td>GET /api/v2/product/1?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+{
+  "title" : "Management 3.0",
+  "subtitle" : "Leading Agile Developers, Developing Agile Leaders",
+  "url" : "http://www.management30.com/product/management30/",
+  "description" : "....",
+  "cta_url" : "http://www.management30.com/product/management30/",
+  "cta_text" : "Buy Now!",
+  "image" : "/product/1/picture",
+  "brands" : [ {
+    "code" : "MGT30",
+    "unique_name" : "MGT30",
+    "name" : "Management 3.0"
+  } ],
+  "category" : "Books",
+  "parent" : null,
+  "contributors" : [ {
+    "name" : "Jurgen Appelo",
+    "unique_name" : "jurgen.appelo",
+    "photo" : "http://graph.facebook.com/jurgenappelo/picture?type=large",
+    "role" : "Author"
+  }, {
+    "name" : "Lisette Sutherland",
+    "unique_name" : "lisette.sutherland",
+    "photo" : null,
+    "role" : "Rock Star Virtual Assistant"
+  } ]
+}
+    </pre></td>
   </tr>
 </table>

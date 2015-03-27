@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="products">Products</h3>
 
@@ -47,7 +47,49 @@
     <td>none</td>
   </tr>
   <tr>
-    <th>Example</th>
-    <td><a href="/api/v2/products?api_token=@user.apiToken">GET /api/v2/products</a>
+    <th>Example request</th>
+    <td>GET /api/v2/products?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+     <th>Example response</th>
+    <td><pre>
+[ {
+  "title" : "#Workout",
+  "subtitle" : "Engage People, Improve Work, Delight Clients",
+  "image" : "/product/15/picture",
+  "brands" : [ {
+    "code" : "MGT30",
+    "unique_name" : "MGT30",
+    "name" : "Management 3.0"
+  } ],
+  "category" : "Books"
+}, {
+  "title" : "Collaboration Superpowers",
+  "subtitle" : "Stories of remote teams doing great things",
+  "image" : "/product/17/picture",
+  "brands" : [ ],
+  "category" : "Books"
+}, {
+  "title" : "Dare Devils",
+  "subtitle" : null,
+  "image" : "/product/12/picture",
+  "brands" : [ {
+    "code" : "DARE",
+    "unique_name" : "darefestival",
+    "name" : "Dare"
+  } ],
+  "category" : "Conferences"
+}, {
+  "title" : "Dare Festival",
+  "subtitle" : "More Happy Workers!",
+  "image" : "/product/11/picture",
+  "brands" : [ {
+    "code" : "DARE",
+    "unique_name" : "darefestival",
+    "name" : "Dare"
+  } ],
+  "category" : "Conferences"
+} ]
+    </pre></td>
   </tr>
 </table>

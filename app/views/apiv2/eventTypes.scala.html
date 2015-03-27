@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="eventtypes">Event Types</h3>
 
@@ -38,9 +38,28 @@
     </td>
   </tr>
   <tr>
-    <th>Examples</th>
-    <td>
-      <a href="/api/v2/brand/mgt30/types?api_token=@user.apiToken">GET /api/v2/brand/mgt30/types</a>
-    </td>
+    <th>Example request</th>
+    <td>GET /api/v2/brand/mgt30/types?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "id" : 1,
+  "brand" : "MGT30",
+  "name" : "Regular 2-Day course",
+  "defaultTitle" : "Regular 2-Day Management 3.0 Course"
+}, {
+  "id" : 2,
+  "brand" : "MGT30",
+  "name" : "1-Day Workshop",
+  "defaultTitle" : "Exclusive 1-Day #Workout Workshop"
+}, {
+  "id" : 10,
+  "brand" : "MGT30",
+  "name" : "Odin Test",
+  "defaultTitle" : "Test 321"
+} ]
+    </pre></td>
   </tr>
 </table>

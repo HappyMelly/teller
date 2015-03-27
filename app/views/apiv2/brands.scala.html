@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="brands">Brands</h3>
 
@@ -41,7 +41,50 @@
         <td>none</td>
     </tr>
     <tr>
-        <th>Example</th>
-        <td><a href="/api/v2/brands?api_token=@user.apiToken">GET /api/v2/brands</a>
+        <th>Example request</th>
+        <td>GET /api/v2/brands?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+    </tr>
+    <tr>
+        <th>Example response</th>
+        <td><pre>
+[ {
+    "unique_name" : "BT",
+    "name" : "Business Transformers",
+    "image" : null,
+    "tagline" : null,
+    "products" : 0
+}, {
+    "unique_name" : "collaborationsuperpowers",
+    "name" : "Collaboration Superpowers",
+    "image" : "/brand/CS/picture",
+    "tagline" : "Working together from anywhere",
+    "products" : 0
+}, {
+    "unique_name" : "darefestival",
+    "name" : "Dare",
+    "image" : "/brand/DARE/picture",
+    "tagline" : "More Happy Workers!",
+    "products" : 2
+}, {
+    "unique_name" : "HM",
+    "name" : "Happy Melly",
+    "image" : null,
+    "tagline" : null,
+    "products" : 1
+}, {
+    "unique_name" : "HMEX",
+    "name" : "Happy Melly Express",
+    "image" : "/brand/HMEX/picture",
+    "tagline" : null,
+    "products" : 2
+}, {
+    "unique_name" : "happyremotemelly",
+    "name" : "Happy Remote Melly",
+    "image" : "/brand/HMAU1/picture",
+    "tagline" : "Tools, technology and training for happy remote working",
+    "products" : 0
+}]
+        </pre>
+        </td>
     </tr>
 </table>

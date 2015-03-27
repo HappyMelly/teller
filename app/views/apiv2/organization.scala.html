@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="organization">Organization details</h3>
 
@@ -70,9 +70,35 @@
     </td>
   </tr>
   <tr>
-    <th>Examples</th>
-    <td>
-      <a href="/api/v2/organization/1?api_token=@user.apiToken">GET /api/v2/organization/1</a>
-    </td>
+    <th>Example request</th>
+    <td>GET /api/v2/organization/1?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+{
+  "name" : "Cocondi - Coaching Consulting Dittmar",
+  "address" : {
+    "street1" : " Fuggerstrasse 1",
+    "street2" : null,
+    "city" : "Muenchen",
+    "post_code" : "81373",
+    "province" : "Bayern",
+    "country" : "DE"
+  },
+  "vat_number" : "DE 276433983" ,
+  "registration_number" : null,
+  "website" : "http://www.cocondi.de/" ,
+  "members":[{
+    "id" : 40,
+    "unique_name" : "jürgen.dittmar",
+    "first_name" : "Jürgen",
+    "last_name" : "Dittmar",
+    "photo" : null,
+    "country" : "DE"
+  }],
+  "contributions" : []
+}
+    </pre></td>
   </tr>
 </table>

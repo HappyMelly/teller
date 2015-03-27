@@ -1,14 +1,16 @@
-@(user: UserIdentity)
+@()
 
 <h3>Authentication</h3>
 
-<p>All API requests require authentication using a user-specific token. Yours is <code>@user.apiToken</code>.
-  You need to pass this token on all requests by adding the <code>api_token</code> query string parameter.</p>
+<p>All API requests require authentication using a application-specific token.
+  To get a token, please contact <a href="mailto:sergey.kotlov@@happymelly.com">Sergey Kotlov</a>.</p>
+<p>There are two supported types of applications: read-only and read-write. Make sure
+  you mention which type of application you want to write.</p>
 
 <table class="table-bordered table">
   <tr>
     <th>Example</th>
-    <td><a href="/api/v2/organizations?api_token=@user.apiToken">GET /api/v2/organizations?api_token=@user.apiToken</a></td>
+    <td>GET /api/v2/organizations?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</a></td>
   </tr>
 </table>
 

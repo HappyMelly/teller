@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="facilitators">Facilitators</h3>
 <table class="table table-bordered">
@@ -45,8 +45,45 @@
         <td>none</td>
     </tr>
     <tr>
-        <th>Examples</th>
-        <td><a href="/api/v2/brand/mgt30/facilitators?api_token=@user.apiToken">
-            GET /api/v2/brand/mgt30/facilitators</a><br>
+        <th>Example request</th>
+        <td>GET /api/v2/brand/mgt30/facilitators?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+    </tr>
+    <tr>
+        <th>Example response</th>
+        <td><pre>
+[ {
+    "id" : 37,
+    "first_name" : "Alejandro",
+    "last_name" : "Olchik",
+    "photo" : "http://graph.facebook.com/aolchik/picture?type=large",
+    "country" : "RU",
+    "languages" : [ "Portuguese" ],
+    "countries" : [ "BR" ]
+}, {
+    "id" : 42,
+    "first_name" : "Alexander",
+    "last_name" : "Jäger",
+    "photo" : "http://graph.facebook.com/lxHunter/picture?type=large",
+    "country" : "DE",
+    "languages" : [ "German", "English" ],
+    "countries" : [ "DE" ]
+}, {
+    "id" : 60,
+    "first_name" : "Alexandre",
+    "last_name" : "Cuva",
+    "photo" : "http://graph.facebook.com/GToronto/picture?type=large",
+    "country" : "VN",
+    "languages" : [ "English", "French", "Italian" ],
+    "countries" : [ "KH", "LA", "SG", "TH", "VN" ]
+}, {
+    "id" : 33,
+    "first_name" : "Alexandre",
+    "last_name" : "Magno",
+    "photo" : null,
+    "country" : "BR",
+    "languages" : [ ],
+    "countries" : [ ]
+} ]
+        </pre></td>
     </tr>
 </table>

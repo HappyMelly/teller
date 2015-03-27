@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="member">Member details</h3>
 
@@ -41,9 +41,155 @@
     </td>
   </tr>
   <tr>
-    <th>Examples</th>
-    <td>
-      <a href="/api/v2/member/1?api_token=@user.apiToken">GET /api/v2/member/1</a>
-    </td>
+    <th>Example request</th>
+    <td>GET /api/v2/member/1?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response (person)</th>
+    <td><pre>
+{
+  "id" : 1,
+  "funder" : true,
+  "type" : "person",
+  "person" : {
+    "id" : 25,
+    "unique_name" : "sergey.kotlov",
+    "first_name" : "Sergey",
+    "last_name" : "Kotlov",
+    "email_address" : "skotlov@@gmail.com",
+    "photo" : null,
+    "address" : {
+      "street1" : "3 Kotelnikova alley 75",
+      "street2" : null,
+      "city" : "Saint-Petersburg",
+      "post_code" : "197341",
+      "province" : "----",
+      "country" : "RU"
+    },
+    "bio" : "**Can I visit your company?**...",
+    "interests" : null,
+    "twitter_handle" : "skotlov",
+    "facebook_url" : null,
+    "linkedin_url" : null,
+    "google_plus_url" : null,
+    "website" : "http://changegeek.ru",
+    "blog" : "http://changegeek.ru",
+    "active" : true,
+    "organizations" : [ {
+      "name" : "AdaptWorks",
+      "city" : "São Paulo",
+      "country" : "BR",
+      "website" : "http://www.adaptworks.com.br/"
+    }, {
+      "name" : "Happy Melly One BV",
+      "city" : "Rotterdam",
+      "country" : "NL",
+      "website" : null
+    } ],
+    "licenses" : [ ],
+    "contributions" : [ {
+      "product" : {
+        "title" : "Happy Melly Teller",
+        "subtitle" : "A backbone of Happy Melly ecosystem",
+        "image" : "/product/2/picture",
+        "brands" : [ {
+          "code" : "HM",
+          "unique_name" : "HM",
+          "name" : "Happy Melly"
+        } ],
+        "category" : "Apps"
+      },
+      "role" : "Curator"
+    }, {
+      "product" : {
+        "title" : "Kudobox",
+        "subtitle" : "Easy and fun way to say thank you",
+        "image" : "/product/13/picture",
+        "brands" : [ {
+          "code" : "KUDOB",
+          "unique_name" : "kudobox",
+          "name" : "Kudobox"
+        } ],
+        "category" : "Apps"
+      },
+      "role" : "Happy Kudo Wizard"
+    }, {
+      "product" : {
+        "title" : "Lean Change Management",
+        "subtitle" : "Innovative Practices for Organizational Change",
+        "image" : "/product/3/picture",
+        "brands" : [ {
+          "code" : "HMEX",
+          "unique_name" : "HMEX",
+          "name" : "Happy Melly Express"
+        } ],
+        "category" : "Books"
+      },
+      "role" : "Supporter"
+    } ]
+  }
+}
+    </pre></td>
+  </tr>
+  <tr>
+    <th>Example response (organisation)</th>
+    <td><pre>
+{
+  "id" : 4,
+  "funder" : true,
+  "type" : "org",
+  "org" : {
+    "name" : "Happy Melly One BV",
+    "address" : {
+      "street1" : "Handelsplein 37",
+      "street2" : null,
+      "city" : "Rotterdam",
+      "post_code" : "3071 PR",
+      "province" : null,
+      "country" : "NL"
+    },
+    "vat_number" : "NL852530699B01",
+    "registration_number" : "57321736",
+    "website" : null,
+    "members" : [ {
+      "id" : 22,
+      "unique_name" : "jurgen.appelo",
+      "first_name" : "Jurgen",
+      "last_name" : "Appelo",
+      "photo" : "http://graph.facebook.com/jurgenappelo/picture?type=large",
+      "country" : "RU"
+    }, {
+      "id" : 182,
+      "unique_name" : "louise.brace",
+      "first_name" : "Louise",
+      "last_name" : "Brace",
+      "photo" : null,
+      "country" : "ES"
+    }, {
+      "id" : 185,
+      "unique_name" : "nicolas.de.vicq",
+      "first_name" : "Nicolas",
+      "last_name" : "de Vicq",
+      "photo" : null,
+      "country" : "BE"
+    }, {
+      "id" : 25,
+      "unique_name" : "sergey.kotlov",
+      "first_name" : "Sergey",
+      "last_name" : "Kotlov",
+      "photo" : null,
+      "country" : "RU"
+    }, {
+      "id" : 183,
+      "unique_name" : "jennifer.riggins",
+      "first_name" : "Jennifer",
+      "last_name" : "Riggins",
+      "photo" : null,
+      "country" : "ES"
+    } ],
+    "contributions" : [ ]
+  }
+}
+    </pre></td>
   </tr>
 </table>

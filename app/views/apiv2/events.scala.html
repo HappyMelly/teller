@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@()
 
 <h3 id="events">Events</h3>
 
@@ -73,10 +73,64 @@
     </td>
   </tr>
   <tr>
-    <th>Examples</th>
+    <th>Examples request</th>
     <td>
-      <a href="/api/v2/brand/mgt30/events?api_token=@user.apiToken">GET /api/v2/brand/mgt30/events</a>
-      <br><a href="/api/v2/brand/mgt30/events?future=true&public=true&api_token=@user.apiToken">GET /api/v2/brand/mgt30/events?future=true&public=true</a>
+      GET /api/v2/brand/mgt30/events?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2
+      <br>GET /api/v2/brand/mgt30/events?future=true&public=true&api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2
     </td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[{
+  "id" : 193,
+  "title" : "Management 3.0 two day course",
+  "type" : 1,
+  "description" : "",
+  "spokenLanguages" : [ "German" ],
+  "materialsLanguage" : "English",
+  "specialAttention" : "",
+  "start" : "2011-11-24",
+  "end" : "2011-11-25",
+  "hoursPerDay" : 8,
+  "totalHours" : 16,
+  "facilitators" : [ {
+    "id" : 31,
+    "unique_name" : "mischa.ramseyer",
+    "first_name" : "Mischa",
+    "last_name" : "Ramseyer",
+    "photo" : null,
+    "country" : "CH"
+  } ],
+  "city" : "Zürich",
+  "country" : "CH",
+  "website" : "http://www.pragmatic-solutions.ch",
+  "registrationPage" : "http://www.management30.ch"
+}, {
+  "id" : 270,
+  "title" : "Management 3.0 two day course",
+  "type" : 1,
+  "description" : "",
+  "spokenLanguages" : [ "French" ],
+  "materialsLanguage" : "English",
+  "specialAttention" : "",
+  "start" : "2012-03-22",
+  "end" : "2012-03-23",
+  "hoursPerDay" : 8,
+  "totalHours" : 16,
+  "facilitators" : [ {
+    "id" : 36,
+    "unique_name" : "françois.beauregard",
+    "first_name" : "François",
+    "last_name" : "Beauregard",
+    "photo" : null,
+    "country" : "CA"
+  } ],
+  "city" : "Montréal",
+  "country" : "CA",
+  "website" : null,
+  "registrationPage" : null
+}]
+    </pre></td>
   </tr>
 </table>
