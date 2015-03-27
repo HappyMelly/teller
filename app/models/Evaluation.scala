@@ -120,16 +120,17 @@ case class Evaluation(
    * Adds new evaluation to database and sends email notification
    * @return Returns an updated evaluation with id
    */
-  def add(withConfirmation: Boolean = false): Evaluation = if (withConfirmation) {
-    val hash = Random.nextString(64)
-    evaluationService.
-      add(this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))).
-      sendConfirmationRequest()
-  } else {
-    evaluationService.
-      add(this.copy(status = EvaluationStatus.Pending)).
-      sendNewEvaluationNotification()
-  }
+  def add(confirmationUrl: String, withConfirmation: Boolean = false): Evaluation =
+    if (withConfirmation) {
+      val hash = Random.alphanumeric.take(64).mkString
+      evaluationService.
+        add(this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))).
+        sendConfirmationRequest(confirmationUrl)
+    } else {
+      evaluationService.
+        add(this.copy(status = EvaluationStatus.Pending)).
+        sendNewEvaluationNotification()
+    }
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluations.where(_.id === id).mutate(_.delete())
@@ -179,7 +180,17 @@ case class Evaluation(
     this
   }
 
-  protected def sendConfirmationRequest() = {
+  protected def sendConfirmationRequest(confirmationUrl: String) = {
+
+    val brand = brandService.find(event.brandCode).get
+    val en = translationService.find("EN").get
+    val participant = personService.find(this.personId).get
+    val subject = "Confirm your %s evaluation".format(brand.name)
+    val url = confirmationUrl + this.confirmationId.getOrElse("")
+    println(url)
+    email.send(Set(participant), None, None, subject,
+      mail.evaluation.html.confirm(brand, participant.fullName, url).toString(),
+      richMessage = true)
     this
   }
 }

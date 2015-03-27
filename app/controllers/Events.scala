@@ -550,7 +550,7 @@ object Events extends Controller
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
                 email.send(Set(participant), None, None, subject,
-                  mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
+                  mail.evaluation.html.request(brand.brand, participant, body).toString(), richMessage = true)
               }
 
               val activity = Activity.insert(user.fullName, Activity.Predicate.Sent, event.title)

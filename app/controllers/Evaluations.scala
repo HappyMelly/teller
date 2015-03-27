@@ -24,13 +24,12 @@
 
 package controllers
 
-import models._
 import models.UserRole.Role._
-import models.admin.Translation
-import models.service.{ Services, EventService }
+import models._
+import models.service.{ EventService, Services }
 import org.joda.time._
-import play.api.data._
 import play.api.data.Forms._
+import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -97,7 +96,8 @@ trait Evaluations extends EvaluationsController
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          val eval = evaluation.add()
+          val url = request.host + routes.Evaluations.confirm("").url
+          val eval = evaluation.add(url, withConfirmation = true)
           val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
@@ -264,7 +264,7 @@ trait Evaluations extends EvaluationsController
                 cert.generateAndSend(brand, approver)
                 data.copy(certificate = Some(cert.id), issued = cert.issued).update
               } else if (data.certificate.isEmpty) {
-                val body = mail.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
+                val body = mail.evaluation.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
                 val subject = s"Your ${brand.brand.name} event's evaluation approval"
                 email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
                   Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
@@ -316,7 +316,7 @@ trait Evaluations extends EvaluationsController
           email.send(Set(participant),
             Some(x.event.facilitators.toSet),
             Some(Set(brand.coordinator)), subject,
-            mail.html.rejected(brand.brand, participant, user.person).toString(),
+            mail.evaluation.html.rejected(brand.brand, participant, user.person).toString(),
             richMessage = true)
 
           Redirect(route).flashing("success" -> activity.toString)

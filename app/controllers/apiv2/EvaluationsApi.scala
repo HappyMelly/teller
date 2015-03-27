@@ -26,10 +26,11 @@ package controllers.apiv2
 import controllers.EvaluationsController
 import models._
 import org.joda.time.DateTime
+import play.api.Play
+import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json._
-import play.api.mvc._
 
 /**
  * Evaluations API
@@ -86,7 +87,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
             val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
             BadRequest(Json.prettyPrint(json))
           } else {
-            val createdEvaluation = evaluation.add()
+            val url = request.host + controllers.routes.Evaluations.confirm("").url
+            val createdEvaluation = evaluation.add(url, withConfirmation = true)
             val message = "new evaluation for " + createdEvaluation.participant.fullName
             Activity.insert(name, Activity.Predicate.Created, message)
             jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))

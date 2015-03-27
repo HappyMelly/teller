@@ -33,6 +33,7 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.Play
 import services.notifiers.Notifiers
 
 import scala.language.postfixOps
@@ -190,6 +191,7 @@ class EventService extends Notifiers with Services {
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title
+        val url = Play.configuration.getString("application.baseUrl")
         val body = mail.txt.confirm(event, brand).toString()
         email.send(
           event.facilitators.toSet,

@@ -63,7 +63,8 @@ GET         /evaluation/:id/edit                                      controller
 GET         /evaluation/:id                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                           controllers.Evaluations.update(id: Long)
 GET         /evaluation/:id/delete                                    controllers.Evaluations.delete(id: Long, ref: Option[String])
-GET         /evaluation/:confirmationId/confirm                       controllers.Evaluations.confirm(confirmationId: String)
+# it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
+GET         /evaluation/confirm/:confirmationId                       controllers.Evaluations.confirm(confirmationId: String)
 
 GET         /report/create/:code/event/:eventId/status/:status        controllers.Reports.create(code: String, eventId: Long, status: Int)
 
