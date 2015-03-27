@@ -31,6 +31,7 @@ import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.data._
 import play.api.data.Forms._
+import play.api.i18n.Messages
 import play.api.libs.json.Json
 import services.notifiers.Notifiers
 
@@ -94,7 +95,7 @@ trait Evaluations extends EvaluationsController
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          val eval = evaluation.create
+          val eval = evaluation.add
           val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
@@ -244,20 +245,45 @@ trait Evaluations extends EvaluationsController
   def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Evaluation.find(id).map { ev ⇒
-
-          ev.approve(user.person)
-
-          val activity = ev.activity(
-            user.person,
-            Activity.Predicate.Approved).insert
-
-          val route = ref match {
+        evaluationService.find(id).map { x ⇒
+          val route: String = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-            case _ ⇒ routes.Events.details(ev.eventId).url + "#participant"
+            case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
           }
-          Redirect(route).flashing("success" -> activity.toString)
+          if (x.eval.approvable) {
+            val ev = x.eval.approve
+
+            val approver = user.person
+            val brand = Brand.find(x.event.brandCode).get
+            Participant.find(ev.personId, ev.eventId) map { data ⇒
+              if (data.certificate.isEmpty && brand.brand.generateCert) {
+                val cert = new Certificate(ev.handled, x.event, ev.participant)
+                cert.generateAndSend(brand, approver)
+                data.copy(certificate = Some(cert.id), issued = cert.issued).update
+              } else if (data.certificate.isEmpty) {
+                val body = mail.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
+                val subject = s"Your ${brand.brand.name} event's evaluation approval"
+                email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
+                  Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+              } else {
+                val cert = new Certificate(ev.handled, x.event, ev.participant, renew = true)
+                cert.send(brand, approver)
+              }
+            }
+
+            val activity = ev.activity(
+              user.person,
+              Activity.Predicate.Approved).insert
+
+            Redirect(route).flashing("success" -> activity.toString)
+          } else {
+            val error = x.eval.status match {
+              case EvaluationStatus.Unvalidated ⇒ "error.evaluation.approve.unvalidated"
+              case _ ⇒ "error.evaluation.approve.approved"
+            }
+            Redirect(route).flashing("error" -> Messages(error))
+          }
         }.getOrElse(NotFound)
   }
 
@@ -269,28 +295,36 @@ trait Evaluations extends EvaluationsController
    */
   def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.reject()
-
-        val activity = existingEvaluation.activity(
-          user.person,
-          Activity.Predicate.Rejected).insert
-
-        val brand = Brand.find(existingEvaluation.event.brandCode).get
-        val participant = existingEvaluation.participant
-        val subject = s"Your ${brand.brand.name} certificate"
-        email.send(Set(participant),
-          Some(existingEvaluation.event.facilitators.toSet),
-          Some(Set(brand.coordinator)), subject,
-          mail.html.rejected(brand.brand, participant, user.person).toString(),
-          richMessage = true)
-
-        val route = ref match {
+      evaluationService.find(id).map { x ⇒
+        val route: String = ref match {
           case Some("index") ⇒ routes.Participants.index().url
           case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-          case _ ⇒ routes.Events.details(existingEvaluation.eventId).url + "#participant"
+          case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
         }
-        Redirect(route).flashing("success" -> activity.toString)
+        if (x.eval.rejectable) {
+          x.eval.reject()
+
+          val activity = x.eval.activity(
+            user.person,
+            Activity.Predicate.Rejected).insert
+
+          val brand = Brand.find(x.event.brandCode).get
+          val participant = x.eval.participant
+          val subject = s"Your ${brand.brand.name} certificate"
+          email.send(Set(participant),
+            Some(x.event.facilitators.toSet),
+            Some(Set(brand.coordinator)), subject,
+            mail.html.rejected(brand.brand, participant, user.person).toString(),
+            richMessage = true)
+
+          Redirect(route).flashing("success" -> activity.toString)
+        } else {
+          val error = x.eval.status match {
+            case EvaluationStatus.Unvalidated ⇒ "error.evaluation.reject.unvalidated"
+            case _ ⇒ "error.evaluation.reject.rejected"
+          }
+          Redirect(route).flashing("error" -> Messages(error))
+        }
       }.getOrElse(NotFound)
   }
 

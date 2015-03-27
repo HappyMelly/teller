@@ -24,14 +24,13 @@
 
 package models
 
-import models.admin.Translation
 import models.database.Evaluations
-import models.service.{ TranslationService, EventService, PersonService }
+import models.service._
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.notifiers.Email
+import services.notifiers.Notifiers
 
 /**
  * A status of an evaluation which a participant gives to an event
@@ -77,7 +76,7 @@ case class Evaluation(
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends Email with ActivityRecorder {
+  updatedBy: String) extends ActivityRecorder with Notifiers with Services {
 
   lazy val event: Event = EventService.get.find(eventId).get
 
@@ -114,22 +113,12 @@ case class Evaluation(
 
   def approved: Boolean = status == EvaluationStatus.Approved
 
-  def create: Evaluation = DB.withSession { implicit session: Session ⇒
-    val id = Evaluations.forInsert.insert(this)
-    val participant = Participant.find(personId, eventId).get
-    participant.copy(evaluationId = Some(id)).update
-    val created = this.copy(id = Some(id))
-
-    val brand = Brand.find(event.brandCode).get
-    val en = TranslationService.get.find("EN").get
-    val impression = en.impressions.value(question6)
-    val subject = s"New evaluation (General impression: $impression)"
-    send(event.facilitators.toSet,
-      Some(Set(brand.coordinator)), None, subject,
-      mail.html.evaluation(created, participant, en).toString(), richMessage = true)
-
-    created
-  }
+  /**
+   * Adds new evaluation to database and sends email notification
+   * @return Returns an updated evaluation with id
+   */
+  def add: Evaluation =
+    evaluationService.add(this).sendNewEvaluationNotification()
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluations.where(_.id === id).mutate(_.delete())
@@ -146,31 +135,10 @@ case class Evaluation(
     this
   }
 
-  def approve(approver: Person): Evaluation = {
-
-    val ev = this.
+  def approve: Evaluation = {
+    this.
       copy(status = EvaluationStatus.Approved).
       copy(handled = Some(LocalDate.now)).update
-
-    val brand = Brand.find(ev.event.brandCode).get
-    Participant.find(ev.personId, ev.eventId) map { data ⇒
-      if (data.certificate.isEmpty && brand.brand.generateCert) {
-        val cert = new Certificate(ev.handled, ev.event, ev.participant)
-        cert.generateAndSend(brand, approver)
-        data.copy(certificate = Some(cert.id), issued = cert.issued).update
-      } else if (data.certificate.isEmpty) {
-        val body = mail.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
-        val subject = s"Your ${brand.brand.name} event's evaluation approval"
-        send(Set(ev.participant), Some(ev.event.facilitators.toSet),
-          Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
-      } else {
-        val cert = new Certificate(ev.handled, ev.event, ev.participant, renew = true)
-        cert.send(brand, approver)
-      }
-
-    }
-
-    ev
   }
 
   /**
@@ -182,6 +150,18 @@ case class Evaluation(
       .copy(handled = Some(LocalDate.now)).update
   }
 
+  protected def sendNewEvaluationNotification() = {
+    val brand = Brand.find(event.brandCode).get
+    val en = translationService.find("EN").get
+    val impression = en.impressions.value(question6)
+    val participant = Participant.find(this.personId, this.eventId).get
+    val subject = s"New evaluation (General impression: $impression)"
+    email.send(event.facilitators.toSet,
+      Some(Set(brand.coordinator)), None, subject,
+      mail.html.evaluation(this, participant, en).toString(), richMessage = true)
+
+    this
+  }
 }
 
 object Evaluation {

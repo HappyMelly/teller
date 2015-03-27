@@ -48,6 +48,8 @@ models.OrganisationCategory.legalentity.label = label label-info
 
 
 # Evaluation status label names and Bootstrap label CSS classes.
+models.EvaluationStatus.0 = Unvalidated
+models.EvaluationStatus.0.label =
 models.EvaluationStatus.1 = Pending
 models.EvaluationStatus.1.label =
 models.EvaluationStatus.2 = Approved
@@ -120,9 +122,14 @@ error.payment.incorrect_cvc = Your card's security code is incorrect. Please che
 error.payment.expired_card = Your card has expired. Please check card details.
 error.payment.processing_error = An error occurred while processing your card. Try again in a little bit. Please contact the system support if the error persists.
 
-
 error.brand.invalid = You are not allowed to create events for this brand
+
 error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
+error.evaluation.reject.unvalidated = You cannot reject an unvalidated evaluation
+error.evaluation.reject.rejected = You cannot reject a rejected evaluation
+error.evaluation.approve.unvalidated = You cannot approve an unvalidated evaluation
+error.evaluation.approve.approved = You cannot approve an approved evaluation
+
 error.event.nonDeletable = You cannot delete this event because it has participants
 error.event.invalid = You are not allowed to manage this event
 error.event.nofacilitators = An event should have at least one facilitator

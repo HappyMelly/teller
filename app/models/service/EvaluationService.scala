@@ -24,13 +24,25 @@
  */
 package models.service
 
-import models.EvaluationPair
+import models.{ Participant, Evaluation, EvaluationPair }
 import models.database.{ Evaluations, People, Participants, Events }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 class EvaluationService {
+
+  /**
+   * Inserts evaluation to database and updates all related records
+   * @param eval Evaluation
+   * @return Return the updated evaluation with id
+   */
+  def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
+    val id = Evaluations.forInsert.insert(eval)
+    val participant = Participant.find(eval.personId, eval.eventId).get
+    participant.copy(evaluationId = Some(id)).update
+    eval.copy(id = Some(id))
+  }
 
   /**
    * Returns evaluation with related event if exists; otherwise, None
