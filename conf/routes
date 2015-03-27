@@ -63,6 +63,7 @@ GET         /evaluation/:id/edit                                      controller
 GET         /evaluation/:id                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                           controllers.Evaluations.update(id: Long)
 GET         /evaluation/:id/delete                                    controllers.Evaluations.delete(id: Long, ref: Option[String])
+GET         /evaluation/:confirmationId/confirm                       controllers.Evaluations.confirm(confirmationId: String)
 
 GET         /report/create/:code/event/:eventId/status/:status        controllers.Reports.create(code: String, eventId: Long, status: Int)
 
@@ -236,6 +237,7 @@ GET         /api/v2/brand/:code/facilitators                          controller
 GET         /api/v2/brand/:code/types                                 controllers.apiv2.EventTypesApi.types(code: String)
 
 POST        /api/v2/evaluation                                        controllers.apiv2.EvaluationsApi.create
+POST        /api/v2/evaluation/:id/confirm                            controllers.apiv2.EvaluationsApi.confirm(id: String)
 
 GET         /api/v2/event/:id                                         controllers.apiv2.EventsApi.event(id: Long)
 GET         /api/v2/event/:id/participants                            controllers.apiv2.ParticipantsApi.participants(id: Long)

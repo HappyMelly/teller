@@ -32,6 +32,8 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import services.notifiers.Notifiers
 
+import scala.util.Random
+
 /**
  * A status of an evaluation which a participant gives to an event
  *
@@ -40,7 +42,7 @@ import services.notifiers.Notifiers
  *    a facilitator
  */
 object EvaluationStatus extends Enumeration {
-  val Unvalidated = Value("0")
+  val Unconfirmed = Value("0")
   val Pending = Value("1")
   val Approved = Value("2")
   val Rejected = Value("3")
@@ -73,6 +75,7 @@ case class Evaluation(
   question8: String,
   status: EvaluationStatus.Value,
   handled: Option[LocalDate],
+  confirmationId: Option[String],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -117,8 +120,16 @@ case class Evaluation(
    * Adds new evaluation to database and sends email notification
    * @return Returns an updated evaluation with id
    */
-  def add: Evaluation =
-    evaluationService.add(this).sendNewEvaluationNotification()
+  def add(withConfirmation: Boolean = false): Evaluation = if (withConfirmation) {
+    val hash = Random.nextString(64)
+    evaluationService.
+      add(this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))).
+      sendConfirmationRequest()
+  } else {
+    evaluationService.
+      add(this.copy(status = EvaluationStatus.Pending)).
+      sendNewEvaluationNotification()
+  }
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluations.where(_.id === id).mutate(_.delete())
@@ -126,19 +137,15 @@ case class Evaluation(
     participant.copy(evaluationId = None).update
   }
 
-  def update: Evaluation = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventId, personId, question1, question2, question3,
-      question4, question5, question6, question7, question8, status,
-      handled, updated, updatedBy)
-    val updateQuery = Evaluations.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-    this
-  }
+  /**
+   * Updates the evaluation
+   */
+  def update(): Evaluation = evaluationService.update(this)
 
   def approve: Evaluation = {
     this.
       copy(status = EvaluationStatus.Approved).
-      copy(handled = Some(LocalDate.now)).update
+      copy(handled = Some(LocalDate.now)).update()
   }
 
   /**
@@ -147,8 +154,17 @@ case class Evaluation(
   def reject(): Evaluation = {
     this
       .copy(status = EvaluationStatus.Rejected)
-      .copy(handled = Some(LocalDate.now)).update
+      .copy(handled = Some(LocalDate.now)).update()
   }
+
+  /**
+   * Sets the evaluation to Pending state and returns the updated evaluation
+   */
+  def confirm(): Evaluation =
+    this.
+      copy(status = EvaluationStatus.Pending).
+      update().
+      sendNewEvaluationNotification()
 
   protected def sendNewEvaluationNotification() = {
     val brand = Brand.find(event.brandCode).get
@@ -160,6 +176,10 @@ case class Evaluation(
       Some(Set(brand.coordinator)), None, subject,
       mail.html.evaluation(this, participant, en).toString(), richMessage = true)
 
+    this
+  }
+
+  protected def sendConfirmationRequest() = {
     this
   }
 }

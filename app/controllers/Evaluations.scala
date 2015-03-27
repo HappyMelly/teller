@@ -33,6 +33,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
+import play.api.mvc.Action
 import services.notifiers.Notifiers
 
 trait Evaluations extends EvaluationsController
@@ -58,6 +59,7 @@ trait Evaluations extends EvaluationsController
     "question8" -> nonEmptyText,
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
+    "validationId" -> optional(ignored(None.asInstanceOf[String])),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now),
@@ -95,7 +97,7 @@ trait Evaluations extends EvaluationsController
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          val eval = evaluation.add
+          val eval = evaluation.add()
           val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
@@ -279,7 +281,7 @@ trait Evaluations extends EvaluationsController
             Redirect(route).flashing("success" -> activity.toString)
           } else {
             val error = x.eval.status match {
-              case EvaluationStatus.Unvalidated ⇒ "error.evaluation.approve.unvalidated"
+              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unvalidated"
               case _ ⇒ "error.evaluation.approve.approved"
             }
             Redirect(route).flashing("error" -> Messages(error))
@@ -320,12 +322,23 @@ trait Evaluations extends EvaluationsController
           Redirect(route).flashing("success" -> activity.toString)
         } else {
           val error = x.eval.status match {
-            case EvaluationStatus.Unvalidated ⇒ "error.evaluation.reject.unvalidated"
+            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unvalidated"
             case _ ⇒ "error.evaluation.reject.rejected"
           }
           Redirect(route).flashing("error" -> Messages(error))
         }
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Confirms the given evaluation
+   * @param confirmationId Confirmation unique id
+   */
+  def confirm(confirmationId: String) = Action { implicit request ⇒
+    evaluationService.find(confirmationId) map { x ⇒
+      x.confirm()
+      Ok(views.html.evaluation.confirmed())
+    } getOrElse NotFound(views.html.evaluation.notfound())
   }
 
   /**

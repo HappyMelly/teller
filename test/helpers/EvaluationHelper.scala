@@ -45,6 +45,7 @@ object EvaluationHelper {
       "question8_" + id.toString,
       status,
       handled = None,
+      None,
       created = created,
       createdBy = "Sergey Kotlov",
       updated = DateTime.now(),

@@ -56,7 +56,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
       question5, question6, question7, question8) ⇒
         Evaluation(id, event_id, participant_id, question1, question2, question3,
           question4, question5, question6, question7, question8,
-          EvaluationStatus.Pending, None, DateTime.now, appName, DateTime.now, appName)
+          EvaluationStatus.Pending, None, None,
+          DateTime.now, appName, DateTime.now, appName)
     })({
       (e: Evaluation) ⇒
         Some(e.id, e.eventId, e.personId, e.question1, e.question2, e.question3,
@@ -85,12 +86,28 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
             val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
             BadRequest(Json.prettyPrint(json))
           } else {
-            val createdEvaluation = evaluation.add
+            val createdEvaluation = evaluation.add()
             val message = "new evaluation for " + createdEvaluation.participant.fullName
             Activity.insert(name, Activity.Predicate.Created, message)
             jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
           }
         })
+  }
+
+  /**
+   * Confirms the given evaluation if exists
+   * @param confirmationId Confirmation unique id
+   */
+  def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) {
+    implicit request ⇒
+      implicit token ⇒
+        evaluationService.find(confirmationId) map { x ⇒
+          x.confirm()
+          val msg = "participant %s confirmed evaluation %s".format(x.personId, x.eventId)
+          Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
+
+          jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
+        } getOrElse jsonNotFound("Unknown evaluation")
   }
 }
 

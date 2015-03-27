@@ -7,5 +7,7 @@ create table if not exists API_TOKEN(
   APP_WEBSITE varchar(254),
   WRITE_CALLS tinyint(1) not null default 0
 );
+alter table EVALUATION add column CONFIRMATION_ID char(64) after HANDLED;
 # --- !Downs
 drop table if exists API_TOKEN;
+alter table EVALUATION drop column CONFIRMATION_ID;

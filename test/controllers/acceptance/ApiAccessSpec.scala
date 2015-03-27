@@ -41,6 +41,7 @@ class ApiAccessSpec extends Specification {
 
   In Evaluations API method
     'created' should be read-write $e4
+    'confirm' should be read-write $e15
 
   In Events API method
     'event' should be read-only  $e5
@@ -87,8 +88,12 @@ class ApiAccessSpec extends Specification {
     controller.readWrite must_== false
   }
 
+  class TestEvaluationsApi() extends EvaluationsApi with FakeNoCallApiAuthentication
+
   def e4 = {
-    ok
+    val controller = new TestEvaluationsApi
+    controller.create().apply(FakeRequest("POST", ""))
+    controller.readWrite must_== true
   }
 
   class TestEventsApi() extends EventsApi with FakeNoCallApiAuthentication
@@ -161,5 +166,11 @@ class ApiAccessSpec extends Specification {
     val controller = new TestProductsApi
     controller.products().apply(FakeRequest())
     controller.readWrite must_== false
+  }
+
+  def e15 = {
+    val controller = new TestEvaluationsApi
+    controller.confirm("test").apply(FakeRequest())
+    controller.readWrite must_== true
   }
 }

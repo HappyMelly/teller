@@ -59,6 +59,15 @@ class EvaluationService {
   }
 
   /**
+   * Returns evaluation if it exists; otherwise, None
+   * @param confirmationId Confirmation unique id
+   */
+  def find(confirmationId: String): Option[Evaluation] = DB.withSession {
+    implicit session ⇒
+      Query(Evaluations).filter(_.confirmationId === confirmationId).firstOption
+  }
+
+  /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
@@ -74,6 +83,22 @@ class EvaluationService {
     } else {
       List()
     }
+  }
+
+  /**
+   * Updates the given evaluation in database
+   * @param eval Evaluation
+   * @return Returns the given evaluation
+   */
+  def update(eval: Evaluation): Evaluation = DB.withSession {
+    implicit session ⇒
+      val updateTuple = (eval.eventId, eval.personId, eval.question1,
+        eval.question2, eval.question3, eval.question4, eval.question5,
+        eval.question6, eval.question7, eval.question8, eval.status,
+        eval.handled, eval.updated, eval.updatedBy)
+      val updateQuery = Evaluations.filter(_.id === eval.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      eval
   }
 
 }
