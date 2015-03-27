@@ -59,7 +59,7 @@ trait Evaluations extends EvaluationsController
     "question8" -> nonEmptyText,
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
-    "validationId" -> optional(ignored(None.asInstanceOf[String])),
+    "validationId" -> optional(ignored("")),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now),

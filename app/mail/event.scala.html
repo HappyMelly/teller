@@ -1,159 +1,116 @@
 @(event: Event, changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
+
 @import models.service.brand.EventTypeService
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML
 
-    <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    </head>
-    <body>
-        <table cellpadding="0" cellspacing="0" border="0" style="margin: 0; padding: 0; width: 100% !important; line-height: 100% !important">
+@tmpl {
+<tr>
+    <td valign="top" style="background-color: rgb(72, 177, 112); color: #ffffff;">
+        <h3 style="font-size: 20px ; font-weight: normal">Event "@event.title"</h3>
+    </td>
+</tr>
+<tr>
+    <td valign="top">
+        @event.details.description.map { description => @Html(Transform.from(Markdown).to(HTML).fromString(description).toString) }
+        <p><a href="@routes.Events.details(event.id.getOrElse(0)).absoluteURL(false)">Click to review</a></p>
+
+        @if(changes.nonEmpty) {
+            <h2>Changes</h2>
+            <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
+            style="font-size: 12px ; line-height:16 px">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Now</th>
+                        <th>Was</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(field <- changes) {
+                    @defining(field.printable()) { value =>
+                        @if(value._1 == "Description" || value._1 == "Special Attention") {
+                            <tr>
+                                <td width="150"><strong>@value._1</strong></td>
+                                <td>@Html(value._2)</td>
+                                <td>@Html(value._3)</td>
+                            </tr>
+                        } else {
+                            <tr>
+                                <td width="150"><strong>@value._1</strong></td>
+                                <td>@value._2</td>
+                                <td>@value._3</td>
+                            </tr>
+                        }
+
+                    }
+                }
+                </tbody>
+            </table>
+            <br/><br/>
+        }
+
+        <h2>Event details</h2>
+        <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
+            style="font-size: 12px ; line-height:16 px">
             <tbody>
                 <tr>
-                    <td valign="top">
-                        <table cellpadding="0" cellspacing="0" border="0" align="center"
-                        width="550" style="margin-top: 10px">
-                            <tbody>
-                                <tr>
-                                    <td valign="top"
-                                    style="text-transform: uppercase; color: rgb(153, 153, 153); font-size: 11px">
-                                        A COPY HAS BEEN SENT TO THE BRAND MANAGER</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <table cellpadding="15" cellspacing="0" border="0" align="center"
-                        width="550" style="margin-top: 10px; background-color: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204)">
-                            <tbody>
-                                <tr>
-                                    <td valign="top" style="background-color: rgb(72, 177, 112); color: #ffffff;">
-                                        <h3 style="font-size: 20px ; font-weight: normal">Event "@event.title"</h3>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">
-                                        @event.details.description.map { description => @Html(Transform.from(Markdown).to(HTML).fromString(description).toString) }
-                                        <p>
-                                            <a href="@routes.Events.details(event.id.getOrElse(0)).absoluteURL(false)">
-                                                Click to review
-                                            </a></p>
-
-                                        @if(changes.nonEmpty) {
-                                            <h2>Changes</h2>
-                                            <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
-                                            style="font-size: 12px ; line-height:16 px">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Field</th>
-                                                        <th>Now</th>
-                                                        <th>Was</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                @for(field <- changes) {
-                                                    @defining(field.printable()) { value =>
-                                                        @if(value._1 == "Description" || value._1 == "Special Attention") {
-                                                            <tr>
-                                                                <td width="150"><strong>@value._1</strong></td>
-                                                                <td>@Html(value._2)</td>
-                                                                <td>@Html(value._3)</td>
-                                                            </tr>
-                                                        } else {
-                                                            <tr>
-                                                                <td width="150"><strong>@value._1</strong></td>
-                                                                <td>@value._2</td>
-                                                                <td>@value._3</td>
-                                                            </tr>
-                                                        }
-
-                                                    }
-                                                }
-                                                </tbody>
-                                            </table>
-                                            <br/><br/>
-                                        }
-
-                                        <h2>Event details</h2>
-                                        <table cellpadding="2" cellspacing="2" border="1" align="center" width="100%"
-                                            style="font-size: 12px ; line-height:16 px">
-                                            <tbody>
-                                                <tr>
-                                                    <td width="150"><strong>Brand</strong></td>
-                                                    <td>@Brand.find(event.brandCode).get.brand.name</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Event Type</strong></td>
-                                                    <td>@EventTypeService.get.find(event.eventTypeId).get.name</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Spoken Languages</strong></td>
-                                                    <td>@event.spokenLanguage</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Materials Language</strong></td>
-                                                    <td>@event.materialsLanguage</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>City</strong></td>
-                                                    <td>@event.location.city</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Country</strong></td>
-                                                    <td>@Messages("country." + event.location.countryCode)</td>
-                                                </tr>
-                                                @event.details.specialAttention.map { text =>
-                                                    <tr>
-                                                        <td width="150"><strong>Special Attention</strong></td>
-                                                        <td>@Html(Transform.from(Markdown).to(HTML).fromString(text).toString)</td>
-                                                    </tr>
-                                                }
-                                                <tr>
-                                                    <td width="150"><strong>Start Date</strong></td>
-                                                    <td>@event.schedule.start.toString</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>End Date</strong></td>
-                                                    <td>@event.schedule.end.toString</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Hours Per Day</strong></td>
-                                                    <td>@event.schedule.hoursPerDay.toString</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Total Hours</strong></td>
-                                                    <td>@event.schedule.totalHours.toString</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Private</strong></td>
-                                                    <td>@event.notPublic.toString</td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="150"><strong>Archived</strong></td>
-                                                    <td>@event.archived</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <table cellpadding="0" cellspacing="0" border="0" align="center"
-                        style="margin-top: 10px ; width: 550px">
-                            <tbody>
-                                <tr>
-                                    <td valign="top"
-                                    style="text-transform: uppercase; color: rgb( 153, 153, 153 ); font-size: 11px ; width: 50%">
-                                        THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">
-                                        HAPPY MELLY TELLER</a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <br><br><br><br>
-                    </td>
+                    <td width="150"><strong>Brand</strong></td>
+                    <td>@Brand.find(event.brandCode).get.brand.name</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Event Type</strong></td>
+                    <td>@EventTypeService.get.find(event.eventTypeId).get.name</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Spoken Languages</strong></td>
+                    <td>@event.spokenLanguage</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Materials Language</strong></td>
+                    <td>@event.materialsLanguage</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>City</strong></td>
+                    <td>@event.location.city</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Country</strong></td>
+                    <td>@Messages("country." + event.location.countryCode)</td>
+                </tr>
+                @event.details.specialAttention.map { text =>
+                    <tr>
+                        <td width="150"><strong>Special Attention</strong></td>
+                        <td>@Html(Transform.from(Markdown).to(HTML).fromString(text).toString)</td>
+                    </tr>
+                }
+                <tr>
+                    <td width="150"><strong>Start Date</strong></td>
+                    <td>@event.schedule.start.toString</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>End Date</strong></td>
+                    <td>@event.schedule.end.toString</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Hours Per Day</strong></td>
+                    <td>@event.schedule.hoursPerDay.toString</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Total Hours</strong></td>
+                    <td>@event.schedule.totalHours.toString</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Private</strong></td>
+                    <td>@event.notPublic.toString</td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>Archived</strong></td>
+                    <td>@event.archived</td>
                 </tr>
             </tbody>
         </table>
-    </body>
-</html>
+    </td>
+</tr>
+}

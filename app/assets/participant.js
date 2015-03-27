@@ -182,6 +182,7 @@ function calculateAverageImpression(table) {
 
 function drawStatus(data) {
     var style = [
+        { badge: '', icon: 'glyphicon-clock' },
         { badge: '', icon: 'glyphicon-hand-right' },
         { badge: 'alert-success', icon: 'glyphicon-thumbs-up' },
         { badge: 'alert-warning', icon: 'glyphicon-thumbs-down' }
