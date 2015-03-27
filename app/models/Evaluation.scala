@@ -105,14 +105,12 @@ case class Evaluation(
   /**
    * Returns true if the evaluation can be approved
    */
-  def approvable: Boolean = status == EvaluationStatus.Pending ||
-    status == EvaluationStatus.Rejected
+  def approvable: Boolean = Evaluation.approvable(status)
 
   /**
    * Returns true if the evaluation can be rejected
    */
-  def rejectable: Boolean = status == EvaluationStatus.Pending ||
-    status == EvaluationStatus.Approved
+  def rejectable: Boolean = Evaluation.rejectable(status)
 
   def approved: Boolean = status == EvaluationStatus.Approved
 
@@ -181,9 +179,7 @@ case class Evaluation(
   }
 
   protected def sendConfirmationRequest(confirmationUrl: String) = {
-
     val brand = brandService.find(event.brandCode).get
-    val en = translationService.find("EN").get
     val participant = personService.find(this.personId).get
     val subject = "Confirm your %s evaluation".format(brand.name)
     val url = confirmationUrl + this.confirmationId.getOrElse("")
@@ -196,6 +192,20 @@ case class Evaluation(
 }
 
 object Evaluation {
+
+  /**
+   * Returns true if the evaluation can be approved
+   * @param status Status of the evaluation
+   */
+  def approvable(status: EvaluationStatus.Value): Boolean =
+    status == EvaluationStatus.Pending || status == EvaluationStatus.Rejected
+
+  /**
+   * Returns true if the evaluation can be rejected
+   * @param status Status of the evaluation
+   */
+  def rejectable(status: EvaluationStatus.Value): Boolean =
+    status == EvaluationStatus.Pending || status == EvaluationStatus.Approved
 
   def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
     implicit session: Session ⇒

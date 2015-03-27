@@ -404,12 +404,12 @@ object Participants extends Controller with Security with Services {
   private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount, page: String): JsValue = {
     Json.obj(
       "approve" -> {
-        if (data.status.get != EvaluationStatus.Approved)
+        if (Evaluation.approvable(data.status.get))
           routes.Evaluations.approve(id, Some(page)).url
         else ""
       },
       "reject" -> {
-        if (data.status.get != EvaluationStatus.Rejected)
+        if (Evaluation.rejectable(data.status.get))
           routes.Evaluations.reject(id, Some(page)).url
         else ""
       },

@@ -281,7 +281,7 @@ trait Evaluations extends EvaluationsController
             Redirect(route).flashing("success" -> activity.toString)
           } else {
             val error = x.eval.status match {
-              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unvalidated"
+              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
               case _ ⇒ "error.evaluation.approve.approved"
             }
             Redirect(route).flashing("error" -> Messages(error))
@@ -322,7 +322,7 @@ trait Evaluations extends EvaluationsController
           Redirect(route).flashing("success" -> activity.toString)
         } else {
           val error = x.eval.status match {
-            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unvalidated"
+            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
             case _ ⇒ "error.evaluation.reject.rejected"
           }
           Redirect(route).flashing("error" -> Messages(error))
