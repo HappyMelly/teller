@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.{ Dashboard, Security }
 import helpers.{ BrandHelper, EvaluationHelper, EventHelper, PersonHelper }
 import models._
-import models.service.EvaluationService
+import models.service.{ LicenseService, EvaluationService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -299,7 +299,7 @@ class DashboardSpec extends PlayAppSpec {
           val license = new License(None, licenseeId, 1L,
             "1", LocalDate.now().minusYears(1),
             start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
-          License.insert(license)
+          LicenseService.get.add(license)
         }
       }
   }

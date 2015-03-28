@@ -224,10 +224,14 @@ object Brand {
    * @param coordinator Brand coordinator
    * @return
    */
-  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
-    val collator = Collator.getInstance(Locale.ENGLISH)
-    val ord = new Ordering[String] { def compare(x: String, y: String) = collator.compare(x, y) }
-    (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName.toLowerCase)(ord)
+  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession {
+    implicit session: Session ⇒
+      val collator = Collator.getInstance(Locale.ENGLISH)
+      val ord = new Ordering[String] {
+        def compare(x: String, y: String) = collator.compare(x, y)
+      }
+      val facilitators = License.licensees(code, LocalDate.now())
+      (coordinator :: facilitators).distinct.sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds all brands belonging to one coordinator **/

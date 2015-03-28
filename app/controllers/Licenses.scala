@@ -94,7 +94,7 @@ object Licenses extends Controller with Security with Services {
         licenseForm.bindFromRequest.fold(
           form ⇒ BadRequest(views.html.license.form(user, None, form, person)),
           license ⇒ {
-            val newLicense = License.insert(license.copy(licenseeId = personId))
+            val newLicense = licenseService.add(license.copy(licenseeId = personId))
             val brand = brandService.find(newLicense.brandId).get
 
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)

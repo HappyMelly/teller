@@ -24,20 +24,19 @@
 
 package models
 
-import akka.actor.{ Props, Actor }
-import models.database.{ EventFacilitators, Participants, Events }
-import models.service.{ Services, EventService }
+import akka.actor.{ Actor, Props }
+import models.database.{ EventFacilitators, Events, Participants }
+import models.service.{ EventService, Services }
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.{ DateTime, LocalDate }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import services.notifiers.EmailService
-import scala.language.postfixOps
-import scala.math.BigDecimal.RoundingMode
-import scala.slick.lifted.Query
 import views.Languages
+
+import scala.language.postfixOps
+import scala.slick.lifted.Query
 
 /**
  * Contains schedule-related data
