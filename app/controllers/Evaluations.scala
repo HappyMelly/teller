@@ -96,8 +96,8 @@ trait Evaluations extends EvaluationsController
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          val url = request.host + routes.Evaluations.confirm("").url
-          val eval = evaluation.add(url, withConfirmation = true)
+          val defaultHook = request.host + routes.Evaluations.confirm("").url
+          val eval = evaluation.add(defaultHook, withConfirmation = true)
           val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })

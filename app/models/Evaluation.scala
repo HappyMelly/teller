@@ -116,14 +116,16 @@ case class Evaluation(
 
   /**
    * Adds new evaluation to database and sends email notification
+   * @param defaultHook Link to a default confirmation page
+   * @param withConfirmation If true, the evaluation should be confirmed first by the participant
    * @return Returns an updated evaluation with id
    */
-  def add(confirmationUrl: String, withConfirmation: Boolean = false): Evaluation =
+  def add(defaultHook: String, withConfirmation: Boolean = false): Evaluation =
     if (withConfirmation) {
       val hash = Random.alphanumeric.take(64).mkString
       evaluationService.
         add(this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))).
-        sendConfirmationRequest(confirmationUrl)
+        sendConfirmationRequest(defaultHook)
     } else {
       evaluationService.
         add(this.copy(status = EvaluationStatus.Pending)).
@@ -178,12 +180,19 @@ case class Evaluation(
     this
   }
 
-  protected def sendConfirmationRequest(confirmationUrl: String) = {
+  /**
+   * Sends a confirmation request to the participant
+   * @param defaultHook Link to a default confirmation page
+   * @return Returns the evaluation
+   */
+  protected def sendConfirmationRequest(defaultHook: String) = {
     val brand = brandService.find(event.brandCode).get
     val participant = personService.find(this.personId).get
-    val subject = "Confirm your %s evaluation".format(brand.name)
-    val url = confirmationUrl + this.confirmationId.getOrElse("")
-    println(url)
+    val subject = "Confirm your %s evaluation" format brand.name
+    val url = brand.evaluationHookUrl.
+      map(x ⇒ if (x.endsWith("/")) x else x + "/").
+      getOrElse("https://" + defaultHook).
+      concat(this.confirmationId getOrElse "")
     email.send(Set(participant), None, None, subject,
       mail.evaluation.html.confirm(brand, participant.fullName, url).toString(),
       richMessage = true)

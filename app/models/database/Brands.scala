@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.{ ProfileType, SocialProfile, Brand }
+import models.Brand
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -46,27 +46,22 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def tagLine = column[Option[String]]("TAGLINE")
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
+  def evaluationHookUrl = column[Option[String]]("EVALUATION_HOOK_URL")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
-
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
   def * = id.? ~ code ~ uniqueName ~ name ~ coordinatorId ~ description ~ picture ~
-    generateCert ~ tagLine ~ webSite ~ blog ~ created ~ createdBy ~ updated ~
-    updatedBy <> ({ b ⇒
-      Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7, b._8, b._9, b._10, b._11, b._12, b._13, b._14, b._15)
-    }, { (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description, b.picture, b.generateCert,
-        b.tagLine, b.webSite, b.blog, b.created, b.createdBy, b.updated, b.updatedBy))
-    })
+    generateCert ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ created ~
+    createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
 
   def forInsert = * returning id
 
-  def forUpdate = code ~ uniqueName ~ name ~ coordinatorId ~ description ~ picture ~ tagLine ~ webSite ~ blog ~
-    updated ~ updatedBy
+  def forUpdate = code ~ uniqueName ~ name ~ coordinatorId ~ description ~
+    picture ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ updated ~ updatedBy
 
   def uniqueCodeIndex = index("IDX_CODE", code, unique = true)
   def uniqueNameIndex = index("IDX_UNIQUE_NAME", uniqueName, unique = true)

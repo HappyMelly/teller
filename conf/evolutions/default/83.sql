@@ -9,7 +9,10 @@ create table if not exists API_TOKEN(
 );
 alter table EVALUATION add column CONFIRMATION_ID char(64) after HANDLED;
 alter table EVENT add column RATING float(6,2) default 0.0 after CONFIRMED;
+alter table BRAND add column EVALUATION_HOOK_URL varchar(254) after BLOG;
+
 # --- !Downs
 drop table if exists API_TOKEN;
 alter table EVALUATION drop column CONFIRMATION_ID;
 alter table EVENT drop column RATING;
+alter table BRAND drop columnd EVALUATION_HOOK_URL;
