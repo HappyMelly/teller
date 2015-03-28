@@ -153,13 +153,13 @@ object Events extends Controller
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(
+      "error.event.nofacilitators", (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
         invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandCode, title, language,
-            location, details, schedule, notPublic,
-            archived, confirmed, None, created, createdBy, updated, updatedBy)
+            location, details, schedule, notPublic, archived, confirmed,
+            0.0f, None, created, createdBy, updated, updatedBy)
           event.invoice_=(invoice)
           event.facilitatorIds_=(facilitatorIds)
           event
@@ -192,7 +192,7 @@ object Events extends Controller
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, "", "", Language("", None, Some("English")),
         Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false,
+        notPublic = false, archived = false, confirmed = false, 0.0f,
         None, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
       val account = user.account

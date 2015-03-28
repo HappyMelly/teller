@@ -58,7 +58,7 @@ object EventHelper {
       new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())),
         endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
-      None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+      0.0f, None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
     event.facilitatorIds_=(facilitatorIds.getOrElse(1 :: Nil))
     event.invoice_=(invoice)
 

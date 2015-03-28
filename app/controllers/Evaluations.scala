@@ -112,16 +112,17 @@ trait Evaluations extends EvaluationsController
   def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map {
-        evaluation ⇒
-          evaluation.delete()
-          val activity = evaluation.activity(user.person, Activity.Predicate.Deleted).insert
+      Evaluation.find(id).map { x ⇒
+        x.delete()
+        // recalculate event rating
+        Event.ratingActor ! x.eventId
+        val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
 
-          val route = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
-            case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
-          }
-          Redirect(route).flashing("success" -> activity.toString)
+        val route = ref match {
+          case Some("index") ⇒ routes.Participants.index().url
+          case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -255,7 +256,8 @@ trait Evaluations extends EvaluationsController
           }
           if (x.eval.approvable) {
             val ev = x.eval.approve
-
+            // recalculate event rating
+            Event.ratingActor ! ev.eventId
             val approver = user.person
             val brand = Brand.find(x.event.brandCode).get
             Participant.find(ev.personId, ev.eventId) map { data ⇒
@@ -305,6 +307,9 @@ trait Evaluations extends EvaluationsController
         }
         if (x.eval.rejectable) {
           x.eval.reject()
+
+          // recalculate event rating
+          Event.ratingActor ! x.eval.eventId
 
           val activity = x.eval.activity(
             user.person,

@@ -64,7 +64,7 @@ class EvaluationSpec extends Specification {
       this
     }
 
-    override def sendConfirmationRequest() = {
+    override def sendConfirmationRequest(confirmationUrl: String) = {
       confirmEvalCallCount += 1
       this
     }
@@ -150,7 +150,7 @@ class EvaluationSpec extends Specification {
   "When a confirmation for an evaluation is requested" >> {
     "the evaluation should be added as Unconfirmed & the notification should be sent to participant" in {
       eval.evaluationService_=(new TestEvaluationService)
-      val added = eval.add(withConfirmation = true).asInstanceOf[TestEvaluation]
+      val added = eval.add("", withConfirmation = true).asInstanceOf[TestEvaluation]
       added.status must_== EvaluationStatus.Unconfirmed
       added.confirmationId must_!= None
       added.confirmEvalCallCount must_== 1
@@ -163,7 +163,7 @@ class EvaluationSpec extends Specification {
       (evalService.add(_)).expects(pending).returning(pending)
       val approved = eval.copy(status = EvaluationStatus.Approved)
       approved.evaluationService_=(evalService)
-      val added = approved.add().asInstanceOf[TestEvaluation]
+      val added = approved.add("").asInstanceOf[TestEvaluation]
       added.newEvalCallCount must_== 1
     }
   }

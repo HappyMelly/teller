@@ -225,6 +225,16 @@ class EventService extends Notifiers with Services {
   }
 
   /**
+   * Updates rating for the given event
+   * @param eventId Event id
+   * @param rating New rating
+   */
+  def updateRating(eventId: Long, rating: Float): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Query(Events).filter(_.id === eventId).map(_.rating).update(rating)
+  }
+
+  /**
    * Applies time filter on query
    *
    * @param future Defines if time filter should be applied

@@ -225,7 +225,7 @@ object Participants extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val participants = event.participants
-        val evaluations = Evaluation.findByEvent(eventId)
+        val evaluations = evaluationService.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }

@@ -214,11 +214,6 @@ object Evaluation {
         filter(_.eventId === eventId).firstOption
   }
 
-  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Evaluations).filter(_.eventId === eventId).list
-  }
-
   def find(id: Long) = DB.withSession { implicit session: Session ⇒
     Query(Evaluations).filter(_.id === id).firstOption
   }

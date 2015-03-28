@@ -8,6 +8,8 @@ create table if not exists API_TOKEN(
   WRITE_CALLS tinyint(1) not null default 0
 );
 alter table EVALUATION add column CONFIRMATION_ID char(64) after HANDLED;
+alter table EVENT add column RATING float(6,2) default 0.0 after CONFIRMED;
 # --- !Downs
 drop table if exists API_TOKEN;
 alter table EVALUATION drop column CONFIRMATION_ID;
+alter table EVENT drop column RATING;

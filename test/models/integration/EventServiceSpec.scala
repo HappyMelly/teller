@@ -186,4 +186,19 @@ class EventServiceSpec extends PlayAppSpec {
       activities.head.activityObject must_== Some(msg)
     }
   }
+
+  "Method updateRating" should {
+    "set new rating to 6.5" in {
+      val event = EventHelper.one.insert
+      event.rating must_== 0.0f
+      EventService.get.updateRating(event.id.get, 6.5f)
+      EventService.get.find(event.id.get) map { x ⇒
+        x.rating must_== 6.5f
+      } getOrElse ko
+    }
+    "throw no exception if the event doesn't exist" in {
+      EventService.get.updateRating(567, 7.0f)
+      ok
+    }
+  }
 }

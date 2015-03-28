@@ -86,6 +86,15 @@ class EvaluationService {
   }
 
   /**
+   * Returns list of evaluation for the given event
+   * @param eventId Event id
+   */
+  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Evaluations).filter(_.eventId === eventId).list
+  }
+
+  /**
    * Updates the given evaluation in database
    * @param eval Evaluation
    * @return Returns the given evaluation

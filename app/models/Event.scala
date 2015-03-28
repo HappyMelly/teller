@@ -24,13 +24,15 @@
 
 package models
 
+import akka.actor.{ Props, Actor }
 import models.database.{ EventFacilitators, Participants, Events }
-import models.service.EventService
+import models.service.{ Services, EventService }
 import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
+import play.api.libs.concurrent.Akka
 import services.notifiers.EmailService
 import scala.language.postfixOps
 import scala.math.BigDecimal.RoundingMode
@@ -78,6 +80,7 @@ case class Event(
   notPublic: Boolean = false,
   archived: Boolean = false,
   confirmed: Boolean = false,
+  rating: Float = 0.0f,
   fee: Option[Money] = None,
   created: DateTime = DateTime.now(),
   createdBy: String,
@@ -244,6 +247,7 @@ case class Event(
 }
 
 object Event {
+  val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
 
   /**
    * Returns new event with a fee calculated the given one and a number of hours
@@ -286,5 +290,16 @@ object Event {
     }
   }
 
+  /**
+   * Updates event rating
+   */
+  class RatingCalculatorActor extends Actor with Services {
+    def receive = {
+      case eventId: Long ⇒
+        val evaluations = evaluationService.findByEvent(eventId).filter(_.approved)
+        val rating = evaluations.foldLeft(0.0f)(_ + _.question6.toFloat) / evaluations.length
+        eventService.updateRating(eventId, rating)
+    }
+  }
 }
 
