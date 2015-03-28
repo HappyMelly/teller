@@ -46,7 +46,7 @@ class ApiTokenService {
    */
   def find(token: String): Option[ApiToken] = DB.withSession {
     implicit session ⇒
-      Query(ApiTokens).filter(_.token === token).firstOption
+      Query(ApiTokens).filter(_.token is token).firstOption
   }
 }
 

@@ -24,6 +24,9 @@
 
 package models
 
+import akka.actor.Actor
+import models.service.Services
+
 /**
  * Represents facilitator entity
  */
@@ -31,3 +34,19 @@ case class Facilitator(id: Option[Long] = None,
   personId: Long,
   brandId: Long,
   rating: Float = 0.0f)
+
+object Facilitator {
+
+  /**
+   * Updates facilitator rating
+   */
+  class RatingCalculatorActor extends Actor with Services {
+    def receive = {
+      case msg: (Long, String) ⇒
+        val events = eventService.findByFacilitator(msg._1, Some(msg._2)).map(_.id.get)
+//        val evaluations = evaluationService.findByEvents(events)
+//        val rating = evaluations.foldLeft(0.0f)(_ + _.question6.toFloat) / evaluations.length
+//        eventService.updateRating(personId, rating)
+    }
+  }
+}

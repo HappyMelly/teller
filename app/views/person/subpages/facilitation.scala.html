@@ -1,12 +1,12 @@
 @(person: Person,
-    licenses: List[LicenseView])(implicit request: Request[Any],
+    facilitationData: List[(LicenseView, Float)])(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
 <div class="col-md-10">
   <div class="row block">
-    @views.html.person.blocks.licenses(person, licenses)
+    @views.html.person.blocks.licenses(person, facilitationData)
   </div>
   <div class="row block">
     <legend>Signature</legend>

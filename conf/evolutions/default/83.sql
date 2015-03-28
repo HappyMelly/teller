@@ -1,7 +1,7 @@
 # --- !Ups
 create table if not exists API_TOKEN(
   ID bigint not null auto_increment primary key,
-  TOKEN varchar(254) not null unique,
+  TOKEN char(40) not null unique,
   APP_NAME varchar(254) not null unique,
   APP_DESCRIPTION text not null,
   APP_WEBSITE varchar(254),

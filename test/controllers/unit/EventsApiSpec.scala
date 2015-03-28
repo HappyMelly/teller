@@ -75,8 +75,10 @@ class EventsApiSpec extends Specification {
         "country" -> "RU",
         "website" -> None.asInstanceOf[Option[String]],
         "registrationPage" -> None.asInstanceOf[Option[String]],
+        "rating" -> 0.0f,
         "public" -> true,
-        "archived" -> false)
+        "archived" -> false,
+        "confirmed" -> false)
     }
     "return 404 error with error message when an event doesn't exist" in {
       val controller = new TestEventsApi()

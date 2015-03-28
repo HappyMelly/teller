@@ -57,6 +57,25 @@ class FacilitatorService {
         filter(_.personId === personId).
         filter(_.brandId === brandId).firstOption
   }
+
+  /**
+   * Returns list of facilitator records for the given person
+   * @param personId Person id
+   */
+  def findByPerson(personId: Long): List[Facilitator] = DB.withSession {
+    implicit session ⇒
+      Query(Facilitators).filter(_.personId === personId).list
+  }
+
+  /**
+   * Returns list of facilitator records for the given brand
+   * @param brandId Brand id
+   * @return
+   */
+  def findByBrand(brandId: Long): List[Facilitator] = DB.withSession {
+    implicit session ⇒
+      Query(Facilitators).filter(_.brandId === brandId).list
+  }
 }
 
 object FacilitatorService {

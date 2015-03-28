@@ -33,16 +33,17 @@ import views.Languages
  */
 trait FacilitatorsApi extends Controller with ApiAuthentication {
 
-  implicit val facilitatorWrites = new Writes[Person] {
-    def writes(person: Person): JsValue = {
+  implicit val facilitatorWrites = new Writes[(Person, Float)] {
+    def writes(value: (Person, Float)): JsValue = {
       Json.obj(
-        "id" -> person.id.get,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "photo" -> person.photo.url,
-        "country" -> person.address.countryCode,
-        "languages" -> person.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
-        "countries" -> person.countries.map(_.country).toList)
+        "id" -> value._1.id.get,
+        "first_name" -> value._1.firstName,
+        "last_name" -> value._1.lastName,
+        "photo" -> value._1.photo.url,
+        "country" -> value._1.address.countryCode,
+        "languages" -> value._1.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
+        "countries" -> value._1.countries.map(_.country).toList,
+        "rating" -> value._2)
     }
   }
 
@@ -59,7 +60,10 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
           PeopleCollection.countries(facilitators)
           PeopleCollection.languages(facilitators)
           PeopleCollection.addresses(facilitators)
-          jsonOk(Json.toJson(facilitators))
+          val facilitationData = facilitatorService.findByBrand(brand.brand.id.get)
+          val data = facilitators.
+            map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.rating))
+          jsonOk(Json.toJson(data))
         } getOrElse jsonNotFound("Unknown brand")
   }
 }
