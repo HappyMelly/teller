@@ -59,8 +59,8 @@
                           <ul class="dropdown-menu">
                               <li><a href="@routes.Dashboard.profile()">
                                   <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
+                              <li class="divider"></li>
                               @restrict(handler, List(as(Editor.toString))) {
-                                  <li class="divider"></li>
                                   <li><a href="@routes.Dashboard.about()">About</a></li>
                                   <li><a href="@routes.Dashboard.api()"> API (v1)</a></li>
                                   <li><a href="@routes.Dashboard.apiv2()"> API (v2)</a></li>
@@ -69,6 +69,7 @@
                                   <li><a href="@controllers.admin.routes.Translations.index()">
                                       Translations</a></li>
                               }
+                              <li><a href="@routes.Dashboard.apiv2()"> API (v2)</a></li>
                               <li class="divider"></li>
                               <li>
                                   <a href="@routes.LoginPage.logout()">

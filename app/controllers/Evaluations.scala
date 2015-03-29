@@ -114,8 +114,10 @@ trait Evaluations extends EvaluationsController
 
       Evaluation.find(id).map { x ⇒
         x.delete()
-        // recalculate event rating
+        // recalculate ratings
         Event.ratingActor ! x.eventId
+        Facilitator.ratingActor ! x.eventId
+
         val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
 
         val route = ref match {
@@ -229,7 +231,7 @@ trait Evaluations extends EvaluationsController
             BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
-            val eval = evaluation.copy(id = Some(id)).update
+            val eval = evaluation.copy(id = Some(id)).update()
             val activity = eval.activity(
               user.person,
               Activity.Predicate.Updated).insert
@@ -256,11 +258,12 @@ trait Evaluations extends EvaluationsController
           }
           if (x.eval.approvable) {
             val ev = x.eval.approve
-            // recalculate event rating
+            // recalculate ratings
             Event.ratingActor ! ev.eventId
+            Facilitator.ratingActor ! ev.eventId
             val approver = user.person
             val brand = Brand.find(x.event.brandCode).get
-            Participant.find(ev.personId, ev.eventId) map { data ⇒
+            Participant.find(ev.personId, ev.eventId) foreach { data ⇒
               if (data.certificate.isEmpty && brand.brand.generateCert) {
                 val cert = new Certificate(ev.handled, x.event, ev.participant)
                 cert.generateAndSend(brand, approver)
@@ -308,8 +311,9 @@ trait Evaluations extends EvaluationsController
         if (x.eval.rejectable) {
           x.eval.reject()
 
-          // recalculate event rating
+          // recalculate ratings
           Event.ratingActor ! x.eval.eventId
+          Facilitator.ratingActor ! x.eval.eventId
 
           val activity = x.eval.activity(
             user.person,

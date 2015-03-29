@@ -24,8 +24,10 @@
 
 package models
 
-import akka.actor.Actor
+import akka.actor.{ Actor, Props }
 import models.service.Services
+import play.api.Play.current
+import play.api.libs.concurrent.Akka
 
 /**
  * Represents facilitator entity
@@ -36,17 +38,24 @@ case class Facilitator(id: Option[Long] = None,
   rating: Float = 0.0f)
 
 object Facilitator {
+  val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
 
   /**
    * Updates facilitator rating
    */
   class RatingCalculatorActor extends Actor with Services {
     def receive = {
-      case msg: (Long, String) ⇒
-        val events = eventService.findByFacilitator(msg._1, Some(msg._2)).map(_.id.get)
-//        val evaluations = evaluationService.findByEvents(events)
-//        val rating = evaluations.foldLeft(0.0f)(_ + _.question6.toFloat) / evaluations.length
-//        eventService.updateRating(personId, rating)
+      case eventId: Long ⇒
+        eventService.find(eventId) foreach { x ⇒
+          x.facilitatorIds.foreach { id ⇒
+            val events = eventService.findByFacilitator(id, Some(x.brandCode)).map(_.id.get)
+            val evaluations = evaluationService.findByEvents(events).filter(_._3.approved)
+            val rating = evaluations.foldLeft(0.0f)(_ + _._3.question6.toFloat / evaluations.length)
+            val brand = brandService.find(x.brandCode).get
+            println(evaluations.toString())
+            facilitatorService.update(Facilitator(None, id, brand.id.get, rating))
+          }
+        }
     }
   }
 }

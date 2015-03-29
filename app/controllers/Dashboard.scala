@@ -52,7 +52,7 @@ trait Dashboard extends Controller with Security with Services {
   /**
    * API v2 documentation page.
    */
-  def apiv2 = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def apiv2 = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.apiv2.index(user))
   }

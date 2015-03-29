@@ -76,6 +76,20 @@ class FacilitatorService {
     implicit session ⇒
       Query(Facilitators).filter(_.brandId === brandId).list
   }
+
+  /**
+   * Updates the given facilitator in database
+   * @param facilitator Facilitator
+   * @return Retunrs the given facilitator
+   */
+  def update(facilitator: Facilitator): Facilitator = DB.withSession {
+    implicit session ⇒
+      Query(Facilitators).
+        filter(_.personId === facilitator.personId).
+        filter(_.brandId === facilitator.brandId).
+        map(_.forUpdate).update(facilitator.rating)
+      facilitator
+  }
 }
 
 object FacilitatorService {
