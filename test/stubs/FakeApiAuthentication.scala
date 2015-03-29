@@ -24,14 +24,30 @@
  */
 package stubs
 
-import controllers.api.ApiAuthentication
+import controllers.apiv2.ApiAuthentication
+import models.admin.ApiToken
 import play.api.mvc._
 
 /** Stubs api authentication */
 trait FakeApiAuthentication extends ApiAuthentication {
 
-  override def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action {
+  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result) = Action {
     implicit request ⇒
-      f(request)
+      val token = ApiToken(None, "test", "test", "test", None, readWrite)
+      f(request)(token)
+  }
+}
+
+/**
+ * This trait is used to test that API methods have valid read/write token
+ *  authentication
+ */
+trait FakeNoCallApiAuthentication extends ApiAuthentication {
+  var readWrite: Boolean = false
+
+  override def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result) = Action {
+    implicit request ⇒
+      this.readWrite = readWrite
+      Ok("test")
   }
 }

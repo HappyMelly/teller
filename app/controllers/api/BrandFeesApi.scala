@@ -28,7 +28,6 @@ import models.brand.BrandFee
 import models.service.Services
 import play.api.mvc.Controller
 import play.api.libs.json._
-import views.Countries
 
 /**
  * Provides API for working with event fees

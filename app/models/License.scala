@@ -25,12 +25,12 @@
 package models
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.database.{ Addresses, People, Brands, Licenses }
+import models.database.Licenses
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ Interval, LocalDate }
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A content license - a person’s agreement with Happy Melly to use a `Brand`.
@@ -108,11 +108,6 @@ object License {
     } yield license.start
 
     Query(query.min).first
-  }
-
-  def insert(license: License) = DB.withSession { implicit session: Session ⇒
-    val id = Licenses.forInsert.insert(license)
-    license.copy(id = Some(id))
   }
 
   /** Finds a licensee by license ID **/

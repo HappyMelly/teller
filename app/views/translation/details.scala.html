@@ -1,7 +1,11 @@
 @(user: UserIdentity,
-  translation: Translation,
-  en: Translation)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  translation: models.admin.Translation,
+  en: models.admin.Translation)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
+@import controllers.admin.routes.Translations
 @import helper.CSRF
 @import views.Languages
 @import be.objectify.deadbolt.scala.views.html._
@@ -15,14 +19,14 @@
         <div class="actions pull-right">
           @dynamic(handler, "event", "add") {
             <div class="button">
-              <a class="btn btn-default" href="@routes.Translations.edit(translation.language)">
+              <a class="btn btn-default" href="@Translations.edit(translation.language)">
                 <i class="glyphicon glyphicon-pencil"></i> Edit
               </a>
             </div>
             @if(translation.changeable) {
               <div class="button">
                 <form class="delete form-inline" method="post" text="translation"
-                  action="@CSRF(routes.Translations.delete(translation.language))">
+                  action="@CSRF(Translations.delete(translation.language))">
                   <button class="btn btn-danger" type="submit">
                     <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
                   </button>

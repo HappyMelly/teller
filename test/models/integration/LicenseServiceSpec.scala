@@ -25,14 +25,16 @@
 package models.integration
 
 import helpers.{ BrandHelper, PersonHelper }
-import integration.PlayAppSpec
-import models.License
-import models.service.LicenseService
+import integration.{ TruncateBefore, PlayAppSpec }
+import models.{ Facilitator, License }
+import models.service.{ FacilitatorService, LicenseService }
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
 import org.joda.time.LocalDate
 
 class LicenseServiceSpec extends PlayAppSpec {
+
+  val service = new LicenseService
 
   "Method `expiring`" should {
     "return only licenses expiring this month" in {
@@ -54,9 +56,9 @@ class LicenseServiceSpec extends PlayAppSpec {
             val license = new License(None, licenseeId, 1L,
               "1", LocalDate.now().minusYears(1),
               start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
-            License.insert(license)
+            service.add(license)
         }
-      val licenses = LicenseService.get.expiring()
+      val licenses = service.expiring()
       licenses.length must_== 2
       licenses.exists(_.license.licenseeId == 1) must beFalse
       licenses.exists(_.license.licenseeId == 2) must beFalse
@@ -65,6 +67,31 @@ class LicenseServiceSpec extends PlayAppSpec {
       licenses.exists(_.license.licenseeId == 5) must beTrue
       licenses.exists(_.licensee.fullName == "Fifth Tester") must beTrue
       licenses.exists(_.licensee.fullName == "Fourth Tester") must beTrue
+    }
+  }
+  "Method 'add'" should {
+    "add facilitator record the record it does not exist" in new TruncateBefore {
+      val person = PersonHelper.one().insert
+      val brand = BrandHelper.one.insert
+      val now = LocalDate.now()
+      val license = new License(None, person.id.get, brand.id.get,
+        "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
+        true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
+      FacilitatorService.get.find(brand.id.get, person.id.get) must_== None
+      service.add(license)
+      FacilitatorService.get.find(brand.id.get, person.id.get) must_!= None
+    }
+    "not add facilitator record and successfully execute" in new TruncateBefore {
+      val person = PersonHelper.one().insert
+      val brand = BrandHelper.one.insert
+      val now = LocalDate.now()
+      val facilitator = Facilitator(None, person.id.get, brand.id.get)
+      FacilitatorService.get.insert(facilitator)
+      val license = new License(None, person.id.get, brand.id.get,
+        "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
+        true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
+      service.add(license)
+      ok
     }
   }
 }

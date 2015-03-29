@@ -132,6 +132,10 @@
           <a href="#" data-toggle="modal" data-target="#brandfees"><i class="glyphicon glyphicon-info-sign"></i></a>
         </dd>
       </dl>
+      <dl>
+        <dt>Event Rating</dt>
+        <dd>@views.html.element.rating(event.rating)</dd>
+      </dl>
     </div>
   </div>
   @views.html.element.brandFees(event.brandCode, fees)

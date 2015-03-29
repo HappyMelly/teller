@@ -67,7 +67,6 @@ object PersonHelper {
   def oneAsJson(): JsValue = Json.obj(
     "id" -> 1,
     "unique_name" -> "first.tester",
-    "href" -> "/api/v1/person/1",
     "first_name" -> "First",
     "last_name" -> "Tester",
     "photo" -> None.asInstanceOf[Option[String]],
@@ -76,7 +75,6 @@ object PersonHelper {
   def twoAsJson(): JsValue = Json.obj(
     "id" -> 2,
     "unique_name" -> "second.tester",
-    "href" -> "/api/v1/person/2",
     "first_name" -> "Second",
     "last_name" -> "Tester",
     "photo" -> None.asInstanceOf[Option[String]],

@@ -59,6 +59,8 @@ private[models] object Events extends Table[Event]("EVENT") {
   def archived = column[Boolean]("ARCHIVED")
   def confirmed = column[Boolean]("CONFIRMED")
 
+  def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
+
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
@@ -66,23 +68,29 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def brand = foreignKey("BRAND_FK", brandCode, Brands)(_.code)
 
-  def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
-    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
-    notPublic ~ archived ~ confirmed <> (
+  def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
+    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
+    totalHours ~ notPublic ~ archived ~ confirmed ~ rating <> (
       e ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7),
         Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
-        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20,
+        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, e._21,
         None, DateTime.now(), "", DateTime.now(), ""),
-      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title, e.language.spoken, e.language.secondSpoken,
-        e.language.materials, e.location.city, e.location.countryCode, e.details.description, e.details.specialAttention,
-        e.details.webSite, e.details.registrationPage, e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,
-        e.schedule.totalHours, e.notPublic, e.archived, e.confirmed)))
+      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title,
+        e.language.spoken, e.language.secondSpoken, e.language.materials,
+        e.location.city, e.location.countryCode, e.details.description,
+        e.details.specialAttention, e.details.webSite, e.details.registrationPage,
+        e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,
+        e.schedule.totalHours, e.notPublic, e.archived, e.confirmed, e.rating)))
 
-  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
-    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
-    notPublic ~ archived ~ confirmed ~ created ~ createdBy returning id
+  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
+    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
+    totalHours ~ notPublic ~ archived ~ confirmed ~ created ~
+    createdBy returning id
 
-  def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~ secondSpokenLanguage ~ materialsLanguage ~ city ~
-    countryCode ~ description ~ specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~ totalHours ~
-    notPublic ~ archived ~ confirmed ~ updated ~ updatedBy
+  def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
+    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
+    totalHours ~ notPublic ~ archived ~ confirmed ~ updated ~ updatedBy
 }

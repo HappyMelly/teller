@@ -1,0 +1,90 @@
+@()
+
+<h3 id="brands">Brands</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Description</th>
+        <td>A list of Happy Melly brands</td>
+    </tr>
+    <tr>
+        <th>Request</th>
+        <td><code>GET /api/v2/brands</code></td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON array of brand objects, with properties:</p>
+            <ul>
+                <li><code>unique_name</code></li>
+                <li><code>name</code></li>
+                <li><code>image</code> - URL of a brand's logo, excluding protocol/host</li>
+                <li><code>tagline</code></li>
+                <li><code>products</code> - a number of products belongs to the brand</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Example request</th>
+        <td>GET /api/v2/brands?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+    </tr>
+    <tr>
+        <th>Example response</th>
+        <td><pre>
+[ {
+    "unique_name" : "BT",
+    "name" : "Business Transformers",
+    "image" : null,
+    "tagline" : null,
+    "products" : 0
+}, {
+    "unique_name" : "collaborationsuperpowers",
+    "name" : "Collaboration Superpowers",
+    "image" : "/brand/CS/picture",
+    "tagline" : "Working together from anywhere",
+    "products" : 0
+}, {
+    "unique_name" : "darefestival",
+    "name" : "Dare",
+    "image" : "/brand/DARE/picture",
+    "tagline" : "More Happy Workers!",
+    "products" : 2
+}, {
+    "unique_name" : "HM",
+    "name" : "Happy Melly",
+    "image" : null,
+    "tagline" : null,
+    "products" : 1
+}, {
+    "unique_name" : "HMEX",
+    "name" : "Happy Melly Express",
+    "image" : "/brand/HMEX/picture",
+    "tagline" : null,
+    "products" : 2
+}, {
+    "unique_name" : "happyremotemelly",
+    "name" : "Happy Remote Melly",
+    "image" : "/brand/HMAU1/picture",
+    "tagline" : "Tools, technology and training for happy remote working",
+    "products" : 0
+}]
+        </pre>
+        </td>
+    </tr>
+</table>

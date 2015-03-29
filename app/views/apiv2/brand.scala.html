@@ -1,0 +1,203 @@
+@()
+
+<h3 id="brand">Brand details</h3>
+
+<p>The <em>brand details</em> resource provides more details about an entry in the <a href="#brands">list</a>.</p>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Request</th>
+        <td>
+            <code>GET /api/v2/brand/{brandCode}</code><br/>
+            <code>GET /api/v2/brand/{brandUniqueName}</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>
+            <code>brandCode</code> unique identifier for the brand, e.g. <code>DARE</code><br/>
+            <code>brandUniqueName</code> unique identifier for the brand, e.g. <code>management30</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON object, with brand properties:</p>
+            <ul>
+                <li><code>code</code></li>
+                <li><code>unique_name</code></li>
+                <li><code>name</code></li>
+                <li><code>tagline</code></li>
+                <li><code>image</code> - URL of a brand's logo, excluding protocol/host</li>
+                <li><code>description</code></li>
+                <li><code>coordinator</code> - a JSON object with <a href="#person">person's</a> properties:
+                    <ul>
+                        <li><code>href</code> - URL of the <a href="#person">person details</a>
+                            resource, excluding protocol/host and starting with <code>/api</code></li>
+                        <li><code>name</code></li>
+                        <li><code>photo</code></li>
+                        <li><code>city</code></li>
+                        <li><code>country</code> - ISO 8166-2 country code</li>
+                    </ul>
+                </li>
+                <li><code>contact_info</code> - a JSON object with properties:
+                    <ul>
+                        <li><code>email</code></li>
+                        <li><code>skype</code></li>
+                        <li><code>phone</code></li>
+                    </ul>
+                </li>
+                <li><code>social_profile</code> - a JSON object with properties:
+                    <ul>
+                        <li><code>facebook</code></li>
+                        <li><code>twitter</code></li>
+                        <li><code>google_plus</code></li>
+                        <li><code>linkedin</code></li>
+                    </ul>
+                </li>
+                <li><code>website</code></li>
+                <li><code>blog</code></li>
+                <li><code>products</code> - a list of JSON objects
+                    <ul>
+                        <li><code>href</code> - URL of the <a href="#product">product details</a>
+                            resource, excluding protocol/host and starting with <code>/api</code></li>
+                        <li><code>title</code></li>
+                        <li><code>image</code> - URL of a product's image, excluding protocol/host</li>
+                        <li><code>brands</code> - array of objects with properties:
+                            <ul>
+                                <li><code>code</code>
+                                <li><code>name</code></li>
+                            </ul>
+                        </li>
+                        <li><code>category</code></li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>
+            <p><code>404 Not Found</code> if the specified brand is not found</p>
+        </td>
+    </tr>
+    <tr>
+        <th>Example request</th>
+        <td>GET /api/v2/brand/mgt30?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+    </tr>
+    <tr>
+        <th>Example response</th>
+        <td>
+            <pre>
+{
+    "code" : "MGT30",
+    "unique_name" : "MGT30",
+    "name" : "Management 3.0",
+    "tagline" : "Better management with fewer managers",
+    "description" : "How do I deal with my crappy organization?...",
+    "image" : "/brand/MGT30/picture",
+    "coordinator" : {
+        "id" : 22,
+        "unique_name" : "jurgen.appelo",
+        "first_name" : "Jurgen",
+        "last_name" : "Appelo",
+        "photo" : "http://graph.facebook.com/jurgenappelo/picture?type=large",
+        "country" : "RU"
+    },
+    "contact_info" : {
+        "email" : "skotlov@@gmail.com",
+        "skype" : null,
+        "phone" : null
+    },
+    "social_profile" : {
+        "facebook" : "https://www.facebook.com/Management30",
+        "twitter" : "management30",
+        "google_plus" : "https://plus.google.com/+Management30",
+        "linkedin" : "https://www.linkedin.com/groups/Management-30-4074448?gid=4074448"
+    },
+    "website" : "http://www.management30.com/",
+    "blog" : null,
+    "products" : [ {
+            "title" : "#Workout",
+            "subtitle" : "Engage People, Improve Work, Delight Clients",
+            "image" : "/product/15/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            }],
+            "category" : "Books"
+        }, {
+            "title" : "Delegation Poker",
+            "subtitle" : "A Management 3.0 game",
+            "image" : "/product/8/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Games"
+        }, {
+            "title" : "How to Change the World",
+            "subtitle" : "Change Management 3.0",
+            "image" : "/product/7/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Books"
+        }, {
+            "title" : "Kudo Cards",
+            "subtitle" : "A Management 3.0 game",
+            "image" : "/product/6/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Games"
+        }, {
+            "title" : "Management 3.0",
+            "subtitle" : "Leading Agile Developers, Developing Agile Leaders",
+            "image" : "/product/1/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Books"
+        }, {
+            "title" : "Meddlers",
+            "subtitle" : "A Management 3.0 game",
+            "image" : "/product/10/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Games"
+        }, {
+            "title" : "Moving Motivators",
+            "subtitle" : "A Management 3.0 game",
+            "image" : "/product/9/picture",
+            "brands" : [ {
+                "code" : "MGT30",
+                "unique_name" : "MGT30",
+                "name" : "Management 3.0"
+            } ],
+            "category" : "Games"
+        }]
+}
+            </pre>
+        </td>
+    </tr>
+</table>

@@ -24,19 +24,19 @@
 
 package controllers
 
-import models._
-import models.service.{ PersonService, EventService }
-import org.joda.time.DateTime
-import play.api.data._
-import play.api.data.Forms._
 import models.UserRole.Role._
-import securesocial.core.SecuredRequest
+import models._
+import models.admin.Translation
+import models.service.{ EventService, PersonService, Services }
+import org.joda.time.DateTime
+import play.api.data.Forms._
+import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Countries
 
-object Participants extends Controller with Security {
+object Participants extends Controller with Security with Services {
 
   def newPersonForm(account: UserAccount, userName: String) = {
     Form(mapping(
@@ -104,7 +104,7 @@ object Participants extends Controller with Security {
       // TODO: check for a valid brand from Brand.findForUser
       Brand.find(brandCode).map { brand ⇒
         val account = user.account
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -169,7 +169,7 @@ object Participants extends Controller with Security {
       EventService.get.find(eventId).map { event ⇒
         val account = user.account
         val brand = Brand.find(event.brandCode).get
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -225,7 +225,7 @@ object Participants extends Controller with Security {
     implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val participants = event.participants
-        val evaluations = Evaluation.findByEvent(eventId)
+        val evaluations = evaluationService.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }
@@ -404,12 +404,12 @@ object Participants extends Controller with Security {
   private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount, page: String): JsValue = {
     Json.obj(
       "approve" -> {
-        if (data.status.get != EvaluationStatus.Approved)
+        if (Evaluation.approvable(data.status.get))
           routes.Evaluations.approve(id, Some(page)).url
         else ""
       },
       "reject" -> {
-        if (data.status.get != EvaluationStatus.Rejected)
+        if (Evaluation.rejectable(data.status.get))
           routes.Evaluations.reject(id, Some(page)).url
         else ""
       },

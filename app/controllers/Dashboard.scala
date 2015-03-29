@@ -50,6 +50,14 @@ trait Dashboard extends Controller with Security with Services {
   }
 
   /**
+   * API v2 documentation page.
+   */
+  def apiv2 = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok(views.html.apiv2.index(user))
+  }
+
+  /**
    * Dashboard page - logged-in home page.
    */
   def index = SecuredRestrictedAction(Unregistered) { implicit request ⇒

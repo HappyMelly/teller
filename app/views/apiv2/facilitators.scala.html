@@ -1,0 +1,94 @@
+@()
+
+<h3 id="facilitators">Facilitators</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>Description</th>
+        <td>A list of facilitators for a particular brand</td>
+    </tr>
+    <tr>
+        <th>Request</th>
+        <td><code>GET /api/v2/brand/{brand}/facilitators</code></td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>
+            <code>brand</code> a brand code to return events for, e.g. <code>mgt30</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON array of person objects, with properties:</p>
+            <ul>
+                <li><code>id</code> - an unique identified for a person </li>
+                <li><code>first_name</code></li>
+                <li><code>last_name</code></li>
+                <li><code>photo</code></li>
+                <li><code>city</code></li>
+                <li><code>country</code> - ISO 8166-2 country code</li>
+                <li><code>languages</code> - a list of languages the facilitator speaks</li>
+                <li><code>countries</code> - a list of ISO 8166-2 country codes where the facilitator works in</li>
+                <li><code>rating</code> - facilitator rating</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Example request</th>
+        <td>GET /api/v2/brand/mgt30/facilitators?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+    </tr>
+    <tr>
+        <th>Example response</th>
+        <td><pre>
+[ {
+    "id" : 37,
+    "first_name" : "Alejandro",
+    "last_name" : "Olchik",
+    "photo" : "http://graph.facebook.com/aolchik/picture?type=large",
+    "country" : "RU",
+    "languages" : [ "Portuguese" ],
+    "countries" : [ "BR" ],
+    "rating" : 5.6
+}, {
+    "id" : 42,
+    "first_name" : "Alexander",
+    "last_name" : "Jäger",
+    "photo" : "http://graph.facebook.com/lxHunter/picture?type=large",
+    "country" : "DE",
+    "languages" : [ "German", "English" ],
+    "countries" : [ "DE" ],
+    "rating" : 6.6
+}, {
+    "id" : 60,
+    "first_name" : "Alexandre",
+    "last_name" : "Cuva",
+    "photo" : "http://graph.facebook.com/GToronto/picture?type=large",
+    "country" : "VN",
+    "languages" : [ "English", "French", "Italian" ],
+    "countries" : [ "KH", "LA", "SG", "TH", "VN" ],
+    "rating" : 0.0
+}, {
+    "id" : 33,
+    "first_name" : "Alexandre",
+    "last_name" : "Magno",
+    "photo" : null,
+    "country" : "BR",
+    "languages" : [ ],
+    "countries" : [ ],
+    "rating" : 10.0
+} ]
+        </pre></td>
+    </tr>
+</table>

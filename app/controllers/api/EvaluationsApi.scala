@@ -26,6 +26,8 @@ package controllers.api
 import controllers.EvaluationsController
 import models._
 import org.joda.time.DateTime
+import play.api.Play
+import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json._
@@ -54,7 +56,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
       (id, event_id, participant_id, question1, question2, question3, question4, question5, question6, question7,
       question8) ⇒
         Evaluation(id, event_id, participant_id, question1, question2, question3, question4, question5,
-          question6, question7, question8, EvaluationStatus.Pending, None, DateTime.now, userName, DateTime.now, userName)
+          question6, question7, question8, EvaluationStatus.Pending, None, None, DateTime.now, userName, DateTime.now, userName)
     })({
       (e: Evaluation) ⇒
         Some(e.id, e.eventId, e.personId, e.question1, e.question2, e.question3, e.question4,
@@ -82,7 +84,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
           val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
           BadRequest(Json.prettyPrint(json))
         } else {
-          val createdEvaluation = evaluation.create
+          val url = request.host + controllers.routes.Evaluations.confirm("").url
+          val createdEvaluation = evaluation.add(url)
           val message = "new evaluation for " + createdEvaluation.participant.fullName
           Activity.insert(name, Activity.Predicate.Created, message)
           Ok(Json.obj("evaluation_id" -> createdEvaluation.id.get))

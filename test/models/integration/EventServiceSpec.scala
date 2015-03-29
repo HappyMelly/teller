@@ -28,12 +28,11 @@ import _root_.integration.PlayAppSpec
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
-import models.service.EventService
+import models.service.{ BrandService, EventService }
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
-import services.notifiers.{ Notifiers, Email }
-import stubs.services.FakeNotifiers
-import stubs.{ FakeBrandService, FakeServices }
+import services.notifiers.Email
+import stubs.FakeServices
 
 class EventServiceSpec extends PlayAppSpec {
 
@@ -141,7 +140,7 @@ class EventServiceSpec extends PlayAppSpec {
 
   "Method sendConfirmationAlert" should {
     "send 1 email and record an activity" in new MockContext {
-      class StubBrandService extends FakeBrandService {
+      class StubBrandService extends BrandService {
         override def findAll: List[Brand] = List(BrandHelper.one)
       }
       class FakeEmail extends Email {
@@ -185,6 +184,21 @@ class EventServiceSpec extends PlayAppSpec {
       activities.head.predicate must_== Activity.Predicate.Sent.toString
       val msg = "confirmation email for event One (id = 1)"
       activities.head.activityObject must_== Some(msg)
+    }
+  }
+
+  "Method updateRating" should {
+    "set new rating to 6.5" in {
+      val event = EventHelper.one.insert
+      event.rating must_== 0.0f
+      EventService.get.updateRating(event.id.get, 6.5f)
+      EventService.get.find(event.id.get) map { x ⇒
+        x.rating must_== 6.5f
+      } getOrElse ko
+    }
+    "throw no exception if the event doesn't exist" in {
+      EventService.get.updateRating(567, 7.0f)
+      ok
     }
   }
 }

@@ -33,6 +33,7 @@ import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import play.api.Play
 import services.notifiers.Notifiers
 
 import scala.language.postfixOps
@@ -190,7 +191,8 @@ class EventService extends Notifiers with Services {
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title
-        val body = mail.txt.confirm(event, brand).toString()
+        val url = Play.configuration.getString("application.baseUrl").getOrElse("")
+        val body = mail.html.confirm(event, brand, url).toString()
         email.send(
           event.facilitators.toSet,
           None,
@@ -220,6 +222,16 @@ class EventService extends Notifiers with Services {
       e.invoice_=(invoices
         .find(_.eventId == e.id)
         .getOrElse(EventInvoice(None, None, 0, None, None))))
+  }
+
+  /**
+   * Updates rating for the given event
+   * @param eventId Event id
+   * @param rating New rating
+   */
+  def updateRating(eventId: Long, rating: Float): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Query(Events).filter(_.id === eventId).map(_.rating).update(rating)
   }
 
   /**

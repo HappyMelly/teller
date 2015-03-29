@@ -24,12 +24,48 @@
  */
 package models.service
 
+import models.{ Participant, Evaluation, EvaluationPair }
 import models.database.{ Evaluations, People, Participants, Events }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 class EvaluationService {
+
+  /**
+   * Inserts evaluation to database and updates all related records
+   * @param eval Evaluation
+   * @return Return the updated evaluation with id
+   */
+  def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
+    val id = Evaluations.forInsert.insert(eval)
+    val participant = Participant.find(eval.personId, eval.eventId).get
+    participant.copy(evaluationId = Some(id)).update
+    eval.copy(id = Some(id))
+  }
+
+  /**
+   * Returns evaluation with related event if exists; otherwise, None
+   * @param id Evaluation id
+   * @return
+   */
+  def find(id: Long): Option[EvaluationPair] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← Evaluations if x.id === id
+        y ← Events if y.id === x.eventId
+      } yield (x, y)
+      query.firstOption.map(EvaluationPair.tupled)
+  }
+
+  /**
+   * Returns evaluation if it exists; otherwise, None
+   * @param confirmationId Confirmation unique id
+   */
+  def find(confirmationId: String): Option[Evaluation] = DB.withSession {
+    implicit session ⇒
+      Query(Evaluations).filter(_.confirmationId === confirmationId).firstOption
+  }
 
   /**
    * Returns a list of evaluations for the given events
@@ -47,6 +83,31 @@ class EvaluationService {
     } else {
       List()
     }
+  }
+
+  /**
+   * Returns list of evaluation for the given event
+   * @param eventId Event id
+   */
+  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Evaluations).filter(_.eventId === eventId).list
+  }
+
+  /**
+   * Updates the given evaluation in database
+   * @param eval Evaluation
+   * @return Returns the given evaluation
+   */
+  def update(eval: Evaluation): Evaluation = DB.withSession {
+    implicit session ⇒
+      val updateTuple = (eval.eventId, eval.personId, eval.question1,
+        eval.question2, eval.question3, eval.question4, eval.question5,
+        eval.question6, eval.question7, eval.question8, eval.status,
+        eval.handled, eval.updated, eval.updatedBy)
+      val updateQuery = Evaluations.filter(_.id === eval.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+      eval
   }
 
 }

@@ -143,6 +143,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `ACCOUNT`").execute
     Q.updateNA("TRUNCATE `ACTIVITY`").execute
     Q.updateNA("TRUNCATE `ADDRESS`").execute
+    Q.updateNA("TRUNCATE `API_TOKEN`").execute
     Q.updateNA("TRUNCATE `BRAND`").execute
     Q.updateNA("TRUNCATE `BRAND_FEE`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
@@ -157,6 +158,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `EVENT_PARTICIPANT`").execute
     Q.updateNA("TRUNCATE `EVENT_TYPE`").execute
     Q.updateNA("TRUNCATE `EXCHANGE_RATE`").execute
+    Q.updateNA("TRUNCATE `FACILITATOR`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_COUNTRY`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_LANGUAGE`").execute
     Q.updateNA("TRUNCATE `LICENSE`").execute

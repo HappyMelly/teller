@@ -24,18 +24,19 @@
 */
 package controllers.acceptance
 
-import controllers.{ Dashboard, Security }
-import helpers.{ BrandHelper, EvaluationHelper, PersonHelper, EventHelper }
 import _root_.integration.PlayAppSpec
+import controllers.{ Dashboard, Security }
+import helpers.{ BrandHelper, EvaluationHelper, EventHelper, PersonHelper }
 import models._
+import models.service.{ LicenseService, EvaluationService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import org.joda.time.{ LocalDate, DateTime }
-import scala.collection.mutable
+import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import play.api.mvc.SimpleResult
 import stubs._
 
+import scala.collection.mutable
 import scala.concurrent.Future
 
 class TestDashboard() extends Dashboard with Security with FakeServices
@@ -150,7 +151,7 @@ class DashboardSpec extends PlayAppSpec {
       val identity = FakeUserIdentity.viewer
       val request = prepareSecuredGetRequest(identity, "/")
 
-      val evaluationService = stub[StubEvaluationService]
+      val evaluationService = stub[EvaluationService]
       val evalStatus = EvaluationStatus.Pending
       val evaluations: List[(Event, Person, Evaluation)] = List(
         (EventHelper.one, PersonHelper.one(),
@@ -298,7 +299,7 @@ class DashboardSpec extends PlayAppSpec {
           val license = new License(None, licenseeId, 1L,
             "1", LocalDate.now().minusYears(1),
             start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
-          License.insert(license)
+          LicenseService.get.add(license)
         }
       }
   }
