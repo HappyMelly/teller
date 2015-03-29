@@ -24,7 +24,7 @@ create table if not exists TMP_EVENT_RATING (
   EVENT_ID bigint,
   RATING float(6,2) default 0.0
 );
-insert into TMP_EVENT_RATING select EVENT_ID, avg(QUESTION_6) from EVALUATION where EVALUATION.STATUS = 2 group by event_id;
+insert into TMP_EVENT_RATING select EVENT_ID, avg(QUESTION_6) from EVALUATION where EVALUATION.STATUS = 1 group by event_id;
 update EVENT e, TMP_EVENT_RATING t set e.RATING = t.RATING where e.ID = t.EVENT_ID;
 drop table if exists TMP_EVENT_RATING;
 # --- update facilitator rating (I simplify calculations here as we have only one brand with evaluations now
@@ -34,7 +34,7 @@ create table if not exists TMP_EVENT_DATA (
   FACILITATOR_ID bigint,
   IMPRESSION int
 );
-insert into TMP_EVENT_DATA (select e.EVENT_ID, e.ID, f.FACILITATOR_ID, e.QUESTION_6 from EVALUATION e left join EVENT_FACILITATOR f on e.EVENT_ID = f.EVENT_ID where e.STATUS = 2);
+insert into TMP_EVENT_DATA (select e.EVENT_ID, e.ID, f.FACILITATOR_ID, e.QUESTION_6 from EVALUATION e left join EVENT_FACILITATOR f on e.EVENT_ID = f.EVENT_ID where e.STATUS = 1);
 create table if not exists TMP_FAC_RATING (
   FACILITATOR_ID bigint,
   RATING float(6,2) default 0.0

@@ -42,10 +42,10 @@ import scala.util.Random
  *    a facilitator
  */
 object EvaluationStatus extends Enumeration {
-  val Unconfirmed = Value("0")
-  val Pending = Value("1")
-  val Approved = Value("2")
-  val Rejected = Value("3")
+  val Pending = Value("0")
+  val Approved = Value("1")
+  val Rejected = Value("2")
+  val Unconfirmed = Value("3")
 }
 
 /**
