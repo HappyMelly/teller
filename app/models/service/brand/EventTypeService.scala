@@ -59,7 +59,7 @@ class EventTypeService {
    */
   def update(value: EventType): EventType = DB.withSession {
     implicit session: Session ⇒
-      val tuple = (value.name, value.defaultTitle)
+      val tuple = (value.name, value.defaultTitle, value.maxHours)
       Query(EventTypes).filter(_.id === value.id).map(_.forUpdate).update(tuple)
       value
   }

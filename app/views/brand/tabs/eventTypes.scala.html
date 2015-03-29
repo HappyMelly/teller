@@ -15,6 +15,7 @@
     <tr>
       <th>Name</th>
       <th>Default Title</th>
+      <th>Max hours</th>
       <th></th>
     </tr>
   </thead>
@@ -23,6 +24,7 @@
     <tr data-id="@eventType.id.get" data-brandid="@eventType.brandId">
       <td data-name="name">@eventType.name</td>
       <td data-name="title">@eventType.defaultTitle</td>
+      <td data-name="maxhours">@eventType.maxHours</td>
       <th style="font-weight: normal;">
       @restrict(handler, List(as(Editor.toString))) {
         <a href="@routes.EventTypes.delete(eventType.id.get)">
@@ -37,8 +39,9 @@
   <form class="form-inline pull-right col-sm-8" method="POST" action="@CSRF(routes.EventTypes.create())" id="eventType">
     <input type="hidden" name="brandId" value="@brand.id"/>
     <div>
-      <input name="name" class="form-control input-sm" style="width: 28%;" placeholder="Ex: Regular 2-Day course"/>
-      <input name="title" class="form-control input-sm" style="width: 49%;" placeholder="Ex: Regular Management 3.0 Course"/>
+      <input name="name" class="form-control input-sm" style="width: 20%;" placeholder="Ex: Regular 2-Day course"/>
+      <input name="title" class="form-control input-sm" style="width: 40%;" placeholder="Ex: Regular Management 3.0 Course"/>
+      <input name="maxhours" class="form-control input-sm" style="width: 15%;" />
       <button class="btn btn-success btn-sm pull-right">
         <i class="glyphicon glyphicon-plus"></i>Add Event Type
       </button>

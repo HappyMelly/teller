@@ -254,8 +254,8 @@ object Event {
    * @param fee Country Fee for 16-hours event
    */
   def withFee(event: Event, fee: Money): Event = {
-    val hours = event.schedule.totalHours.toLong
-    val eventFee = fee.multipliedBy(hours).dividedBy(16L, java.math.RoundingMode.UNNECESSARY)
+    val slotNumber = event.schedule.totalHours.toLong / 4 + 1
+    val eventFee = fee.multipliedBy(slotNumber).dividedBy(4L, java.math.RoundingMode.UNNECESSARY)
     event.copy(fee = Some(eventFee))
   }
 
