@@ -25,6 +25,7 @@
 package models.brand
 
 import models.database.brand.EventTypes
+import models.service.BrandService
 import models.{ Activity, ActivityRecorder, Brand }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -33,7 +34,8 @@ import play.api.db.slick.DB
 case class EventType(id: Option[Long],
   brandId: Long,
   name: String,
-  defaultTitle: Option[String]) extends ActivityRecorder {
+  defaultTitle: Option[String],
+  maxHours: Int) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -53,7 +55,7 @@ case class EventType(id: Option[Long],
   def objectType: String = Activity.Type.EventType
 
   def brand: Brand = DB.withSession { implicit session: Session ⇒
-    Brand.find(this.brandId).get
+    BrandService.get.find(this.brandId).get
   }
 
   def insert: EventType = DB.withSession { implicit session: Session ⇒
@@ -72,15 +74,8 @@ object EventType {
     Query(Query(EventTypes).filter(_.id === id).exists).first
   }
 
-  /**
-   * Returns a list of all event types for the given brand.
-   */
-  def findByBrand(brandId: Long): List[EventType] = DB.withSession { implicit session: Session ⇒
-    Query(EventTypes).filter(_.brandId === brandId).list
-  }
-
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventTypes.filter(_.id === id).mutate(_.delete)
+    EventTypes.filter(_.id === id).mutate(_.delete())
   }
 
 }

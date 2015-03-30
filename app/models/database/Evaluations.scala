@@ -51,7 +51,7 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
   def question8 = column[String]("QUESTION_8")
   def status = column[EvaluationStatus.Value]("STATUS")
   def handled = column[Option[LocalDate]]("HANDLED")
-
+  def confirmationId = column[Option[String]]("CONFIRMATION_ID", O.DBType("CHAR(64)"))
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
 
@@ -60,7 +60,7 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
 
   def * = id.? ~ eventId ~ personId ~ question1 ~ question2 ~ question3 ~
     question4 ~ question5 ~ question6 ~ question7 ~ question8 ~ status ~
-    handled ~ created ~ createdBy ~ updated ~
+    handled ~ confirmationId ~ created ~ createdBy ~ updated ~
     updatedBy <> (Evaluation.apply _, Evaluation.unapply _)
 
   def forInsert = * returning id

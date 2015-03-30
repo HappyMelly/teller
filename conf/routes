@@ -3,6 +3,7 @@
 GET         /                                                         controllers.Dashboard.index
 GET         /about                                                    controllers.Dashboard.about
 GET         /api                                                      controllers.Dashboard.api
+GET         /apiv2                                                    controllers.Dashboard.apiv2
 GET         /profile                                                  controllers.Dashboard.profile
 
 GET         /accounts                                                 controllers.Accounts.index
@@ -14,10 +15,10 @@ GET         /account/:id/bookings                                     controller
 POST        /account/:id/activate                                     controllers.Accounts.activate(id: Long)
 POST        /account/:id/deactivate                                   controllers.Accounts.deactivate(id: Long)
 
-GET         /admin/settings                                           controllers.Administration.settings
-POST        /admin/transactiontype/new                                controllers.Administration.createTransactionType
-POST        /admin/transactiontype/:id/delete                         controllers.Administration.deleteTransactionType(id: Long)
-GET         /admin/translations                                       controllers.Translations.index
+GET         /admin/settings                                           controllers.admin.Administration.settings
+POST        /admin/transactiontype/new                                controllers.admin.Administration.createTransactionType
+POST        /admin/transactiontype/:id/delete                         controllers.admin.Administration.deleteTransactionType(id: Long)
+GET         /admin/translations                                       controllers.admin.Translations.index
 
 GET         /bookings                                                 controllers.BookingEntries.index
 GET         /booking/new                                              controllers.BookingEntries.add
@@ -41,6 +42,8 @@ GET         /brand/:code/edit                                         controller
 POST        /brand/:code/delete                                       controllers.Brands.delete(code)
 GET         /brand/:code/picture                                      controllers.Brands.picture(code: String)
 POST        /brand/:code/picture/delete                               controllers.Brands.deletePicture(code: String)
+GET         /brand/:code/eventtypes                                   controllers.EventTypes.index(code: String)
+
 
 GET         /brand/:code/template                                     controllers.CertificateTemplates.add(code: String)
 POST        /brand/:code/template                                     controllers.CertificateTemplates.create(code: String)
@@ -60,6 +63,8 @@ GET         /evaluation/:id/edit                                      controller
 GET         /evaluation/:id                                           controllers.Evaluations.details(id: Long)
 POST        /evaluation/:id                                           controllers.Evaluations.update(id: Long)
 GET         /evaluation/:id/delete                                    controllers.Evaluations.delete(id: Long, ref: Option[String])
+# it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
+GET         /evaluation/confirm/:confirmationId                       controllers.Evaluations.confirm(confirmationId: String)
 
 GET         /report/create/:code/event/:eventId/status/:status        controllers.Reports.create(code: String, eventId: Long, status: Int)
 
@@ -76,8 +81,8 @@ POST        /event/:id/delete                                         controller
 POST        /event/:id/invoice                                        controllers.Events.invoice(id: Long)
 POST        /event/:id/send                                           controllers.Events.sendRequest(id: Long)
 
-GET         /eventtypes/:brandCode                                    controllers.EventTypes.index(brandCode: String)
 POST        /eventtype/new                                            controllers.EventTypes.create
+POST        /eventtype/:id                                            controllers.EventTypes.update(id: Long)
 GET         /eventtype/:id/delete                                     controllers.EventTypes.delete(id: Long)
 
 GET         /exchangerate                                             controllers.ExchangeRates.rate
@@ -184,12 +189,12 @@ GET         /registration/congratulations                             controller
 GET         /template/:id                                             controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET         /template/:id/delete                                      controllers.CertificateTemplates.delete(id: Long)
 
-GET         /translation/new                                          controllers.Translations.add(lang: String)
-POST        /translation/new                                          controllers.Translations.create(lang: String)
-GET         /translation/:lang                                        controllers.Translations.details(lang: String)
-GET         /translation/:lang/edit                                   controllers.Translations.edit(lang: String)
-POST        /translation/:lang                                        controllers.Translations.update(lang: String)
-POST        /translation/:lang/delete                                 controllers.Translations.delete(lang: String)
+GET         /translation/new                                          controllers.admin.Translations.add(lang: String)
+POST        /translation/new                                          controllers.admin.Translations.create(lang: String)
+GET         /translation/:lang                                        controllers.admin.Translations.details(lang: String)
+GET         /translation/:lang/edit                                   controllers.admin.Translations.edit(lang: String)
+POST        /translation/:lang                                        controllers.admin.Translations.update(lang: String)
+POST        /translation/:lang/delete                                 controllers.admin.Translations.delete(lang: String)
 
 POST        /user                                                     controllers.UserAccounts.update
 
@@ -225,6 +230,31 @@ GET         /api/v1/organization/:id                                  controller
 GET         /api/v1/products                                          controllers.api.ProductsApi.products
 GET         /api/v1/product/:id                                       controllers.api.ProductsApi.product(id: Long)
 
+# API (v2)
+GET         /api/v2/brands                                            controllers.apiv2.BrandsApi.brands
+GET         /api/v2/brand/:code                                       controllers.apiv2.BrandsApi.brand(code: String)
+GET         /api/v2/brand/:code/events                                controllers.apiv2.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
+GET         /api/v2/brand/:code/facilitators                          controllers.apiv2.FacilitatorsApi.facilitators(code: String)
+GET         /api/v2/brand/:code/types                                 controllers.apiv2.EventTypesApi.types(code: String)
+
+POST        /api/v2/evaluation                                        controllers.apiv2.EvaluationsApi.create
+POST        /api/v2/evaluation/:id/confirm                            controllers.apiv2.EvaluationsApi.confirm(id: String)
+
+GET         /api/v2/event/:id                                         controllers.apiv2.EventsApi.event(id: Long)
+GET         /api/v2/event/:id/participants                            controllers.apiv2.ParticipantsApi.participants(id: Long)
+
+GET         /api/v2/fees/:brand                                       controllers.apiv2.BrandFeesApi.fees(brand: String)
+
+GET         /api/v2/members                                           controllers.apiv2.MembersApi.members(funder: Option[Boolean] ?= None)
+GET         /api/v2/member/:id                                        controllers.apiv2.MembersApi.member(id: Long)
+
+POST        /api/v2/participant                                       controllers.apiv2.ParticipantsApi.create
+
+GET         /api/v2/organizations                                     controllers.apiv2.OrganisationsApi.organisations
+GET         /api/v2/organization/:id                                  controllers.apiv2.OrganisationsApi.organisation(id: Long)
+
+GET         /api/v2/products                                          controllers.apiv2.ProductsApi.products
+GET         /api/v2/product/:id                                       controllers.apiv2.ProductsApi.product(id: Long)
 
 # Public assets
 GET         /assets/*file                                             controllers.Assets.at(path="/public", file)

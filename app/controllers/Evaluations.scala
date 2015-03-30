@@ -24,16 +24,21 @@
 
 package controllers
 
-import models._
 import models.UserRole.Role._
-import models.service.EventService
+import models._
+import models.service.{ EventService, Services }
 import org.joda.time._
-import play.api.data._
 import play.api.data.Forms._
+import play.api.data._
+import play.api.i18n.Messages
 import play.api.libs.json.Json
+import play.api.mvc.Action
 import services.notifiers.Notifiers
 
-object Evaluations extends EvaluationsController with Security with Notifiers {
+trait Evaluations extends EvaluationsController
+  with Security
+  with Notifiers
+  with Services {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -53,6 +58,7 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
     "question8" -> nonEmptyText,
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
+    "validationId" -> optional(ignored("")),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now),
@@ -70,7 +76,7 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
       implicit handler ⇒ implicit user ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
         Ok(views.html.evaluation.form(user, None, evaluationForm(user.fullName), events, eventId, participantId, en))
   }
 
@@ -86,11 +92,12 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
         formWithErrors ⇒ {
           val account = user.account
           val events = findEvents(account)
-          val en = Translation.find("EN").get
+          val en = translationService.find("EN").get
           BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
         },
         evaluation ⇒ {
-          val eval = evaluation.create
+          val defaultHook = request.host + routes.Evaluations.confirm("").url
+          val eval = evaluation.add(defaultHook, withConfirmation = true)
           val activity = eval.activity(user.person, Activity.Predicate.Created).insert
           Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
         })
@@ -105,16 +112,19 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
   def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map {
-        evaluation ⇒
-          evaluation.delete()
-          val activity = evaluation.activity(user.person, Activity.Predicate.Deleted).insert
+      Evaluation.find(id).map { x ⇒
+        x.delete()
+        // recalculate ratings
+        Event.ratingActor ! x.eventId
+        Facilitator.ratingActor ! x.eventId
 
-          val route = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
-            case _ ⇒ routes.Events.details(evaluation.eventId).url + "#participant"
-          }
-          Redirect(route).flashing("success" -> activity.toString)
+        val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
+
+        val route = ref match {
+          case Some("index") ⇒ routes.Participants.index().url
+          case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
+        }
+        Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -163,18 +173,22 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
   }
 
   /**
-   * Renders a Details page
+   * Renders an evaluation page
    *
    * @param id Unique evaluation identifier
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { evaluation ⇒
-        val brand = Brand.find(evaluation.event.brandCode).get
-        val en = Translation.find("EN").get
-        Ok(views.html.evaluation.details(user, evaluation, en, brand.brand))
-      }.getOrElse(NotFound)
+      evaluationService.find(id) map { x ⇒
+        val brand = brandService.find(x.event.brandCode).get
+        val en = translationService.find("EN").get
+        val participant = personService.find(x.eval.personId).get
+        Ok(views.html.evaluation.details(user, x,
+          participant.fullName,
+          en,
+          brand.generateCert))
+      } getOrElse NotFound
 
   }
 
@@ -189,7 +203,7 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
       Evaluation.find(id).map { evaluation ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = Translation.find("EN").get
+        val en = translationService.find("EN").get
 
         Ok(views.html.evaluation.form(user, Some(evaluation),
           evaluationForm(user.fullName).fill(evaluation), events, None, None, en))
@@ -212,12 +226,12 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
           formWithErrors ⇒ {
             val account = user.account
             val events = findEvents(account)
-            val en = Translation.find("EN").get
+            val en = translationService.find("EN").get
 
             BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
           },
           evaluation ⇒ {
-            val eval = evaluation.copy(id = Some(id)).update
+            val eval = evaluation.copy(id = Some(id)).update()
             val activity = eval.activity(
               user.person,
               Activity.Predicate.Updated).insert
@@ -236,20 +250,47 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
   def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Evaluation.find(id).map { ev ⇒
-
-          ev.approve(user.person)
-
-          val activity = ev.activity(
-            user.person,
-            Activity.Predicate.Approved).insert
-
-          val route = ref match {
+        evaluationService.find(id).map { x ⇒
+          val route: String = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-            case _ ⇒ routes.Events.details(ev.eventId).url + "#participant"
+            case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
           }
-          Redirect(route).flashing("success" -> activity.toString)
+          if (x.eval.approvable) {
+            val ev = x.eval.approve
+            // recalculate ratings
+            Event.ratingActor ! ev.eventId
+            Facilitator.ratingActor ! ev.eventId
+            val approver = user.person
+            val brand = Brand.find(x.event.brandCode).get
+            Participant.find(ev.personId, ev.eventId) foreach { data ⇒
+              if (data.certificate.isEmpty && brand.brand.generateCert) {
+                val cert = new Certificate(ev.handled, x.event, ev.participant)
+                cert.generateAndSend(brand, approver)
+                data.copy(certificate = Some(cert.id), issued = cert.issued).update
+              } else if (data.certificate.isEmpty) {
+                val body = mail.evaluation.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
+                val subject = s"Your ${brand.brand.name} event's evaluation approval"
+                email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
+                  Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+              } else {
+                val cert = new Certificate(ev.handled, x.event, ev.participant, renew = true)
+                cert.send(brand, approver)
+              }
+            }
+
+            val activity = ev.activity(
+              user.person,
+              Activity.Predicate.Approved).insert
+
+            Redirect(route).flashing("success" -> activity.toString)
+          } else {
+            val error = x.eval.status match {
+              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
+              case _ ⇒ "error.evaluation.approve.approved"
+            }
+            Redirect(route).flashing("error" -> Messages(error))
+          }
         }.getOrElse(NotFound)
   }
 
@@ -261,29 +302,52 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
    */
   def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Evaluation.find(id).map { existingEvaluation ⇒
-        existingEvaluation.reject()
-
-        val activity = existingEvaluation.activity(
-          user.person,
-          Activity.Predicate.Rejected).insert
-
-        val brand = Brand.find(existingEvaluation.event.brandCode).get
-        val participant = existingEvaluation.participant
-        val subject = s"Your ${brand.brand.name} certificate"
-        email.send(Set(participant),
-          Some(existingEvaluation.event.facilitators.toSet),
-          Some(Set(brand.coordinator)), subject,
-          mail.html.rejected(brand.brand, participant, user.person).toString(),
-          richMessage = true)
-
-        val route = ref match {
+      evaluationService.find(id).map { x ⇒
+        val route: String = ref match {
           case Some("index") ⇒ routes.Participants.index().url
           case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-          case _ ⇒ routes.Events.details(existingEvaluation.eventId).url + "#participant"
+          case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
         }
-        Redirect(route).flashing("success" -> activity.toString)
+        if (x.eval.rejectable) {
+          x.eval.reject()
+
+          // recalculate ratings
+          Event.ratingActor ! x.eval.eventId
+          Facilitator.ratingActor ! x.eval.eventId
+
+          val activity = x.eval.activity(
+            user.person,
+            Activity.Predicate.Rejected).insert
+
+          val brand = Brand.find(x.event.brandCode).get
+          val participant = x.eval.participant
+          val subject = s"Your ${brand.brand.name} certificate"
+          email.send(Set(participant),
+            Some(x.event.facilitators.toSet),
+            Some(Set(brand.coordinator)), subject,
+            mail.evaluation.html.rejected(brand.brand, participant, user.person).toString(),
+            richMessage = true)
+
+          Redirect(route).flashing("success" -> activity.toString)
+        } else {
+          val error = x.eval.status match {
+            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
+            case _ ⇒ "error.evaluation.reject.rejected"
+          }
+          Redirect(route).flashing("error" -> Messages(error))
+        }
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Confirms the given evaluation
+   * @param confirmationId Confirmation unique id
+   */
+  def confirm(confirmationId: String) = Action { implicit request ⇒
+    evaluationService.find(confirmationId) map { x ⇒
+      x.confirm()
+      Ok(views.html.evaluation.confirmed())
+    } getOrElse NotFound(views.html.evaluation.notfound())
   }
 
   /**
@@ -312,3 +376,5 @@ object Evaluations extends EvaluationsController with Security with Notifiers {
     }
   }
 }
+
+object Evaluations extends Evaluations

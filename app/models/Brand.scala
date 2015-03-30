@@ -50,6 +50,7 @@ case class Brand(id: Option[Long],
   tagLine: Option[String],
   webSite: Option[String],
   blog: Option[String],
+  evaluationHookUrl: Option[String] = None,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
@@ -223,15 +224,14 @@ object Brand {
    * @param coordinator Brand coordinator
    * @return
    */
-  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession { implicit session: Session ⇒
-    val collator = Collator.getInstance(Locale.ENGLISH)
-    val ord = new Ordering[String] { def compare(x: String, y: String) = collator.compare(x, y) }
-    (coordinator :: License.licensees(code, LocalDate.now())).distinct.sortBy(_.fullName.toLowerCase)(ord)
-  }
-
-  /** Finds a brand by ID **/
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.id === id).firstOption
+  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession {
+    implicit session: Session ⇒
+      val collator = Collator.getInstance(Locale.ENGLISH)
+      val ord = new Ordering[String] {
+        def compare(x: String, y: String) = collator.compare(x, y)
+      }
+      val facilitators = License.licensees(code, LocalDate.now())
+      (coordinator :: facilitators).distinct.sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds all brands belonging to one coordinator **/
@@ -266,8 +266,10 @@ object Brand {
    * @param picture New brand picture
    * @return
    */
-  def update(existingData: Brand, updatedData: Brand, picture: Option[String]): Brand = DB.withSession { implicit session: Session ⇒
-    session.withTransaction {
+  def update(existingData: Brand,
+    updatedData: Brand,
+    picture: Option[String]): Brand = DB.withTransaction {
+    implicit session: Session ⇒
       import models.database.SocialProfiles._
 
       val u = updatedData.copy(id = existingData.id).copy(picture = picture)
@@ -286,12 +288,12 @@ object Brand {
         eventQuery.update(u.code)
       }
 
-      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId, u.description, u.picture, u.tagLine,
-        u.webSite, u.blog, u.updated, u.updatedBy)
+      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId,
+        u.description, u.picture, u.tagLine, u.webSite, u.blog,
+        u.evaluationHookUrl, u.updated, u.updatedBy)
       val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
       updateQuery.update(updateTuple)
       u
-    }
   }
 }
 

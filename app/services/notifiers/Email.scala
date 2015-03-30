@@ -93,6 +93,7 @@ object EmailService {
           new mail.SimpleEmail().setMsg(message.body.trim)
         }
 
+
         message.to.foreach(commonsMail.addTo(_))
         message.cc.foreach(commonsMail.addCc(_))
         message.bcc.foreach(commonsMail.addBcc(_))
@@ -100,6 +101,8 @@ object EmailService {
         val preparedMail = commonsMail.
           setFrom(message.from).
           setSubject(message.subject)
+        preparedMail.setCharset("UTF-8")
+
         Logger.debug(s"Sending e-mail with subject: ${message.subject}")
 
         if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {

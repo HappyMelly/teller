@@ -31,6 +31,7 @@ import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
 import models.BookingEntry.FieldChange
 import models.JodaMoney._
 import models.UserRole.Role._
+import models.admin.TransactionType
 import models.{ AccountSummary, _ }
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }

@@ -27,6 +27,7 @@ package models.database
 import com.github.tototoshi.slick.JodaSupport._
 import models.JodaMoney._
 import models.BookingEntry
+import models.database.admin.TransactionTypes
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.db.slick.Config.driver.simple._
 

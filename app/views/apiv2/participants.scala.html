@@ -1,0 +1,79 @@
+@()
+
+<h3 id="participants">Participants</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>A list of participants for a particular event</td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>POST /api/v2/event/{event}/participants</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+        <code>event</code> an event id to return participants for, e.g. <code>40</code>
+    </td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+        <p>A JSON array of person objects, with properties:</p>
+        <ul>
+            <li><code>id</code> - an unique identified for a person </li>
+            <li><code>unique_name</code></li>
+            <li><code>first_name</code></li>
+            <li><code>last_name</code></li>
+            <li><code>photo</code></li>
+            <li><code>country</code> - ISO 8166-2 country code</li>
+        </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>400 Bad Request</code> if parameters are wrong, with a JSON object, containing errors for all parameters</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Example request</th>
+    <td>GET /api/v2/event/40/participants?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "id" : 1,
+  "unique_name" : "santjago.de.cuba",
+  "first_name" : "Santjago",
+  "last_name" : "de Cuba",
+  "photo" : null,
+  "country" : "BR"
+}, {
+  "id" : 2,
+  "unique_name" : "rodrigo.marces",
+  "first_name" : "Rodrigo",
+  "last_name" : "Marces",
+  "photo" : null,
+  "country" : "BR"
+}, {
+  "id" : 3,
+  "unique_name" : "sergey.kotlov",
+  "first_name" : "Sergey",
+  "last_name" : "Kotlov",
+  "photo" : null,
+  "country" : "BR"
+}]
+    </pre></td>
+  </tr>
+</table>

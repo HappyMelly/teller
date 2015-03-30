@@ -42,8 +42,8 @@ class EventSpec extends PlayAppSpec {
     PersonHelper.make(Some(4L), "Four", "Tester").insert
     PersonHelper.make(Some(5L), "Four", "Tester").insert
     BrandHelper.one.insert
-    (new EventType(None, 1L, "Type 1", None)).insert
-    (new EventType(None, 1L, "Type 2", None)).insert
+    (new EventType(None, 1L, "Type 1", None, 16)).insert
+    (new EventType(None, 1L, "Type 2", None, 16)).insert
     EventHelper.addEvents(BrandHelper.one.code)
     EventHelper.addEvents("MGT30")
   }
@@ -132,14 +132,32 @@ class EventSpec extends PlayAppSpec {
     }
   }
 
-  "Event singleton" should {
-    "make an event without fee" in {
-      val event = EventHelper.one
+  "Event fee " should {
+    "be rounded to a multiple of half a day" in {
+      val e1 = EventHelper.one
       val fee = Money.parse("EUR 160")
+      val maxHours = 16
       // total hours = 1
-      Event.withFee(event, fee).fee map { f: Money ⇒
-        f.getAmount.longValue must_== 10L
+      Event.withFee(e1, fee, maxHours).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 40L
+      } getOrElse ko
+      val e2 = e1.copy(schedule = e1.schedule.copy(totalHours = 5))
+      Event.withFee(e2, fee, maxHours).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 80L
+      } getOrElse ko
+      val e3 = e1.copy(schedule = e1.schedule.copy(totalHours = 11))
+      Event.withFee(e3, fee, maxHours).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 120L
+      } getOrElse ko
+      val e4 = e1.copy(schedule = e1.schedule.copy(totalHours = 16))
+      Event.withFee(e4, fee, maxHours).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 160L
+      } getOrElse ko
+      val e5 = e1.copy(schedule = e1.schedule.copy(totalHours = 21))
+      Event.withFee(e5, fee, maxHours).fee map { f: Money ⇒
+        f.getAmount.longValue must_== 160L
       } getOrElse ko
     }
+
   }
 }

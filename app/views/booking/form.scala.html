@@ -3,13 +3,12 @@
     fromAccounts: List[AccountSummary],
     toAccounts: List[AccountSummary],
     brands: List[BrandView],
-    transactionTypes: List[TransactionType],
+    transactionTypes: List[models.admin.TransactionType],
     successMessage: Option[String] = None,
     bookingNumber: Option[Int] = None)(implicit flash: Flash,
         token: play.filters.csrf.CSRF.Token,
         request: Request[Any],
         handler: AuthorisationHandler)
-
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit
 @import scala.collection.JavaConverters._

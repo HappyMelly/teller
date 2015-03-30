@@ -25,21 +25,38 @@
 package models
 
 import models.database.Evaluations
-import models.service.{ EventService, PersonService }
+import models.service._
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.notifiers.Email
+import services.notifiers.Notifiers
+
+import scala.util.Random
 
 /**
  * A status of an evaluation which a participant gives to an event
+ *
+ *  - Evaluation is in progress when a participant created it but hasn't validated
+ *  - Evaluation is pending when it's approved by a participant but not by
+ *    a facilitator
  */
 object EvaluationStatus extends Enumeration {
-  val Pending = Value("1")
-  val Approved = Value("2")
-  val Rejected = Value("3")
+  val Pending = Value("0")
+  val Approved = Value("1")
+  val Rejected = Value("2")
+  val Unconfirmed = Value("3")
 }
+
+/**
+ * In most cases event data is required along with evaluation data. To decrease
+ * a number of requests to database some requests return evalution with companion
+ * objects
+ *
+ * @param eval Evaluation
+ * @param event Related event
+ */
+case class EvaluationPair(eval: Evaluation, event: Event)
 
 /**
  * An evaluation which a participant gives to an event
@@ -58,10 +75,11 @@ case class Evaluation(
   question8: String,
   status: EvaluationStatus.Value,
   handled: Option[LocalDate],
+  confirmationId: Option[String],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends Email with ActivityRecorder {
+  updatedBy: String) extends ActivityRecorder with Notifiers with Services {
 
   lazy val event: Event = EventService.get.find(eventId).get
 
@@ -84,22 +102,35 @@ case class Evaluation(
    */
   def objectType: String = Activity.Type.Evaluation
 
-  def create: Evaluation = DB.withSession { implicit session: Session ⇒
-    val id = Evaluations.forInsert.insert(this)
-    val participant = Participant.find(personId, eventId).get
-    participant.copy(evaluationId = Some(id)).update
-    val created = this.copy(id = Some(id))
+  /**
+   * Returns true if the evaluation can be approved
+   */
+  def approvable: Boolean = Evaluation.approvable(status)
 
-    val brand = Brand.find(event.brandCode).get
-    val en = Translation.find("EN").get
-    val impression = en.impressions.value(question6)
-    val subject = s"New evaluation (General impression: $impression)"
-    send(event.facilitators.toSet,
-      Some(Set(brand.coordinator)), None, subject,
-      mail.html.evaluation(created, participant, en).toString(), richMessage = true)
+  /**
+   * Returns true if the evaluation can be rejected
+   */
+  def rejectable: Boolean = Evaluation.rejectable(status)
 
-    created
-  }
+  def approved: Boolean = status == EvaluationStatus.Approved
+
+  /**
+   * Adds new evaluation to database and sends email notification
+   * @param defaultHook Link to a default confirmation page
+   * @param withConfirmation If true, the evaluation should be confirmed first by the participant
+   * @return Returns an updated evaluation with id
+   */
+  def add(defaultHook: String, withConfirmation: Boolean = false): Evaluation =
+    if (withConfirmation) {
+      val hash = Random.alphanumeric.take(64).mkString
+      evaluationService.
+        add(this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))).
+        sendConfirmationRequest(defaultHook)
+    } else {
+      evaluationService.
+        add(this.copy(status = EvaluationStatus.Pending)).
+        sendNewEvaluationNotification()
+    }
 
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     Evaluations.where(_.id === id).mutate(_.delete())
@@ -107,40 +138,15 @@ case class Evaluation(
     participant.copy(evaluationId = None).update
   }
 
-  def update: Evaluation = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventId, personId, question1, question2, question3,
-      question4, question5, question6, question7, question8, status,
-      handled, updated, updatedBy)
-    val updateQuery = Evaluations.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-    this
-  }
+  /**
+   * Updates the evaluation
+   */
+  def update(): Evaluation = evaluationService.update(this)
 
-  def approve(approver: Person): Evaluation = {
-
-    val ev = this.
+  def approve: Evaluation = {
+    this.
       copy(status = EvaluationStatus.Approved).
-      copy(handled = Some(LocalDate.now)).update
-
-    val brand = Brand.find(ev.event.brandCode).get
-    Participant.find(ev.personId, ev.eventId) map { data ⇒
-      if (data.certificate.isEmpty && brand.brand.generateCert) {
-        val cert = new Certificate(ev.handled, ev.event, ev.participant)
-        cert.generateAndSend(brand, approver)
-        data.copy(certificate = Some(cert.id), issued = cert.issued).update
-      } else if (data.certificate.isEmpty) {
-        val body = mail.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
-        val subject = s"Your ${brand.brand.name} event's evaluation approval"
-        send(Set(ev.participant), Some(ev.event.facilitators.toSet),
-          Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
-      } else {
-        val cert = new Certificate(ev.handled, ev.event, ev.participant, renew = true)
-        cert.send(brand, approver)
-      }
-
-    }
-
-    ev
+      copy(handled = Some(LocalDate.now)).update()
   }
 
   /**
@@ -149,23 +155,72 @@ case class Evaluation(
   def reject(): Evaluation = {
     this
       .copy(status = EvaluationStatus.Rejected)
-      .copy(handled = Some(LocalDate.now)).update
+      .copy(handled = Some(LocalDate.now)).update()
   }
 
+  /**
+   * Sets the evaluation to Pending state and returns the updated evaluation
+   */
+  def confirm(): Evaluation =
+    this.
+      copy(status = EvaluationStatus.Pending).
+      update().
+      sendNewEvaluationNotification()
+
+  protected def sendNewEvaluationNotification() = {
+    val brand = Brand.find(event.brandCode).get
+    val en = translationService.find("EN").get
+    val impression = en.impressions.value(question6)
+    val participant = Participant.find(this.personId, this.eventId).get
+    val subject = s"New evaluation (General impression: $impression)"
+    email.send(event.facilitators.toSet,
+      Some(Set(brand.coordinator)), None, subject,
+      mail.html.evaluation(this, participant, en).toString(), richMessage = true)
+
+    this
+  }
+
+  /**
+   * Sends a confirmation request to the participant
+   * @param defaultHook Link to a default confirmation page
+   * @return Returns the evaluation
+   */
+  protected def sendConfirmationRequest(defaultHook: String) = {
+    val brand = brandService.find(event.brandCode).get
+    val participant = personService.find(this.personId).get
+    val subject = "Confirm your %s evaluation" format brand.name
+    val url = brand.evaluationHookUrl.
+      map(x ⇒ if (x.endsWith("/")) x else x + "/").
+      getOrElse("https://" + defaultHook).
+      concat(this.confirmationId getOrElse "")
+    email.send(Set(participant), None, None, subject,
+      mail.evaluation.html.confirm(brand, participant.fullName, url).toString(),
+      richMessage = true)
+    this
+  }
 }
 
 object Evaluation {
+
+  /**
+   * Returns true if the evaluation can be approved
+   * @param status Status of the evaluation
+   */
+  def approvable(status: EvaluationStatus.Value): Boolean =
+    status == EvaluationStatus.Pending || status == EvaluationStatus.Rejected
+
+  /**
+   * Returns true if the evaluation can be rejected
+   * @param status Status of the evaluation
+   */
+  def rejectable(status: EvaluationStatus.Value): Boolean =
+    status == EvaluationStatus.Pending || status == EvaluationStatus.Approved
 
   def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
     implicit session: Session ⇒
       Query(Evaluations).
         filter(_.personId === personId).
         filter(_.eventId === eventId).firstOption
-  }
-
-  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Evaluations).filter(_.eventId === eventId).list
   }
 
   def find(id: Long) = DB.withSession { implicit session: Session ⇒

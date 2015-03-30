@@ -26,28 +26,42 @@ package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ Licenses, People }
-import models.{ LicenseLicenseeView, LicenseView }
+import models.{ Facilitator, LicenseLicenseeView, LicenseView, License }
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-class LicenseService {
+class LicenseService extends Services {
+
+  /**
+   * Adds the given license to database and updates all related tables
+   * @param license License
+   * @return Returns the updated license with a valid id
+   */
+  def add(license: License) = DB.withTransaction { implicit session: Session ⇒
+    val id = Licenses.forInsert.insert(license)
+    if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
+      val facilitator = Facilitator(None, license.licenseeId, license.brandId)
+      facilitatorService.insert(facilitator)
+    }
+    license.copy(id = Some(id))
+  }
 
   /**
    * Returns a list of content licenses for the given person
    * @param personId Person identifier
    */
-  def licenses(personId: Long): List[LicenseView] = DB.withSession { implicit session: Session ⇒
+  def licenses(personId: Long): List[LicenseView] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        license ← Licenses if license.licenseeId === personId
+        brand ← license.brand
+      } yield (license, brand)
 
-    val query = for {
-      license ← Licenses if license.licenseeId === personId
-      brand ← license.brand
-    } yield (license, brand)
-
-    query.sortBy(_._2.name.toLowerCase).list.map {
-      case (license, brand) ⇒ LicenseView(brand, license)
-    }
+      query.sortBy(_._2.name.toLowerCase).list.map {
+        case (license, brand) ⇒ LicenseView(brand, license)
+      }
   }
 
   /**

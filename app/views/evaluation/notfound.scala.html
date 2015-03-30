@@ -1,0 +1,14 @@
+@()(implicit request: Request[Any], flash: Flash)
+
+@layout.unauthorized("Error") {
+  <div class="container">
+    <h1>Sorry 8-( </h1>
+
+    <p>the evaluation you try to confirm does not exist.</p>
+    <p>Please contact your facilitator or <a href="mailto:sergey.kotlov@@happymelly.com?subject=Unknown evaluation">support team</a>.</p>
+
+    <br/><br/>
+    <h3><a href="@securesocial.controllers.routes.LoginPage.login()">Back to login page</a></h3>
+
+  </div>
+}

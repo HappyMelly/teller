@@ -28,8 +28,9 @@ import com.github.tototoshi.slick.JodaSupport._
 import java.math.RoundingMode
 import java.net.URLEncoder
 import models.JodaMoney._
+import models.admin.TransactionType
 import models.database._
-import models.service.PersonService
+import models.service.{ BrandService, PersonService }
 import org.joda.time.{ Days, DateTime, LocalDate }
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.Play.current
@@ -75,7 +76,7 @@ case class BookingEntry(
 
   lazy val owner = PersonService.get.find(ownerId).get
 
-  lazy val brand = brandId.flatMap(Brand.find(_))
+  lazy val brand = brandId.flatMap(BrandService.get.find(_))
 
   val owes = source.isPositiveOrZero
 

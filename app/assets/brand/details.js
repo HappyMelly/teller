@@ -22,12 +22,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
+/**
+ * Show notification message
+ * @param message {string}
+ * @param type {string} 'success/danger'
+ */
+function notify(message, type) {
+    $('#notification').html("");
+    $('#notification').append(
+        $('<div class="alert alert-' + type + '">')
+            .text(message)
+            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+    );
+}
 
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
+$(document).ready( function() {
 
     // Delete links.
     $('.delete').click(function() {
@@ -57,10 +66,49 @@ $(document).ready( function() {
       e.preventDefault();
       $(this).tab('show');
     });
+
     var hash = window.location.hash.substring(1);
     if (!hash) {
         hash = 'products';
     }
     $('#activities a[href="#' + hash + '"]').tab('show');
+
+    $('#eventTypes').editableTableWidget();
+    $('#eventTypes td').on('validate', function(evt, newValue) {
+        if (newValue == "") {
+            return false; // mark cell as invalid
+        }
+    }).on('change', function(evt, newValue) {
+        $('#notification').html("");
+        var data = [];
+        var id = $(this).parent().data('id');
+        data[0] = { name: 'brandId', value: $(this).parent().data('brandid') };
+        var i = 1;
+        $(this).parent().children('td').each(function() {
+            data[i] = { name: $(this).data('name'), value: $(this).text() };
+            i += 1;
+        });
+        var that = this;
+        $("body").css("cursor", "progress");
+        $.ajax({
+            type: "POST",
+            url: jsRoutes.controllers.EventTypes.update(id).url,
+            data: data
+        }).done(function(data) {
+            notify("You successfully updated the event type", 'success');
+            $(that).text(newValue);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                notify(error.message, 'danger');
+            } else {
+                var msg = "Unexpected error. Please contact the support team.";
+                notify(msg, 'danger');
+            }
+        }).complete(function() {
+            $("body").css("cursor", "default");
+        });
+        return false;
+    });
 });
 

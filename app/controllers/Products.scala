@@ -145,14 +145,14 @@ trait Products extends Controller with Security with Services {
         {
           case (page, productId, brandId) ⇒ {
             Product.find(productId).map { product ⇒
-              Brand.find(brandId).map { brand ⇒
+              brandService.find(brandId).map { brand ⇒
                 product.addBrand(brandId)
                 val activityObject = Messages("activity.relationship.create", product.title, brand.name)
                 val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the product or brand details page.
                 val action = if (page == "product") routes.Products.details(productId)
-                else routes.Brands.details(Brand.find(brandId).get.code)
+                else routes.Brands.details(brand.code)
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
@@ -167,14 +167,14 @@ trait Products extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       Product.find(productId).map { product ⇒
-        Brand.find(brandId).map { brand ⇒
+        brandService.find(brandId).map { brand ⇒
           product.deleteBrand(brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
           val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the product or brand details page.
           val action = if (page == "product") routes.Products.details(productId)
-          else routes.Brands.details(Brand.find(brandId).get.code)
+          else routes.Brands.details(brand.code)
           Redirect(action).flashing("success" -> activity.toString)
         }
       }.flatten.getOrElse(NotFound)

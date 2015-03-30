@@ -27,7 +27,7 @@ package controllers
 import controllers.Forms._
 import models._
 import models.brand.EventType
-import models.service.EventService
+import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.data.validation.Constraints
 import play.api.mvc._
@@ -45,7 +45,7 @@ import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 
-object Brands extends Controller with Security {
+object Brands extends Controller with Security with Services {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -72,8 +72,16 @@ object Brands extends Controller with Security {
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "code" -> nonEmptyText.verifying(pattern("[A-Z0-9]*".r, "constraint.brand.code", "constraint.brand.code.error"), maxLength(5)),
-    "uniqueName" -> nonEmptyText.verifying(pattern("[A-Za-z0-9._]*".r, "constraint.brand.code", "constraint.brand.uniqueName.error"), maxLength(25)),
+    "code" -> nonEmptyText.verifying(
+      pattern("[A-Z0-9]*".r,
+        "constraint.brand.code",
+        "constraint.brand.code.error"),
+      maxLength(5)),
+    "uniqueName" -> nonEmptyText.verifying(
+      pattern("[A-Za-z0-9._]*".r,
+        "constraint.brand.code",
+        "constraint.brand.uniqueName.error"),
+      maxLength(25)),
     "name" -> nonEmptyText,
     "coordinatorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "description" -> optional(text),
@@ -83,21 +91,25 @@ object Brands extends Controller with Security {
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "profile" -> socialProfileMapping,
+    "evaluationHookUrl" -> optional(webUrl),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(user.fullName))({
-      (id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine, webSite, blog,
-      profile, created, createdBy, updated, updatedBy) ⇒
+      (id, code, uniqueName, name, coordinatorId, description, picture,
+      generateCert, tagLine, webSite, blog, profile, evaluationHookUrl,
+      created, createdBy, updated, updatedBy) ⇒
         {
-          val brand = Brand(id, code, uniqueName, name, coordinatorId, description, picture, generateCert, tagLine,
-            webSite, blog, created, createdBy, updated, updatedBy)
+          val brand = Brand(id, code, uniqueName, name, coordinatorId,
+            description, picture, generateCert, tagLine, webSite, blog,
+            evaluationHookUrl, created, createdBy, updated, updatedBy)
           brand.socialProfile_=(profile)
           brand
         }
     })({ (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description, b.picture, b.generateCert, b.tagLine,
-        b.webSite, b.blog, b.socialProfile, b.created, b.createdBy, b.updated, b.updatedBy))
+      Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description,
+        b.picture, b.generateCert, b.tagLine, b.webSite, b.blog, b.socialProfile,
+        b.evaluationHookUrl, b.created, b.createdBy, b.updated, b.updatedBy))
     }))
 
   /** Shows all brands **/
@@ -216,7 +228,7 @@ object Brands extends Controller with Security {
     implicit handler ⇒ implicit user ⇒
       Brand.find(code).map {
         case BrandView(brand, coordinator, licenseIds) ⇒ {
-          val eventTypes = EventType.findByBrand(brand.id.get)
+          val eventTypes = eventTypeService.findByBrand(brand.id.get)
           Ok(views.html.brand.details(user, brand, coordinator, eventTypes))
         }
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
@@ -344,9 +356,9 @@ object Brands extends Controller with Security {
           val account = user.account
           val events = if (account.editor ||
             brand.brand.coordinatorId == account.personId) {
-            EventService.get.findByParameters(Some(brandCode), future)
+            eventService.findByParameters(Some(brandCode), future)
           } else {
-            EventService.get.findByFacilitator(
+            eventService.findByFacilitator(
               account.personId,
               Some(brandCode),
               future,

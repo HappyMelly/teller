@@ -24,10 +24,13 @@
  */
 package models.service
 
+import models.service.admin.ApiTokenService
 import models.service.brand.{ BrandFeeService, EventTypeService }
 
 /** Contains references to all services so we can stub them in tests */
 trait Services {
+
+  def apiTokenService: ApiTokenService = ApiTokenService.get
 
   def brandService: BrandService = BrandService.get
 
@@ -38,6 +41,8 @@ trait Services {
   def eventService: EventService = EventService.get
 
   def eventTypeService: EventTypeService = EventTypeService.get
+
+  def facilitatorService: FacilitatorService = FacilitatorService.get
 
   def feeService: BrandFeeService = BrandFeeService.get
 
@@ -52,6 +57,8 @@ trait Services {
   def personService: PersonService = PersonService.get
 
   def productService: ProductService = ProductService.get
+
+  def translationService: TranslationService = TranslationService.get
 
   def userAccountService: UserAccountService = UserAccountService.get
 

@@ -184,7 +184,8 @@ function drawStatus(data) {
     var style = [
         { badge: '', icon: 'glyphicon-hand-right' },
         { badge: 'alert-success', icon: 'glyphicon-thumbs-up' },
-        { badge: 'alert-warning', icon: 'glyphicon-thumbs-down' }
+        { badge: 'alert-warning', icon: 'glyphicon-thumbs-down'},
+        { badge: 'alert-danger', icon: 'glyphicon-hourglass' }
     ];
     if (data) {
         var html = '<span class="badge ' + style[data.value].badge + '"';

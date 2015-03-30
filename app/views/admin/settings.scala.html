@@ -1,10 +1,11 @@
 @(user: UserIdentity,
-    transactionTypes: List[TransactionType],
+    transactionTypes: List[models.admin.TransactionType],
     form: Form[String])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
 
+@import controllers.admin.routes.Administration
 @import helper.CSRF
 
 @main("Settings", "admin", user) {
@@ -31,7 +32,8 @@
           <tr>
             <td>@transactionType.name</td>
             <td>
-              <form class="delete" method="post" text="transaction type" action="@CSRF(routes.Administration.deleteTransactionType(transactionType.id.get))">
+              <form class="delete" method="post" text="transaction type"
+                action="@CSRF(Administration.deleteTransactionType(transactionType.id.get))">
                 <button class="btn btn-link"><i class="glyphicon glyphicon-trash"></i> Delete</button>
               </form>
             </td>
@@ -43,7 +45,7 @@
       <p>There are no transaction types.</p>
     }
 
-    <form class="form-inline" method="post" action="@CSRF(routes.Administration.createTransactionType)">
+    <form class="form-inline" method="post" action="@CSRF(Administration.createTransactionType)">
       <div class="form-group @if(form("name").hasErrors) {error}">
           <input type="text" class="form-control input-sm"
             name="name" placeholder="Transaction type" value="@form("name").value">

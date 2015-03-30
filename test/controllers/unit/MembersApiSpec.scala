@@ -24,7 +24,7 @@
 
 package controllers.unit
 
-import controllers.api.MembersApi
+import controllers.apiv2.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.Photo
 import org.joda.time.LocalDate

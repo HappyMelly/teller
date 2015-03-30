@@ -1,0 +1,19 @@
+@(brand: Brand, participant: Person, body: String)
+@import laika.api._
+@import laika.parse.markdown.Markdown
+@import laika.render.HTML
+
+@mail.html.tmpl {
+  <tr>
+    <td valign="top" style="background-color:rgb(72, 177, 112); color: #ffffff;">
+      <h3 style="font-size:20px;font-weight:normal">Evaluation Request</h3>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+        @Html(Transform.from(Markdown).to(HTML).fromString(body).toString)
+        <p style="font-weight:bold"> The @brand.name team</p>
+    </td>
+  </tr>
+}
+

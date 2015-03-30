@@ -29,6 +29,7 @@ import helpers._
 import _root_.integration.PlayAppSpec
 import models._
 import models.payment.Record
+import models.service.FacilitatorService
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -239,6 +240,9 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       LocalDate.now(), LocalDate.now(), LocalDate.now().plusYears(1), true,
       Money.parse("EUR 10"), None)
     val licenses = List(LicenseView(BrandHelper.one, license))
+    val facilitationData = List(Facilitator(Some(1L), id, 1L))
+    val facilitatorService = mock[FacilitatorService]
+    facilitatorService.findByPerson _ expects id returning facilitationData
 
     licenseService.licenses _ expects id returning licenses
     accountService.findRole _ expects id returning None
@@ -246,6 +250,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     (contributionService.contributions(_, _)) expects (id, true) returning List()
     paymentService.findByPerson _ expects id returning List()
     val controller = fakedController()
+    controller.facilitatorService_=(facilitatorService)
 
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1")
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)

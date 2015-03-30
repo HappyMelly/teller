@@ -3,7 +3,7 @@
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
     contributions: List[ContributionView],
-    licenses: List[LicenseView],
+    facilitationData: List[(LicenseView, Float)],
     accountRole: Option[models.UserRole.Role.Role],
     otherUser: Option[UserAccount],
     payments: Option[List[payment.Record]]
@@ -11,7 +11,6 @@
         flash: Flash,
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
-@import models.payment.Record$
 
 @import helper.CSRF
     @import models.UserRole.Role._
@@ -65,7 +64,7 @@
           <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
             <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Personal Details</a></li>
             <li><a href="#contributions" role="tab" data-toggle="tab">Contributions</a></li>
-            @if(licenses.length > 0) {
+            @if(facilitationData.length > 0) {
               <li><a href="#facilitation" role="tab" data-toggle="tab">
                 Facilitation</a></li>
             }
@@ -121,7 +120,7 @@
             </div>
           }
 
-          @if(licenses.length == 0) {
+          @if(facilitationData.length == 0) {
             @restrict(handler, List(as(Editor.toString))) {
               <div class="button">
                 <a href="@routes.Licenses.add(person.id.getOrElse(0))" class="btn btn-success">
@@ -180,9 +179,9 @@
       @views.html.person.subpages.contributions(person, contributions)
     </div>
 
-    @if(licenses.length > 0) {
+    @if(facilitationData.length > 0) {
       <div class="tab-pane" id="facilitation">
-        @views.html.person.subpages.facilitation(person, licenses)
+        @views.html.person.subpages.facilitation(person, facilitationData)
       </div>
     }
 

@@ -153,13 +153,13 @@ object Events extends Controller
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "error.event.nofacilitators", (ids: List[Long]) ⇒ !ids.isEmpty))(
+      "error.event.nofacilitators", (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandCode, title, language, location, details, schedule, notPublic, archived, confirmed,
         invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandCode, title, language,
-            location, details, schedule, notPublic,
-            archived, confirmed, None, created, createdBy, updated, updatedBy)
+            location, details, schedule, notPublic, archived, confirmed,
+            0.0f, None, created, createdBy, updated, updatedBy)
           event.invoice_=(invoice)
           event.facilitatorIds_=(facilitatorIds)
           event
@@ -192,7 +192,7 @@ object Events extends Controller
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, "", "", Language("", None, Some("English")),
         Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false,
+        notPublic = false, archived = false, confirmed = false, 0.0f,
         None, DateTime.now(), "", DateTime.now(), "")
       default.invoice_=(defaultInvoice)
       val account = user.account
@@ -305,18 +305,25 @@ object Events extends Controller
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map { event ⇒
-        //@TODO only funders must be retrieved
-        val funders = Organisation.findAll
+      eventService.find(id) map { x ⇒
         val acc = user.account
-        val typeName = eventTypeService.find(event.eventTypeId) map {
-          _.name
-        } getOrElse ""
-        val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-        val fees = feeService.findByBrand(event.brandCode).
+        //@TODO only funders must be retrieved
+        val funders = if (acc.editor) Organisation.findAll else List()
+        val eventType = eventTypeService.find(x.eventTypeId).get
+        val canFacilitate = acc.editor || x.canFacilitate(acc.personId)
+        val fees = feeService.findByBrand(x.brandCode)
+        val printableFees = fees.
           map(x ⇒ (Countries.name(x.country), x.fee.toString)).
           sortBy(_._1)
-        Ok(views.html.event.details(user, canFacilitate, funders, event, typeName, fees))
+        val event = fees.find(_.country == x.location.countryCode) map { y ⇒
+          Event.withFee(x, y.fee, eventType.maxHours)
+        } getOrElse x
+        Ok(views.html.event.details(user,
+          canFacilitate,
+          funders,
+          event,
+          eventType.name,
+          printableFees))
       } getOrElse NotFound
   }
 
@@ -440,6 +447,11 @@ object Events extends Controller
                   if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
                     routes.Events.duplicate(data.id.get).url
                   } else ""
+                },
+                "remove" -> {
+                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.delete(data.id.get).url
+                  } else ""
                 })
             })
         }
@@ -545,7 +557,7 @@ object Events extends Controller
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
                 email.send(Set(participant), None, None, subject,
-                  mail.html.evaluationRequest(brand.brand, participant, body).toString(), richMessage = true)
+                  mail.evaluation.html.request(brand.brand, participant, body).toString(), richMessage = true)
               }
 
               val activity = Activity.insert(user.fullName, Activity.Predicate.Sent, event.title)

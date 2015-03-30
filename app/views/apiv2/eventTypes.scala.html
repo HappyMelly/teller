@@ -1,0 +1,65 @@
+@()
+
+<h3 id="eventtypes">Event Types</h3>
+
+<p>The <em>event types</em> resource is a list of event types for a particular brand.</p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v2/brand/{brand}/types</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>
+      <code>brand</code> a brand code to return event types for, e.g. <code>mgt30</code>
+    </td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of event types objects, with properties:</p>
+      <ul>
+        <li><code>id</code> - unique identification number of the type</li>
+        <li><code>brand</code> - a brand code, e.g. <code>MGT30</code></li>
+        <li><code>name</code></li>
+        <li><code>defaultTitle</code></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>
+      <p><code>404 Not Found</code> if the given brand code is not defined</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Example request</th>
+    <td>GET /api/v2/brand/mgt30/types?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "id" : 1,
+  "brand" : "MGT30",
+  "name" : "Regular 2-Day course",
+  "defaultTitle" : "Regular 2-Day Management 3.0 Course"
+}, {
+  "id" : 2,
+  "brand" : "MGT30",
+  "name" : "1-Day Workshop",
+  "defaultTitle" : "Exclusive 1-Day #Workout Workshop"
+}, {
+  "id" : 10,
+  "brand" : "MGT30",
+  "name" : "Odin Test",
+  "defaultTitle" : "Test 321"
+} ]
+    </pre></td>
+  </tr>
+</table>

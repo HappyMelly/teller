@@ -301,6 +301,9 @@ trait People extends Controller with Security with Services {
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
         val licenses = licenseService.licenses(id)
+        val facilitation = facilitatorService.findByPerson(id)
+        val facilitatorData = facilitation.
+          map(x ⇒ (licenses.find(_.license.brandId == x.brandId).get, x.rating))
         val accountRole = if (user.account.editor)
           userAccountService.findRole(id) else None
         val duplicated = if (user.account.editor)
@@ -312,8 +315,7 @@ trait People extends Controller with Security with Services {
         } getOrElse None
         Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
-          contributions,
-          licenses, accountRole, duplicated, payments))
+          contributions, facilitatorData, accountRole, duplicated, payments))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))

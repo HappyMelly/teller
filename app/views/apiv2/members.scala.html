@@ -1,0 +1,89 @@
+@()
+
+<h3 id="members">Members</h3>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Description</th>
+    <td>A list of Happy Melly members</td>
+  </tr>
+  <tr>
+    <th>Request</th>
+    <td><code>GET /api/v2/members</code></td>
+  </tr>
+  <tr>
+    <th>Request path parameters</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Request query string parameters</th>
+    <td><code>funder</code> optional parameter. If true, only funders are returned. If false, only supporters. If empty, all members.</td>
+  </tr>
+  <tr>
+    <th>Response content type</th>
+    <td><code>application/json; charset=utf-8</code></td>
+  </tr>
+  <tr>
+    <th>Response body</th>
+    <td>
+      <p>A JSON array of member objects, with properties:</p>
+      <ul>
+        <li><code>id</code></li>
+        <li><code>name</code></li>
+        <li><code>type</code> - "person" or "org"</li>
+        <li><code>funder</code></li>
+        <li><code>image</code> - url with avatar or logo</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Errors (HTTP status)</th>
+    <td>none</td>
+  </tr>
+  <tr>
+    <th>Example request</th>
+    <td>GET /api/v2/members?api_token=4d5d132664a3f42e9a04a53ca701f36a5fba53a2</td>
+  </tr>
+  <tr>
+    <th>Example response</th>
+    <td><pre>
+[ {
+  "id" : 13,
+  "name" : "ChangeGeek",
+  "type" : "org",
+  "funder" : false,
+  "image" : null
+}, {
+  "id" : 8,
+  "name" : "Happy Melly Brazil LTDA",
+  "type" : "org",
+  "funder" : true,
+  "image" : null
+}, {
+  "id" : 4,
+  "name" : "Happy Melly One BV",
+  "type" : "org",
+  "funder" : true,
+  "image" : null
+}, {
+  "id" : 5,
+  "name" : "Jason Little",
+  "type" : "person",
+  "funder" : true,
+  "image" : null
+}, {
+  "id" : 12,
+  "name" : "Jennifer Riggins",
+  "type" : "person",
+  "funder" : false,
+  "image" : null
+}, {
+  "id" : 3,
+  "name" : "Jurgen Appelo",
+  "type" : "person",
+  "funder" : true,
+  "image" : "http://graph.facebook.com/jurgenappelo/picture?type=large"
+} ]
+    </pre></td>
+  </tr>
+</table>

@@ -24,7 +24,7 @@
 */
 package controllers.unit
 
-import controllers.api.{ ApiAuthentication, EventsApi }
+import controllers.apiv2.{ ApiAuthentication, EventsApi }
 import helpers.{ EventHelper, PersonHelper }
 import models.Event
 import org.scalamock.specs2.MockContext
@@ -75,8 +75,10 @@ class EventsApiSpec extends Specification {
         "country" -> "RU",
         "website" -> None.asInstanceOf[Option[String]],
         "registrationPage" -> None.asInstanceOf[Option[String]],
+        "rating" -> 0.0f,
         "public" -> true,
-        "archived" -> false)
+        "archived" -> false,
+        "confirmed" -> false)
     }
     "return 404 error with error message when an event doesn't exist" in {
       val controller = new TestEventsApi()
@@ -84,12 +86,6 @@ class EventsApiSpec extends Specification {
       status(result) must equalTo(NOT_FOUND)
       contentType(result) must beSome("text/plain")
       contentAsString(result) mustEqual "Unknown event"
-    }
-    "return 401 error if api_token is not provided" in {
-      val controller = new AnotherTestEventsApi()
-      val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
-      status(result) must equalTo(UNAUTHORIZED)
-      contentAsString(result) mustEqual "Unauthorized"
     }
   }
 
@@ -158,19 +154,6 @@ class EventsApiSpec extends Specification {
       contentAsJson(result) mustEqual Json.arr(
         EventHelper.oneAsJson,
         EventHelper.twoAsJson)
-    }
-    "return 401 error if api_token is not provided" in {
-      val controller = new AnotherTestEventsApi()
-      val result: Future[SimpleResult] = controller.events(
-        "TEST",
-        future = None,
-        public = Some(true),
-        archived = Some(false),
-        facilitatorId = Some(1),
-        countryCode = Some("UK"),
-        eventType = Some(1)).apply(FakeRequest())
-      status(result) must equalTo(UNAUTHORIZED)
-      contentAsString(result) mustEqual "Unauthorized"
     }
   }
 

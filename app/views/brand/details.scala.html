@@ -1,133 +1,143 @@
 @(user: UserIdentity,
-  brand: Brand,
-  coordinator: Person,
-  eventTypes: List[models.brand.EventType]
-  )(implicit request: Request[Any],
+    brand: Brand,
+    coordinator: Person,
+    eventTypes: List[models.brand.EventType]
+    )(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
-@import models.UserRole.Role._
-@import templates.Formatters._
-@import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+  @import helper.CSRF
+  @import models.UserRole.Role._
+  @import templates.Formatters._
+  @import be.objectify.deadbolt.scala.views.html._
+  @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@main(brand.code + " - Brand", "brands", user) {
+  @main(brand.code + " - Brand", "brands", user) {
 
     <div class="page-header">
-        <h1>
+      <h1>
+        @brand.picture.map { picture =>
+          <img width="64" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
+        }
+        @brand.name
+        @restrict(handler, List(as(Editor.toString))) {
+          <div class="actions pull-right">
+            <div class="button">
+              <a class="btn btn-default" href="@routes.Brands.edit(brand.code)">
+                <i class="glyphicon glyphicon-pencil"></i> Edit
+              </a>
+            </div>
             @brand.picture.map { picture =>
-                <img width="64" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
-            }
-            @brand.name
-            @restrict(handler, List(as(Editor.toString))) {
-                <div class="actions pull-right">
-                    <div class="button">
-                        <a class="btn btn-default" href="@routes.Brands.edit(brand.code)">
-                            <i class="glyphicon glyphicon-pencil"></i> Edit
-                        </a>
-                    </div>
-                    @brand.picture.map { picture =>
-                        <div class="button">
-                            <form class="delete form-inline" method="post" text="image"
-                            action="@CSRF(routes.Brands.deletePicture(brand.code))">
-                            @restrict(handler, List(as(Editor.toString))) {
-                                <button class="btn btn-warning btn-sm" type="submit">
-                                    <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete Picture
-                                </button>
-                            }
-                            </form>
-                        </div>
-                    }
-                    <div class="button">
-                        <form class="delete form-inline" method="post" text="brand"
-                        action="@CSRF(routes.Brands.delete(brand.code))">
-                            <button class="btn btn-danger" type="submit"
-                                @if(!brand.deletable) {
-                                    disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
-                            >
-                            <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            }
-        </h1>
-    </div>
-
-    <div class="col-md-4">
-        <p>
-            <strong>Brand code / Unique Name</strong><br>
-        @brand.code / @brand.uniqueName
-        </p>
-        <p>
-            <strong>Brand coordinator</strong><br>
-            <a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a>
-        </p>
-        @brand.tagLine.map { value =>
-          <p><strong>Tagline</strong><br/>@value</p>
-        }
-        @brand.webSite.map { value =>
-            <p><strong>Web site</strong><br/><a href="@value" target="_blank">@value</a> </p>
-        }
-        @brand.blog.map { value =>
-            <p><strong>Blog</strong><br/><a href="@value" target="_blank">@value</a></p>
-        }
-    </div>
-    <div class="col-md-4">
-        <p><strong>E-mail address</strong>
-            <br><a href="mailto:@brand.socialProfile.email" target="_blank">@brand.socialProfile.email</a>
-        </p>
-
-        <p><strong>Social Accounts</strong>
-            @brand.socialProfile.facebookUrl.map { url =>
-                <br><a href="@url" target="_blank">Facebook</a>
-            }
-
-            @brand.socialProfile.linkedInUrl.map { url =>
-                <br><a href="@url" target="_blank">LinkedIn</a>
-            }
-
-            @brand.socialProfile.googlePlusUrl.map { url =>
-                <br><a href="@url" target="_blank">Google+</a>
-            }
-            @brand.socialProfile.skype.map { skype =>
-                <br><a href="skype:@skype" target="_blank">Skype</a>
-            }
-        </p>
-        @brand.socialProfile.phone.map { phone =>
-            <p><strong>Phone</strong><br>@phone</p>
-        }
-    </div>
-    <div class="col-md-10">
-        @brand.description.map { desc =>
-            <p><strong>Description</strong><br/>@desc.markdown</p>
-        }
-    </div>
-
-    <div class="col-md-10">
-        <ul class="nav nav-tabs" id="activities">
-            <li class="active"><a href="#products">Products</a></li>
-            <li><a href="#eventTypes">Event Types</a></li>
-            <li><a href="#templates">Certificate Templates</a></li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane active" id="products">
-                @if(brand.products.isEmpty) {
-                    <p>This brand doesn't have any products.</p>
-                } else {
-                    @views.html.product.table(brand.products, viewOnly = true) { product => @None}
+              <div class="button">
+                <form class="delete form-inline" method="post" text="image"
+                action="@CSRF(routes.Brands.deletePicture(brand.code))">
+                @restrict(handler, List(as(Editor.toString))) {
+                  <button class="btn btn-warning btn-sm" type="submit">
+                    <i class="glyphicon glyphicon-white glyphicon-trash"></i>
+                    Delete Picture
+                  </button>
                 }
+                </form>
+              </div>
+            }
+            <div class="button">
+              <form class="delete form-inline" method="post" text="brand"
+              action="@CSRF(routes.Brands.delete(brand.code))">
+                <button class="btn btn-danger" type="submit"
+                  @if(!brand.deletable) {
+                    disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
+                >
+                  <i class="glyphicon glyphicon-white glyphicon-trash"></i>
+                  Delete
+                </button>
+              </form>
             </div>
-            <div class="tab-pane" id="eventTypes">
-                @views.html.brand.tabs.eventTypes(brand, eventTypes)
-            </div>
-            <div class="tab-pane" id="templates">
-                @views.html.brand.tabs.templates(brand)
-            </div>
+          </div>
+        }
+      </h1>
+    </div>
+
+    <div class="col-md-4">
+      <p>
+        <strong>Brand code / Unique Name</strong><br>
+        @brand.code / @brand.uniqueName
+      </p>
+      <p>
+        <strong>Brand coordinator</strong><br>
+        <a href="@routes.People.details(coordinator.id.get)">@coordinator.fullName</a>
+      </p>
+      @brand.tagLine.map { value =>
+        <p><strong>Tagline</strong><br/>@value</p>
+      }
+      @brand.webSite.map { value =>
+        <p><strong>
+          Web site</strong><br/><a href="@value" target="_blank">@value</a> </p>
+      }
+      @brand.blog.map { value =>
+        <p><strong>
+          Blog</strong><br/><a href="@value" target="_blank">@value</a></p>
+      }
+    </div>
+    <div class="col-md-4">
+      <p><strong>E-mail address</strong>
+        <br><a href="mailto:@brand.socialProfile.email" target="_blank">@brand.socialProfile.email</a>
+      </p>
+
+      <p><strong>Social Accounts</strong>
+        @brand.socialProfile.facebookUrl.map { url =>
+          <br> <a href="@url" target="_blank">Facebook</a>
+        }
+
+        @brand.socialProfile.linkedInUrl.map { url =>
+          <br> <a href="@url" target="_blank">LinkedIn</a>
+        }
+
+        @brand.socialProfile.googlePlusUrl.map { url =>
+          <br> <a href="@url" target="_blank">Google+</a>
+        }
+        @brand.socialProfile.skype.map { skype =>
+          <br> <a href="skype:@skype" target="_blank">Skype</a>
+        }
+      </p>
+      @brand.socialProfile.phone.map { phone =>
+        <p><strong>Phone</strong><br>@phone</p>
+      }
+    </div>
+    <div class="col-md-10">
+    @brand.description.map { desc =>
+      <p><strong>Description</strong><br/>@desc.markdown</p>
+    }
+    </div>
+    <div class="col-md-10">
+      <ul class="nav nav-tabs" id="activities">
+        <li class="active"><a href="#products">Products</a></li>
+        <li><a href="#eventTypes">Event Types</a></li>
+        <li><a href="#templates">Certificate Templates</a></li>
+        <li><a href="#hooks">Hooks</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane active" id="products">
+        @if(brand.products.isEmpty) {
+          <p>This brand doesn't have any products.</p>
+        } else {
+          @views.html.product.table(brand.products, viewOnly = true) { product => @None }
+        }
         </div>
+        <div class="tab-pane" id="eventTypes">
+        @views.html.brand.tabs.eventTypes(brand, eventTypes)
+        </div>
+        <div class="tab-pane" id="templates">
+        @views.html.brand.tabs.templates(brand)
+        </div>
+        <div class="tab-pane" id="hooks">
+          <dl>
+            <dt>Evaluation Hook</dt>
+            <dd>@brand.evaluationHookUrl.getOrElse("none")</dd>
+          </dl>
+        </div>
+      </div>
     </div>
 
     <script src="@routes.Assets.at("brand/details.js")" type="text/javascript"></script>
-}
+  }

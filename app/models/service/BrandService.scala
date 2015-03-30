@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.Brand
-import models.database.Brands
+import models.{ BrandView, Brand }
+import models.database.{ Brands, Licenses }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -33,6 +33,22 @@ import play.api.db.slick.DB
 import scala.slick.lifted.Query
 
 class BrandService {
+
+  /**
+   * Returns brand if it exists, otherwise - None
+   * @param id Brand identifier
+   */
+  def find(id: Long) = DB.withSession { implicit session: Session ⇒
+    Query(Brands).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Returns brand if it exists, otherwise - None
+   * @param code Brand code
+   */
+  def find(code: String): Option[Brand] = DB.withSession { implicit session ⇒
+    Query(Brands).filter(_.code === code).firstOption
+  }
 
   /**
    * Returns a list of all brands
