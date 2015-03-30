@@ -34,7 +34,8 @@ import play.api.db.slick.DB
 case class EventType(id: Option[Long],
   brandId: Long,
   name: String,
-  defaultTitle: Option[String]) extends ActivityRecorder {
+  defaultTitle: Option[String],
+  maxHours: Int) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -74,7 +75,7 @@ object EventType {
   }
 
   def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventTypes.filter(_.id === id).mutate(_.delete)
+    EventTypes.filter(_.id === id).mutate(_.delete())
   }
 
 }

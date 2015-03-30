@@ -58,15 +58,7 @@ class EventService extends Notifiers with Services {
    */
   def find(id: Long): Option[Event] = DB.withSession {
     implicit session: Session ⇒
-      val query = for {
-        (event, fee) ← Events leftJoin
-          BrandFees on ((e, f) ⇒ e.brandCode === f.brand && e.countryCode === f.country) if event.id === id
-      } yield (event, fee.feeCurrency.?, fee.feeAmount.?)
-      query.list.headOption map { v ⇒
-        val e = v._2 map { currency ⇒ Event.withFee(v._1, currency -> v._3.get)
-        } getOrElse v._1
-        Some(e)
-      } getOrElse None
+      Query(Events).filter(_.id === id).firstOption
   }
 
   /**

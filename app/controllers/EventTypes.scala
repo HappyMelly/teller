@@ -43,13 +43,15 @@ trait EventTypes extends Controller with Security with Services {
     "brandId" -> nonEmptyText.transform(_.toLong,
       (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ brandService.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),
-    "title" -> optional(text(maxLength = 254)))(EventType.apply)(EventType.unapply))
+    "title" -> optional(text(maxLength = 254)),
+    "maxhours" -> number(min = 1))(EventType.apply)(EventType.unapply))
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(data: EventType): JsValue = {
       Json.obj(
         "name" -> data.name,
         "title" -> data.defaultTitle,
+        "maxhours" -> data.maxHours,
         "id" -> data.id.get)
     }
   }
@@ -95,7 +97,6 @@ trait EventTypes extends Controller with Security with Services {
       eventTypeService.find(id) map { x ⇒
         eventTypeForm.bindFromRequest.fold(
           hasErrors ⇒ {
-            println(hasErrors.errors.toString)
             BadRequest(Json.toJson(Json.obj(
               "message" -> Messages("event.eventType.notFound"))))
           },

@@ -305,18 +305,25 @@ object Events extends Controller
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map { event ⇒
-        //@TODO only funders must be retrieved
-        val funders = Organisation.findAll
+      eventService.find(id) map { x ⇒
         val acc = user.account
-        val typeName = eventTypeService.find(event.eventTypeId) map {
-          _.name
-        } getOrElse ""
-        val canFacilitate = acc.editor || event.canFacilitate(acc.personId)
-        val fees = feeService.findByBrand(event.brandCode).
+        //@TODO only funders must be retrieved
+        val funders = if (acc.editor) Organisation.findAll else List()
+        val eventType = eventTypeService.find(x.eventTypeId).get
+        val canFacilitate = acc.editor || x.canFacilitate(acc.personId)
+        val fees = feeService.findByBrand(x.brandCode)
+        val printableFees = fees.
           map(x ⇒ (Countries.name(x.country), x.fee.toString)).
           sortBy(_._1)
-        Ok(views.html.event.details(user, canFacilitate, funders, event, typeName, fees))
+        val event = fees.find(_.country == x.location.countryCode) map { y ⇒
+          Event.withFee(x, y.fee, eventType.maxHours)
+        } getOrElse x
+        Ok(views.html.event.details(user,
+          canFacilitate,
+          funders,
+          event,
+          eventType.name,
+          printableFees))
       } getOrElse NotFound
   }
 
