@@ -252,9 +252,11 @@ object Event {
    * Returns new event with a fee calculated the given one and a number of hours
    * @param event Source event
    * @param fee Country Fee for 16-hours event
+   * @param maxHours Maximum number of chargeable hours
    */
-  def withFee(event: Event, fee: Money): Event = {
-    val slotNumber = event.schedule.totalHours.toLong / 4 + 1
+  def withFee(event: Event, fee: Money, maxHours: Int): Event = {
+    val hours = scala.math.min(maxHours, event.schedule.totalHours)
+    val slotNumber = hours / 4 + (hours % 4).min(1)
     val eventFee = fee.multipliedBy(slotNumber).dividedBy(4L, java.math.RoundingMode.UNNECESSARY)
     event.copy(fee = Some(eventFee))
   }

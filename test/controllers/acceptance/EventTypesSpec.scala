@@ -80,7 +80,7 @@ class EventTypesSpec extends PlayAppSpec {
   def e4 = new MockContext {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody(("id", "1"), ("brandId", "1"), ("name", "Test"))
-    val eventType = EventType(Some(1L), 1L, "Test", Some("test type"))
+    val eventType = EventType(Some(1L), 1L, "Test", Some("test type"), 16)
     val eventTypeService = mock[FakeEventTypeService]
     (eventTypeService.find _).expects(1L).returning(Some(eventType))
     val types = List(eventType.copy(id = Some(2L)))
@@ -99,7 +99,7 @@ class EventTypesSpec extends PlayAppSpec {
   def e5 = new MockContext {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody(("id", "1"), ("brandId", "1"), ("name", "Test"))
-    val eventType = EventType(Some(1L), 1L, "Test", Some("test type"))
+    val eventType = EventType(Some(1L), 1L, "Test", Some("test type"), 16)
     val eventTypeService = mock[FakeEventTypeService]
     (eventTypeService.find _).expects(1L).returning(Some(eventType))
     (eventTypeService.findByBrand _).expects(1L).returning(List())
