@@ -156,16 +156,16 @@ case class Certificate(
         val imageData = Await.result(Person.downloadFromCloud(firstFacilitator.id.get),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(120, 45)
-        signature.scaleToFit(150, 50)
+        signature.setAbsolutePosition(100, 45)
+        signature.scaleToFit(130, 110)
         document.add(signature)
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.downloadFromCloud(secondFacilitator.id.get),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(650, 45)
-        signature.scaleToFit(150, 50)
+        signature.setAbsolutePosition(630, 45)
+        signature.scaleToFit(130, 110)
         document.add(signature)
       }
     } else {
@@ -176,8 +176,8 @@ case class Certificate(
         val imageData = Await.result(Person.downloadFromCloud(facilitator.id.get),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.scaleToFit(150, 50)
-        signature.setAbsolutePosition(650, 45)
+        signature.scaleToFit(130, 110)
+        signature.setAbsolutePosition(630, 45)
         document.add(signature)
       }
     }
