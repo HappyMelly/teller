@@ -93,7 +93,6 @@ object EmailService {
           new mail.SimpleEmail().setMsg(message.body.trim)
         }
 
-
         message.to.foreach(commonsMail.addTo(_))
         message.cc.foreach(commonsMail.addCc(_))
         message.bcc.foreach(commonsMail.addBcc(_))
