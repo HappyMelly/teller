@@ -12,10 +12,39 @@
 @import helper.CSRF
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
+@import org.joda.time.LocalDate
 @import views.Countries
 @import views.ViewHelpers.dateInterval
 
 @main(event.title + " - Event", "events", user) {
+
+  @dynamic(handler, "event", "edit") {
+    <!-- Confirm Modal -->
+    <div id="confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+              ×</button>
+            <h3>Confirm event</h3>
+          </div>
+          <div class="modal-body">
+            I confirm that this event
+            @if(event.schedule.start.toString >= LocalDate.now().toString) { will take} else { took}
+            place and understand I will get
+            an invoice for @event.fee.map { fee => @fee} from a brand manager.
+          </div>
+          <div class="modal-footer">
+            <form method="post" class="form-inline"
+            action="@CSRF(routes.Events.confirm(event.id.getOrElse(0)))">
+              <button class="btn btn-warning" type="submit">Confirm</button>
+              <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   @element.evaluationActions()
   @views.html.event.requestEvaluation(event)
@@ -36,12 +65,9 @@
         </div>
         @if(!event.confirmed) {
           <div class="button">
-            <form method="post" class="form-inline"
-            action="@CSRF(routes.Events.confirm(event.id.getOrElse(0)))">
-              <button class="btn btn-warning" type="submit">
-                <i class="glyphicon-ok glyphicon glyphicon-white"></i> Confirm
-              </button>
-            </form>
+            <a href="#" class="btn btn-warning" data-toggle="modal" data-target="#confirm">
+              <i class="glyphicon-ok glyphicon glyphicon-white"></i> Confirm
+            </a>
           </div>
         }
         <div class="button">
@@ -62,10 +88,10 @@
     </h1>
   </div>
   @if(event.confirmed) {
-    <div class="alert alert-info">
-      <i class="glyphicon glyphicon-info-sign"></i> This event is
-        <span class="label label-success">confirmed</span>.
-      @event.fee.map { fee => License event fee is @fee  }
+    <div class="alert alert-warning">
+      <i class="glyphicon glyphicon-info-sign"></i> You will be
+      invoiced for @event.fee.map { fee => @fee}. If the event didn't take place,
+      <b>delete it</b>.
     </div>
   }
 
@@ -109,6 +135,11 @@
             <span class="label label-warning">archived</span>
           } else {
             <span class="label label-info">active</span>
+          }
+          @if(event.confirmed) {
+            <span class="label label-success">confirmed</span>
+          } else {
+            <span class="label label-primary">unconfirmed</span>
           }
         </dd>
       </dl>
