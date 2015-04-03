@@ -25,10 +25,9 @@
 package controllers.integration
 
 import controllers.{ OrgData, PaymentData, Registration, UserData }
-import helpers.{ OrganisationHelper, MemberHelper, PersonHelper }
-import integration.{ TruncateBefore, PlayAppSpec }
+import integration.{ PlayAppSpec, TruncateBefore }
 import models.service.{ OrganisationService, PersonService }
-import models.{ UserIdentity, Member, Organisation, Person }
+import models.{ Member, Organisation, Person }
 import org.joda.money.Money
 import play.api.Play.current
 import play.api.cache.Cache
@@ -214,46 +213,6 @@ class RegistrationSpec extends PlayAppSpec {
         data._3.getAmountMajorInt must_== 50
         data._4.funder must_== false
       } getOrElse ko
-    }
-  }
-
-  "Method 'notify'" should {
-    "send Slack and Email notifications for a new person member" in {
-      val person = PersonHelper.one()
-      val fee = Money.parse("EUR 100")
-      val member = MemberHelper.make(Some(1L), 1L, funder = false, person = true)
-      val controller = new AnotherTestRegistration
-      controller.callNotify(person, None, fee, member)
-
-      controller.slack.message must contain("Hey @channel, we have *new Supporter*")
-      controller.slack.message must contain("First Tester")
-      controller.slack.message must contain("/person/1")
-      controller.email.to.exists(_.lastName == "Tester") must_== true
-      controller.email.cc must_== None
-      controller.email.bcc must_== None
-      controller.email.subject must_== "Welcome to Happy Melly network"
-      controller.email.body must contain("Hi First,")
-      controller.email.body must contain("Join Slack discussions")
-      controller.email.body must contain(member.profileUrl)
-    }
-    "send Slack and Email notifications for a new organisation member" in {
-      val person = PersonHelper.one()
-      val fee = Money.parse("EUR 100")
-      val org = OrganisationHelper.two
-      val member = MemberHelper.make(Some(1L), 2L, funder = false, person = false)
-      val controller = new AnotherTestRegistration
-      controller.callNotify(person, Some(org), fee, member)
-
-      controller.slack.message must contain("Hey @channel, we have *new Supporter*")
-      controller.slack.message must contain("Two")
-      controller.slack.message must contain("/organization/2")
-      controller.email.to.exists(_.lastName == "Tester") must_== true
-      controller.email.cc must_== None
-      controller.email.bcc must_== None
-      controller.email.subject must_== "Welcome to Happy Melly network"
-      controller.email.body must contain("Hi Two,")
-      controller.email.body must contain("Join Slack discussions")
-      controller.email.body must contain(member.profileUrl)
     }
   }
 }
