@@ -77,24 +77,6 @@ trait People extends Controller with Security with Services {
   }
 
   /**
-   * Formatter used to define a form mapping for the `PersonRole` enumeration.
-   */
-  implicit def personRoleFormat: Formatter[PersonRole.Value] = new Formatter[PersonRole.Value] {
-
-    def bind(key: String, data: Map[String, String]) = {
-      try {
-        data.get(key).map(PersonRole.withName).toRight(Seq.empty)
-      } catch {
-        case e: NoSuchElementException ⇒ Left(Seq(FormError(key, "error.invalid")))
-      }
-    }
-
-    def unbind(key: String, value: PersonRole.Value) = Map(key -> value.toString)
-  }
-
-  val roleMapping = of[PersonRole.Value]
-
-  /**
    * HTML form mapping for a person’s address.
    */
   val addressMapping = mapping(
@@ -138,7 +120,6 @@ trait People extends Controller with Security with Services {
       "bio" -> optional(text),
       "interests" -> optional(text),
       "profile" -> socialProfileMapping,
-      "role" -> roleMapping,
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
@@ -147,10 +128,11 @@ trait People extends Controller with Security with Services {
         "createdBy" -> ignored(user.fullName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
-        { (id, firstName, lastName, emailAddress, birthday, photo, signature, address, bio, interests, profile, role,
-          webSite, blog, active, dateStamp) ⇒
+        { (id, firstName, lastName, emailAddress, birthday, photo, signature,
+          address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
           {
-            val person = Person(id, firstName, lastName, birthday, photo, signature, address.id.getOrElse(0), bio, interests, role,
+            val person = Person(id, firstName, lastName, birthday, photo,
+              signature, address.id.getOrElse(0), bio, interests,
               webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
             person.address_=(address)
@@ -159,8 +141,9 @@ trait People extends Controller with Security with Services {
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday, p.photo, p.signature, p.address, p.bio, p.interests,
-                p.socialProfile, p.role, p.webSite, p.blog, p.active, p.dateStamp))
+              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
+                p.photo, p.signature, p.address, p.bio, p.interests,
+                p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
 

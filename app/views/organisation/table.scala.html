@@ -1,34 +1,29 @@
 @(organisations: List[Organisation])(actions: (Organisation) => Html)
 
-    @if(organisations.nonEmpty) {
-        <table class="datatables table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>City</th>
-                    <th>Country</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @for(organisation <- organisations) {
-                <tr @if(!organisation.active) {
-                    class="inactive" title="deactivated" } >
-                    <td><a href="@routes.Organisations.details(organisation.id.getOrElse(0))">@organisation.name</a></td>
-                    <td>
-                    @organisation.category.map { name =>
-                        <span class="label @Messages(s"models.OrganisationCategory.$name.label")">@Messages(s"models.OrganisationCategory.$name")</span>
-                    }
-                    </td>
-                    <td>@organisation.city</td>
-                    <td>
-                        <img width="16" src="/assets/images/flags/16/@(organisation.countryCode.toLowerCase).png" align="absmiddle">
-                        @Messages("country." + organisation.countryCode)
-                    </td>
-                    <td>@actions(organisation)</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+@if(organisations.nonEmpty) {
+  <table class="datatables table table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>City</th>
+        <th>Country</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    @for(org <- organisations) {
+      <tr @if(!org.active) {
+        class="inactive" title="deactivated" } >
+        <td>
+          <a href="@routes.Organisations.details(org.id.getOrElse(0))">@org.name</a></td>
+        <td>@org.city</td>
+        <td>
+          <img width="16" src="/assets/images/flags/16/@(org.countryCode.toLowerCase).png" align="absmiddle">
+          @Messages("country." + org.countryCode)
+        </td>
+        <td>@actions(org)</td>
+      </tr>
     }
+    </tbody>
+  </table>
+}

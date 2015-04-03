@@ -50,7 +50,7 @@ object PersonHelper {
       DateTime.now(),
       "Sergey Kotlov")
     val person = new Person(id, firstName, lastName, birthday, realPhoto,
-      signature, address.id.get, bio, interests, PersonRole.NoRole,
+      signature, address.id.get, bio, interests,
       webSite, blog, Some("customer"), virtual, active, dateStamp)
     person.address_=(address)
     person.socialProfile_=(new SocialProfile(email = "test@test.ru"))

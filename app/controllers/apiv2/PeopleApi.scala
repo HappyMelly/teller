@@ -74,8 +74,6 @@ object PeopleApi {
         "email_address" -> person.socialProfile.email,
         "photo" -> person.photo.url,
         "address" -> person.address,
-        "stakeholder" -> (person.role == PersonRole.Stakeholder),
-        "board_member" -> (person.role == PersonRole.BoardMember),
         "bio" -> person.bio,
         "interests" -> person.interests,
         "twitter_handle" -> person.socialProfile.twitterHandle,

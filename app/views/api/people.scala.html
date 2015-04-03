@@ -4,7 +4,7 @@
 <table class="table table-bordered">
     <tr>
         <th>Description</th>
-        <td>A list of Happy Melly People, optionally filtered by their stakeholder and/or board member status</td>
+        <td>A list of Happy Melly People, optionally filtered by their activity status and names</td>
     </tr>
     <tr>
         <th>Request</th>
@@ -16,12 +16,7 @@
     </tr>
     <tr>
         <th>Request query string parameters</th>
-        <td><p><code>stakeholders_only</code> boolean, set to <code>true</code>
-            to only include people that are HM stakeholders, default <code>false</code></p>
-            <p><code>board_members_only</code> boolean, set to <code>true</code>
-                to only include people that are HM board members, default <code>false</code></p>
-            <p>Both parameters can be combined to get a list of people that only contains stakeholder who are also board members.</p>
-        </td>
+        <td><code>query</code> string to filter people by names</td>
     </tr>
     <tr>
         <th>Response content type</th>
@@ -49,10 +44,6 @@
     </tr>
     <tr>
         <th>Examples</th>
-        <td><a href="/api/v1/people?api_token=@user.apiToken">GET /api/v1/people</a><br>
-            <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true">
-                GET /api/v1/people?stakeholders_only=true</a><br>
-            <a href="/api/v1/people?api_token=@user.apiToken&stakeholders_only=true&board_members_only=true">
-                GET /api/v1/people?stakeholders_only=true&board_members_only=true</a></td>
+        <td><a href="/api/v1/people?api_token=@user.apiToken">GET /api/v1/people</a></td>
     </tr>
 </table>

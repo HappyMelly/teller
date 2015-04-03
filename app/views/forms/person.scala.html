@@ -46,7 +46,6 @@
   'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
 @html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
   'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
-<input type="hidden" id="role" name="role" value="@form("role").value.getOrElse("0")"/>
 
 @html.text(form("webSite"), '_label -> "Web site",
   'placeholder -> "http://", '_help -> "Web site URL")

@@ -35,14 +35,6 @@ import play.api.db.slick.DB
 import scala.slick.lifted.Query
 
 /**
- * Categories classifications that an organisation has zero or one of.
- */
-object OrganisationCategory extends Enumeration {
-  val LegalEntity = Value("legalentity")
-  val BrandEntity = Value("brandentity")
-}
-
-/**
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
 case class Organisation(
@@ -56,7 +48,6 @@ case class Organisation(
   countryCode: String,
   vatNumber: Option[String],
   registrationNumber: Option[String],
-  category: Option[OrganisationCategory.Value],
   webSite: Option[String],
   blog: Option[String],
   customerId: Option[String] = None,
@@ -165,7 +156,7 @@ case class Organisation(
 
     // Skip the created, createdBy and active fields.
     val updateTuple = (id, name, street1, street2, city, province, postCode,
-      countryCode, vatNumber, registrationNumber, category, webSite, blog,
+      countryCode, vatNumber, registrationNumber, webSite, blog,
       customerId, active, dateStamp.updated, dateStamp.updatedBy)
     q.update(updateTuple)
     this
@@ -182,7 +173,7 @@ object Organisation {
    */
   def apply(name: String, countryCode: String): Organisation = {
     val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
-    Organisation(None, name, None, None, None, None, None, countryCode, None,
+    Organisation(None, name, None, None, None, None, None, countryCode,
       None, None, None, None, None, active = false, date)
   }
 

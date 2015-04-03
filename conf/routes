@@ -221,7 +221,7 @@ POST        /api/v1/participant                                       controller
 GET         /api/v1/members                                           controllers.api.MembersApi.members(funder: Option[Boolean] ?= None)
 GET         /api/v1/member/:id                                        controllers.api.MembersApi.member(id: Long)
 
-GET         /api/v1/people                                            controllers.api.PeopleApi.people(stakeholders_only: Option[Boolean], board_members_only: Option[Boolean], active: Option[Boolean], q: Option[String])
+GET         /api/v1/people                                            controllers.api.PeopleApi.people(active: Option[Boolean], q: Option[String])
 GET         /api/v1/person/:identifier                                controllers.api.PeopleApi.person(identifier: String)
 
 GET         /api/v1/organizations                                     controllers.api.OrganisationsApi.organisations

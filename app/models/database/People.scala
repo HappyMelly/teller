@@ -34,9 +34,6 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object People extends Table[Person]("PERSON") {
 
-  implicit val personRoleTypeMapper = MappedTypeMapper.base[PersonRole.Value, Int](
-    { role ⇒ role.id }, { id ⇒ PersonRole(id) })
-
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def firstName = column[String]("FIRST_NAME")
   def lastName = column[String]("LAST_NAME")
@@ -48,8 +45,6 @@ private[models] object People extends Table[Person]("PERSON") {
 
   def bio = column[Option[String]]("BIO", O.DBType("TEXT"))
   def interests = column[Option[String]]("INTERESTS", O.DBType("TEXT"))
-
-  def role = column[PersonRole.Value]("ROLE")
 
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
@@ -66,20 +61,21 @@ private[models] object People extends Table[Person]("PERSON") {
 
   // Note that this projection does not include the address and social profile, which must be joined in queries.
   def * = id.? ~ firstName ~ lastName ~ birthday ~ photo ~ signature ~ addressId ~
-    bio ~ interests ~ role ~ webSite ~ blog ~ customerId ~ virtual ~ active ~
+    bio ~ interests ~ webSite ~ blog ~ customerId ~ virtual ~ active ~
     created ~ createdBy ~ updated ~ updatedBy <> (
       { p ⇒
         Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, p._7, p._8, p._9, p._10,
-          p._11, p._12, p._13, p._14, p._15, DateStamp(p._16, p._17, p._18, p._19))
+          p._11, p._12, p._13, p._14, DateStamp(p._15, p._16, p._17, p._18))
       },
       { (p: Person) ⇒
-        Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url, p.signature, p.addressId, p.bio,
-          p.interests, p.role, p.webSite, p.blog, p.customerId, p.virtual, p.active,
-          p.dateStamp.created, p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
+        Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url,
+          p.signature, p.addressId, p.bio, p.interests, p.webSite, p.blog,
+          p.customerId, p.virtual, p.active, p.dateStamp.created,
+          p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
       })
 
   def forInsert = * returning id
 
   def forUpdate = firstName ~ lastName ~ birthday ~ photo ~ signature ~ bio ~ interests ~
-    role ~ webSite ~ blog ~ customerId ~ virtual ~ active ~ updated ~ updatedBy
+    webSite ~ blog ~ customerId ~ virtual ~ active ~ updated ~ updatedBy
 }

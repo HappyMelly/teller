@@ -140,16 +140,7 @@ trait Membership extends Controller
             } getOrElse {
               routes.People.details(user.person.id.get).url
             }
-            val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-            val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
-              org map { o ⇒ o.name } getOrElse { user.person.fullName },
-              fee.toString,
-              fullUrl)
-            slack.send(text)
-            email.send(Set(user.person),
-              subject = "Welcome to Happy Melly network",
-              body = mail.html.welcome(fullUrl, member.profileUrl, user.person.firstName).toString(),
-              richMessage = true)
+            notify(user.person, org, fee, member)
 
             member.activity(
               user.person,
@@ -176,6 +167,33 @@ trait Membership extends Controller
   }
 
   /**
+   * Sends Slack and email notifications
+   * @param person Person making all membership-related actions
+   * @param org Organisation which want to become a member
+   * @param fee Membership fee
+   * @param member Member data
+   */
+  protected def notify(person: Person,
+    org: Option[Organisation],
+    fee: Money,
+    member: Member) = {
+    val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
+    } getOrElse routes.People.details(person.id.get).url
+    val name = org map (_.name) getOrElse person.fullName
+    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
+    val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+      name,
+      fee.toString,
+      fullUrl)
+    slack.send(text)
+    val shortName = org map (_.name) getOrElse person.firstName
+    email.send(Set(person),
+      subject = "Welcome to Happy Melly network",
+      body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
+      richMessage = true)
+  }
+
+  /**
    * Validates payments data
    * @param data Data from payment form
    * @param person Current user
@@ -184,7 +202,7 @@ trait Membership extends Controller
   protected def validatePaymentData(data: PaymentData,
     person: Person,
     organisation: Option[Organisation]) = {
-    data.orgId map { orgId ⇒
+    data.orgId foreach { orgId ⇒
       if (organisation.isEmpty) {
         throw new ValidationException("error.organisation.notExist")
       }
