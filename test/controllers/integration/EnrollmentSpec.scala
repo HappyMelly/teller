@@ -22,7 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.unit
+package controllers.integration
 
 import controllers.Enrollment
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
@@ -31,12 +31,12 @@ import models.{ Member, Organisation, Person }
 import org.joda.money.Money
 import play.api.mvc.Action
 import stubs.FakeServices
-import stubs.services.FakeNotifiers
+import stubs.services.FakeIntegrations
 
 class EnrollmentSpec extends PlayAppSpec {
 
   class TestEnrollment extends Enrollment
-    with FakeNotifiers
+    with FakeIntegrations
     with FakeServices {
 
     /**

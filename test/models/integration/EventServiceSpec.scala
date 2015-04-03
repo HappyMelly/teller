@@ -31,7 +31,7 @@ import models.brand.EventType
 import models.service.{ BrandService, EventService }
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
-import services.notifiers.Email
+import services.integrations.Email
 import stubs.FakeServices
 
 class EventServiceSpec extends PlayAppSpec {

@@ -38,13 +38,13 @@ import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import views.Countries
 
 object Events extends Controller
   with Security
   with Services
-  with Notifiers {
+  with Integrations {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 

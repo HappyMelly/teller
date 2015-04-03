@@ -40,7 +40,7 @@ import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
 import play.api.Play.current
 import play.api.test.FakeRequest
 import stubs._
-import stubs.services.FakeNotifiers
+import stubs.services.FakeIntegrations
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
@@ -50,7 +50,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   class TestMembers() extends Members
     with Security
     with FakeServices
-    with FakeNotifiers
+    with FakeIntegrations
 
   override def is = s2"""
 

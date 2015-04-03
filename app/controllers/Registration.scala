@@ -40,7 +40,7 @@ import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.core.{ IdentityId, SecureSocial }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import views.Countries
 
 /**
@@ -246,6 +246,8 @@ trait Registration extends Enrollment {
                   person.becomeMember(funder = false, fee)
                 }
                 notify(person, org, fee, member)
+                subscribe(person, member)
+
                 member.activity(person, Activity.Predicate.BecameSupporter).insert
 
                 val orgId = org map (_.id) getOrElse None

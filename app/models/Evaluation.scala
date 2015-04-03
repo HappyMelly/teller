@@ -30,7 +30,7 @@ import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 
 import scala.util.Random
 
@@ -79,7 +79,7 @@ case class Evaluation(
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends ActivityRecorder with Notifiers with Services {
+  updatedBy: String) extends ActivityRecorder with Integrations with Services {
 
   lazy val event: Event = EventService.get.find(eventId).get
 

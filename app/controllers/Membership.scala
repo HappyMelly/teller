@@ -26,14 +26,14 @@ package controllers
 
 import models.UserRole.Role._
 import models._
-import models.payment.{Payment, PaymentException, RequestException}
+import models.payment.{ Payment, PaymentException, RequestException }
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Play.current
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.{Logger, Play}
+import play.api.{ Logger, Play }
 
 trait Membership extends Enrollment {
 

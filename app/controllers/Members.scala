@@ -27,7 +27,7 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
 import models.{ Activity, Member }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play
@@ -39,7 +39,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Controller with Security with Services with Notifiers {
+trait Members extends Controller with Security with Services with Integrations {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")

@@ -35,13 +35,13 @@ import play.api.mvc.{ Cookie, SimpleResult }
 import play.api.test.FakeRequest
 import securesocial.core.IdentityId
 import stubs.FakeUserIdentity
-import stubs.services.FakeNotifiers
+import stubs.services.FakeIntegrations
 
 import scala.concurrent.Future
 
 class RegistrationSpec extends PlayAppSpec {
 
-  class TestRegistration extends Registration with FakeNotifiers {
+  class TestRegistration extends Registration with FakeIntegrations {
     var notifyData: Option[(Person, Option[Organisation], Money, Member)] = None
 
     def callPersonCacheId(id: IdentityId): String = personCacheId(id)
@@ -58,7 +58,7 @@ class RegistrationSpec extends PlayAppSpec {
     }
   }
 
-  class AnotherTestRegistration extends Registration with FakeNotifiers {
+  class AnotherTestRegistration extends Registration with FakeIntegrations {
 
     def callNotify(person: Person,
       org: Option[Organisation],

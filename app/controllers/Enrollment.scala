@@ -31,7 +31,7 @@ import play.api.Play
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{ AnyContent, Controller, Action }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import play.api.Play.current
 
 case class PaymentData(token: String,
@@ -44,7 +44,7 @@ case class PaymentData(token: String,
 trait Enrollment extends Controller
   with Security
   with Services
-  with Notifiers {
+  with Integrations {
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -95,5 +95,16 @@ trait Enrollment extends Controller
       subject = "Welcome to Happy Melly network",
       body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
       richMessage = true)
+  }
+
+  /**
+   * Subscribes the given person to a membership list
+   * @param person Person
+   * @param member Member data
+   * @return Returns true if the person is successfully subscribed
+   */
+  protected def subscribe(person: Person, member: Member): Boolean = {
+    val listId = Play.configuration.getString("mailchimp.listId").getOrElse("")
+    mailChimp.subscribe(listId, person, member.funder)
   }
 }

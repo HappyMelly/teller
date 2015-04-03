@@ -24,7 +24,7 @@
 */
 package stubs.services
 
-import _root_.services.notifiers.{ Notifiers, Slack, Email }
+import _root_.services.integrations.{ Integrations, Slack, Email }
 import models.Person
 
 /**
@@ -67,7 +67,7 @@ class FakeEmail extends Email {
   }
 }
 
-trait FakeNotifiers extends Notifiers {
+trait FakeIntegrations extends Integrations {
   val slackInstance = new FakeSlack
   val emailInstance = new FakeEmail
 

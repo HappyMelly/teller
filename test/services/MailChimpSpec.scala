@@ -22,23 +22,33 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package services.notifiers
+package services
 
-import play.api._
-import play.api.Play.current
-/**
- * Contains all notifiers available in the system
- */
-trait Notifiers {
+import helpers.PersonHelper
+import org.specs2.mutable.Specification
+import play.api.libs.json._
+import play.api.libs.ws._
+import services.integrations.MailChimp
 
-  /** Returns Email notifier */
-  def email: Email = new Email
+import scala.concurrent.duration._
 
-  /** Returns Slack notifier */
-  def slack: Slack = {
-    val webhook = Play.configuration.getString("slack.webhook").getOrElse("")
-    val channel = Play.configuration.getString("slack.channel").getOrElse("")
-    val username = Play.configuration.getString("slack.username").getOrElse("")
-    new Slack(webhook, channel, username)
+class MailChimpSpec extends Specification {
+
+  "Method 'subscribe'" should {
+    "add a new subscriber to 'Funder' group" in {
+      val apiUrl = System.getenv("MAILCHIMP_URL")
+      val apiToken = System.getenv("MAILCHIMP_TOKEN")
+      val listId = System.getenv("MAILCHIMP_LIST_ID")
+      val mailChimp = new MailChimp(apiUrl, apiToken)
+      mailChimp.subscribe(listId, PersonHelper.one(), funder = true) must_== true
+
+      val listUrl = apiUrl + "lists/members.json"
+      val data = Json.obj("apikey" -> apiToken, "id" -> listId).toString()
+      implicit val concurrentExecutionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
+      val res = WS.url(listUrl).post(data).map { x ⇒
+        (x.json \ "total").as[Int]
+      }
+      res must be_==(1).await(timeout = FiniteDuration(5, SECONDS))
+    }
   }
 }

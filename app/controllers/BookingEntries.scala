@@ -39,13 +39,13 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc.{ SimpleResult, _ }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import services.{ CurrencyConverter, S3Bucket }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object BookingEntries extends Controller with Security with Notifiers {
+object BookingEntries extends Controller with Security with Integrations {
 
   def bookingEntryForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),

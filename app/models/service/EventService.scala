@@ -34,12 +34,12 @@ import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 
 import scala.language.postfixOps
 import scala.slick.lifted.Query
 
-class EventService extends Notifiers with Services {
+class EventService extends Integrations with Services {
 
   /**
    * Returns true if a person is a brand manager of this event

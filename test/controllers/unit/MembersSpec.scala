@@ -30,7 +30,7 @@ import helpers.{ PersonHelper, MemberHelper }
 import models.Member
 import org.joda.money.Money
 import org.joda.time.LocalDate
-import services.notifiers.Slack
+import services.integrations.Slack
 import stubs._
 import stubs.services.FakeSlack
 
