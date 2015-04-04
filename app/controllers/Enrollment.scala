@@ -52,25 +52,6 @@ trait Enrollment extends Controller
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
   /**
-   * Renders welcome screen for existing users with two options:
-   * Become a funder and Become a supporter
-   */
-  def welcome: Action[AnyContent]
-
-  /**
-   * Renders congratulations screen
-   * If orgId is not empty payment is done for the organisation
-   *
-   * @param orgId Organisation identifier
-   */
-  def congratulations(orgId: Option[Long]): Action[AnyContent]
-
-  /**
-   * Charges card
-   */
-  def charge: Action[AnyContent]
-
-  /**
    * Sends Slack and email notifications
    * @param person Person making all membership-related actions
    * @param org Organisation which want to become a member

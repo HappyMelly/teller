@@ -124,6 +124,7 @@ trait Membership extends Enrollment {
               routes.People.details(user.person.id.get).url
             }
             notify(user.person, org, fee, member)
+            subscribe(user.person, member)
 
             member.activity(
               user.person,

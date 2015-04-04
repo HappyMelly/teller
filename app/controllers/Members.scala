@@ -39,7 +39,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Controller with Security with Services with Integrations {
+trait Members extends Enrollment {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -251,6 +251,8 @@ trait Members extends Controller with Security with Services with Integrations {
             val profileUrl = routes.People.details(person.id.get).url
             val text = newMemberMsg(member, person.fullName, profileUrl)
             slack.send(text)
+            subscribe(person, member)
+
             Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
@@ -288,6 +290,8 @@ trait Members extends Controller with Security with Services with Integrations {
                   val profileUrl = routes.People.details(person.id.get).url
                   val text = newMemberMsg(member, person.fullName, profileUrl)
                   slack.send(text)
+                  subscribe(person, member)
+
                   Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {

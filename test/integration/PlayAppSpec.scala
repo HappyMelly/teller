@@ -48,7 +48,8 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       "logger.play" -> "ERROR",
       "logger.application" -> "ERROR",
       "ehcacheplugin" -> "enabled",
-      "stripe.public_key" -> "none")
+      "stripe.public_key" -> "none",
+      "mailchimp.listId" -> "testId")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
       "services.LoginIdentityService")
     val withPlugins = List("stubs.StubLoginIdentityService")

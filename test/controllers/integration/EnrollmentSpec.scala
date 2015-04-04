@@ -71,14 +71,17 @@ class EnrollmentSpec extends PlayAppSpec {
       fee: Money,
       member: Member) =
       notify(person, org, fee, member)
+
+    def callSubscribe(person: Person, member: Member) = subscribe(person, member)
   }
+
+  val controller = new TestEnrollment
 
   "Method 'notify'" should {
     "send Slack and Email notifications for a new person member" in {
       val person = PersonHelper.one()
       val fee = Money.parse("EUR 100")
       val member = MemberHelper.make(Some(1L), 1L, funder = false, person = true)
-      val controller = new TestEnrollment
       controller.callNotify(person, None, fee, member)
 
       controller.slack.message must contain("Hey @channel, we have *new Supporter*")
@@ -97,7 +100,6 @@ class EnrollmentSpec extends PlayAppSpec {
       val fee = Money.parse("EUR 100")
       val org = OrganisationHelper.two
       val member = MemberHelper.make(Some(1L), 2L, funder = false, person = false)
-      val controller = new TestEnrollment
       controller.callNotify(person, Some(org), fee, member)
 
       controller.slack.message must contain("Hey @channel, we have *new Supporter*")
@@ -110,6 +112,16 @@ class EnrollmentSpec extends PlayAppSpec {
       controller.email.body must contain("Hi Two,")
       controller.email.body must contain("Join Slack discussions")
       controller.email.body must contain(member.profileUrl)
+    }
+  }
+
+  "Method 'subscribe'" should {
+    "subscribe a person to a MailChimp list" in {
+      val member = MemberHelper.make(Some(1L), 1L, funder = true, person = true)
+      controller.callSubscribe(PersonHelper.one(), member)
+      controller.mailChimp.funder must_== true
+      controller.mailChimp.listId must_== "testId"
+      controller.mailChimp.personName must_== "First Tester"
     }
   }
 }

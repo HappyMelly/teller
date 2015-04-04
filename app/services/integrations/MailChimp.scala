@@ -44,7 +44,7 @@ class MailChimp(apiUrl: String, apiToken: String) {
    * @return Returns true if the person was successfully subscribed
    */
   def subscribe(listId: String, person: Person, funder: Boolean): Boolean = {
-    val group = if (funder) "Funders" else "Supporters"
+    val group = if (funder) "Funder" else "Supporter"
     val url = apiUrl + "lists/subscribe.json"
     val request = Json.obj("apikey" -> apiToken,
       "id" -> listId,

@@ -24,8 +24,8 @@
 */
 package stubs.services
 
-import _root_.services.integrations.{ Integrations, Slack, Email }
 import models.Person
+import services.integrations.{ Email, Integrations, MailChimp, Slack }
 
 /**
  * Stub class for Slack service
@@ -67,13 +67,31 @@ class FakeEmail extends Email {
   }
 }
 
+class FakeMailChimp(apiUrl: String, apiToken: String)
+  extends MailChimp(apiUrl, apiToken) {
+  var listId: String = ""
+  var personName: String = ""
+  var funder: Boolean = false
+
+  override def subscribe(listId: String, person: Person, funder: Boolean): Boolean = {
+    this.listId = listId
+    this.personName = person.fullName
+    this.funder = funder
+    true
+  }
+}
+
 trait FakeIntegrations extends Integrations {
   val slackInstance = new FakeSlack
   val emailInstance = new FakeEmail
+  val mailChimpInstance = new FakeMailChimp("", "")
 
   /** Returns a fake Slack notifier */
   override def slack: FakeSlack = slackInstance
 
   /** Returns a fake Email notifier */
   override def email: FakeEmail = emailInstance
+
+  /** Returns a fake MailChimp service */
+  override def mailChimp: FakeMailChimp = mailChimpInstance
 }
