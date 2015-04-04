@@ -139,18 +139,18 @@ $(document).ready( function() {
             url: '/facilitators/' + brandCode,
             dataType: "json"
         }).done(function(data) {
-                for(var i = 0; i < data.length; i++) {
-                    var user = new User(data[i]);
-                    if (isChosenOne(user, chosenFacilitators)) {
-                        facilitators.chosen[facilitators.chosen.length] = user;
-                    } else {
-                        facilitators.retrieved[facilitators.retrieved.length] = user;
-                    }
+            for(var i = 0; i < data.length; i++) {
+                var user = new User(data[i]);
+                if (isChosenOne(user, chosenFacilitators)) {
+                    facilitators.chosen[facilitators.chosen.length] = user;
+                } else {
+                    facilitators.retrieved[facilitators.retrieved.length] = user;
                 }
-                facilitators.updateState();
-            }).fail(function() {
-                showError("Sorry we don't know anything about the brand you try to request");
-            });
+            }
+            facilitators.updateState();
+        }).fail(function() {
+            showError("Sorry we don't know anything about the brand you try to request");
+        });
     }
 
     var facilitators = {
@@ -242,7 +242,7 @@ $(document).ready( function() {
             this.updateState();
         },
         sortByName: function(left, right) {
-            return left.name > right.name;
+            return left.name.localeCompare(right.name);
         }
     };
 
