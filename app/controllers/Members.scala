@@ -248,11 +248,10 @@ trait Members extends Enrollment {
               user.person,
               Activity.Predicate.Made,
               Some(person)).insert
-            val profileUrl = routes.People.details(person.id.get).url
-            val text = newMemberMsg(member, person.fullName, profileUrl)
-            slack.send(text)
+            notify(person, None, member.fee, member)
             subscribe(person, member)
 
+            val profileUrl = routes.People.details(person.id.get).url
             Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
@@ -287,11 +286,10 @@ trait Members extends Enrollment {
                     user.person,
                     Activity.Predicate.Made,
                     Some(person)).insert
-                  val profileUrl = routes.People.details(person.id.get).url
-                  val text = newMemberMsg(member, person.fullName, profileUrl)
-                  slack.send(text)
+                  notify(person, None, member.fee, member)
                   subscribe(person, member)
 
+                  val profileUrl = routes.People.details(person.id.get).url
                   Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {
