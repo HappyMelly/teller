@@ -33,11 +33,11 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Action
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 
 trait Evaluations extends EvaluationsController
   with Security
-  with Notifiers
+  with Integrations
   with Services {
 
   /** HTML form mapping for creating and editing. */

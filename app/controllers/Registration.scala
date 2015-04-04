@@ -40,7 +40,7 @@ import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.core.{ IdentityId, SecureSocial }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import views.Countries
 
 /**
@@ -65,10 +65,10 @@ case class UserData(firstName: String,
 case class OrgData(name: String, country: String)
 
 /**
+ * -v
  * Contains actions for a registration process
  */
-trait Registration extends Controller
-  with Security with Services with Notifiers {
+trait Registration extends Enrollment {
 
   val REGISTRATION_COOKIE = "registration"
 
@@ -161,7 +161,7 @@ trait Registration extends Controller
             val id = personCacheId(user.identityId)
             Cache.set(id, data, 900)
             val paymentUrl = routes.Registration.payment().url
-            val url = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
+            val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
               if (x.value == "org")
                 routes.Registration.step3().url
               else
@@ -205,7 +205,7 @@ trait Registration extends Controller
           else
             None
           val fee = Payment.countryBasedFees(country)
-          Ok(views.html.registration.payment(Membership.form, person, publicKey, fee, org))
+          Ok(views.html.registration.payment(paymentForm, person, publicKey, fee, org))
         }
       }
   }
@@ -222,7 +222,7 @@ trait Registration extends Controller
             Some(unregisteredOrg(userData).insert)
           else None
 
-          Membership.form.bindFromRequest.fold(
+          paymentForm.bindFromRequest.fold(
             hasError ⇒
               BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
             data ⇒ {
@@ -246,6 +246,8 @@ trait Registration extends Controller
                   person.becomeMember(funder = false, fee)
                 }
                 notify(person, org, fee, member)
+                subscribe(person, member)
+
                 member.activity(person, Activity.Predicate.BecameSupporter).insert
 
                 val orgId = org map (_.id) getOrElse None
@@ -282,7 +284,7 @@ trait Registration extends Controller
    * @param orgId Organisation identifier
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
-    val url = orgId map { id ⇒ routes.Organisations.details(id).url
+    val url: String = orgId map { id ⇒ routes.Organisations.details(id).url
     } getOrElse routes.Dashboard.profile().url
     Ok(views.html.registration.congratulations(url))
   }
@@ -311,33 +313,6 @@ trait Registration extends Controller
       person.socialProfile.linkedInUrl,
       person.socialProfile.googlePlusUrl)
     UserAccount.insert(account)
-  }
-
-  /**
-   * Sends Slack and email notifications
-   * @param person Person making all membership-related actions
-   * @param org Organisation which want to become a member
-   * @param fee Membership fee
-   * @param member Member data
-   */
-  protected def notify(person: Person,
-    org: Option[Organisation],
-    fee: Money,
-    member: Member) = {
-    val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
-    } getOrElse routes.People.details(person.id.get).url
-    val name = org map (_.name) getOrElse person.fullName
-    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-    val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
-      name,
-      fee.toString,
-      fullUrl)
-    slack.send(text)
-    val shortName = org map (_.name) getOrElse person.firstName
-    email.send(Set(person),
-      subject = "Welcome to Happy Melly network",
-      body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
-      richMessage = true)
   }
 
   /**
@@ -437,4 +412,4 @@ trait Registration extends Controller
   }
 }
 
-object Registration extends Registration with Security with Services
+object Registration extends Registration

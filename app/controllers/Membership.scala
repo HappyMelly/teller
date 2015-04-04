@@ -24,37 +24,20 @@
 
 package controllers
 
-import models._
 import models.UserRole.Role._
-import models.payment.{ PaymentException, RequestException, Payment }
+import models._
+import models.payment.{ Payment, PaymentException, RequestException }
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import play.api.i18n.Messages
-import play.api.mvc.{ Controller, Action }
-import play.api.data._
-import play.api.data.Forms._
-import play.api.Logger
-import play.api.libs.json._
-import play.api.Play
 import play.api.Play.current
-import services.notifiers.Notifiers
+import play.api.i18n.Messages
+import play.api.libs.json._
+import play.api.{ Logger, Play }
 
-case class PaymentData(token: String,
-  fee: Int,
-  orgId: Option[Long] = None) {}
-
-trait Membership extends Controller
-  with Security
-  with Services
-  with Notifiers {
+trait Membership extends Enrollment {
 
   class ValidationException(msg: String) extends RuntimeException(msg) {}
-
-  def form = Form(mapping(
-    "token" -> nonEmptyText,
-    "fee" -> number,
-    "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
   /**
    * Renders welcome screen for existing users with two options:
@@ -91,7 +74,7 @@ trait Membership extends Controller
           orgService.find(id) map { org ⇒
             if (user.person.organisations.exists(_.id == org.id)) {
               val fee = Payment.countryBasedFees(org.countryCode)
-              Ok(views.html.membership.payment(user, form, publicKey, fee, Some(org)))
+              Ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
             } else {
               Redirect(routes.Membership.welcome()).
                 flashing("error" -> Messages("error.person.notOrgMember"))
@@ -103,7 +86,7 @@ trait Membership extends Controller
         } getOrElse {
           val code = user.person.address.countryCode
           val fee = Payment.countryBasedFees(code)
-          Ok(views.html.membership.payment(user, form, publicKey, fee))
+          Ok(views.html.membership.payment(user, paymentForm, publicKey, fee))
         }
   }
 
@@ -112,7 +95,7 @@ trait Membership extends Controller
    */
   def charge = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      form.bindFromRequest.fold(
+      paymentForm.bindFromRequest.fold(
         hasError ⇒
           BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
         data ⇒ {
@@ -141,6 +124,7 @@ trait Membership extends Controller
               routes.People.details(user.person.id.get).url
             }
             notify(user.person, org, fee, member)
+            subscribe(user.person, member)
 
             member.activity(
               user.person,
@@ -164,33 +148,6 @@ trait Membership extends Controller
               BadRequest(Json.obj("message" -> Messages(e.getMessage)))
           }
         })
-  }
-
-  /**
-   * Sends Slack and email notifications
-   * @param person Person making all membership-related actions
-   * @param org Organisation which want to become a member
-   * @param fee Membership fee
-   * @param member Member data
-   */
-  protected def notify(person: Person,
-    org: Option[Organisation],
-    fee: Money,
-    member: Member) = {
-    val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
-    } getOrElse routes.People.details(person.id.get).url
-    val name = org map (_.name) getOrElse person.fullName
-    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-    val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
-      name,
-      fee.toString,
-      fullUrl)
-    slack.send(text)
-    val shortName = org map (_.name) getOrElse person.firstName
-    email.send(Set(person),
-      subject = "Welcome to Happy Melly network",
-      body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
-      richMessage = true)
   }
 
   /**

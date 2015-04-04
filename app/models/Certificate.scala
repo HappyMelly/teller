@@ -36,7 +36,7 @@ import play.api.cache.Cache
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
@@ -49,7 +49,7 @@ case class Certificate(
   issued: Option[LocalDate],
   event: Event,
   participant: Person,
-  renew: Boolean = false) extends Notifiers {
+  renew: Boolean = false) extends Integrations {
 
   val id =
     issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"

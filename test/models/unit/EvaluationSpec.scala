@@ -30,7 +30,7 @@ import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import stubs.FakeServices
-import stubs.services.FakeNotifiers
+import stubs.services.FakeIntegrations
 
 class EvaluationSpec extends Specification {
 

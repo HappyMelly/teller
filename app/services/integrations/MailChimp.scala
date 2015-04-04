@@ -22,31 +22,38 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package services.notifiers
+package services.integrations
 
-import play.api.libs.json._
+import models.Person
+import play.api.libs.json.Json
 import play.api.libs.ws.WS
+
 import scala.util.Try
 
 /**
- * Notifies using Slack
+ * MailChimp integration
  */
-class Slack(webhookUrl: String, channel: String, username: String) {
+class MailChimp(apiUrl: String, apiToken: String) {
 
   /**
-   * Sends a message to Slach channel
-   * @param message Message itself
-   * @param channel Channel to send. If empty, default channel is used
-   * @param username Name of the sender. If empty, default username is used
+   * Subscribes the given person to the given list and assigns the person
+   *  to "Funders" or "Supporters" group
+   * @param listId Mailchimp list id
+   * @param person Person
+   * @param funder if true, the person is added to "Funder" group; otherwise, to "Supporters"
+   * @return Returns true if the person was successfully subscribed
    */
-  def send(message: String,
-    channel: Option[String] = None,
-    username: Option[String] = None): Boolean = {
-    val ch = channel getOrElse this.channel
-    val name = username getOrElse this.username
-    val text = Json.obj("text" -> message,
-      "channel" -> ch,
-      "username" -> name).toString()
-    Try(WS.url(webhookUrl).post(text)).isSuccess
+  def subscribe(listId: String, person: Person, funder: Boolean): Boolean = {
+    val group = if (funder) "Funder" else "Supporter"
+    val url = apiUrl + "lists/subscribe.json"
+    val request = Json.obj("apikey" -> apiToken,
+      "id" -> listId,
+      "email" -> Json.obj("email" -> person.socialProfile.email),
+      "merge_vars" -> Json.obj("groupings" -> Json.arr(
+        Json.obj("name" -> "Membership type", "groups" -> Json.arr(group)))),
+      "double_optin" -> false,
+      "update_existing" -> true,
+      "replace_interests" -> false).toString()
+    Try(WS.url(url).post(request)).isSuccess
   }
 }

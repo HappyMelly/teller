@@ -27,7 +27,7 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models.service.Services
 import models.{ Activity, Member }
-import services.notifiers.Notifiers
+import services.integrations.Integrations
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play
@@ -39,7 +39,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Controller with Security with Services with Notifiers {
+trait Members extends Enrollment {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -248,9 +248,10 @@ trait Members extends Controller with Security with Services with Notifiers {
               user.person,
               Activity.Predicate.Made,
               Some(person)).insert
+            notify(person, None, member.fee, member)
+            subscribe(person, member)
+
             val profileUrl = routes.People.details(person.id.get).url
-            val text = newMemberMsg(member, person.fullName, profileUrl)
-            slack.send(text)
             Redirect(profileUrl).flashing("success" -> activity.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
@@ -285,9 +286,10 @@ trait Members extends Controller with Security with Services with Notifiers {
                     user.person,
                     Activity.Predicate.Made,
                     Some(person)).insert
+                  notify(person, None, member.fee, member)
+                  subscribe(person, member)
+
                   val profileUrl = routes.People.details(person.id.get).url
-                  val text = newMemberMsg(member, person.fullName, profileUrl)
-                  slack.send(text)
                   Redirect(profileUrl).flashing("success" -> activity.toString)
                 }
               } getOrElse {

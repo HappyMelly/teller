@@ -21,7 +21,7 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package services.notifiers
+package services.integrations
 
 import akka.actor.{ Actor, Props }
 import models.Person
@@ -29,7 +29,7 @@ import org.apache.commons._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.{ Logger, Play }
-import services.notifiers.EmailService.EmailMessage
+import services.integrations.EmailService.EmailMessage
 
 import scala.util.Try
 

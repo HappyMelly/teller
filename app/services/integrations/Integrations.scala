@@ -22,14 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package services.notifiers
+package services.integrations
 
 import play.api._
 import play.api.Play.current
 /**
- * Contains all notifiers available in the system
+ * Contains all integrations available in the system
  */
-trait Notifiers {
+trait Integrations {
 
   /** Returns Email notifier */
   def email: Email = new Email
@@ -40,5 +40,12 @@ trait Notifiers {
     val channel = Play.configuration.getString("slack.channel").getOrElse("")
     val username = Play.configuration.getString("slack.username").getOrElse("")
     new Slack(webhook, channel, username)
+  }
+
+  /** Returns MailChimp service */
+  def mailChimp: MailChimp = {
+    val apiUrl = Play.configuration.getString("mailchimp.url").getOrElse("")
+    val apiToken = Play.configuration.getString("mailchimp.token").getOrElse("")
+    new MailChimp(apiUrl, apiToken)
   }
 }

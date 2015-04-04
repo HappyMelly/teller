@@ -39,9 +39,9 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.db.slick._
 import play.api.mvc.SimpleResult
-import services.notifiers.Slack
+import services.integrations.Slack
 import stubs.{ FakeServices, FakeUserIdentity, FakeMemberService }
-import stubs.services.{ FakeNotifiers, FakeSlack }
+import stubs.services.{ FakeIntegrations, FakeSlack }
 
 import scala.concurrent.Future
 import scala.slick.jdbc.{ GetResult, StaticQuery ⇒ Q }
