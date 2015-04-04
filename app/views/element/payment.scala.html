@@ -33,7 +33,7 @@
       action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
       method="POST" id="payment-form" autocomplete="on">
       <span class="payment-errors"></span>
-      @org.foreach { organisation =>
+      @org.map { organisation =>
         <input type="hidden" name="orgId" value="@organisation.id.getOrElse(0)"/>
       }
       <legend>Step 1: Fee</legend>
