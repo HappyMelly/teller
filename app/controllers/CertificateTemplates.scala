@@ -27,6 +27,7 @@ package controllers
 import models._
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
+import models.service.Services
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
@@ -39,7 +40,7 @@ import views.Languages
  */
 case class FakeCertificateTemplate(language: String, template: Option[String], templateNoFacilitator: Option[String])
 
-object CertificateTemplates extends Controller with Security {
+object CertificateTemplates extends Controller with Security with Services {
 
   val encoding = "ISO-8859-1"
 
@@ -51,41 +52,40 @@ object CertificateTemplates extends Controller with Security {
       FakeCertificateTemplate.apply)(FakeCertificateTemplate.unapply))
 
   /**
-   * Add page
+   * Renders an Add form
    *
+   * @todo change access rights to all brand managers
    * @param code Unique text brand identifier
-   * @return
    */
   def add(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(code).map { brand ⇒
+      brandService.find(code) map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        Ok(views.html.certificateTemplate.form(user, brand.brand, languages, certificateFileForm))
-      }.getOrElse(NotFound)
+        Ok(views.html.certificateTemplate.form(user, brand, languages, certificateFileForm))
+      } getOrElse NotFound
   }
 
   /**
-   * Add form submits to this action
+   * Adds new certificate for the given brand
    *
    * @param code Unique text brand identifier
-   * @return
    */
   def create(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(code).map { brand ⇒
+      brandService.find(code) map { brand ⇒
         val templates = CertificateTemplate.findByBrand(code)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
           formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user,
-            brand.brand,
+            brand,
             languages,
             formWithErrors)),
           data ⇒ {
             templates.find(_.language == data.language).map { v ⇒
               BadRequest(views.html.certificateTemplate.form(user,
-                brand.brand,
+                brand,
                 languages,
                 form.withError("language", "error.template.exist")))
             }.getOrElse {
@@ -96,7 +96,7 @@ object CertificateTemplates extends Controller with Security {
                 || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
                 || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
                 BadRequest(views.html.certificateTemplate.form(user,
-                  brand.brand,
+                  brand,
                   languages,
                   form.withError(
                     "oneFacilitator",
@@ -121,7 +121,7 @@ object CertificateTemplates extends Controller with Security {
               }
             }
           })
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**

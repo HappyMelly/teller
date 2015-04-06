@@ -59,7 +59,8 @@ object Facilitators extends Controller with Security {
   }
 
   /**
-   * Returns a list of facilitators for the given brand on today, including the coordinator of the brand
+   * Returns a list of facilitators for the given brand on today,
+   * including the coordinator of the brand
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒

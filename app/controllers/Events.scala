@@ -178,7 +178,9 @@ object Events extends Controller
   def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
     recipient: Person)(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} event"
-    email.send(Set(recipient), None, None, subject, mail.html.event(event, changes).toString, richMessage = true)
+    val brand = brandService.find(event.brandCode).get
+    email.send(Set(recipient), None, None, subject,
+      mail.html.event(event, brand, changes).toString, richMessage = true)
   }
 
   /**

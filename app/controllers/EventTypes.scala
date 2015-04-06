@@ -57,15 +57,15 @@ trait EventTypes extends Controller with Security with Services {
   }
 
   /**
-   * Returns a list of event types for the given brand
+   * Returns a list of event types for the given brand in JSON format
    *
    * @param brandCode Brand code
    */
   def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(brandCode).map { brand ⇒
-        Ok(Json.toJson(eventTypeService.findByBrand(brand.brand.id.get)))
-      }.getOrElse(NotFound("Unknown brand"))
+      brandService.find(brandCode) map { brand ⇒
+        Ok(Json.toJson(eventTypeService.findByBrand(brand.id.get)))
+      } getOrElse NotFound("Unknown brand")
   }
 
   /**

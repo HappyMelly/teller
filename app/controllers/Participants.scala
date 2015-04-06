@@ -98,11 +98,13 @@ object Participants extends Controller with Security with Services {
   /**
    * Returns JSON data about participants together with their evaluations
    * and events
+   *
+   * @param brandCode Brand string identifier
    */
   def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       // TODO: check for a valid brand from Brand.findForUser
-      Brand.find(brandCode).map { brand ⇒
+      brandService.find(brandCode) map { brand ⇒
         val account = user.account
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
@@ -126,15 +128,15 @@ object Participants extends Controller with Security with Services {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand.brand, data, "index"),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "index"),
+                    "certificate" -> certificateActions(brand, data, "index"),
+                    "evaluation" -> evaluationActions(id, brand, data, account, "index"),
                     "participant" -> participantActions(data, account, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
-                      "certificate" -> certificateActions(brand.brand, data, "event"),
+                      "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                          if (account.editor || brand.coordinatorId == account.personId) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
@@ -149,7 +151,7 @@ object Participants extends Controller with Security with Services {
         }
         val personId = account.personId
         val participants =
-          if (account.editor || brand.brand.coordinatorId == personId) {
+          if (account.editor || brand.coordinatorId == personId) {
             Participant.findByBrand(Some(brandCode))
           } else if (License.licensedSince(personId, brandCode).nonEmpty) {
             val events = EventService.get.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
@@ -158,7 +160,7 @@ object Participants extends Controller with Security with Services {
             List[ParticipantView]()
           }
         Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
-      }.getOrElse(Ok(Json.toJson(List[String]())))
+      } getOrElse Ok(Json.toJson(List[String]()))
   }
 
   /**
@@ -168,7 +170,7 @@ object Participants extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val account = user.account
-        val brand = Brand.find(event.brandCode).get
+        val brand = brandService.find(event.brandCode).get
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -181,15 +183,15 @@ object Participants extends Controller with Security with Services {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand.brand, data, "event"),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "event"),
+                    "certificate" -> certificateActions(brand, data, "event"),
+                    "evaluation" -> evaluationActions(id, brand, data, account, "event"),
                     "participant" -> participantActions(data, account, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
-                      "certificate" -> certificateActions(brand.brand, data, "event"),
+                      "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                          if (account.editor || brand.coordinatorId == account.personId) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),

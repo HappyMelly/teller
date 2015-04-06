@@ -45,12 +45,12 @@ trait Reports extends Controller with Security with Services {
   def create(brandCode: String, eventId: Long, status: Int) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Brand.find(brandCode).map { brand ⇒
+        brandService.find(brandCode) map { brand ⇒
           val account = user.account
 
           val personId = account.personId
           val events =
-            if (account.editor || brand.brand.coordinatorId == personId) {
+            if (account.editor || brand.coordinatorId == personId) {
               eventService.findByParameters(Some(brandCode))
             } else if (License.licensedSince(personId, brandCode).nonEmpty) {
               eventService.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
@@ -75,7 +75,7 @@ trait Reports extends Controller with Security with Services {
           Ok.sendFile(
             content = createXLSXreport(participants),
             fileName = _ ⇒ s"report-$date-$brandCode.xlsx")
-        }.getOrElse(NotFound("Unknown brand"))
+        } getOrElse NotFound("Unknown brand")
   }
 
   /**

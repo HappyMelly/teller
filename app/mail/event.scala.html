@@ -1,4 +1,6 @@
-@(event: Event, changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
+@(event: Event,
+    brand: Brand,
+    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
 
 @import models.service.brand.EventTypeService
 @import laika.api._
@@ -14,7 +16,7 @@
 <tr>
     <td valign="top">
         @event.details.description.map { description => @Html(Transform.from(Markdown).to(HTML).fromString(description).toString) }
-        <p><a href="@routes.Events.details(event.id.getOrElse(0)).absoluteURL(false)">Click to review</a></p>
+        <p><a href="@routes.Events.details(event.id.getOrElse(0)).absoluteURL(true)">Click to review</a></p>
 
         @if(changes.nonEmpty) {
             <h2>Changes</h2>
@@ -57,7 +59,7 @@
             <tbody>
                 <tr>
                     <td width="150"><strong>Brand</strong></td>
-                    <td>@Brand.find(event.brandCode).get.brand.name</td>
+                    <td>@brand.name</td>
                 </tr>
                 <tr>
                     <td width="150"><strong>Event Type</strong></td>

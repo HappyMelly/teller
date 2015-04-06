@@ -27,14 +27,14 @@ import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
 import models.service.brand.EventTypeService
-import models.service.{ OrganisationService, PersonService }
+import models.service.{ Services, OrganisationService, PersonService }
 import models.{ Brand, Event }
 import play.api.i18n.Messages
 import views.Languages
 
 import scala.language.postfixOps
 
-object Comparator {
+object Comparator extends Services {
 
   abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
     def changed() = oldValue != newValue
@@ -47,14 +47,14 @@ object Comparator {
 
   class BrandChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
     override def toString = {
-      val oldBrand = Brand.find(oldValue).get.brand.name
-      val newBrand = Brand.find(newValue).get.brand.name
+      val oldBrand = brandService.find(oldValue).get.name
+      val newBrand = brandService.find(newValue).get.name
       s"$label: $newBrand (was: $oldBrand)"
     }
 
     override def printable(): (String, String, String) = {
-      val oldBrand = Brand.find(oldValue).get.brand.name
-      val newBrand = Brand.find(newValue).get.brand.name
+      val oldBrand = brandService.find(oldValue).get.name
+      val newBrand = brandService.find(newValue).get.name
       (label, newBrand, oldBrand)
     }
   }

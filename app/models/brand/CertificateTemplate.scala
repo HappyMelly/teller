@@ -57,10 +57,6 @@ case class CertificateTemplate(
    */
   def objectType: String = Activity.Type.CertificateTemplate
 
-  lazy val brand: Brand = DB.withSession { implicit session: Session ⇒
-    Brand.find(brandCode).get.brand
-  }
-
   def insert: CertificateTemplate = DB.withSession { implicit session: Session ⇒
     val id = CertificateTemplates.forInsert.insert(this)
     this.copy(id = Some(id))

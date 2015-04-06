@@ -8,14 +8,14 @@
     otherUser: Option[UserAccount],
     payments: Option[List[payment.Record]]
     )(implicit request: Request[Any],
-        flash: Flash,
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-    @import models.UserRole.Role._
-    @import be.objectify.deadbolt.scala.views.html._
-    @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @roleInput(accountRole: Option[models.UserRole.Role.Role], inputRole: models.UserRole.Role.Role, label: String) = {
   <label class="radio">
@@ -25,89 +25,92 @@
 @main(person.fullName + " - Person", "people", user) {
 
   <div class="col-md-3 info">
-        <div class="page-header">
-          @element.photo(person, "200")
+    <div class="page-header">
+      @element.photo(person, "200")
+    </div>
+    <div class="social">
+      @person.socialProfile.twitterHandle.map { handle =>
+        <a href="http://twitter.com/@handle" target="_blank">
+          <img width="30" src="@routes.Assets.at("images/securesocial/twitter.png")"/>
+        </a>
+      }
+      @person.socialProfile.facebookUrl.map { url =>
+        <a href="@url" target="_blank">
+          <img width="30" src="@routes.Assets.at("images/securesocial/facebook.png")"/>
+        </a>
+      }
+      @person.socialProfile.linkedInUrl.map { url =>
+        <a href="@url" target="_blank">
+          <img width="30" src="@routes.Assets.at("images/securesocial/linkedin.png")"/>
+        </a>
+      }
+      @person.socialProfile.googlePlusUrl.map { url =>
+        <a href="@url" target="_blank">
+          <img width="30" src="@routes.Assets.at("images/securesocial/google.png")"/>
+        </a>
+      }
+      @person.member.map { m =>
+        <a href="@m.profileUrl" target="_blank">
+          <img width="30" src="@routes.Assets.at("images/hm-face.jpg")"/>
+        </a>
+      }
+    </div>
+    @person.member.map { m =>
+      @if(m.active) {
+        @element.membershipPanel(m)
+      }
+    }
+    <div class="panel">
+      <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
+        <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">
+          Personal Details</a></li>
+        <li><a href="#contributions" role="tab" data-toggle="tab">
+          Contributions</a></li>
+        @if(facilitationData.length > 0) {
+          <li><a href="#facilitation" role="tab" data-toggle="tab">
+            Facilitation</a></li>
+        }
+        @if(person.member.nonEmpty) {
+          <li><a href="#membership" role="tab" data-toggle="tab">
+            Membership</a></li>
+        }
+      </ul>
+    </div>
+
+    @restrict(handler, List(as("admin"))) {
+      <div class="role panel panel-default">
+        <div class="panel-body">
+        @otherUser.map { account =>
+        <p>None (cannot log in)</p>
+        <div class="alert alert-danger">
+          <p>You cannot add a role because <a href="@routes.People.details(account.personId)">another user</a>
+            has the same Twitter handle, Facebook URL, Google+ URL or LinkedIn URL.</p>
         </div>
-        <div class="social">
-          @person.socialProfile.twitterHandle.map { handle =>
-            <a href="http://twitter.com/@handle" target="_blank">
-              <img width="30" src="@routes.Assets.at("images/securesocial/twitter.png")"/>
-            </a>
-          }
-          @person.socialProfile.facebookUrl.map { url =>
-            <a href="@url" target="_blank">
-              <img width="30" src="@routes.Assets.at("images/securesocial/facebook.png")"/>
-            </a>
-          }
-          @person.socialProfile.linkedInUrl.map { url =>
-            <a href="@url" target="_blank">
-              <img width="30" src="@routes.Assets.at("images/securesocial/linkedin.png")"/>
-            </a>
-          }
-          @person.socialProfile.googlePlusUrl.map { url =>
-            <a href="@url" target="_blank">
-              <img width="30" src="@routes.Assets.at("images/securesocial/google.png")"/>
-            </a>
-          }
-          @person.member.map { m =>
-            <a href="@m.profileUrl" target="_blank">
-              <img width="30" src="@routes.Assets.at("images/hm-face.jpg")"/>
-            </a>
-          }
-        </div>
-        @person.member.map { m =>
-          @if(m.active) {
-            @element.membershipPanel(m)
+        }.getOrElse {
+          @if(!person.canHaveUserAccount) {
+            <p>
+              None (cannot log in) - add a Twitter handle, Facebook URL, Google+ URL or LinkedIn URL to assign roles</p>
+          } else {
+            <form method="post" action="@CSRF(routes.UserAccounts.update)">
+              <input type="hidden" name="personId" value="@person.id">
+              <div class="control-group" id="role_field">
+                <label class="radio">
+                  <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
+                </label>
+                @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
+                @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
+                @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
+              </div>
+
+              <button class="btn" type="submit">Update Role</button>
+            </form>
           }
         }
-        <div class="panel">
-          <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
-            <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Personal Details</a></li>
-            <li><a href="#contributions" role="tab" data-toggle="tab">Contributions</a></li>
-            @if(facilitationData.length > 0) {
-              <li><a href="#facilitation" role="tab" data-toggle="tab">
-                Facilitation</a></li>
-            }
-            @if(person.member.nonEmpty) {
-              <li><a href="#membership" role="tab" data-toggle="tab">
-                Membership</a></li>
-            }
-          </ul>
         </div>
-
-        @restrict(handler, List(as("admin"))) {
-          <div class="role panel panel-default">
-            <div class="panel-body">
-              @otherUser.map { account =>
-                <p>None (cannot log in)</p>
-                <div class="alert alert-danger">
-                  <p>You cannot add a role because <a href="@routes.People.details(account.personId)">another user</a>
-                    has the same Twitter handle, Facebook URL, Google+ URL or LinkedIn URL.</p>
-                </div>
-              }.getOrElse {
-                @if(!person.canHaveUserAccount) {
-                  <p>None (cannot log in) - add a Twitter handle, Facebook URL, Google+ URL or LinkedIn URL to assign roles</p>
-                } else {
-                  <form method="post" action="@CSRF(routes.UserAccounts.update)">
-                    <input type="hidden" name="personId" value="@person.id">
-                    <div class="control-group" id="role_field">
-                      <label class="radio">
-                        <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
-                      </label>
-                      @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
-                      @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
-                      @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
-                    </div>
-
-                    <button class="btn" type="submit">Update Role</button>
-                  </form>
-                }
-              }
-            </div>
-          </div>
-        }
-
       </div>
+    }
+
+  </div>
 
   <div class="col-md-9 tab-content">
     <div class="page-header">
@@ -116,7 +119,8 @@
         <div class="actions pull-right">
           @if(person.member.isEmpty && user.person.id == person.id) {
             <div class="button">
-              <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
+              <a class="btn btn-success" href="@routes.Membership.welcome()">
+                Become a Member</a>
             </div>
           }
 
@@ -142,11 +146,13 @@
                 <input name="active" value="@(!person.active)" type="hidden">
                 @if(person.active) {
                   <button class="btn btn-warning" type="submit">
-                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
+                    <i class="glyphicon-off glyphicon glyphicon-white"></i>
+                    Deactivate
                   </button>
                 } else {
                   <button class="btn btn-success" type="submit">
-                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
+                    <i class="glyphicon-off glyphicon glyphicon-white"></i>
+                    Activate
                   </button>
                 }
               </form>
@@ -157,37 +163,41 @@
               <form class="delete form-inline" method="post" text="person"
               action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
                 <div data-toggle="tooltip" data-placement="bottom"
-                  @if(!person.deletable) { title="@Messages("error.person.nonDeletable")" }>
+                  @if(!person.deletable) {
+                    title="@Messages("error.person.nonDeletable")" }>
                   <button class="btn btn-danger" type="submit"
-                    @if(!person.deletable) { disabled="disabled" } >
-                    <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
+                    @if(!person.deletable) {
+                      disabled="disabled" } >
+                    <i class="glyphicon glyphicon-white glyphicon-trash"></i>
+                    Delete
                   </button>
                 </div>
               </form>
             </div>
-            }
+          }
         </div>
       </h1>
     </div>
     @if(!person.active) {
       <div class="alert alert-warning">
-        <i class="glyphicon glyphicon-warning-sign"></i> This person is <strong>deactivated</strong></div>
+        <i class="glyphicon glyphicon-warning-sign"></i> This person is <strong>
+        deactivated</strong></div>
     }
     <div class="tab-pane active" id="personal-details">
-      @views.html.person.subpages.details(person, organisations, otherOrganisations)</div>
+    @views.html.person.subpages.details(person, organisations, otherOrganisations)</div>
     <div class="tab-pane" id="contributions">
-      @views.html.person.subpages.contributions(person, contributions)
+    @views.html.person.subpages.contributions(person, contributions)
     </div>
 
     @if(facilitationData.length > 0) {
       <div class="tab-pane" id="facilitation">
-        @views.html.person.subpages.facilitation(person, facilitationData)
+      @views.html.person.subpages.facilitation(person, facilitationData)
       </div>
     }
 
     @if(person.member.nonEmpty) {
       <div class="tab-pane" id="membership">
-        @views.html.person.subpages.membership(user, person, payments.get)
+      @views.html.person.subpages.membership(user, person, payments.get)
       </div>
     }
 
