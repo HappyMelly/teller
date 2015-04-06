@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.{ BrandView, Brand }
-import models.database.{ Brands, Licenses }
+import models.Brand
+import models.database.Brands
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB

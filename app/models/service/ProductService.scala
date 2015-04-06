@@ -25,7 +25,7 @@
 package models.service
 
 import models.Product
-import models.database.Products
+import models.database.{ ProductBrandAssociations, Products }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -35,6 +35,20 @@ class ProductService {
   /** Return a list with all products */
   def findAll: List[Product] = DB.withSession { implicit session: Session ⇒
     Query(Products).sortBy(_.title.toLowerCase).list
+  }
+
+  /**
+   * Returns sorted list of products for the given brand
+   * @todo test
+   * @param brandId Brand identifier
+   */
+  def findByBrand(brandId: Long): List[Product] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        relation ← ProductBrandAssociations if relation.brandId === brandId
+        product ← relation.product
+      } yield product
+      query.sortBy(_.title.toLowerCase).list
   }
 
 }

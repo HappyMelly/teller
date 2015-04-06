@@ -22,10 +22,30 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package stubs
+package models.integration
 
-import models.service.brand.EventTypeService
+import integration.PlayAppSpec
+import models.brand.CertificateTemplate
+import models.service.brand.CertificateTemplateService
 
-class FakeEventTypeService extends EventTypeService {
+class CertificateTemplateServiceSpec extends PlayAppSpec {
 
+  override def setupDb(): Unit = {
+    Seq(
+      CertificateTemplate(None, 1L, "EN", Array[Byte](), Array[Byte]()),
+      CertificateTemplate(None, 1L, "RU", Array[Byte](), Array[Byte]()),
+      CertificateTemplate(None, 1L, "DE", Array[Byte](), Array[Byte]()),
+      CertificateTemplate(None, 3L, "EN", Array[Byte](), Array[Byte]())).foreach(x ⇒ x.insert)
+  }
+
+  val service = new CertificateTemplateService
+
+  "The service " should {
+    "all templates for the brand TEST, available in database" in {
+      service.findByBrand(1L).length must_== 3
+    }
+    "return no templates for the brand TWO as there's no templates in database" in {
+      service.findByBrand(2L).length must_== 0
+    }
+  }
 }

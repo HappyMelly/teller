@@ -18,7 +18,7 @@
             <div class="page-header">
                 <h1>@title</h1>
             </div>
-            @html.form(action = CSRF(routes.CertificateTemplates.create(brand.code)), 'enctype -> "multipart/form-data") {
+            @html.form(action = CSRF(routes.CertificateTemplates.create(brand.id.get)), 'enctype -> "multipart/form-data") {
                 @html.select(form("language"), ("", "Choose a language") +: languages.toList.sortBy(_._2),
                     '_label -> "Language"),
                 @html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_help -> "Required",

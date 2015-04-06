@@ -28,7 +28,7 @@ import java.text.Collator
 import java.util.Locale
 import models.brand.CertificateTemplate
 import models.database._
-import models.service.SocialProfileService
+import models.service.{ ProductService, SocialProfileService }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -99,7 +99,7 @@ case class Brand(id: Option[Long],
       val query = Query(BookingEntries).filter(e ⇒ e.brandId === brandId)
       Query(query.exists).first
     }
-    !hasLicences && !hasBookings && products.isEmpty
+    !hasLicences && !hasBookings && ProductService.get.findByBrand(this.id.get).isEmpty
   }
 
   lazy val products: List[Product] = DB.withSession { implicit session: Session ⇒
@@ -109,8 +109,6 @@ case class Brand(id: Option[Long],
     } yield product
     query.sortBy(_.title.toLowerCase).list
   }
-
-  lazy val certificates: List[CertificateTemplate] = CertificateTemplate.findByBrand(code)
 
   def insert: Brand = DB.withSession { implicit session: Session ⇒
     val id = Brands.forInsert.insert(this)
@@ -218,20 +216,17 @@ object Brand {
   }
 
   /**
-   * Get a list of facilitators for a given brand
+   * Returns list of facilitators for the given brand
    *
    * @param code Brand string identifier
-   * @param coordinator Brand coordinator
-   * @return
    */
-  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession {
+  def findFacilitators(code: String): List[Person] = DB.withSession {
     implicit session: Session ⇒
       val collator = Collator.getInstance(Locale.ENGLISH)
       val ord = new Ordering[String] {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
-      val facilitators = License.licensees(code, LocalDate.now())
-      (coordinator :: facilitators).distinct.sortBy(_.fullName.toLowerCase)(ord)
+      License.licensees(code, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds all brands belonging to one coordinator **/

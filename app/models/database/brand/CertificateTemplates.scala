@@ -33,12 +33,13 @@ import play.api.db.slick.Config.driver.simple._
 private[models] object CertificateTemplates extends Table[CertificateTemplate]("CERTIFICATE_TEMPLATE") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandCode = column[String]("BRAND_CODE")
+  def brandId = column[Long]("BRAND_ID")
   def language = column[String]("LANGUAGE")
   def oneFacilitator = column[Array[Byte]]("ONE_FACILITATOR")
   def twoFacilitators = column[Array[Byte]]("TWO_FACILITATORS")
 
-  def * = id.? ~ brandCode ~ language ~ oneFacilitator ~ twoFacilitators <> (CertificateTemplate.apply _, CertificateTemplate.unapply _)
+  def * = id.? ~ brandId ~ language ~ oneFacilitator ~
+    twoFacilitators <> (CertificateTemplate.apply _, CertificateTemplate.unapply _)
 
   def forInsert = * returning id
 

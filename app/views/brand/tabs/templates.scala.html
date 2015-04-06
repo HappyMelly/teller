@@ -1,26 +1,52 @@
-@(brand: Brand)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+@(id: Long,
+    templates: List[models.brand.CertificateTemplate])(implicit request: Request[Any],
+    handler: AuthorisationHandler)
 
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
 @import views.Languages
 
-<table class="datatables table table-bordered">
-    <thead>
-        <th>Language</th>
-        <th>One Facilitator</th>
-        <th>Two Facilitators</th>
-        <th></th>
-    </thead>
-    <tbody>
-    @for(file <- brand.certificates) {
-        <tr>
-            <td>@Languages.all.get(file.language)</td>
-            <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
-            <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
-            <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
-                <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
-        </tr>
-    }
-    </tbody>
-</table>
-<a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(brand.code)">
-    <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
-</a>
+<p>Templates are required for generating certificates. You may add different
+certificates for different languages. The system uses a spoken language of an
+event to identify which template to use. For example, you uploaded two templates &mdash;
+for English and German languages. If a facilitator runs an event in German when the system
+uses German templates for generating certificates.</p>
+<p>If the system cannot find a template for a particular language it uses a certificate
+for English language. It means you need to upload at least one certificate for English language.</p>
+<div class="alert alert-info">
+    <i class="label label-info"></i><strong>Important:</strong> each brand has
+    its own template desing. The system does not know where to put event and
+    participant data. Each brand requires a custom module being developed before
+    it will be able to support certificate generation. Please contact
+    <a href="mailto:sergey.kotlov@@happymelly.com">Sergey Kotlov</a> for more information.
+</div>
+<br/>
+@if(templates.length > 0) {
+    <table class="datatables table table-bordered">
+        <thead>
+            <tr>
+                <th>Language</th>
+                <th>One Facilitator</th>
+                <th>Two Facilitators</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @for(file <- templates) {
+            <tr>
+                <td>@Languages.all.get(file.language)</td>
+                <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
+                <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
+                <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
+                    <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+@restrict(handler, List(as(Editor.toString))) {
+    <a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(id)">
+        <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
+    </a>
+}

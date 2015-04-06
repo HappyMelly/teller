@@ -29,10 +29,11 @@ import helpers.BrandHelper
 import integration.PlayAppSpec
 import models.brand.EventType
 import models.service.BrandService
+import models.service.brand.EventTypeService
 import org.scalamock.specs2.MockContext
 import play.api.libs.json.JsObject
 import play.api.mvc.SimpleResult
-import stubs.{ FakeEventTypeService, FakeServices, FakeUserIdentity }
+import stubs.{ FakeServices, FakeUserIdentity }
 
 import scala.concurrent.Future
 
@@ -68,7 +69,7 @@ class EventTypesSpec extends PlayAppSpec {
 
   def e3 = new MockContext {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val service = mock[FakeEventTypeService]
+    val service = mock[EventTypeService]
     (service.find _).expects(1L).returning(None)
     controller.eventTypeService_=(service)
     val res = controller.update(1L).apply(req)
@@ -82,7 +83,7 @@ class EventTypesSpec extends PlayAppSpec {
       withFormUrlEncodedBody(("id", "1"), ("brandId", "1"), ("name", "Test"),
         ("maxhours", "16"))
     val eventType = EventType(Some(1L), 1L, "Test", Some("test type"), 16)
-    val eventTypeService = mock[FakeEventTypeService]
+    val eventTypeService = mock[EventTypeService]
     (eventTypeService.find _).expects(1L).returning(Some(eventType))
     val types = List(eventType.copy(id = Some(2L)))
     (eventTypeService.findByBrand _).expects(1L).returning(types)
@@ -102,7 +103,7 @@ class EventTypesSpec extends PlayAppSpec {
       withFormUrlEncodedBody(("id", "1"), ("brandId", "1"),
         ("name", "Test"), ("maxhours", "16"))
     val eventType = EventType(Some(1L), 1L, "Test", Some("test type"), 16)
-    val eventTypeService = mock[FakeEventTypeService]
+    val eventTypeService = mock[EventTypeService]
     (eventTypeService.find _).expects(1L).returning(Some(eventType))
     (eventTypeService.findByBrand _).expects(1L).returning(List())
     (eventTypeService.update _).expects(*)

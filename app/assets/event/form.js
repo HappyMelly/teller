@@ -25,15 +25,11 @@
 function User(data) {
     this.name = data["first_name"] + " " + data["last_name"];
     this.id = data["id"];
-    this.coordinator = data["coordinator"];
     this.memberships = data["memberships"];
 }
 
 User.prototype.isFacilitator = function(userId) {
     return this.id == userId;
-};
-User.prototype.isCoordinator = function() {
-    return this.coordinator;
 };
 
 function showError(message) {
@@ -207,7 +203,7 @@ $(document).ready( function() {
                 var trashCan = $('<i>')
                     .attr('class', 'glyphicon glyphicon-trash');
                 var button = $('<button>').attr('type', 'button');
-                if (!user.isFacilitator(this.userId) || user.isCoordinator()) {
+                if (!user.isFacilitator(this.userId)) {
                     button.attr('class', 'btn btn-danger deselect');
                 } else {
                     button

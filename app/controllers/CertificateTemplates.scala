@@ -36,9 +36,11 @@ import securesocial.core.SecuredRequest
 import views.Languages
 
 /**
- * This class was created to simplify form handling and generation
+ * This class exists to simplify form handling and generation
  */
-case class FakeCertificateTemplate(language: String, template: Option[String], templateNoFacilitator: Option[String])
+case class FakeCertificateTemplate(language: String,
+  template: Option[String],
+  templateNoFacilitator: Option[String])
 
 object CertificateTemplates extends Controller with Security with Services {
 
@@ -55,12 +57,12 @@ object CertificateTemplates extends Controller with Security with Services {
    * Renders an Add form
    *
    * @todo change access rights to all brand managers
-   * @param code Unique text brand identifier
+   * @param brandId Unique text brand identifier
    */
-  def add(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(code) map { brand ⇒
-        val templates = CertificateTemplate.findByBrand(code)
+      brandService.find(brandId) map { brand ⇒
+        val templates = certificateService.findByBrand(brandId)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         Ok(views.html.certificateTemplate.form(user, brand, languages, certificateFileForm))
       } getOrElse NotFound
@@ -69,12 +71,12 @@ object CertificateTemplates extends Controller with Security with Services {
   /**
    * Adds new certificate for the given brand
    *
-   * @param code Unique text brand identifier
+   * @param brandId Unique brand identifier
    */
-  def create(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(code) map { brand ⇒
-        val templates = CertificateTemplate.findByBrand(code)
+      brandService.find(brandId) map { brand ⇒
+        val templates = certificateService.findByBrand(brandId)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
@@ -107,7 +109,7 @@ object CertificateTemplates extends Controller with Security with Services {
                 val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)
                 val secondSource = Source.fromFile(templateOneFacilitator.get.ref.file.getPath, encoding)
                 val tpl = new CertificateTemplate(None,
-                  code,
+                  brandId,
                   data.language,
                   firstSource.toArray.map(_.toByte),
                   secondSource.toArray.map(_.toByte)).insert
@@ -116,7 +118,7 @@ object CertificateTemplates extends Controller with Security with Services {
                 val activity = tpl.activity(
                   user.person,
                   Activity.Predicate.Created).insert
-                Redirect(routes.Brands.details(code).url + "#templates").flashing(
+                Redirect(routes.Brands.details(brand.code).url + "#templates").flashing(
                   "success" -> activity.toString)
               }
             }
@@ -157,8 +159,12 @@ object CertificateTemplates extends Controller with Security with Services {
         val activity = tpl.activity(
           user.person,
           Activity.Predicate.Deleted).insert
-        Redirect(routes.Brands.details(tpl.brandCode).url + "#templates").flashing(
-          "success" -> activity.toString)
+        brandService.find(tpl.brandId) map { x ⇒
+          Redirect(routes.Brands.details(x.code).url + "#templates").flashing(
+            "success" -> activity.toString)
+        } getOrElse {
+          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+        }
       }.getOrElse(NotFound)
   }
 }

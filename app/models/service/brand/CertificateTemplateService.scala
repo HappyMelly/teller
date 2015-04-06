@@ -21,25 +21,33 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import models.Activity
+package models.service.brand
+
 import models.brand.CertificateTemplate
-import org.specs2.mutable._
+import models.database.brand.CertificateTemplates
+import play.api.db.slick.DB
+import play.api.db.slick.Config.driver.simple._
+import play.api.Play.current
 
-class CertificateTemplateSpec extends Specification {
+/**
+ * Contains a set of functions for managing templates in database
+ */
+class CertificateTemplateService {
 
-  "Certificate template" should {
-    "have well-formed activity attributes" in {
-      val tpl = new CertificateTemplate(Some(1L), 1L, "EN", Array(), Array())
-      tpl.objectType must_== Activity.Type.CertificateTemplate
-      tpl.identifier must_== 1
-      tpl.humanIdentifier must_== "for brand 1 and lang EN"
-      val tpl2 = new CertificateTemplate(Some(2L), 2L, "RU", Array(), Array())
-      tpl2.objectType must_== Activity.Type.CertificateTemplate
-      tpl2.identifier must_== 2
-      tpl2.humanIdentifier must_== "for brand 2 and lang RU"
-    }
+  /**
+   * Returns list of certificate templates for the given brand
+   *
+   * @param brandId Unique brand identifier
+   */
+  def findByBrand(brandId: Long): List[CertificateTemplate] = DB.withSession {
+    implicit session: Session ⇒
+      Query(CertificateTemplates).filter(_.brandId === brandId).sortBy(_.language).list
   }
+}
 
+object CertificateTemplateService {
+  private val instance = new CertificateTemplateService
+
+  def get: CertificateTemplateService = instance
 }

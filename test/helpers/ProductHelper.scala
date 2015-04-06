@@ -21,25 +21,26 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import models.Activity
-import models.brand.CertificateTemplate
-import org.specs2.mutable._
+package helpers
 
-class CertificateTemplateSpec extends Specification {
+import models.Product
+import org.joda.time.DateTime
 
-  "Certificate template" should {
-    "have well-formed activity attributes" in {
-      val tpl = new CertificateTemplate(Some(1L), 1L, "EN", Array(), Array())
-      tpl.objectType must_== Activity.Type.CertificateTemplate
-      tpl.identifier must_== 1
-      tpl.humanIdentifier must_== "for brand 1 and lang EN"
-      val tpl2 = new CertificateTemplate(Some(2L), 2L, "RU", Array(), Array())
-      tpl2.objectType must_== Activity.Type.CertificateTemplate
-      tpl2.identifier must_== 2
-      tpl2.humanIdentifier must_== "for brand 2 and lang RU"
-    }
+/**
+ * Contains a set of functions for creating products in tests
+ */
+object ProductHelper {
+
+  /**
+   * Returns new product
+   * @param title Product title
+   * @param id Product id
+   * @return
+   */
+  def make(title: String, id: Option[Long] = None): Product = {
+    Product(id, title, None, None, None, None, None, None, None, None,
+      DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
   }
 
 }

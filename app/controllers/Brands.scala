@@ -26,7 +26,7 @@ package controllers
 
 import controllers.Forms._
 import models._
-import models.brand.EventType
+import models.brand.{ CertificateTemplate, EventType }
 import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.data.validation.Constraints
@@ -45,7 +45,7 @@ import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 
-object Brands extends Controller with Security with Services {
+trait Brands extends Controller with Security with Services {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -218,20 +218,38 @@ object Brands extends Controller with Security with Services {
   }
 
   /**
-   * Render a brand's details page
+   * Renders a brand page of the given brand
    *
-   * @param code Brand string identifier
-   * @return
+   * @param code Brand identifier
    */
-  def details(code: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Brand.find(code).map {
-        case BrandView(brand, coordinator, licenseIds) ⇒ {
-          val eventTypes = eventTypeService.findByBrand(brand.id.get)
-          Ok(views.html.brand.details(user, brand, coordinator, eventTypes))
-        }
-      }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
+  def details(code: String) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandService.find(code) map { brand ⇒
+          val coordinator = personService.find(brand.coordinatorId)
+          Ok(views.html.brand.details(user, brand, coordinator))
+        } getOrElse NotFound(views.html.notFoundPage(request.path))
+  }
 
+  /**
+   * Renders tab for the given brand
+   * @param id Brand identifier
+   * @param tab Tab identifier
+   */
+  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        tab match {
+          case "templates" ⇒
+            val templates = certificateService.findByBrand(id)
+            Ok(views.html.brand.tabs.templates(id, templates))
+          case "types" ⇒
+            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
+            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
+          case _ ⇒
+            val products = productService.findByBrand(id)
+            Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.api.templates.Html.empty })
+        }
   }
 
   /**
@@ -370,3 +388,5 @@ object Brands extends Controller with Security with Services {
   }
 
 }
+
+object Brands extends Brands

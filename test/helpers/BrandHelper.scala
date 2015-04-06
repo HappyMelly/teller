@@ -28,6 +28,17 @@ import org.joda.time.DateTime
 
 object BrandHelper {
 
+  def make(code: String): Brand = {
+    val brandUniqueName = code.toLowerCase + ".brand"
+    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
+
+    var brand = new Brand(None, code, brandUniqueName,
+      code + " Brand", coordinatorId = 1, None, None, generateCert = false, None,
+      None, None, None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+    brand.socialProfile_=(socialProfile)
+    brand
+  }
+
   def one: Brand = {
     val brandCode = "TEST"
     val brandUniqueName = "test.brand"

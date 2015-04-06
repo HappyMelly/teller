@@ -76,7 +76,7 @@ trait EventTypes extends Controller with Security with Services {
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
       val brand = brandService.find(boundForm.data("brandId").toLong).get
-      val route = routes.Brands.details(brand.code).url + "#eventTypes"
+      val route = routes.Brands.details(brand.code).url + "#types"
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
         eventType ⇒ {
@@ -125,8 +125,8 @@ trait EventTypes extends Controller with Security with Services {
 
       eventTypeService.find(id).map { eventType ⇒
         val brand = eventType.brand
-        val route = routes.Brands.details(brand.code).url + "#eventTypes"
-        val events = EventService.get.findByParameters(
+        val route = routes.Brands.details(brand.code).url + "#types"
+        val events = eventService.findByParameters(
           brandCode = None,
           eventType = Some(eventType.id.get))
         if (events.length > 0) {

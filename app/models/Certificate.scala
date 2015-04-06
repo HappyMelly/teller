@@ -30,6 +30,7 @@ import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
 import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.brand.CertificateTemplate
+import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.cache.Cache
@@ -62,9 +63,9 @@ case class Certificate(
   def generateAndSend(brand: BrandView, approver: Person) {
     val contentType = "application/pdf"
     val pdf = if (brand.brand.code == "LCM")
-      lcmCertificate(event, participant)
+      lcmCertificate(brand.brand.id.get, event, participant)
     else
-      m30Certificate(issued, event, participant)
+      m30Certificate(issued, brand.brand.id.get, event, participant)
     if (renew) {
       Certificate.removeFromCloud(id)
     }
@@ -105,10 +106,14 @@ case class Certificate(
 
   /**
    * Returns new generated LCM certificate
+   *
+   * @param brandId Brand identifier
    * @param event Event
    * @param participant Participant
    */
-  private def lcmCertificate(event: Event, participant: Person): Array[Byte] = {
+  private def lcmCertificate(brandId: Long,
+    event: Event,
+    participant: Person): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
@@ -119,7 +124,7 @@ case class Certificate(
     document.open()
     val facilitators = event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
-    val img = template(event, cofacilitator)
+    val img = template(brandId, event, cofacilitator)
     img.setAbsolutePosition(28, 0)
     img.scalePercent(77)
     document.add(img)
@@ -189,11 +194,14 @@ case class Certificate(
 
   /**
    * Returns new generated M30 certificate for the given participant
+   *
+   * @param brandId Brand identifier
    * @param handledDate The date participant's evaluation was approved
    * @param event Event
    * @param participant Participant
    */
   private def m30Certificate(handledDate: Option[LocalDate],
+    brandId: Long,
     event: Event,
     participant: Person): Array[Byte] = {
 
@@ -206,7 +214,7 @@ case class Certificate(
     document.open()
     val facilitators = event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
-    val img = template(event, cofacilitator)
+    val img = template(brandId, event, cofacilitator)
     img.setAbsolutePosition(7, 10)
     img.scalePercent(55)
     document.add(img)
@@ -284,12 +292,13 @@ case class Certificate(
   /**
    * Get a raw certificate template
    *
+   * @param brandId Brand identifier
    * @param event Event
    * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
    * @return
    */
-  private def template(event: Event, twoFacilitators: Boolean): Image = {
-    val templates = CertificateTemplate.findByBrand(event.brandCode)
+  private def template(brandId: Long, event: Event, twoFacilitators: Boolean): Image = {
+    val templates = CertificateTemplateService.get.findByBrand(brandId)
     val data = templates.find(_.language == event.language.spoken) map { tpl ⇒
       if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
     } getOrElse {

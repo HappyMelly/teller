@@ -35,7 +35,8 @@ POST        /booking/:bookingNumber/attachment/delete                 controller
 GET         /brands                                                   controllers.Brands.index
 GET         /brand/new                                                controllers.Brands.add
 POST        /brand/new                                                controllers.Brands.create
-GET         /brand/:code                                              controllers.Brands.details(code)
+GET         /brand/:code                                              controllers.Brands.details(code: String)
+GET         /brand/:id/tabs                                           controllers.Brands.renderTabs(id: Long, tab: String)
 POST        /brand/:code                                              controllers.Brands.update(code)
 GET         /brand/:code/events                                       controllers.Brands.events(code, future: Option[Boolean])
 GET         /brand/:code/edit                                         controllers.Brands.edit(code)
@@ -45,8 +46,8 @@ POST        /brand/:code/picture/delete                               controller
 GET         /brand/:code/eventtypes                                   controllers.EventTypes.index(code: String)
 
 
-GET         /brand/:code/template                                     controllers.CertificateTemplates.add(code: String)
-POST        /brand/:code/template                                     controllers.CertificateTemplates.create(code: String)
+GET         /brand/:id/template                                       controllers.CertificateTemplates.add(id: Long)
+POST        /brand/:id/template                                       controllers.CertificateTemplates.create(id: Long)
 
 GET         /certificate/:id                                          controllers.Certificates.certificate(id: String)
 GET         /certificate/new/:eventId/:personId                       controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
