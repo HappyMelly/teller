@@ -52,7 +52,6 @@ object Facilitator {
             val evaluations = evaluationService.findByEvents(events).filter(_._3.approved)
             val rating = evaluations.foldLeft(0.0f)(_ + _._3.question6.toFloat / evaluations.length)
             val brand = brandService.find(x.brandCode).get
-            println(evaluations.toString())
             facilitatorService.update(Facilitator(None, id, brand.id.get, rating))
           }
         }

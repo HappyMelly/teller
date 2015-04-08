@@ -253,6 +253,9 @@ POST        /api/v2/participant                                       controller
 GET         /api/v2/organizations                                     controllers.apiv2.OrganisationsApi.organisations
 GET         /api/v2/organization/:id                                  controllers.apiv2.OrganisationsApi.organisation(id: Long)
 
+GET         /api/v2/people                                            controllers.apiv2.PeopleApi.people(active: Option[Boolean], q: Option[String])
+GET         /api/v2/person/:identifier                                controllers.apiv2.PeopleApi.person(identifier: String)
+
 GET         /api/v2/products                                          controllers.apiv2.ProductsApi.products
 GET         /api/v2/product/:id                                       controllers.apiv2.ProductsApi.product(id: Long)
 
