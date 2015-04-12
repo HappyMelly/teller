@@ -27,6 +27,7 @@
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
         <li class="active"><a href="#general" role="tab" data-toggle="tab">
           General</a></li>
+        <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "products")" href="#products" role="tab" data-toggle="tab">Products</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
@@ -132,12 +133,10 @@
       }
       </div>
     </div>
-    <div class="tab-pane" id="products">
-    </div>
-    <div class="tab-pane" id="types">
-    </div>
-    <div class="tab-pane" id="templates">
-    </div>
+    <div class="tab-pane" id="team"></div>
+    <div class="tab-pane" id="products"></div>
+    <div class="tab-pane" id="types"></div>
+    <div class="tab-pane" id="templates"></div>
     <div class="tab-pane" id="integration">
       <dl>
         <dt>Evaluation Hook</dt>

@@ -24,8 +24,9 @@
  */
 package models.service
 
-import models.Brand
-import models.database.Brands
+import models.database.brand.BrandTeamMembers
+import models.{ Person, Brand }
+import models.database.{ People, Brands }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -55,6 +56,18 @@ class BrandService {
    */
   def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
     Query(Brands).sortBy(_.name.toLowerCase).list
+  }
+
+  /**
+   * Returns list of team members for the given brand
+   * @param brandId Brand identifier
+   */
+  def team(brandId: Long): List[Person] = DB.withSession { implicit session ⇒
+    val query = for {
+      t ← BrandTeamMembers if t.brandId === brandId
+      p ← People if p.id === t.personId
+    } yield p
+    query.list()
   }
 }
 

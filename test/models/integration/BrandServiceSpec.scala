@@ -24,34 +24,52 @@
 
 package models.integration
 
-import helpers.{ PersonHelper, BrandHelper }
-import integration.{ TruncateBefore, PlayAppSpec }
+import helpers.{ BrandHelper, PersonHelper }
+import integration.PlayAppSpec
 import models.service.BrandService
+import models.service.brand.BrandTeamMemberService
 
 /**
  * Tests for BrandService class
  */
 class BrandServiceSpec extends PlayAppSpec {
 
+  override def setupDb(): Unit = {
+    List(PersonHelper.one(),
+      PersonHelper.two(),
+      PersonHelper.make(Some(3), "Third", "Tester")).foreach { x ⇒
+        x.insert
+      }
+    List(BrandHelper.one, BrandHelper.make("TWO")).foreach(_.insert)
+    BrandTeamMemberService.get.insert(1L, 1L)
+    BrandTeamMemberService.get.insert(1L, 2L)
+  }
+
   val service = new BrandService
 
   "Method find(_: String)" should {
-    "return a brand with code TEST" in new TruncateBefore {
-      val person = PersonHelper.one().insert
-      val brand = BrandHelper.one.insert
+    "return a brand with code TEST" in {
+      val brand = BrandHelper.one
       service.find("TEST") map { x ⇒
         x.code must_== "TEST"
         x.coordinatorId must_== brand.coordinatorId
         x.uniqueName must_== brand.uniqueName
       } getOrElse ko
     }
-    "return None" in new TruncateBefore {
-      val person = PersonHelper.one().insert
-      val one = BrandHelper.one
-      val brand = one.copy(code = "One")
-      brand.socialProfile_=(one.socialProfile)
+    "return None" in {
+      service.find("THREE") must_== None
+    }
+  }
+  "The service should return" >> {
 
-      service.find("TEST") must_== None
+    "2 team members for brand id = 1 available in database" in {
+      val members = service.team(1L)
+      members.length must_== 2
+      members.exists(_.id == Some(1L))
+      members.exists(_.id == Some(2L))
+    }
+    "no members for brand id = 3 as no members are available in database" in {
+      service.team(3L).length must_== 0
     }
   }
 }

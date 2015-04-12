@@ -24,52 +24,28 @@
 
 /**
  * Show notification message
+ * @param target jQuery identifier of html element
  * @param message {string}
  * @param type {string} 'success/danger'
  */
-function notify(message, type) {
-    $('#notification').html("");
-    $('#notification').append(
+function notify(target, message, type) {
+    $(target).html("");
+    $(target).append(
         $('<div class="alert alert-' + type + '">')
             .text(message)
             .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
     );
 }
-var loadedTabs = [];
 
-/**
- * Loads tab content (if needed) and shows it to a user
- * @param elem Tab button
- * @returns {boolean}
- */
-function showTab(elem) {
-    var url = $(elem).attr('data-href'),
-        target = $(elem).attr('href');
-    if ($.inArray(target, loadedTabs) < 0 && url) {
-        $.get(url, function(data) {
-            $(target).html(data);
-        });
-        loadedTabs[loadedTabs.length] = target;
-    }
-    $(elem).tab('show');
-    return false;
+function showEventTypeNotification(message, type) {
+    notify('#notification', message, type)
 }
 
-$(document).ready( function() {
-    // Delete links.
-    $('.delete').click(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
+function showTeamNotification(message, type) {
+    notify('#teamNotification', message, type);
+}
 
-    $('#sidemenu a').click(function (e) {
-        showTab($(this));
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'general';
-    }
-    showTab($('#sidemenu a[href="#' + hash + '"]'));
-
+function initializeEventTypesActions() {
     $('#eventTypes').editableTableWidget();
     $('#eventTypes td').on('validate', function(evt, newValue) {
         if (newValue == "") {
@@ -92,20 +68,146 @@ $(document).ready( function() {
             url: jsRoutes.controllers.EventTypes.update(id).url,
             data: data
         }).done(function(data) {
-            notify("You successfully updated the event type", 'success');
+            showEventTypeNotification("You successfully updated the event type", 'success');
             $(that).text(newValue);
         }).fail(function(jqXHR, status, error) {
             if (status == "error") {
                 var error = JSON.parse(jqXHR.responseText);
-                notify(error.message, 'danger');
+                showEventTypeNotification(error.message, 'danger');
             } else {
                 var msg = "Unexpected error. Please contact the support team.";
-                notify(msg, 'danger');
+                showEventTypeNotification(msg, 'danger');
             }
         }).complete(function() {
             $("body").css("cursor", "default");
         });
         return false;
     });
+}
+
+/**
+ * Updates the view after the person was added as a team member
+ * @param personId {int} Person id
+ * @param name {string} Person name
+ * @param brandId {int} Brand id
+ */
+function addMember(personId, name, brandId) {
+    $('#members').append(
+        $('<tr>')
+            .attr('data-id', personId)
+            .attr('data-brandid', brandId)
+            .append($('<td>')
+                .append($('<a>')
+                    .attr('href', jsRoutes.controllers.People.details(personId).url)
+                    .append(name)))
+            .append($('<td>')
+                .append($('<a>')
+                    .append('<i class="glyphicon glyphicon-trash"></i>')
+                    .addClass('remove')
+                    .attr('href', '#')
+                    .attr('data-id', personId)
+                    .attr('data-name', name)
+                    .attr('data-href',
+                    jsRoutes.controllers.Brands.removeMember(brandId, personId).url)))
+    );
+    $('select[name="personId"]').children('option[value=' + personId + ']').remove();
+}
+
+function removeMember(personId, name) {
+    $('tr[data-id="' + personId + '"]').remove();
+    var people = [];
+    var select = 'select[name="personId"]';
+    $(select).children('option').each(function() {
+        people.push({ id: $(this).val(), name: $(this).text()});
+    });
+    people.push({ id: personId, name: name });
+    people.sort(function(left, right) { return left.name.localeCompare(right.name); });
+    $(select).empty();
+    for(var i = 0; i < people.length; i++) {
+        var data = people[i];
+        $(select).append($('<option>').append(data.name).attr('value', data.id));
+    }
+}
+
+function initializeTeamActions() {
+    $('#addMemberForm').submit(function(e) {
+        $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
+            addMember(data.data.personId, data.data.name, data.data.brandId);
+            showTeamNotification(data.message, 'success');
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showTeamNotification(error.message, 'danger');
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                showTeamNotification(msg, 'danger');
+            }
+        });
+        // Prevent the form from submitting with the default action
+        return false;
+    });
+    $('#members').on('click', 'a.remove', function(e) {
+        var personId = $(this).data('id'),
+            name = $(this).data('name');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            removeMember(personId, name);
+            showTeamNotification(data.message, 'success');
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showTeamNotification(error.message, 'danger');
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                showTeamNotification(msg, 'danger');
+            }
+        });
+        return false;
+    });
+}
+
+function initializeActions() {
+    initializeEventTypesActions();
+    initializeTeamActions();
+}
+
+/**
+ * Loads tab content (if needed) and shows it to a user
+ * @param elem Tab button
+ * @returns {boolean}
+ */
+function showTab(elem) {
+    var url = $(elem).attr('data-href'),
+        target = $(elem).attr('href');
+    if ($.inArray(target, loadedTabs) < 0 && url) {
+        $.get(url, function(data) {
+            $(target).html(data);
+            initializeActions();
+        });
+        loadedTabs[loadedTabs.length] = target;
+    }
+    $(elem).tab('show');
+    return false;
+}
+
+var loadedTabs = [];
+
+$(document).ready( function() {
+    // Delete links.
+    $('.delete').click(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
+
+    $('#sidemenu a').click(function (e) {
+        showTab($(this));
+    });
+    var hash = window.location.hash.substring(1);
+    if (!hash) {
+        hash = 'general';
+    }
+    showTab($('#sidemenu a[href="#' + hash + '"]'));
 });
 

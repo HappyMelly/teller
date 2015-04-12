@@ -25,13 +25,14 @@
 package stubs
 
 import models.service.admin.ApiTokenService
-import models.service.brand.{ CertificateTemplateService, EventTypeService, BrandFeeService }
+import models.service.brand.{ BrandTeamMemberService, CertificateTemplateService, EventTypeService, BrandFeeService }
 import models.service._
 
 trait FakeServices extends Services {
 
   private var _apiTokenService = new ApiTokenService
   private var _brandService = new BrandService
+  private var _brandTeamMemberService = new BrandTeamMemberService
   private var _certificateService = new CertificateTemplateService
   private var _contributionService = new FakeContributionService
   private var _evaluationService = new EvaluationService
@@ -53,6 +54,10 @@ trait FakeServices extends Services {
 
   def brandService_=(service: BrandService) = _brandService = service
   override def brandService: BrandService = _brandService
+
+  def brandTeamMemberService_=(service: BrandTeamMemberService) =
+    _brandTeamMemberService = service
+  override def brandTeamMemberService = _brandTeamMemberService
 
   def certificateService_=(service: CertificateTemplateService) = _certificateService = service
   override def certificateService: CertificateTemplateService = _certificateService

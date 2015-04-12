@@ -37,6 +37,8 @@ GET         /brand/new                                                controller
 POST        /brand/new                                                controllers.Brands.create
 GET         /brand/:code                                              controllers.Brands.details(code: String)
 GET         /brand/:id/tabs                                           controllers.Brands.renderTabs(id: Long, tab: String)
+POST        /brand/:id/member                                         controllers.Brands.addMember(id: Long)
+DELETE      /brand/:id/member/:personId                               controllers.Brands.removeMember(id: Long, personId: Long)
 POST        /brand/:code                                              controllers.Brands.update(code)
 GET         /brand/:code/events                                       controllers.Brands.events(code, future: Option[Boolean])
 GET         /brand/:code/edit                                         controllers.Brands.edit(code)

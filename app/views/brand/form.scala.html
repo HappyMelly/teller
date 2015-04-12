@@ -1,5 +1,6 @@
 @(user: UserIdentity,
     code: Option[String],
+    people: List[Person],
     form: Form[Brand])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
@@ -27,7 +28,7 @@
           @html.text(form("name"), '_label -> "Name")
           @html.text(form("tagLine"), '_label -> "Tagline")
           @html.select(form("coordinatorId"),
-            ("", "Choose a brand coordinator") :: Person.findActive.map(p => (p.id.get.toString, p.fullName)),
+            ("", "Choose a brand coordinator") :: people.map(p => (p.id.get.toString, p.fullName)),
             '_label -> "Coordinator")
           @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
             '_help -> views.html.element.markdownHelp())

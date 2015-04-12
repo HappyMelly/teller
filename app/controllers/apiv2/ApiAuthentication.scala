@@ -28,13 +28,13 @@ import models.admin.ApiToken
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.libs.json._
+import controllers.JsonController
 import play.api.mvc._
 
 /**
  * Provides token-based authentication for API actions.
  */
-trait ApiAuthentication extends Controller with Services {
+trait ApiAuthentication extends JsonController with Services {
 
   val ApiTokenParam = "api_token"
 
@@ -72,12 +72,4 @@ trait ApiAuthentication extends Controller with Services {
     else
       jsonUnauthorized
   }
-
-  protected def jsonUnauthorized = Unauthorized("Unauthorized")
-
-  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
-
-  protected def jsonNotFound(msg: String) = NotFound(msg)
-
-  protected def jsonBadRequest(msg: String) = BadRequest(msg)
 }

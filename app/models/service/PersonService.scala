@@ -98,6 +98,13 @@ class PersonService {
     query.firstOption
   }
 
+  /**
+   * Returns a list of active people
+   */
+  def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
+    Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+  }
+
   /** Returns list of people which are not members (yet!) */
   def findNonMembers: List[Person] = DB.withSession { implicit session ⇒
     import scala.language.postfixOps

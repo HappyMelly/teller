@@ -25,7 +25,7 @@
 package models.service
 
 import models.service.admin.ApiTokenService
-import models.service.brand.{ CertificateTemplateService, BrandFeeService, EventTypeService }
+import models.service.brand.{ BrandTeamMemberService, CertificateTemplateService, BrandFeeService, EventTypeService }
 
 /** Contains references to all services so we can stub them in tests */
 trait Services {
@@ -33,6 +33,8 @@ trait Services {
   def apiTokenService: ApiTokenService = ApiTokenService.get
 
   def brandService: BrandService = BrandService.get
+
+  def brandTeamMemberService: BrandTeamMemberService = BrandTeamMemberService.get
 
   def certificateService: CertificateTemplateService = CertificateTemplateService.get
 

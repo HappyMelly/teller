@@ -248,7 +248,7 @@ object Participants extends Controller with Security with Services {
 
         val account = user.account
         val brands = Brand.findByUser(account)
-        val people = Person.findActive
+        val people = personService.findActive
         val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
           request.session.get("brandCode").getOrElse("")
         }
@@ -271,7 +271,7 @@ object Participants extends Controller with Security with Services {
         formWithErrors ⇒ {
           val account = user.account
           val brands = Brand.findByUser(account)
-          val people = Person.findActive
+          val people = personService.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
             newPersonForm(account, user.fullName), formWithErrors,
@@ -282,7 +282,7 @@ object Participants extends Controller with Security with Services {
             case Some(p) ⇒ {
               val account = user.account
               val brands = Brand.findByUser(account)
-              val people = Person.findActive
+              val people = personService.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
               BadRequest(views.html.participant.form(user, None, brands, people,
                 newPersonForm(account, user.fullName), form.withError("participantId", "error.participant.exist"),
@@ -319,7 +319,7 @@ object Participants extends Controller with Security with Services {
 
       form.fold(
         formWithErrors ⇒ {
-          val people = Person.findActive
+          val people = personService.findActive
           val brands = Brand.findByUser(account)
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,

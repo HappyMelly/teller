@@ -25,17 +25,18 @@
 package controllers.acceptance
 
 import controllers.Brands
-import helpers.ProductHelper
+import helpers.{ PersonHelper, ProductHelper }
 import integration.PlayAppSpec
 import models.brand.{ CertificateTemplate, EventType }
+import models.service.BrandService
 import models.service.brand.{ CertificateTemplateService, EventTypeService }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import stubs.{ FakeProductService, FakeUserIdentity, FakeServices }
 
 /**
- * Tests Brands controller
+ * Tests Brands controller methods, rendering Details page
  */
-class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
+class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   override def is = s2"""
 
   On 'Event Types' tab on a Brand page a user should see
@@ -53,6 +54,12 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     no table if there is no templates                             $e8
     no 'Add Certificate Template' button if she is a Viewer       $e9
     'Add Certificate Template' button if he is an Editor          $e10
+
+  On 'Team' tab on a Brand page a user should see
+    a list of team members of the requested brand                 $e11
+    no 'Add Team Member' or 'Delete' buttons if she is a Viewer   $e13
+    'Add Team Member' or 'Delete' buttons if he is an Editor      $e14
+
   """
 
   class TestBrands extends Brands with FakeServices
@@ -64,6 +71,8 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.productService_=(productService)
   val certificateService = mock[CertificateTemplateService]
   controller.certificateService_=(certificateService)
+  val brandService = mock[BrandService]
+  controller.brandService_=(brandService)
 
   def e1 = new MockContext {
     val eventTypes = List(
@@ -163,5 +172,33 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     val res = controller.renderTabs(1L, "templates").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Certificate Template")
+  }
+
+  def e11 = new MockContext {
+    val team = List(PersonHelper.one(), PersonHelper.two())
+    (brandService.team _).expects(1L).returning(team)
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
+    val res = controller.renderTabs(1L, "team").apply(req)
+    status(res) must equalTo(OK)
+    contentAsString(res) must contain("First Tester")
+    contentAsString(res) must contain("Second Tester")
+  }
+
+  def e13 = new MockContext {
+    (brandService.team _).expects(1L).returning(List())
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
+    val res = controller.renderTabs(1L, "team").apply(req)
+    status(res) must equalTo(OK)
+    contentAsString(res) must not contain "Add Team Member"
+    contentAsString(res) must not contain "glyphicon-trash"
+  }
+
+  def e14 = new MockContext {
+    (brandService.team _).expects(1L).returning(List(PersonHelper.one()))
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val res = controller.renderTabs(1L, "team").apply(req)
+    status(res) must equalTo(OK)
+    contentAsString(res) must contain("Add Team Member")
+    contentAsString(res) must contain("glyphicon-trash")
   }
 }

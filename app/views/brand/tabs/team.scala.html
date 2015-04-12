@@ -1,0 +1,54 @@
+@(brandId: Long,
+    members: List[Person],
+    people: List[Person])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.Role._
+
+<p>Team members help a brand owner to run brand-related activities. They have
+  the same access rights as the owner: managing events, facilitators and
+licenses.</p>
+<p>Team members could set what notifications about brand activities they want
+to receive from the system.</p>
+<br/>
+<div id="teamNotification">
+</div>
+<table id="members" class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for(member <- members) {
+      <tr data-id="@member.id.get" data-brandid="@brandId">
+        <td><a href="@routes.People.details(member.id.get)">@member.fullName</a></td>
+        @restrict(handler, List(as(Editor.toString))) {
+          <td><a class="remove" data-href="@routes.Brands.removeMember(brandId, member.id.get)"
+          href="#" data-name="@member.fullName" data-id="@member.id.get"><i class="glyphicon glyphicon-trash"></i></a></td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>
+@restrict(handler, List(as(Editor.toString))) {
+  <form id="addMemberForm" class="form-inline pull-right" method="POST" action="@CSRF(routes.Brands.addMember(brandId))">
+    <select class="form-control input-sm" name="personId">
+    @for(person <- people) {
+      <option value="@person.id">@person.fullName</option>
+    }
+    </select>
+    <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i> Add Team Member</button>
+  </form>
+}
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.People.details,
+  routes.javascript.Brands.removeMember
+)
