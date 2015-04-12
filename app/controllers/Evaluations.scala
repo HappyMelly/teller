@@ -181,7 +181,7 @@ trait Evaluations extends EvaluationsController
     implicit handler ⇒ implicit user ⇒
 
       evaluationService.find(id) map { x ⇒
-        val brand = brandService.find(x.event.brandCode).get
+        val brand = brandService.find(x.event.brandId).get
         val en = translationService.find("EN").get
         val participant = personService.find(x.eval.personId).get
         Ok(views.html.evaluation.details(user, x,
@@ -262,7 +262,7 @@ trait Evaluations extends EvaluationsController
             Event.ratingActor ! ev.eventId
             Facilitator.ratingActor ! ev.eventId
             val approver = user.person
-            val brand = Brand.find(x.event.brandCode).get
+            val brand = brandService.findWithCoordinators(x.event.brandId).get
             Participant.find(ev.personId, ev.eventId) foreach { data ⇒
               if (data.certificate.isEmpty && brand.brand.generateCert) {
                 val cert = new Certificate(ev.handled, x.event, ev.participant)
@@ -272,7 +272,7 @@ trait Evaluations extends EvaluationsController
                 val body = mail.evaluation.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
                 val subject = s"Your ${brand.brand.name} event's evaluation approval"
                 email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
-                  Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
+                  Some(brand.coordinators.toSet), subject, body, richMessage = true, None)
               } else {
                 val cert = new Certificate(ev.handled, x.event, ev.participant, renew = true)
                 cert.send(brand, approver)
@@ -319,12 +319,12 @@ trait Evaluations extends EvaluationsController
             user.person,
             Activity.Predicate.Rejected).insert
 
-          val brand = Brand.find(x.event.brandCode).get
+          val brand = brandService.findWithCoordinators(x.event.brandId).get
           val participant = x.eval.participant
           val subject = s"Your ${brand.brand.name} certificate"
           email.send(Set(participant),
             Some(x.event.facilitators.toSet),
-            Some(Set(brand.coordinator)), subject,
+            Some(brand.coordinators.toSet), subject,
             mail.evaluation.html.rejected(brand.brand, participant, user.person).toString(),
             richMessage = true)
 
@@ -358,18 +358,17 @@ trait Evaluations extends EvaluationsController
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
       EventService.get.findByParameters(
-        brandCode = None,
+        brandId = None,
         archived = Some(false),
         confirmed = Some(true))
     } else {
       val brands = Brand.findByCoordinator(account.personId)
       if (brands.length > 0) {
-        val brandCodes = brands.map(_.code)
         val events = EventService.get.findByParameters(
-          brandCode = None,
+          brandId = None,
           archived = Some(false),
           confirmed = Some(true))
-        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+        events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
       } else {
         List[Event]()
       }

@@ -59,13 +59,11 @@ trait EventTypes extends Controller with Security with Services {
   /**
    * Returns a list of event types for the given brand in JSON format
    *
-   * @param brandCode Brand code
+   * @param brandId Brand id
    */
-  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandCode) map { brand ⇒
-        Ok(Json.toJson(eventTypeService.findByBrand(brand.id.get)))
-      } getOrElse NotFound("Unknown brand")
+      Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
   }
 
   /**
@@ -75,8 +73,9 @@ trait EventTypes extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
+      //BUG and what if brand does not exist?
       val brand = brandService.find(boundForm.data("brandId").toLong).get
-      val route = routes.Brands.details(brand.code).url + "#types"
+      val route = routes.Brands.details(brand.id.get).url + "#types"
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
         eventType ⇒ {
@@ -125,9 +124,9 @@ trait EventTypes extends Controller with Security with Services {
 
       eventTypeService.find(id).map { eventType ⇒
         val brand = eventType.brand
-        val route = routes.Brands.details(brand.code).url + "#types"
+        val route = routes.Brands.details(brand.id.get).url + "#types"
         val events = eventService.findByParameters(
-          brandCode = None,
+          brandId = None,
           eventType = Some(eventType.id.get))
         if (events.length > 0) {
           Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))

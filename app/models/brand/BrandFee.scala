@@ -30,12 +30,12 @@ import org.joda.money.Money
 /**
  * Represents fee for 16-hours event per country
  * @param id Fee identifier
- * @param brand Brand code
+ * @param brand Brand id
  * @param country Country code
  * @param fee Fee
  */
 case class BrandFee(id: Option[Long],
-  brand: String,
+  brand: Long,
   country: String,
   fee: Money) extends Services {
 

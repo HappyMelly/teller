@@ -25,6 +25,7 @@
 package controllers
 
 import models._
+import models.service.Services
 import org.joda.time.LocalDate
 import play.api.mvc._
 import play.api.cache.Cache
@@ -32,7 +33,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
 
-object Certificates extends Controller with Security {
+object Certificates extends Controller with Security with Services {
 
   /**
    * Generate new certificate
@@ -53,7 +54,7 @@ object Certificates extends Controller with Security {
           else
             None
           val event = participant.event.get
-          val brand = Brand.find(event.brandCode).get
+          val brand = brandService.findWithCoordinators(event.brandId).get
           val person = participant.person.get
           val issued = participant.issued getOrElse LocalDate.now()
           val certificate = new Certificate(Some(issued), event, person, renew = true)
@@ -61,7 +62,7 @@ object Certificates extends Controller with Security {
           participant.copy(
             certificate = Some(certificate.id),
             issued = Some(issued)).update
-          val route = ref match {
+          val route: String = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
             case _ ⇒ routes.Events.details(eventId).url + "#participant"

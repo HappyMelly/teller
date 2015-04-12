@@ -34,11 +34,11 @@ class BrandFeeService {
 
   /**
    * Returns a list of fees belonged to the given brand
-   * @param brand Brand code
+   * @param brandId Brand id
    */
-  def findByBrand(brand: String): List[BrandFee] = DB.withSession {
+  def findByBrand(brandId: Long): List[BrandFee] = DB.withSession {
     implicit session ⇒
-      Query(BrandFees).filter(_.brand === brand).list
+      Query(BrandFees).filter(_.brandId === brandId).list
   }
 
   /**

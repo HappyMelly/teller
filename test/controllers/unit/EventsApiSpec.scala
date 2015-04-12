@@ -25,8 +25,9 @@
 package controllers.unit
 
 import controllers.apiv2.{ ApiAuthentication, EventsApi }
-import helpers.{ EventHelper, PersonHelper }
+import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models.Event
+import models.service.BrandService
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import play.api.libs.json._
@@ -57,7 +58,7 @@ class EventsApiSpec extends Specification {
       contentType(result) must beSome("text/plain")
       charset(result) must beSome("utf-8")
       contentAsJson(result) mustEqual Json.obj(
-        "brand" -> "TEST",
+        "brand" -> 1,
         "type" -> 1,
         "title" -> "Test event",
         "description" -> None.asInstanceOf[Option[String]],
@@ -84,22 +85,25 @@ class EventsApiSpec extends Specification {
       val controller = new TestEventsApi()
       val result: Future[SimpleResult] = controller.event(101).apply(FakeRequest())
       status(result) must equalTo(NOT_FOUND)
-      contentType(result) must beSome("text/plain")
-      contentAsString(result) mustEqual "Unknown event"
+      contentType(result) must beSome("application/json")
+      contentAsString(result) must contain("Unknown event")
     }
   }
 
   "Events API call" should {
     "pass all parameters to findByFacilitator in a right order" in new MockContext {
-      val service = mock[StubEventService]
+      val eventService = mock[StubEventService]
+      val brandService = mock[BrandService]
       inSequence {
-        (service.findByFacilitator _)
-          .expects(1, Some("TEST"), None, Some(true), Some(false))
+        (brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
+        (eventService.findByFacilitator _)
+          .expects(1, Some(1L), None, Some(true), Some(false))
           .returning(List[Event]())
-        (service.applyFacilitators _).expects(*)
+        (eventService.applyFacilitators _).expects(*)
       }
       val controller = new TestEventsApi()
-      controller.eventService_=(service)
+      controller.eventService_=(eventService)
+      controller.brandService_=(brandService)
       controller.events(
         "TEST",
         future = None,
@@ -112,14 +116,17 @@ class EventsApiSpec extends Specification {
 
     "pass all parameters to findByParameters in a right order" in new MockContext {
       val service = mock[StubEventService]
+      val brandService = mock[BrandService]
       inSequence {
+        (brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
         (service.findByParameters _)
-          .expects(Some("TEST"), None, Some(true), Some(false), None, Some("UK"), Some(1L))
+          .expects(Some(1L), None, Some(true), Some(false), None, Some("UK"), Some(1L))
           .returning(List[Event]())
         (service.applyFacilitators _).expects(*)
       }
       val controller = new TestEventsApi()
       controller.eventService_=(service)
+      controller.brandService_=(brandService)
       controller.events(
         "TEST",
         future = None,
@@ -132,7 +139,9 @@ class EventsApiSpec extends Specification {
 
     "return events in JSON format" in new MockContext {
       val service = mock[StubEventService]
+      val brandService = mock[BrandService]
       inSequence {
+        (brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
         (service.findByFacilitator _)
           .expects(*, *, *, *, *)
           .returning(List[Event](EventHelper.one, EventHelper.two))
@@ -140,6 +149,7 @@ class EventsApiSpec extends Specification {
       }
       val controller = new TestEventsApi()
       controller.eventService_=(service)
+      controller.brandService_=(brandService)
       val result: Future[SimpleResult] = controller.events(
         "TEST",
         future = None,

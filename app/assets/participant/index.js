@@ -61,7 +61,7 @@ function loadEventList(events) {
 
 $(document).ready( function() {
     var currentBrand = $('#brands').val();
-    var brandInSession = $('#participants').attr('brandCode');
+    var brandInSession = $('#participants').attr('brandId');
     if (brandInSession) {
         currentBrand = brandInSession;
         $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
@@ -155,12 +155,12 @@ $(document).ready( function() {
     });
 
     $("#brands").change(function() {
-        var brandCode = $(this).find(':selected').val();
+        var brandId = $(this).find(':selected').val();
         events = [];
         participantTable
             .api()
             .ajax
-            .url("participants/brand/" + brandCode)
+            .url("participants/brand/" + brandId)
             .load(function(){
                 loadEventList(events);
             });

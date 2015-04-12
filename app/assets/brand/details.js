@@ -108,7 +108,7 @@ function addMember(personId, name, brandId) {
                     .attr('data-id', personId)
                     .attr('data-name', name)
                     .attr('data-href',
-                    jsRoutes.controllers.Brands.removeMember(brandId, personId).url)))
+                    jsRoutes.controllers.Brands.removeCoordinator(brandId, personId).url)))
     );
     $('select[name="personId"]').children('option[value=' + personId + ']').remove();
 }

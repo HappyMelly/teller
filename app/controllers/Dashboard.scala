@@ -74,7 +74,7 @@ trait Dashboard extends Controller with Security with Services {
           List()
         val events = eventService.findByFacilitator(
           account.personId,
-          brand = None)
+          brandId = None)
         val upcomingEvents = events.
           filter(_.schedule.end.toString >= LocalDate.now().toString).
           slice(0, 3)

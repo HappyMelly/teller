@@ -32,13 +32,13 @@ function showError(message) {
 
 /**
  * Retrieve a list of event types for the brand
- * @param brandCode     String
- * @param currentEvent  String
+ * @param brandId {int}
+ * @param currentEvent  {string}
  */
-function getEvents(brandCode, currentEvent) {
+function getEvents(brandId, currentEvent) {
     //TODO it should retrieve archived events only
     $.ajax({
-        url: '/brand/' + brandCode + '/events',
+        url: '/brand/' + brandId + '/events',
         dataType: "json"
     }).done(function(data) {
             var selector = "[name=eventId]";
@@ -98,9 +98,9 @@ $(document).ready(function() {
     });
 
     var eventId = $('#currentEvent').attr('value');
-    var code = $('#currentBrand').attr('value');
-    if (code) {
-        $("[name=brandId]").find('[value=' + code + ']').attr('selected', 'selected');
-        getEvents(code, eventId);
+    var brandId = $('#currentBrand').attr('value');
+    if (brandId) {
+        $("[name=brandId]").find('[value=' + brandId + ']').attr('selected', 'selected');
+        getEvents(brandId, eventId);
     }
 });

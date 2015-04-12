@@ -1,75 +1,73 @@
 @(user: UserIdentity,
         brands: List[Brand],
-        brandCode: String)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+        brandId: Long)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
-    @import models.UserRole.Role._
-    @import be.objectify.deadbolt.scala.views.html._
-    @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.scala.views.html._
 
-    @main("Participants", "participants", user) {
+@main("Participants", "participants", user) {
 
-        @element.evaluationActions()
-        @html.indexPageHeader("Participants") {
-            <div class="pull-right">
-                @dynamic(handler, "event", "add") {
-                    <a class="btn btn-success" href="@routes.Participants.add(brandCode = None, eventId = None, ref = None)">
-                        <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Participant</a>
-                }
-                @dynamic(handler, "evaluation", "add") {
-                    <a class="btn btn-success" href="@routes.Evaluations.add(None, None)">
-                        <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Evaluation</a>
-                }
-            </div>
-        }
-        <div class="col-md-12">
-            <div id="filter-containter">
-                <div class="pull-left">
-                    <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
-                        <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
-                </div>
-                <div class="toolbar pull-right">
-                    <div class="btn-group">
-                        <select id="brands" class="input-sm form-control">
-                        @for(brand <- brands) {
-                            <option value="@brand.code">@brand.name</option>
-                        }
-                        </select>
-                    </div>
-                    <div class="btn-group">
-                        <select id="events" class="input-sm form-control">
-                            <option value="">Select an event</option>
-                        </select>
-                    </div>
-                    <div class="btn-group">
-                        <select id="status" class="input-sm form-control">
-                            <option value="all"></option>
-                            <option value="0">Unconfirmed</option>
-                            <option value="1">Pending</option>
-                            <option value="2">Approved</option>
-                            <option value="3">Rejected</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <table id="participants" class="datatables table table-bordered" brandCode="@brandCode">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Participant</th>
-                        <th width="20%">Event</th>
-                        <th>Location</th>
-                        <th>Dates</th>
-                        <th width="5%" align="center" id="impression"></th>
-                        <th>Evaluation Date</th>
-                        <th>Handled Date</th>
-                        <th>Certificate Number</th>
-                        <th>Event id </th>
-                        <th></th>
-                    </tr>
-                </thead>
-            </table>
+    @element.evaluationActions()
+    @html.indexPageHeader("Participants") {
+        <div class="pull-right">
+            @dynamic(handler, "event", "add") {
+                <a class="btn btn-success" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
+                    <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Participant</a>
+            }
+            @dynamic(handler, "evaluation", "add") {
+                <a class="btn btn-success" href="@routes.Evaluations.add(None, None)">
+                    <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Evaluation</a>
+            }
         </div>
-
-        <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
     }
+    <div class="col-md-12">
+        <div id="filter-containter">
+            <div class="pull-left">
+                <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+                    <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+            </div>
+            <div class="toolbar pull-right">
+                <div class="btn-group">
+                    <select id="brands" class="input-sm form-control">
+                    @for(brand <- brands) {
+                        <option value="@brand.id.get">@brand.name</option>
+                    }
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <select id="events" class="input-sm form-control">
+                        <option value="">Select an event</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <select id="status" class="input-sm form-control">
+                        <option value="all"></option>
+                        <option value="0">Unconfirmed</option>
+                        <option value="1">Pending</option>
+                        <option value="2">Approved</option>
+                        <option value="3">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <table id="participants" class="datatables table table-bordered" brandId="@brandId">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Participant</th>
+                    <th width="20%">Event</th>
+                    <th>Location</th>
+                    <th>Dates</th>
+                    <th width="5%" align="center" id="impression"></th>
+                    <th>Evaluation Date</th>
+                    <th>Handled Date</th>
+                    <th>Certificate Number</th>
+                    <th>Event id </th>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+    <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
+}

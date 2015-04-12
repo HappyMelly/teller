@@ -123,7 +123,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   private def expectations(): Unit = {
-    (brandService.find(_: String)).expects(brand.code).returning(Some(brand))
+    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
     (translationService.find(_: String)).expects("EN").returning(Some(translation))
     (personService.find(_: Long)).expects(1L).returning(Some(PersonHelper.one()))
   }

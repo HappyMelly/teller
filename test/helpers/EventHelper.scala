@@ -31,7 +31,7 @@ object EventHelper {
 
   def make(id: Option[Long] = None,
     eventTypeId: Option[Long] = None,
-    brandCode: Option[String] = None,
+    brandId: Option[Long] = None,
     title: Option[String] = None,
     spokenLanguage: Option[String] = None,
     secondSpokenLanguage: Option[String] = None,
@@ -46,13 +46,12 @@ object EventHelper {
     invoice: Option[EventInvoice] = None,
     facilitatorIds: Option[List[Long]] = None): Event = {
 
-    val code = brandCode.getOrElse(BrandHelper.one.code)
     val invoice = new EventInvoice(None, None, 1, None, None)
     val language = new Language(
       spokenLanguage.getOrElse("DE"),
       secondSpokenLanguage,
       materialsLanguage)
-    var event = new Event(id, eventTypeId.getOrElse(1), code, title.getOrElse("Test event"),
+    var event = new Event(id, eventTypeId.getOrElse(1), brandId.getOrElse(1L), title.getOrElse("Test event"),
       language, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
       new Details(None, None, None, None),
       new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())),
@@ -65,7 +64,7 @@ object EventHelper {
     event
   }
 
-  def addEvents(brand: String) = {
+  def addEvents(brandId: Long) = {
     Seq(
       ("one", "2013-01-01", "2013-01-03", true, false, true, "RU", 1, List(1L, 2L)),
       ("two", "2013-01-01", "2013-01-03", true, false, false, "RU", 1, List(1L, 4L)),
@@ -79,7 +78,7 @@ object EventHelper {
             title = Some(title),
             startDate = Some(LocalDate.parse(start)),
             endDate = Some(LocalDate.parse(end)),
-            brandCode = Some(brand),
+            brandId = Some(brandId),
             notPublic = Some(!public),
             archived = Some(archived),
             confirmed = Some(confirmed),

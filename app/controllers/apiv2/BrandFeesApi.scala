@@ -41,7 +41,6 @@ trait BrandFeesApi extends Controller with ApiAuthentication with Services {
     def writes(fee: BrandFee): JsValue = {
       Json.obj(
         "id" -> fee.id.get,
-        "brand" -> fee.brand,
         "country" -> fee.country,
         "fee" -> fee.fee.toString)
     }
@@ -54,8 +53,10 @@ trait BrandFeesApi extends Controller with ApiAuthentication with Services {
   def fees(brand: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       implicit token ⇒
-        val fees = feeService.findByBrand(brand)
-        jsonOk(Json.toJson(fees))
+        brandService.find(brand) map { x ⇒
+          val fees = feeService.findByBrand(x.id.get)
+          jsonOk(Json.toJson(fees))
+        } getOrElse jsonNotFound("Unknown brand")
   }
 }
 

@@ -13,12 +13,12 @@
   }
 
   <div class="col-md-12">
-    @if(!brands.isEmpty) {
+    @if(brands.nonEmpty) {
       <table id="brands" class="datatables table table-bordered">
       <thead>
         <tr>
           <th>Name</th>
-          <th>Co-ordinator</th>
+          <th>Owner</th>
           @restrict(handler, List(as(Editor.toString))) {
             <th></th>
           }
@@ -27,10 +27,10 @@
       <tbody>
         @for(brand <- brands) {
           <tr>
-            <td><a href="@routes.Brands.details(brand.brand.code)">@brand.brand.name</a></td>
+            <td><a href="@routes.Brands.details(brand.brand.id.get)">@brand.brand.name</a></td>
             <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
             @restrict(handler, List(as(Editor.toString))) {
-              <td><a href="@routes.Brands.edit(brand.brand.code)"><i class="glyphicon glyphicon-pencil"></i> Edit</a></td>
+              <td><a href="@routes.Brands.edit(brand.brand.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a></td>
             }
           </tr>
         }

@@ -95,7 +95,7 @@
     </div>
   }
 
-  <input type="hidden" disabled id="brandCode" value="@event.brandCode"/>
+  <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <div class="col-md-8">
     <div class="col-md-9">
       <dl class="dl-horizontal">
@@ -120,7 +120,7 @@
       </dl>
       <dl class="dl-horizontal">
         <dt class="text-muted">Brand</dt>
-        <dd class="text-muted"><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></dd>
+        <dd class="text-muted"><a href="@routes.Brands.details(event.brandId)">@event.brandId</a></dd>
         <dt class="text-muted">Event type</dt>
         <dd class="text-muted">@typeName</dd>
       </dl>
@@ -169,7 +169,8 @@
       </dl>
     </div>
   </div>
-  @views.html.element.brandFees(event.brandCode, fees)
+  <!-- TODO change to brand name -->
+  @views.html.element.brandFees(event.brandId.toString, fees)
   <div class="col-md-3 col-md-offset-1x">
     <legend>Invoice</legend>
     <p>
@@ -235,7 +236,7 @@
           <div id="filter-containter">
             <div class="pull-right">
               <a class="input-sm" tabindex="-1"
-              href="@routes.Participants.add(Some(event.brandCode), event.id, Some("event")).url" title="Add Participant">
+              href="@routes.Participants.add(Some(event.brandId), event.id, Some("event")).url" title="Add Participant">
                 <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
               <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                 <i class="glyphicon glyphicon-envelope"></i>

@@ -61,9 +61,9 @@ object Facilitators extends Controller with Security {
    * Returns a list of facilitators for the given brand on today,
    * including the coordinator of the brand
    */
-  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val facilitators = Brand.findFacilitators(brandCode)
+      val facilitators = Brand.findFacilitators(brandId)
       if (facilitators.length > 0) {
         PeopleCollection.organisations(facilitators)
       }

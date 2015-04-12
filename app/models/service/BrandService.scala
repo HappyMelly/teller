@@ -24,7 +24,7 @@
  */
 package models.service
 
-import models.database.brand.BrandTeamMembers
+import models.database.brand.BrandCoordinators
 import models.{ Person, Brand }
 import models.database.{ People, Brands }
 import play.api.Play.current
@@ -33,7 +33,21 @@ import play.api.db.slick.DB
 
 import scala.slick.lifted.Query
 
+case class BrandWithCoordinators(brand: Brand, coordinators: List[Person])
+
 class BrandService {
+
+  /**
+   * Returns list of team members for the given brand
+   * @param brandId Brand identifier
+   */
+  def coordinators(brandId: Long): List[Person] = DB.withSession { implicit session ⇒
+    val query = for {
+      t ← BrandCoordinators if t.brandId === brandId
+      p ← People if p.id === t.personId
+    } yield p
+    query.list()
+  }
 
   /**
    * Returns brand if it exists, otherwise - None
@@ -59,15 +73,23 @@ class BrandService {
   }
 
   /**
-   * Returns list of team members for the given brand
-   * @param brandId Brand identifier
+   * Returns brand with its coordinators if exists; otherwise - None
+   * @param id Brand id
    */
-  def team(brandId: Long): List[Person] = DB.withSession { implicit session ⇒
-    val query = for {
-      t ← BrandTeamMembers if t.brandId === brandId
-      p ← People if p.id === t.personId
-    } yield p
-    query.list()
+  def findWithCoordinators(id: Long): Option[BrandWithCoordinators] =
+    find(id) flatMap { x ⇒ Some(BrandWithCoordinators(x, coordinators(id))) }
+
+  /**
+   * Returns true if the given person is a coordinator of the given brand
+   * @param brandId Brand id
+   * @param personId Person id
+   */
+  def isCoordinator(brandId: Long, personId: Long): Boolean = DB.withSession {
+    implicit session ⇒
+      Query(Query(BrandCoordinators)
+        .filter(_.brandId === brandId)
+        .filter(_.personId === personId)
+        .exists).first()
   }
 }
 

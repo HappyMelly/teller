@@ -24,7 +24,7 @@
 
 package models.service.brand
 
-import models.database.brand.BrandTeamMembers
+import models.database.brand.BrandCoordinators
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -43,7 +43,7 @@ class BrandTeamMemberService {
    */
   def insert(brandId: Long, personId: Long) = DB.withSession {
     implicit session: Session ⇒
-      BrandTeamMembers.forInsert.insert((brandId, personId))
+      BrandCoordinators.forInsert.insert((brandId, personId))
   }
 
   /**
@@ -53,7 +53,7 @@ class BrandTeamMemberService {
    */
   def delete(brandId: Long, personId: Long) = DB.withSession {
     implicit session: Session ⇒
-      Query(BrandTeamMembers).
+      Query(BrandCoordinators).
         filter(_.brandId === brandId).
         filter(_.personId === personId).mutate(_.delete())
   }

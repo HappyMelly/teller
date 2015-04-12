@@ -171,6 +171,7 @@ class TellerResourceHandler(account: Option[UserAccount])
     account.exists { existingAccount ⇒
       val userId = existingAccount.personId
       name match {
+        case "brand" ⇒ checkBrandPermission(existingAccount, meta, request.uri)
         case "evaluation" ⇒
           meta match {
             case "add" ⇒ existingAccount.coordinator || existingAccount.editor
@@ -182,17 +183,7 @@ class TellerResourceHandler(account: Option[UserAccount])
               existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canFacilitate(userId))
             case _ ⇒ true
           }
-        case "event" ⇒
-          meta match {
-            case "add" ⇒ existingAccount.facilitator || existingAccount.editor
-            case "edit" ⇒
-              val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || eventService.find(eventId.get.toLong).exists(_.canFacilitate(userId))
-            case "admin" ⇒
-              val eventId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || eventService.find(eventId.get.toLong).exists(_.isBrandManager(userId))
-            case _ ⇒ true
-          }
+        case "event" ⇒ checkEventPermission(existingAccount, meta, request.uri)
         case "person" ⇒
           meta match {
             case "edit" ⇒
@@ -240,6 +231,46 @@ class TellerResourceHandler(account: Option[UserAccount])
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
     false
+  }
+
+  protected def checkEventPermission(account: UserAccount, meta: String, url: String): Boolean = {
+    val userId = account.personId
+    meta match {
+      case "add" ⇒ account.facilitator || account.editor
+      case "edit" ⇒
+        id(url) exists { eventId ⇒
+          account.editor || eventService.find(eventId).exists(_.canFacilitate(userId))
+        }
+      case "admin" ⇒
+        id(url) exists { eventId ⇒
+          account.editor || eventService.find(eventId).exists(_.isBrandManager(userId))
+        }
+      case _ ⇒ true
+    }
+  }
+
+  /**
+   * Returns true if the given user is allowed to execute a brand-related action
+   * @param account User account
+   * @param meta Action identifier
+   * @param url Request url
+   */
+  protected def checkBrandPermission(account: UserAccount, meta: String, url: String): Boolean = {
+    meta match {
+      case "coordinator" ⇒
+        id(url) exists { brandId ⇒
+          account.editor || brandService.isCoordinator(brandId, account.personId)
+        }
+      case _ ⇒ false
+    }
+  }
+
+  /**
+   * Returns the first long number from the given url
+   * @param url Url
+   */
+  protected def id(url: String): Option[Long] = """\d+""".r findFirstIn url flatMap { x ⇒
+    try { Some(x.toLong) } catch { case _: NumberFormatException ⇒ None }
   }
 
 }

@@ -123,7 +123,7 @@ error.payment.expired_card = Your card has expired. Please check card details.
 error.payment.processing_error = An error occurred while processing your card. Try again in a little bit. Please contact the system support if the error persists.
 
 error.brand.invalid = You are not allowed to create events for this brand
-error.brand.alreadyMember = This person is already a team member
+error.brand.alreadyMember = This person is already a coordinator
 
 error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
 error.evaluation.reject.unconfirmed = You cannot reject an unconfirmed evaluation
@@ -182,8 +182,8 @@ constraint.brand.uniqueName.error = Letters, numbers, dots and underscores only
 constraint.product.title.exists = A product with title "{0}" already exists
 constraint.transactionType.exists = Transaction type already exists
 
-success.brand.newMember = You added new team member
-success.brand.deleteMember = You removed a team member
+success.brand.newMember = You added new coordinator
+success.brand.deleteMember = You removed a coordinator
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org

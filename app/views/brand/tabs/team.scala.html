@@ -6,14 +6,12 @@
     token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
-@import models.UserRole.Role._
 
-<p>Team members help a brand owner to run brand-related activities. They have
+<p>Brand coordinators help a brand owner to run brand-related activities. They have
   the same access rights as the owner: managing events, facilitators and
 licenses.</p>
-<p>Team members could set what notifications about brand activities they want
+<p>Brand coordinators could set what notifications about brand activities they want
 to receive from the system.</p>
 <br/>
 <div id="teamNotification">
@@ -29,16 +27,16 @@ to receive from the system.</p>
     @for(member <- members) {
       <tr data-id="@member.id.get" data-brandid="@brandId">
         <td><a href="@routes.People.details(member.id.get)">@member.fullName</a></td>
-        @restrict(handler, List(as(Editor.toString))) {
-          <td><a class="remove" data-href="@routes.Brands.removeMember(brandId, member.id.get)"
+        @dynamic(handler, "brand", "coordinator") {
+          <td><a class="remove" data-href="@routes.Brands.removeCoordinator(brandId, member.id.get)"
           href="#" data-name="@member.fullName" data-id="@member.id.get"><i class="glyphicon glyphicon-trash"></i></a></td>
         }
       </tr>
     }
   </tbody>
 </table>
-@restrict(handler, List(as(Editor.toString))) {
-  <form id="addMemberForm" class="form-inline pull-right" method="POST" action="@CSRF(routes.Brands.addMember(brandId))">
+@dynamic(handler, "brand", "coordinator") {
+  <form id="addMemberForm" class="form-inline pull-right" method="POST" action="@CSRF(routes.Brands.addCoordinator(brandId))">
     <select class="form-control input-sm" name="personId">
     @for(person <- people) {
       <option value="@person.id">@person.fullName</option>
@@ -50,5 +48,5 @@ to receive from the system.</p>
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.People.details,
-  routes.javascript.Brands.removeMember
+  routes.javascript.Brands.removeCoordinator
 )

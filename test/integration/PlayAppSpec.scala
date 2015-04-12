@@ -168,6 +168,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `API_TOKEN`").execute
     Q.updateNA("TRUNCATE `BRAND`").execute
     Q.updateNA("TRUNCATE `BRAND_FEE`").execute
+    Q.updateNA("TRUNCATE `BRAND_COORDINATOR`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
     Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
     Q.updateNA("TRUNCATE `EVALUATION`").execute

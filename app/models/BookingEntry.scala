@@ -172,7 +172,8 @@ case class BookingEntrySummary(
   to: String,
   toAmount: Money,
 
-  brandCode: Option[String],
+  brandId: Option[Long],
+  brandName: Option[String],
   summary: String,
 
   fromId: Long,
@@ -237,17 +238,17 @@ object BookingEntry {
     entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
     fromPerson.firstName.?, fromPerson.lastName.?, fromOrganisation.name.?, entry.fromCurrency -> entry.fromAmount,
     toPerson.firstName.?, toPerson.lastName.?, toOrganisation.name.?, entry.toCurrency -> entry.toAmount,
-    brand.code.?, entry.summary)
+    brand.id.?, brand.name.?, entry.summary)
 
-  type BookingEntriesQueryResult = (Long, Long, DateTime, Int, LocalDate, (String, BigDecimal), Int, Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], String)
+  type BookingEntriesQueryResult = (Long, Long, DateTime, Int, LocalDate, (String, BigDecimal), Int, Option[String], Option[String], Option[String], (String, BigDecimal), Option[String], Option[String], Option[String], (String, BigDecimal), Option[Long], Option[String], String)
 
   val mapBookingEntryResult: (BookingEntriesQueryResult ⇒ BookingEntrySummary) = {
     case (fromId, toId, created, number, date, source, sourcePercentage, fromPersonFirstName, fromPersonLastName, fromOrganisation,
-      fromAmount, toPersonFirstName, toPersonLastName, toOrganisation, toAmount, brandCode, summary) ⇒ {
+      fromAmount, toPersonFirstName, toPersonLastName, toOrganisation, toAmount, brandId, brandName, summary) ⇒ {
       val from = Account.accountHolderName(fromPersonFirstName, fromPersonLastName, fromOrganisation)
       val to = Account.accountHolderName(toPersonFirstName, toPersonLastName, toOrganisation)
       val owes = source.isPositiveOrZero
-      BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandCode,
+      BookingEntrySummary(number, date, source, sourcePercentage, from, fromAmount, owes, to, toAmount, brandId, brandName,
         summary, fromId, toId)
     }
   }

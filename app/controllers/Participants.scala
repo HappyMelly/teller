@@ -66,7 +66,7 @@ object Participants extends Controller with Security with Services {
   def existingPersonForm(implicit user: UserIdentity) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
-      "brandId" -> nonEmptyText,
+      "brandId" -> longNumber(min = 1),
       "eventId" -> longNumber.verifying(
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, user.account)),
@@ -79,7 +79,7 @@ object Participants extends Controller with Security with Services {
             certificate = None, issued = None, organisation = None, comment = None)
       })({
         (p: Participant) ⇒
-          Some(p.id, p.event.get.brandCode, p.eventId,
+          Some(p.id, p.event.get.brandId, p.eventId,
             p.personId, p.evaluationId)
       }))
   }
@@ -91,20 +91,20 @@ object Participants extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       val brands = Brand.findByUser(account)
-      val brandCode = request.session.get("brandCode").getOrElse("")
-      Ok(views.html.participant.index(user, brands, brandCode))
+      val brandId = request.session.get("brandId").map(_.toLong).getOrElse(0L)
+      Ok(views.html.participant.index(user, brands, brandId))
   }
 
   /**
    * Returns JSON data about participants together with their evaluations
    * and events
    *
-   * @param brandCode Brand string identifier
+   * @param brandId Brand identifier
    */
-  def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def participantsByBrand(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       // TODO: check for a valid brand from Brand.findForUser
-      brandService.find(brandCode) map { brand ⇒
+      brandService.find(brandId) map { brand ⇒
         val account = user.account
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
@@ -150,16 +150,17 @@ object Participants extends Controller with Security with Services {
           }
         }
         val personId = account.personId
+        //TODO change to brand team
         val participants =
           if (account.editor || brand.coordinatorId == personId) {
-            Participant.findByBrand(Some(brandCode))
-          } else if (License.licensedSince(personId, brandCode).nonEmpty) {
-            val events = EventService.get.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
+            Participant.findByBrand(brand.id)
+          } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
+            val events = eventService.findByFacilitator(personId, brand.id).map(_.id.get)
             Participant.findEvaluationsByEvents(events)
           } else {
             List[ParticipantView]()
           }
-        Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
+        Ok(Json.toJson(participants)).withSession("brandId" -> brand.id.get.toString)
       } getOrElse Ok(Json.toJson(List[String]()))
   }
 
@@ -170,7 +171,7 @@ object Participants extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       EventService.get.find(eventId).map { event ⇒
         val account = user.account
-        val brand = brandService.find(event.brandCode).get
+        val brand = brandService.find(event.brandId).get
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -235,12 +236,12 @@ object Participants extends Controller with Security with Services {
   /**
    * Render a Create page
    *
-   * @param brandCode A code of the brand to add participant to
+   * @param brandId Brand id to add participant to
    * @param eventId An identifier of the event to add participant to
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def add(brandCode: Option[String],
+  def add(brandId: Option[Long],
     eventId: Option[Long],
     ref: Option[String]) = SecuredDynamicAction("event", "add") {
     implicit request ⇒
@@ -249,8 +250,8 @@ object Participants extends Controller with Security with Services {
         val account = user.account
         val brands = Brand.findByUser(account)
         val people = personService.findActive
-        val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
-          request.session.get("brandCode").getOrElse("")
+        val selectedBrand = brandId.getOrElse {
+          request.session.get("brandId").map(_.toLong).getOrElse(0L)
         }
         Ok(views.html.participant.form(user, id = None, brands, people,
           newPersonForm(account, user.fullName), existingPersonForm(user),
@@ -275,7 +276,9 @@ object Participants extends Controller with Security with Services {
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
             newPersonForm(account, user.fullName), formWithErrors,
-            showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
+            showExistingPersonForm = true, formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+            Some(chosenEventId),
+            ref))
         },
         participant ⇒ {
           Participant.find(participant.personId, participant.eventId) match {
@@ -286,7 +289,8 @@ object Participants extends Controller with Security with Services {
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
               BadRequest(views.html.participant.form(user, None, brands, people,
                 newPersonForm(account, user.fullName), form.withError("participantId", "error.participant.exist"),
-                showExistingPersonForm = true, form("brandId").value, Some(chosenEventId), ref))
+                showExistingPersonForm = true, form("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+                Some(chosenEventId), ref))
             }
             case _ ⇒ {
               Participant.insert(participant)
@@ -324,7 +328,9 @@ object Participants extends Controller with Security with Services {
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
             formWithErrors, existingPersonForm(user),
-            showExistingPersonForm = false, formWithErrors("brandId").value, Some(chosenEventId), ref))
+            showExistingPersonForm = false,
+            formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+            Some(chosenEventId), ref))
         },
         data ⇒ {
           Participant.create(data)

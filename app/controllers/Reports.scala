@@ -37,23 +37,23 @@ trait Reports extends Controller with Security with Services {
   /**
    * Generate a XLSX report with evaluations (if they're available)
    *
-   * @param brandCode filter events by a brand
+   * @param brandId filter events by a brand
    * @param eventId a selected event
    * @param status  filter events by their statuses
    * @return
    */
-  def create(brandCode: String, eventId: Long, status: Int) = SecuredRestrictedAction(Viewer) {
+  def create(brandId: Long, eventId: Long, status: Int) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        brandService.find(brandCode) map { brand ⇒
+        brandService.find(brandId) map { brand ⇒
           val account = user.account
 
           val personId = account.personId
           val events =
             if (account.editor || brand.coordinatorId == personId) {
-              eventService.findByParameters(Some(brandCode))
-            } else if (License.licensedSince(personId, brandCode).nonEmpty) {
-              eventService.findByFacilitator(account.personId, Some(brandCode), archived = Some(false))
+              eventService.findByParameters(brand.id)
+            } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
+              eventService.findByFacilitator(account.personId, brand.id, archived = Some(false))
             } else
               List()
           val filteredEvents = if (eventId > 0)
@@ -74,7 +74,7 @@ trait Reports extends Controller with Security with Services {
           val date = LocalDate.now.toString
           Ok.sendFile(
             content = createXLSXreport(participants),
-            fileName = _ ⇒ s"report-$date-$brandCode.xlsx")
+            fileName = _ ⇒ s"report-$date-${brand.code}.xlsx")
         } getOrElse NotFound("Unknown brand")
   }
 

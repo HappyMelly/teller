@@ -45,14 +45,14 @@
       @restrict(handler, List(as(Editor.toString))) {
         <div class="actions pull-right">
           <div class="button">
-            <a class="btn btn-default" href="@routes.Brands.edit(brand.code)">
+            <a class="btn btn-default" href="@routes.Brands.edit(brand.id.get)">
               <i class="glyphicon glyphicon-pencil"></i> Edit
             </a>
           </div>
           @brand.picture.map { picture =>
             <div class="button">
               <form class="delete form-inline" method="post" text="image"
-              action="@CSRF(routes.Brands.deletePicture(brand.code))">
+              action="@CSRF(routes.Brands.deletePicture(brand.id.get))">
               @restrict(handler, List(as(Editor.toString))) {
                 <button class="btn btn-warning btn-sm" type="submit">
                   <i class="glyphicon glyphicon-white glyphicon-trash"></i>
@@ -64,7 +64,7 @@
           }
           <div class="button">
             <form class="delete form-inline" method="post" text="brand"
-            action="@CSRF(routes.Brands.delete(brand.code))">
+            action="@CSRF(routes.Brands.delete(brand.id.get))">
               <button class="btn btn-danger" type="submit"
                 @if(!brand.deletable) {
                   disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }

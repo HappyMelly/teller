@@ -44,8 +44,8 @@ class EventServiceSpec extends PlayAppSpec {
     BrandHelper.one.insert
     (new EventType(None, 1L, "Type 1", None, 16)).insert
     (new EventType(None, 1L, "Type 2", None, 16)).insert
-    EventHelper.addEvents(BrandHelper.one.code)
-    EventHelper.addEvents("MGT30")
+    EventHelper.addEvents(1L)
+    EventHelper.addEvents(2L)
   }
 
   lazy val event = EventHelper.make(
@@ -65,10 +65,10 @@ class EventServiceSpec extends PlayAppSpec {
 
   "Method findByParameters" should {
     "return 6 events for default brand" in {
-      service.findByParameters(Some(BrandHelper.one.code)).length mustEqual 6
+      service.findByParameters(Some(1L)).length mustEqual 6
     }
     "return 4 public events" in {
-      val events = EventService.get.findByParameters(brandCode = None, public = Some(true))
+      val events = EventService.get.findByParameters(brandId = None, public = Some(true))
       (events.length mustEqual 8) and
         (events.exists(_.title == "one") must beTrue) and
         (events.exists(_.title == "two") must beTrue) and
@@ -77,12 +77,12 @@ class EventServiceSpec extends PlayAppSpec {
         (events.exists(_.title == "six") must beTrue)
     }
     "return 1 archived event" in {
-      val events = service.findByParameters(brandCode = None, archived = Some(true))
+      val events = service.findByParameters(brandId = None, archived = Some(true))
       (events.length mustEqual 2) and
         (events.exists(_.title == "four") must beTrue)
     }
     "return 3 confirmed events" in {
-      val events = service.findByParameters(brandCode = None, confirmed = Some(true))
+      val events = service.findByParameters(brandId = None, confirmed = Some(true))
       (events.length mustEqual 6) and
         (events.exists(_.title == "one") must beTrue) and
         (events.exists(_.title == "four") must beTrue) and
@@ -90,7 +90,7 @@ class EventServiceSpec extends PlayAppSpec {
         (events.exists(_.title == "six") must beFalse)
     }
     "return 1 unconfirmed past events for brand TEST" in {
-      val events = service.findByParameters(brandCode = Some("TEST"),
+      val events = service.findByParameters(brandId = Some(1L),
         future = Some(false),
         confirmed = Some(false))
       (events.length mustEqual 1) and
@@ -98,12 +98,12 @@ class EventServiceSpec extends PlayAppSpec {
         (events.exists(_.title == "three") must beFalse)
     }
     "return 1 event in DE" in {
-      val events = service.findByParameters(brandCode = None, country = Some("DE"))
+      val events = service.findByParameters(brandId = None, country = Some("DE"))
       (events.length mustEqual 2) and
         (events.exists(_.title == "five") must beTrue)
     }
     "return 3 events with type = 2" in {
-      val events = service.findByParameters(brandCode = None, eventType = Some(2))
+      val events = service.findByParameters(brandId = None, eventType = Some(2))
       (events.length mustEqual 6) and
         (events.exists(_.title == "three") must beTrue) and
         (events.exists(_.title == "four") must beTrue) and
@@ -112,7 +112,7 @@ class EventServiceSpec extends PlayAppSpec {
     }
     "return 3 future events" in {
       val events = service.findByParameters(
-        brandCode = Some("MGT30"),
+        brandId = Some(2L),
         future = Some(true))
       (events.length mustEqual 3) and
         (events.exists(_.title == "three") must beFalse) and
@@ -126,7 +126,7 @@ class EventServiceSpec extends PlayAppSpec {
     "return 4 events for default brand and facilitator = 1" in {
       val events = service.findByFacilitator(
         1,
-        Some(BrandHelper.one.code))
+        Some(1L))
       events.length mustEqual 4
     }
     "return 4 events facilitated by facilitator = 2" in {
@@ -162,7 +162,7 @@ class EventServiceSpec extends PlayAppSpec {
       }
       class TestEventService extends EventService with FakeServices {
         override def findByParameters(
-          brandCode: Option[String],
+          brandId: Option[Long],
           future: Option[Boolean] = None,
           public: Option[Boolean] = None,
           archived: Option[Boolean] = None,

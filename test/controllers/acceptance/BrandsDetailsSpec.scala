@@ -57,8 +57,8 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   On 'Team' tab on a Brand page a user should see
     a list of team members of the requested brand                 $e11
-    no 'Add Team Member' or 'Delete' buttons if she is a Viewer   $e13
-    'Add Team Member' or 'Delete' buttons if he is an Editor      $e14
+    no 'Add Coordinator' or 'Delete' buttons if she is a Viewer   $e13
+    'Add Coordinator' or 'Delete' buttons if he is an Editor      $e14
 
   """
 
@@ -176,7 +176,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e11 = new MockContext {
     val team = List(PersonHelper.one(), PersonHelper.two())
-    (brandService.team _).expects(1L).returning(team)
+    (brandService.coordinators _).expects(1L).returning(team)
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
@@ -185,20 +185,20 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e13 = new MockContext {
-    (brandService.team _).expects(1L).returning(List())
+    (brandService.coordinators _).expects(1L).returning(List())
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
-    contentAsString(res) must not contain "Add Team Member"
+    contentAsString(res) must not contain "Add Coordinator"
     contentAsString(res) must not contain "glyphicon-trash"
   }
 
   def e14 = new MockContext {
-    (brandService.team _).expects(1L).returning(List(PersonHelper.one()))
+    (brandService.coordinators _).expects(1L).returning(List(PersonHelper.one()))
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
-    contentAsString(res) must contain("Add Team Member")
+    contentAsString(res) must contain("Add Coordinator")
     contentAsString(res) must contain("glyphicon-trash")
   }
 }

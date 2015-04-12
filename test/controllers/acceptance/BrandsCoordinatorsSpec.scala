@@ -33,24 +33,24 @@ import org.scalamock.specs2.IsolatedMockFactory
 import stubs.{ FakePersonService, FakeServices, FakeUserIdentity }
 
 /**
- * Tests Brands controller methods, managing team members
+ * Tests Brands controller methods, managing brand coordinators
  */
-class BrandsMemberSpec extends PlayAppSpec with IsolatedMockFactory {
+class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   override def is = s2"""
 
-  Given a user adds a person as new team member when the brand doesn't exist
+  Given a user adds a person as new coordinator when the brand doesn't exist
     then the system returns an error $e1
 
-  Given a user adds a person as new team member when this person doesn't exist
+  Given a user adds a person as new coordinator when this person doesn't exist
     then the system returns an error $e2
 
-  Given a user adds a person as new team member when this person is already a member
+  Given a user adds a person as new coordinator when this person is already a member
     then the system returns an error $e3
 
-  Given a user adds a person as new team member when this person exists and is not a member
+  Given a user adds a person as new coordinator when this person exists and is not a member
     then the system adds the person $e4
 
-  Given a user adds a person as new team member when person id is not > 0
+  Given a user adds a person as new coordinator when person id is not > 0
     then the system returns an error $e5
 
 
@@ -72,7 +72,7 @@ class BrandsMemberSpec extends PlayAppSpec with IsolatedMockFactory {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody("personId" -> "1")
     (brandService.find(_: Long)).expects(1L).returning(None)
-    val res = controller.addMember(1L).apply(req)
+    val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("brand not found")
   }
@@ -83,7 +83,7 @@ class BrandsMemberSpec extends PlayAppSpec with IsolatedMockFactory {
     val brand = BrandHelper.one
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
     (personService.find(_: Long)).expects(1L).returning(None)
-    val res = controller.addMember(1L).apply(req)
+    val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("person not found")
   }
@@ -95,10 +95,10 @@ class BrandsMemberSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.one()
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
     (personService.find(_: Long)).expects(1L).returning(Some(person))
-    (brandService.team(_)).expects(1L).returning(List(person))
-    val res = controller.addMember(1L).apply(req)
+    (brandService.coordinators(_)).expects(1L).returning(List(person))
+    val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(CONFLICT)
-    contentAsString(res) must contain("This person is already a team member")
+    contentAsString(res) must contain("This person is already a coordinator")
   }
 
   def e4 = {
@@ -108,28 +108,28 @@ class BrandsMemberSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.one()
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
     (personService.find(_: Long)).expects(1L).returning(Some(person))
-    (brandService.team(_)).expects(1L).returning(List())
+    (brandService.coordinators(_)).expects(1L).returning(List())
     (brandTeamMemberService.insert(_, _)).expects(1L, 1L)
-    val res = controller.addMember(1L).apply(req)
+    val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(OK)
-    contentAsString(res) must contain("You added new team member")
+    contentAsString(res) must contain("You added new coordinator")
     contentAsString(res) must contain("First Tester")
   }
 
   def e5 = {
     val req1 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody("personId" -> "0")
-    status(controller.addMember(1L).apply(req1)) must equalTo(BAD_REQUEST)
+    status(controller.addCoordinator(1L).apply(req1)) must equalTo(BAD_REQUEST)
     val req2 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody("personId" -> "2adf")
-    status(controller.addMember(1L).apply(req2)) must equalTo(BAD_REQUEST)
+    status(controller.addCoordinator(1L).apply(req2)) must equalTo(BAD_REQUEST)
   }
 
   def e6 = {
     val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/")
     (brandTeamMemberService.delete(_, _)).expects(1L, 1L)
-    val res = controller.removeMember(1L, 1L).apply(req)
+    val res = controller.removeCoordinator(1L, 1L).apply(req)
     status(res) must equalTo(OK)
-    contentAsString(res) must contain("You removed a team member")
+    contentAsString(res) must contain("You removed a coordinator")
   }
 }

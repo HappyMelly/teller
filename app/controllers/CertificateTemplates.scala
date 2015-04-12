@@ -118,7 +118,7 @@ object CertificateTemplates extends Controller with Security with Services {
                 val activity = tpl.activity(
                   user.person,
                   Activity.Predicate.Created).insert
-                Redirect(routes.Brands.details(brand.code).url + "#templates").flashing(
+                Redirect(routes.Brands.details(brandId).url + "#templates").flashing(
                   "success" -> activity.toString)
               }
             }
@@ -146,10 +146,9 @@ object CertificateTemplates extends Controller with Security with Services {
   }
 
   /**
-   * Delete a certificate template
+   * Deletes a certificate template
    *
    * @param id Unique template identifier
-   * @return
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -159,12 +158,8 @@ object CertificateTemplates extends Controller with Security with Services {
         val activity = tpl.activity(
           user.person,
           Activity.Predicate.Deleted).insert
-        brandService.find(tpl.brandId) map { x ⇒
-          Redirect(routes.Brands.details(x.code).url + "#templates").flashing(
-            "success" -> activity.toString)
-        } getOrElse {
-          Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
-        }
+        Redirect(routes.Brands.details(tpl.brandId).url + "#templates").flashing(
+          "success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 }

@@ -167,7 +167,7 @@
                         <tbody>
                         @for(brand <- product.brands) {
                             <tr>
-                                <td><a href="@routes.Brands.details(brand.code)">@brand.name</a></td>
+                                <td><a href="@routes.Brands.details(brand.id.get)">@brand.name</a></td>
                                 <td>
                                 @restrict(handler, List(as(Editor.toString))) {
                                     <a href="@routes.Products.deleteBrand("product", product.id.get, brand.id.get)">

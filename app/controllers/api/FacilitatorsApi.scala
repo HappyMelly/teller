@@ -52,13 +52,15 @@ object FacilitatorsApi extends Controller with ApiAuthentication {
    * @param code Brand code
    */
   def facilitators(code: String) = TokenSecuredAction { implicit request ⇒
-    val facilitators = Brand.findFacilitators(code)
-    if (facilitators.length > 0) {
-      PeopleCollection.countries(facilitators)
-      PeopleCollection.languages(facilitators)
-      PeopleCollection.addresses(facilitators)
-    }
-    Ok(Json.prettyPrint(Json.toJson(facilitators)))
+    brandService.find(code) map { x ⇒
+      val facilitators = Brand.findFacilitators(x.id.get)
+      if (facilitators.length > 0) {
+        PeopleCollection.countries(facilitators)
+        PeopleCollection.languages(facilitators)
+        PeopleCollection.addresses(facilitators)
+      }
+      Ok(Json.prettyPrint(Json.toJson(facilitators)))
+    } getOrElse Ok(Json.toJson(List()))
   }
 
 }

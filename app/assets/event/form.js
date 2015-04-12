@@ -42,12 +42,12 @@ function showError(message) {
 
 /**
  * Retrieve a list of event types for the brand
- * @param brandCode        String
+ * @param brandId {int}
  * @param currentEventType String
  */
-function getEventTypes(brandCode, currentEventType) {
+function getEventTypes(brandId, currentEventType) {
     $.ajax({
-        url: '/brand/' + brandCode + '/eventtypes',
+        url: '/brand/' + brandId + '/eventtypes',
         dataType: "json"
     }).done(function(data) {
             var selector = "#eventTypeId";
@@ -127,12 +127,12 @@ $(document).ready( function() {
     /**
      * Retrieve a list of facilitators for the brand and fill 'chosen' and 'retrieved' arrays
      * in 'facilitators' object
-     * @param brandCode String
+     * @param brandId String
      * @param chosenFacilitators Array[Int] or null
      */
-    function getFacilitators(brandCode, chosenFacilitators) {
+    function getFacilitators(brandId, chosenFacilitators) {
         $.ajax({
-            url: '/facilitators/' + brandCode,
+            url: '/facilitators/' + brandId,
             dataType: "json"
         }).done(function(data) {
             for(var i = 0; i < data.length; i++) {
@@ -154,16 +154,16 @@ $(document).ready( function() {
         chosen: [],
         userId: 0,
         invoiceOrgId: 0,
-        initialize: function(brandCode) {
+        initialize: function(brandId) {
             this.userId = parseInt($('#currentUserId').attr('value'));
             this.invoiceOrgId = parseInt($('#currentInvoiceToId').attr('value'));
             var values = $('#chosenFacilitators').attr('value').split(',');
-            getFacilitators(brandCode, values);
+            getFacilitators(brandId, values);
         },
-        retrieve: function(brandCode) {
+        retrieve: function(brandId) {
             this.retrieved = [];
             this.chosen = [];
-            getFacilitators(brandCode, null);
+            getFacilitators(brandId, null);
         },
         updateState: function() {
             // update a list of available facilitators
@@ -243,10 +243,10 @@ $(document).ready( function() {
     };
 
     // Binds
-    $("#brandCode").change(function() {
-        var code = $(this).find(':selected').val();
-        getEventTypes(code, "");
-        facilitators.retrieve(code);
+    $("#brandId").change(function() {
+        var id = $(this).find(':selected').val();
+        getEventTypes(id, "");
+        facilitators.retrieve(id);
     });
     $('#facilitatorIds').change(function() {
         facilitators.select($(this).find(':selected').val());
@@ -259,9 +259,9 @@ $(document).ready( function() {
     $("#schedule_start").on("dp.change", function (e) {
         $('#schedule_end').data("DateTimePicker").setMinDate(e.date);
     });
-    var code = $('#brandCode').find(':selected').val();
-    getEventTypes(code, $('#currentEventTypeId').attr('value'));
-    facilitators.initialize(code);
+    var brandId = $('#brandId').find(':selected').val();
+    getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
+    facilitators.initialize(brandId);
     if ($("#emptyForm").attr("value") == 'true') {
         $("#schedule_start").on("dp.change", function (e) {
             $('#schedule_end').data("DateTimePicker").setDate(e.date.add(1, 'days'))

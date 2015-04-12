@@ -73,17 +73,16 @@ trait LicensesApi extends Controller with ApiAuthentication with Services {
    * API that returns a list of licensees for the given brand on the given date.
    */
   def licensees(brandCode: String, dateString: Option[String]) = TokenSecuredAction { implicit request ⇒
-    if (Brand.exists(brandCode)) {
+    brandService.find(brandCode) map { x ⇒
       val date = Try(dateString.map(d ⇒ new LocalDate(d)).getOrElse(LocalDate.now()))
       date match {
         case Success(d) ⇒ {
-          val licensees = License.licensees(brandCode, d).map(licensee ⇒ LicenseeView(brandCode, licensee))
+          val licensees = License.licensees(x.id.get, d).map(licensee ⇒ LicenseeView(brandCode, licensee))
           Ok(Json.toJson(licensees))
         }
         case Failure(e) ⇒ BadRequest("Invalid date")
       }
-
-    } else NotFound("Unknown brand")
+    } getOrElse NotFound("Unknown brand")
   }
 
   /**
@@ -91,10 +90,10 @@ trait LicensesApi extends Controller with ApiAuthentication with Services {
    */
   def licensee(licenseeId: Long, brandCode: String) = TokenSecuredAction { implicit request ⇒
     personService.find(licenseeId).map { person ⇒
-      if (Brand.exists(brandCode)) {
-        val view = LicensedSinceView(person, License.licensedSince(licenseeId, brandCode))
+      brandService.find(brandCode) map { x ⇒
+        val view = LicensedSinceView(person, License.licensedSince(licenseeId, x.id.get))
         Ok(Json.toJson(view))
-      } else NotFound("Unknown brand")
+      } getOrElse NotFound("Unknown brand")
     }.getOrElse(NotFound("Unknown licensee"))
   }
 }

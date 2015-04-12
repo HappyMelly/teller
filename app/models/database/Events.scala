@@ -36,7 +36,7 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventTypeId = column[Long]("EVENT_TYPE_ID")
-  def brandCode = column[String]("BRAND_CODE")
+  def brandId = column[Long]("BRAND_ID")
   def title = column[String]("TITLE")
 
   def spokenLanguage = column[String]("SPOKEN_LANGUAGE")
@@ -66,9 +66,9 @@ private[models] object Events extends Table[Event]("EVENT") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def brand = foreignKey("BRAND_FK", brandCode, Brands)(_.code)
+  def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
 
-  def * = id.? ~ eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+  def * = id.? ~ eventTypeId ~ brandId ~ title ~ spokenLanguage ~
     secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
     specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
     totalHours ~ notPublic ~ archived ~ confirmed ~ rating <> (
@@ -76,20 +76,20 @@ private[models] object Events extends Table[Event]("EVENT") {
         Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
         Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, e._21,
         None, DateTime.now(), "", DateTime.now(), ""),
-      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandCode, e.title,
+      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandId, e.title,
         e.language.spoken, e.language.secondSpoken, e.language.materials,
         e.location.city, e.location.countryCode, e.details.description,
         e.details.specialAttention, e.details.webSite, e.details.registrationPage,
         e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,
         e.schedule.totalHours, e.notPublic, e.archived, e.confirmed, e.rating)))
 
-  def forInsert = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+  def forInsert = eventTypeId ~ brandId ~ title ~ spokenLanguage ~
     secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
     specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
     totalHours ~ notPublic ~ archived ~ confirmed ~ created ~
     createdBy returning id
 
-  def forUpdate = eventTypeId ~ brandCode ~ title ~ spokenLanguage ~
+  def forUpdate = eventTypeId ~ brandId ~ title ~ spokenLanguage ~
     secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
     specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
     totalHours ~ notPublic ~ archived ~ confirmed ~ updated ~ updatedBy

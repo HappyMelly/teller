@@ -130,7 +130,7 @@ $(document).ready( function() {
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 5
             }, {
-               "render": function(data) { return renderDropdown(data, $('#brandCode').val()); },
+               "render": function(data) { return renderDropdown(data, $('#brandId').val()); },
                "targets": 6,
                "bSortable": false
             }

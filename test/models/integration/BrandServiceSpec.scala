@@ -63,13 +63,13 @@ class BrandServiceSpec extends PlayAppSpec {
   "The service should return" >> {
 
     "2 team members for brand id = 1 available in database" in {
-      val members = service.team(1L)
+      val members = service.coordinators(1L)
       members.length must_== 2
       members.exists(_.id == Some(1L))
       members.exists(_.id == Some(2L))
     }
     "no members for brand id = 3 as no members are available in database" in {
-      service.team(3L).length must_== 0
+      service.coordinators(3L).length must_== 0
     }
   }
 }

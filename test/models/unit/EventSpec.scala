@@ -44,8 +44,8 @@ class EventSpec extends PlayAppSpec {
     BrandHelper.one.insert
     (new EventType(None, 1L, "Type 1", None, 16)).insert
     (new EventType(None, 1L, "Type 2", None, 16)).insert
-    EventHelper.addEvents(BrandHelper.one.code)
-    EventHelper.addEvents("MGT30")
+    EventHelper.addEvents(1L)
+    EventHelper.addEvents(2L)
   }
 
   lazy val event = EventHelper.make(

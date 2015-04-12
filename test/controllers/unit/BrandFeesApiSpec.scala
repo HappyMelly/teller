@@ -25,7 +25,9 @@
 package controllers.unit
 
 import controllers.apiv2.BrandFeesApi
+import helpers.BrandHelper
 import models.brand.BrandFee
+import models.service.BrandService
 import models.service.brand.BrandFeeService
 import org.joda.money.Money
 import org.scalamock.specs2.MockContext
@@ -42,12 +44,15 @@ class BrandFeesApiSpec extends Specification {
   "Method 'fees'" should {
     "return 2 fees in the correct JSON format" in new MockContext {
       val fees = List(
-        BrandFee(Some(1), "TEST", "RU", Money.parse("RUB 100")),
-        BrandFee(Some(2), "TEST", "DE", Money.parse("EUR 50")))
-      val service = mock[BrandFeeService]
-      (service.findByBrand _).expects("TEST").returning(fees)
+        BrandFee(Some(1), 1L, "RU", Money.parse("RUB 100")),
+        BrandFee(Some(2), 1L, "DE", Money.parse("EUR 50")))
+      val brandFeeService = mock[BrandFeeService]
+      (brandFeeService.findByBrand _).expects(1L).returning(fees)
+      val brandService = mock[BrandService]
+      (brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
       val controller = new TestBrandFeesApi
-      controller.feeService_=(service)
+      controller.feeService_=(brandFeeService)
+      controller.brandService_=(brandService)
 
       val res = controller.fees("TEST").apply(FakeRequest())
       status(res) must beEqualTo(OK)
@@ -55,12 +60,10 @@ class BrandFeesApiSpec extends Specification {
       data.value.length must_== 2
       data.value(0) must_== Json.obj(
         "id" -> 1,
-        "brand" -> "TEST",
         "country" -> "RU",
         "fee" -> "RUB 100.00")
       data.value(1) must_== Json.obj(
         "id" -> 2,
-        "brand" -> "TEST",
         "country" -> "DE",
         "fee" -> "EUR 50.00")
     }

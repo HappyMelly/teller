@@ -132,14 +132,14 @@ function renderDropdown(data, brand) {
  *  It collects data from all table filters
  */
 function buildExportLink(detailsPage) {
-    var brandCode = '';
+    var brandId = '';
     var eventId = 0;
     var status = -1;
     if (detailsPage) {
-        brandCode = $('#brandCode').val();
+        brandId = $('#brandId').val();
         eventId = $('#eventId').val();
     } else {
-        brandCode = $('#brands').find(':selected').val();
+        brandId = $('#brands').find(':selected').val();
         eventId = $('#events').find(':selected').val();
         if (!eventId) {
             eventId = 0;
@@ -149,7 +149,7 @@ function buildExportLink(detailsPage) {
             status = -1;
         }
     }
-    var suffix = brandCode + '/event/' + eventId + '/status/' + status;
+    var suffix = brandId + '/event/' + eventId + '/status/' + status;
     $("#exportLink").attr("href", "/report/create/" + suffix);
 }
 

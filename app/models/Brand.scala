@@ -162,11 +162,9 @@ object Brand {
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
    */
-  def canManage(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (!exists(code))
-      false
-    else
-      findByUser(user).exists(_.code == code)
+  def canManage(brandId: Long, user: UserAccount): Boolean = DB.withSession {
+    implicit session: Session ⇒
+      findByUser(user).exists(_.id == Some(brandId))
   }
 
   /**
@@ -218,15 +216,15 @@ object Brand {
   /**
    * Returns list of facilitators for the given brand
    *
-   * @param code Brand string identifier
+   * @param brandId Brand id
    */
-  def findFacilitators(code: String): List[Person] = DB.withSession {
+  def findFacilitators(brandId: Long): List[Person] = DB.withSession {
     implicit session: Session ⇒
       val collator = Collator.getInstance(Locale.ENGLISH)
       val ord = new Ordering[String] {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
-      License.licensees(code, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
+      License.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
   }
 
   /** Finds all brands belonging to one coordinator **/
@@ -275,13 +273,6 @@ object Brand {
       } yield p
       socialQuery
         .update(u.socialProfile.copy(objectId = u.id.get))
-
-      if (existingData.code != u.code) {
-        val eventQuery = for {
-          event ← Events if event.brandCode === existingData.code
-        } yield event.brandCode
-        eventQuery.update(u.code)
-      }
 
       val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId,
         u.description, u.picture, u.tagLine, u.webSite, u.blog,

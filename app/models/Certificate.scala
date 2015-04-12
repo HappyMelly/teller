@@ -30,6 +30,7 @@ import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
 import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.brand.CertificateTemplate
+import models.service.BrandWithCoordinators
 import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
 import play.api.Play.current
@@ -60,7 +61,7 @@ case class Certificate(
    * @param brand Brand data
    * @param approver Person who generates the certificate
    */
-  def generateAndSend(brand: BrandView, approver: Person) {
+  def generateAndSend(brand: BrandWithCoordinators, approver: Person) {
     val contentType = "application/pdf"
     val pdf = if (brand.brand.code == "LCM")
       lcmCertificate(brand.brand.id.get, event, participant)
@@ -76,7 +77,7 @@ case class Certificate(
     }
   }
 
-  def send(brand: BrandView, approver: Person) {
+  def send(brand: BrandWithCoordinators, approver: Person) {
     val pdf = Certificate.downloadFromCloud(id)
     pdf.map {
       case value ⇒
@@ -84,7 +85,7 @@ case class Certificate(
     }
   }
 
-  private def sendEmail(brand: BrandView, approver: Person, data: Array[Byte]) {
+  private def sendEmail(brand: BrandWithCoordinators, approver: Person, data: Array[Byte]) {
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
     val brandName = brand.brand.code match {
@@ -97,7 +98,7 @@ case class Certificate(
     val subject = s"Your ${brand.brand.name} certificate"
     email.send(Set(participant),
       Some(event.facilitators.toSet),
-      Some(Set(brand.coordinator)),
+      Some(brand.coordinators.toSet),
       subject,
       body,
       richMessage = true,

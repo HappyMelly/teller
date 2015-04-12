@@ -70,7 +70,7 @@ case class Language(spoken: String, secondSpoken: Option[String], materials: Opt
 case class Event(
   id: Option[Long],
   eventTypeId: Long,
-  brandCode: String,
+  brandId: Long,
   title: String,
   language: Language,
   location: Location,
@@ -206,7 +206,7 @@ case class Event(
   }
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
-    val insertTuple = (eventTypeId, brandCode, title, language.spoken,
+    val insertTuple = (eventTypeId, brandId, title, language.spoken,
       language.secondSpoken, language.materials, location.city,
       location.countryCode, details.description, details.specialAttention,
       details.webSite, details.registrationPage, schedule.start, schedule.end,
@@ -227,7 +227,7 @@ case class Event(
   }
 
   def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventTypeId, brandCode, title, language.spoken,
+    val updateTuple = (eventTypeId, brandId, title, language.spoken,
       language.secondSpoken, language.materials, location.city,
       location.countryCode, details.description, details.specialAttention,
       details.webSite, details.registrationPage, schedule.start, schedule.end,
@@ -282,9 +282,8 @@ object Event {
     else {
       val brands = Brand.findByUser(user)
       if (brands.length > 0) {
-        val brandCodes = brands.map(_.code)
         val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
-        events.filter(e ⇒ brandCodes.contains(e.brandCode))
+        events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
       } else {
         List[Event]()
       }

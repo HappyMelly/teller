@@ -1,5 +1,5 @@
 @(user: UserIdentity,
-    code: Option[String],
+    id: Option[Long],
     people: List[Person],
     form: Form[Brand])(implicit flash: Flash,
     request: Request[Any],
@@ -20,7 +20,7 @@
         <div class="page-header">
           <h1>@name</h1>
         </div>
-        @html.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())),
+        @html.form(action = CSRF(id.map(x => routes.Brands.update(x)).getOrElse(routes.Brands.create())),
           'enctype -> "multipart/form-data") {
           @html.text(form("code"), '_label -> "Code")
           @html.text(form("uniqueName"), '_label -> "Unique name",

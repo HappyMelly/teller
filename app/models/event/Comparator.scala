@@ -45,7 +45,7 @@ object Comparator extends Services {
     override def toString = s"$label: $newValue (was: $oldValue)"
   }
 
-  class BrandChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
+  class BrandChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
     override def toString = {
       val oldBrand = brandService.find(oldValue).get.name
       val newBrand = brandService.find(newValue).get.name
@@ -108,7 +108,7 @@ object Comparator extends Services {
    */
   def compare(was: Event, now: Event): List[FieldChange] = {
     val changes = List(
-      new BrandChange("Brand", was.brandCode, now.brandCode),
+      new BrandChange("Brand", was.brandId, now.brandId),
       new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
       new SimpleFieldChange("Title", was.title, now.title),
       new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.language.spoken, ""),

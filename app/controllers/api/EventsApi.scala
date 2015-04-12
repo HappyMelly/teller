@@ -60,7 +60,7 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
   val eventDetailsWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
       Json.obj(
-        "brand" -> event.brandCode,
+        "brand" -> event.brandId,
         "type" -> event.eventTypeId,
         "title" -> event.title,
         "description" -> event.details.description,
@@ -111,25 +111,27 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction { implicit request ⇒
 
-    val events: List[Event] = facilitatorId map { value ⇒
-      eventService.findByFacilitator(
-        value,
-        Some(code),
-        future,
-        public,
-        archived = Some(false))
-    } getOrElse {
-      eventService.findByParameters(
-        Some(code),
-        future,
-        public,
-        archived,
-        None,
-        countryCode,
-        eventType)
-    }
-    eventService.applyFacilitators(events)
-    Ok(Json.prettyPrint(Json.toJson(events)))
+    brandService.find(code) map { x ⇒
+      val events: List[Event] = facilitatorId map { value ⇒
+        eventService.findByFacilitator(
+          value,
+          x.id,
+          future,
+          public,
+          archived = Some(false))
+      } getOrElse {
+        eventService.findByParameters(
+          x.id,
+          future,
+          public,
+          archived,
+          None,
+          countryCode,
+          eventType)
+      }
+      eventService.applyFacilitators(events)
+      Ok(Json.prettyPrint(Json.toJson(events)))
+    } getOrElse NotFound("Unknown brand")
   }
 }
 

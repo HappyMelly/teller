@@ -29,7 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Database table mapping for the association between brand and team members
  */
-private[models] object BrandTeamMembers extends Table[(Option[Long], Long, Long)]("BRAND_TEAM_MEMBER") {
+private[models] object BrandCoordinators extends Table[(Option[Long], Long, Long)]("BRAND_COORDINATOR") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
