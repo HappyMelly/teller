@@ -27,7 +27,7 @@ package models.integration
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.service.BrandService
-import models.service.brand.BrandTeamMemberService
+import models.service.brand.BrandCoordinatorService
 
 /**
  * Tests for BrandService class
@@ -41,8 +41,9 @@ class BrandServiceSpec extends PlayAppSpec {
         x.insert
       }
     List(BrandHelper.one, BrandHelper.make("TWO")).foreach(_.insert)
-    BrandTeamMemberService.get.insert(1L, 1L)
-    BrandTeamMemberService.get.insert(1L, 2L)
+    BrandCoordinatorService.get.insert(1L, 1L)
+    BrandCoordinatorService.get.insert(1L, 2L)
+    BrandCoordinatorService.get.insert(2L, 1L)
   }
 
   val service = new BrandService
@@ -70,6 +71,43 @@ class BrandServiceSpec extends PlayAppSpec {
     }
     "no members for brand id = 3 as no members are available in database" in {
       service.coordinators(3L).length must_== 0
+    }
+  }
+  "Method findByCoordinator" should {
+    "return 2 brands for coordinator 1" in {
+      val res = service.findByCoordinator(1L)
+      res.length must_== 2
+      res.exists(_.id == Some(1))
+      res.exists(_.id == Some(2))
+    }
+    "return 1 brand for coordinator 2" in {
+      service.findByCoordinator(2L).exists(_.id == Some(1))
+    }
+    "return 0 brand for coordinator 3" in {
+      service.findByCoordinator(3L).length must_== 0
+    }
+  }
+
+  "Method findWithCoordinators" should {
+    "return a brand object along with related person objects" in {
+      val res = service.findWithCoordinators(1L)
+      res map { x ⇒
+        x.brand.id must_== Some(1L)
+        x.coordinators.length must_== 2
+        x.coordinators.exists(_.firstName == "First") must_== true
+        x.coordinators.exists(_.firstName == "Second") must_== true
+      } getOrElse ko
+    }
+  }
+
+  "Method isCoordinator" should {
+    "return true if a person is a brand coordinator" in {
+      service.isCoordinator(1L, 1L) must_== true
+      service.isCoordinator(1L, 2L) must_== true
+    }
+    "return false if a person is not a brand coordinator" in {
+      service.isCoordinator(1L, 3L) must_== false
+      service.isCoordinator(2L, 2L) must_== false
     }
   }
 }

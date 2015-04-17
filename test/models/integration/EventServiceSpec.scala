@@ -25,11 +25,11 @@
 package models.integration
 
 import _root_.integration.PlayAppSpec
-import helpers.{ BrandHelper, EventHelper, PersonHelper }
+import helpers.{ EvaluationHelper, BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
-import models.service.{ BrandService, EventService }
-import org.joda.time.LocalDate
+import models.service.{ EvaluationService, BrandService, EventService }
+import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import services.integrations.Email
 import stubs.FakeServices
@@ -53,14 +53,6 @@ class EventServiceSpec extends PlayAppSpec {
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
 
-  "A brand manager (id = 1)" >> {
-    "with id = 1 be detected as a brand manager" in {
-      event.isBrandManager(1) must beTrue
-    }
-    "with id = 5 not be detected as a brand manager" in {
-      (event isBrandManager 5) must beFalse
-    }
-  }
   val service = new EventService
 
   "Method findByParameters" should {
@@ -135,6 +127,22 @@ class EventServiceSpec extends PlayAppSpec {
     }
     "return 0 events facilitated by facilitator = 3" in {
       service.findByFacilitator(3, None).length mustEqual 0
+    }
+  }
+
+  "Method findByEvaluation" should {
+    "return an event connected to an evaluation 1" in {
+      val eval = EvaluationHelper.make(Some(1L), 1L, 1L, EvaluationStatus.Approved, 10, DateTime.now())
+      Participant.insert(Participant(None, 1L, 1L, None, None, None, None, None))
+      EvaluationService.get.add(eval)
+      val event = service.findByEvaluation(1L)
+      event map { x ⇒
+        x.id must_== Some(1L)
+        x.title must_== "one"
+      } getOrElse ko
+    }
+    "return no event connected to an evaluation 4" in {
+      service.findByEvaluation(4L) must_== None
     }
   }
 

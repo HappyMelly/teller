@@ -26,18 +26,24 @@ package models
 
 import be.objectify.deadbolt.core.models.{ Permission, Subject }
 import models.database.UserAccounts
-import models.service.{ UserAccountService, PersonService }
+import models.service._
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 import play.libs.Scala
+
 import scala.collection.JavaConversions._
 
 /**
  * A log-in user account.
  */
-case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHandle: Option[String],
-  facebookUrl: Option[String], linkedInUrl: Option[String], googlePlusUrl: Option[String]) extends Subject {
+case class UserAccount(id: Option[Long],
+  personId: Long,
+  role: String,
+  twitterHandle: Option[String],
+  facebookUrl: Option[String],
+  linkedInUrl: Option[String],
+  googlePlusUrl: Option[String]) extends Subject with Services {
 
   private var _roles: Option[List[UserRole]] = None
 
@@ -49,7 +55,7 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
    * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = if (_roles.isEmpty) {
-    val accountRole = UserAccountService.get.findRole(personId).map(role ⇒ UserRole(role))
+    val accountRole = userAccountService.findRole(personId).map(role ⇒ UserRole(role))
     roles_=(accountRole.map(_.list).getOrElse(List()))
     _roles.get
   } else {
@@ -63,15 +69,19 @@ case class UserAccount(id: Option[Long], personId: Long, role: String, twitterHa
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 
-  def facilitator: Boolean = licenses.nonEmpty || brands.nonEmpty
+  /**
+   * True if this person is a facilitator
+   */
+  lazy val facilitator: Boolean = licenseService.activeLicenses(personId).nonEmpty
 
+  /**
+   * True if this person coordinates at least one brand
+   */
   def coordinator: Boolean = brands.nonEmpty
 
-  lazy val person: Option[Person] = PersonService.get.find(personId)
-  lazy val account: Option[Account] = Account.findByPerson(personId)
-  lazy val licenses: List[LicenseView] = License.activeLicenses(personId)
-  lazy val brands: List[Brand] = Brand.findByCoordinator(personId)
+  lazy val brands: List[Brand] = brandService.findByCoordinator(personId)
 
+  lazy val person: Option[Person] = personService.find(personId)
 }
 
 object UserAccount {

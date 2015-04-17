@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models._
 import models.service.{ Services, EventService }
 import securesocial.core._
@@ -157,11 +158,7 @@ trait Security extends SecureSocial with DeadboltActions {
 /**
  * A security handler to check if a user is allowed to work with the specific objects.
  *
- * The system supports three roles - Viewer, Editor and Admin. The event module has its specific roles - Facilitator
- *  and Brand Coordinator.
- *
- *  A Brand Coordinator is able to create events for his/her own brand even if he/she is a Viewer.
- *  A Facilitator is able to create events for any brand he/she has active content licenses even if he/she is a Viewer.
+ * The system supports three roles - Viewer, Editor and Admin.
  */
 class TellerResourceHandler(account: Option[UserAccount])
   extends DynamicResourceHandler
@@ -172,17 +169,7 @@ class TellerResourceHandler(account: Option[UserAccount])
       val userId = existingAccount.personId
       name match {
         case "brand" ⇒ checkBrandPermission(existingAccount, meta, request.uri)
-        case "evaluation" ⇒
-          meta match {
-            case "add" ⇒ existingAccount.coordinator || existingAccount.editor
-            case "edit" ⇒
-              val evaluationId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.isBrandManager(userId))
-            case "manage" ⇒
-              val evaluationId = """\d+""".r findFirstIn request.uri
-              existingAccount.editor || Evaluation.find(evaluationId.get.toLong).exists(_.event.canFacilitate(userId))
-            case _ ⇒ true
-          }
+        case "evaluation" ⇒ checkEvaluationPermission(existingAccount, meta, request.uri)
         case "event" ⇒ checkEventPermission(existingAccount, meta, request.uri)
         case "person" ⇒
           meta match {
@@ -233,19 +220,55 @@ class TellerResourceHandler(account: Option[UserAccount])
     false
   }
 
+  /**
+   * Returns true if the given user is allowed to execute an evaluation-related action
+   * @param account User account
+   * @param meta Action identifier
+   * @param url Request url
+   */
+  protected def checkEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean = {
+    val userId = account.personId
+    meta match {
+      case "add" ⇒ account.editor || account.coordinator
+      case DynamicRole.Coordinator ⇒
+        id(url) exists { evaluationId ⇒
+          account.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
+            brandService.isCoordinator(x.brandId, userId)
+          }
+        }
+      case DynamicRole.Facilitator ⇒
+        id(url) exists { evaluationId ⇒
+          account.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
+            x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
+          }
+        }
+      case _ ⇒ false
+    }
+  }
+
+  /**
+   * Returns true if the given user is allowed to execute an event-related action
+   * @param account User account
+   * @param meta Action identifier
+   * @param url Request url
+   */
   protected def checkEventPermission(account: UserAccount, meta: String, url: String): Boolean = {
     val userId = account.personId
     meta match {
-      case "add" ⇒ account.facilitator || account.editor
-      case "edit" ⇒
+      case "add" ⇒ account.editor || account.facilitator || account.coordinator
+      case DynamicRole.Facilitator ⇒
         id(url) exists { eventId ⇒
-          account.editor || eventService.find(eventId).exists(_.canFacilitate(userId))
+          account.editor || eventService.find(eventId).exists { x ⇒
+            x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
+          }
         }
-      case "admin" ⇒
+      case DynamicRole.Coordinator ⇒
         id(url) exists { eventId ⇒
-          account.editor || eventService.find(eventId).exists(_.isBrandManager(userId))
+          account.editor || eventService.find(eventId).exists { x ⇒
+            brandService.isCoordinator(x.brandId, userId)
+          }
         }
-      case _ ⇒ true
+      case _ ⇒ false
     }
   }
 
@@ -257,7 +280,7 @@ class TellerResourceHandler(account: Option[UserAccount])
    */
   protected def checkBrandPermission(account: UserAccount, meta: String, url: String): Boolean = {
     meta match {
-      case "coordinator" ⇒
+      case DynamicRole.Coordinator ⇒
         id(url) exists { brandId ⇒
           account.editor || brandService.isCoordinator(brandId, account.personId)
         }

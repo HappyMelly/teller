@@ -34,7 +34,7 @@ import scala.slick.session.Session
 /**
  * Contains a set of functions for managing team members in database
  */
-class BrandTeamMemberService {
+class BrandCoordinatorService {
 
   /**
    * Adds new team member to the given brand
@@ -59,8 +59,8 @@ class BrandTeamMemberService {
   }
 }
 
-object BrandTeamMemberService {
-  private val instance = new BrandTeamMemberService
+object BrandCoordinatorService {
+  private val instance = new BrandCoordinatorService
 
-  def get: BrandTeamMemberService = instance
+  def get: BrandCoordinatorService = instance
 }

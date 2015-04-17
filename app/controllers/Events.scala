@@ -25,6 +25,7 @@
 package controllers
 
 import controllers.Forms._
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
 import models.event.Comparator
@@ -207,7 +208,7 @@ object Events extends Controller
    * @param id Event Id
    * @return
    */
-  def duplicate(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def duplicate(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       EventService.get.find(id).map {
@@ -257,7 +258,7 @@ object Events extends Controller
    * Delete an event.
    * @param id Event ID
    */
-  def delete(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def delete(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map { event ⇒
@@ -281,7 +282,7 @@ object Events extends Controller
    * @param id Event ID
    * @return
    */
-  def invoice(id: Long) = SecuredDynamicAction("event", "admin") { implicit request ⇒
+  def invoice(id: Long) = SecuredDynamicAction("event", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       eventService.find(id).map { event ⇒
@@ -313,7 +314,8 @@ object Events extends Controller
         //@TODO only funders must be retrieved
         val funders = if (acc.editor) Organisation.findAll else List()
         val eventType = eventTypeService.find(x.eventTypeId).get
-        val canFacilitate = acc.editor || x.canFacilitate(acc.personId)
+        val canFacilitate = acc.editor || x.isFacilitator(acc.personId) ||
+          brandService.isCoordinator(x.brandId, acc.personId)
         val fees = feeService.findByBrand(x.brandId)
         val printableFees = fees.
           map(x ⇒ (Countries.name(x.country), x.fee.toString)).
@@ -334,21 +336,21 @@ object Events extends Controller
    * Edit page.
    * @param id Event ID
    */
-  def edit(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id).map {
+      eventService.find(id) map {
         event ⇒
           val account = user.account
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
    * List page.
    */
-  def index = SecuredDynamicAction("event", "view") { implicit request ⇒
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val person = user.person
@@ -386,7 +388,7 @@ object Events extends Controller
     facilitator: Option[Long],
     future: Option[Boolean],
     public: Option[Boolean],
-    archived: Option[Boolean]) = SecuredDynamicAction("event", "view") { implicit request ⇒
+    archived: Option[Boolean]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val events = facilitator map {
         eventService.findByFacilitator(_, brandId, future, public, archived)
@@ -532,7 +534,7 @@ object Events extends Controller
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
-  def sendRequest(id: Long) = SecuredDynamicAction("event", "edit") { implicit request ⇒
+  def sendRequest(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(

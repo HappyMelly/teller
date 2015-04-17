@@ -64,5 +64,10 @@ object UserRole {
     val Admin = Value("admin")
   }
 
+  object DynamicRole {
+    val Facilitator = "facilitator"
+    val Coordinator = "coordinator"
+  }
+
   def forName(name: String): UserRole = UserRole(Role.withName(name))
 }

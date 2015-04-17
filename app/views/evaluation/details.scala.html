@@ -9,6 +9,7 @@
 
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
+@import UserRole.DynamicRole
 
 @main("Evaluation for %s".format(participantName), "participants", user) {
 
@@ -17,14 +18,14 @@
     <h1>
       Evaluation for @participantName
       <div class="actions pull-right">
-        @dynamic(handler, "evaluation", "edit") {
+        @dynamic(handler, "evaluation", DynamicRole.Coordinator) {
           <div class="button">
             <a class="btn btn-default" href="@routes.Evaluations.edit(pair.eval.id.get)">
               <i class="glyphicon glyphicon-pencil"></i> Edit
             </a>
           </div>
         }
-        @dynamic(handler, "evaluation", "manage") {
+        @dynamic(handler, "evaluation", DynamicRole.Facilitator) {
           <div class="button">
             @if(withCertificate) {
               <button class="btn btn-default" tabindex="-1"

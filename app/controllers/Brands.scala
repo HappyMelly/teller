@@ -133,7 +133,6 @@ trait Brands extends JsonController with Security with Services {
 
   /**
    * Create a new brand
-   * @return
    */
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒

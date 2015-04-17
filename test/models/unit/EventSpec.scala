@@ -99,26 +99,6 @@ class EventSpec extends PlayAppSpec {
 
   event.facilitatorIds_=(List(2L, 3L, 4L, 6L))
 
-  "A brand manager (id = 1)" should {
-    "be able to facilitate an event" in new MockContext {
-      event.canFacilitate(1) must beTrue
-    }
-  }
-  "A random person (id = 5)" should {
-    val id = 5
-    "not be able to facilitate the event" in {
-      (event canFacilitate id) must beFalse
-    }
-  }
-
-  "A facilitator" should {
-    "be able to facilitate events" in {
-      Result.unit {
-        List(2, 4, 6) foreach { i ⇒ event.canFacilitate(i) must beTrue }
-      }
-    }
-  }
-
   "Event" should {
     "have well-formed activity attributes" in {
       val eventType = EventHelper.one

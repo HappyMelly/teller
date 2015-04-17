@@ -73,6 +73,19 @@ class BrandService {
   }
 
   /**
+   * Returns list of brands belonging to one coordinator
+   * @param coordinatorId Coordinator identifier
+   */
+  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        x ← BrandCoordinators if x.personId === coordinatorId
+        y ← Brands if y.id === x.brandId
+      } yield y
+      query.list
+  }
+
+  /**
    * Returns brand with its coordinators if exists; otherwise - None
    * @param id Brand id
    */

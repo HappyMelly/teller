@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.service.{ EventService, Services }
@@ -109,23 +110,24 @@ trait Evaluations extends EvaluationsController
    * @param ref Identifier of a page where a user should be redirected
    * @return
    */
-  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { x ⇒
-        x.delete()
-        // recalculate ratings
-        Event.ratingActor ! x.eventId
-        Facilitator.ratingActor ! x.eventId
+        Evaluation.find(id).map { x ⇒
+          x.delete()
+          // recalculate ratings
+          Event.ratingActor ! x.eventId
+          Facilitator.ratingActor ! x.eventId
 
-        val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
+          val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
 
-        val route = ref match {
-          case Some("index") ⇒ routes.Participants.index().url
-          case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
-        }
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -133,43 +135,44 @@ trait Evaluations extends EvaluationsController
    * @param id Unique evaluation identifier
    * @return
    */
-  def move(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def move(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { evaluation ⇒
-        val form = Form(single(
-          "eventId" -> longNumber))
-        val (eventId) = form.bindFromRequest
-        form.bindFromRequest.fold (
-          f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
-          eventId ⇒ {
-            if (eventId == evaluation.eventId) {
-              val activity = evaluation.activity(
-                user.person,
-                Activity.Predicate.Updated).insert
-              Ok(Json.obj("success" -> activity.toString))
-            } else {
-              EventService.get.find(eventId).map { event ⇒
-                Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
-                  // first we need to check if this event has already the participant
-                  Participant.find(evaluation.personId, eventId).map { participant ⇒
-                    // if yes, we reassign an evaluation
-                    participant.copy(evaluationId = Some(id)).update
-                    oldParticipant.copy(evaluationId = None).update
-                  }.getOrElse {
-                    // if no, we move a participant
-                    oldParticipant.copy(eventId = eventId).update
-                  }
-                  evaluation.copy(eventId = eventId).update
-                  val activity = evaluation.activity(
-                    user.person,
-                    Activity.Predicate.Updated).insert
-                  Ok(Json.obj("success" -> activity.toString))
+        Evaluation.find(id).map { evaluation ⇒
+          val form = Form(single(
+            "eventId" -> longNumber))
+          val (eventId) = form.bindFromRequest
+          form.bindFromRequest.fold (
+            f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
+            eventId ⇒ {
+              if (eventId == evaluation.eventId) {
+                val activity = evaluation.activity(
+                  user.person,
+                  Activity.Predicate.Updated).insert
+                Ok(Json.obj("success" -> activity.toString))
+              } else {
+                EventService.get.find(eventId).map { event ⇒
+                  Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
+                    // first we need to check if this event has already the participant
+                    Participant.find(evaluation.personId, eventId).map { participant ⇒
+                      // if yes, we reassign an evaluation
+                      participant.copy(evaluationId = Some(id)).update
+                      oldParticipant.copy(evaluationId = None).update
+                    }.getOrElse {
+                      // if no, we move a participant
+                      oldParticipant.copy(eventId = eventId).update
+                    }
+                    evaluation.copy(eventId = eventId).update
+                    val activity = evaluation.activity(
+                      user.person,
+                      Activity.Predicate.Updated).insert
+                    Ok(Json.obj("success" -> activity.toString))
+                  }.getOrElse(NotFound)
                 }.getOrElse(NotFound)
-              }.getOrElse(NotFound)
-            }
-          })
-      }.getOrElse(NotFound)
+              }
+            })
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -197,7 +200,7 @@ trait Evaluations extends EvaluationsController
    *
    * @param id Unique evaluation identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
@@ -217,7 +220,7 @@ trait Evaluations extends EvaluationsController
    * @param id Unique evaluation identifier
    * @return
    */
-  def update(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
@@ -247,7 +250,7 @@ trait Evaluations extends EvaluationsController
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         evaluationService.find(id).map { x ⇒
@@ -300,7 +303,7 @@ trait Evaluations extends EvaluationsController
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       evaluationService.find(id).map { x ⇒
         val route: String = ref match {
@@ -362,7 +365,7 @@ trait Evaluations extends EvaluationsController
         archived = Some(false),
         confirmed = Some(true))
     } else {
-      val brands = Brand.findByCoordinator(account.personId)
+      val brands = brandService.findByCoordinator(account.personId)
       if (brands.length > 0) {
         val events = EventService.get.findByParameters(
           brandId = None,

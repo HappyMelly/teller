@@ -177,7 +177,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e11 = new MockContext {
     val team = List(PersonHelper.one(), PersonHelper.two())
     (brandService.coordinators _).expects(1L).returning(team)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/details/1")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("First Tester")
@@ -186,7 +186,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e13 = new MockContext {
     (brandService.coordinators _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/details/1")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Coordinator"
@@ -195,7 +195,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e14 = new MockContext {
     (brandService.coordinators _).expects(1L).returning(List(PersonHelper.one()))
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/details/1")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Coordinator")

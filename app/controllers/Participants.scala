@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.admin.Translation
@@ -103,9 +104,10 @@ object Participants extends Controller with Security with Services {
    */
   def participantsByBrand(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      // TODO: check for a valid brand from Brand.findForUser
-      brandService.find(brandId) map { brand ⇒
+      brandService.findWithCoordinators(brandId) map { x ⇒
+        val brand = x.brand
         val account = user.account
+        val coordinator = account.editor || x.coordinators.exists(_.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -129,14 +131,14 @@ object Participants extends Controller with Security with Services {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(brand, data, "index"),
-                    "evaluation" -> evaluationActions(id, brand, data, account, "index"),
+                    "evaluation" -> evaluationActions(id, coordinator, data, "index"),
                     "participant" -> participantActions(data, account, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.coordinatorId == account.personId) {
+                          if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
@@ -150,9 +152,8 @@ object Participants extends Controller with Security with Services {
           }
         }
         val personId = account.personId
-        //TODO change to brand team
         val participants =
-          if (account.editor || brand.coordinatorId == personId) {
+          if (coordinator) {
             Participant.findByBrand(brand.id)
           } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
             val events = eventService.findByFacilitator(personId, brand.id).map(_.id.get)
@@ -169,9 +170,11 @@ object Participants extends Controller with Security with Services {
    */
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      EventService.get.find(eventId).map { event ⇒
+      eventService.find(eventId).map { event ⇒
         val account = user.account
-        val brand = brandService.find(event.brandId).get
+        val x = brandService.findWithCoordinators(event.brandId).get
+        val brand = x.brand
+        val coordinator = account.editor || x.coordinators.exists(_.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -185,14 +188,14 @@ object Participants extends Controller with Security with Services {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(brand, data, "event"),
-                    "evaluation" -> evaluationActions(id, brand, data, account, "event"),
+                    "evaluation" -> evaluationActions(id, coordinator, data, "event"),
                     "participant" -> participantActions(data, account, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.coordinatorId == account.personId) {
+                          if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
@@ -355,21 +358,22 @@ object Participants extends Controller with Security with Services {
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Participant.find(personId, eventId).map { value ⇒
+  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Participant.find(personId, eventId).map { value ⇒
 
-        val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
-        value.delete()
-        val activity = Activity.create(user.fullName,
-          Activity.Predicate.Deleted,
-          activityObject)
-        val route = ref match {
-          case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
-          case _ ⇒ routes.Participants.index().url
-        }
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
+          value.delete()
+          val activity = Activity.create(user.fullName,
+            Activity.Predicate.Deleted,
+            activityObject)
+          val route = ref match {
+            case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
+            case _ ⇒ routes.Participants.index().url
+          }
+          Redirect(route).flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -409,7 +413,7 @@ object Participants extends Controller with Security with Services {
   }
 
   /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount, page: String): JsValue = {
+  private def evaluationActions(id: Long, coordinator: Boolean, data: ParticipantView, page: String): JsValue = {
     Json.obj(
       "approve" -> {
         if (Evaluation.approvable(data.status.get))
@@ -423,7 +427,7 @@ object Participants extends Controller with Security with Services {
       },
       "move" -> routes.Evaluations.move(id).url,
       "edit" -> {
-        if (account.editor || brand.coordinatorId == account.personId)
+        if (coordinator)
           routes.Evaluations.edit(id).url
         else ""
       },

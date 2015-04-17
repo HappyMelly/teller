@@ -25,15 +25,13 @@
 package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.JodaMoney._
 import models._
-import models.database.brand.BrandFees
-import models.database.{ EventFacilitators, EventInvoices, Events }
+import models.database.{ Evaluations, EventFacilitators, EventInvoices, Events }
 import org.joda.time.LocalDate
+import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play
 import services.integrations.Integrations
 
 import scala.language.postfixOps
@@ -59,6 +57,19 @@ class EventService extends Integrations with Services {
   def find(id: Long): Option[Event] = DB.withSession {
     implicit session: Session ⇒
       Query(Events).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Return event if it exists related to the given evaluation
+   * @param evaluationId Evaluation id
+   */
+  def findByEvaluation(evaluationId: Long): Option[Event] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← Evaluations if x.id === evaluationId
+        y ← Events if y.id === x.eventId
+      } yield y
+      query.firstOption
   }
 
   /**

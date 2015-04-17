@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models._
 import models.service.Services
 import org.joda.time.LocalDate
@@ -44,7 +45,7 @@ object Certificates extends Controller with Security with Services {
    */
   def create(eventId: Long,
     personId: Long,
-    ref: Option[String] = None) = SecuredDynamicAction("event", "edit") {
+    ref: Option[String] = None) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Participant.find(personId, eventId) map { participant ⇒

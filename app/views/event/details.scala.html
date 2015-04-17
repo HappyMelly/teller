@@ -8,6 +8,7 @@
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
+@import models.UserRole.DynamicRole
 
 @import helper.CSRF
 @import templates.Formatters._
@@ -18,7 +19,7 @@
 
 @main(event.title + " - Event", "events", user) {
 
-  @dynamic(handler, "event", "edit") {
+  @dynamic(handler, "event", DynamicRole.Facilitator) {
     <!-- Confirm Modal -->
     <div id="confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -52,7 +53,7 @@
     <h1>
       @event.title
       <div class="actions pull-right">
-      @dynamic(handler, "event", "edit") {
+      @dynamic(handler, "event", DynamicRole.Facilitator) {
         <div class="button">
           <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
             <i class="glyphicon glyphicon-pencil"></i> Edit
@@ -185,7 +186,7 @@
         <strong>Invoice #:</strong> @number
       }
     </p>
-    @dynamic(handler, "event", "admin") {
+    @dynamic(handler, "event", DynamicRole.Coordinator) {
       <form method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
         <input type="hidden" name="id" value="@event.invoice.id">
         <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">

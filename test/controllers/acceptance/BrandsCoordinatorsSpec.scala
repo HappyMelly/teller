@@ -28,7 +28,7 @@ import controllers.Brands
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.service.BrandService
-import models.service.brand.BrandTeamMemberService
+import models.service.brand.BrandCoordinatorService
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs.{ FakePersonService, FakeServices, FakeUserIdentity }
 
@@ -61,7 +61,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestBrands extends Brands with FakeServices
 
   val controller = new TestBrands
-  val brandTeamMemberService = mock[BrandTeamMemberService]
+  val brandTeamMemberService = mock[BrandCoordinatorService]
   controller.brandTeamMemberService_=(brandTeamMemberService)
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
@@ -69,7 +69,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.personService_=(personService)
 
   def e1 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "1")
     (brandService.find(_: Long)).expects(1L).returning(None)
     val res = controller.addCoordinator(1L).apply(req)
@@ -78,7 +78,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
@@ -89,7 +89,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     val person = PersonHelper.one()
@@ -102,7 +102,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     val person = PersonHelper.one()
@@ -117,16 +117,16 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = {
-    val req1 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req1 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "0")
     status(controller.addCoordinator(1L).apply(req1)) must equalTo(BAD_REQUEST)
-    val req2 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+    val req2 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
       withFormUrlEncodedBody("personId" -> "2adf")
     status(controller.addCoordinator(1L).apply(req2)) must equalTo(BAD_REQUEST)
   }
 
   def e6 = {
-    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/details/1")
     (brandTeamMemberService.delete(_, _)).expects(1L, 1L)
     val res = controller.removeCoordinator(1L, 1L).apply(req)
     status(res) must equalTo(OK)

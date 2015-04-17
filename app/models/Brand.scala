@@ -28,7 +28,7 @@ import java.text.Collator
 import java.util.Locale
 import models.brand.CertificateTemplate
 import models.database._
-import models.service.{ ProductService, SocialProfileService }
+import models.service.{ BrandService, LicenseService, ProductService, SocialProfileService }
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -177,8 +177,8 @@ object Brand {
     if (user.editor)
       Query(Brands).list.sortBy(_.name)
     else {
-      val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
-      findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
+      val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
+      BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
     }
   }
 
@@ -225,11 +225,6 @@ object Brand {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
       License.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
-  }
-
-  /** Finds all brands belonging to one coordinator **/
-  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.coordinatorId === coordinatorId).list
   }
 
   def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒

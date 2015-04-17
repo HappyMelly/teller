@@ -186,24 +186,7 @@ case class Event(
 
   lazy val deletable: Boolean = participants.isEmpty
 
-  /**
-   * Returns true if a person is a facilitator of this event
-   *
-   * @param personId A person's unique identifier
-   */
-  def canFacilitate(personId: Long): Boolean =
-    facilitatorIds.contains(personId) || isBrandManager(personId)
-
-  /**
-   * Returns true if a person is a brand manager of this event
-   *
-   * @param personId A person unique identifier
-   */
-  def isBrandManager(personId: Long): Boolean = {
-    (new EventService()).isBrandManager(
-      personId,
-      this)
-  }
+  def isFacilitator(personId: Long): Boolean = facilitatorIds.contains(personId)
 
   def insert: Event = DB.withSession { implicit session: Session ⇒
     val insertTuple = (eventTypeId, brandId, title, language.spoken,
