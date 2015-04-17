@@ -30,11 +30,13 @@ import models.service.brand.{ BrandCoordinatorService, CertificateTemplateServic
 /** Contains references to all services so we can stub them in tests */
 trait Services {
 
+  def activityService: ActivityService = ActivityService.get
+
   def apiTokenService: ApiTokenService = ApiTokenService.get
 
   def brandService: BrandService = BrandService.get
 
-  def brandTeamMemberService: BrandCoordinatorService = BrandCoordinatorService.get
+  def brandCoordinatorService: BrandCoordinatorService = BrandCoordinatorService.get
 
   def certificateService: CertificateTemplateService = CertificateTemplateService.get
 

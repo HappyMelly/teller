@@ -46,7 +46,7 @@ class EventService extends Integrations with Services {
    */
   def isBrandManager(personId: Long, event: Event): Boolean = DB.withSession {
     implicit session: Session ⇒
-      brandService.find(event.brandId).exists(_.coordinatorId == personId)
+      brandService.find(event.brandId).exists(_.ownerId == personId)
   }
 
   /**
@@ -128,7 +128,7 @@ class EventService extends Integrations with Services {
    */
   def findByFacilitator(
     facilitatorId: Long,
-    brandId: Option[Long],
+    brandId: Option[Long] = None,
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None): List[Event] = DB.withSession {

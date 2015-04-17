@@ -24,6 +24,7 @@
 
 package models.service.brand
 
+import models.brand.BrandCoordinator
 import models.database.brand.BrandCoordinators
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -38,12 +39,11 @@ class BrandCoordinatorService {
 
   /**
    * Adds new team member to the given brand
-   * @param brandId Brand identifier
-   * @param personId Person identifier
+   * @param coordinator Brand object
    */
-  def insert(brandId: Long, personId: Long) = DB.withSession {
+  def insert(coordinator: BrandCoordinator) = DB.withSession {
     implicit session: Session ⇒
-      BrandCoordinators.forInsert.insert((brandId, personId))
+      _insert(coordinator)
   }
 
   /**
@@ -57,6 +57,16 @@ class BrandCoordinatorService {
         filter(_.brandId === brandId).
         filter(_.personId === personId).mutate(_.delete())
   }
+
+  /**
+   * Adds new coordinator to the given brand
+   *
+   * Requires session object so it can be used inside withTransaction
+   * @param coordinator Brand object
+   * @param session Session object
+   */
+  def _insert(coordinator: BrandCoordinator)(implicit session: Session) =
+    BrandCoordinators.forInsert.insert(coordinator)
 }
 
 object BrandCoordinatorService {

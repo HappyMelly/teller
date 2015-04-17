@@ -26,6 +26,7 @@ package models.integration
 
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
+import models.brand.{ BrandCoordinator, BrandNotifications }
 import models.service.BrandService
 import models.service.brand.BrandCoordinatorService
 
@@ -40,10 +41,11 @@ class BrandServiceSpec extends PlayAppSpec {
       PersonHelper.make(Some(3), "Third", "Tester")).foreach { x ⇒
         x.insert
       }
-    List(BrandHelper.one, BrandHelper.make("TWO")).foreach(_.insert)
-    BrandCoordinatorService.get.insert(1L, 1L)
-    BrandCoordinatorService.get.insert(1L, 2L)
-    BrandCoordinatorService.get.insert(2L, 1L)
+    List(BrandHelper.one, BrandHelper.make("TWO")).foreach(_.insert())
+    // Persons with id = 1 is a brand owner for both brands. Its coordinator
+    // records are added automatically
+    val coordinator = BrandCoordinator(None, 1L, 2L, BrandNotifications())
+    BrandCoordinatorService.get.insert(coordinator)
   }
 
   val service = new BrandService
@@ -53,7 +55,7 @@ class BrandServiceSpec extends PlayAppSpec {
       val brand = BrandHelper.one
       service.find("TEST") map { x ⇒
         x.code must_== "TEST"
-        x.coordinatorId must_== brand.coordinatorId
+        x.ownerId must_== brand.ownerId
         x.uniqueName must_== brand.uniqueName
       } getOrElse ko
     }
@@ -66,8 +68,8 @@ class BrandServiceSpec extends PlayAppSpec {
     "2 team members for brand id = 1 available in database" in {
       val members = service.coordinators(1L)
       members.length must_== 2
-      members.exists(_.id == Some(1L))
-      members.exists(_.id == Some(2L))
+      members.exists(_._1.id == Some(1L))
+      members.exists(_._1.id == Some(2L))
     }
     "no members for brand id = 3 as no members are available in database" in {
       service.coordinators(3L).length must_== 0
@@ -94,8 +96,8 @@ class BrandServiceSpec extends PlayAppSpec {
       res map { x ⇒
         x.brand.id must_== Some(1L)
         x.coordinators.length must_== 2
-        x.coordinators.exists(_.firstName == "First") must_== true
-        x.coordinators.exists(_.firstName == "Second") must_== true
+        x.coordinators.exists(_._1.firstName == "First") must_== true
+        x.coordinators.exists(_._1.firstName == "Second") must_== true
       } getOrElse ko
     }
   }

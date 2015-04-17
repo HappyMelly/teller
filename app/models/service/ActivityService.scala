@@ -22,31 +22,32 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database.brand
+package models.service
 
-import models.brand.{ BrandNotifications, BrandCoordinator }
+import models.Activity
+import models.database.Activities
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
+import play.api.db.slick.DB
+
+import scala.slick.lifted.Query
 
 /**
- * Database table mapping for the association between brand and team members
+ * Contains a set of activity-related functions to work with database
  */
-private[models] object BrandCoordinators extends Table[BrandCoordinator]("BRAND_COORDINATOR") {
+class ActivityService {
 
-  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandId = column[Long]("BRAND_ID")
-  def personId = column[Long]("PERSON_ID")
-  def event = column[Boolean]("EVENT")
-  def evaluation = column[Boolean]("EVALUATION")
-  def certificate = column[Boolean]("CERTIFICATE")
+  /**
+   * Returns 50 latest activity stream entries in reverse chronological order
+   */
+  def findAll: List[Activity] = DB.withSession { implicit session ⇒
+    Query(Activities).sortBy(_.created.desc).take(50).list
+  }
 
-  def * = id.? ~ brandId ~ personId ~ event ~ evaluation ~
-    certificate <> ({
-      x ⇒ BrandCoordinator(x._1, x._2, x._3, BrandNotifications(x._4, x._5, x._6))
-    }, { (x: BrandCoordinator) ⇒
-      Some(x.id, x.brandId, x.personId,
-        x.notification.event, x.notification.evaluation, x.notification.certificate)
-    })
+}
 
-  def forInsert = * returning id
-  def forUpdate = event ~ evaluation ~ certificate
+object ActivityService {
+  private val instance = new ActivityService
+
+  def get: ActivityService = instance
 }

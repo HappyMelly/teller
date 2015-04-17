@@ -50,7 +50,7 @@ trait Reports extends Controller with Security with Services {
 
           val personId = account.personId
           val events =
-            if (account.editor || brand.coordinatorId == personId) {
+            if (account.editor || brand.ownerId == personId) {
               eventService.findByParameters(brand.id)
             } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
               eventService.findByFacilitator(account.personId, brand.id, archived = Some(false))

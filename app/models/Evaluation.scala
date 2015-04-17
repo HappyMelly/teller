@@ -173,8 +173,9 @@ case class Evaluation(
     val impression = en.impressions.value(question6)
     val participant = Participant.find(this.personId, this.eventId).get
     val subject = s"New evaluation (General impression: $impression)"
+    val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
-      Some(brand.coordinators.toSet), None, subject,
+      Some(cc.toSet), None, subject,
       mail.html.evaluation(this, participant, en).toString(), richMessage = true)
 
     this

@@ -30,7 +30,7 @@ import models.UserRole.Role._
 import models.brand.EventType
 import models.event.Comparator
 import models.event.Comparator.FieldChange
-import models.service.{ EventService, PersonService, Services }
+import models.service.{ EventService, Services }
 import models.{ Location, Schedule, _ }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.data.Forms._
@@ -173,18 +173,6 @@ object Events extends Controller
       }))
 
   /**
-   * Sends an e-mail notification for an event to the given recipients.
-   *
-   */
-  def sendEmailNotification(event: Event, changes: List[FieldChange], activity: Activity,
-    recipients: List[Person])(implicit request: RequestHeader): Unit = {
-    val subject = s"${activity.description} event"
-    val brand = brandService.find(event.brandId).get
-    email.send(recipients.toSet, None, None, subject,
-      mail.html.event(event, brand, changes).toString, richMessage = true)
-  }
-
-  /**
    * Create page.
    */
   def add = SecuredDynamicAction("event", "add") { implicit request ⇒
@@ -211,12 +199,12 @@ object Events extends Controller
   def duplicate(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      EventService.get.find(id).map {
+      eventService.find(id) map {
         event ⇒
           val account = user.account
           val brands = Brand.findByUser(account)
           Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(event)))
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
@@ -227,30 +215,21 @@ object Events extends Controller
 
       val form = eventForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ {
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          BadRequest(views.html.event.form(user, None, brands, account.personId, false, formWithErrors))
-        },
-        event ⇒ {
-          val validLicensees = License.licensees(event.brandId)
-          val coordinators = brandService.coordinators(event.brandId)
-          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinators.exists(_.id.get == id) })) {
-            val addedEvent = event.insert
-            val activity = addedEvent.activity(
+        formWithErrors ⇒ formError(user, formWithErrors, None),
+        x ⇒ {
+          val validLicensees = License.licensees(x.brandId)
+          if (x.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) })) {
+            val event = x.insert
+            val activity = event.activity(
               user.person,
               Activity.Predicate.Created).insert
-            sendEmailNotification(addedEvent,
+            sendEmailNotification(event,
               List.empty,
-              activity,
-              coordinators)
+              activity)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
-          } else {
-            val account = user.account
-            val brands = Brand.findByUser(account)
-            BadRequest(views.html.event.form(user, None, brands, account.personId, false,
-              form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
-          }
+          } else formError(user,
+            form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
+            None)
         })
   }
 
@@ -261,19 +240,18 @@ object Events extends Controller
   def delete(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id).map { event ⇒
+      eventService.find(id) map { event ⇒
         if (event.deletable) {
           event.delete()
           val activity = event.activity(
             user.person,
             Activity.Predicate.Deleted).insert
-          val coordinators = brandService.coordinators(event.brandId)
-          sendEmailNotification(event, List.empty, activity, coordinators)
+          sendEmailNotification(event, List.empty, activity)
           Redirect(routes.Events.index()).flashing("success" -> activity.toString)
         } else {
           Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
         }
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
@@ -285,7 +263,7 @@ object Events extends Controller
   def invoice(id: Long) = SecuredDynamicAction("event", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id).map { event ⇒
+      eventService.find(id) map { event ⇒
         val form = Form(invoiceMapping).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
@@ -299,7 +277,7 @@ object Events extends Controller
               Activity.Predicate.Updated).insert
             Redirect(routes.Events.details(id)).flashing("success" -> "Invoice data was successfully updated")
           })
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
@@ -467,20 +445,15 @@ object Events extends Controller
    * Edit form submits to this action.
    * @param id Event ID
    */
-  def update(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form = eventForm.bindFromRequest
       form.fold(
-        formWithErrors ⇒ {
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false, formWithErrors))
-        },
+        formWithErrors ⇒ formError(user, formWithErrors, Some(id)),
         event ⇒ {
           val validLicensees = License.licensees(event.brandId)
-          val coordinators = brandService.coordinators(event.brandId)
-          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) || coordinators.exists(_.id.get == id) })) {
+          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) })) {
             val existingEvent = eventService.find(id).get
 
             val updatedEvent = event.copy(id = Some(id))
@@ -498,16 +471,12 @@ object Events extends Controller
               Activity.Predicate.Updated).insert
             sendEmailNotification(updatedEvent,
               changes,
-              activity,
-              coordinators)
+              activity)
 
             Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
-          } else {
-            val account = user.account
-            val brands = Brand.findByUser(account)
-            BadRequest(views.html.event.form(user, Some(id), brands, account.personId, false,
-              form.withError("facilitatorIds", "Some facilitators do not have valid licenses")))
-          }
+          } else formError(user,
+            form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
+            Some(id))
         })
   }
 
@@ -515,7 +484,7 @@ object Events extends Controller
    * Confirm form submits to this action.
    * @param id Event ID
    */
-  def confirm(id: Long) = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def confirm(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventService.find(id).map {
         event ⇒
@@ -572,5 +541,42 @@ object Events extends Controller
             }
           })
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Returns event form with highlighted errors
+   * @param user User object
+   * @param form Form with errors
+   * @param eventId Event identifier if exists
+   */
+  protected def formError(user: UserIdentity,
+    form: Form[Event],
+    eventId: Option[Long])(implicit flash: play.api.mvc.Flash,
+      request: Request[Any],
+      handler: AuthorisationHandler,
+      token: play.filters.csrf.CSRF.Token) = {
+    val account = user.account
+    val brands = Brand.findByUser(account)
+    BadRequest(views.html.event.form(user, eventId, brands, account.personId, false, form))
+  }
+
+  /**
+   * Sends an e-mail notification for an event to the given recipients
+   *
+   * @param event Event
+   * @param changes Changes if the event was updated
+   * @param activity Activity description
+   * @param request Request which is passed to view
+   */
+  protected def sendEmailNotification(event: Event,
+    changes: List[FieldChange],
+    activity: Activity)(implicit request: RequestHeader): Unit = {
+
+    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+      val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
+      val subject = s"${activity.description} event"
+      email.send(recipients.toSet, None, None, subject,
+        mail.html.event(event, x.brand, changes).toString, richMessage = true)
+    }
   }
 }

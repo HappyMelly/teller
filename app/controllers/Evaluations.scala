@@ -260,31 +260,15 @@ trait Evaluations extends EvaluationsController
             case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
           }
           if (x.eval.approvable) {
-            val ev = x.eval.approve
+            val evaluation = x.eval.approve
             // recalculate ratings
-            Event.ratingActor ! ev.eventId
-            Facilitator.ratingActor ! ev.eventId
-            val approver = user.person
-            val brand = brandService.findWithCoordinators(x.event.brandId).get
-            Participant.find(ev.personId, ev.eventId) foreach { data ⇒
-              if (data.certificate.isEmpty && brand.brand.generateCert) {
-                val cert = new Certificate(ev.handled, x.event, ev.participant)
-                cert.generateAndSend(brand, approver)
-                data.copy(certificate = Some(cert.id), issued = cert.issued).update
-              } else if (data.certificate.isEmpty) {
-                val body = mail.evaluation.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
-                val subject = s"Your ${brand.brand.name} event's evaluation approval"
-                email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
-                  Some(brand.coordinators.toSet), subject, body, richMessage = true, None)
-              } else {
-                val cert = new Certificate(ev.handled, x.event, ev.participant, renew = true)
-                cert.send(brand, approver)
-              }
-            }
+            Event.ratingActor ! evaluation.eventId
+            Facilitator.ratingActor ! evaluation.eventId
 
-            val activity = ev.activity(
+            val activity = evaluation.activity(
               user.person,
               Activity.Predicate.Approved).insert
+            sendApprovalConfirmation(user.person, evaluation, x.event)
 
             Redirect(route).flashing("success" -> activity.toString)
           } else {
@@ -322,14 +306,7 @@ trait Evaluations extends EvaluationsController
             user.person,
             Activity.Predicate.Rejected).insert
 
-          val brand = brandService.findWithCoordinators(x.event.brandId).get
-          val participant = x.eval.participant
-          val subject = s"Your ${brand.brand.name} certificate"
-          email.send(Set(participant),
-            Some(x.event.facilitators.toSet),
-            Some(brand.coordinators.toSet), subject,
-            mail.evaluation.html.rejected(brand.brand, participant, user.person).toString(),
-            richMessage = true)
+          sendRejectionConfirmation(user.person, x.eval.participant, x.event)
 
           Redirect(route).flashing("success" -> activity.toString)
         } else {
@@ -351,6 +328,57 @@ trait Evaluations extends EvaluationsController
       x.confirm()
       Ok(views.html.evaluation.confirmed())
     } getOrElse NotFound(views.html.evaluation.notfound())
+  }
+
+  /**
+   * Sends confirmation email that evaluation was approved
+   * @param approver Person who approved the given evaluation
+   * @param ev Evaluation
+   * @param event Related event
+   */
+  protected def sendApprovalConfirmation(approver: Person,
+    ev: Evaluation,
+    event: Event) = {
+    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+      Participant.find(ev.personId, ev.eventId) foreach { data ⇒
+        val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
+        if (data.certificate.isEmpty && x.brand.generateCert) {
+          val cert = new Certificate(ev.handled, event, ev.participant)
+          cert.generateAndSend(x, approver)
+          data.copy(certificate = Some(cert.id), issued = cert.issued).update
+        } else if (data.certificate.isEmpty) {
+          val body = mail.evaluation.html.approvedNoCert(x.brand, ev.participant, approver).toString()
+          val subject = s"Your ${x.brand.name} event's evaluation approval"
+          email.send(Set(ev.participant),
+            Some(event.facilitators.toSet),
+            Some(bcc.toSet),
+            subject, body, richMessage = true, None)
+        } else {
+          val cert = new Certificate(ev.handled, event, ev.participant, renew = true)
+          cert.send(x, approver)
+        }
+      }
+    }
+  }
+
+  /**
+   * Sends confirmation email that evaluation was rejected
+   * @param rejector Person who rejected the evaluation
+   * @param participant Participant
+   * @param event Related event
+   */
+  protected def sendRejectionConfirmation(rejector: Person,
+    participant: Person,
+    event: Event) = {
+    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+      val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
+      val subject = s"Your ${x.brand.name} certificate"
+      email.send(Set(participant),
+        Some(event.facilitators.toSet),
+        Some(bcc.toSet), subject,
+        mail.evaluation.html.rejected(x.brand, participant, rejector).toString(),
+        richMessage = true)
+    }
   }
 
   /**

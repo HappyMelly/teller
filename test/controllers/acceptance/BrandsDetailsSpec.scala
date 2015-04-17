@@ -27,7 +27,7 @@ package controllers.acceptance
 import controllers.Brands
 import helpers.{ PersonHelper, ProductHelper }
 import integration.PlayAppSpec
-import models.brand.{ CertificateTemplate, EventType }
+import models.brand.{ BrandCoordinator, CertificateTemplate, EventType }
 import models.service.BrandService
 import models.service.brand.{ CertificateTemplateService, EventTypeService }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -175,7 +175,9 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e11 = new MockContext {
-    val team = List(PersonHelper.one(), PersonHelper.two())
+    val team = List(
+      (PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)),
+      (PersonHelper.two(), BrandCoordinator(Some(2L), 1L, 2L)))
     (brandService.coordinators _).expects(1L).returning(team)
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/details/1")
     val res = controller.renderTabs(1L, "team").apply(req)
@@ -194,7 +196,8 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e14 = new MockContext {
-    (brandService.coordinators _).expects(1L).returning(List(PersonHelper.one()))
+    val coordinators = List((PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)))
+    (brandService.coordinators _) expects 1L returning coordinators
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/details/1")
     val res = controller.renderTabs(1L, "team").apply(req)
     status(res) must equalTo(OK)

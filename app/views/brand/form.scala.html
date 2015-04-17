@@ -27,9 +27,9 @@
             '_help -> "This name is used on HM website in an address of brand's landing page")
           @html.text(form("name"), '_label -> "Name")
           @html.text(form("tagLine"), '_label -> "Tagline")
-          @html.select(form("coordinatorId"),
-            ("", "Choose a brand coordinator") :: people.map(p => (p.id.get.toString, p.fullName)),
-            '_label -> "Coordinator")
+          @html.select(form("ownerId"),
+            ("", "Choose brand owner") :: people.map(p => (p.id.get.toString, p.fullName)),
+            '_label -> "Owner")
           @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
             '_help -> views.html.element.markdownHelp())
           @html.file(form("picture"), '_label -> "Picture")

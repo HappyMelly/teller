@@ -27,6 +27,7 @@ package controllers.acceptance
 import controllers.Brands
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
+import models.brand.{ BrandCoordinator, BrandNotifications }
 import models.service.BrandService
 import models.service.brand.BrandCoordinatorService
 import org.scalamock.specs2.IsolatedMockFactory
@@ -53,63 +54,70 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   Given a user adds a person as new coordinator when person id is not > 0
     then the system returns an error $e5
 
+  Given a user removes a coordinator when the brand doesn't exist
+    then the system returns an error $e6
 
-  Given a user removes a member when any parameters are provided
-    then the system tries to remove the member and always returns success $e6
+  Given a user removes a coordinator when the coordinator is the brand owner
+    then the system returns an error $e7
+
+  Given a user removes a coordinator when any parameters are provided
+    then the system tries to remove the member and always returns success $e8
   """
 
   class TestBrands extends Brands with FakeServices
 
   val controller = new TestBrands
   val brandTeamMemberService = mock[BrandCoordinatorService]
-  controller.brandTeamMemberService_=(brandTeamMemberService)
+  controller.brandCoordinatorService_=(brandTeamMemberService)
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
   val personService = mock[FakePersonService]
   controller.personService_=(personService)
 
   def e1 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "1")
-    (brandService.find(_: Long)).expects(1L).returning(None)
+    (brandService.find(_: Long)) expects 1L returning None
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("brand not found")
   }
 
   def e2 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
-    (personService.find(_: Long)).expects(1L).returning(None)
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (personService.find(_: Long)) expects 1L returning None
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("person not found")
   }
 
   def e3 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     val person = PersonHelper.one()
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
-    (personService.find(_: Long)).expects(1L).returning(Some(person))
-    (brandService.coordinators(_)).expects(1L).returning(List(person))
+    val coordinator = BrandCoordinator(Some(1L), 1L, 1L)
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (personService.find(_: Long)) expects 1L returning Some(person)
+    (brandService.coordinators(_)) expects 1L returning List((person, coordinator))
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(CONFLICT)
     contentAsString(res) must contain("This person is already a coordinator")
   }
 
   def e4 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     val person = PersonHelper.one()
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
-    (personService.find(_: Long)).expects(1L).returning(Some(person))
-    (brandService.coordinators(_)).expects(1L).returning(List())
-    (brandTeamMemberService.insert(_, _)).expects(1L, 1L)
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (personService.find(_: Long)) expects 1L returning Some(person)
+    (brandService.coordinators _) expects 1L returning List()
+    val coordinator = BrandCoordinator(None, 1L, 1L, BrandNotifications())
+    (brandTeamMemberService.insert _) expects coordinator
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("You added new coordinator")
@@ -117,18 +125,37 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = {
-    val req1 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req1 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "0")
     status(controller.addCoordinator(1L).apply(req1)) must equalTo(BAD_REQUEST)
-    val req2 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/details/1").
+    val req2 = prepareSecuredPostRequest(FakeUserIdentity.editor, "/1").
       withFormUrlEncodedBody("personId" -> "2adf")
     status(controller.addCoordinator(1L).apply(req2)) must equalTo(BAD_REQUEST)
   }
 
   def e6 = {
-    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/details/1")
-    (brandTeamMemberService.delete(_, _)).expects(1L, 1L)
+    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/1")
+    (brandService.find(_: Long)) expects 1L returning None
     val res = controller.removeCoordinator(1L, 1L).apply(req)
+    status(res) must equalTo(NOT_FOUND)
+    contentAsString(res) must contain("brand not found")
+  }
+
+  def e7 = {
+    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/1")
+    val brand = BrandHelper.one
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    val res = controller.removeCoordinator(1L, 1L).apply(req)
+    status(res) must equalTo(CONFLICT)
+    contentAsString(res) must contain("You cannot remove brand owner from the list of coordinators")
+  }
+
+  def e8 = {
+    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "/1")
+    val brand = BrandHelper.one
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (brandTeamMemberService.delete(_, _)) expects (1L, 2L)
+    val res = controller.removeCoordinator(1L, 2L).apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("You removed a coordinator")
   }

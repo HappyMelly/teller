@@ -26,8 +26,10 @@ package controllers
 
 import controllers.Forms._
 import fly.play.s3.{ BucketFile, S3Exception }
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
+import models.brand.BrandCoordinator
 import models.service.Services
 import org.joda.time._
 import play.api.Play.current
@@ -83,7 +85,7 @@ trait Brands extends JsonController with Security with Services {
         "constraint.brand.uniqueName.error"),
       maxLength(25)),
     "name" -> nonEmptyText,
-    "coordinatorId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "ownerId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "description" -> optional(text),
     "picture" -> optional(text),
     "generateCert" -> boolean,
@@ -96,18 +98,18 @@ trait Brands extends JsonController with Security with Services {
     "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(user.fullName))({
-      (id, code, uniqueName, name, coordinatorId, description, picture,
+      (id, code, uniqueName, name, ownerId, description, picture,
       generateCert, tagLine, webSite, blog, profile, evaluationHookUrl,
       created, createdBy, updated, updatedBy) ⇒
         {
-          val brand = Brand(id, code, uniqueName, name, coordinatorId,
+          val brand = Brand(id, code, uniqueName, name, ownerId,
             description, picture, generateCert, tagLine, webSite, blog,
             evaluationHookUrl, created, createdBy, updated, updatedBy)
           brand.socialProfile_=(profile)
           brand
         }
     })({ (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.coordinatorId, b.description,
+      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description,
         b.picture, b.generateCert, b.tagLine, b.webSite, b.blog, b.socialProfile,
         b.evaluationHookUrl, b.created, b.createdBy, b.updated, b.updatedBy))
     }))
@@ -208,7 +210,7 @@ trait Brands extends JsonController with Security with Services {
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brand.code))
         }
-        Brand.update(brand, brand, None)
+        brandService.update(brand, brand, None)
         val activity = brand.activity(
           user.person,
           Activity.Predicate.DeletedImage).insert
@@ -225,7 +227,7 @@ trait Brands extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(id) map { brand ⇒
-          val coordinator = personService.find(brand.coordinatorId)
+          val coordinator = personService.find(brand.ownerId)
           Ok(views.html.brand.details(user, brand, coordinator))
         } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
@@ -246,7 +248,7 @@ trait Brands extends JsonController with Security with Services {
             val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
             Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case "team" ⇒
-            val members = brandService.coordinators(id).sortBy(_.fullName)
+            val members = brandService.coordinators(id).sortBy(_._1.fullName)
             val people = personService.findActive.filterNot(x ⇒ members.contains(x))
             Ok(views.html.brand.tabs.team(id, members, people))
           case _ ⇒
@@ -268,10 +270,11 @@ trait Brands extends JsonController with Security with Services {
           personId ⇒
             brandService.find(id) map { x ⇒
               personService.find(personId) map { y ⇒
-                if (brandService.coordinators(id).contains(y)) {
+                if (brandService.coordinators(id).exists(_._1 == y)) {
                   jsonConflict(Messages("error.brand.alreadyMember"))
                 } else {
-                  brandTeamMemberService.insert(id, personId)
+                  val coordinator = BrandCoordinator(None, id, personId)
+                  brandCoordinatorService.insert(coordinator)
                   val data = Json.obj("personId" -> personId,
                     "brandId" -> id,
                     "name" -> y.fullName)
@@ -286,11 +289,17 @@ trait Brands extends JsonController with Security with Services {
    * @param id Brand id
    * @param personId Person id
    */
-  def removeCoordinator(id: Long, personId: Long) = SecuredDynamicAction("brand", "coordinator") {
+  def removeCoordinator(id: Long, personId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        brandTeamMemberService.delete(id, personId)
-        jsonSuccess(Messages("success.brand.deleteMember"))
+        brandService.find(id) map { x ⇒
+          if (x.ownerId == personId) {
+            jsonConflict(Messages("error.brand.removeOwner"))
+          } else {
+            brandCoordinatorService.delete(id, personId)
+            jsonSuccess(Messages("success.brand.deleteMember"))
+          }
+        } getOrElse jsonNotFound(Messages("error.notFound", "brand"))
   }
 
   /**
@@ -334,7 +343,7 @@ trait Brands extends JsonController with Security with Services {
                 val byteArray = source.toArray.map(_.toByte)
                 source.close()
                 S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                  val updatedBrand = Brand.update(x, brand, Some(filename))
+                  val updatedBrand = brandService.update(x, brand, Some(filename))
                   Cache.remove(Brand.cacheId(x.code))
                   if (x.code != updatedBrand.code) {
                     Cache.remove(Brand.cacheId(updatedBrand.code))
@@ -353,7 +362,7 @@ trait Brands extends JsonController with Security with Services {
                       form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                 }
               }.getOrElse {
-                val updatedBrand = Brand.update(x, brand, x.picture)
+                val updatedBrand = brandService.update(x, brand, x.picture)
                 val activity = updatedBrand.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
@@ -416,7 +425,7 @@ trait Brands extends JsonController with Security with Services {
           val account = user.account
           val events = if (account.editor ||
             //TODO change to brand team
-            brand.coordinatorId == account.personId) {
+            brand.ownerId == account.personId) {
             eventService.findByParameters(brand.id, future)
           } else {
             eventService.findByFacilitator(

@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import helpers.{ EvaluationHelper, BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
-import models.service.{ EvaluationService, BrandService, EventService }
+import models.service.{ ActivityService, EvaluationService, BrandService, EventService }
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import services.integrations.Email
@@ -186,7 +186,7 @@ class EventServiceSpec extends PlayAppSpec {
 
       service.sendConfirmationAlert()
 
-      val activities = Activity.findAll
+      val activities = ActivityService.get.findAll
       activities.length must_== 1
       activities.head.subject must_== "Teller"
       activities.head.predicate must_== Activity.Predicate.Sent.toString

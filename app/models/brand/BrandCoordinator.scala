@@ -22,31 +22,27 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database.brand
-
-import models.brand.{ BrandNotifications, BrandCoordinator }
-import play.api.db.slick.Config.driver.simple._
+package models.brand
 
 /**
- * Database table mapping for the association between brand and team members
+ * Represents notification state object regulating which notifications are sent
+ * to brand coordinator
+ * @param event If true, event notifications (create, edit, delete) are sent
+ * @param evaluation If true, evaluation notifications (create, delete, approve, reject) are sent
+ * @param certificate If true, notifications are sent when certificate is generated
  */
-private[models] object BrandCoordinators extends Table[BrandCoordinator]("BRAND_COORDINATOR") {
+case class BrandNotifications(event: Boolean = false,
+  evaluation: Boolean = false,
+  certificate: Boolean = false)
 
-  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brandId = column[Long]("BRAND_ID")
-  def personId = column[Long]("PERSON_ID")
-  def event = column[Boolean]("EVENT")
-  def evaluation = column[Boolean]("EVALUATION")
-  def certificate = column[Boolean]("CERTIFICATE")
-
-  def * = id.? ~ brandId ~ personId ~ event ~ evaluation ~
-    certificate <> ({
-      x ⇒ BrandCoordinator(x._1, x._2, x._3, BrandNotifications(x._4, x._5, x._6))
-    }, { (x: BrandCoordinator) ⇒
-      Some(x.id, x.brandId, x.personId,
-        x.notification.event, x.notification.evaluation, x.notification.certificate)
-    })
-
-  def forInsert = * returning id
-  def forUpdate = event ~ evaluation ~ certificate
-}
+/**
+ * Represents brand coordinator
+ * @param id Identifier
+ * @param brandId Brand identifier
+ * @param personId Person identifier
+ * @param notification Notofication object
+ */
+case class BrandCoordinator(id: Option[Long],
+  brandId: Long,
+  personId: Long,
+  notification: BrandNotifications = BrandNotifications())

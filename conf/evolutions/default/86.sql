@@ -20,10 +20,15 @@ create table BRAND_COORDINATOR (
   ID bigint not null auto_increment primary key,
   BRAND_ID bigint not null,
   PERSON_ID bigint not null,
+  EVENT tinyint(1) not null default 0,
+  EVALUATION tinyint(1) not null default 0,
+  CERTIFICATE tinyint(1) not null default 0,
   unique key BRAND_MEMBER_KEY(BRAND_ID, PERSON_ID)
 );
-alter table BRAND_COORDINATOR add constraint BRAND_TEAM_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete NO ACTION;
-alter table BRAND_COORDINATOR add constraint BRAND_TEAM_PERSON_FK foreign key(PERSON_ID) references PERSON(ID) on update NO ACTION on delete NO ACTION;
+alter table BRAND_COORDINATOR add constraint BRAND_TEAM_BRAND_FK foreign key(BRAND_ID) references BRAND(ID) on update NO ACTION on delete CASCADE;
+alter table BRAND_COORDINATOR add constraint BRAND_TEAM_PERSON_FK foreign key(PERSON_ID) references PERSON(ID) on update NO ACTION on delete CASCADE;
+
+insert into BRAND_COORDINATOR (BRAND_ID, PERSON_ID, EVENT, EVALUATION, CERTIFICATE) select BRAND.ID, BRAND.COORDINATOR_ID, 1, 1, 1 from BRAND;
 
 # --- !Downs
 alter table CERTIFICATE_TEMPLATE add column BRAND_CODE char(5) not null default "" after BRAND_ID;

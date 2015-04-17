@@ -35,8 +35,8 @@ class ProductServiceSpec extends PlayAppSpec {
 
   override def setupDb(): Unit = {
     val person = PersonHelper.one().insert
-    val one = BrandHelper.one.insert
-    val two = BrandHelper.make("TWO").insert
+    val one = BrandHelper.one.insert()
+    val two = BrandHelper.make("TWO").insert()
     Seq(
       (ProductHelper.make("one"), one.id.get),
       (ProductHelper.make("two"), one.id.get),

@@ -24,29 +24,43 @@
  */
 package models.service
 
+import models.brand.{ BrandNotifications, BrandCoordinator }
 import models.database.brand.BrandCoordinators
-import models.{ Person, Brand }
-import models.database.{ People, Brands }
+import models.database.{ Brands, People, SocialProfiles }
+import models.{ Brand, Person, ProfileType }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
 import scala.slick.lifted.Query
 
-case class BrandWithCoordinators(brand: Brand, coordinators: List[Person])
+case class BrandWithCoordinators(brand: Brand,
+  coordinators: List[(Person, BrandCoordinator)])
 
-class BrandService {
+class BrandService extends Services {
 
   /**
-   * Returns list of team members for the given brand
+   * Returns list of coordinators for the given brand
    * @param brandId Brand identifier
    */
-  def coordinators(brandId: Long): List[Person] = DB.withSession { implicit session ⇒
-    val query = for {
-      t ← BrandCoordinators if t.brandId === brandId
-      p ← People if p.id === t.personId
-    } yield p
-    query.list()
+  def coordinators(brandId: Long): List[(Person, BrandCoordinator)] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        t ← BrandCoordinators if t.brandId === brandId
+        p ← People if p.id === t.personId
+      } yield (p, t)
+      query.list()
+  }
+
+  /**
+   * Deletes brand and all related brand data (which are allowed to be deleted
+   *  automatically) from database
+   * @param brand Brand to delete
+   */
+  def delete(brand: Brand): Unit = DB.withTransaction {
+    implicit session: Session ⇒
+      SocialProfileService.delete(brand.id.get, ProfileType.Brand)
+      Query(Brands).filter(_.id === brand.id.get).mutate(_.delete())
   }
 
   /**
@@ -103,6 +117,58 @@ class BrandService {
         .filter(_.brandId === brandId)
         .filter(_.personId === personId)
         .exists).first()
+  }
+
+  /**
+   * Adds brand and all related records to database
+   * @param brand Brand object
+   * @return Updated brand object with ID
+   */
+  def insert(brand: Brand): Brand = DB.withTransaction {
+    implicit session ⇒
+      val id = Brands.forInsert.insert(brand)
+      SocialProfileService._insert(brand.socialProfile.copy(objectId = id))
+      val owner = BrandCoordinator(None, id, brand.ownerId,
+        BrandNotifications(true, true, true))
+      brandCoordinatorService._insert(owner)
+      brand.copy(id = Some(id))
+  }
+
+  /**
+   * Update brand
+   * @param old Brand data before update
+   * @param updated Brand data including updated fields from the from
+   * @param picture New brand picture
+   * @return Updated brand object
+   */
+  def update(old: Brand,
+    updated: Brand,
+    picture: Option[String]): Brand = DB.withTransaction {
+    implicit session: Session ⇒
+      import models.database.SocialProfiles._
+
+      val u = updated.copy(id = old.id).copy(picture = picture)
+      u.socialProfile_=(updated.socialProfile)
+
+      val socialQuery = for {
+        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
+      } yield p
+      socialQuery
+        .update(u.socialProfile.copy(objectId = u.id.get))
+
+      val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
+        u.description, u.picture, u.tagLine, u.webSite, u.blog,
+        u.evaluationHookUrl, u.updated, u.updatedBy)
+      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+
+      if (old.ownerId != updated.ownerId &&
+        !brandService.isCoordinator(old.id.get, updated.ownerId)) {
+        val owner = BrandCoordinator(None, updated.id.get, updated.ownerId,
+          BrandNotifications(true, true, true))
+        brandCoordinatorService.insert(owner)
+      }
+      u
   }
 }
 

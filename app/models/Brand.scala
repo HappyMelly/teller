@@ -28,7 +28,7 @@ import java.text.Collator
 import java.util.Locale
 import models.brand.CertificateTemplate
 import models.database._
-import models.service.{ BrandService, LicenseService, ProductService, SocialProfileService }
+import models.service._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -43,7 +43,7 @@ case class Brand(id: Option[Long],
   code: String,
   uniqueName: String,
   name: String,
-  coordinatorId: Long,
+  ownerId: Long,
   description: Option[String],
   picture: Option[String],
   generateCert: Boolean = false,
@@ -54,7 +54,7 @@ case class Brand(id: Option[Long],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends ActivityRecorder {
+  updatedBy: String) extends ActivityRecorder with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
 
@@ -110,16 +110,12 @@ case class Brand(id: Option[Long],
     query.sortBy(_.title.toLowerCase).list
   }
 
-  def insert: Brand = DB.withSession { implicit session: Session ⇒
-    val id = Brands.forInsert.insert(this)
-    SocialProfileService.insert(socialProfile.copy(objectId = id))
-    this.copy(id = Some(id))
-  }
+  /**
+   * Adds this brand to database and returns an updated object with ID
+   */
+  def insert(): Brand = brandService.insert(this)
 
-  def delete(): Unit = {
-    SocialProfileService.delete(this.id.get, ProfileType.Brand)
-    Brand.delete(this.id.get)
-  }
+  def delete(): Unit = brandService.delete(this)
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
@@ -242,39 +238,5 @@ object Brand {
     }.toList.sortBy(_.brand.name)
   }
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    //TODO delete social profile
-    Brands.where(_.id === id).mutate(_.delete())
-  }
-
-  /**
-   * Update brand
-   * @param existingData Brand data before update
-   * @param updatedData Brand data including updated fields from the from
-   * @param picture New brand picture
-   * @return
-   */
-  def update(existingData: Brand,
-    updatedData: Brand,
-    picture: Option[String]): Brand = DB.withTransaction {
-    implicit session: Session ⇒
-      import models.database.SocialProfiles._
-
-      val u = updatedData.copy(id = existingData.id).copy(picture = picture)
-      u.socialProfile_=(updatedData.socialProfile)
-
-      val socialQuery = for {
-        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
-      } yield p
-      socialQuery
-        .update(u.socialProfile.copy(objectId = u.id.get))
-
-      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId,
-        u.description, u.picture, u.tagLine, u.webSite, u.blog,
-        u.evaluationHookUrl, u.updated, u.updatedBy)
-      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
-      updateQuery.update(updateTuple)
-      u
-  }
 }
 

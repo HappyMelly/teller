@@ -45,20 +45,23 @@ class LicenseServiceSpec extends PlayAppSpec {
         5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"))
       facilitators.foreach(v ⇒ v._2.insert)
 
-      BrandHelper.one.insert
+      BrandHelper.one.insert()
+      BrandHelper.make("two", Some(2L)).insert()
+      BrandHelper.make("three", Some(3L)).insert()
       val now = LocalDate.now()
       Seq(
-        (4L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
-        (5L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
-        (1L, now.minusMonths(6), now.plusMonths(4)),
-        (2L, now.minusMonths(4), now.plusMonths(1))).foreach {
-          case (licenseeId, start, end) ⇒
-            val license = new License(None, licenseeId, 1L,
+        (4L, 1L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
+        (5L, 3L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
+        (3L, 2L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
+        (1L, 2L, now.minusMonths(6), now.plusMonths(4)),
+        (2L, 1L, now.minusMonths(4), now.plusMonths(1))).foreach {
+          case (licenseeId, brandId, start, end) ⇒
+            val license = new License(None, licenseeId, brandId,
               "1", LocalDate.now().minusYears(1),
               start, end, true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
             service.add(license)
         }
-      val licenses = service.expiring()
+      val licenses = service.expiring(List(1, 3))
       licenses.length must_== 2
       licenses.exists(_.license.licenseeId == 1) must beFalse
       licenses.exists(_.license.licenseeId == 2) must beFalse
@@ -72,7 +75,7 @@ class LicenseServiceSpec extends PlayAppSpec {
   "Method 'add'" should {
     "add facilitator record the record it does not exist" in new TruncateBefore {
       val person = PersonHelper.one().insert
-      val brand = BrandHelper.one.insert
+      val brand = BrandHelper.one.insert()
       val now = LocalDate.now()
       val license = new License(None, person.id.get, brand.id.get,
         "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
@@ -83,7 +86,7 @@ class LicenseServiceSpec extends PlayAppSpec {
     }
     "not add facilitator record and successfully execute" in new TruncateBefore {
       val person = PersonHelper.one().insert
-      val brand = BrandHelper.one.insert
+      val brand = BrandHelper.one.insert()
       val now = LocalDate.now()
       val facilitator = Facilitator(None, person.id.get, brand.id.get)
       FacilitatorService.get.insert(facilitator)

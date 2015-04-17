@@ -94,9 +94,8 @@ object SocialProfileService {
       query.firstOption
   }
 
-  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession { implicit session: Session ⇒
-    SocialProfiles.insert(socialProfile)
-    socialProfile
+  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession {
+    implicit session: Session ⇒ _insert(socialProfile)
   }
 
   def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = DB.withSession {
@@ -116,5 +115,16 @@ object SocialProfileService {
     Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).delete
   }
 
+  /**
+   * Inserts social profile into database
+   *
+   * Requires session object so it can be used inside withTransaction
+   * @param profile Profile object
+   * @param session Session
+   */
+  def _insert(profile: SocialProfile)(implicit session: Session): SocialProfile = {
+    SocialProfiles.insert(profile)
+    profile
+  }
 }
 

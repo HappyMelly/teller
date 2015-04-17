@@ -107,7 +107,7 @@ object Participants extends Controller with Security with Services {
       brandService.findWithCoordinators(brandId) map { x ⇒
         val brand = x.brand
         val account = user.account
-        val coordinator = account.editor || x.coordinators.exists(_.id == Some(account.personId))
+        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -174,7 +174,7 @@ object Participants extends Controller with Security with Services {
         val account = user.account
         val x = brandService.findWithCoordinators(event.brandId).get
         val brand = x.brand
-        val coordinator = account.editor || x.coordinators.exists(_.id == Some(account.personId))
+        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {

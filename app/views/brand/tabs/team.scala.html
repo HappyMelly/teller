@@ -1,5 +1,5 @@
 @(brandId: Long,
-    members: List[Person],
+    members: List[(Person, models.brand.BrandCoordinator)],
     people: List[Person])(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
@@ -24,7 +24,7 @@ to receive from the system.</p>
     </tr>
   </thead>
   <tbody>
-    @for(member <- members) {
+    @for((member, data) <- members) {
       <tr data-id="@member.id.get" data-brandid="@brandId">
         <td><a href="@routes.People.details(member.id.get)">@member.fullName</a></td>
         @dynamic(handler, "brand", "coordinator") {
