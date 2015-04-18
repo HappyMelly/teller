@@ -32,6 +32,9 @@ object ApplicationBuild extends Build {
   )
 
   javaOptions in Test += "-Dconfig.file=conf/application-test.conf"
+  parallelExecution in Test := false
+  sbt.Keys.fork in Test := false  //here's the important setting
+  javaOptions ++= Seq("-Xms512m", "-Xmx2048m", "-XX:MaxPermSize=2048m", "-Xss2m")
 
   val main = play.Project(appName, appVersion, appDependencies).settings(scalariformSettings: _*).settings(
     resolvers += Resolver.url("sbt-plugin-releases", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),

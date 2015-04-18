@@ -100,6 +100,9 @@ function addMember(personId, name, brandId) {
                 .append($('<a>')
                     .attr('href', jsRoutes.controllers.People.details(personId).url)
                     .append(name)))
+            .append('<td><input type="checkbox" value="event"/></td>')
+            .append('<td><input type="checkbox" value="evaluation"/></td>')
+            .append('<td><input type="checkbox" value="certificate"/></td>')
             .append($('<td>')
                 .append($('<a>')
                     .append('<i class="glyphicon glyphicon-trash"></i>')
@@ -113,6 +116,11 @@ function addMember(personId, name, brandId) {
     $('select[name="personId"]').children('option[value=' + personId + ']').remove();
 }
 
+/**
+ * Updates the view after the person was deleted from the team
+ * @param personId {int} Person id
+ * @param name {string} Person full name
+ */
 function removeMember(personId, name) {
     $('tr[data-id="' + personId + '"]').remove();
     var people = [];
@@ -166,6 +174,28 @@ function initializeTeamActions() {
             }
         });
         return false;
+    });
+    $('#members').on('change', 'input', function(e) {
+        var brandId = $(this).parents('tr').data('brandid');
+        var personId = $(this).parents('tr').data('id');
+        var type = $(this).val();
+        var url = jsRoutes.controllers.Brands.turnNotificationOff(brandId, personId, type).url;
+        if (this.checked) {
+            url = jsRoutes.controllers.Brands.turnNotificationOn(brandId, personId, type).url;
+        }
+        var that = $(this);
+        $.post(url, {}, null, "json").done(function(data) {
+            showTeamNotification(data.message, 'success');
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showTeamNotification(error.message, 'danger');
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                showTeamNotification(msg, 'danger');
+            }
+            that.attr('checked', false);
+        });
     });
 }
 

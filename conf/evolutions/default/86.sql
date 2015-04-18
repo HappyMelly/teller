@@ -16,7 +16,7 @@ update EVENT t, BRAND set t.BRAND_ID = BRAND.ID where t.BRAND_CODE = BRAND.CODE 
 delete from EVENT where BRAND_ID = 0;
 alter table EVENT drop column BRAND_CODE;
 
-create table BRAND_COORDINATOR (
+create table if not exists BRAND_COORDINATOR (
   ID bigint not null auto_increment primary key,
   BRAND_ID bigint not null,
   PERSON_ID bigint not null,

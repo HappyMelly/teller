@@ -303,6 +303,36 @@ trait Brands extends JsonController with Security with Services {
   }
 
   /**
+   * Turns on a notification of the given type
+   * @param id Brand id
+   * @param personId Person id
+   * @param notification Notification type
+   */
+  def turnNotificationOff(id: Long,
+    personId: Long,
+    notification: String) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandCoordinatorService.update(id, personId, notification, false)
+        jsonSuccess("Changes saved")
+  }
+
+  /**
+   * Turns off a notification of the given type
+   * @param id Brand id
+   * @param personId Person id
+   * @param notification Notification type
+   */
+  def turnNotificationOn(id: Long,
+    personId: Long,
+    notification: String) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandCoordinatorService.update(id, personId, notification, true)
+        jsonSuccess("Changes saved")
+  }
+
+  /**
    * Renders a Brand edit page
    *
    * @param id Brand identifier
@@ -421,16 +451,15 @@ trait Brands extends JsonController with Security with Services {
           }
         }
 
-        brandService.find(brandId) map { brand ⇒
+        brandService.findWithCoordinators(brandId) map { x ⇒
           val account = user.account
           val events = if (account.editor ||
-            //TODO change to brand team
-            brand.ownerId == account.personId) {
-            eventService.findByParameters(brand.id, future)
+            x.coordinators.exists(_._1.id == Some(account.personId))) {
+            eventService.findByParameters(x.brand.id, future, archived = Some(false))
           } else {
             eventService.findByFacilitator(
               account.personId,
-              brand.id,
+              x.brand.id,
               future,
               archived = Some(false))
           }

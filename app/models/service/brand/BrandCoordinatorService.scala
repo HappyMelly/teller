@@ -38,15 +38,6 @@ import scala.slick.session.Session
 class BrandCoordinatorService {
 
   /**
-   * Adds new team member to the given brand
-   * @param coordinator Brand object
-   */
-  def insert(coordinator: BrandCoordinator) = DB.withSession {
-    implicit session: Session ⇒
-      _insert(coordinator)
-  }
-
-  /**
    * Removes the given person from the given brand
    * @param brandId Brand identifier
    * @param personId Person identifier
@@ -57,6 +48,28 @@ class BrandCoordinatorService {
         filter(_.brandId === brandId).
         filter(_.personId === personId).mutate(_.delete())
   }
+
+  /**
+   * Adds new team member to the given brand
+   * @param coordinator Brand object
+   */
+  def insert(coordinator: BrandCoordinator) = DB.withSession {
+    implicit session: Session ⇒
+      _insert(coordinator)
+  }
+
+  def update(brandId: Long, personId: Long, notification: String, value: Boolean) =
+    DB.withSession {
+      implicit session: Session ⇒
+        val query = Query(BrandCoordinators).
+          filter(_.brandId === brandId).
+          filter(_.personId === personId)
+        notification match {
+          case "event" ⇒ query.map(_.event).update(value)
+          case "evaluation" ⇒ query.map(_.evaluation).update(value)
+          case _ ⇒ query.map(_.certificate).update(value)
+        }
+    }
 
   /**
    * Adds new coordinator to the given brand

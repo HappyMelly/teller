@@ -132,7 +132,7 @@ $(document).ready( function() {
      */
     function getFacilitators(brandId, chosenFacilitators) {
         $.ajax({
-            url: '/facilitators/' + brandId,
+            url: '/brand/' + brandId + '/facilitators',
             dataType: "json"
         }).done(function(data) {
             for(var i = 0; i < data.length; i++) {
