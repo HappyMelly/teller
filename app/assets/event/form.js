@@ -276,5 +276,15 @@ $(document).ready( function() {
             $("#eventTypeId").unbind('change');
         });
     }
+    if ($("#confirmed").attr("checked") != "checked") {
+        $("#confirmed-alert").hide();
+    }
+    $("#confirmed").on("change", function(e) {
+        if (this.checked) {
+            $("#confirmed-alert").show();
+        } else {
+            $("#confirmed-alert").hide();
+        }
+    });
 });
 

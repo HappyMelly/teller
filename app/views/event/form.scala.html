@@ -109,6 +109,12 @@
         @html.checkbox(form("confirmed"),
           '_label -> "Confirmed Event : Invoicing for licenses only happens for confirmed events",
           '_help -> "")
+        <div class="col-md-offset-3 alert alert-warning" id="confirmed-alert">
+          <i class="glyphicon glyphicon-info-sign"></i> You confirmed the event took or will
+          take place. You will get an invoice for this event. If you are not sure that
+          the event will take place, uncheck this checkbox.
+        </div>
+
         <legend>Invoice</legend>
         @html.select(form("invoice.invoiceTo"), Nil, '_label -> "Invoice To", '_help -> "")
         <div clas="row">
