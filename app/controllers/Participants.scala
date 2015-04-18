@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.admin.Translation
@@ -66,7 +67,7 @@ object Participants extends Controller with Security with Services {
   def existingPersonForm(implicit user: UserIdentity) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
-      "brandId" -> nonEmptyText,
+      "brandId" -> longNumber(min = 1),
       "eventId" -> longNumber.verifying(
         "error.event.invalid",
         (eventId: Long) ⇒ Event.canManage(eventId, user.account)),
@@ -79,7 +80,7 @@ object Participants extends Controller with Security with Services {
             certificate = None, issued = None, organisation = None, comment = None)
       })({
         (p: Participant) ⇒
-          Some(p.id, p.event.get.brandCode, p.eventId,
+          Some(p.id, p.event.get.brandId, p.eventId,
             p.personId, p.evaluationId)
       }))
   }
@@ -91,19 +92,22 @@ object Participants extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       val brands = Brand.findByUser(account)
-      val brandCode = request.session.get("brandCode").getOrElse("")
-      Ok(views.html.participant.index(user, brands, brandCode))
+      val brandId = request.session.get("brandId").map(_.toLong).getOrElse(0L)
+      Ok(views.html.participant.index(user, brands, brandId))
   }
 
   /**
    * Returns JSON data about participants together with their evaluations
    * and events
+   *
+   * @param brandId Brand identifier
    */
-  def participantsByBrand(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def participantsByBrand(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      // TODO: check for a valid brand from Brand.findForUser
-      Brand.find(brandCode).map { brand ⇒
+      brandService.findWithCoordinators(brandId) map { x ⇒
+        val brand = x.brand
         val account = user.account
+        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -126,15 +130,15 @@ object Participants extends Controller with Security with Services {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand.brand, data, "index"),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "index"),
+                    "certificate" -> certificateActions(brand, data, "index"),
+                    "evaluation" -> evaluationActions(id, coordinator, data, "index"),
                     "participant" -> participantActions(data, account, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
-                      "certificate" -> certificateActions(brand.brand, data, "event"),
+                      "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                          if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
@@ -149,16 +153,16 @@ object Participants extends Controller with Security with Services {
         }
         val personId = account.personId
         val participants =
-          if (account.editor || brand.brand.coordinatorId == personId) {
-            Participant.findByBrand(Some(brandCode))
-          } else if (License.licensedSince(personId, brandCode).nonEmpty) {
-            val events = EventService.get.findByFacilitator(personId, Some(brandCode)).map(_.id.get)
+          if (coordinator) {
+            Participant.findByBrand(brand.id)
+          } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
+            val events = eventService.findByFacilitator(personId, brand.id).map(_.id.get)
             Participant.findEvaluationsByEvents(events)
           } else {
             List[ParticipantView]()
           }
-        Ok(Json.toJson(participants)).withSession("brandCode" -> brandCode)
-      }.getOrElse(Ok(Json.toJson(List[String]())))
+        Ok(Json.toJson(participants)).withSession("brandId" -> brand.id.get.toString)
+      } getOrElse Ok(Json.toJson(List[String]()))
   }
 
   /**
@@ -166,9 +170,11 @@ object Participants extends Controller with Security with Services {
    */
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      EventService.get.find(eventId).map { event ⇒
+      eventService.find(eventId).map { event ⇒
         val account = user.account
-        val brand = Brand.find(event.brandCode).get
+        val x = brandService.findWithCoordinators(event.brandId).get
+        val brand = x.brand
+        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
         val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
@@ -181,15 +187,15 @@ object Participants extends Controller with Security with Services {
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand.brand, data, "event"),
-                    "evaluation" -> evaluationActions(id, brand.brand, data, account, "event"),
+                    "certificate" -> certificateActions(brand, data, "event"),
+                    "evaluation" -> evaluationActions(id, coordinator, data, "event"),
                     "participant" -> participantActions(data, account, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
-                      "certificate" -> certificateActions(brand.brand, data, "event"),
+                      "certificate" -> certificateActions(brand, data, "event"),
                       "evaluation" -> Json.obj(
                         "add" -> {
-                          if (account.editor || brand.brand.coordinatorId == account.personId) {
+                          if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
                         }),
@@ -233,12 +239,12 @@ object Participants extends Controller with Security with Services {
   /**
    * Render a Create page
    *
-   * @param brandCode A code of the brand to add participant to
+   * @param brandId Brand id to add participant to
    * @param eventId An identifier of the event to add participant to
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def add(brandCode: Option[String],
+  def add(brandId: Option[Long],
     eventId: Option[Long],
     ref: Option[String]) = SecuredDynamicAction("event", "add") {
     implicit request ⇒
@@ -246,9 +252,9 @@ object Participants extends Controller with Security with Services {
 
         val account = user.account
         val brands = Brand.findByUser(account)
-        val people = Person.findActive
-        val selectedBrand = if (brandCode.nonEmpty) { brandCode.get } else {
-          request.session.get("brandCode").getOrElse("")
+        val people = personService.findActive
+        val selectedBrand = brandId.getOrElse {
+          request.session.get("brandId").map(_.toLong).getOrElse(0L)
         }
         Ok(views.html.participant.form(user, id = None, brands, people,
           newPersonForm(account, user.fullName), existingPersonForm(user),
@@ -269,22 +275,25 @@ object Participants extends Controller with Security with Services {
         formWithErrors ⇒ {
           val account = user.account
           val brands = Brand.findByUser(account)
-          val people = Person.findActive
+          val people = personService.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
             newPersonForm(account, user.fullName), formWithErrors,
-            showExistingPersonForm = true, formWithErrors("brandId").value, Some(chosenEventId), ref))
+            showExistingPersonForm = true, formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+            Some(chosenEventId),
+            ref))
         },
         participant ⇒ {
           Participant.find(participant.personId, participant.eventId) match {
             case Some(p) ⇒ {
               val account = user.account
               val brands = Brand.findByUser(account)
-              val people = Person.findActive
+              val people = personService.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
               BadRequest(views.html.participant.form(user, None, brands, people,
                 newPersonForm(account, user.fullName), form.withError("participantId", "error.participant.exist"),
-                showExistingPersonForm = true, form("brandId").value, Some(chosenEventId), ref))
+                showExistingPersonForm = true, form("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+                Some(chosenEventId), ref))
             }
             case _ ⇒ {
               Participant.insert(participant)
@@ -317,12 +326,14 @@ object Participants extends Controller with Security with Services {
 
       form.fold(
         formWithErrors ⇒ {
-          val people = Person.findActive
+          val people = personService.findActive
           val brands = Brand.findByUser(account)
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
             formWithErrors, existingPersonForm(user),
-            showExistingPersonForm = false, formWithErrors("brandId").value, Some(chosenEventId), ref))
+            showExistingPersonForm = false,
+            formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
+            Some(chosenEventId), ref))
         },
         data ⇒ {
           Participant.create(data)
@@ -347,21 +358,22 @@ object Participants extends Controller with Security with Services {
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Participant.find(personId, eventId).map { value ⇒
+  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Participant.find(personId, eventId).map { value ⇒
 
-        val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
-        value.delete()
-        val activity = Activity.create(user.fullName,
-          Activity.Predicate.Deleted,
-          activityObject)
-        val route = ref match {
-          case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
-          case _ ⇒ routes.Participants.index().url
-        }
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
+          value.delete()
+          val activity = Activity.create(user.fullName,
+            Activity.Predicate.Deleted,
+            activityObject)
+          val route = ref match {
+            case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
+            case _ ⇒ routes.Participants.index().url
+          }
+          Redirect(route).flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -401,7 +413,7 @@ object Participants extends Controller with Security with Services {
   }
 
   /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long, brand: Brand, data: ParticipantView, account: UserAccount, page: String): JsValue = {
+  private def evaluationActions(id: Long, coordinator: Boolean, data: ParticipantView, page: String): JsValue = {
     Json.obj(
       "approve" -> {
         if (Evaluation.approvable(data.status.get))
@@ -415,7 +427,7 @@ object Participants extends Controller with Security with Services {
       },
       "move" -> routes.Evaluations.move(id).url,
       "edit" -> {
-        if (account.editor || brand.coordinatorId == account.personId)
+        if (coordinator)
           routes.Evaluations.edit(id).url
         else ""
       },

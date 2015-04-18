@@ -27,6 +27,7 @@ package controllers
 import models._
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
+import models.service.Services
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
@@ -35,11 +36,13 @@ import securesocial.core.SecuredRequest
 import views.Languages
 
 /**
- * This class was created to simplify form handling and generation
+ * This class exists to simplify form handling and generation
  */
-case class FakeCertificateTemplate(language: String, template: Option[String], templateNoFacilitator: Option[String])
+case class FakeCertificateTemplate(language: String,
+  template: Option[String],
+  templateNoFacilitator: Option[String])
 
-object CertificateTemplates extends Controller with Security {
+object CertificateTemplates extends Controller with Security with Services {
 
   val encoding = "ISO-8859-1"
 
@@ -51,41 +54,40 @@ object CertificateTemplates extends Controller with Security {
       FakeCertificateTemplate.apply)(FakeCertificateTemplate.unapply))
 
   /**
-   * Add page
+   * Renders an Add form
    *
-   * @param code Unique text brand identifier
-   * @return
+   * @todo change access rights to all brand managers
+   * @param brandId Unique text brand identifier
    */
-  def add(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(code).map { brand ⇒
-        val templates = CertificateTemplate.findByBrand(code)
+      brandService.find(brandId) map { brand ⇒
+        val templates = certificateService.findByBrand(brandId)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        Ok(views.html.certificateTemplate.form(user, brand.brand, languages, certificateFileForm))
-      }.getOrElse(NotFound)
+        Ok(views.html.certificateTemplate.form(user, brand, languages, certificateFileForm))
+      } getOrElse NotFound
   }
 
   /**
-   * Add form submits to this action
+   * Adds new certificate for the given brand
    *
-   * @param code Unique text brand identifier
-   * @return
+   * @param brandId Unique brand identifier
    */
-  def create(code: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(code).map { brand ⇒
-        val templates = CertificateTemplate.findByBrand(code)
+      brandService.find(brandId) map { brand ⇒
+        val templates = certificateService.findByBrand(brandId)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
           formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user,
-            brand.brand,
+            brand,
             languages,
             formWithErrors)),
           data ⇒ {
             templates.find(_.language == data.language).map { v ⇒
               BadRequest(views.html.certificateTemplate.form(user,
-                brand.brand,
+                brand,
                 languages,
                 form.withError("language", "error.template.exist")))
             }.getOrElse {
@@ -96,7 +98,7 @@ object CertificateTemplates extends Controller with Security {
                 || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
                 || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
                 BadRequest(views.html.certificateTemplate.form(user,
-                  brand.brand,
+                  brand,
                   languages,
                   form.withError(
                     "oneFacilitator",
@@ -107,7 +109,7 @@ object CertificateTemplates extends Controller with Security {
                 val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)
                 val secondSource = Source.fromFile(templateOneFacilitator.get.ref.file.getPath, encoding)
                 val tpl = new CertificateTemplate(None,
-                  code,
+                  brandId,
                   data.language,
                   firstSource.toArray.map(_.toByte),
                   secondSource.toArray.map(_.toByte)).insert
@@ -116,12 +118,12 @@ object CertificateTemplates extends Controller with Security {
                 val activity = tpl.activity(
                   user.person,
                   Activity.Predicate.Created).insert
-                Redirect(routes.Brands.details(code).url + "#templates").flashing(
+                Redirect(routes.Brands.details(brandId).url + "#templates").flashing(
                   "success" -> activity.toString)
               }
             }
           })
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
@@ -144,10 +146,9 @@ object CertificateTemplates extends Controller with Security {
   }
 
   /**
-   * Delete a certificate template
+   * Deletes a certificate template
    *
    * @param id Unique template identifier
-   * @return
    */
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -157,7 +158,7 @@ object CertificateTemplates extends Controller with Security {
         val activity = tpl.activity(
           user.person,
           Activity.Predicate.Deleted).insert
-        Redirect(routes.Brands.details(tpl.brandCode).url + "#templates").flashing(
+        Redirect(routes.Brands.details(tpl.brandId).url + "#templates").flashing(
           "success" -> activity.toString)
       }.getOrElse(NotFound)
   }

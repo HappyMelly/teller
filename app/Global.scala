@@ -70,7 +70,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       (request, Action.async(BodyParsers.parse.empty)(_ ⇒ this.onHandlerNotFound(request)))
     }
 
-    val api = """/api/v1""".r findPrefixOf request.path
+    val api = """/api/v""".r findPrefixOf request.path
     if (api.isEmpty) {
       (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
     } else {

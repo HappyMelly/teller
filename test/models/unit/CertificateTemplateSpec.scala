@@ -31,14 +31,14 @@ class CertificateTemplateSpec extends Specification {
 
   "Certificate template" should {
     "have well-formed activity attributes" in {
-      val tpl = new CertificateTemplate(Some(1L), "TEST", "EN", Array(), Array())
+      val tpl = new CertificateTemplate(Some(1L), 1L, "EN", Array(), Array())
       tpl.objectType must_== Activity.Type.CertificateTemplate
       tpl.identifier must_== 1
-      tpl.humanIdentifier must_== "for brand TEST and lang EN"
-      val tpl2 = new CertificateTemplate(Some(2L), "MGT30", "RU", Array(), Array())
+      tpl.humanIdentifier must_== "for brand 1 and lang EN"
+      val tpl2 = new CertificateTemplate(Some(2L), 2L, "RU", Array(), Array())
       tpl2.objectType must_== Activity.Type.CertificateTemplate
       tpl2.identifier must_== 2
-      tpl2.humanIdentifier must_== "for brand MGT30 and lang RU"
+      tpl2.humanIdentifier must_== "for brand 2 and lang RU"
     }
   }
 

@@ -28,7 +28,7 @@ import java.text.Collator
 import java.util.Locale
 import models.brand.CertificateTemplate
 import models.database._
-import models.service.SocialProfileService
+import models.service._
 import org.joda.time.{ LocalDate, DateTime }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -43,7 +43,7 @@ case class Brand(id: Option[Long],
   code: String,
   uniqueName: String,
   name: String,
-  coordinatorId: Long,
+  ownerId: Long,
   description: Option[String],
   picture: Option[String],
   generateCert: Boolean = false,
@@ -54,7 +54,7 @@ case class Brand(id: Option[Long],
   created: DateTime,
   createdBy: String,
   updated: DateTime,
-  updatedBy: String) extends ActivityRecorder {
+  updatedBy: String) extends ActivityRecorder with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
 
@@ -99,7 +99,7 @@ case class Brand(id: Option[Long],
       val query = Query(BookingEntries).filter(e ⇒ e.brandId === brandId)
       Query(query.exists).first
     }
-    !hasLicences && !hasBookings && products.isEmpty
+    !hasLicences && !hasBookings && ProductService.get.findByBrand(this.id.get).isEmpty
   }
 
   lazy val products: List[Product] = DB.withSession { implicit session: Session ⇒
@@ -110,18 +110,12 @@ case class Brand(id: Option[Long],
     query.sortBy(_.title.toLowerCase).list
   }
 
-  lazy val certificates: List[CertificateTemplate] = CertificateTemplate.findByBrand(code)
+  /**
+   * Adds this brand to database and returns an updated object with ID
+   */
+  def insert(): Brand = brandService.insert(this)
 
-  def insert: Brand = DB.withSession { implicit session: Session ⇒
-    val id = Brands.forInsert.insert(this)
-    SocialProfileService.insert(socialProfile.copy(objectId = id))
-    this.copy(id = Some(id))
-  }
-
-  def delete(): Unit = {
-    SocialProfileService.delete(this.id.get, ProfileType.Brand)
-    Brand.delete(this.id.get)
-  }
+  def delete(): Unit = brandService.delete(this)
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
@@ -164,11 +158,9 @@ object Brand {
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
    */
-  def canManage(code: String, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (!exists(code))
-      false
-    else
-      findByUser(user).exists(_.code == code)
+  def canManage(brandId: Long, user: UserAccount): Boolean = DB.withSession {
+    implicit session: Session ⇒
+      findByUser(user).exists(_.id == Some(brandId))
   }
 
   /**
@@ -181,8 +173,8 @@ object Brand {
     if (user.editor)
       Query(Brands).list.sortBy(_.name)
     else {
-      val facilitatedBrands = License.activeLicenses(user.personId).map(_.brand)
-      findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
+      val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
+      BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
     }
   }
 
@@ -218,25 +210,17 @@ object Brand {
   }
 
   /**
-   * Get a list of facilitators for a given brand
+   * Returns list of facilitators for the given brand
    *
-   * @param code Brand string identifier
-   * @param coordinator Brand coordinator
-   * @return
+   * @param brandId Brand id
    */
-  def findFacilitators(code: String, coordinator: Person): List[Person] = DB.withSession {
+  def findFacilitators(brandId: Long): List[Person] = DB.withSession {
     implicit session: Session ⇒
       val collator = Collator.getInstance(Locale.ENGLISH)
       val ord = new Ordering[String] {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
-      val facilitators = License.licensees(code, LocalDate.now())
-      (coordinator :: facilitators).distinct.sortBy(_.fullName.toLowerCase)(ord)
-  }
-
-  /** Finds all brands belonging to one coordinator **/
-  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession { implicit session: Session ⇒
-    Query(Brands).filter(_.coordinatorId === coordinatorId).list
+      License.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
   }
 
   def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒
@@ -254,46 +238,5 @@ object Brand {
     }.toList.sortBy(_.brand.name)
   }
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    //TODO delete social profile
-    Brands.where(_.id === id).mutate(_.delete())
-  }
-
-  /**
-   * Update brand
-   * @param existingData Brand data before update
-   * @param updatedData Brand data including updated fields from the from
-   * @param picture New brand picture
-   * @return
-   */
-  def update(existingData: Brand,
-    updatedData: Brand,
-    picture: Option[String]): Brand = DB.withTransaction {
-    implicit session: Session ⇒
-      import models.database.SocialProfiles._
-
-      val u = updatedData.copy(id = existingData.id).copy(picture = picture)
-      u.socialProfile_=(updatedData.socialProfile)
-
-      val socialQuery = for {
-        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
-      } yield p
-      socialQuery
-        .update(u.socialProfile.copy(objectId = u.id.get))
-
-      if (existingData.code != u.code) {
-        val eventQuery = for {
-          event ← Events if event.brandCode === existingData.code
-        } yield event.brandCode
-        eventQuery.update(u.code)
-      }
-
-      val updateTuple = (u.code, u.uniqueName, u.name, u.coordinatorId,
-        u.description, u.picture, u.tagLine, u.webSite, u.blog,
-        u.evaluationHookUrl, u.updated, u.updatedBy)
-      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
-      updateQuery.update(updateTuple)
-      u
-  }
 }
 

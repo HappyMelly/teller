@@ -73,10 +73,10 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
 
       val name = token.appName
       val form: Form[Evaluation] = evaluationForm(name).bindFromRequest()(request)
-
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+          println(json.toString())
           BadRequest(Json.prettyPrint(json))
         },
         evaluation ⇒ {

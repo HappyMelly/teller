@@ -187,13 +187,6 @@ object Activity {
   }
 
   /**
-   * Returns all activity stream entries in reverse chronological order.
-   */
-  def findAll: List[Activity] = DB.withSession { implicit session ⇒
-    Query(Activities).sortBy(_.created.desc).take(50).list
-  }
-
-  /**
    * Returns activity stream entries for the given booking entry
    */
   def findForBookingEntry(bookingEntryId: Long): List[Activity] = DB.withSession { implicit session ⇒

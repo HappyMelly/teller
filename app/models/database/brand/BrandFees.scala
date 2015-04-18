@@ -33,12 +33,12 @@ import play.api.db.slick.Config.driver.simple._
  */
 private[models] object BrandFees extends Table[BrandFee]("BRAND_FEE") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def brand = column[String]("BRAND", O.DBType("CHAR(5)"))
+  def brandId = column[Long]("BRAND_ID")
   def country = column[String]("COUNTRY", O.DBType("CHAR(2)"))
   def feeCurrency = column[String]("FEE_CURRENCY", O.DBType("CHAR(3)"))
   def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
 
-  def * = id.? ~ brand ~ country ~ feeCurrency ~ feeAmount <> ({
+  def * = id.? ~ brandId ~ country ~ feeCurrency ~ feeAmount <> ({
     _ match {
       case (id, brand, country, feeCurrency, feeAmount) ⇒
         BrandFee(id, brand, country, feeCurrency -> feeAmount)

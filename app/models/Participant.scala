@@ -147,10 +147,10 @@ object Participant {
 
   /**
    * Find all participants for all events of the specified brand
-   * @param brandCode Brand code
+   * @param brandId Brand id
    * @return
    */
-  def findByBrand(brandCode: Option[String]): List[ParticipantView] = DB.withSession {
+  def findByBrand(brandId: Option[Long]): List[ParticipantView] = DB.withSession {
     implicit session: Session ⇒
 
       val baseQuery = for {
@@ -160,8 +160,8 @@ object Participant {
           Evaluations on (_._1._1.evaluationId === _.id)
       } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
 
-      val brandQuery = brandCode.map { value ⇒
-        baseQuery.filter(_._2.brandCode === value)
+      val brandQuery = brandId.map { value ⇒
+        baseQuery.filter(_._2.brandId === value)
       }.getOrElse(baseQuery)
       val rawList = brandQuery.mapResult(ParticipantView.tupled).list
       val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct

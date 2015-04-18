@@ -53,6 +53,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     (contributionService.contributions(_, _)).expects(id, false).returning(List())
     (orgService.find _).expects(id).returning(Some(org))
     (productService.findAll _).expects().returning(List())
+    (personService.findActive _).expects().returning(List())
   }
 
   trait ExtendedMemberMockContext extends DefaultMockContext {

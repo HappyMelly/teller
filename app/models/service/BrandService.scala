@@ -24,15 +24,44 @@
  */
 package models.service
 
-import models.{ BrandView, Brand }
-import models.database.{ Brands, Licenses }
+import models.brand.{ BrandNotifications, BrandCoordinator }
+import models.database.brand.BrandCoordinators
+import models.database.{ Brands, People, SocialProfiles }
+import models.{ Brand, Person, ProfileType }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
 import scala.slick.lifted.Query
 
-class BrandService {
+case class BrandWithCoordinators(brand: Brand,
+  coordinators: List[(Person, BrandCoordinator)])
+
+class BrandService extends Services {
+
+  /**
+   * Returns list of coordinators for the given brand
+   * @param brandId Brand identifier
+   */
+  def coordinators(brandId: Long): List[(Person, BrandCoordinator)] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        t ← BrandCoordinators if t.brandId === brandId
+        p ← People if p.id === t.personId
+      } yield (p, t)
+      query.list()
+  }
+
+  /**
+   * Deletes brand and all related brand data (which are allowed to be deleted
+   *  automatically) from database
+   * @param brand Brand to delete
+   */
+  def delete(brand: Brand): Unit = DB.withTransaction {
+    implicit session: Session ⇒
+      SocialProfileService.delete(brand.id.get, ProfileType.Brand)
+      Query(Brands).filter(_.id === brand.id.get).mutate(_.delete())
+  }
 
   /**
    * Returns brand if it exists, otherwise - None
@@ -55,6 +84,91 @@ class BrandService {
    */
   def findAll: List[Brand] = DB.withSession { implicit session: Session ⇒
     Query(Brands).sortBy(_.name.toLowerCase).list
+  }
+
+  /**
+   * Returns list of brands belonging to one coordinator
+   * @param coordinatorId Coordinator identifier
+   */
+  def findByCoordinator(coordinatorId: Long): List[Brand] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        x ← BrandCoordinators if x.personId === coordinatorId
+        y ← Brands if y.id === x.brandId
+      } yield y
+      query.list
+  }
+
+  /**
+   * Returns brand with its coordinators if exists; otherwise - None
+   * @param id Brand id
+   */
+  def findWithCoordinators(id: Long): Option[BrandWithCoordinators] =
+    find(id) flatMap { x ⇒ Some(BrandWithCoordinators(x, coordinators(id))) }
+
+  /**
+   * Returns true if the given person is a coordinator of the given brand
+   * @param brandId Brand id
+   * @param personId Person id
+   */
+  def isCoordinator(brandId: Long, personId: Long): Boolean = DB.withSession {
+    implicit session ⇒
+      Query(Query(BrandCoordinators)
+        .filter(_.brandId === brandId)
+        .filter(_.personId === personId)
+        .exists).first()
+  }
+
+  /**
+   * Adds brand and all related records to database
+   * @param brand Brand object
+   * @return Updated brand object with ID
+   */
+  def insert(brand: Brand): Brand = DB.withTransaction {
+    implicit session ⇒
+      val id = Brands.forInsert.insert(brand)
+      SocialProfileService._insert(brand.socialProfile.copy(objectId = id))
+      val owner = BrandCoordinator(None, id, brand.ownerId,
+        BrandNotifications(true, true, true))
+      brandCoordinatorService._insert(owner)
+      brand.copy(id = Some(id))
+  }
+
+  /**
+   * Update brand
+   * @param old Brand data before update
+   * @param updated Brand data including updated fields from the from
+   * @param picture New brand picture
+   * @return Updated brand object
+   */
+  def update(old: Brand,
+    updated: Brand,
+    picture: Option[String]): Brand = DB.withTransaction {
+    implicit session: Session ⇒
+      import models.database.SocialProfiles._
+
+      val u = updated.copy(id = old.id).copy(picture = picture)
+      u.socialProfile_=(updated.socialProfile)
+
+      val socialQuery = for {
+        p ← SocialProfiles if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
+      } yield p
+      socialQuery
+        .update(u.socialProfile.copy(objectId = u.id.get))
+
+      val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
+        u.description, u.picture, u.tagLine, u.webSite, u.blog,
+        u.evaluationHookUrl, u.updated, u.updatedBy)
+      val updateQuery = Brands.filter(_.id === u.id).map(_.forUpdate)
+      updateQuery.update(updateTuple)
+
+      if (old.ownerId != updated.ownerId &&
+        !brandService.isCoordinator(old.id.get, updated.ownerId)) {
+        val owner = BrandCoordinator(None, updated.id.get, updated.ownerId,
+          BrandNotifications(true, true, true))
+        brandCoordinatorService.insert(owner)
+      }
+      u
   }
 }
 

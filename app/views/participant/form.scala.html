@@ -5,7 +5,7 @@
   newPersonForm: Form[ParticipantData],
   existingPersonForm: Form[Participant],
   showExistingPersonForm: Boolean = true,
-  currentBrand: Option[String],
+  currentBrand: Option[Long],
   currentEvent: Option[Long],
   ref: Option[String])(implicit flash: Flash,
     request: Request[Any],
@@ -54,7 +54,7 @@
       <div class="existingPerson">
         @html.form(action = CSRF(routes.Participants.create(ref))) {
           @html.select(existingPersonForm("brandId"),
-            ("", "Choose a brand") :: brands.map(b => (b.code, b.name)), '_label->"Brand", '_help->"")
+            ("", "Choose a brand") :: brands.map(b => (b.id.get.toString, b.name)), '_label->"Brand", '_help->"")
           @html.select(existingPersonForm("eventId"),
             ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
           @html.select(existingPersonForm("participantId"),
@@ -70,7 +70,7 @@
       <div class="newPerson">
         @html.form(action = CSRF(routes.Participants.createParticipantAndPerson(ref))) {
           @html.select(newPersonForm("brandId"),
-            ("", "Choose a brand") :: brands.map(b => (b.code, b.name)), '_label->"Brand", '_help->"")
+            ("", "Choose a brand") :: brands.map(b => (b.id.get.toString, b.name)), '_label->"Brand", '_help->"")
           @html.select(newPersonForm("eventId"),
             ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
           @html.text(newPersonForm("firstName"), '_label -> "First name")

@@ -151,8 +151,10 @@ trait Products extends Controller with Security with Services {
                 val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the product or brand details page.
-                val action = if (page == "product") routes.Products.details(productId)
-                else routes.Brands.details(brand.code)
+                val action = if (page == "product")
+                  routes.Products.details(productId)
+                else
+                  routes.Brands.details(brand.id.get)
                 Redirect(action).flashing("success" -> activity.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
@@ -173,8 +175,10 @@ trait Products extends Controller with Security with Services {
           val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the product or brand details page.
-          val action = if (page == "product") routes.Products.details(productId)
-          else routes.Brands.details(brand.code)
+          val action = if (page == "product")
+            routes.Products.details(productId)
+          else
+            routes.Brands.details(brand.id.get)
           Redirect(action).flashing("success" -> activity.toString)
         }
       }.flatten.getOrElse(NotFound)

@@ -64,17 +64,18 @@ trait Dashboard extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       if (account.viewer) {
-        val activity = if (account.editor)
-          Some(Activity.findAll)
+        val activity = if (account.admin)
+          Some(activityService.findAll)
         else
           None
-        val licenses = if (account.admin)
-          licenseService.expiring()
+        val brands = brandService.findByCoordinator(account.personId)
+        val licenses = if (brands.length > 0)
+          licenseService.expiring(brands.map(_.id.get))
         else
           List()
         val events = eventService.findByFacilitator(
           account.personId,
-          brand = None)
+          brandId = None)
         val upcomingEvents = events.
           filter(_.schedule.end.toString >= LocalDate.now().toString).
           slice(0, 3)

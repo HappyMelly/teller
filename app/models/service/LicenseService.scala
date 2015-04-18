@@ -49,6 +49,22 @@ class LicenseService extends Services {
   }
 
   /**
+   * Returns a list of active content licenses for the given person
+   * @param personId Person identifier
+   */
+  def activeLicenses(personId: Long): List[LicenseView] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        license ← Licenses if license.licenseeId === personId && license.end >= LocalDate.now
+        brand ← license.brand
+      } yield (license, brand)
+
+      query.sortBy(_._2.name.toLowerCase).list.map {
+        case (license, brand) ⇒ LicenseView(brand, license)
+      }
+  }
+
+  /**
    * Returns a list of content licenses for the given person
    * @param personId Person identifier
    */
@@ -65,9 +81,11 @@ class LicenseService extends Services {
   }
 
   /**
-   * Returns list of licenses expiring this month
+   * Returns list of licenses expiring this month for the given brands
+   *
+   * @param brands List of brands we want expiring license data from
    */
-  def expiring(): List[LicenseLicenseeView] = DB.withSession {
+  def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
     implicit session: Session ⇒
       val lowerLimit = LocalDate.now().withDayOfMonth(1)
       val upperLimit = lowerLimit.plusMonths(1)
@@ -75,7 +93,7 @@ class LicenseService extends Services {
         license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
         person ← People if person.id === license.licenseeId
       } yield (license, person)
-      query.list
+      query.filter(_._1.brandId inSet brands).list
         .map(v ⇒ LicenseLicenseeView(v._1, v._2))
         .sortBy(_.licensee.fullName)
   }

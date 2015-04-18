@@ -1,0 +1,60 @@
+@(brandId: Long,
+    members: List[(Person, models.brand.BrandCoordinator)],
+    people: List[Person])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+
+<p>Brand coordinators help a brand owner to run brand-related activities. They have
+  the same access rights as the owner: managing events, facilitators and
+licenses.</p>
+<p>Brand coordinators could set what notifications about brand activities they want
+to receive from the system.</p>
+<br/>
+<div id="teamNotification">
+</div>
+<table id="members" class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Event</th>
+      <th>Evaluation</th>
+      <th>Certificate</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for((member, data) <- members) {
+      <tr data-id="@member.id.get" data-brandid="@brandId">
+        <td><a href="@routes.People.details(member.id.get)">@member.fullName</a></td>
+        <td><input type="checkbox" value="event" @if(data.notification.event) {checked}/></td>
+        <td><input type="checkbox" value="evaluation" @if(data.notification.evaluation) {checked}/></td>
+        <td><input type="checkbox" value="certificate" @if(data.notification.certificate) {checked}/></td>
+        @dynamic(handler, "brand", "coordinator") {
+          <td><a class="remove" data-href="@routes.Brands.removeCoordinator(brandId, member.id.get)"
+          href="#" data-name="@member.fullName" data-id="@member.id.get"><i class="glyphicon glyphicon-trash"></i></a></td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>
+@dynamic(handler, "brand", "coordinator") {
+  <form id="addMemberForm" class="form-inline pull-right" method="POST" action="@CSRF(routes.Brands.addCoordinator(brandId))">
+    <select class="form-control input-sm" name="personId">
+    @for(person <- people) {
+      <option value="@person.id">@person.fullName</option>
+    }
+    </select>
+    <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i> Add Coordinator</button>
+  </form>
+}
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.People.details,
+  routes.javascript.Brands.removeCoordinator,
+  routes.javascript.Brands.turnNotificationOn,
+  routes.javascript.Brands.turnNotificationOff
+)

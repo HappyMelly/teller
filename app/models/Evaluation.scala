@@ -168,13 +168,14 @@ case class Evaluation(
       sendNewEvaluationNotification()
 
   protected def sendNewEvaluationNotification() = {
-    val brand = Brand.find(event.brandCode).get
+    val brand = brandService.findWithCoordinators(event.brandId).get
     val en = translationService.find("EN").get
     val impression = en.impressions.value(question6)
     val participant = Participant.find(this.personId, this.eventId).get
     val subject = s"New evaluation (General impression: $impression)"
+    val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
-      Some(Set(brand.coordinator)), None, subject,
+      Some(cc.toSet), None, subject,
       mail.html.evaluation(this, participant, en).toString(), richMessage = true)
 
     this
@@ -186,7 +187,7 @@ case class Evaluation(
    * @return Returns the evaluation
    */
   protected def sendConfirmationRequest(defaultHook: String) = {
-    val brand = brandService.find(event.brandCode).get
+    val brand = brandService.find(event.brandId).get
     val participant = personService.find(this.personId).get
     val subject = "Confirm your %s evaluation" format brand.name
     val url = brand.evaluationHookUrl.

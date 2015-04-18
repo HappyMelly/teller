@@ -114,7 +114,7 @@ function makeRequestUrl() {
     }
     filter = $('#brands').find(':selected').val();
     if (filter != 'all') {
-        request += ((counter > 0) ? '&' : '') + 'brandCode=' + filter;
+        request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
         counter += 1;
     }
     filter = $('#facilitators').find(':selected').val();

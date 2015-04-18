@@ -38,7 +38,7 @@
         <div id="currentUserId" value="@currentUserId"></div>
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
         <div id="currentInvoiceToId" value="@form("invoice.invoiceTo").value"></div>
-        @html.select(form("brandCode"), brands.map(v => v.code -> v.name), '_label -> "Brand")
+        @html.select(form("brandId"), brands.map(v => v.id.get.toString -> v.name), '_label -> "Brand")
         @html.twoInRow(form("eventTypeId"),
           html.select(form("eventTypeId"), Seq(("", "Choose an event type")))(asIs, implicitly[Lang]),
           form("title"),

@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.service.{ EventService, Services }
@@ -109,23 +110,24 @@ trait Evaluations extends EvaluationsController
    * @param ref Identifier of a page where a user should be redirected
    * @return
    */
-  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { x ⇒
-        x.delete()
-        // recalculate ratings
-        Event.ratingActor ! x.eventId
-        Facilitator.ratingActor ! x.eventId
+        Evaluation.find(id).map { x ⇒
+          x.delete()
+          // recalculate ratings
+          Event.ratingActor ! x.eventId
+          Facilitator.ratingActor ! x.eventId
 
-        val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
+          val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
 
-        val route = ref match {
-          case Some("index") ⇒ routes.Participants.index().url
-          case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
-        }
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          val route = ref match {
+            case Some("index") ⇒ routes.Participants.index().url
+            case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
+          }
+          Redirect(route).flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -133,43 +135,44 @@ trait Evaluations extends EvaluationsController
    * @param id Unique evaluation identifier
    * @return
    */
-  def move(id: Long) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def move(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { evaluation ⇒
-        val form = Form(single(
-          "eventId" -> longNumber))
-        val (eventId) = form.bindFromRequest
-        form.bindFromRequest.fold (
-          f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
-          eventId ⇒ {
-            if (eventId == evaluation.eventId) {
-              val activity = evaluation.activity(
-                user.person,
-                Activity.Predicate.Updated).insert
-              Ok(Json.obj("success" -> activity.toString))
-            } else {
-              EventService.get.find(eventId).map { event ⇒
-                Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
-                  // first we need to check if this event has already the participant
-                  Participant.find(evaluation.personId, eventId).map { participant ⇒
-                    // if yes, we reassign an evaluation
-                    participant.copy(evaluationId = Some(id)).update
-                    oldParticipant.copy(evaluationId = None).update
-                  }.getOrElse {
-                    // if no, we move a participant
-                    oldParticipant.copy(eventId = eventId).update
-                  }
-                  evaluation.copy(eventId = eventId).update
-                  val activity = evaluation.activity(
-                    user.person,
-                    Activity.Predicate.Updated).insert
-                  Ok(Json.obj("success" -> activity.toString))
+        Evaluation.find(id).map { evaluation ⇒
+          val form = Form(single(
+            "eventId" -> longNumber))
+          val (eventId) = form.bindFromRequest
+          form.bindFromRequest.fold (
+            f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
+            eventId ⇒ {
+              if (eventId == evaluation.eventId) {
+                val activity = evaluation.activity(
+                  user.person,
+                  Activity.Predicate.Updated).insert
+                Ok(Json.obj("success" -> activity.toString))
+              } else {
+                EventService.get.find(eventId).map { event ⇒
+                  Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
+                    // first we need to check if this event has already the participant
+                    Participant.find(evaluation.personId, eventId).map { participant ⇒
+                      // if yes, we reassign an evaluation
+                      participant.copy(evaluationId = Some(id)).update
+                      oldParticipant.copy(evaluationId = None).update
+                    }.getOrElse {
+                      // if no, we move a participant
+                      oldParticipant.copy(eventId = eventId).update
+                    }
+                    evaluation.copy(eventId = eventId).update
+                    val activity = evaluation.activity(
+                      user.person,
+                      Activity.Predicate.Updated).insert
+                    Ok(Json.obj("success" -> activity.toString))
+                  }.getOrElse(NotFound)
                 }.getOrElse(NotFound)
-              }.getOrElse(NotFound)
-            }
-          })
-      }.getOrElse(NotFound)
+              }
+            })
+        }.getOrElse(NotFound)
   }
 
   /**
@@ -181,7 +184,7 @@ trait Evaluations extends EvaluationsController
     implicit handler ⇒ implicit user ⇒
 
       evaluationService.find(id) map { x ⇒
-        val brand = brandService.find(x.event.brandCode).get
+        val brand = brandService.find(x.event.brandId).get
         val en = translationService.find("EN").get
         val participant = personService.find(x.eval.personId).get
         Ok(views.html.evaluation.details(user, x,
@@ -197,7 +200,7 @@ trait Evaluations extends EvaluationsController
    *
    * @param id Unique evaluation identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { evaluation ⇒
@@ -217,7 +220,7 @@ trait Evaluations extends EvaluationsController
    * @param id Unique evaluation identifier
    * @return
    */
-  def update(id: Long) = SecuredDynamicAction("evaluation", "edit") { implicit request ⇒
+  def update(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
@@ -247,7 +250,7 @@ trait Evaluations extends EvaluationsController
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") {
+  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         evaluationService.find(id).map { x ⇒
@@ -257,31 +260,15 @@ trait Evaluations extends EvaluationsController
             case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
           }
           if (x.eval.approvable) {
-            val ev = x.eval.approve
+            val evaluation = x.eval.approve
             // recalculate ratings
-            Event.ratingActor ! ev.eventId
-            Facilitator.ratingActor ! ev.eventId
-            val approver = user.person
-            val brand = Brand.find(x.event.brandCode).get
-            Participant.find(ev.personId, ev.eventId) foreach { data ⇒
-              if (data.certificate.isEmpty && brand.brand.generateCert) {
-                val cert = new Certificate(ev.handled, x.event, ev.participant)
-                cert.generateAndSend(brand, approver)
-                data.copy(certificate = Some(cert.id), issued = cert.issued).update
-              } else if (data.certificate.isEmpty) {
-                val body = mail.evaluation.html.approvedNoCert(brand.brand, ev.participant, approver).toString()
-                val subject = s"Your ${brand.brand.name} event's evaluation approval"
-                email.send(Set(ev.participant), Some(x.event.facilitators.toSet),
-                  Some(Set(brand.coordinator)), subject, body, richMessage = true, None)
-              } else {
-                val cert = new Certificate(ev.handled, x.event, ev.participant, renew = true)
-                cert.send(brand, approver)
-              }
-            }
+            Event.ratingActor ! evaluation.eventId
+            Facilitator.ratingActor ! evaluation.eventId
 
-            val activity = ev.activity(
+            val activity = evaluation.activity(
               user.person,
               Activity.Predicate.Approved).insert
+            sendApprovalConfirmation(user.person, evaluation, x.event)
 
             Redirect(route).flashing("success" -> activity.toString)
           } else {
@@ -300,7 +287,7 @@ trait Evaluations extends EvaluationsController
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", "manage") { implicit request ⇒
+  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       evaluationService.find(id).map { x ⇒
         val route: String = ref match {
@@ -319,14 +306,7 @@ trait Evaluations extends EvaluationsController
             user.person,
             Activity.Predicate.Rejected).insert
 
-          val brand = Brand.find(x.event.brandCode).get
-          val participant = x.eval.participant
-          val subject = s"Your ${brand.brand.name} certificate"
-          email.send(Set(participant),
-            Some(x.event.facilitators.toSet),
-            Some(Set(brand.coordinator)), subject,
-            mail.evaluation.html.rejected(brand.brand, participant, user.person).toString(),
-            richMessage = true)
+          sendRejectionConfirmation(user.person, x.eval.participant, x.event)
 
           Redirect(route).flashing("success" -> activity.toString)
         } else {
@@ -351,6 +331,57 @@ trait Evaluations extends EvaluationsController
   }
 
   /**
+   * Sends confirmation email that evaluation was approved
+   * @param approver Person who approved the given evaluation
+   * @param ev Evaluation
+   * @param event Related event
+   */
+  protected def sendApprovalConfirmation(approver: Person,
+    ev: Evaluation,
+    event: Event) = {
+    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+      Participant.find(ev.personId, ev.eventId) foreach { data ⇒
+        val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
+        if (data.certificate.isEmpty && x.brand.generateCert) {
+          val cert = new Certificate(ev.handled, event, ev.participant)
+          cert.generateAndSend(x, approver)
+          data.copy(certificate = Some(cert.id), issued = cert.issued).update
+        } else if (data.certificate.isEmpty) {
+          val body = mail.evaluation.html.approvedNoCert(x.brand, ev.participant, approver).toString()
+          val subject = s"Your ${x.brand.name} event's evaluation approval"
+          email.send(Set(ev.participant),
+            Some(event.facilitators.toSet),
+            Some(bcc.toSet),
+            subject, body, richMessage = true, None)
+        } else {
+          val cert = new Certificate(ev.handled, event, ev.participant, renew = true)
+          cert.send(x, approver)
+        }
+      }
+    }
+  }
+
+  /**
+   * Sends confirmation email that evaluation was rejected
+   * @param rejector Person who rejected the evaluation
+   * @param participant Participant
+   * @param event Related event
+   */
+  protected def sendRejectionConfirmation(rejector: Person,
+    participant: Person,
+    event: Event) = {
+    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+      val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
+      val subject = s"Your ${x.brand.name} certificate"
+      email.send(Set(participant),
+        Some(event.facilitators.toSet),
+        Some(bcc.toSet), subject,
+        mail.evaluation.html.rejected(x.brand, participant, rejector).toString(),
+        richMessage = true)
+    }
+  }
+
+  /**
    * Retrieve active events which a user is able to see
    *
    * @param account User object
@@ -358,18 +389,17 @@ trait Evaluations extends EvaluationsController
   private def findEvents(account: UserAccount): List[Event] = {
     if (account.editor) {
       EventService.get.findByParameters(
-        brandCode = None,
+        brandId = None,
         archived = Some(false),
         confirmed = Some(true))
     } else {
-      val brands = Brand.findByCoordinator(account.personId)
+      val brands = brandService.findByCoordinator(account.personId)
       if (brands.length > 0) {
-        val brandCodes = brands.map(_.code)
         val events = EventService.get.findByParameters(
-          brandCode = None,
+          brandId = None,
           archived = Some(false),
           confirmed = Some(true))
-        events.filter(e ⇒ brandCodes.exists(_ == e.brandCode))
+        events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
       } else {
         List[Event]()
       }

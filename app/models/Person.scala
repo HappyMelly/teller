@@ -450,13 +450,6 @@ object Person {
       .mapResult(PersonSummary.tupled).list
   }
 
-  /**
-   * Find all active people
-   * @return
-   */
-  def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
-    Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
-  }
 }
 
 object PeopleCollection {

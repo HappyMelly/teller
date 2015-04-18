@@ -32,20 +32,20 @@ import org.joda.money.Money
 class BrandFeeServiceSpec extends PlayAppSpec {
 
   "Method 'findByBrand'" should {
-    "return 2 fees for the brand TEST" in {
+    "return 2 fees for the brand id = 1" in {
       val m1 = Money.parse("RUB 100")
       val m2 = Money.parse("EUR 300")
       Seq(
-        ("TEST", "RU", m1),
-        ("TEST", "DE", m2),
-        ("MGT", "US", Money.parse("USD 100")),
-        ("MGT", "HK", Money.parse("USD 100"))).foreach {
+        (1L, "RU", m1),
+        (1L, "DE", m2),
+        (2L, "US", Money.parse("USD 100")),
+        (2L, "HK", Money.parse("USD 100"))).foreach {
           case (brand, country, fee) ⇒
             BrandFee(None, brand, country, fee).insert()
         }
 
       val service = new BrandFeeService
-      val result = service.findByBrand("TEST")
+      val result = service.findByBrand(1L)
       result.length must_== 2
       result.exists(x ⇒ x.country == "RU" && x.fee == m1) must_== true
       result.exists(x ⇒ x.country == "DE" && x.fee == m2) must_== true

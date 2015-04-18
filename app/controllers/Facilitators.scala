@@ -47,27 +47,27 @@ object Facilitators extends Controller with Security {
     }
   }
 
-  implicit val personWrites = new Writes[(Person, Boolean)] {
-    def writes(data: (Person, Boolean)): JsValue = {
+  implicit val personWrites = new Writes[Person] {
+    def writes(data: Person): JsValue = {
       Json.obj(
-        "first_name" -> data._1.firstName,
-        "last_name" -> data._1.lastName,
-        "coordinator" -> data._2,
-        "id" -> data._1.id.get,
-        "memberships" -> data._1.organisations)
+        "first_name" -> data.firstName,
+        "last_name" -> data.lastName,
+        "id" -> data.id.get,
+        "memberships" -> data.organisations)
     }
   }
 
   /**
-   * Returns a list of facilitators for the given brand on today, including the coordinator of the brand
+   * Returns a list of facilitators for the given brand on today,
+   * including the coordinator of the brand
    */
-  def index(brandCode: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Brand.find(brandCode).map { brand ⇒
-        val facilitators = Brand.findFacilitators(brandCode, brand.coordinator)
+      val facilitators = Brand.findFacilitators(brandId)
+      if (facilitators.length > 0) {
         PeopleCollection.organisations(facilitators)
-        Ok(Json.toJson(facilitators.map(person ⇒ (person, person.id == brand.coordinator.id))))
-      }.getOrElse(NotFound("Unknown brand"))
+      }
+      Ok(Json.toJson(facilitators))
   }
 
   /**

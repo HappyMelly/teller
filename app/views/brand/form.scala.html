@@ -1,5 +1,6 @@
 @(user: UserIdentity,
-    code: Option[String],
+    id: Option[Long],
+    people: List[Person],
     form: Form[Brand])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
@@ -19,16 +20,16 @@
         <div class="page-header">
           <h1>@name</h1>
         </div>
-        @html.form(action = CSRF(code.map(code => routes.Brands.update(code)).getOrElse(routes.Brands.create())),
+        @html.form(action = CSRF(id.map(x => routes.Brands.update(x)).getOrElse(routes.Brands.create())),
           'enctype -> "multipart/form-data") {
           @html.text(form("code"), '_label -> "Code")
           @html.text(form("uniqueName"), '_label -> "Unique name",
             '_help -> "This name is used on HM website in an address of brand's landing page")
           @html.text(form("name"), '_label -> "Name")
           @html.text(form("tagLine"), '_label -> "Tagline")
-          @html.select(form("coordinatorId"),
-            ("", "Choose a brand coordinator") :: Person.findActive.map(p => (p.id.get.toString, p.fullName)),
-            '_label -> "Coordinator")
+          @html.select(form("ownerId"),
+            ("", "Choose brand owner") :: people.map(p => (p.id.get.toString, p.fullName)),
+            '_label -> "Owner")
           @html.textarea(form("description"), '_label -> "Description", 'rows -> 3,
             '_help -> views.html.element.markdownHelp())
           @html.file(form("picture"), '_label -> "Picture")

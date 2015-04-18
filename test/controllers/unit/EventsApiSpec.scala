@@ -25,19 +25,20 @@
 package controllers.unit
 
 import controllers.apiv2.{ ApiAuthentication, EventsApi }
-import helpers.{ EventHelper, PersonHelper }
+import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models.Event
-import org.scalamock.specs2.MockContext
+import models.service.{ BrandService, EventService }
+import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable._
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeApiAuthentication, FakeServices, StubEventService }
+import stubs.{ FakeApiAuthentication, FakeServices }
 
 import scala.concurrent.Future
 
-class EventsApiSpec extends Specification {
+class EventsApiSpec extends Specification with IsolatedMockFactory {
 
   /** Test controller without api authentication and with stubbed services */
   class TestEventsApi() extends EventsApi
@@ -49,23 +50,27 @@ class EventsApiSpec extends Specification {
     with ApiAuthentication
     with FakeServices
 
+  val eventService = mock[EventService]
+  val controller = new TestEventsApi()
+  controller.eventService_=(eventService)
+
   "Event details API call" should {
     "return event details in JSON format" in {
-      val controller = new TestEventsApi()
+      (eventService.find _) expects 1L returning Some(EventHelper.one)
       val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
       status(result) must equalTo(OK)
       contentType(result) must beSome("text/plain")
       charset(result) must beSome("utf-8")
       contentAsJson(result) mustEqual Json.obj(
-        "brand" -> "TEST",
+        "brand" -> 1,
         "type" -> 1,
-        "title" -> "Test event",
+        "title" -> "One",
         "description" -> None.asInstanceOf[Option[String]],
         "spokenLanguages" -> Json.arr("German"),
         "materialsLanguage" -> None.asInstanceOf[Option[String]],
         "specialAttention" -> None.asInstanceOf[Option[String]],
-        "start" -> "2015-01-20",
-        "end" -> "2015-01-20",
+        "start" -> "2015-01-01",
+        "end" -> "2015-01-02",
         "hoursPerDay" -> 1,
         "totalHours" -> 1,
         "facilitators" -> Json.arr(
@@ -81,25 +86,26 @@ class EventsApiSpec extends Specification {
         "confirmed" -> false)
     }
     "return 404 error with error message when an event doesn't exist" in {
-      val controller = new TestEventsApi()
+      (eventService.find _) expects 101L returning None
+
       val result: Future[SimpleResult] = controller.event(101).apply(FakeRequest())
       status(result) must equalTo(NOT_FOUND)
-      contentType(result) must beSome("text/plain")
-      contentAsString(result) mustEqual "Unknown event"
+      contentType(result) must beSome("application/json")
+      contentAsString(result) must contain("Unknown event")
     }
   }
 
   "Events API call" should {
-    "pass all parameters to findByFacilitator in a right order" in new MockContext {
-      val service = mock[StubEventService]
+    "pass all parameters to findByFacilitator in a right order" in {
+      val brandService = mock[BrandService]
       inSequence {
-        (service.findByFacilitator _)
-          .expects(1, Some("TEST"), None, Some(true), Some(false))
+        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (eventService.findByFacilitator _)
+          .expects(1, Some(1L), None, Some(true), Some(false))
           .returning(List[Event]())
-        (service.applyFacilitators _).expects(*)
+        (eventService.applyFacilitators _).expects(*)
       }
-      val controller = new TestEventsApi()
-      controller.eventService_=(service)
+      controller.brandService_=(brandService)
       controller.events(
         "TEST",
         future = None,
@@ -108,18 +114,20 @@ class EventsApiSpec extends Specification {
         facilitatorId = Some(1),
         countryCode = Some("UK"),
         eventType = Some(1)).apply(FakeRequest())
+      // we check passed parameters, so we don't care about result
+      ok
     }
 
-    "pass all parameters to findByParameters in a right order" in new MockContext {
-      val service = mock[StubEventService]
+    "pass all parameters to findByParameters in a right order" in {
+      val brandService = mock[BrandService]
       inSequence {
-        (service.findByParameters _)
-          .expects(Some("TEST"), None, Some(true), Some(false), None, Some("UK"), Some(1L))
+        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (eventService.findByParameters _)
+          .expects(Some(1L), None, Some(true), Some(false), None, Some("UK"), Some(1L))
           .returning(List[Event]())
-        (service.applyFacilitators _).expects(*)
+        (eventService.applyFacilitators _).expects(*)
       }
-      val controller = new TestEventsApi()
-      controller.eventService_=(service)
+      controller.brandService_=(brandService)
       controller.events(
         "TEST",
         future = None,
@@ -128,18 +136,20 @@ class EventsApiSpec extends Specification {
         facilitatorId = None,
         countryCode = Some("UK"),
         eventType = Some(1)).apply(FakeRequest())
+      // we check passed parameters, so we don't care about result
+      ok
     }
 
-    "return events in JSON format" in new MockContext {
-      val service = mock[StubEventService]
+    "return events in JSON format" in {
+      val brandService = mock[BrandService]
       inSequence {
-        (service.findByFacilitator _)
+        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (eventService.findByFacilitator _)
           .expects(*, *, *, *, *)
           .returning(List[Event](EventHelper.one, EventHelper.two))
-        (service.applyFacilitators _).expects(*)
+        (eventService.applyFacilitators _) expects *
       }
-      val controller = new TestEventsApi()
-      controller.eventService_=(service)
+      controller.brandService_=(brandService)
       val result: Future[SimpleResult] = controller.events(
         "TEST",
         future = None,

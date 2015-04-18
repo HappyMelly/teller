@@ -63,7 +63,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.evaluationService_=(evalService)
 
   def e1 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
     val evalPair = EvaluationPair(evaluation, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
@@ -75,7 +75,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
     val eval = evaluation.copy(status = EvaluationStatus.Pending)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
@@ -88,7 +88,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
     val eval = evaluation.copy(status = EvaluationStatus.Approved)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
@@ -101,7 +101,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
     val eval = evaluation.copy(status = EvaluationStatus.Rejected)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
@@ -123,7 +123,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   private def expectations(): Unit = {
-    (brandService.find(_: String)).expects(brand.code).returning(Some(brand))
+    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
     (translationService.find(_: String)).expects("EN").returning(Some(translation))
     (personService.find(_: Long)).expects(1L).returning(Some(PersonHelper.one()))
   }

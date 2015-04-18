@@ -8,6 +8,7 @@
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
+@import models.UserRole.DynamicRole
 
 @import helper.CSRF
 @import templates.Formatters._
@@ -18,7 +19,7 @@
 
 @main(event.title + " - Event", "events", user) {
 
-  @dynamic(handler, "event", "edit") {
+  @dynamic(handler, "event", DynamicRole.Facilitator) {
     <!-- Confirm Modal -->
     <div id="confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -52,7 +53,7 @@
     <h1>
       @event.title
       <div class="actions pull-right">
-      @dynamic(handler, "event", "edit") {
+      @dynamic(handler, "event", DynamicRole.Facilitator) {
         <div class="button">
           <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
             <i class="glyphicon glyphicon-pencil"></i> Edit
@@ -95,7 +96,7 @@
     </div>
   }
 
-  <input type="hidden" disabled id="brandCode" value="@event.brandCode"/>
+  <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <div class="col-md-8">
     <div class="col-md-9">
       <dl class="dl-horizontal">
@@ -120,7 +121,7 @@
       </dl>
       <dl class="dl-horizontal">
         <dt class="text-muted">Brand</dt>
-        <dd class="text-muted"><a href="@routes.Brands.details(event.brandCode)">@event.brandCode</a></dd>
+        <dd class="text-muted"><a href="@routes.Brands.details(event.brandId)">@event.brandId</a></dd>
         <dt class="text-muted">Event type</dt>
         <dd class="text-muted">@typeName</dd>
       </dl>
@@ -169,7 +170,8 @@
       </dl>
     </div>
   </div>
-  @views.html.element.brandFees(event.brandCode, fees)
+  <!-- TODO change to brand name -->
+  @views.html.element.brandFees(event.brandId.toString, fees)
   <div class="col-md-3 col-md-offset-1x">
     <legend>Invoice</legend>
     <p>
@@ -184,7 +186,7 @@
         <strong>Invoice #:</strong> @number
       }
     </p>
-    @dynamic(handler, "event", "admin") {
+    @dynamic(handler, "event", DynamicRole.Coordinator) {
       <form method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
         <input type="hidden" name="id" value="@event.invoice.id">
         <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">
@@ -235,7 +237,7 @@
           <div id="filter-containter">
             <div class="pull-right">
               <a class="input-sm" tabindex="-1"
-              href="@routes.Participants.add(Some(event.brandCode), event.id, Some("event")).url" title="Add Participant">
+              href="@routes.Participants.add(Some(event.brandId), event.id, Some("event")).url" title="Add Participant">
                 <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
               <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                 <i class="glyphicon glyphicon-envelope"></i>

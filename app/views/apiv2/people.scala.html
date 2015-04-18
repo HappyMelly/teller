@@ -1,0 +1,81 @@
+@(user: UserIdentity)
+
+<h3 id="people">People</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>Description</th>
+        <td>A list of Happy Melly People, optionally filtered by their activity status and names</td>
+    </tr>
+    <tr>
+        <th>Request</th>
+        <td><code>GET /api/v2/people</code></td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Request query string parameters</th>
+        <td><code>query</code> string to filter people by names</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON array of person objects, with properties:</p>
+            <ul>
+                <li><code>id</code> - a numeric unique identifier of a person, e.g. 42</li>
+                <li><code>unique_name</code> - an unique identifier of a person, e.g. sergey.kotlov</li>
+                <li><code>name</code></li>
+                <li><code>photo</code></li>
+                <li><code>city</code></li>
+                <li><code>country</code> - ISO 8166-2 country code</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Examples Request</th>
+        <td>GET /api/v2/people</td>
+    </tr>
+    <tr>
+        <th>Example Response</th>
+        <td><pre>
+[ {
+    "id" : 1,
+    "unique_name" : "andrea.andrea",
+    "first_name" : "Andrea",
+    "last_name" : "Andrea",
+    "photo" : null,
+    "country" : "NZ"
+}, {
+    "id" : 7,
+    "unique_name" : "adrian.christen",
+    "first_name" : "Adrian",
+    "last_name" : "Christen",
+    "photo" : null,
+    "country" : "CH"
+}, {
+    "id" : 4,
+    "unique_name" : "laslo.coach",
+    "first_name" : "Laslo",
+    "last_name" : "Coach",
+    "photo" : null,
+    "country" : "BR"
+}, {
+    "id" : 9,
+    "unique_name" : "bat.man",
+    "first_name" : "Bat",
+    "last_name" : "Man",
+    "photo" : null,
+    "country" : "IN"
+}]
+        </pre></td>
+    </tr>
+</table>

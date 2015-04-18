@@ -24,18 +24,21 @@
  */
 package stubs
 
-import models.service.admin.ApiTokenService
-import models.service.brand.BrandFeeService
 import models.service._
+import models.service.admin.ApiTokenService
+import models.service.brand.{ BrandCoordinatorService, BrandFeeService, CertificateTemplateService, EventTypeService }
 
 trait FakeServices extends Services {
 
+  private var _activityService = new ActivityService
   private var _apiTokenService = new ApiTokenService
   private var _brandService = new BrandService
+  private var _brandTeamMemberService = new BrandCoordinatorService
+  private var _certificateService = new CertificateTemplateService
   private var _contributionService = new FakeContributionService
   private var _evaluationService = new EvaluationService
-  private var _eventService = new StubEventService
-  private var _eventTypeService = new FakeEventTypeService
+  private var _eventService = new EventService
+  private var _eventTypeService = new EventTypeService
   private var _facilitatorService = new FacilitatorService
   private var _feeService = new BrandFeeService
   private var _licenseService = new FakeLicenseService
@@ -47,11 +50,21 @@ trait FakeServices extends Services {
   private var _translationService = new TranslationService
   private var _userAccountService = new FakeUserAccountService
 
+  def activityService_=(service: ActivityService) = _activityService = service
+  override def activityService: ActivityService = _activityService
+
   def apiTokenService_=(service: ApiTokenService) = _apiTokenService = service
   override def apiTokenService: ApiTokenService = _apiTokenService
 
   def brandService_=(service: BrandService) = _brandService = service
   override def brandService: BrandService = _brandService
+
+  def brandCoordinatorService_=(service: BrandCoordinatorService) =
+    _brandTeamMemberService = service
+  override def brandCoordinatorService = _brandTeamMemberService
+
+  def certificateService_=(service: CertificateTemplateService) = _certificateService = service
+  override def certificateService: CertificateTemplateService = _certificateService
 
   def contributionService_=(service: FakeContributionService) = {
     _contributionService = service
@@ -62,13 +75,11 @@ trait FakeServices extends Services {
   def evaluationService_=(service: EvaluationService) = _evaluationService = service
   override def evaluationService: EvaluationService = _evaluationService
 
-  def eventService_=(service: StubEventService) = {
-    _eventService = service
-  }
-  override def eventService: StubEventService = _eventService
+  def eventService_=(service: EventService) = _eventService = service
+  override def eventService: EventService = _eventService
 
-  def eventTypeService_=(service: FakeEventTypeService) = _eventTypeService = service
-  override def eventTypeService: FakeEventTypeService = _eventTypeService
+  def eventTypeService_=(service: EventTypeService) = _eventTypeService = service
+  override def eventTypeService: EventTypeService = _eventTypeService
 
   def facilitatorService_=(service: FacilitatorService) = _facilitatorService = service
   override def facilitatorService: FacilitatorService = _facilitatorService

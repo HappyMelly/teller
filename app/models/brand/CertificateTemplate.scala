@@ -35,7 +35,7 @@ import play.api.db.slick.DB
  */
 case class CertificateTemplate(
   id: Option[Long],
-  brandCode: String,
+  brandId: Long,
   language: String,
   oneFacilitator: Array[Byte],
   twoFacilitators: Array[Byte]) extends ActivityRecorder {
@@ -50,16 +50,12 @@ case class CertificateTemplate(
    *
    * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
    */
-  def humanIdentifier: String = "for brand %s and lang %s".format(brandCode, language)
+  def humanIdentifier: String = "for brand %s and lang %s".format(brandId, language)
 
   /**
    * Returns type of this object
    */
   def objectType: String = Activity.Type.CertificateTemplate
-
-  lazy val brand: Brand = DB.withSession { implicit session: Session ⇒
-    Brand.find(brandCode).get.brand
-  }
 
   def insert: CertificateTemplate = DB.withSession { implicit session: Session ⇒
     val id = CertificateTemplates.forInsert.insert(this)
@@ -72,16 +68,6 @@ case class CertificateTemplate(
 }
 
 object CertificateTemplate {
-
-  /**
-   * Find all brand-related certificate files
-   *
-   * @param code Unique brand identifier
-   * @return
-   */
-  def findByBrand(code: String): List[CertificateTemplate] = DB.withSession { implicit session: Session ⇒
-    Query(CertificateTemplates).filter(_.brandCode === code).sortBy(_.language).list
-  }
 
   /**
    * Find a certificate file

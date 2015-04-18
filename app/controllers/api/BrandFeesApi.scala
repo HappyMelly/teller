@@ -52,8 +52,10 @@ trait BrandFeesApi extends Controller with ApiAuthentication with Services {
    * @param brand Brand code
    */
   def fees(brand: String) = TokenSecuredAction { implicit request ⇒
-    val fees = feeService.findByBrand(brand)
-    Ok(Json.prettyPrint(Json.toJson(fees)))
+    brandService.find(brand) map { x ⇒
+      val fees = feeService.findByBrand(x.id.get)
+      Ok(Json.prettyPrint(Json.toJson(fees)))
+    } getOrElse NotFound("Unknown brand")
   }
 }
 

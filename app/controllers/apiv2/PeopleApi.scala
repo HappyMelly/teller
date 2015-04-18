@@ -24,10 +24,12 @@
 
 package controllers.apiv2
 
+import java.net.URLDecoder
+
 import models._
 import play.api.libs.json._
 
-object PeopleApi {
+object PeopleApi extends ApiAuthentication {
 
   implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
@@ -87,6 +89,39 @@ object PeopleApi {
         "licenses" -> person.licenses,
         "contributions" -> person.contributions)
     }
+  }
+
+  /**
+   * Get a list of people
+   * @param active If true only active members are retrieved
+   * @param query Retrieve only people whose name meets the pattern
+   * @return
+   */
+  def people(active: Option[Boolean],
+    query: Option[String]) = TokenSecuredAction(readWrite = false) {
+    implicit request ⇒
+      implicit token ⇒
+
+        val people: List[Person] = Person.findByParameters(active, query)
+        PeopleCollection.addresses(people)
+        Ok(Json.prettyPrint(Json.toJson(people)))
+  }
+
+  /**
+   * Get a person
+   * @param identifier Person identifier
+   * @return
+   */
+  def person(identifier: String) = TokenSecuredAction(readWrite = false) {
+    implicit request ⇒
+      implicit token ⇒
+        val person = try {
+          val id = identifier.toLong
+          personService.find(id)
+        } catch {
+          case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
+        }
+        person.map(person ⇒ Ok(Json.prettyPrint(Json.toJson(person)(personDetailsWrites)))).getOrElse(NotFound)
   }
 }
 

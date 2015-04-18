@@ -48,11 +48,10 @@ object Facilitator {
       case eventId: Long ⇒
         eventService.find(eventId) foreach { x ⇒
           x.facilitatorIds.foreach { id ⇒
-            val events = eventService.findByFacilitator(id, Some(x.brandCode)).map(_.id.get)
+            val events = eventService.findByFacilitator(id, Some(x.brandId)).map(_.id.get)
             val evaluations = evaluationService.findByEvents(events).filter(_._3.approved)
             val rating = evaluations.foldLeft(0.0f)(_ + _._3.question6.toFloat / evaluations.length)
-            val brand = brandService.find(x.brandCode).get
-            println(evaluations.toString())
+            val brand = brandService.find(x.brandId).get
             facilitatorService.update(Facilitator(None, id, brand.id.get, rating))
           }
         }

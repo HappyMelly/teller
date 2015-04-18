@@ -25,15 +25,13 @@
 package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
-import models.JodaMoney._
 import models._
-import models.database.brand.BrandFees
-import models.database.{ EventFacilitators, EventInvoices, Events }
+import models.database.{ Evaluations, EventFacilitators, EventInvoices, Events }
 import org.joda.time.LocalDate
+import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play
 import services.integrations.Integrations
 
 import scala.language.postfixOps
@@ -48,7 +46,7 @@ class EventService extends Integrations with Services {
    */
   def isBrandManager(personId: Long, event: Event): Boolean = DB.withSession {
     implicit session: Session ⇒
-      Brand.find(event.brandCode).exists(_.coordinator.id.get == personId)
+      brandService.find(event.brandId).exists(_.ownerId == personId)
   }
 
   /**
@@ -62,9 +60,22 @@ class EventService extends Integrations with Services {
   }
 
   /**
+   * Return event if it exists related to the given evaluation
+   * @param evaluationId Evaluation id
+   */
+  def findByEvaluation(evaluationId: Long): Option[Event] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← Evaluations if x.id === evaluationId
+        y ← Events if y.id === x.eventId
+      } yield y
+      query.firstOption
+  }
+
+  /**
    * Returns a list of events based on several parameters
    *
-   * @param brandCode Only events of this brand
+   * @param brandId Only events of this brand
    * @param future Only future and current events
    * @param public Only public events
    * @param archived Only archived events
@@ -73,7 +84,7 @@ class EventService extends Integrations with Services {
    * @param eventType Only events of this type
    */
   def findByParameters(
-    brandCode: Option[String],
+    brandId: Option[Long],
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None,
@@ -83,8 +94,8 @@ class EventService extends Integrations with Services {
     implicit session: Session ⇒
       val baseQuery = Query(Events)
 
-      val brandQuery = brandCode map {
-        v ⇒ baseQuery filter (_.brandCode === v)
+      val brandQuery = brandId map {
+        v ⇒ baseQuery filter (_.brandId === v)
       } getOrElse baseQuery
 
       val timeQuery = applyTimeFilter(future, brandQuery)
@@ -110,23 +121,23 @@ class EventService extends Integrations with Services {
    * Return a list of events for a given facilitator
    *
    * @param facilitatorId Only events facilitated by this facilitator
-   * @param brand Only events of this brand
+   * @param brandId Only events of this brand
    * @param future Only future and current events
    * @param public Only public events
    * @param archived Only archived events
    */
   def findByFacilitator(
     facilitatorId: Long,
-    brand: Option[String],
+    brandId: Option[Long] = None,
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
     archived: Option[Boolean] = None): List[Event] = DB.withSession {
     implicit session: Session ⇒
 
-      val baseQuery = brand map { value ⇒
+      val baseQuery = brandId map { value ⇒
         for {
           entry ← EventFacilitators if entry.facilitatorId === facilitatorId
-          event ← Events if event.id === entry.eventId && event.brandCode === value
+          event ← Events if event.id === entry.eventId && event.brandId === value
         } yield event
       } getOrElse {
         for {
@@ -144,13 +155,13 @@ class EventService extends Integrations with Services {
 
   /** Returns list with active events */
   def findActive: List[Event] = DB.withSession { implicit session: Session ⇒
-    findByParameters(brandCode = None, archived = Some(false)).
+    findByParameters(brandId = None, archived = Some(false)).
       sortBy(_.title.toLowerCase)
   }
 
   /** Returns list with all events */
   def findAll: List[Event] = DB.withSession { implicit session: Session ⇒
-    findByParameters(brandCode = None)
+    findByParameters(brandId = None)
   }
 
   /**
@@ -179,7 +190,7 @@ class EventService extends Integrations with Services {
    */
   def sendConfirmationAlert() = brandService.findAll.foreach { brand ⇒
     findByParameters(
-      brandCode = Some(brand.code),
+      brandId = brand.id,
       future = Some(false),
       confirmed = Some(false)).foreach { event ⇒
         val subject = "Confirm your event " + event.title

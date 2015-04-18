@@ -1,10 +1,6 @@
 @(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-@if(!products.isEmpty) {
-
+@if(products.nonEmpty) {
   <table class="datatables table table-bordered">
     <thead>
     <tr>
