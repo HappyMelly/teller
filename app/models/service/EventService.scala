@@ -201,7 +201,8 @@ class EventService extends Integrations with Services {
           None,
           None,
           subject,
-          body)
+          body,
+          richMessage = true)
         val msg = "confirmation email for event %s (id = %s)".format(
           event.title,
           event.id.get.toString)
