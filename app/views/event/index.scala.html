@@ -39,9 +39,8 @@
       <div class="toolbar pull-right">
         <div class="btn-group">
           <select id="brands" class="input-sm form-control">
-            <option value="all">All</option>
             @brands.map { v =>
-              <option value="@v.code">@v.name</option>
+              <option value="@v.id.get" @if(v.id.get == 1){selected}>@v.name</option>
             }
           </select>
         </div>
@@ -76,15 +75,14 @@
     <table id="events" class="datatables table table-bordered">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Brand</th>
+          <th width="20%">Title</th>
           <th>Facilitators</th>
           <th>Location</th>
           <th>Dates</th>
-          <th>Total hours</th>
+          <th width="5%" align="center">Total hours</th>
           <th>Materials</th>
-          <th>Invoice</th>
-          <th>Confirmed</th>
+          <th width="5%" align="center">Invoice</th>
+          <th width="5%" align="center">Confirmed</th>
           <th></th>
         </tr>
       </thead>
