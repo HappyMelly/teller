@@ -6,7 +6,6 @@
     request: Request[Any],
     handler: AuthorisationHandler)
 
-@import models.payment.Payment
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -62,6 +61,12 @@
                     </li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
+                    @if(showJoinBanner && user.person.member.isEmpty) {
+                      <li class="btn-warning">
+                          <a href="@routes.Membership.welcome()" style="color: white;">
+                            Become a Supporter</a>
+                      </li>
+                    }
                     <li class="dropdown">
                           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                               @user.person.fullName
@@ -91,16 +96,6 @@
           </div>
       </div>
       <div class="container" id="content">
-        @if(showJoinBanner && user.person.member.isEmpty) {
-          @defining(Payment.countryBasedFees(user.person.address.countryCode)._2) { fee: Int =>
-            <div class="alert alert-danger banner">
-              <img src="@routes.Assets.at("images/melly_tongue.gif")"/>
-              Getting rid of this annoying banner will cost you only € @fee, and it will make you a Supporter too!
-              <a class="btn btn-success pull-right btn-lg" href="@routes.Membership.welcome()">
-                Become a Supporter</a>
-            </div>
-          }
-        }
         <div class="alert-block">
           @alert(alertType: String) = {
             @flash.get(alertType).map { message =>

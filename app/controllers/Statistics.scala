@@ -26,7 +26,7 @@ package controllers
 
 import scala.util.Random
 
-import models.License
+import models.{ License, Event }
 import models.UserRole.Role._
 import models.service.Services
 import org.joda.time.{ LocalDate, Months }
@@ -48,27 +48,20 @@ trait Statistics extends JsonController with Security with Services {
       Ok(views.html.statistics.index(user))
   }
 
+  /**
+   * Returns number facilitators per quarter for the given brand in a format
+   * suitable for diagrams
+   *
+   * @param brandId Brand id
+   */
   def byFacilitators(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
-        .sortBy(_.start.toString)
-        .map(x ⇒ x.copy(start = x.start.withDayOfMonth(1), end = x.end.withDayOfMonth(1).plusMonths(1)))
 
-      val start = licenses.head.start
-      val ends = licenses.groupBy(_.end)
-        .filter(_._1.compareTo(LocalDate.now().withDayOfMonth(1)) <= 0)
-        .map(x ⇒ x._1 -> x._2.length)
-      val perMonth = licenses.groupBy(_.start)
-        .map(x ⇒ x._1 -> (x._2.length, ends.getOrElse(x._1, 0)))
-      lazy val data: Stream[(LocalDate, Int)] = {
-        def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
-          (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(x ⇒ num + x._1 - x._2).getOrElse(num))
-        loop(start, perMonth.get(start).map(_._1).getOrElse(0))
-      }
-      val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
-      val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
-
-      val stats = rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
+      val stats = if (licenses.isEmpty)
+        List[(LocalDate, Int)]()
+      else
+        quarterStatsByFacilitators(licenses)
 
       Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
         "datasets" -> List(
@@ -82,18 +75,22 @@ trait Statistics extends JsonController with Security with Services {
             "data" -> stats.map(_._2)))))
   }
 
+  /**
+   * Returns accumulated number of events per quarter for the given brand in
+   * a format suitable for diagrams
+   *
+   * @param brandId Brand id
+   */
   def byEvents(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val events = eventService
-        .findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
-        .map(x ⇒ (x.schedule.start.withDayOfMonth(1), 1))
-        .groupBy(_._1)
-        .map(x ⇒ (x._1, x._2.length))
-        .toList.sortBy(_._1.toString)
+      val events = eventService.findByParameters(Some(brandId),
+        confirmed = Some(true),
+        future = Some(false))
 
-      val rawStats = events.head :: events.tail.scanLeft(events.head)((x, y) ⇒ (y._1, x._2 + y._2))
-
-      val stats = rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
+      val stats = if (events.isEmpty)
+        List[(LocalDate, Int)]()
+      else
+        quarterStatsByEvents(events)
 
       Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
         "datasets" -> List(
@@ -107,9 +104,15 @@ trait Statistics extends JsonController with Security with Services {
             "data" -> stats.map(_._2)))))
   }
 
+  /**
+   * Returns number of events per country for the given brand in a format
+   * suitable for diagrams
+   *
+   * @param brandId Brand id
+   */
   def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val events = eventService
+      val perCountry = eventService
         .findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
         .groupBy(_.location.countryCode)
         .map(x ⇒ (Countries.name(x._1), x._2.length))
@@ -128,6 +131,7 @@ trait Statistics extends JsonController with Security with Services {
         ("rgba(106,61,154,0.2)", "rgba(106,61,154,1)"),
         ("rgba(255,255,153,0.2)", "rgba(255,255,153,1)"),
         ("rgba(177,89,40,0.2)", "rgba(177,89,40,1)"))
+
       implicit val countryStat = new Writes[(String, Int)] {
         def writes(value: (String, Int)): JsValue = {
           val color = colors(Random.nextInt(colors.length))
@@ -138,7 +142,63 @@ trait Statistics extends JsonController with Security with Services {
             "highlight" -> color._1)
         }
       }
-      Ok(Json.toJson(events))
+      Ok(Json.toJson(perCountry))
+  }
+
+  /**
+   * Returns accumulated number of events per quarter starting from the first event
+   * @param rawEvents Events
+   */
+  protected def quarterStatsByEvents(rawEvents: List[Event]): List[(LocalDate, Int)] = {
+    val perMonth = rawEvents
+      .map(x ⇒ (x.schedule.start.withDayOfMonth(1), 1))
+      .groupBy(_._1)
+      .map(x ⇒ (x._1, x._2.length))
+
+    val start = perMonth.keys.toList.sortBy(_.toString).head
+
+    lazy val data: Stream[(LocalDate, Int)] = {
+      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
+        (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(_ + num).getOrElse(num))
+      loop(start, perMonth.getOrElse(start, 0))
+    }
+    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
+    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
+
+    rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
+  }
+
+  /**
+   * Returns number of facilitators per quarter starting from the first license
+   * @param rawLicenses Licenses
+   */
+  protected def quarterStatsByFacilitators(rawLicenses: List[License]): List[(LocalDate, Int)] = {
+    val licenses: List[License] = rawLicenses
+      .sortBy(_.start.toString)
+      .map(x ⇒ x.copy(start = x.start.withDayOfMonth(1), end = x.end.withDayOfMonth(1).plusMonths(1)))
+
+    val start = licenses.head.start
+    val ends = licenses
+      .groupBy(_.end)
+      .filter(_._1.compareTo(LocalDate.now().withDayOfMonth(1)) <= 0)
+      .map(x ⇒ x._1 -> x._2.length)
+    val perMonthStart = licenses
+      .groupBy(_.start)
+      .map(x ⇒ x._1 -> (x._2.length, ends.getOrElse(x._1, 0)))
+    val perMonthEnd = ends
+      .filter(x ⇒ ends.keys.toSet.diff(perMonthStart.keys.toSet).contains(x._1))
+      .map(x ⇒ x._1 -> (0, x._2))
+    val perMonth = perMonthStart ++ perMonthEnd
+
+    lazy val data: Stream[(LocalDate, Int)] = {
+      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
+        (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(x ⇒ num + x._1 - x._2).getOrElse(num))
+      loop(start, perMonth.get(start).map(_._1).getOrElse(0))
+    }
+    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
+    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
+
+    rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
   }
 }
 
