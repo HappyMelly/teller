@@ -25,17 +25,16 @@
 package controllers.unit
 
 import controllers.TellerResourceHandler
-import helpers.EventHelper
 import models.UserRole.DynamicRole
-import models.service.BrandService
-import models.{ UserAccount, UserRole }
+import models.{ UserAccount, UserRole, DynamicResourceChecker }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable.Specification
-import stubs.{ FakeServices, StubEventService }
+import stubs.FakeServices
 
 class TellerResourceHandlerSpec extends Specification {
 
-  class TestTellerResourceHandler(account: Option[UserAccount])
+  class TestTellerResourceHandler(account: Option[UserAccount],
+    checker: DynamicResourceChecker)
     extends TellerResourceHandler(account) with FakeServices {
 
     def callCheckBrandPermission(account: UserAccount, meta: String, url: String): Boolean =
@@ -46,29 +45,25 @@ class TellerResourceHandlerSpec extends Specification {
 
     def callCheckEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean =
       checkEvaluationPermission(account, meta, url)
+
+    override def checker(account: UserAccount): DynamicResourceChecker = checker
   }
 
-  val handler = new TestTellerResourceHandler(None)
   val editor = UserAccount(None, 1L, "editor", None, None, None, None)
   editor.roles_=(List(UserRole.forName("editor")))
   val viewer = editor.copy(role = "viewer")
   viewer.roles_=(List(UserRole.forName("viewer")))
 
+  val checker = new DynamicResourceChecker(editor)
+  val handler = new TestTellerResourceHandler(None, checker)
+
   "When brand permissions are checked for coordinator" >> {
-    "and user is an Editor then permission should be granted" in {
+    "isBrandCoordinator function should be called" in new MockContext {
+      class MockedChecker extends DynamicResourceChecker(editor)
+      val checker = mock[MockedChecker]
+      val handler = new TestTellerResourceHandler(None, checker)
+      (checker.isBrandCoordinator _) expects 1L returning true
       handler.callCheckBrandPermission(editor, DynamicRole.Coordinator, "/1") must_== true
-    }
-    "and user is a coordinator then permission should be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      handler.brandService_=(brandService)
-      handler.callCheckBrandPermission(viewer, DynamicRole.Coordinator, "/1") must_== true
-    }
-    "and user is a Viewer then permission should not be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      handler.brandService_=(brandService)
-      handler.callCheckBrandPermission(viewer, DynamicRole.Coordinator, "/1") must_== false
     }
     "and url doesn't containt brand id then permission should not be granted" in {
       handler.callCheckBrandPermission(editor, DynamicRole.Coordinator, "/") must_== false
@@ -81,174 +76,61 @@ class TellerResourceHandlerSpec extends Specification {
   }
 
   "When event permissions are checked for coordinator" >> {
-    "and user is an Editor then permission should be granted" in {
-      handler.callCheckEventPermission(editor, DynamicRole.Coordinator, "/1") must_== true
-    }
-    "and user is a coordinator then permission should be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(Some(EventHelper.one))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
+    "isEventCoordinator function should be called" in new MockContext {
+      class MockedChecker extends DynamicResourceChecker(editor)
+      val checker = mock[MockedChecker]
+      val handler = new TestTellerResourceHandler(None, checker)
+      (checker.isEventCoordinator _) expects 1L returning true
       handler.callCheckEventPermission(viewer, DynamicRole.Coordinator, "/1") must_== true
-    }
-    "and user is a Viewer then permission should not be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(Some(EventHelper.one))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEventPermission(viewer, DynamicRole.Coordinator, "/1") must_== false
-    }
-    "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(None)
-      handler.eventService_=(eventService)
-
-      handler.callCheckEventPermission(viewer, DynamicRole.Coordinator, "/1") must_== false
     }
     "and url doesn't contain event id then permission should not be granted" in {
       handler.callCheckEventPermission(editor, DynamicRole.Coordinator, "/") must_== false
     }
   }
   "When event permissions are checked for facilitator" >> {
-    "and user is an Editor then permission should be granted" in {
+    "isEventFacilitator function should be called" in new MockContext {
+      class MockedChecker extends DynamicResourceChecker(editor)
+      val checker = mock[MockedChecker]
+      val handler = new TestTellerResourceHandler(None, checker)
+      (checker.isEventFacilitator _) expects 1L returning true
       handler.callCheckEventPermission(editor, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a coordinator then permission should be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List())
-
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEventPermission(viewer, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a facilitator then permission should be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List(1))
-
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.callCheckEventPermission(viewer, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a Viewer then permission should not be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List())
-
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEventPermission(viewer, DynamicRole.Facilitator, "/1") must_== false
-    }
-    "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
-      (eventService.find(_)).expects(1L).returning(None)
-      handler.eventService_=(eventService)
-
-      handler.callCheckEventPermission(viewer, DynamicRole.Facilitator, "/1") must_== false
     }
     "and url doesn't contain event id then permission should not be granted" in {
       handler.callCheckEventPermission(editor, DynamicRole.Facilitator, "/") must_== false
     }
   }
-  "When brand permissions are checked for random role" >> {
+  "When event permissions are checked for random role" >> {
     "then permission should not be granted" in {
       handler.callCheckEventPermission(editor, "anything", "/1") must_== false
     }
   }
 
   "When evaluation permissions are checked for coordinator" >> {
-    "and user is an Editor then permission should be granted" in {
+    "isEvaluationCoordinator function should be called" in new MockContext {
+      class MockedChecker extends DynamicResourceChecker(editor)
+      val checker = mock[MockedChecker]
+      val handler = new TestTellerResourceHandler(None, checker)
+      (checker.isEvaluationCoordinator _) expects 1L returning true
       handler.callCheckEvaluationPermission(editor, DynamicRole.Coordinator, "/1") must_== true
     }
-    "and user is a coordinator then permission should be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(Some(EventHelper.one))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Coordinator, "/1") must_== true
-    }
-    "and user is a Viewer then permission should not be granted" in new MockContext {
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(Some(EventHelper.one))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Coordinator, "/1") must_== false
-    }
-    "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(None)
-      handler.eventService_=(eventService)
 
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Coordinator, "/1") must_== false
-    }
     "and url doesn't contain event id then permission should not be granted" in {
       handler.callCheckEvaluationPermission(editor, DynamicRole.Coordinator, "/") must_== false
     }
   }
   "When evaluation permissions are checked for facilitator" >> {
-    "and user is an Editor then permission should be granted" in {
+    "isEvaluationFacilitator function should be called" in new MockContext {
+      class MockedChecker extends DynamicResourceChecker(editor)
+      val checker = mock[MockedChecker]
+      val handler = new TestTellerResourceHandler(None, checker)
+      (checker.isEvaluationFacilitator _) expects 1L returning true
       handler.callCheckEvaluationPermission(editor, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a coordinator then permission should be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List())
-
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a facilitator then permission should be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List(1))
-
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Facilitator, "/1") must_== true
-    }
-    "and user is a Viewer then permission should not be granted" in new MockContext {
-      val event = EventHelper.one
-      event.facilitatorIds_=(List())
-
-      val brandService = mock[BrandService]
-      (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
-      handler.eventService_=(eventService)
-      handler.brandService_=(brandService)
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Facilitator, "/1") must_== false
-    }
-    "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
-      (eventService.findByEvaluation(_)).expects(1L).returning(None)
-      handler.eventService_=(eventService)
-
-      handler.callCheckEvaluationPermission(viewer, DynamicRole.Facilitator, "/1") must_== false
     }
     "and url doesn't contain event id then permission should not be granted" in {
       handler.callCheckEvaluationPermission(editor, DynamicRole.Facilitator, "/") must_== false
     }
   }
-  "When brand permissions are checked for random role" >> {
+  "When evaluation permissions are checked for random role" >> {
     "then permission should not be granted" in {
       handler.callCheckEvaluationPermission(editor, "anything", "/1") must_== false
     }

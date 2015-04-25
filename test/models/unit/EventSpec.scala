@@ -24,10 +24,9 @@
  */
 package models.unit
 
-import models.Activity
+import models.{ Schedule, Activity, Event }
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.Event
 import models.brand.EventType
 import org.joda.money.Money
 import org.joda.time.LocalDate
@@ -35,18 +34,6 @@ import org.scalamock.specs2.MockContext
 import org.specs2.execute._
 
 class EventSpec extends PlayAppSpec {
-
-  override def setupDb() {
-    PersonHelper.one().insert
-    PersonHelper.two().insert
-    PersonHelper.make(Some(4L), "Four", "Tester").insert
-    PersonHelper.make(Some(5L), "Four", "Tester").insert
-    BrandHelper.one.insert
-    (new EventType(None, 1L, "Type 1", None, 16)).insert
-    (new EventType(None, 1L, "Type 2", None, 16)).insert
-    EventHelper.addEvents(1L)
-    EventHelper.addEvents(2L)
-  }
 
   lazy val event = EventHelper.make(
     title = Some("Daily Workshop"),
@@ -138,6 +125,19 @@ class EventSpec extends PlayAppSpec {
         f.getAmount.longValue must_== 160L
       } getOrElse ko
     }
-
+  }
+  "Total hours should be invalid if they are less than hoursPerDay * numOfDays * 0.8" >> {
+    "when an event is two-days long" in {
+      val schedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 12)
+      schedule.validateTotalHours must_== false
+      schedule.copy(totalHours = 1).validateTotalHours must_== false
+      schedule.copy(totalHours = 13).validateTotalHours must_== true
+    }
+    "when an event is one-day long" in {
+      val schedule = Schedule(LocalDate.now(), LocalDate.now(), 8, 6)
+      schedule.validateTotalHours must_== false
+      schedule.copy(totalHours = 3).validateTotalHours must_== false
+      schedule.copy(totalHours = 7).validateTotalHours must_== true
+    }
   }
 }

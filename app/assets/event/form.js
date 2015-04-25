@@ -111,6 +111,41 @@ function updateInvoicingOrganisations(organisations, selectedId) {
     }
 }
 
+/**
+ * Calculates number of total hours for event based on its number of days and
+ * hours per day
+ */
+function calculateTotalHours() {
+    var end = $('#schedule_end').data("DateTimePicker").getDate();
+    var start = $('#schedule_start').data('DateTimePicker').getDate();
+    var days = end.diff(start, 'days') + 1;
+    return $('#schedule_hoursPerDay').val() * days;
+}
+/**
+ * Updates number of total hours for event based on its number
+ * of days and hours per day
+ */
+function updateTotalHours() {
+    var totalHours = calculateTotalHours();
+    $('#schedule_totalHours').val(totalHours);
+}
+
+/**
+ * Checks if the entered number of total hours is move than minimum threshold
+ * and shows an alert
+ * @param hours Number of entered total hours
+ */
+function checkTotalHours(hours) {
+    var idealHours = calculateTotalHours();
+    var threshold = 0.2;
+    var difference = (idealHours - hours) / parseFloat(idealHours);
+    if (difference > threshold) {
+        $('#totalHours-alert').show();
+    } else {
+        $('#totalHours-alert').hide();
+    }
+}
+
 $(document).ready( function() {
 
     /**
@@ -258,9 +293,17 @@ $(document).ready( function() {
     });
     $("#schedule_start").on("dp.change", function (e) {
         $('#schedule_end').data("DateTimePicker").setMinDate(e.date);
+        updateTotalHours();
+    });
+    $("#schedule_end").on("dp.change", function(e) {
+        updateTotalHours();
+    });
+    $('#schedule_totalHours').on('change', function(e) {
+        checkTotalHours($(this).val());
     });
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
+    checkTotalHours($('#schedule_totalHours').val());
     facilitators.initialize(brandId);
     if ($("#emptyForm").attr("value") == 'true') {
         $("#schedule_start").on("dp.change", function (e) {
@@ -275,6 +318,7 @@ $(document).ready( function() {
         $("#title").on('keyup', function() {
             $("#eventTypeId").unbind('change');
         });
+        updateTotalHours(8);
     }
     if ($("#confirmed").attr("checked") != "checked") {
         $("#confirmed-alert").hide();

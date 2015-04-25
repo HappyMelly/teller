@@ -25,6 +25,7 @@ package helpers
 
 import models._
 import org.joda.time.{ DateTime, LocalDate }
+import models.service.EventService
 import play.api.libs.json.{ Json, JsValue }
 
 object EventHelper {
@@ -85,7 +86,7 @@ object EventHelper {
             country = Some(code),
             eventTypeId = Some(eventType),
             facilitatorIds = Some(facilitators))
-          event.insert
+          EventService.get.insert(event)
         }
       }
   }
