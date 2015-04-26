@@ -96,8 +96,16 @@
       <b>delete it</b>.
     </div>
   }
+  @dynamic(handler, "event", DynamicRole.Coordinator) {
+    @if(!event.schedule.validateTotalHours) {
+      <div class="alert alert-warning">
+        <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
+        suspiciosly less than a number of hours per day multiplied to a number of days.
+      </div>
+    }
+  }
 
-  <input type="hidden" disabled id="brandId" value="@event.brandId"/>
+    <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <div class="col-md-8">
     <div class="col-md-9">
       <dl class="dl-horizontal">

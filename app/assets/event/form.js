@@ -111,6 +111,75 @@ function updateInvoicingOrganisations(organisations, selectedId) {
     }
 }
 
+/**
+ * Calculates number of total hours for event based on its number of days and
+ * hours per day
+ */
+function calculateTotalHours() {
+    var end = $('#schedule_end').data("DateTimePicker").getDate();
+    var start = $('#schedule_start').data('DateTimePicker').getDate();
+    var days = end.diff(start, 'days') + 1;
+    return $('#schedule_hoursPerDay').val() * days;
+}
+/**
+ * Updates number of total hours for event based on its number
+ * of days and hours per day
+ */
+function updateTotalHours() {
+    var totalHours = calculateTotalHours();
+    $('#schedule_totalHours').val(totalHours);
+}
+
+/**
+ * Checks if the entered number of total hours is move than minimum threshold
+ * and shows an alert
+ * @param hours Number of entered total hours
+ */
+function checkTotalHours(hours) {
+    var idealHours = calculateTotalHours();
+    var threshold = 0.2;
+    var difference = (idealHours - hours) / parseFloat(idealHours);
+    if (difference > threshold) {
+        $('#totalHours-alert').show();
+    } else {
+        $('#totalHours-alert').hide();
+    }
+}
+
+/**
+ * Checks if the given url points to an existing page and notifies a user about
+ *  the results of the check
+ *
+ * @param url {string} The url of interest
+ * @param element {string} jQuery selector
+ */
+function checkUrl(url, element) {
+    var field = element + '_field';
+    if ($.trim(url).length == 0 || (url.substring(0, 6) == "mailto")) {
+        $(field).removeClass('has-error');
+        $(field).removeClass('has-success');
+        $(element).siblings('span').each(function() {
+            $(this).text("Web site URL");
+        });
+    } else {
+        var fullUrl = jsRoutes.controllers.Urls.validate(url).url;
+        $.post(fullUrl, {}, null, "json").done(function(data) {
+            if (data.result == "invalid") {
+                $(field).addClass('has-error');
+                $(element).siblings('span').each(function() {
+                    $(this).text("URL is not correct");
+                });
+            } else {
+                $(field).removeClass('has-error');
+                $(field).addClass('has-success');
+                $(element).siblings('span').each(function() {
+                    $(this).text("URL is correct");
+                });
+            }
+        });
+    }
+}
+
 $(document).ready( function() {
 
     /**
@@ -258,6 +327,19 @@ $(document).ready( function() {
     });
     $("#schedule_start").on("dp.change", function (e) {
         $('#schedule_end').data("DateTimePicker").setMinDate(e.date);
+        updateTotalHours();
+    });
+    $("#schedule_end").on("dp.change", function(e) {
+        updateTotalHours();
+    });
+    $('#schedule_totalHours').on('change', function(e) {
+        checkTotalHours($(this).val());
+    });
+    $('#details_webSite').on('change', function(e) {
+        checkUrl($(this).val(), '#details_webSite');
+    });
+    $('#details_registrationPage').on('change', function(e) {
+        checkUrl($(this).val(), '#details_registrationPage');
     });
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
@@ -275,7 +357,10 @@ $(document).ready( function() {
         $("#title").on('keyup', function() {
             $("#eventTypeId").unbind('change');
         });
+        updateTotalHours(8);
     }
+    checkTotalHours($('#schedule_totalHours').val());
+
     if ($("#confirmed").attr("checked") != "checked") {
         $("#confirmed-alert").hide();
     }

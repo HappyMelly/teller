@@ -220,7 +220,7 @@ object Brand {
       val ord = new Ordering[String] {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
-      License.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
+      LicenseService.get.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
   }
 
   def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒

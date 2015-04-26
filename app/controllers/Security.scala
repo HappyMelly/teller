@@ -232,15 +232,11 @@ class TellerResourceHandler(account: Option[UserAccount])
       case "add" ⇒ account.editor || account.coordinator
       case DynamicRole.Coordinator ⇒
         id(url) exists { evaluationId ⇒
-          account.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
-            brandService.isCoordinator(x.brandId, userId)
-          }
+          checker(account).isEvaluationCoordinator(evaluationId)
         }
       case DynamicRole.Facilitator ⇒
         id(url) exists { evaluationId ⇒
-          account.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
-            x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
-          }
+          checker(account).isEvaluationFacilitator(evaluationId)
         }
       case _ ⇒ false
     }
@@ -257,17 +253,9 @@ class TellerResourceHandler(account: Option[UserAccount])
     meta match {
       case "add" ⇒ account.editor || account.facilitator || account.coordinator
       case DynamicRole.Facilitator ⇒
-        id(url) exists { eventId ⇒
-          account.editor || eventService.find(eventId).exists { x ⇒
-            x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
-          }
-        }
+        id(url) exists { eventId ⇒ checker(account).isEventFacilitator(eventId) }
       case DynamicRole.Coordinator ⇒
-        id(url) exists { eventId ⇒
-          account.editor || eventService.find(eventId).exists { x ⇒
-            brandService.isCoordinator(x.brandId, userId)
-          }
-        }
+        id(url) exists { eventId ⇒ checker(account).isEventCoordinator(eventId) }
       case _ ⇒ false
     }
   }
@@ -281,9 +269,7 @@ class TellerResourceHandler(account: Option[UserAccount])
   protected def checkBrandPermission(account: UserAccount, meta: String, url: String): Boolean = {
     meta match {
       case DynamicRole.Coordinator ⇒
-        id(url) exists { brandId ⇒
-          account.editor || brandService.isCoordinator(brandId, account.personId)
-        }
+        id(url) exists { brandId ⇒ checker(account).isBrandCoordinator(brandId) }
       case _ ⇒ false
     }
   }
@@ -295,5 +281,13 @@ class TellerResourceHandler(account: Option[UserAccount])
   protected def id(url: String): Option[Long] = """\d+""".r findFirstIn url flatMap { x ⇒
     try { Some(x.toLong) } catch { case _: NumberFormatException ⇒ None }
   }
+
+  /**
+   * Returns new resource checker
+   *
+   * @param account User account
+   */
+  protected def checker(account: UserAccount): DynamicResourceChecker =
+    new DynamicResourceChecker(account)
 
 }

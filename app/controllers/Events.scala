@@ -30,7 +30,7 @@ import models.UserRole.Role._
 import models.brand.EventType
 import models.event.Comparator
 import models.event.Comparator.FieldChange
-import models.service.{ EventService, Services }
+import models.service.Services
 import models.{ Location, Schedule, _ }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.data.Forms._
@@ -42,7 +42,7 @@ import play.api.mvc._
 import services.integrations.Integrations
 import views.Countries
 
-object Events extends Controller
+trait Events extends Controller
   with Security
   with Services
   with Integrations {
@@ -74,37 +74,6 @@ object Events extends Controller
     }
   }
 
-  val eventTypeFormatter = new Formatter[Long] {
-
-    def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
-      // "data" lets you access all form data values
-      try {
-        val eventTypeId = data.get("eventTypeId").get.toLong
-        try {
-          val brandId = data.get("brandId").get.toLong
-          if (EventType.exists(eventTypeId)) {
-            val event = eventTypeService.find(eventTypeId).get
-            if (event.brandId == brandId) {
-              Right(eventTypeId)
-            } else {
-              Left(List(FormError("eventTypeId", "Selected event type doesn't belong to a selected brand")))
-            }
-          } else {
-            Left(List(FormError("eventTypeId", "Unknown event type")))
-          }
-        } catch {
-          case e: IllegalArgumentException ⇒ Left(List(FormError("brandCode", "Select a brand")))
-        }
-      } catch {
-        case e: IllegalArgumentException ⇒ Left(List(FormError("eventTypeId", "Select an event type")))
-      }
-    }
-
-    def unbind(key: String, value: Long): Map[String, String] = {
-      Map(key -> value.toString)
-    }
-  }
-
   /**
    * HTML form mapping for an event’s invoice.
    */
@@ -124,9 +93,8 @@ object Events extends Controller
    */
   def eventForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "eventTypeId" -> of(eventTypeFormatter),
-    "brandId" -> longNumber(min = 1).verifying(
-      "error.brand.invalid", (brandId: Long) ⇒ Brand.canManage(brandId, user.account)),
+    "eventTypeId" -> longNumber(min = 1),
+    "brandId" -> longNumber(min = 1),
     "title" -> nonEmptyText(1, 254),
     "language" -> mapping(
       "spoken" -> language,
@@ -154,7 +122,7 @@ object Events extends Controller
     "updated" -> ignored(DateTime.now()),
     "updatedBy" -> ignored(user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
-      "error.event.nofacilitators", (ids: List[Long]) ⇒ ids.nonEmpty))(
+      Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandId, title, language, location, details, schedule, notPublic, archived, confirmed,
         invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
         {
@@ -217,19 +185,19 @@ object Events extends Controller
       form.fold(
         formWithErrors ⇒ formError(user, formWithErrors, None),
         x ⇒ {
-          val validLicensees = License.licensees(x.brandId)
-          if (x.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) })) {
-            val event = x.insert
+          validateEvent(x, user.account) map { errors ⇒
+            formError(user,
+              form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
+              None)
+          } getOrElse {
+            val event = eventService.insert(x)
             val activity = event.activity(
               user.person,
               Activity.Predicate.Created).insert
-            sendEmailNotification(event,
-              List.empty,
-              activity)
+            sendEmailNotification(event, List.empty, activity)
             Redirect(routes.Events.index()).flashing("success" -> activity.toString)
-          } else formError(user,
-            form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
-            None)
+
+          }
         })
   }
 
@@ -450,32 +418,33 @@ object Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ formError(user, formWithErrors, Some(id)),
-        event ⇒ {
-          val validLicensees = License.licensees(event.brandId)
-          if (event.facilitatorIds.forall(id ⇒ { validLicensees.exists(_.id.get == id) })) {
+        received ⇒ {
+          validateEvent(received, user.account) map { errors ⇒
+            formError(user,
+              form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
+              Some(id))
+          } getOrElse {
             val existingEvent = eventService.find(id).get
 
-            val updatedEvent = event.copy(id = Some(id))
-            updatedEvent.invoice_=(event.invoice.copy(id = existingEvent.invoice.id))
-            updatedEvent.facilitatorIds_=(event.facilitatorIds)
+            val updated = received.copy(id = Some(id))
+            updated.invoice_=(received.invoice.copy(id = existingEvent.invoice.id))
+            updated.facilitatorIds_=(received.facilitatorIds)
 
             // it's important to compare before updating as with lazy
             // initialization invoice and facilitators data
             // for an old event will be destroyed
-            val changes = Comparator.compare(existingEvent, updatedEvent)
-            updatedEvent.update
+            val changes = Comparator.compare(existingEvent, updated)
+            eventService.update(updated)
 
-            val activity = updatedEvent.activity(
+            val activity = updated.activity(
               user.person,
               Activity.Predicate.Updated).insert
-            sendEmailNotification(updatedEvent,
+            sendEmailNotification(updated,
               changes,
               activity)
 
             Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
-          } else formError(user,
-            form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
-            Some(id))
+          }
         })
   }
 
@@ -485,16 +454,15 @@ object Events extends Controller
    */
   def confirm(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventService.find(id).map {
-        event ⇒
-          val updatedEvent = event.copy(id = Some(id)).copy(confirmed = true)
-          updatedEvent.invoice_=(event.invoice.copy(id = event.invoice.id))
-          updatedEvent.facilitatorIds_=(event.facilitatorIds)
-          updatedEvent.update
-          val activity = event.activity(
-            user.person,
-            Activity.Predicate.Confirmed).insert
-          Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+      eventService.find(id).map { event ⇒
+        val updated = event.copy(id = Some(id)).copy(confirmed = true)
+        updated.invoice_=(event.invoice.copy(id = event.invoice.id))
+        updated.facilitatorIds_=(event.facilitatorIds)
+        eventService.update(updated)
+        val activity = event.activity(
+          user.person,
+          Activity.Predicate.Confirmed).insert
+        Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -543,6 +511,63 @@ object Events extends Controller
   }
 
   /**
+   * Returns none if the given event is valid; otherwise returns a list with errors
+   *
+   * @param event Event
+   * @param account User account
+   */
+  protected def validateEvent(event: Event, account: UserAccount): Option[List[(String, String)]] = {
+    if (checker(account).isBrandFacilitator(event.brandId)) {
+      val licenseErrors = validateLicenses(event) map { x ⇒ List(x) } getOrElse List()
+      val eventTypeErrors = validateEventType(event) map { x ⇒ List(x) } getOrElse List()
+      val errors = licenseErrors ++ eventTypeErrors
+      if (errors.isEmpty)
+        None
+      else
+        Some(errors)
+    } else {
+      Some(List(("brandId", "error.brand.invalid")))
+    }
+  }
+
+  /**
+   * Returns error if none of facilitators has a valid license
+   *
+   * @param event Event object
+   */
+  protected def validateLicenses(event: Event): Option[(String, String)] = {
+    val validLicensees = licenseService.licensees(event.brandId)
+    if (event.facilitatorIds.forall(id ⇒ validLicensees.exists(_.id.get == id))) {
+      None
+    } else {
+      Some(("facilitatorIds", "error.event.invalidLicense"))
+    }
+  }
+
+  /**
+   * Returns error if event type doesn't exist or doesn't belong to the brand
+   *
+   * @param event Event object
+   */
+  protected def validateEventType(event: Event): Option[(String, String)] = {
+    val eventType = eventTypeService.find(event.eventTypeId)
+    eventType map { x ⇒
+      if (x.brandId != event.brandId)
+        Some(("eventTypeId", "error.eventType.wrongBrand"))
+      else
+        None
+    } getOrElse Some(("eventTypeId", "error.eventType.notFound"))
+  }
+
+  /**
+   * Returns new resource checker
+   *
+   * @param account User account
+   */
+  protected def checker(account: UserAccount): DynamicResourceChecker =
+    new DynamicResourceChecker(account)
+
+  /**
    * Returns event form with highlighted errors
    * @param user User object
    * @param form Form with errors
@@ -579,3 +604,5 @@ object Events extends Controller
     }
   }
 }
+
+object Events extends Events

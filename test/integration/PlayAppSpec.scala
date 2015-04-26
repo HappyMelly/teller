@@ -42,7 +42,7 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   sequential
   lazy val app: FakeApplication = {
     val conf = Map(
-      "db.default.url" -> "jdbc:mysql://localhost/teller_test",
+      "db.default.url" -> "jdbc:mysql://localhost/teller_test?reconnect=true&characterEncoding=UTF-8",
       "db.default.user" -> "root",
       "db.default.password" -> "",
       "logger.play" -> "ERROR",

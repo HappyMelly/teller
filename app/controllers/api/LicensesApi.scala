@@ -77,7 +77,7 @@ trait LicensesApi extends Controller with ApiAuthentication with Services {
       val date = Try(dateString.map(d ⇒ new LocalDate(d)).getOrElse(LocalDate.now()))
       date match {
         case Success(d) ⇒ {
-          val licensees = License.licensees(x.id.get, d).map(licensee ⇒ LicenseeView(brandCode, licensee))
+          val licensees = licenseService.licensees(x.id.get, d).map(licensee ⇒ LicenseeView(brandCode, licensee))
           Ok(Json.toJson(licensees))
         }
         case Failure(e) ⇒ BadRequest("Invalid date")

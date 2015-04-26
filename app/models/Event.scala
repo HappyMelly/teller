@@ -28,7 +28,7 @@ import akka.actor.{ Actor, Props }
 import models.database.{ EventFacilitators, Events, Participants }
 import models.service.{ EventService, Services }
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{ Days, DateTime, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -45,7 +45,25 @@ import scala.slick.lifted.Query
  *   - how many hours per day it takes
  *   - how many total hours it takes
  */
-case class Schedule(start: LocalDate, end: LocalDate, hoursPerDay: Int, totalHours: Int)
+case class Schedule(start: LocalDate,
+  end: LocalDate,
+  hoursPerDay: Int,
+  totalHours: Int) {
+
+  /**
+   * Returns true if number of total hours is inside a threshold for an allowed
+   * number of total hours
+   */
+  def validateTotalHours: Boolean = {
+    val days = math.abs(Days.daysBetween(start, end).getDays) + 1
+    val idealHours = days * hoursPerDay
+    val difference = (idealHours - totalHours) / idealHours.toFloat
+    if (difference > 0.2)
+      false
+    else
+      true
+  }
+}
 
 /**
  * Contains optional descriptive data
@@ -188,20 +206,6 @@ case class Event(
 
   def isFacilitator(personId: Long): Boolean = facilitatorIds.contains(personId)
 
-  def insert: Event = DB.withSession { implicit session: Session ⇒
-    val insertTuple = (eventTypeId, brandId, title, language.spoken,
-      language.secondSpoken, language.materials, location.city,
-      location.countryCode, details.description, details.specialAttention,
-      details.webSite, details.registrationPage, schedule.start, schedule.end,
-      schedule.hoursPerDay, schedule.totalHours, notPublic, archived, confirmed,
-      created, createdBy)
-    val id = Events.forInsert.insert(insertTuple)
-    this.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      EventFacilitators.insert((id, facilitatorId)))
-    EventInvoice.insert(this.invoice.copy(eventId = Some(id)))
-    this.copy(id = Some(id))
-  }
-
   /** Deletes this event and its related data from database */
   def delete(): Unit = DB.withSession { implicit session: Session ⇒
     EventFacilitators.where(_.eventId === this.id.get).mutate(_.delete())
@@ -209,23 +213,6 @@ case class Event(
     Query(Events).filter(_.id === this.id.get).delete
   }
 
-  def update: Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (eventTypeId, brandId, title, language.spoken,
-      language.secondSpoken, language.materials, location.city,
-      location.countryCode, details.description, details.specialAttention,
-      details.webSite, details.registrationPage, schedule.start, schedule.end,
-      schedule.hoursPerDay, schedule.totalHours, notPublic, archived, confirmed,
-      updated, updatedBy)
-    val updateQuery = Events.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-
-    EventFacilitators.where(_.eventId === this.id).mutate(_.delete())
-    this.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      EventFacilitators.insert((this.id.get, facilitatorId)))
-    EventInvoice.update(this.invoice)
-
-    this
-  }
 }
 
 object Event {

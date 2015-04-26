@@ -119,22 +119,6 @@ object License {
   }
 
   /**
-   * Returns a list of people who are licensed for the given brand on the given
-   * date, usually today
-   *
-   * @param brandId Brand id
-   * @param date Date of interest
-   */
-  def licensees(brandId: Long, date: LocalDate = LocalDate.now()): List[Person] = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        license ← Licenses if license.start <= date && license.end >= date && license.brandId === brandId
-        licensee ← license.licensee
-      } yield licensee
-      query.sortBy(_.lastName.toLowerCase).list
-  }
-
-  /**
    * Returns a list of all people who have ever been licensed for the given brand
    */
   def allLicensees(brandId: Long): List[Person] = DB.withSession {

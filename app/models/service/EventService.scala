@@ -40,16 +40,6 @@ import scala.slick.lifted.Query
 class EventService extends Integrations with Services {
 
   /**
-   * Returns true if a person is a brand manager of this event
-   *
-   * @param personId A person unique identifier
-   */
-  def isBrandManager(personId: Long, event: Event): Boolean = DB.withSession {
-    implicit session: Session ⇒
-      brandService.find(event.brandId).exists(_.ownerId == personId)
-  }
-
-  /**
    * Returns event if it exists, otherwise - None
    *
    * @param id Event identifier
@@ -165,8 +155,29 @@ class EventService extends Integrations with Services {
   }
 
   /**
+   * Adds event and related objects to database
+   *
+   * @param event Event object
+   * @return Updated event object with id
+   */
+  def insert(event: Event): Event = DB.withTransaction { implicit session: Session ⇒
+    val insertTuple = (event.eventTypeId, event.brandId, event.title,
+      event.language.spoken, event.language.secondSpoken, event.language.materials,
+      event.location.city, event.location.countryCode, event.details.description,
+      event.details.specialAttention, event.details.webSite,
+      event.details.registrationPage, event.schedule.start, event.schedule.end,
+      event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
+      event.archived, event.confirmed, event.created, event.createdBy)
+    val id = Events.forInsert.insert(insertTuple)
+    event.facilitatorIds.distinct.foreach(facilitatorId ⇒
+      EventFacilitators.insert((id, facilitatorId)))
+    EventInvoices.forInsert.insert(event.invoice.copy(eventId = Some(id)))
+    event.copy(id = Some(id))
+  }
+
+  /**
    * Fill events with facilitators (using only one query to database)
-   * @todo Cover with tests
+   * TODO: Cover with tests
    * @param events List of events
    * @return
    */
@@ -226,6 +237,31 @@ class EventService extends Integrations with Services {
       e.invoice_=(invoices
         .find(_.eventId == e.id)
         .getOrElse(EventInvoice(None, None, 0, None, None))))
+  }
+
+  /**
+   * Updates event and related objects in database
+   *
+   * @param event Event
+   * @return Updated event object with id
+   */
+  def update(event: Event): Event = DB.withSession { implicit session: Session ⇒
+    val updateTuple = (event.eventTypeId, event.brandId, event.title,
+      event.language.spoken, event.language.secondSpoken, event.language.materials,
+      event.location.city, event.location.countryCode, event.details.description,
+      event.details.specialAttention, event.details.webSite,
+      event.details.registrationPage, event.schedule.start, event.schedule.end,
+      event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
+      event.archived, event.confirmed, event.updated, event.updatedBy)
+
+    val updateQuery = Events.filter(_.id === event.id).map(_.forUpdate)
+    updateQuery.update(updateTuple)
+    EventFacilitators.where(_.eventId === event.id).mutate(_.delete())
+    event.facilitatorIds.distinct.foreach(facilitatorId ⇒
+      EventFacilitators.insert((event.id.get, facilitatorId)))
+    EventInvoice._update(event.invoice)
+
+    event
   }
 
   /**
