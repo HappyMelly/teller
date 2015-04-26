@@ -61,9 +61,9 @@ function initBrandsFilter() {
  */
 function updateFacilitatorsFilter(brand) {
     var records = [];
-    if (brand && brand != 'all') {
+    if (brand) {
         var data = $.grep(facilitators, function (f) {
-            return f.code === brand
+            return f.brandId == brand
         })[0].facilitators;
         records = data;
     } else {
@@ -175,10 +175,9 @@ $(document).ready( function() {
             "dataSrc": "",
             "deferRender": true
         },
-        "order": [[ 4, "asc" ]],
+        "order": [[ 3, "asc" ]],
         "columns": [
             { "data": "event" },
-            { "data": "brand" },
             { "data": "facilitators" },
             { "data": "location" },
             { "data": "schedule" },
@@ -195,29 +194,24 @@ $(document).ready( function() {
             "targets": 0
         }, {
             "render": function(data) {
-                return '<a href="' + data.url + '">' + data.code + '</a>';
-            },
-            "targets": 1
-        }, {
-            "render": function(data) {
                 var html = '';
                 for (var i = 0; i < data.length; i++) {
                     html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
                 }
                 return html;
             },
-            "targets": 2
+            "targets": 1
         },{
             "render": function(data) {
                 return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
                     data.country + '.png"/> ' + data.city;
             },
-            "targets": 3
+            "targets": 2
         }, {
             "render": function(data) {
                 return data.start + ' / ' + data.end;
             },
-            "targets": 4
+            "targets": 3
         }, {
             "render": function(data) {
                 if(data) {
@@ -226,12 +220,12 @@ $(document).ready( function() {
                     return '<span class="label label-danger">no</span>';
                 }
             },
-            "targets": 8
+            "targets": 7
         },{
             "render": function(data) {
                 return renderDropdown(data);
             },
-            "targets": 9
+            "targets": 8
         }]
     });
     $("body").css("cursor", "progress");

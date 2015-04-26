@@ -3,6 +3,7 @@
     funders: List[Organisation],
     event: Event,
     typeName: String,
+    brandName: String,
     fees: List[(String, String)])(implicit
     request: Request[Any],
     flash: Flash,
@@ -121,7 +122,7 @@
       </dl>
       <dl class="dl-horizontal">
         <dt class="text-muted">Brand</dt>
-        <dd class="text-muted"><a href="@routes.Brands.details(event.brandId)">@event.brandId</a></dd>
+        <dd class="text-muted"><a href="@routes.Brands.details(event.brandId)">@brandName</a></dd>
         <dt class="text-muted">Event type</dt>
         <dd class="text-muted">@typeName</dd>
       </dl>
@@ -170,8 +171,7 @@
       </dl>
     </div>
   </div>
-  <!-- TODO change to brand name -->
-  @views.html.element.brandFees(event.brandId.toString, fees)
+  @views.html.element.brandFees(brandName, fees)
   <div class="col-md-3 col-md-offset-1x">
     <legend>Invoice</legend>
     <p>

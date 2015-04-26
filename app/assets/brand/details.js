@@ -197,6 +197,7 @@ function initializeTeamActions() {
             that.attr('checked', false);
         });
     });
+    $('#members .glyphicon-info-sign').tooltip();
 }
 
 function initializeActions() {

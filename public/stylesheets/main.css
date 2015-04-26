@@ -194,3 +194,7 @@ body.api h3 {
 .banner a {
     margin-top: 15px;
 }
+canvas {
+    margin-top: 20px;
+    margin-bottom: 30px;
+}

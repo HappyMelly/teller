@@ -6,7 +6,6 @@
     request: Request[Any],
     handler: AuthorisationHandler)
 
-@import models.payment.Payment
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -27,31 +26,47 @@
               <a class="navbar-brand" href="/">Happy Melly</a>
               <div class="navbar-collapse collapse">
                   <ul class="nav navbar-nav">
-                    <li @if(menu == "members") { class="active" }
-                      ><a href="@routes.Members.index()">Members</a></li>
-                    @restrict(handler, List(as(Editor.toString))) {
-                      <li @if(menu == "orgs") {
-                        class="active"}><a href="@routes.Organisations.index()">
-                        Organizations</a></li>
-                      <li @if(menu == "people") {
-                        class="active"}><a href="@routes.People.index()">
-                        People</a></li>
-                    }
-                    <li @if(menu == "brands") {
-                        class="active"}><a href="@routes.Brands.index()">Brands</a></li>
-                    <li @if(menu == "products") {
-                        class="active"}><a href="@routes.Products.index()">Products</a></li>
-                    @restrict(handler, List(as(Editor.toString))) {
-                        <li @if(menu == "finance") {
+                    <li @if(menu == "events") {
+                      class="active"}><a href="@routes.Events.index()">Events</a></li>
+                    <li @if(menu == "participants") {
+                      class="active"}><a href="@routes.Participants.index()">Participants</a></li>
+                    <li @if(menu == "statistics") {
+                      class="active"}><a href="@routes.Statistics.index()">Statistics</a></li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        Network
+                        <b class="caret"></b>
+                      </a>
+                      <ul class="dropdown-menu">
+                        <li @if(menu == "members") { class="active" }
+                        ><a href="@routes.Members.index()">Members</a></li>
+                        @restrict(handler, List(as(Editor.toString))) {
+                          <li @if(menu == "orgs") {
+                            class="active"}><a href="@routes.Organisations.index()">
+                            Organizations</a></li>
+                          <li @if(menu == "people") {
+                            class="active"}><a href="@routes.People.index()">
+                            People</a></li>
+                        }
+                        <li @if(menu == "brands") {
+                          class="active"}><a href="@routes.Brands.index()">Brands</a></li>
+                        <li @if(menu == "products") {
+                          class="active"}><a href="@routes.Products.index()">Products</a></li>
+                        @restrict(handler, List(as(Editor.toString))) {
+                          <li @if(menu == "finance") {
                             class="active"}><a href="@routes.BookingEntries.index()">
                             Finance</a></li>
-                    }
-                    <li @if(menu == "events") {
-                        class="active"}><a href="@routes.Events.index()">Events</a></li>
-                    <li @if(menu == "participants") {
-                        class="active"}><a href="@routes.Participants.index()">Participants</a></li>
+                        }
+                      </ul>
+                    </li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
+                    @if(showJoinBanner && user.person.member.isEmpty) {
+                      <li class="btn-warning">
+                          <a href="@routes.Membership.welcome()" style="color: white;">
+                            Become a Supporter</a>
+                      </li>
+                    }
                     <li class="dropdown">
                           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                               @user.person.fullName
@@ -81,16 +96,6 @@
           </div>
       </div>
       <div class="container" id="content">
-        @if(showJoinBanner && user.person.member.isEmpty) {
-          @defining(Payment.countryBasedFees(user.person.address.countryCode)._2) { fee: Int =>
-            <div class="alert alert-danger banner">
-              <img src="@routes.Assets.at("images/melly_tongue.gif")"/>
-              Getting rid of this annoying banner will cost you only € @fee, and it will make you a Supporter too!
-              <a class="btn btn-success pull-right btn-lg" href="@routes.Membership.welcome()">
-                Become a Supporter</a>
-            </div>
-          }
-        }
         <div class="alert-block">
           @alert(alertType: String) = {
             @flash.get(alertType).map { message =>

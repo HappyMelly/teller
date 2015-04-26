@@ -298,6 +298,7 @@ object Events extends Controller
         val printableFees = fees.
           map(x ⇒ (Countries.name(x.country), x.fee.toString)).
           sortBy(_._1)
+        val brand = brandService.find(x.brandId).get
         val event = fees.find(_.country == x.location.countryCode) map { y ⇒
           Event.withFee(x, y.fee, eventType.maxHours)
         } getOrElse x
@@ -306,6 +307,7 @@ object Events extends Controller
           funders,
           event,
           eventType.name,
+          brand.name,
           printableFees))
       } getOrElse NotFound
   }
@@ -335,7 +337,7 @@ object Events extends Controller
       val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
       val brands = brandService.findAll
       val facilitators = brands.map(b ⇒
-        (b.code, License.allLicensees(b.id.get).map(l ⇒ (l.id.get, l.fullName))))
+        (b.id.get, License.allLicensees(b.id.get).map(l ⇒ (l.id.get, l.fullName))))
 
       implicit val facilitatorWrites = new Writes[(Long, String)] {
         def writes(data: (Long, String)): JsValue = {
@@ -344,10 +346,10 @@ object Events extends Controller
             "name" -> data._2)
         }
       }
-      implicit val facilitatorsWrites = new Writes[(String, List[(Long, String)])] {
-        def writes(data: (String, List[(Long, String)])): JsValue = {
+      implicit val facilitatorsWrites = new Writes[(Long, List[(Long, String)])] {
+        def writes(data: (Long, List[(Long, String)])): JsValue = {
           Json.obj(
-            "code" -> data._1,
+            "brandId" -> data._1,
             "facilitators" -> data._2)
         }
       }
@@ -405,9 +407,6 @@ object Events extends Controller
               "id" -> data.id,
               "url" -> routes.Events.details(data.id.get).url,
               "title" -> data.title),
-            "brand" -> Json.obj(
-              "code" -> data.brandId,
-              "url" -> routes.Brands.details(data.brandId).url),
             "location" -> Json.obj(
               "country" -> data.location.countryCode.toLowerCase,
               "city" -> data.location.city),
