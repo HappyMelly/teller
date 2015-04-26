@@ -201,6 +201,7 @@ GET           /translation/:lang/edit                                        con
 POST          /translation/:lang                                             controllers.admin.Translations.update(lang: String)
 POST          /translation/:lang/delete                                      controllers.admin.Translations.delete(lang: String)
 
+POST          /url/:url/validate                                             controllers.Urls.validate(url)
 POST          /user                                                          controllers.UserAccounts.update
 
 

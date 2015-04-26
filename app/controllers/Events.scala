@@ -38,9 +38,7 @@ import play.api.data._
 import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.libs.ws.WS
 import play.api.mvc._
-import scala.util.Try
 import services.integrations.Integrations
 import views.Countries
 
@@ -544,20 +542,6 @@ trait Events extends Controller
     } else {
       Some(("facilitatorIds", "error.event.invalidLicense"))
     }
-  }
-
-  protected def validateUrls(event: Event): Option[List[(String, String)]] = {
-    import concurrent.ExecutionContext.Implicits.global
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
-    import scala.language.postfixOps
-    event.details.webSite map { x ⇒
-      val result = Try(Await.result(WS.url(x).head(), 1 second)).isSuccess
-      if (result)
-        None
-      else
-        Some(List(("webSite", "error.url.notExist")))
-    } getOrElse None
   }
 
   /**

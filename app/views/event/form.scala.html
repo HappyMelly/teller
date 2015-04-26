@@ -133,6 +133,8 @@
       }
     </div>
     <script src='@routes.Assets.at("event/form.js")' type="text/javascript"></script>
-
+    @helper.javascriptRouter("jsRoutes")(
+      routes.javascript.Urls.validate
+    )
   }
 }

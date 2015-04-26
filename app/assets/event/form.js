@@ -146,6 +146,40 @@ function checkTotalHours(hours) {
     }
 }
 
+/**
+ * Checks if the given url points to an existing page and notifies a user about
+ *  the results of the check
+ *
+ * @param url {string} The url of interest
+ * @param element {string} jQuery selector
+ */
+function checkUrl(url, element) {
+    var field = element + '_field';
+    if ($.trim(url).length == 0) {
+        $(field).removeClass('has-error');
+        $(field).removeClass('has-success');
+        $(element).siblings('span').each(function() {
+            $(this).text("Web site URL");
+        });
+    } else {
+        var fullUrl = jsRoutes.controllers.Urls.validate(url).url;
+        $.post(fullUrl, {}, null, "json").done(function(data) {
+            if (data.result == "invalid") {
+                $(field).addClass('has-error');
+                $(element).siblings('span').each(function() {
+                    $(this).text("URL is not correct");
+                });
+            } else {
+                $(field).removeClass('has-error');
+                $(field).addClass('has-success');
+                $(element).siblings('span').each(function() {
+                    $(this).text("URL is correct");
+                });
+            }
+        });
+    }
+}
+
 $(document).ready( function() {
 
     /**
@@ -301,9 +335,17 @@ $(document).ready( function() {
     $('#schedule_totalHours').on('change', function(e) {
         checkTotalHours($(this).val());
     });
+    $('#details_webSite').on('change', function(e) {
+        checkUrl($(this).val(), '#details_webSite');
+    });
+    $('#details_registrationPage').on('change', function(e) {
+        var url = $(this).val();
+        if (url.substring(0, 4) == "http") {
+            checkUrl(url, '#details_registrationPage');
+        }
+    });
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
-    checkTotalHours($('#schedule_totalHours').val());
     facilitators.initialize(brandId);
     if ($("#emptyForm").attr("value") == 'true') {
         $("#schedule_start").on("dp.change", function (e) {
@@ -320,6 +362,8 @@ $(document).ready( function() {
         });
         updateTotalHours(8);
     }
+    checkTotalHours($('#schedule_totalHours').val());
+
     if ($("#confirmed").attr("checked") != "checked") {
         $("#confirmed-alert").hide();
     }

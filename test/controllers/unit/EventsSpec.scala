@@ -45,9 +45,6 @@ class EventsSpec extends Specification with IsolatedMockFactory {
 
     def callValidateLicenses(event: Event): Option[(String, String)] =
       validateLicenses(event)
-
-    def callValidateUrls(event: Event): Option[List[(String, String)]] =
-      validateUrls(event)
   }
 
   class AnotherTestEvents(checker: DynamicResourceChecker) extends TestEvents {
@@ -99,24 +96,6 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       res.nonEmpty must_== true
       res.get._1 must_== "eventTypeId"
       res.get._2 must_== "error.eventType.notFound"
-    }
-    "if website doesn't exist" in {
-      val details = EventHelper.one.details
-      val event = EventHelper.one.copy(
-        details = details.copy(webSite = Some("http://notexsting390812093821.com")))
-      val res = controller.callValidateUrls(event)
-      res.nonEmpty must_== true
-      res.get.exists(_._1 == "webSite") must_== true
-      res.get.exists(_._2 == "error.url.notExist") must_== true
-    }
-  }
-  "Event validation should succeed" >> {
-    "when website exists" in {
-      val details = EventHelper.one.details
-      val event = EventHelper.one.copy(
-        details = details.copy(webSite = Some("http://google.com")))
-      val res = controller.callValidateUrls(event)
-      res.isEmpty must_== true
     }
   }
   "On event validation several errors should be returned" >> {
