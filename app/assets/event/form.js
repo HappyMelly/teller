@@ -155,7 +155,7 @@ function checkTotalHours(hours) {
  */
 function checkUrl(url, element) {
     var field = element + '_field';
-    if ($.trim(url).length == 0) {
+    if ($.trim(url).length == 0 || (url.substring(0, 6) == "mailto")) {
         $(field).removeClass('has-error');
         $(field).removeClass('has-success');
         $(element).siblings('span').each(function() {
@@ -339,10 +339,7 @@ $(document).ready( function() {
         checkUrl($(this).val(), '#details_webSite');
     });
     $('#details_registrationPage').on('change', function(e) {
-        var url = $(this).val();
-        if (url.substring(0, 4) == "http") {
-            checkUrl(url, '#details_registrationPage');
-        }
+        checkUrl($(this).val(), '#details_registrationPage');
     });
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
