@@ -81,7 +81,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       res.get.exists(_._2 == "error.brand.invalid")
     }
     "if the event type doesn't belong to the brand" in {
-      val eventType = EventType(None, 2L, "test", None, 16)
+      val eventType = EventType(None, 2L, "test", None, 16, false)
       (eventTypeService.find _) expects 1L returning Some(eventType)
       val event = EventHelper.one
       val res = controller.callValidateEventType(event)

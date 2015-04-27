@@ -76,9 +76,9 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = new MockContext {
     val eventTypes = List(
-      EventType(Some(1L), 1L, "Meetup", Some("Yay, meetup!"), 8),
-      EventType(Some(2L), 1L, "Meeting", None, 1),
-      EventType(Some(3L), 1L, "CodeFest", Some("Coding sessions"), 16))
+      EventType(Some(1L), 1L, "Meetup", Some("Yay, meetup!"), 8, false),
+      EventType(Some(2L), 1L, "Meeting", None, 1, false),
+      EventType(Some(3L), 1L, "CodeFest", Some("Coding sessions"), 16, false))
     (eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     val res = controller.renderTabs(1L, "types").apply(req)

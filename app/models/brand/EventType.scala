@@ -35,7 +35,8 @@ case class EventType(id: Option[Long],
   brandId: Long,
   name: String,
   defaultTitle: Option[String],
-  maxHours: Int) extends ActivityRecorder {
+  maxHours: Int,
+  free: Boolean) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -54,28 +55,8 @@ case class EventType(id: Option[Long],
    */
   def objectType: String = Activity.Type.EventType
 
-  def brand: Brand = DB.withSession { implicit session: Session ⇒
-    BrandService.get.find(this.brandId).get
-  }
-
-  def insert: EventType = DB.withSession { implicit session: Session ⇒
-    val id = EventTypes.forInsert.insert(this)
-    this.copy(id = Some(id))
-  }
-
-}
-
-object EventType {
-
   /**
-   * Checks if an event type with id exists
+   * @deprecated
    */
-  def exists(id: Long): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(EventTypes).filter(_.id === id).exists).first
-  }
-
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventTypes.filter(_.id === id).mutate(_.delete())
-  }
-
+  def brand: Brand = BrandService.get.find(this.brandId).get
 }

@@ -29,6 +29,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <th>Name</th>
         <th>Default Title</th>
         <th>Max hours</th>
+        <th>Allow free events</th>
         <th></th>
       </tr>
     </thead>
@@ -38,6 +39,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <td data-name="name">@eventType.name</td>
         <td data-name="title">@eventType.defaultTitle</td>
         <td data-name="maxhours">@eventType.maxHours</td>
+        <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
         @restrict(handler, List(as(Editor.toString))) {
           <a href="@routes.EventTypes.delete(eventType.id.get)">
@@ -56,6 +58,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
       <input name="name" class="form-control input-sm" style="width: 20%;" placeholder="Ex: Regular 2-Day course"/>
       <input name="title" class="form-control input-sm" style="width: 40%;" placeholder="Ex: Regular Management 3.0 Course"/>
       <input name="maxhours" class="form-control input-sm" style="width: 15%;" />
+      <input name="free" type="checkbox" class="form-control input-sm"/>
       <button class="btn btn-success btn-sm pull-right">
         <i class="glyphicon glyphicon-plus"></i>Add Event Type
       </button>

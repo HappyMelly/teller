@@ -32,11 +32,11 @@ class EventTypeSpec extends Specification {
 
   "Event type" should {
     "have well-formed activity attributes" in {
-      val eventType = new EventType(Some(1L), 1L, "Test", None, 16)
+      val eventType = new EventType(Some(1L), 1L, "Test", None, 16, false)
       eventType.objectType must_== Activity.Type.EventType
       eventType.identifier must_== 1
       eventType.humanIdentifier must_== "Test"
-      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None, 16)
+      val eventType2 = new EventType(Some(2L), 2L, "Boogy", None, 16, false)
       eventType2.objectType must_== Activity.Type.EventType
       eventType2.identifier must_== 2
       eventType2.humanIdentifier must_== "Boogy"

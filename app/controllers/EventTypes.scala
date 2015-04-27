@@ -44,7 +44,8 @@ trait EventTypes extends Controller with Security with Services {
       (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ brandService.find(brandId).isDefined),
     "name" -> nonEmptyText(maxLength = 254),
     "title" -> optional(text(maxLength = 254)),
-    "maxhours" -> number(min = 1))(EventType.apply)(EventType.unapply))
+    "maxhours" -> number(min = 1),
+    "free" -> boolean)(EventType.apply)(EventType.unapply))
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(data: EventType): JsValue = {
@@ -79,8 +80,8 @@ trait EventTypes extends Controller with Security with Services {
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
         eventType ⇒ {
-          val et = eventType.insert
-          val activity = et.activity(user.person,
+          val inserted = eventTypeService.insert(eventType)
+          val activity = inserted.activity(user.person,
             Activity.Predicate.Connected,
             Some(brand)).insert
           Redirect(route).flashing("success" -> activity.toString)
@@ -131,7 +132,7 @@ trait EventTypes extends Controller with Security with Services {
         if (events.length > 0) {
           Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
         } else {
-          EventType.delete(id)
+          eventTypeService.delete(id)
           val activity = eventType.activity(user.person,
             Activity.Predicate.Disconnected,
             Some(brand)).insert

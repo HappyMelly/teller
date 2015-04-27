@@ -29,6 +29,7 @@ import helpers.{ EvaluationHelper, BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
 import models.service.{ ActivityService, EvaluationService, BrandService, EventService }
+import models.service.brand.EventTypeService
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import services.integrations.Email
@@ -42,8 +43,9 @@ class EventServiceSpec extends PlayAppSpec {
     PersonHelper.make(Some(4L), "Four", "Tester").insert
     PersonHelper.make(Some(5L), "Four", "Tester").insert
     BrandHelper.one.insert
-    (new EventType(None, 1L, "Type 1", None, 16)).insert
-    (new EventType(None, 1L, "Type 2", None, 16)).insert
+    val service = new EventTypeService
+    service.insert(new EventType(None, 1L, "Type 1", None, 16, false))
+    service.insert(new EventType(None, 1L, "Type 2", None, 16, false))
     EventHelper.addEvents(1L)
     EventHelper.addEvents(2L)
   }
