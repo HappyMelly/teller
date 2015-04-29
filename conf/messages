@@ -118,6 +118,7 @@ error.payment.processing_error = An error occurred while processing your card. T
 
 error.brand.invalid = You are not allowed to create events for this brand
 error.brand.alreadyMember = This person is already a coordinator
+error.brand.notFound = Brand is not found
 error.brand.removeOwner = You cannot remove brand owner from the list of coordinators
 
 error.evaluation.exist = An evaluation for the participant exists. Only one evaluation per participant per event is allowed
@@ -132,9 +133,9 @@ error.event.nofacilitators = An event should have at least one facilitator
 error.event.invalidLicense = Some facilitators do not have valid licenses
 error.eventType.tooManyEvents = You cannot delete this event type because there are several events of this type
 error.eventType.nameWrongLength = A name of event type should not be empty or more than 254 characters long
-event.eventType.nameExists = An event with the given name already exists
-event.eventType.notFound = Event type is not found
-event.eventType.wrongBrand = Event type doesn't belong to the selected brand
+error.eventType.nameExists = An event with the given name already exists
+error.eventType.notFound = Event type is not found
+error.eventType.wrongBrand = Event type doesn't belong to the selected brand
 error.language.unknown = Unknown language
 
 error.membership.tooEarly = Membership date cannot be earlier than 2015-01-01

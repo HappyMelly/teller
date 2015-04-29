@@ -35,13 +35,12 @@ import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 
-trait EventTypes extends Controller with Security with Services {
+trait EventTypes extends JsonController with Security with Services {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "brandId" -> nonEmptyText.transform(_.toLong,
-      (l: Long) ⇒ l.toString).verifying((brandId: Long) ⇒ brandService.find(brandId).isDefined),
+    "brandId" -> longNumber(min = 1),
     "name" -> nonEmptyText(maxLength = 254),
     "title" -> optional(text(maxLength = 254)),
     "maxhours" -> number(min = 1),
@@ -68,51 +67,59 @@ trait EventTypes extends Controller with Security with Services {
   }
 
   /**
-   * Creates a new event type
+   * Renders add form for event type for the given brand
+   *
+   * @param brandId Brand identifier
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
+      Ok("")
+  }
 
-      val boundForm: Form[EventType] = eventTypeForm.bindFromRequest
-      //BUG and what if brand does not exist?
-      val brand = brandService.find(boundForm.data("brandId").toLong).get
-      val route = routes.Brands.details(brand.id.get).url + "#types"
-      boundForm.bindFromRequest.fold(
-        formWithErrors ⇒ Redirect(route).flashing("error" -> Messages.apply("error.eventType.nameWrongLength")),
-        eventType ⇒ {
-          val inserted = eventTypeService.insert(eventType)
-          val activity = inserted.activity(user.person,
-            Activity.Predicate.Connected,
-            Some(brand)).insert
-          Redirect(route).flashing("success" -> activity.toString)
-        })
+  /**
+   * Creates a new event type for the given brand
+   *
+   * @param brandId Brand identifier
+   */
+  def create(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val form = eventTypeForm.bindFromRequest
+      brandService.find(brandId) map { brand ⇒
+        form.fold(
+          withErrors ⇒
+            BadRequest(views.html.eventtype.form(user, brand, withErrors)),
+          received ⇒ validateEventType(brandId, received) map { x ⇒
+            val withErrors = form.withError(x._1, x._2)
+            BadRequest(views.html.eventtype.form(user, brand, withErrors))
+          } getOrElse {
+            val inserted = eventTypeService.insert(received)
+            val activity = inserted.activity(user.person,
+              Activity.Predicate.Connected,
+              Some(brand)).insert
+            val route = routes.Brands.details(brandId).url + "#types"
+            Redirect(route).flashing("success" -> activity.toString)
+          })
+      } getOrElse Redirect(routes.Brands.index()).
+        flashing("error" -> Messages("error.brand.notFound"))
   }
 
   /**
    * Updates the given event type
+   *
    * @param id Event type identifier
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventTypeService.find(id) map { x ⇒
-        eventTypeForm.bindFromRequest.fold(
-          hasErrors ⇒ {
-            BadRequest(Json.toJson(Json.obj(
-              "message" -> Messages("event.eventType.notFound"))))
-          },
-          updated ⇒ {
-            val types = eventTypeService.findByBrand(updated.brandId)
-            if (types.exists(y ⇒ y.name == updated.name && y.id.get != id)) {
-              BadRequest(Json.toJson(Json.obj(
-                "message" -> Messages("event.eventType.nameExists"))))
-            } else {
-              eventTypeService.update(updated.copy(id = Some(id)))
-              Ok(Json.obj("message" -> "success"))
-            }
-          })
-      } getOrElse
-        NotFound(Json.toJson(Json.obj(
-          "message" -> Messages("event.eventType.notFound"))))
+      eventTypeForm.bindFromRequest.fold(
+        hasErrors ⇒ jsonBadRequest(Messages("event.eventType.notFound")),
+        updated ⇒ brandService.find(updated.brandId) map { brand ⇒
+          validateUpdatedEventType(id, updated) map { x ⇒
+            jsonRequest(x._1, Messages(x._2))
+          } getOrElse {
+            eventTypeService.update(updated.copy(id = Some(id)))
+            jsonSuccess("success")
+          }
+        } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
   }
 
   /**
@@ -130,7 +137,7 @@ trait EventTypes extends Controller with Security with Services {
           brandId = None,
           eventType = Some(eventType.id.get))
         if (events.length > 0) {
-          Redirect(route).flashing("error" -> Messages.apply("error.eventType.tooManyEvents"))
+          Redirect(route).flashing("error" -> Messages("error.eventType.tooManyEvents"))
         } else {
           eventTypeService.delete(id)
           val activity = eventType.activity(user.person,
@@ -141,6 +148,40 @@ trait EventTypes extends Controller with Security with Services {
       }.getOrElse(NotFound)
   }
 
+  /**
+   * Validates updated event type and
+   *
+   * @param id Updated event type identifier
+   * @param value Event type object
+   * @return returns a validation error if it's invalid
+   */
+  protected def validateUpdatedEventType(id: Long,
+    value: EventType): Option[(Int, String)] = {
+    eventTypeService.find(id) map { x ⇒
+      //TODO: add check for a wrong brand
+      val types = eventTypeService.findByBrand(value.brandId)
+      if (types.exists(y ⇒ y.name == value.name && y.id != Some(id)))
+        Some((CONFLICT, "error.eventType.nameExists"))
+      else
+        None
+    } getOrElse Some((BAD_REQUEST, "error.eventType.notFound"))
+  }
+
+  /**
+   * Validates event type for the given brand
+   *
+   * @param brandId Brand identifier
+   * @param value Event type object
+   * @return returns a validation error if invalid
+   */
+  protected def validateEventType(brandId: Long,
+    value: EventType): Option[(String, String)] = {
+    val types = eventTypeService.findByBrand(brandId)
+    if (types.exists(y ⇒ y.name == value.name))
+      Some(("name", "error.eventType.nameExists"))
+    else
+      None
+  }
 }
 
 object EventTypes extends EventTypes

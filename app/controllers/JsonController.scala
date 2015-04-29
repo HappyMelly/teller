@@ -44,8 +44,14 @@ trait JsonController extends Controller {
 
   protected def jsonNotFound(msg: String) = NotFound(Json.obj("message" -> msg))
 
-  protected def jsonBadRequest(msg: String) = BadRequest(msg)
+  protected def jsonBadRequest(msg: String) = BadRequest(Json.obj("message" -> msg))
 
   protected def jsonConflict(msg: String) = Conflict(Json.obj("message" -> msg))
+
+  protected def jsonRequest(status: Int, msg: String) = status match {
+    case NOT_FOUND ⇒ jsonNotFound(msg)
+    case CONFLICT ⇒ jsonConflict(msg)
+    case _ ⇒ jsonBadRequest(msg)
+  }
 
 }

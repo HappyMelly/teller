@@ -52,18 +52,10 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
   </table>
 }
 @restrict(handler, List(as(Editor.toString))) {
-  <form class="form-inline pull-right col-sm-8" method="POST" action="@CSRF(routes.EventTypes.create())" id="eventType">
-    <input type="hidden" name="brandId" value="@brandId"/>
-    <div>
-      <input name="name" class="form-control input-sm" style="width: 20%;" placeholder="Ex: Regular 2-Day course"/>
-      <input name="title" class="form-control input-sm" style="width: 40%;" placeholder="Ex: Regular Management 3.0 Course"/>
-      <input name="maxhours" class="form-control input-sm" style="width: 15%;" />
-      <input name="free" type="checkbox" class="form-control input-sm"/>
-      <button class="btn btn-success btn-sm pull-right">
-        <i class="glyphicon glyphicon-plus"></i>Add Event Type
-      </button>
-    </div>
-  </form>
+  <a class="btn btn-success btn-sm pull-right"
+    href="@routes.EventTypes.add(brandId)">
+    <i class="glyphicon glyphicon-plus"></i>Add Event Type
+  </a>
 }
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.EventTypes.update
