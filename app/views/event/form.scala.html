@@ -121,6 +121,9 @@
           take place. You will get an invoice for this event. If you are not sure that
           the event will take place, uncheck this checkbox.
         </div>
+        @html.checkbox(form("free"),
+          '_label -> "Free Event : Participants of this event can't be certified",
+          '_help -> "")
 
         <legend>Invoice</legend>
         @html.select(form("invoice.invoiceTo"), Nil, '_label -> "Invoice To", '_help -> "")

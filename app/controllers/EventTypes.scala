@@ -52,6 +52,7 @@ trait EventTypes extends JsonController with Security with Services {
         "name" -> data.name,
         "title" -> data.defaultTitle,
         "maxhours" -> data.maxHours,
+        "free" -> data.free,
         "id" -> data.id.get)
     }
   }

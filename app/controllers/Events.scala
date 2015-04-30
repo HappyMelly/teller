@@ -382,7 +382,9 @@ trait Events extends Controller
             "totalHours" -> data.schedule.totalHours,
             "materialsLanguage" -> data.materialsLanguage,
             "confirmed" -> data.confirmed,
-            "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" }),
+            "invoice" -> Json.obj(
+              "free" -> data.free,
+              "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" })),
             "actions" -> {
               Json.obj(
                 "edit" -> {

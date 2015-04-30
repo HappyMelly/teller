@@ -59,6 +59,7 @@ function getEventTypes(brandId, currentEventType) {
                 var option = $("<option></option>")
                     .attr("value", data[i].id)
                     .attr("defaultTitle", data[i].title)
+                    .attr("free", data[i].free)
                     .text(data[i].name);
                 if (value == data[i].id) {
                     option.attr('selected', 'selected');
@@ -67,7 +68,9 @@ function getEventTypes(brandId, currentEventType) {
             }
             if (currentEventType) {
                 selector = 'option[value="' + currentEventType + '"]';
-                $('#eventTypeId').find(selector).attr('selected', 'selected');
+                var object = $('#eventTypeId').find(selector)
+                object.attr('selected', 'selected');
+                toggleFreeCheckbox(object.attr('free'));
             }
         }).fail(function() {
             showError("Sorry we don't know anything about the brand you try to request");
@@ -177,6 +180,19 @@ function checkUrl(url, element) {
                 });
             }
         });
+    }
+}
+
+/**
+ * Shows/hides free checkbox depending on if event type allows free events
+ *
+ * @param value True if free events are allowed
+ */
+function toggleFreeCheckbox(value) {
+    if (value == "true") {
+        $("#free_field").show();
+    } else {
+        $("#free_field").hide();
     }
 }
 
@@ -358,7 +374,12 @@ $(document).ready( function() {
             $("#eventTypeId").unbind('change');
         });
         updateTotalHours(8);
+        $("#free_field").hide();
     }
+    $("#eventTypeId").change(function(event) {
+        var option = $(this).find(':selected');
+        toggleFreeCheckbox(option.attr('free'));
+    });
     checkTotalHours($('#schedule_totalHours').val());
 
     if ($("#confirmed").attr("checked") != "checked") {
