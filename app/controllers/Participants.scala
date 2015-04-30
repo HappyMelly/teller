@@ -406,7 +406,7 @@ object Participants extends Controller with Security with Services {
   private def certificateActions(brand: Brand, data: ParticipantView, page: String): JsValue = {
     Json.obj(
       "generate" -> {
-        if (brand.generateCert)
+        if (brand.generateCert && !data.event.free)
           routes.Certificates.create(data.event.id.get, data.person.id.get, Some(page)).url
         else ""
       })

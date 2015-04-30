@@ -56,7 +56,10 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     not be accessible to Viewers                                            $e7
     return JSON with error if a brand of the given event type is not found  $e9
     return JSON with error if event type with such name already exists      $e10
-
+  'Add' action should
+    be accessible to Editors                                                $e11
+    not be accessible to Viewers                                            $e12
+    return JSON with error if the given brand  is not found                 $e13
   """
 
   val controller = new TestEventTypes()
@@ -176,6 +179,31 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
     contentAsString(res) must contain("already exists")
+  }
+
+  def e11 = {
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1/eventtype")
+    (brandService.find(_: Long)) expects 1L returning Some(brand)
+
+    val result = controller.add(1L).apply(req)
+    status(result) must equalTo(OK)
+  }
+
+  def e12 = {
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/1/eventtype")
+    val result = controller.add(2L).apply(req)
+
+    status(result) must equalTo(SEE_OTHER)
+  }
+
+  def e13 = {
+    (brandService.find(_: Long)) expects 1L returning None
+
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1/eventtype")
+
+    val res = controller.add(1L).apply(req)
+    status(res) must equalTo(SEE_OTHER)
+    flash(res).get("error") must_== Some("Brand is not found")
   }
 
   private def withPostData(request: FakeRequest[AnyContentAsEmpty.type]) =

@@ -43,7 +43,7 @@ trait EventTypes extends JsonController with Security with Services {
     "brandId" -> longNumber(min = 1),
     "name" -> nonEmptyText(maxLength = 254),
     "title" -> optional(text(maxLength = 254)),
-    "maxhours" -> number(min = 1),
+    "maxHours" -> number(min = 1),
     "free" -> boolean)(EventType.apply)(EventType.unapply))
 
   implicit val eventTypeWrites = new Writes[EventType] {
@@ -73,7 +73,10 @@ trait EventTypes extends JsonController with Security with Services {
    */
   def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok("")
+      brandService.find(brandId) map { brand ⇒
+        Ok(views.html.eventtype.form(user, brand, eventTypeForm))
+      } getOrElse Redirect(routes.Brands.index()).
+        flashing("error" -> Messages("error.brand.notFound"))
   }
 
   /**
@@ -86,13 +89,16 @@ trait EventTypes extends JsonController with Security with Services {
       val form = eventTypeForm.bindFromRequest
       brandService.find(brandId) map { brand ⇒
         form.fold(
-          withErrors ⇒
-            BadRequest(views.html.eventtype.form(user, brand, withErrors)),
+          withErrors ⇒ {
+            println(withErrors.toString)
+            BadRequest(views.html.eventtype.form(user, brand, withErrors))
+          },
           received ⇒ validateEventType(brandId, received) map { x ⇒
+            println(x.toString)
             val withErrors = form.withError(x._1, x._2)
             BadRequest(views.html.eventtype.form(user, brand, withErrors))
           } getOrElse {
-            val inserted = eventTypeService.insert(received)
+            val inserted = eventTypeService.insert(received.copy(brandId = brandId))
             val activity = inserted.activity(user.person,
               Activity.Predicate.Connected,
               Some(brand)).insert
@@ -111,12 +117,12 @@ trait EventTypes extends JsonController with Security with Services {
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventTypeForm.bindFromRequest.fold(
-        hasErrors ⇒ jsonBadRequest(Messages("event.eventType.notFound")),
+        hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
         updated ⇒ brandService.find(updated.brandId) map { brand ⇒
           validateUpdatedEventType(id, updated) map { x ⇒
             jsonRequest(x._1, Messages(x._2))
           } getOrElse {
-            eventTypeService.update(updated.copy(id = Some(id)))
+            eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
             jsonSuccess("success")
           }
         } getOrElse jsonBadRequest(Messages("error.brand.notFound")))

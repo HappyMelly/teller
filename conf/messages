@@ -135,6 +135,7 @@ error.eventType.tooManyEvents = You cannot delete this event type because there 
 error.eventType.nameWrongLength = A name of event type should not be empty or more than 254 characters long
 error.eventType.nameExists = An event with the given name already exists
 error.eventType.notFound = Event type is not found
+error.eventType.wrongParameters = Some parameters for the event type are wrong
 error.eventType.wrongBrand = Event type doesn't belong to the selected brand
 error.language.unknown = Unknown language
 

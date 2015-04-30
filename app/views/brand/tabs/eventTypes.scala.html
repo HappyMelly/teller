@@ -38,7 +38,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
       <tr data-id="@eventType.id.get" data-brandid="@eventType.brandId">
         <td data-name="name">@eventType.name</td>
         <td data-name="title">@eventType.defaultTitle</td>
-        <td data-name="maxhours">@eventType.maxHours</td>
+        <td data-name="maxHours">@eventType.maxHours</td>
         <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
         @restrict(handler, List(as(Editor.toString))) {

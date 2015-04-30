@@ -116,27 +116,24 @@ trait Events extends Controller
     "notPublic" -> default(boolean, false),
     "archived" -> default(boolean, false),
     "confirmed" -> default(boolean, false),
+    "free" -> default(boolean, false),
     "invoice" -> invoiceMapping,
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(user.fullName),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(user.fullName),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
-      { (id, eventTypeId, brandId, title, language, location, details, schedule, notPublic, archived, confirmed,
-        invoice, created, createdBy, updated, updatedBy, facilitatorIds) ⇒
+      { (id, eventTypeId, brandId, title, language, location, details, schedule,
+        notPublic, archived, confirmed, free, invoice, facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandId, title, language,
-            location, details, schedule, notPublic, archived, confirmed,
-            0.0f, None, created, createdBy, updated, updatedBy)
+            location, details, schedule, notPublic, archived, confirmed, free,
+            0.0f, None)
           event.invoice_=(invoice)
           event.facilitatorIds_=(facilitatorIds)
           event
         }
       })({ (e: Event) ⇒
         Some((e.id, e.eventTypeId, e.brandId, e.title, e.language, e.location,
-          e.details, e.schedule, e.notPublic, e.archived, e.confirmed, e.invoice,
-          e.created, e.createdBy, e.updated, e.updatedBy, e.facilitatorIds))
+          e.details, e.schedule, e.notPublic, e.archived, e.confirmed, e.free,
+          e.invoice, e.facilitatorIds))
 
       }))
 
@@ -151,8 +148,8 @@ trait Events extends Controller
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, 0, "", Language("", None, Some("English")),
         Location("", ""), defaultDetails, defaultSchedule,
-        notPublic = false, archived = false, confirmed = false, 0.0f,
-        None, DateTime.now(), "", DateTime.now(), "")
+        notPublic = false, archived = false, confirmed = false, free = false,
+        0.0f, None)
       default.invoice_=(defaultInvoice)
       val account = user.account
       val brands = Brand.findByUser(account)
