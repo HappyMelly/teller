@@ -104,7 +104,6 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     val res = controller.renderTabs(1L, "types").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Event Type"
-    contentAsString(res) must not contain "<form"
   }
 
   def e4 = new MockContext {
@@ -113,7 +112,6 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     val res = controller.renderTabs(1L, "types").apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Event Type")
-    contentAsString(res) must contain("<form")
   }
 
   def e5 = new MockContext {

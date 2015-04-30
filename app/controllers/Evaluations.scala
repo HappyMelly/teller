@@ -342,7 +342,7 @@ trait Evaluations extends EvaluationsController
     brandService.findWithCoordinators(event.brandId) foreach { x ⇒
       Participant.find(ev.personId, ev.eventId) foreach { data ⇒
         val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
-        if (data.certificate.isEmpty && x.brand.generateCert) {
+        if (data.certificate.isEmpty && x.brand.generateCert && !event.free) {
           val cert = new Certificate(ev.handled, event, ev.participant)
           cert.generateAndSend(x, approver)
           data.copy(certificate = Some(cert.id), issued = cert.issued).update
@@ -390,15 +390,13 @@ trait Evaluations extends EvaluationsController
     if (account.editor) {
       EventService.get.findByParameters(
         brandId = None,
-        archived = Some(false),
-        confirmed = Some(true))
+        archived = Some(false))
     } else {
       val brands = brandService.findByCoordinator(account.personId)
       if (brands.length > 0) {
         val events = EventService.get.findByParameters(
           brandId = None,
-          archived = Some(false),
-          confirmed = Some(true))
+          archived = Some(false))
         events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
       } else {
         List[Event]()
