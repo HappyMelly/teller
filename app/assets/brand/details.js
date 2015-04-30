@@ -45,6 +45,58 @@ function showTeamNotification(message, type) {
     notify('#teamNotification', message, type);
 }
 
+/**
+ * Returns data to update event type retrieved from a event type row
+ *
+ * @param element {object} jQuery table row representation
+ */
+function collectEventTypePostData(element) {
+    var data = [];
+    data[0] = { name: 'brandId', value: $(element).data('brandid') };
+    var i = 1;
+    $(element).children('td').each(function() {
+        data[i] = { name: $(this).data('name'), value: $(this).text() };
+        i += 1;
+    });
+    var free = $(element).find('[type="checkbox"]').prop('checked');
+    data[i] = { name: 'free', value: free };
+    return data;
+}
+
+/**
+ * Updates event type
+ *
+ * @param object Changed field
+ * @param value New parameter value
+ */
+function updateEventType(object, value) {
+    $('#notification').html("");
+    var id = $(object).parent().data('id');
+    var data = collectEventTypePostData($(object).parent());
+    $("body").css("cursor", "progress");
+    $.ajax({
+        type: "POST",
+        url: jsRoutes.controllers.EventTypes.update(id).url,
+        data: data
+    }).done(function(data) {
+        showEventTypeNotification("You successfully updated the event type", 'success');
+        if (value != null) {
+            $(object).text(value);
+        }
+    }).fail(function(jqXHR, status, error) {
+        if (status == "error") {
+            var error = JSON.parse(jqXHR.responseText);
+            showEventTypeNotification(error.message, 'danger');
+        } else {
+            var msg = "Unexpected error. Please contact the support team.";
+            showEventTypeNotification(msg, 'danger');
+        }
+    }).complete(function() {
+        $("body").css("cursor", "default");
+    });
+    return true;
+}
+
 function initializeEventTypesActions() {
     $('#eventTypes').editableTableWidget();
     $('#eventTypes td').on('validate', function(evt, newValue) {
@@ -52,36 +104,10 @@ function initializeEventTypesActions() {
             return false; // mark cell as invalid
         }
     }).on('change', function(evt, newValue) {
-        $('#notification').html("");
-        var data = [];
-        var id = $(this).parent().data('id');
-        data[0] = { name: 'brandId', value: $(this).parent().data('brandid') };
-        var i = 1;
-        $(this).parent().children('td').each(function() {
-            data[i] = { name: $(this).data('name'), value: $(this).text() };
-            i += 1;
-        });
-        var that = this;
-        $("body").css("cursor", "progress");
-        $.ajax({
-            type: "POST",
-            url: jsRoutes.controllers.EventTypes.update(id).url,
-            data: data
-        }).done(function(data) {
-            showEventTypeNotification("You successfully updated the event type", 'success');
-            $(that).text(newValue);
-        }).fail(function(jqXHR, status, error) {
-            if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showEventTypeNotification(error.message, 'danger');
-            } else {
-                var msg = "Unexpected error. Please contact the support team.";
-                showEventTypeNotification(msg, 'danger');
-            }
-        }).complete(function() {
-            $("body").css("cursor", "default");
-        });
-        return false;
+        return updateEventType($(this), newValue);
+    });
+    $('#eventTypes input').on('change', function(e) {
+        return updateEventType($(this).parent(), null);
     });
 }
 

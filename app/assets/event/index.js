@@ -214,6 +214,15 @@ $(document).ready( function() {
             "targets": 3
         }, {
             "render": function(data) {
+                if(data.free) {
+                    return '<span class="label label-success">free</span>';
+                } else {
+                    return data.invoice;
+                }
+            },
+            "targets": 6
+        }, {
+            "render": function(data) {
                 if(data) {
                     return '<span class="label label-success">yes</span>';
                 } else {

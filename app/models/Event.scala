@@ -97,12 +97,9 @@ case class Event(
   notPublic: Boolean = false,
   archived: Boolean = false,
   confirmed: Boolean = false,
+  free: Boolean = false,
   rating: Float = 0.0f,
-  fee: Option[Money] = None,
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends ActivityRecorder {
+  fee: Option[Money] = None) extends ActivityRecorder {
 
   private var _facilitators: Option[List[Person]] = None
   private var _invoice: Option[EventInvoice] = None

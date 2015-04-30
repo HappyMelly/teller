@@ -45,6 +45,8 @@ GET           /brand/:id/edit                                                con
 POST          /brand/:id/delete                                              controllers.Brands.delete(id: Long)
 GET           /brand/:code/picture                                           controllers.Brands.picture(code: String)
 POST          /brand/:id/picture/delete                                      controllers.Brands.deletePicture(id: Long)
+GET           /brand/:brandId/eventtype                                      controllers.EventTypes.add(brandId: Long)
+POST          /brand/:brandId/eventtype                                        controllers.EventTypes.create(brandId: Long)
 GET           /brand/:id/eventtypes                                          controllers.EventTypes.index(id: Long)
 GET           /brand/:id/facilitators                                        controllers.Facilitators.index(id: Long)
 POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
@@ -87,7 +89,6 @@ POST          /event/:id/delete                                              con
 POST          /event/:id/invoice                                             controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                                controllers.Events.sendRequest(id: Long)
 
-POST          /eventtype/new                                                 controllers.EventTypes.create
 POST          /eventtype/:id                                                 controllers.EventTypes.update(id: Long)
 GET           /eventtype/:id/delete                                          controllers.EventTypes.delete(id: Long)
 

@@ -33,6 +33,24 @@ import play.api.db.slick.DB
 class EventTypeService {
 
   /**
+   * Deletes event type object form database
+   *
+   * @param id Event type id
+   */
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    EventTypes.filter(_.id === id).mutate(_.delete())
+  }
+
+  /**
+   * Returns if an event type with the given id exists
+   *
+   * @param id Event type id
+   */
+  def exists(id: Long): Boolean = DB.withSession { implicit session: Session ⇒
+    Query(Query(EventTypes).filter(_.id === id).exists).first
+  }
+
+  /**
    * Returns an event type if it exists, otherwise - None
    * @param id Event type id
    * @return
@@ -53,13 +71,25 @@ class EventTypeService {
   }
 
   /**
+   * Inserts event type data into database
+   *
+   * @param value Event type object
+   * @return Updated object with id
+   */
+  def insert(value: EventType): EventType = DB.withSession {
+    implicit session: Session ⇒
+      val id = EventTypes.forInsert.insert(value)
+      value.copy(id = Some(id))
+  }
+
+  /**
    * Updates the given event type in database
    * @param value Event type object
    * @return Returns the updated object
    */
   def update(value: EventType): EventType = DB.withSession {
     implicit session: Session ⇒
-      val tuple = (value.name, value.defaultTitle, value.maxHours)
+      val tuple = (value.name, value.defaultTitle, value.maxHours, value.free)
       Query(EventTypes).filter(_.id === value.id).map(_.forUpdate).update(tuple)
       value
   }

@@ -1,0 +1,33 @@
+@(user: UserIdentity,
+  brand: Brand,
+  form: Form[models.brand.EventType])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpers._
+
+@main("Event type", "brand", user) {
+  <div class="col-md-6">
+    <div class="page-header">
+      <h1>Add Event Type for @brand.name</h1>
+    </div>
+    @html.form(action = CSRF(routes.EventTypes.create(brand.id.get))) {
+      <input type="hidden" name="brandId" value="@brand.id.get"/>
+      @html.text(form("name"), '_label -> "Name")
+      @html.text(form("defaultTitle"), '_label -> "Default title",
+      '_placeholder -> "Ex: Regular Management 3.0 event")
+      @html.number(form("maxHours"), '_label -> "Maximum chargable hours")
+      @html.checkbox(form("free"), '_label -> "Facilitators are able to create free events of this type")
+
+      <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-9">
+          <button class="btn btn-primary btn-block pull-right" type="submit">
+            Save</button>
+        </div>
+      </div>
+    }
+  </div>
+}

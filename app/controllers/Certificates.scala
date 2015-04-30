@@ -55,20 +55,24 @@ object Certificates extends Controller with Security with Services {
           else
             None
           val event = participant.event.get
-          val brand = brandService.findWithCoordinators(event.brandId).get
-          val person = participant.person.get
-          val issued = participant.issued getOrElse LocalDate.now()
-          val certificate = new Certificate(Some(issued), event, person, renew = true)
-          certificate.generateAndSend(brand, approver)
-          participant.copy(
-            certificate = Some(certificate.id),
-            issued = Some(issued)).update
-          val route: String = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
-            case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
-            case _ ⇒ routes.Events.details(eventId).url + "#participant"
+          if (event.free) {
+            NotFound
+          } else {
+            val brand = brandService.findWithCoordinators(event.brandId).get
+            val person = participant.person.get
+            val issued = participant.issued getOrElse LocalDate.now()
+            val certificate = new Certificate(Some(issued), event, person, renew = true)
+            certificate.generateAndSend(brand, approver)
+            participant.copy(
+              certificate = Some(certificate.id),
+              issued = Some(issued)).update
+            val route: String = ref match {
+              case Some("index") ⇒ routes.Participants.index().url
+              case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
+              case _ ⇒ routes.Events.details(eventId).url + "#participant"
+            }
+            Redirect(route).flashing("success" -> "Certificate was generated")
           }
-          Redirect(route).flashing("success" -> "Certificate was generated")
         } getOrElse NotFound
   }
 

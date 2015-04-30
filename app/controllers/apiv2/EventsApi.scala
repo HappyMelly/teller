@@ -55,7 +55,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "website" -> event.details.webSite,
         "registrationPage" -> event.details.registrationPage,
         "rating" -> event.rating,
-        "confirmed" -> event.confirmed)
+        "confirmed" -> event.confirmed,
+        "free" -> event.free)
     }
   }
 
@@ -81,7 +82,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "rating" -> event.rating,
         "public" -> !event.notPublic,
         "archived" -> event.archived,
-        "confirmed" -> event.confirmed)
+        "confirmed" -> event.confirmed,
+        "free" -> event.free)
     }
   }
 

@@ -167,7 +167,7 @@ class EventService extends Integrations with Services {
       event.details.specialAttention, event.details.webSite,
       event.details.registrationPage, event.schedule.start, event.schedule.end,
       event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
-      event.archived, event.confirmed, event.created, event.createdBy)
+      event.archived, event.confirmed, event.free)
     val id = Events.forInsert.insert(insertTuple)
     event.facilitatorIds.distinct.foreach(facilitatorId ⇒
       EventFacilitators.insert((id, facilitatorId)))
@@ -252,7 +252,7 @@ class EventService extends Integrations with Services {
       event.details.specialAttention, event.details.webSite,
       event.details.registrationPage, event.schedule.start, event.schedule.end,
       event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
-      event.archived, event.confirmed, event.updated, event.updatedBy)
+      event.archived, event.confirmed, event.free)
 
     val updateQuery = Events.filter(_.id === event.id).map(_.forUpdate)
     updateQuery.update(updateTuple)

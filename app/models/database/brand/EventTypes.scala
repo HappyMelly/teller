@@ -37,12 +37,13 @@ private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
   def name = column[String]("NAME")
   def defaultTitle = column[Option[String]]("DEFAULT_TITLE")
   def maxHours = column[Int]("MAX_HOURS")
+  def free = column[Boolean]("FREE")
 
   def brand = foreignKey("EVENT_BRAND_FK", brandId, Brands)(_.id)
 
   def * = id.? ~ brandId ~ name ~ defaultTitle ~
-    maxHours <> (EventType.apply _, EventType.unapply _)
+    maxHours ~ free <> (EventType.apply _, EventType.unapply _)
 
   def forInsert = * returning id
-  def forUpdate = name ~ defaultTitle ~ maxHours
+  def forUpdate = name ~ defaultTitle ~ maxHours ~ free
 }
