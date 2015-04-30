@@ -148,7 +148,8 @@ object EventHelper {
     "website" -> None.asInstanceOf[Option[String]],
     "registrationPage" -> None.asInstanceOf[Option[String]],
     "rating" -> 0.0,
-    "confirmed" -> false)
+    "confirmed" -> false,
+    "free" -> false)
 
   def twoAsJson: JsValue = Json.obj(
     "id" -> 2,
@@ -170,6 +171,7 @@ object EventHelper {
     "website" -> None.asInstanceOf[Option[String]],
     "registrationPage" -> None.asInstanceOf[Option[String]],
     "rating" -> 0.0,
-    "confirmed" -> false)
+    "confirmed" -> false,
+    "free" -> false)
 
 }

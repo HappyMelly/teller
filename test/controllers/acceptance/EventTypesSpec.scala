@@ -51,6 +51,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     return JSON with error if a brand of the given event type is not found  $e8
     return JSON with error if event type with such name already exists      $e4
     return JSON if event type is successfully updated                       $e5
+    return JSON with error if event type isn't belonged to the brand        $e14
   'Create' action should
     be accessible to Editors                                                $e6
     not be accessible to Viewers                                            $e7
@@ -121,7 +122,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
   def e5 = {
     val req = withPostData(editorPostRequest)
     (eventTypeService.find _).expects(1L).returning(Some(eventType))
-    (eventTypeService.findByBrand _).expects(1L).returning(List())
+    (eventTypeService.findByBrand _).expects(1L).returning(List(eventType))
     (eventTypeService.update _).expects(*)
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
@@ -133,13 +134,13 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e6 = {
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
     val result = controller.create(1L).apply(req)
     status(result) must equalTo(BAD_REQUEST)
   }
 
   def e7 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
+    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/1")
     val result = controller.create(1L).apply(req)
     status(result) must equalTo(SEE_OTHER)
   }
@@ -206,10 +207,27 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     flash(res).get("error") must_== Some("Brand is not found")
   }
 
+  def e14 = {
+    class AnotherTestEventTypes extends TestEventTypes {
+      override def validateUpdatedEventType(id: Long, value: EventType): Option[(Int, String)] =
+        Some((BAD_REQUEST, "error.eventType.wrongBrand"))
+    }
+    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
+
+    val req = withPostData(editorPostRequest)
+    val controller = new AnotherTestEventTypes
+    controller.brandService_=(brandService)
+
+    val res = controller.update(3L).apply(req)
+    status(res) must equalTo(BAD_REQUEST)
+    val data = contentAsJson(res).as[JsObject]
+    (data \ "message").as[String] must contain("belong to the selected brand")
+  }
+
   private def withPostData(request: FakeRequest[AnyContentAsEmpty.type]) =
     request.withFormUrlEncodedBody(("id", "1"), ("brandId", "1"),
-      ("name", "Test"), ("maxhours", "16"))
+      ("name", "Test"), ("maxHours", "16"), ("free", "false"))
 
   private def editorPostRequest =
-    prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
+    prepareSecuredPostRequest(FakeUserIdentity.editor, "/1")
 }

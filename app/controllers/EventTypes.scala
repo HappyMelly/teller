@@ -24,16 +24,17 @@
 
 package controllers
 
+import models.{ Event, Brand, Activity }
+import models.UserRole.DynamicRole
+import models.UserRole.Role._
 import models.brand.EventType
 import models.service.{ Services, EventService }
-import models.{ Event, Brand, Activity }
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
-import models.UserRole.Role._
-import securesocial.core.SecuredRequest
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
+import securesocial.core.SecuredRequest
 
 trait EventTypes extends JsonController with Security with Services {
 
@@ -72,12 +73,13 @@ trait EventTypes extends JsonController with Security with Services {
    *
    * @param brandId Brand identifier
    */
-  def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        Ok(views.html.eventtype.form(user, brand, eventTypeForm))
-      } getOrElse Redirect(routes.Brands.index()).
-        flashing("error" -> Messages("error.brand.notFound"))
+  def add(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandService.find(brandId) map { brand ⇒
+          Ok(views.html.eventtype.form(user, brand, eventTypeForm))
+        } getOrElse Redirect(routes.Brands.index()).
+          flashing("error" -> Messages("error.brand.notFound"))
   }
 
   /**
@@ -85,29 +87,27 @@ trait EventTypes extends JsonController with Security with Services {
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val form = eventTypeForm.bindFromRequest
-      brandService.find(brandId) map { brand ⇒
-        form.fold(
-          withErrors ⇒ {
-            println(withErrors.toString)
-            BadRequest(views.html.eventtype.form(user, brand, withErrors))
-          },
-          received ⇒ validateEventType(brandId, received) map { x ⇒
-            println(x.toString)
-            val withErrors = form.withError(x._1, x._2)
-            BadRequest(views.html.eventtype.form(user, brand, withErrors))
-          } getOrElse {
-            val inserted = eventTypeService.insert(received.copy(brandId = brandId))
-            val activity = inserted.activity(user.person,
-              Activity.Predicate.Connected,
-              Some(brand)).insert
-            val route = routes.Brands.details(brandId).url + "#types"
-            Redirect(route).flashing("success" -> activity.toString)
-          })
-      } getOrElse Redirect(routes.Brands.index()).
-        flashing("error" -> Messages("error.brand.notFound"))
+  def create(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val form = eventTypeForm.bindFromRequest
+        brandService.find(brandId) map { brand ⇒
+          form.fold(
+            withErrors ⇒
+              BadRequest(views.html.eventtype.form(user, brand, withErrors)),
+            received ⇒ validateEventType(brandId, received) map { x ⇒
+              val withErrors = form.withError(x._1, x._2)
+              BadRequest(views.html.eventtype.form(user, brand, withErrors))
+            } getOrElse {
+              val inserted = eventTypeService.insert(received.copy(brandId = brandId))
+              val activity = inserted.activity(user.person,
+                Activity.Predicate.Connected,
+                Some(brand)).insert
+              val route = routes.Brands.details(brandId).url + "#types"
+              Redirect(route).flashing("success" -> activity.toString)
+            })
+        } getOrElse Redirect(routes.Brands.index()).
+          flashing("error" -> Messages("error.brand.notFound"))
   }
 
   /**
@@ -165,12 +165,15 @@ trait EventTypes extends JsonController with Security with Services {
   protected def validateUpdatedEventType(id: Long,
     value: EventType): Option[(Int, String)] = {
     eventTypeService.find(id) map { x ⇒
-      //TODO: add check for a wrong brand
       val types = eventTypeService.findByBrand(value.brandId)
-      if (types.exists(y ⇒ y.name == value.name && y.id != Some(id)))
-        Some((CONFLICT, "error.eventType.nameExists"))
-      else
-        None
+      if (!types.exists(_.id == Some(id))) {
+        Some((BAD_REQUEST, "error.eventType.wrongBrand"))
+      } else {
+        if (types.exists(y ⇒ y.name == value.name && y.id != Some(id)))
+          Some((CONFLICT, "error.eventType.nameExists"))
+        else
+          None
+      }
     } getOrElse Some((BAD_REQUEST, "error.eventType.notFound"))
   }
 
