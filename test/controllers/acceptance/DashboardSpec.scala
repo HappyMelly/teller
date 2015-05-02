@@ -59,6 +59,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
 
     On facilitator's dashboard there should be
       three nearest future events               $e7
+      two last previous events                  $e11
       10 latest evaluations                     $e8
 
     A list of facilitators with expiring licenses should be
@@ -139,7 +140,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
       EventHelper.past(5, 3), EventHelper.past(6, 2))
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
-    (evaluationService.findByEvents _) expects List(5L, 6L) returning List()
+    (evaluationService.findByEvents _) expects List(6L, 5L) returning List()
 
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
@@ -148,8 +149,6 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must contain("/event/2")
     contentAsString(result) must contain("/event/3")
     contentAsString(result) must not contain "/event/4"
-    contentAsString(result) must not contain "/event/5"
-    contentAsString(result) must not contain "/event/6"
   }
 
   def e8 = {
@@ -250,6 +249,24 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     status(result) must equalTo(OK)
     val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
     contentAsString(result) must not contain title
+  }
+
+  def e11 = {
+    val identity = FakeUserIdentity.viewer
+    val request = prepareSecuredGetRequest(identity, "/")
+
+    val events = List(EventHelper.future(1, 1), EventHelper.future(2, 2),
+      EventHelper.past(3, 3), EventHelper.past(4, 2),
+      EventHelper.past(5, 3), EventHelper.past(6, 1))
+    (brandService.findByCoordinator _) expects 1L returning List()
+    (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
+    (evaluationService.findByEvents _) expects List(6L, 4L, 3L, 5L) returning List()
+
+    val result: Future[SimpleResult] = controller.index().apply(request)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Last past events")
+    contentAsString(result) must contain("/event/6")
+    contentAsString(result) must contain("/event/4")
   }
 
   /**

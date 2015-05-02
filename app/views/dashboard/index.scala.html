@@ -1,5 +1,6 @@
 @(user: UserIdentity,
-  events: List[Event],
+  future: List[Event],
+  past: List[Event],
   evaluations: List[(Event, Person, Evaluation)],
   licenses: List[LicenseLicenseeView],
   activityStream: Option[List[Activity]])(implicit flash: Flash,
@@ -7,8 +8,11 @@
     handler: AuthorisationHandler)
 
 @main("Home", "", user) {
-  @if(events.length > 0) {
-    @dashboard.blocks.events(events)
+  @if(future.length > 0) {
+    @dashboard.blocks.upcoming(future)
+  }
+  @if(past.length > 0) {
+    @dashboard.blocks.past(past)
   }
   @if(evaluations.length > 0) {
     @dashboard.blocks.evaluations(evaluations)
