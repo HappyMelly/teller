@@ -37,24 +37,28 @@ class LicenseServiceSpec extends PlayAppSpec {
   val service = new LicenseService
 
   "Method `expiring`" should {
-    "return only licenses expiring this month" in {
+    "return only licenses expiring this AND previous months" in {
       val facilitators = Map(1L -> PersonHelper.one(),
         2L -> PersonHelper.two(),
         3L -> PersonHelper.make(Some(3L), "Third", "Tester"),
         4L -> PersonHelper.make(Some(4L), "Fourth", "Tester"),
-        5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"))
+        5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"),
+        6L -> PersonHelper.make(Some(6L), "Sixth", "Tester"))
       facilitators.foreach(v ⇒ v._2.insert)
 
       BrandHelper.one.insert()
       BrandHelper.make("two", Some(2L)).insert()
       BrandHelper.make("three", Some(3L)).insert()
       val now = LocalDate.now()
+      val firstDay = now.dayOfMonth().withMinimumValue()
+      val lastDay = now.dayOfMonth().withMaximumValue()
       Seq(
-        (4L, 1L, now.withDayOfMonth(1), now.dayOfMonth().withMinimumValue()),
-        (5L, 3L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
-        (3L, 2L, now.minusYears(1), now.dayOfMonth().withMaximumValue()),
+        (4L, 1L, now.withDayOfMonth(1), firstDay),
+        (5L, 3L, now.minusYears(1), lastDay),
+        (3L, 2L, now.minusYears(1), lastDay),
         (1L, 2L, now.minusMonths(6), now.plusMonths(4)),
-        (2L, 1L, now.minusMonths(4), now.plusMonths(1))).foreach {
+        (2L, 1L, now.minusMonths(4), now.plusMonths(1)),
+        (6L, 1L, now.minusMonths(4), firstDay.minusMonths(1))).foreach {
           case (licenseeId, brandId, start, end) ⇒
             val license = new License(None, licenseeId, brandId,
               "1", LocalDate.now().minusYears(1),
@@ -62,12 +66,13 @@ class LicenseServiceSpec extends PlayAppSpec {
             service.add(license)
         }
       val licenses = service.expiring(List(1, 3))
-      licenses.length must_== 2
+      licenses.length must_== 3
       licenses.exists(_.license.licenseeId == 1) must beFalse
       licenses.exists(_.license.licenseeId == 2) must beFalse
       licenses.exists(_.license.licenseeId == 3) must beFalse
       licenses.exists(_.license.licenseeId == 4) must beTrue
       licenses.exists(_.license.licenseeId == 5) must beTrue
+      licenses.exists(_.license.licenseeId == 6) must beTrue
       licenses.exists(_.licensee.fullName == "Fifth Tester") must beTrue
       licenses.exists(_.licensee.fullName == "Fourth Tester") must beTrue
     }

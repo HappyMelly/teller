@@ -122,8 +122,9 @@ class LicenseService extends Services {
    */
   def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
     implicit session: Session ⇒
-      val lowerLimit = LocalDate.now().withDayOfMonth(1)
-      val upperLimit = lowerLimit.plusMonths(1)
+      val firstDay = LocalDate.now().withDayOfMonth(1)
+      val lowerLimit = firstDay.minusMonths(1)
+      val upperLimit = firstDay.plusMonths(1)
       val query = for {
         license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
         person ← People if person.id === license.licenseeId

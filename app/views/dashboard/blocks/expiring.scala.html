@@ -3,18 +3,25 @@
 @import org.joda.time.LocalDate
 
 <div class="col-md-10">
-  <h3>Expiring licenses in @Messages("month." + LocalDate.now().getMonthOfYear.toString)</h3>
+  <h3>Expiring licenses</h3>
+  @if(licenses.exists(_.license.end.toString < LocalDate.now().toString)) {
+    <div class="alert alert-danger">
+      <i class="glyphicon glyphicon-info-sign"></i> Several licenses have already
+      expired. Facilitators' profiles are not shown.
+    </div>
+  }
   <table id="events" class="datatables table table-bordered">
     <thead>
       <tr>
         <th>Facilitator</th>
         <th>Expiration Date</th>
         <th>Fee</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       @for(view <- licenses) {
-        <tr>
+        <tr @if(view.license.end.toString < LocalDate.now().toString) { class="warning" }>
           <td>
             <a href="@(routes.People.details(view.licensee.id.get).url)#licenses">
             @view.licensee.fullName
@@ -25,6 +32,10 @@
           </td>
           <td>
             @view.license.fee.toString
+          </td>
+          <td>
+            <a href="@(routes.Licenses.edit(view.license.id.getOrElse(0)))"
+              target="_blank">prolong</a>
           </td>
         </tr>
       }

@@ -226,7 +226,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
-    val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
+    val title = "Expiring licenses"
     contentAsString(result) must contain(title)
     contentAsString(result) must contain("/person/1")
     contentAsString(result) must contain("/person/2")
