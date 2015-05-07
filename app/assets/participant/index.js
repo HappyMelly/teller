@@ -62,7 +62,7 @@ function loadEventList(events) {
 $(document).ready( function() {
     var currentBrand = $('#brands').val();
     var brandInSession = $('#participants').attr('brandId');
-    if (brandInSession) {
+    if (brandInSession && brandInSession != 0) {
         currentBrand = brandInSession;
         $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
     }
