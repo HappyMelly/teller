@@ -35,31 +35,6 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
 
   import PeopleApi.personWrites
 
-  implicit val eventWrites = new Writes[Event] {
-    def writes(event: Event): JsValue = {
-      Json.obj(
-        "id" -> event.id.get,
-        "title" -> event.title,
-        "type" -> event.eventTypeId,
-        "description" -> event.details.description,
-        "spokenLanguages" -> event.spokenLanguages,
-        "materialsLanguage" -> event.materialsLanguage,
-        "specialAttention" -> event.details.specialAttention,
-        "start" -> event.schedule.start,
-        "end" -> event.schedule.end,
-        "hoursPerDay" -> event.schedule.hoursPerDay,
-        "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators,
-        "city" -> event.location.city,
-        "country" -> event.location.countryCode,
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage,
-        "rating" -> event.rating,
-        "confirmed" -> event.confirmed,
-        "free" -> event.free)
-    }
-  }
-
   val eventDetailsWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
       Json.obj(
@@ -121,26 +96,87 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
     implicit request ⇒
       implicit token ⇒
         brandService.find(code) map { x ⇒
-          val events: List[Event] = facilitatorId map { value ⇒
-            eventService.findByFacilitator(
-              value,
-              x.id,
-              future,
-              public,
-              archived = Some(false))
+          val types = eventTypeService.
+            findByBrand(x.id.get).
+            map(y ⇒ y.id.get -> y.name).toMap
+          val events = facilitatorId map { value ⇒
+            eventsByFacilitator(value, x.id, future, public)
           } getOrElse {
-            eventService.findByParameters(
-              x.id,
-              future,
-              public,
-              archived,
-              None,
-              countryCode,
-              eventType)
+            eventsByBrand(x.id, future, public, archived, countryCode, eventType)
           }
           eventService.applyFacilitators(events)
-          jsonOk(Json.toJson(events))
+          jsonOk(eventsToJson(events, types))
         } getOrElse jsonNotFound("Unknown brand")
+  }
+
+  /**
+   * Returns event list in JSON format
+   *
+   * @param events List of events
+   * @param types List of event types belonged to the given brand
+   */
+  protected def eventsToJson(events: List[Event], types: Map[Long, String]): JsValue = {
+    implicit val eventWrites = new Writes[Event] {
+      def writes(event: Event): JsValue = {
+        val typeName: String = types.getOrElse(event.eventTypeId, "")
+        Json.obj(
+          "id" -> event.id.get,
+          "title" -> event.title,
+          "type" -> event.eventTypeId,
+          "typeName" -> typeName,
+          "description" -> event.details.description,
+          "spokenLanguages" -> event.spokenLanguages,
+          "materialsLanguage" -> event.materialsLanguage,
+          "specialAttention" -> event.details.specialAttention,
+          "start" -> event.schedule.start,
+          "end" -> event.schedule.end,
+          "hoursPerDay" -> event.schedule.hoursPerDay,
+          "totalHours" -> event.schedule.totalHours,
+          "facilitators" -> event.facilitators,
+          "city" -> event.location.city,
+          "country" -> event.location.countryCode,
+          "website" -> event.details.webSite,
+          "registrationPage" -> event.details.registrationPage,
+          "rating" -> event.rating,
+          "confirmed" -> event.confirmed,
+          "free" -> event.free)
+      }
+    }
+    Json.toJson(events)
+  }
+
+  /**
+   * Returns list of events for the given facilitator*
+   *
+   * @param facilitatorId Only events by this facilitator
+   * @param brandId Brand id
+   * @param future Only future and current events
+   * @param public Only public events
+   */
+  protected def eventsByFacilitator(facilitatorId: Long,
+    brandId: Option[Long],
+    future: Option[Boolean],
+    public: Option[Boolean]): List[Event] = {
+    eventService.findByFacilitator(facilitatorId, brandId, future, public, archived = Some(false))
+  }
+
+  /**
+   * Returns a list of events for the given brand
+   *
+   * @param brandId Brand identifier
+   * @param future Only future and current events
+   * @param public Only public events
+   * @param archived Only archived events
+   * @param countryCode Only events in this country
+   * @param eventType Only events of this type
+   */
+  protected def eventsByBrand(brandId: Option[Long],
+    future: Option[Boolean],
+    public: Option[Boolean],
+    archived: Option[Boolean],
+    countryCode: Option[String],
+    eventType: Option[Long]): List[Event] = {
+    eventService.findByParameters(brandId, future, public, archived, None, countryCode, eventType)
   }
 }
 
