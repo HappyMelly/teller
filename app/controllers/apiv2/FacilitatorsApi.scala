@@ -57,9 +57,9 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
       implicit token ⇒
         brandService.find(code) map { brand ⇒
           val facilitators = Brand.findFacilitators(brand.id.get)
+          PeopleCollection.addresses(facilitators)
           PeopleCollection.countries(facilitators)
           PeopleCollection.languages(facilitators)
-          PeopleCollection.addresses(facilitators)
           val facilitationData = facilitatorService.findByBrand(brand.id.get)
           val data = facilitators.
             map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.rating))

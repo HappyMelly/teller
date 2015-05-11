@@ -55,9 +55,9 @@ object FacilitatorsApi extends Controller with ApiAuthentication {
     brandService.find(code) map { x ⇒
       val facilitators = Brand.findFacilitators(x.id.get)
       if (facilitators.length > 0) {
+        PeopleCollection.addresses(facilitators)
         PeopleCollection.countries(facilitators)
         PeopleCollection.languages(facilitators)
-        PeopleCollection.addresses(facilitators)
       }
       Ok(Json.prettyPrint(Json.toJson(facilitators)))
     } getOrElse Ok(Json.toJson(List()))

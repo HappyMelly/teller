@@ -493,7 +493,11 @@ object PeopleCollection {
       country ← FacilitatorCountries if country.personId inSet ids
     } yield country
     val countries = query.list.groupBy(_.personId)
-    people.foreach(p ⇒ p.countries_=(countries.getOrElse(p.id.get, List())))
+    people.foreach(p ⇒ {
+      val countryOfResidence = FacilitatorCountry(p.id.get, p.address.countryCode)
+      val c = countries.getOrElse(p.id.get, List()) ::: List(countryOfResidence)
+      p.countries_=(c)
+    })
   }
 
   /**
