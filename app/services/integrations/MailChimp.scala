@@ -59,7 +59,7 @@ class MailChimp(apiUrl: String, apiToken: String) {
       case status ⇒ true
     }
     result onFailure {
-      case t ⇒ Logger.error("WTF: " + t.getMessage)
+      case t ⇒ Logger.error("MailChimp WTF: " + t.getMessage)
     }
     true
   }
