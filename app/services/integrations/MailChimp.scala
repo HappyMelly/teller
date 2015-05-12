@@ -49,8 +49,10 @@ class MailChimp(apiUrl: String, apiToken: String) {
     val request = Json.obj("apikey" -> apiToken,
       "id" -> listId,
       "email" -> Json.obj("email" -> person.socialProfile.email),
-      "merge_vars" -> Json.obj("groupings" -> Json.arr(
-        Json.obj("name" -> "Membership type", "groups" -> Json.arr(group)))),
+      "merge_vars" -> Json.obj("FNAME" -> person.firstName,
+        "LNAME" -> person.lastName,
+        "groupings" -> Json.arr(
+          Json.obj("name" -> "Membership type", "groups" -> Json.arr(group)))),
       "double_optin" -> false,
       "update_existing" -> true,
       "replace_interests" -> false).toString()
