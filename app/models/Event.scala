@@ -26,7 +26,9 @@ package models
 
 import akka.actor.{ Actor, Props }
 import models.database.{ EventFacilitators, Events, Participants }
+import models.event.EventCancellation
 import models.service.{ EventService, Services }
+import models.service.event.EventCancellationService
 import org.joda.money.Money
 import org.joda.time.{ Days, DateTime, LocalDate }
 import play.api.Play.current
@@ -99,7 +101,7 @@ case class Event(
   confirmed: Boolean = false,
   free: Boolean = false,
   rating: Float = 0.0f,
-  fee: Option[Money] = None) extends ActivityRecorder {
+  fee: Option[Money] = None) extends ActivityRecorder with Services {
 
   private var _facilitators: Option[List[Person]] = None
   private var _invoice: Option[EventInvoice] = None
@@ -203,13 +205,26 @@ case class Event(
 
   def isFacilitator(personId: Long): Boolean = facilitatorIds.contains(personId)
 
-  /** Deletes this event and its related data from database */
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    EventFacilitators.where(_.eventId === this.id.get).mutate(_.delete())
-    EventInvoice.delete(this.id.get)
-    Query(Events).filter(_.id === this.id.get).delete
-  }
+  /**
+   * Cancels the event
+   *
+   * @param facilitatorId Identifier of the facilitator who requested the action
+   * @param reason Reason why the event is cancelled
+   * @param participants Number of participants already registered to the event
+   * @param details Details (emails, names) of registered participants
+   */
+  def cancel(facilitatorId: Long,
+    reason: Option[String],
+    participants: Option[Int],
+    details: Option[String]): Unit = {
 
+    val eventType = eventTypeService.find(this.eventTypeId).map(_.name).getOrElse("")
+    val cancellation = EventCancellation(None, this.brandId, facilitatorId,
+      this.title, eventType, this.location.city, this.location.countryCode,
+      this.schedule.start, this.schedule.end, reason, participants, details)
+    eventCancellationService.insert(cancellation)
+    eventService.delete(this.id.get)
+  }
 }
 
 object Event {

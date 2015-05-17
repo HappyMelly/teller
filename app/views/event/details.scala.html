@@ -49,6 +49,7 @@
   }
 
   @element.evaluationActions()
+  @views.html.event.reason()
   @views.html.event.requestEvaluation(event)
   <div class="page-header">
     <h1>
@@ -73,17 +74,15 @@
           </div>
         }
         <div class="button">
-          <form class="delete form-inline" method="post" text="event"
-          action="@CSRF(routes.Events.delete(event.id.getOrElse(0)))">
-            <div data-toggle="tooltip" data-placement="bottom"
-              @if(!event.deletable) {
-                title="@Messages("error.event.nonDeletable")" }>
-              <button class="btn btn-danger" type="submit" @if(!event.deletable) {
-                disabled="disabled"} >
-                <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
-              </button>
-            </div>
-          </form>
+          <div data-toggle="tooltip" data-placement="bottom"
+            @if(!event.deletable) {
+              title="@Messages("error.event.nonDeletable")" }>
+            <a data-href="@routes.Events.cancel(event.id.get)" class="btn btn-danger"
+              data-toggle="modal" data-target="#cancelDialog" id="cancelButton"
+              @if(!event.deletable) {disabled="disabled"}>
+              <i class="glyphicon-white glyphicon glyphicon-trash"></i> Cancel
+            </a>
+          </div>
         </div>
       }
       </div>

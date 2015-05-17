@@ -46,17 +46,14 @@ object EventInvoice {
     Query(EventInvoices).filter(_.eventId === id).first
   }
 
-  def update(invoice: EventInvoice): Unit = DB.withSession { implicit session: Session ⇒
-    _update(invoice)
+  def update(invoice: EventInvoice): Unit = DB.withSession {
+    implicit session: Session ⇒
+      _update(invoice)
   }
 
   def _update(invoice: EventInvoice)(implicit session: Session): Unit =
     EventInvoices.filter(_.id === invoice.id)
       .map(_.forUpdate)
       .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
-
-  def delete(eventId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventInvoices.where(_.eventId === eventId).mutate(_.delete())
-  }
 }
 

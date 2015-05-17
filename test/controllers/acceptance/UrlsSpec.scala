@@ -52,7 +52,7 @@ class UrlsSpec extends PlayAppSpec {
 
   def e2 = {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val url = "http://google.com"
+    val url = "http://t.co"
     val result = Urls.validate(url).apply(req)
 
     status(result) must equalTo(OK)

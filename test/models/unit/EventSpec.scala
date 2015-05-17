@@ -24,14 +24,19 @@
  */
 package models.unit
 
-import models.{ Schedule, Activity, Event }
+import _root_.integration.PlayAppSpec
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
-import integration.PlayAppSpec
+import models._
 import models.brand.EventType
+import models.event.EventCancellation
+import models.service._
+import models.service.brand.EventTypeService
+import models.service.event.EventCancellationService
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._
+import _root_.stubs.FakeServices
 
 class EventSpec extends PlayAppSpec {
 
@@ -126,6 +131,7 @@ class EventSpec extends PlayAppSpec {
       } getOrElse ko
     }
   }
+
   "Total hours should be invalid if they are less than hoursPerDay * numOfDays * 0.8" >> {
     "when an event is two-days long" in {
       val schedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 12)
@@ -138,6 +144,43 @@ class EventSpec extends PlayAppSpec {
       schedule.validateTotalHours must_== false
       schedule.copy(totalHours = 3).validateTotalHours must_== false
       schedule.copy(totalHours = 7).validateTotalHours must_== true
+    }
+  }
+
+  "When an event is cancelled the system" should {
+    "deletes event data and adds event cancellation record" in new MockContext {
+      class EventTest(id: Option[Long],
+        eventTypeId: Long,
+        brandId: Long,
+        title: String,
+        language: Language,
+        location: Location,
+        details: models.Details,
+        schedule: Schedule) extends Event(id, eventTypeId, brandId, title,
+        language, location, details, schedule) with FakeServices {}
+
+      val now = LocalDate.now()
+      val schedule = Schedule(now, now.plusDays(1), 8, 8)
+      val lang = Language("EN", None, None)
+      val details = Details(None, None, None, None)
+      val location = Location("Berlin", "DE")
+      val one = new EventTest(Some(1L), 1L, 1L, "Cancel", lang, location,
+        details, schedule)
+      val eventService = mock[EventService]
+      (eventService.delete _) expects 1L
+      val eventCancellationService = mock[EventCancellationService]
+      val cancellation = EventCancellation(None, 1L, 3L, "Cancel", "Regular event",
+        "Berlin", "DE", now, now.plusDays(1), Some("Small number of participants"),
+        Some(2), Some("some data"))
+      (eventCancellationService.insert _) expects cancellation returning cancellation
+      val eventTypeService = mock[EventTypeService]
+      val eventType = EventType(Some(1L), 1L, "Regular event", None, 8, false)
+      (eventTypeService.find _) expects 1L returning Some(eventType)
+      one.eventService_=(eventService)
+      one.eventCancellationService_=(eventCancellationService)
+      one.eventTypeService_=(eventTypeService)
+
+      one.cancel(3L, Some("Small number of participants"), Some(2), Some("some data"))
     }
   }
 }

@@ -199,24 +199,40 @@ trait Events extends Controller
   }
 
   /**
-   * Delete an event.
+   * Cancel the given event
    * @param id Event ID
    */
-  def delete(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def cancel(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map { event ⇒
-        if (event.deletable) {
-          event.delete()
-          val activity = event.activity(
-            user.person,
-            Activity.Predicate.Deleted).insert
-          sendEmailNotification(event, List.empty, activity)
-          Redirect(routes.Events.index()).flashing("success" -> activity.toString)
-        } else {
-          Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
-        }
-      } getOrElse NotFound
+        case class CancellationData(reason: Option[String],
+          participants: Option[Int],
+          details: Option[String])
+
+        def cancelForm = Form(mapping(
+          "reason" -> optional(text),
+          "participantNumber" -> optional(number),
+          "details" -> optional(text))(CancellationData.apply)(CancellationData.unapply))
+
+        eventService.find(id) map { event ⇒
+          if (event.deletable) {
+            cancelForm.bindFromRequest.fold(
+              failure ⇒
+                Redirect(routes.Events.index()).flashing("error" -> "Something goes wrong :("),
+              data ⇒ {
+                event.cancel(user.person.id.get, data.reason,
+                  data.participants, data.details)
+                val activity = event.activity(
+                  user.person,
+                  Activity.Predicate.Deleted).insert
+                sendEmailNotification(event, List.empty, activity)
+                Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+              })
+          } else {
+            Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
+          }
+        } getOrElse NotFound
   }
 
   /**
@@ -397,9 +413,9 @@ trait Events extends Controller
                     routes.Events.duplicate(data.id.get).url
                   } else ""
                 },
-                "remove" -> {
+                "cancel" -> {
                   if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.delete(data.id.get).url
+                    routes.Events.cancel(data.id.get).url
                   } else ""
                 })
             })

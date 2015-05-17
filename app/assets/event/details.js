@@ -76,10 +76,6 @@ function toggleSentButton() {
 }
 
 $(document).ready( function() {
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
 
     $('#details a').click(function (e) {
       e.preventDefault();
@@ -149,5 +145,23 @@ $(document).ready( function() {
     $('#participantList').on('change', '.participant', toggleSentButton);
     $('textarea[name=body]').on('input propertychange', toggleSentButton);
     $('[data-toggle="tooltip"]').tooltip();
+
+    $('#cancelButton').on('click', function(e) {
+        e.preventDefault();
+        $("#cancelLink").attr('href', $(this).data('href'));
+    });
+
+    $('#cancelLink').on('click', function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr("href"),
+            data: $("#cancelForm").serialize()
+        }).done(function(data){
+            $("#delete").modal('hide');
+            window.location = "/events";
+            showSuccess("You successfully cancelled the event");
+        });
+    });
 });
 

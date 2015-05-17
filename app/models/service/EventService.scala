@@ -40,6 +40,19 @@ import scala.slick.lifted.Query
 class EventService extends Integrations with Services {
 
   /**
+   * Deletes the given event and all related data from database
+   *
+   * @param id Event identifier
+   */
+  def delete(id: Long): Unit = DB.withTransaction {
+    implicit session: Session ⇒
+      EventFacilitators.where(_.eventId === id).mutate(_.delete())
+      EventInvoices.where(_.eventId === id).mutate(_.delete())
+      Query(Events).filter(_.id === id).delete
+
+  }
+
+  /**
    * Returns event if it exists, otherwise - None
    *
    * @param id Event identifier

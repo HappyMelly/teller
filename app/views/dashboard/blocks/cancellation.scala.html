@@ -1,0 +1,31 @@
+@(cancellations: List[models.event.EventCancellation])
+
+@import views.ViewHelpers.dateInterval
+
+<div class="col-md-10">
+  <h3>Cancelled events</h3>
+  <table id="cancellations" class="datatables table table-bordered">
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th>Dates</th>
+        <th>Location</th>
+        <th>Reason</th>
+        <th># of participants</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for(view <- cancellations) {
+        <tr>
+          <td>@view.event</td>
+          <td>@dateInterval(view.start, view.end)</td>
+          <td>@view.city, @view.countryCode</td>
+          <td>@view.reason.getOrElse("")</td>
+          <td>@view.participants.getOrElse(0)</td>
+          <td>@view.details.getOrElse("")</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

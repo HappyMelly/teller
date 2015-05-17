@@ -64,13 +64,13 @@ trait Dashboard extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       if (account.viewer) {
-        val activity = if (account.admin)
-          Some(activityService.findAll)
-        else
-          None
         val brands = brandService.findByCoordinator(account.personId)
         val licenses = if (brands.length > 0)
           licenseService.expiring(brands.map(_.id.get))
+        else
+          List()
+        val cancellations = if (brands.length > 0)
+          eventCancellationService.findByBrands(brands.map(_.id.get))
         else
           List()
         val events = eventService.findByFacilitator(
@@ -91,7 +91,7 @@ trait Dashboard extends Controller with Security with Services {
           pastEvents.slice(0, 2),
           evaluations,
           licenses,
-          activity))
+          cancellations))
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
       }
