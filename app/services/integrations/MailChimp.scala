@@ -29,7 +29,6 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
-import play.Logger
 /**
  * MailChimp integration
  */
@@ -56,13 +55,6 @@ class MailChimp(apiUrl: String, apiToken: String) {
       "double_optin" -> false,
       "update_existing" -> true,
       "replace_interests" -> false).toString()
-    val result = WS.url(url).post(request)
-    result onSuccess {
-      case status ⇒ true
-    }
-    result onFailure {
-      case t ⇒ Logger.error("MailChimp WTF: " + t.getMessage)
-    }
-    true
+    Try(WS.url(url).post(request)).isSuccess
   }
 }

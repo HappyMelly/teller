@@ -55,7 +55,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
 
     Activity stream on the dashboard should
       not be visible to Editor                  $e5
-      and be visible to Admin                   $e6
+      not be visible to Admin                   $e6
 
     On facilitator's dashboard there should be
       three nearest future events               $e7
@@ -68,8 +68,6 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   val controller = new TestDashboard()
-  val activityService = mock[ActivityService]
-  controller.activityService_=(activityService)
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
   val eventService = mock[EventService]
@@ -121,13 +119,12 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   def e6 = {
     val identity = FakeUserIdentity.admin
     val request = prepareSecuredGetRequest(identity, "/")
-    (activityService.findAll _) expects () returning List()
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, None, None, None) returning List()
     (evaluationService.findByEvents _) expects List() returning List()
     val result: Future[SimpleResult] = controller.index().apply(request)
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Latest activity")
+    contentAsString(result) must not contain "Latest activity"
   }
 
   def e7 = {

@@ -3,7 +3,7 @@
   past: List[Event],
   evaluations: List[(Event, Person, Evaluation)],
   licenses: List[LicenseLicenseeView],
-  activityStream: Option[List[Activity]])(implicit flash: Flash,
+  cancellations: List[models.event.EventCancellation])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
 
@@ -20,7 +20,7 @@
   @if(licenses.length > 0) {
     @dashboard.blocks.expiring(licenses)
   }
-  @activityStream.map { activities =>
-    @dashboard.blocks.activities(activities)
+  @if(cancellations.length > 0) {
+    @dashboard.blocks.cancellation(cancellations)
   }
 }

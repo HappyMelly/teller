@@ -146,10 +146,10 @@ function renderDropdown(data) {
             html += '<li><a tabindex="-1" href="' + data.duplicate;
             html += '" title="Duplicate Event"><i class="glyphicon glyphicon-edit"></i> Duplicate</a></li>';
         }
-        if ('remove' in data && data.remove) {
+        if ('cancel' in data && data.cancel) {
             emptyDropdown = false;
-            html += '<li><a class="delete" tabindex="-1" href="#delete" data-href="' + data.remove;
-            html += '" data-toggle="modal" title="Delete Event"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
+            html += '<li><a class="delete" tabindex="-1" href="#cancelDialog" data-href="' + data.cancel;
+            html += '" data-toggle="modal" title="Cancel Event"><i class="glyphicon glyphicon-trash"></i> Cancel</a></li>';
         }
     }
     html += '</ul></div>';
@@ -267,17 +267,18 @@ $(document).ready( function() {
     events.fnDraw();
 
     $("#events").on('click', '.delete', function(){
-        $("#deleteLink").attr('href', $(this).data('href'));
+        $("#cancelLink").attr('href', $(this).data('href'));
     });
-    $('#deleteLink').on('click', function(e) {
+    $('#cancelLink').on('click', function(e) {
         e.preventDefault();
         $.ajax({
             type: "POST",
-            url: $(this).attr("href")
+            url: $(this).attr("href"),
+            data: $("#cancelForm").serialize()
         }).done(function(data){
             updateTable();
             $("#delete").modal('hide');
-            showSuccess("You successfully deleted the event")
+            showSuccess("You successfully cancelled the event")
         });
     });
 });
