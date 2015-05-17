@@ -158,7 +158,7 @@ $(document).ready( function() {
             url: $(this).attr("href"),
             data: $("#cancelForm").serialize()
         }).done(function(data){
-            $("#delete").modal('hide');
+            $("#cancelDialog").modal('hide');
             window.location = "/events";
             showSuccess("You successfully cancelled the event");
         });
