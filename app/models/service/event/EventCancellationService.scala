@@ -45,7 +45,7 @@ class EventCancellationService extends Services {
    * @param brands List of brand identifiers
    */
   def findByBrands(brands: List[Long]): List[EventCancellation] =
-    DB.withSession { implicit session: Session =>
+    DB.withSession { implicit session: Session ⇒
       Query(EventCancellations).filter(_.brandId inSet brands).list
     }
 
