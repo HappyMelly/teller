@@ -277,7 +277,7 @@ $(document).ready( function() {
             data: $("#cancelForm").serialize()
         }).done(function(data){
             updateTable();
-            $("#delete").modal('hide');
+            $("#cancelDialog").modal('hide');
             showSuccess("You successfully cancelled the event")
         });
     });
