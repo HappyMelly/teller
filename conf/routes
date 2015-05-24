@@ -146,6 +146,9 @@ GET           /participant/:eventId/:personId/delete/                        con
 
 GET           /people                                                        controllers.People.index
 
+POST          /person/:personId/photo                                       controllers.People.updatePhoto(personId: Long)
+GET           /person/:personId/photo                                       controllers.People.choosePhoto(personId: Long)
+
 POST          /person/:personId/signature                                    controllers.People.uploadSignature(personId: Long)
 GET           /person/:personId/signature                                    controllers.People.signature(personId: Long)
 POST          /person/:personId/signature/delete                             controllers.People.deleteSignature(personId: Long)

@@ -49,6 +49,8 @@ object Photo {
       case _ ⇒ Photo(None, None)
     }.getOrElse(Photo(None, None))
   }
+
+  def empty: Photo = Photo(None, None)
 }
 
 /**

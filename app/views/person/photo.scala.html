@@ -1,0 +1,25 @@
+@(gravatarUrl: String,
+  facebookUrl: Option[String])(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+<div class="row">
+  <div class="col-md-4" id="gravatar">
+    <img width="200" class="img-rounded photo" src="@gravatarUrl"/>
+  </div>
+  <div class="col-md-4" id="facebook">
+    @facebookUrl.map { url =>
+      <img class="facebook img-rounded photo" width="200" src="@url"/>
+    }.getOrElse {
+      <div>
+        <input name="facebook" placeholder="Enter Facebook name"/>
+      </div>
+    }
+  </div>
+  <div class="col-md-4" id="nophoto">
+    <img width="200" class="img-rounded photo"
+      src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+  </div>
+</div>
+<div class="row">
+  <button class="btn btn-success">Save</button>
+</div>

@@ -53,30 +53,6 @@ trait People extends Controller with Security with Services {
   val contentType = "image/jpeg"
 
   /**
-   * This formatter is used to create a photo object based on its type
-   */
-  val photoFormatter = new Formatter[Photo] {
-
-    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
-      data.getOrElse("photo", "") match {
-        case "facebook" ⇒
-          ("""[\w\.]+$""".r findFirstIn data.getOrElse("profile.facebookUrl", "")).map { userId ⇒
-            Right(Photo(Some("facebook"), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
-          }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
-        case "gravatar" ⇒
-          data.get("emailAddress").map { email ⇒
-            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).size(300).avatarUrl)))
-          }.getOrElse(Right(Photo(None, None)))
-        case _ ⇒ Right(Photo(None, None))
-      }
-    }
-
-    override def unbind(key: String, value: Photo): Map[String, String] = {
-      Map(key -> value.id.getOrElse(""))
-    }
-  }
-
-  /**
    * HTML form mapping for a person’s address.
    */
   val addressMapping = mapping(
@@ -114,7 +90,6 @@ trait People extends Controller with Security with Services {
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
       "birthday" -> optional(jodaLocalDate),
-      "photo" -> of(photoFormatter),
       "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
@@ -128,10 +103,10 @@ trait People extends Controller with Security with Services {
         "createdBy" -> ignored(user.fullName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
-        { (id, firstName, lastName, emailAddress, birthday, photo, signature,
+        { (id, firstName, lastName, emailAddress, birthday, signature,
           address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
           {
-            val person = Person(id, firstName, lastName, birthday, photo,
+            val person = Person(id, firstName, lastName, birthday, Photo.empty,
               signature, address.id.getOrElse(0), bio, interests,
               webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
@@ -142,7 +117,7 @@ trait People extends Controller with Security with Services {
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
-                p.photo, p.signature, p.address, p.bio, p.interests,
+                p.signature, p.address, p.bio, p.interests,
                 p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
@@ -358,7 +333,7 @@ trait People extends Controller with Security with Services {
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
-                  .copy(id = Some(id), active = p.active)
+                  .copy(id = Some(id), active = p.active, photo = p.photo)
                   .copy(customerId = p.customerId)
                 updatedPerson.socialProfile_=(person.socialProfile)
                 updatedPerson.address_=(person.address)
@@ -462,6 +437,32 @@ trait People extends Controller with Security with Services {
     }
   }
 
+  def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.find(id) map { person ⇒
+          Ok("")
+        } getOrElse NotFound
+  }
+
+  /**
+   * Renders a screen for selecting a profile's photo
+   *
+   * @param id Person identifier
+   */
+  def choosePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.find(id) map { person ⇒
+          val facebook = person.socialProfile.facebookUrl map { url ⇒
+            Some(facebookUrl(url))
+          } getOrElse None
+          Ok(views.html.person.photo(
+            gravatarUrl(person.socialProfile.email),
+            facebook))
+        } getOrElse NotFound
+  }
+
   /**
    * Cancels a subscription for yearly-renewing membership
    * @param id Person id
@@ -521,6 +522,24 @@ trait People extends Controller with Security with Services {
     }
     list.toList
   }
+
+  /**
+   * Returns url to a Gravatar photo based on the given email
+   *
+   * @param email Email of interest
+   */
+  protected def gravatarUrl(email: String): String =
+    Gravatar(email, ssl = true).size(300).avatarUrl
+
+  /**
+   * Returns url to a Facebook photo based on the given Facebook profile
+   *
+   * @param url Url to Facebook profile
+   */
+  protected def facebookUrl(url: String): String =
+    ("""[\w\.]+$""".r findFirstIn url) map { userId ⇒
+      "http://graph.facebook.com/" + userId + "/picture?type=large"
+    } getOrElse ""
 }
 
 object People extends People with Security
