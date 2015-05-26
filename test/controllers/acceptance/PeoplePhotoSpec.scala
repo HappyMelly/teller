@@ -49,9 +49,8 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     should return an error                                              $e4
 
   When a person provides valid data the system
-    should update a person profile if new photo is Gravatar             $e5
-    should update a person profile if there is no photo                 $e6
-    should update a person profile if new photo is Facebook             $e7
+    should update a person profile                                      $e5
+    should update a person profile if Facebook photo is added           $e6
   """
 
   class TestPeople() extends People with Security with FakeServices
@@ -108,7 +107,7 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     val updatedPerson = person.copy(photo = photo)
     (personService.update _) expects updatedPerson returning updatedPerson
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "gravatar"))
+      withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
     val result = controller.updatePhoto(1L).apply(req)
     status(result) must equalTo(OK)
   }
@@ -118,25 +117,14 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.one()
     person.socialProfile_=(profile)
     (personService.find(_: Long)) expects 1L returning Some(person)
-    val updatedPerson = person.copy(photo = Photo.empty)
-    (personService.update _) expects updatedPerson returning updatedPerson
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "nophoto"))
-    val result = controller.updatePhoto(1L).apply(req)
-    status(result) must equalTo(OK)
-  }
-
-  def e7 = {
-    val profile = new SocialProfile(email = "test@test.com",
-      facebookUrl = Some("https://www.facebook.com/skotlov"))
-    val person = PersonHelper.one()
-    person.socialProfile_=(profile)
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    val photo = Photo(Some("facebook"), Some("http://graph.facebook.com/skotlov/picture?type=large"))
+    val url = "http://graph.facebook.com/skotlov/picture?type=large";
+    val photo = Photo(Some("facebook"), Some(url))
     val updatedPerson = person.copy(photo = photo)
+    val facebookUrl = "https://www.facebook.com/skotlov"
+    updatedPerson.socialProfile_=(profile.copy(facebookUrl = Some(facebookUrl)))
     (personService.update _) expects updatedPerson returning updatedPerson
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "facebook"))
+      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
     val result = controller.updatePhoto(1L).apply(req)
     status(result) must equalTo(OK)
   }

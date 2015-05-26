@@ -59,7 +59,7 @@ class BrandService extends Services {
    */
   def delete(brand: Brand): Unit = DB.withTransaction {
     implicit session: Session ⇒
-      SocialProfileService.delete(brand.id.get, ProfileType.Brand)
+      socialProfileService.delete(brand.id.get, ProfileType.Brand)
       Query(Brands).filter(_.id === brand.id.get).mutate(_.delete())
   }
 
@@ -127,7 +127,7 @@ class BrandService extends Services {
   def insert(brand: Brand): Brand = DB.withTransaction {
     implicit session ⇒
       val id = Brands.forInsert.insert(brand)
-      SocialProfileService._insert(brand.socialProfile.copy(objectId = id))
+      socialProfileService._insert(brand.socialProfile.copy(objectId = id))
       val owner = BrandCoordinator(None, id, brand.ownerId,
         BrandNotifications(true, true, true))
       brandCoordinatorService._insert(owner)

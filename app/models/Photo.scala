@@ -66,10 +66,9 @@ object Photo {
    */
   def apply(photoType: String, profile: SocialProfile): Photo = {
     photoType match {
-      case "gravatar" ⇒ Photo(Some("gravatar"),
-        Some(gravatarUrl(profile.email)))
+      case "gravatar" ⇒ Photo(Some("gravatar"), Some(gravatarUrl(profile.email)))
       case "facebook" ⇒ Photo(Some("facebook"),
-        Some(facebookUrl(profile.facebookUrl.get)))
+        Some(facebookUrl(profile.facebookUrl.getOrElse(""))))
       case _ ⇒ Photo.empty
     }
   }

@@ -70,14 +70,15 @@ trait People extends JsonController with Security with Services {
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(facebookProfileUrl),
     "linkedInUrl" -> optional(linkedInProfileUrl),
-    "googlePlusUrl" -> optional(googlePlusProfileUrl)) (
-      {
-        (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-          SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
-      })(
-        {
-          (s: SocialProfile) ⇒ Some(s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl)
-        })
+    "googlePlusUrl" -> optional(googlePlusProfileUrl)) ({
+      (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+        SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl,
+          linkedInUrl, googlePlusUrl)
+    })({
+      (s: SocialProfile) ⇒
+        Some(s.twitterHandle, s.facebookUrl,
+          s.linkedInUrl, s.googlePlusUrl)
+    })
 
   /**
    * HTML form mapping for creating and editing.
@@ -325,7 +326,7 @@ trait People extends JsonController with Security with Services {
               val base = person.socialProfile.copy(
                 objectId = id,
                 objectType = ProfileType.Person)
-              SocialProfileService.findDuplicate(base) map { duplicate ⇒
+              socialProfileService.findDuplicate(base) map { duplicate ⇒
                 var form = personForm(user).fill(person)
                 compareSocialProfiles(duplicate, base).
                   foreach(err ⇒ form = form.withError(err))
@@ -436,18 +437,29 @@ trait People extends JsonController with Security with Services {
     }
   }
 
+  /**
+   * Updates profile photo and may be a facebook profile link
+   *
+   * @param id Person identifier
+   */
   def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        val form = Form(single("type" -> text)).bindFromRequest
+        val form = Form(tuple("type" -> nonEmptyText, "name" -> text)).bindFromRequest
         form.fold(
           withError ⇒ jsonBadRequest("No option is provided"),
-          photoType ⇒ {
-            personService.find(id) map { person ⇒
-              val photo = Photo(photoType, person.socialProfile)
-              personService.update(person.copy(photo = photo))
-              jsonSuccess("ok")
-            } getOrElse NotFound
+          {
+            case (photoType, facebookName) ⇒
+              personService.find(id) map { person ⇒
+                val profile = person.socialProfile
+                if (photoType == "facebook" && profile.facebookUrl.isEmpty) {
+                  val profileUrl = "https://www.facebook.com/" + facebookName
+                  person.socialProfile_=(profile.copy(facebookUrl = Some(profileUrl)))
+                }
+                val photo = Photo(photoType, person.socialProfile)
+                personService.update(person.copy(photo = photo))
+                jsonSuccess("ok")
+              } getOrElse NotFound
           })
   }
 

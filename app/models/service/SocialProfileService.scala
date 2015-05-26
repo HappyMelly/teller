@@ -31,47 +31,54 @@ import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-object SocialProfileService {
+class SocialProfileService {
 
-  def find(objectId: Long, objectType: ProfileType.Value): SocialProfile = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).first
-  }
+  def find(objectId: Long, objectType: ProfileType.Value): SocialProfile =
+    DB.withSession { implicit session: Session ⇒
+      Query(SocialProfiles).
+        filter(_.objectId === objectId).
+        filter(_.objectType === objectType).first
+    }
 
   /**
    * Find a profile associated with Twitter
    * @param twitterHandle Twitter name
    * @return
    */
-  def findByTwitter(twitterHandle: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.twitterHandle === twitterHandle).firstOption
-  }
+  def findByTwitter(twitterHandle: String): Option[SocialProfile] =
+    DB.withSession { implicit session: Session ⇒
+      Query(SocialProfiles).filter(_.twitterHandle === twitterHandle).firstOption
+    }
 
   /**
    * Find a profile associated with Facebook
    * @param facebookUrl Facebook profile
    * @return
    */
-  def findByFacebook(facebookUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.facebookUrl === facebookUrl).firstOption
-  }
+  def findByFacebook(facebookUrl: String): Option[SocialProfile] =
+    DB.withSession { implicit session: Session ⇒
+      Query(SocialProfiles).filter(_.facebookUrl === facebookUrl).firstOption
+    }
 
   /**
    * Find a profile associated with LinkedIn
    * @param linkedInUrl LinkedIn profile
    * @return
    */
-  def findByLinkedin(linkedInUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.linkedInUrl === linkedInUrl).firstOption
-  }
+  def findByLinkedin(linkedInUrl: String): Option[SocialProfile] =
+    DB.withSession { implicit session: Session ⇒
+      Query(SocialProfiles).filter(_.linkedInUrl === linkedInUrl).firstOption
+    }
 
   /**
    * Find a profile associated with Google+
    * @param googlePlusUrl Google+ profile
    * @return
    */
-  def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
-  }
+  def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] =
+    DB.withSession { implicit session: Session ⇒
+      Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
+    }
 
   /**
    * Returns the social profile which has a duplicate social network
@@ -98,12 +105,13 @@ object SocialProfileService {
     implicit session: Session ⇒ _insert(socialProfile)
   }
 
-  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = DB.withSession {
-    implicit session: Session ⇒
-      SocialProfiles
-        .filter(_.objectId === socialProfile.objectId)
-        .filter(_.objectType === objectType).update(socialProfile)
-  }
+  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit =
+    DB.withSession {
+      implicit session: Session ⇒
+        SocialProfiles
+          .filter(_.objectId === socialProfile.objectId)
+          .filter(_.objectType === objectType).update(socialProfile)
+    }
 
   /**
    * Delete a social profile
@@ -128,3 +136,8 @@ object SocialProfileService {
   }
 }
 
+object SocialProfileService {
+  private val _instance = new SocialProfileService
+
+  def get: SocialProfileService = _instance
+}

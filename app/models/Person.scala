@@ -96,7 +96,7 @@ case class Person(
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      socialProfile_=(SocialProfileService.find(id.getOrElse(0), ProfileType.Person))
+      socialProfile_=(socialProfileService.find(id.getOrElse(0), ProfileType.Person))
       _socialProfile.get
     }
   } else {

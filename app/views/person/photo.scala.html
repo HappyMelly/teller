@@ -15,10 +15,17 @@
       </div>
       <div class="col-md-4" id="facebook">
         @facebookUrl.map { url =>
-          <img class="facebook img-rounded photo @if(active=="facebook"){active}" height="200" src="@url"/>
+          <img class="facebook img-rounded photo @if(active=="facebook"){active}"
+            height="200" data-name="" src="@url"/>
         }.getOrElse {
           <div>
-            <input name="facebook" placeholder="Enter Facebook name"/>
+            <img class="img-rounded"
+              src="@routes.Assets.at("images/facebook_help.jpg")"/>
+            <input style="margin-top: 30px;" id="facebookName"
+              placeholder="Enter Facebook name"/>
+            <button id="facebookRequest" class="btn btn-small">
+              <i class="glyphicon glyphicon-repeat"></i>
+            </button>
           </div>
         }
       </div>

@@ -194,6 +194,7 @@ POST          /registration/payment                                          con
 GET           /registration/authenticate/:provider                           controllers.Registration.authenticate(provider)
 GET           /registration/congratulations                                  controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
+GET           /profile/id/:id/facebook/:name                                 controllers.SocialProfiles.facebookUrl(id: Long, name: String)
 
 GET           /statistics/                                                   controllers.Statistics.index
 GET           /statistics/type/facilitators/brand/:id                        controllers.Statistics.byFacilitators(id: Long)

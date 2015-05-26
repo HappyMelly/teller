@@ -47,7 +47,7 @@ class PersonService {
       UserAccount.delete(id)
       //TODO add evaluation removal
       Participants.where(_.personId === id).mutate(_.delete())
-      SocialProfileService.delete(id, ProfileType.Person)
+      SocialProfileService.get.delete(id, ProfileType.Person)
       People.where(_.id === id).mutate(_.delete())
       Addresses.where(_.id === person.address.id.get).mutate(_.delete())
     }
@@ -62,7 +62,7 @@ class PersonService {
     implicit session: Session ⇒
       val address = Address.insert(person.address)
       val id = People.forInsert.insert(person.copy(addressId = address.id.get))
-      SocialProfileService.insert(person.socialProfile.copy(objectId = id))
+      SocialProfileService.get.insert(person.socialProfile.copy(objectId = id))
       Accounts.insert(Account(personId = Some(id)))
 
       val saved = person.copy(id = Some(id))
