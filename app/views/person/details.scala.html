@@ -23,7 +23,7 @@
   </label>
 }
 @main(person.fullName + " - Person", "people", user) {
-
+  <input type="hidden" id="personId" value="@person.id.get"/>
   <div class="col-md-3 info">
     <div class="page-header">
       @element.photo(person, "200")
@@ -203,5 +203,9 @@
 
   </div>
 
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.People.choosePhoto,
+    routes.javascript.People.updatePhoto
+  )
   <script src="@routes.Assets.at("person/details.js")" type="text/javascript"></script>
 }

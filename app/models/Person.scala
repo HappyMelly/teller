@@ -38,21 +38,6 @@ import scala.concurrent.Future
 import scala.slick.lifted.Query
 import services.S3Bucket
 
-case class Photo(id: Option[String], url: Option[String])
-
-object Photo {
-
-  def parse(url: Option[String]): Photo = {
-    url.map {
-      case s if s.contains("facebook") ⇒ Photo(Some("facebook"), url)
-      case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
-      case _ ⇒ Photo(None, None)
-    }.getOrElse(Photo(None, None))
-  }
-
-  def empty: Photo = Photo(None, None)
-}
-
 /**
  * A person, such as the owner or employee of an organisation.
  */
@@ -275,33 +260,9 @@ case class Person(
   def insert: Person = personService.insert(this)
 
   /**
-   * Updates this person in the database and returns the saved person.
+   * Updates related info about this person in database
    */
-  def update: Person = DB.withTransaction { implicit session: Session ⇒
-    import models.database.SocialProfiles._
-    val addressId = People.filter(_.id === this.id).map(_.addressId).first
-
-    val addressQuery = for {
-      address ← Addresses if address.id === addressId
-    } yield address
-    addressQuery.update(address.copy(id = Some(addressId)))
-
-    val socialQuery = for {
-      p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
-    } yield p
-
-    socialQuery.update(socialProfile.copy(objectId = id.get))
-
-    // Skip the id, created, createdBy and active fields.
-    val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-      bio, interests, webSite, blog, customerId, virtual, active,
-      dateStamp.updated, dateStamp.updatedBy)
-    val updateQuery = People.filter(_.id === id).map(_.forUpdate)
-    updateQuery.update(personUpdateTuple)
-
-    UserAccount.updateSocialNetworkProfiles(this)
-    this
-  }
+  def update: Person = personService.update(this)
 
   /**
    * Find all events which were faciliated by a specified facilitator and

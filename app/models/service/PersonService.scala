@@ -136,6 +136,32 @@ class PersonService {
     query.sortBy(_.name.toLowerCase).list
   }
 
+  def update(person: Person): Person = DB.withTransaction { implicit session: Session ⇒
+    import models.database.SocialProfiles._
+
+    val addressQuery = for {
+      address ← Addresses if address.id === person.addressId
+    } yield address
+    addressQuery.update(person.address.copy(id = Some(person.addressId)))
+
+    val socialQuery = for {
+      p ← SocialProfiles if p.objectId === person.id.get &&
+        p.objectType === person.socialProfile.objectType
+    } yield p
+
+    socialQuery.update(person.socialProfile.copy(objectId = person.id.get))
+
+    // Skip the id, created, createdBy and active fields.
+    val personUpdateTuple = (person.firstName, person.lastName, person.birthday,
+      person.photo.url, person.signature, person.bio, person.interests,
+      person.webSite, person.blog, person.customerId, person.virtual,
+      person.active, person.dateStamp.updated, person.dateStamp.updatedBy)
+    val updateQuery = People.filter(_.id === person.id).map(_.forUpdate)
+    updateQuery.update(personUpdateTuple)
+
+    UserAccount.updateSocialNetworkProfiles(person)
+    person
+  }
 }
 
 object PersonService {

@@ -22,6 +22,28 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+function switchActivePhoto(object) {
+    $('#choosePhotoContent').find('img').removeClass('active');
+    $(object).addClass('active');
+}
+
+function getPersonId() {
+    return $('#personId').val();
+}
+
+function updatePhoto() {
+    var url = jsRoutes.controllers.People.updatePhoto(getPersonId()).url
+    var object = $('#choosePhotoContent').find('.active');
+    var type = $(object).parent('div').attr('id');
+    var src = $(object).attr('src');
+    $.post(url, {type: type}, null, "json").done(function(data) {
+        $('#photoDialog').modal('hide');
+        $('#photo').attr('src', src);
+    }).fail(function(jqXHR, status, error) {
+        console.log(error);
+    });
+}
+
 $(document).ready( function() {
 
     // Delete links.
@@ -63,5 +85,16 @@ $(document).ready( function() {
     }
     $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
+
+    $('#choosePhotoLink').on('click', function(e) {
+        $('#choosePhotoContent').html('');
+        $.get(jsRoutes.controllers.People.choosePhoto(getPersonId()).url, function(data) {
+            $('#choosePhotoContent').html(data);
+            $('#choosePhotoContent').find('img').on('click', function(e) {
+                switchActivePhoto($(this));
+            });
+            $('#saveLink').on('click', updatePhoto);
+        });
+    });
 });
 

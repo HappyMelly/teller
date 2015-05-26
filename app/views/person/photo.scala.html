@@ -1,25 +1,49 @@
 @(gravatarUrl: String,
-  facebookUrl: Option[String])(implicit request: Request[Any],
+  facebookUrl: Option[String],
+  active: String)(implicit request: Request[Any],
   handler: AuthorisationHandler)
 
-<div class="row">
-  <div class="col-md-4" id="gravatar">
-    <img width="200" class="img-rounded photo" src="@gravatarUrl"/>
+<div class="modal-content">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h4>Update profile photo</h4>
   </div>
-  <div class="col-md-4" id="facebook">
-    @facebookUrl.map { url =>
-      <img class="facebook img-rounded photo" width="200" src="@url"/>
-    }.getOrElse {
-      <div>
-        <input name="facebook" placeholder="Enter Facebook name"/>
+  <div class="modal-body photo-selector">
+    <div class="row">
+      <div class="col-md-4" id="gravatar">
+        <img height="200" class="img-rounded photo @if(active=="gravatar"){active}" src="@gravatarUrl"/>
       </div>
-    }
+      <div class="col-md-4" id="facebook">
+        @facebookUrl.map { url =>
+          <img class="facebook img-rounded photo @if(active=="facebook"){active}" height="200" src="@url"/>
+        }.getOrElse {
+          <div>
+            <input name="facebook" placeholder="Enter Facebook name"/>
+          </div>
+        }
+      </div>
+      <div class="col-md-4" id="nophoto">
+        <img height="200" class="img-rounded photo @if(active=="nophoto"){active}"
+          src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 photo-description">
+        <p class="text-uppercase"><strong>Gravatar<p class="text-uppercase"></strong><p>
+        <p class="text-justify text-muted" style="margin: 10px 40px 10px 40px;"><a href="http://gravatar.com" target="_blank">Gravatar</a> is a service
+        to store your identity assigned to your email address. It's used by
+        many websites.</p>
+      </div>
+      <div class="col-md-4 photo-description">
+        <p class="text-uppercase"><strong>Facebook<p class="text-uppercase"></strong><p>
+      </div>
+      <div class="col-md-4 photo-description">
+        <p class="text-uppercase"><strong>No Photo<p class="text-uppercase"></strong><p>
+      </div>
+    </div>
   </div>
-  <div class="col-md-4" id="nophoto">
-    <img width="200" class="img-rounded photo"
-      src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <a id="saveLink" class="btn btn-danger" href="#">Save</a>
   </div>
-</div>
-<div class="row">
-  <button class="btn btn-success">Save</button>
 </div>

@@ -41,14 +41,13 @@ import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
-import scravatar.Gravatar
 import services.S3Bucket
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.io.Source
 
-trait People extends Controller with Security with Services {
+trait People extends JsonController with Security with Services {
 
   val contentType = "image/jpeg"
 
@@ -440,9 +439,16 @@ trait People extends Controller with Security with Services {
   def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { person ⇒
-          Ok("")
-        } getOrElse NotFound
+        val form = Form(single("type" -> text)).bindFromRequest
+        form.fold(
+          withError ⇒ jsonBadRequest("No option is provided"),
+          photoType ⇒ {
+            personService.find(id) map { person ⇒
+              val photo = Photo(photoType, person.socialProfile)
+              personService.update(person.copy(photo = photo))
+              jsonSuccess("ok")
+            } getOrElse NotFound
+          })
   }
 
   /**
@@ -455,11 +461,13 @@ trait People extends Controller with Security with Services {
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
           val facebook = person.socialProfile.facebookUrl map { url ⇒
-            Some(facebookUrl(url))
+            Some(Photo.facebookUrl(url))
           } getOrElse None
+          val active = person.photo.id getOrElse "nophoto"
           Ok(views.html.person.photo(
-            gravatarUrl(person.socialProfile.email),
-            facebook))
+            Photo.gravatarUrl(person.socialProfile.email),
+            facebook,
+            active))
         } getOrElse NotFound
   }
 
@@ -522,24 +530,6 @@ trait People extends Controller with Security with Services {
     }
     list.toList
   }
-
-  /**
-   * Returns url to a Gravatar photo based on the given email
-   *
-   * @param email Email of interest
-   */
-  protected def gravatarUrl(email: String): String =
-    Gravatar(email, ssl = true).size(300).avatarUrl
-
-  /**
-   * Returns url to a Facebook photo based on the given Facebook profile
-   *
-   * @param url Url to Facebook profile
-   */
-  protected def facebookUrl(url: String): String =
-    ("""[\w\.]+$""".r findFirstIn url) map { userId ⇒
-      "http://graph.facebook.com/" + userId + "/picture?type=large"
-    } getOrElse ""
 }
 
 object People extends People with Security
