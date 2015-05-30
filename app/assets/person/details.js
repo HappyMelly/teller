@@ -27,10 +27,6 @@ function switchActivePhoto(object) {
     $(object).addClass('active');
 }
 
-function getPersonId() {
-    return $('#personId').val();
-}
-
 function updatePhoto() {
     var url = jsRoutes.controllers.People.updatePhoto(getPersonId()).url
     var object = $('#choosePhotoContent').find('.active');
@@ -45,17 +41,6 @@ function updatePhoto() {
         $('#photo').attr('src', src);
         reloadCompletionWidget();
     }).fail(function(jqXHR, status, error) {
-    });
-}
-
-function reloadCompletionWidget() {
-    var url = jsRoutes.controllers.ProfileCompletions.personProfile(getPersonId()).url
-    $.get(url, function(data) {
-        $('#completionWidget').html(data);
-        $('#addPhotoLink').on('click', function(e) {
-            console.log("OK");
-            showSelectPhotoForm();
-        });
     });
 }
 
@@ -133,6 +118,5 @@ $(document).ready( function() {
     $('#choosePhotoLink').on('click', function(e) {
         showSelectPhotoForm();
     });
-    reloadCompletionWidget();
 });
 

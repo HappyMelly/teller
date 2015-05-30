@@ -26,5 +26,12 @@
     }
   </div>
   <div class="col-md-3">
+    @user.person.member.map { m =>
+      @if(m.active) {
+        @element.membershipPanel(m)
+      }
+    }
+    <div class="panel panel-success" id="completionWidget">
+    </div>
   </div>
 }

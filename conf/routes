@@ -184,6 +184,7 @@ POST          /product/brand/new                                             con
 GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
 GET           /profile/:id/person                                            controllers.ProfileCompletions.personProfile(id: Long)
+GET           /profile/:id/improve                                           controllers.ProfileCompletions.widgetWithImproveButton(id: Long)
 
 
 GET           /registration/welcome                                          controllers.Registration.welcome

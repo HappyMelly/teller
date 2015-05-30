@@ -40,6 +40,13 @@ trait ProfileCompletions extends Controller with Security with Services {
         Ok(views.html.profile.widget(id, x.progress, x.incompleteSteps))
       } getOrElse NotFound
   }
+
+  def widgetWithImproveButton(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      profileCompletionService.find(id) map { x ⇒
+        Ok(views.html.profile.widgetWithImproveButton(id, x.progress))
+      } getOrElse NotFound
+  }
 }
 
 object ProfileCompletions extends ProfileCompletions
