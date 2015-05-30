@@ -81,7 +81,8 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
     val result = controller.updatePhoto(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
@@ -89,7 +90,8 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e5 = {
     (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/1/photo")
+    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/1/photo").
+      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
     val result = controller.updatePhoto(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)

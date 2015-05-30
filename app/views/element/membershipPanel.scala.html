@@ -1,13 +1,12 @@
 @(m: Member)(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
-<div class="panel panel-success">
-  <div class="panel-body">
-    @if(m.funder) {
-      <h2>Funder</h2>
-    }else{
-      <h2>Supporter</h2>
-    }
-  <br/><span class="label label-info">@m.fee</span>
-  </div>
+<div class="memberPanel">
+  @if(m.funder) {
+    <img id="photo" width="250" class="img-rounded"
+      src="@routes.Assets.at("images/funder.png")"/>
+  }else{
+    <img id="photo" width="250" class="img-rounded"
+      src="@routes.Assets.at("images/supporter.png")"/>
+  }
 </div>

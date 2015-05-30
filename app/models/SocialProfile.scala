@@ -21,8 +21,9 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
+
+import scala.language.implicitConversions
 
 /**
  * A type of social profile
@@ -47,5 +48,16 @@ case class SocialProfile(
 
   def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
     googlePlusUrl.isDefined || linkedInUrl.isDefined
+
+  /**
+   * Returns true if at least 2 social networks are not empy
+   */
+  def complete: Boolean = {
+    implicit def bool2int(b: Boolean) = if (b) 1 else 0
+
+    val counter = twitterHandle.isDefined + facebookUrl.isDefined +
+      googlePlusUrl.isDefined + linkedInUrl.isDefined
+    (counter >= 2)
+  }
 }
 

@@ -108,6 +108,9 @@ td .btn-link {
 .photo-selector .photo-description {
     margin: 20px 0px 10px 0px;
 }
+.memberPanel {
+    margin-top: 35px;
+}
 
 .actions form {
     margin-bottom: 1em;

@@ -83,7 +83,7 @@ trait People extends JsonController with Security with Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(user: UserIdentity) = {
+  def personForm(editorName: String) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
@@ -100,9 +100,9 @@ trait People extends JsonController with Security with Services {
       "active" -> ignored(true),
       "dateStamp" -> mapping(
         "created" -> ignored(DateTime.now()),
-        "createdBy" -> ignored(user.fullName),
+        "createdBy" -> ignored(editorName),
         "updated" -> ignored(DateTime.now()),
-        "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
+        "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply)) (
         { (id, firstName, lastName, emailAddress, birthday, signature,
           address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
           {
@@ -154,7 +154,7 @@ trait People extends JsonController with Security with Services {
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.person.form(user, None, personForm(user)))
+      Ok(views.html.person.form(user, None, personForm(user.fullName)))
   }
 
   /**
@@ -197,7 +197,7 @@ trait People extends JsonController with Security with Services {
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      personForm(user).bindFromRequest.fold(
+      personForm(user.fullName).bindFromRequest.fold(
         formWithErrors ⇒ {
           BadRequest(views.html.person.form(user, None, formWithErrors))
         },
@@ -306,7 +306,8 @@ trait People extends JsonController with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.person.form(user, Some(id), personForm(user).fill(person)))
+        Ok(views.html.person.form(user, Some(id),
+          personForm(user.fullName).fill(person)))
       }.getOrElse(NotFound)
   }
 
@@ -319,25 +320,17 @@ trait People extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { p ⇒
-          personForm(user).bindFromRequest.fold(
+          personForm(user.fullName).bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
             person ⇒ {
-              val base = person.socialProfile.copy(
-                objectId = id,
-                objectType = ProfileType.Person)
-              socialProfileService.findDuplicate(base) map { duplicate ⇒
-                var form = personForm(user).fill(person)
-                compareSocialProfiles(duplicate, base).
-                  foreach(err ⇒ form = form.withError(err))
+              checkDuplication(person, id, user.fullName) map { form ⇒
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
                   .copy(id = Some(id), active = p.active, photo = p.photo)
-                  .copy(customerId = p.customerId)
-                updatedPerson.socialProfile_=(person.socialProfile)
-                updatedPerson.address_=(person.address)
-                updatedPerson.update
+                  .copy(customerId = p.customerId).update
+                updateProfileCompletion(updatedPerson)
                 val activity = updatedPerson.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
@@ -456,8 +449,12 @@ trait People extends JsonController with Security with Services {
                   val profileUrl = "https://www.facebook.com/" + facebookName
                   person.socialProfile_=(profile.copy(facebookUrl = Some(profileUrl)))
                 }
-                val photo = Photo(photoType, person.socialProfile)
-                personService.update(person.copy(photo = photo))
+                val photo = if (photoType == "nophoto")
+                  Photo.empty
+                else
+                  Photo(photoType, person.socialProfile)
+                val updated = personService.update(person.copy(photo = photo))
+                updateProfileCompletion(updated)
                 jsonSuccess("ok")
               } getOrElse NotFound
           })
@@ -541,6 +538,43 @@ trait People extends JsonController with Security with Services {
       list += FormError("profile.googlePlusUrl", msg)
     }
     list.toList
+  }
+
+  /**
+   * Returns form with erros if a person with identical social networks exists
+   *
+   * @param person Person object with incomplete social profile
+   * @param id Identifier of a person which is updated
+   * @param editorName Name of a user who adds changes
+   */
+  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
+    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
+    socialProfileService.findDuplicate(base) map { duplicate ⇒
+      var form = personForm(editorName).fill(person)
+      compareSocialProfiles(duplicate, base).
+        foreach(err ⇒ form = form.withError(err))
+      Some(form)
+    } getOrElse None
+  }
+
+  protected def updateProfileCompletion(person: Person): Unit = {
+    profileCompletionService.find(person.id.get, false) map { completion ⇒
+      val completionWithDesc = person.bio map { y ⇒
+        completion.markComplete("about")
+      } getOrElse {
+        completion.markIncomplete("about")
+      }
+      val completionWithSocial = if (person.socialProfile.complete)
+        completionWithDesc.markComplete("social")
+      else
+        completionWithDesc.markIncomplete("social")
+      val completionWithPhoto = if (person.photo.id.isDefined) {
+        completionWithSocial.markComplete("photo")
+      } else {
+        completionWithSocial.markIncomplete("photo")
+      }
+      profileCompletionService.update(completionWithPhoto)
+    }
   }
 }
 

@@ -43,7 +43,30 @@ function updatePhoto() {
     $.post(url, {type: type, name: name}, null, "json").done(function(data) {
         $('#photoDialog').modal('hide');
         $('#photo').attr('src', src);
+        reloadCompletionWidget();
     }).fail(function(jqXHR, status, error) {
+    });
+}
+
+function reloadCompletionWidget() {
+    var url = jsRoutes.controllers.ProfileCompletions.personProfile(getPersonId()).url
+    $.get(url, function(data) {
+        $('#completionWidget').html(data);
+        $('#addPhotoLink').on('click', function(e) {
+            console.log("OK");
+            showSelectPhotoForm();
+        });
+    });
+}
+
+function showSelectPhotoForm() {
+    $.get(jsRoutes.controllers.People.choosePhoto(getPersonId()).url, function(data) {
+        $('#choosePhotoContent').html(data);
+        $('#choosePhotoContent img').on('click', function(e) {
+            switchActivePhoto($(this));
+        });
+        $('#saveLink').on('click', updatePhoto);
+        $('#facebookRequest').on('click', retrieveFacebookPhoto);
     });
 }
 
@@ -108,15 +131,8 @@ $(document).ready( function() {
     $('[data-toggle="tooltip"]').tooltip();
 
     $('#choosePhotoLink').on('click', function(e) {
-        $('#choosePhotoContent').empty();
-        $.get(jsRoutes.controllers.People.choosePhoto(getPersonId()).url, function(data) {
-            $('#choosePhotoContent').html(data);
-            $('#choosePhotoContent img').on('click', function(e) {
-                switchActivePhoto($(this));
-            });
-            $('#saveLink').on('click', updatePhoto);
-            $('#facebookRequest').on('click', retrieveFacebookPhoto);
-        });
+        showSelectPhotoForm();
     });
+    reloadCompletionWidget();
 });
 

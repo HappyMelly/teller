@@ -177,7 +177,7 @@ trait Members extends Enrollment {
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newPerson(user, None, People.personForm(user)))
+      Ok(views.html.member.newPerson(user, None, People.personForm(user.fullName)))
   }
 
   /** Renders Add new organisation page */
@@ -233,7 +233,7 @@ trait Members extends Enrollment {
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(user).bindFromRequest
+      val personForm = People.personForm(user.fullName).bindFromRequest
       personForm.fold(
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(user, None, hasErrors)),

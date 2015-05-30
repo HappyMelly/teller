@@ -183,6 +183,9 @@ POST          /product/:id/picture/delete                                    con
 POST          /product/brand/new                                             controllers.Products.addBrand
 GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
+GET           /profile/:id/person                                            controllers.ProfileCompletions.personProfile(id: Long)
+
+
 GET           /registration/welcome                                          controllers.Registration.welcome
 GET           /registration/step1                                            controllers.Registration.step1(org: Boolean ?= false)
 GET           /registration/step2                                            controllers.Registration.step2

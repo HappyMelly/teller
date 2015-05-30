@@ -1,0 +1,35 @@
+@(personId: Long,
+  progress: Int,
+  steps: List[CompletionStep])
+
+<div class="panel-body">
+  <h4>Profile Strength</h4>
+  <div class="progress">
+    <div class="progress-bar" role="progressbar" aria-valuenow="@progress"
+      aria-valuemin="0" aria-valuemax="100" style="width: @(progress)%;">
+      @(progress)%
+    </div>
+  </div>
+  <div class="text-center">
+  <ul class="list-unstyled">
+    @for(step <- steps) {
+      <li>
+        <strong>@(step.weight)%</strong>
+        @if(step.name == "photo") {
+          <a href="#" id="addPhotoLink" data-toggle="modal" data-target="#photoDialog">
+           Add photo</a>
+        }
+        @if(step.name == "about") {
+          <a href="@routes.People.edit(personId)">Add description</a>
+        }
+        @if(step.name == "social") {
+          <a href="@routes.People.edit(personId)">Add 2 social networks</a>
+        }
+        @if(step.name == "reason") {
+          <a href="#">Share why you joined the network</a>
+        }
+      </li>
+    }
+  </ul>
+  </div>
+</div>

@@ -8,19 +8,23 @@
     handler: AuthorisationHandler)
 
 @main("Home", "", user) {
-  @if(future.length > 0) {
-    @dashboard.blocks.upcoming(future)
-  }
-  @if(past.length > 0) {
-    @dashboard.blocks.past(past)
-  }
-  @if(evaluations.length > 0) {
-    @dashboard.blocks.evaluations(evaluations)
-  }
-  @if(licenses.length > 0) {
-    @dashboard.blocks.expiring(licenses)
-  }
-  @if(cancellations.length > 0) {
-    @dashboard.blocks.cancellation(cancellations)
-  }
+  <div class="col-md-9 content-block">
+    @if(future.length > 0) {
+      @dashboard.blocks.upcoming(future)
+    }
+    @if(past.length > 0) {
+      @dashboard.blocks.past(past)
+    }
+    @if(evaluations.length > 0) {
+      @dashboard.blocks.evaluations(evaluations)
+    }
+    @if(licenses.length > 0) {
+      @dashboard.blocks.expiring(licenses)
+    }
+    @if(cancellations.length > 0) {
+      @dashboard.blocks.cancellation(cancellations)
+    }
+  </div>
+  <div class="col-md-3">
+  </div>
 }

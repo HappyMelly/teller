@@ -27,8 +27,10 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.{ People, Security }
 import helpers._
-import models.{ SocialProfile, Photo }
-import org.scalamock.specs2.IsolatedMockFactory
+import models.{ SocialProfile, Photo, ProfileCompletion }
+import models.service.ProfileCompletionService
+import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
+import play.api.libs.json._
 import play.api.test.FakeRequest
 import stubs._
 
@@ -51,16 +53,36 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
   When a person provides valid data the system
     should update a person profile                                      $e5
     should update a person profile if Facebook photo is added           $e6
+
+  When a person provides valid data the system
+    should mark a photo step as Complete if Facebook photo is added     $e7
+    should mark a photo step as Complete if Gravatar photo is added     $e8
+    should mark a photo step as Incomplete if no photo is added         $e9
   """
 
   class TestPeople() extends People with Security with FakeServices
 
   val controller = new TestPeople()
   val personService = mock[FakePersonService]
+  val profileCompletionService = mock[ProfileCompletionService]
   controller.personService_=(personService)
+  controller.profileCompletionService_=(profileCompletionService)
+
+  val person = PersonHelper.one()
+  val profile = new SocialProfile(email = "test@test.com")
+  val facebookPhoto = Photo(Some("facebook"),
+    Some("http://graph.facebook.com/skotlov/picture?type=large"))
+
+  trait DefaultPerson extends MockContext {
+    person.socialProfile_=(profile)
+    (personService.find(_: Long)) expects 1L returning Some(person)
+  }
+
+  trait NoCompletionProfile extends DefaultPerson {
+    (profileCompletionService.find _) expects (1L, false) returning None
+  }
 
   def e1 = {
-    val person = PersonHelper.one()
     person.socialProfile_=(new SocialProfile(email = "test@test.com",
       facebookUrl = Some("https://www.facebook.com/skotlov")))
     (personService.find(_: Long)) expects 1L returning Some(person)
@@ -71,20 +93,14 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must contain("http://graph.facebook.com")
   }
 
-  def e2 = {
-    val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-    (personService.find(_: Long)) expects 1L returning Some(person)
+  def e2 = new DefaultPerson {
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
     val result = controller.choosePhoto(1L).apply(req)
     contentAsString(result) must not contain "http://graph.facebook.com"
     contentAsString(result) must contain("Enter Facebook name")
   }
 
-  def e3 = {
-    val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
-    (personService.find(_: Long)) expects 1L returning Some(person)
+  def e3 = new DefaultPerson {
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
     val result = controller.choosePhoto(1L).apply(req)
     contentAsString(result) must contain("https://secure.gravatar.com")
@@ -98,34 +114,95 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must contain("No option is provided")
   }
 
-  def e5 = {
-    val profile = new SocialProfile(email = "test@test.com")
-    val person = PersonHelper.one()
-    person.socialProfile_=(profile)
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
-    val updatedPerson = person.copy(photo = photo)
-    (personService.update _) expects updatedPerson returning updatedPerson
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
-    val result = controller.updatePhoto(1L).apply(req)
+  def e5 = new NoCompletionProfile {
+    (personService.update _) expects personWithGravatar returning personWithGravatar
+
+    val result = controller.updatePhoto(1L).apply(gravatarRequest)
     status(result) must equalTo(OK)
   }
 
-  def e6 = {
-    val profile = new SocialProfile(email = "test@test.com")
-    val person = PersonHelper.one()
-    person.socialProfile_=(profile)
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    val url = "http://graph.facebook.com/skotlov/picture?type=large";
-    val photo = Photo(Some("facebook"), Some(url))
-    val updatedPerson = person.copy(photo = photo)
+  def e6 = new NoCompletionProfile {
+    (personService.update _) expects personWithFacebook returning personWithFacebook
+
+    val result = controller.updatePhoto(1L).apply(facebookRequest)
+    status(result) must equalTo(OK)
+  }
+
+  def e7 = new DefaultPerson {
+    val completion = ProfileCompletion(None, 1L, false, steps(false))
+    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
+    (personService.update _) expects personWithGravatar returning personWithGravatar
+
+    // the main condition we check
+    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(true)) returning completion
+    val result = controller.updatePhoto(1L).apply(gravatarRequest)
+    status(result) must equalTo(OK)
+  }
+
+  def e8 = new DefaultPerson {
+    val completion = ProfileCompletion(None, 1L, false, steps(false))
+    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
+    (personService.update _) expects personWithFacebook returning personWithFacebook
+
+    // the main condition we check
+    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(true)) returning completion
+    val result = controller.updatePhoto(1L).apply(facebookRequest)
+    status(result) must equalTo(OK)
+  }
+
+  def e9 = new DefaultPerson {
+    val completion = ProfileCompletion(None, 1L, false, steps(true))
+    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
+    val updatedPerson = person.copy(photo = Photo.empty)
+    (personService.update _) expects updatedPerson returning updatedPerson
+
+    // the main condition we check
+    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(false)) returning completion
+    val result = controller.updatePhoto(1L).apply(noPhotoRequest)
+    status(result) must equalTo(OK)
+  }
+
+  /**
+   * Returns profile completion steps
+   *
+   * @param photoStep Set a photo step to 'complete' or 'incomplete' state
+   */
+  private def steps(photoStep: Boolean): JsArray = {
+    Json.arr(
+      Json.obj(
+        "name" -> "photo",
+        "weight" -> 10,
+        "done" -> photoStep), Json.obj(
+        "name" -> "about",
+        "weight" -> 5,
+        "done" -> false), Json.obj(
+        "name" -> "reason",
+        "weight" -> 5,
+        "done" -> true))
+  }
+
+  private def gravatarRequest =
+    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
+      withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
+
+  private def facebookRequest =
+    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
+      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
+
+  private def noPhotoRequest =
+    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
+      withFormUrlEncodedBody(("type" -> "nophoto"), ("name" -> ""))
+
+  private def personWithFacebook = {
+    val updatedPerson = person.copy(photo = facebookPhoto)
     val facebookUrl = "https://www.facebook.com/skotlov"
     updatedPerson.socialProfile_=(profile.copy(facebookUrl = Some(facebookUrl)))
-    (personService.update _) expects updatedPerson returning updatedPerson
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.updatePhoto(1L).apply(req)
-    status(result) must equalTo(OK)
+    updatedPerson
+  }
+
+  private def personWithGravatar = {
+    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
+    val updatedPerson = person.copy(photo = photo)
+    updatedPerson
   }
 }
