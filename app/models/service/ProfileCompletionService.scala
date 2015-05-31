@@ -50,7 +50,7 @@ class ProfileCompletionService {
         filter(_.objectId === completion.objectId).
         filter(_.org === completion.org).
         map(_.forUpdate).
-        update(completion.stepsArray)
+        update(completion.stepsInJson)
 
       completion
     }

@@ -198,9 +198,8 @@ trait People extends JsonController with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       personForm(user.fullName).bindFromRequest.fold(
-        formWithErrors ⇒ {
-          BadRequest(views.html.person.form(user, None, formWithErrors))
-        },
+        formWithErrors ⇒
+          BadRequest(views.html.person.form(user, None, formWithErrors)),
         person ⇒ {
           val updatedPerson = person.insert
           val activity = updatedPerson.activity(
@@ -330,7 +329,6 @@ trait People extends JsonController with Security with Services {
                 val updatedPerson = person
                   .copy(id = Some(id), active = p.active, photo = p.photo)
                   .copy(customerId = p.customerId).update
-                updateProfileCompletion(updatedPerson)
                 val activity = updatedPerson.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
@@ -357,33 +355,34 @@ trait People extends JsonController with Security with Services {
    *
    * @param id Person identifier
    */
-  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      val encoding = "ISO-8859-1"
-      personService.find(id).map { person ⇒
-        val route = routes.People.details(person.id.get).url + "#facilitation"
+        val encoding = "ISO-8859-1"
+        personService.find(id).map { person ⇒
+          val route = routes.People.details(person.id.get).url + "#facilitation"
 
-        request.body.asMultipartFormData.get.file("signature").map { picture ⇒
-          val filename = Person.fullFileName(person.id.get)
-          val source = Source.fromFile(picture.ref.file.getPath, encoding)
-          val byteArray = source.toArray.map(_.toByte)
-          source.close()
-          S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-            person.copy(signature = true).update
-            Cache.remove(Person.cacheId(id))
-            val activity = person.activity(
-              user.person,
-              Activity.Predicate.UploadedSign).insert
-            Redirect(route).flashing("success" -> activity.toString)
-          }.recover {
-            case S3Exception(status, code, message, originalXml) ⇒
-              Redirect(route).flashing("error" -> "Image cannot be temporary saved")
+          request.body.asMultipartFormData.get.file("signature").map { picture ⇒
+            val filename = Person.fullFileName(person.id.get)
+            val source = Source.fromFile(picture.ref.file.getPath, encoding)
+            val byteArray = source.toArray.map(_.toByte)
+            source.close()
+            S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+              personService.update(person.copy(signature = true))
+              Cache.remove(Person.cacheId(id))
+              val activity = person.activity(
+                user.person,
+                Activity.Predicate.UploadedSign).insert
+              Redirect(route).flashing("success" -> activity.toString)
+            }.recover {
+              case S3Exception(status, code, message, originalXml) ⇒
+                Redirect(route).flashing("error" -> "Image cannot be temporary saved")
+            }
+          } getOrElse {
+            Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
           }
-        }.getOrElse {
-          Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
-        }
-      }.getOrElse(Future.successful(NotFound))
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -391,20 +390,21 @@ trait People extends JsonController with Security with Services {
    *
    * @param personId Person identifier
    */
-  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      personService.find(personId.toLong).map { person ⇒
-        if (person.signature) {
-          S3Bucket.remove(Person.fullFileName(personId))
-          Cache.remove(Person.cacheId(personId))
-        }
-        person.copy(signature = false).update
-        val activity = person.activity(
-          user.person,
-          Activity.Predicate.DeletedSign).insert
-        val route = routes.People.details(personId).url + "#facilitation"
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.find(personId.toLong).map { person ⇒
+          if (person.signature) {
+            S3Bucket.remove(Person.fullFileName(personId))
+            Cache.remove(Person.cacheId(personId))
+          }
+          personService.update(person.copy(signature = false))
+          val activity = person.activity(
+            user.person,
+            Activity.Predicate.DeletedSign).insert
+          val route = routes.People.details(personId).url + "#facilitation"
+          Redirect(route).flashing("success" -> activity.toString)
+        } getOrElse NotFound
   }
 
   /**
@@ -453,8 +453,7 @@ trait People extends JsonController with Security with Services {
                   Photo.empty
                 else
                   Photo(photoType, person.socialProfile)
-                val updated = personService.update(person.copy(photo = photo))
-                updateProfileCompletion(updated)
+                personService.update(person.copy(photo = photo))
                 jsonSuccess("ok")
               } getOrElse NotFound
           })
@@ -557,25 +556,6 @@ trait People extends JsonController with Security with Services {
     } getOrElse None
   }
 
-  protected def updateProfileCompletion(person: Person): Unit = {
-    profileCompletionService.find(person.id.get, false) map { completion ⇒
-      val completionWithDesc = person.bio map { y ⇒
-        completion.markComplete("about")
-      } getOrElse {
-        completion.markIncomplete("about")
-      }
-      val completionWithSocial = if (person.socialProfile.complete)
-        completionWithDesc.markComplete("social")
-      else
-        completionWithDesc.markIncomplete("social")
-      val completionWithPhoto = if (person.photo.id.isDefined) {
-        completionWithSocial.markComplete("photo")
-      } else {
-        completionWithSocial.markIncomplete("photo")
-      }
-      profileCompletionService.update(completionWithPhoto)
-    }
-  }
 }
 
 object People extends People with Security

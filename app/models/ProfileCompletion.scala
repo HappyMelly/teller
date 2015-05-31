@@ -31,7 +31,7 @@ case class CompletionStep(name: String, weight: Int, done: Boolean = false)
 case class ProfileCompletion(id: Option[Long],
   objectId: Long,
   org: Boolean = false,
-  stepsArray: JsArray) {
+  steps: List[CompletionStep]) {
 
   /**
    * Returns a profile completion progress in percents
@@ -71,6 +71,17 @@ case class ProfileCompletion(id: Option[Long],
    */
   def markIncomplete(name: String): ProfileCompletion = markStep(name, false)
 
+  def stepsInJson: JsArray = {
+    implicit val stepWriter = new Writes[CompletionStep] {
+      def writes(data: CompletionStep): JsValue = {
+        Json.obj(
+          "name" -> data.name,
+          "weight" -> data.weight,
+          "done" -> data.done)
+      }
+    }
+    Json.toJson(steps).as[JsArray]
+  }
   /**
    * Marks the given step as complete or incomplete
    *
@@ -82,26 +93,71 @@ case class ProfileCompletion(id: Option[Long],
     steps.find(_.name == name).map { x ⇒
       val completedStep = x.copy(done = done)
       val oldSteps = steps.filterNot(_.name == name)
-
-      implicit val stepWriter = new Writes[CompletionStep] {
-        def writes(data: CompletionStep): JsValue = {
-          Json.obj(
-            "name" -> data.name,
-            "weight" -> data.weight,
-            "done" -> data.done)
-        }
-      }
-      this.copy(stepsArray = Json.toJson(completedStep :: oldSteps).as[JsArray])
-
+      val sortedSteps = (completedStep :: oldSteps).sortBy(_.name)
+      this.copy(steps = sortedSteps)
     } getOrElse this
   }
+}
 
-  private lazy val steps: List[CompletionStep] = {
+object ProfileCompletion {
+
+  def apply(id: Option[Long],
+    objectId: Long,
+    org: Boolean,
+    stepsInJson: JsArray): ProfileCompletion = {
+
     implicit val stepReader = (
       (__ \ "name").read[String] and
       (__ \ "weight").read[Int] and
       (__ \ "done").read[Boolean])(CompletionStep)
 
-    stepsArray.as[List[CompletionStep]]
+    ProfileCompletion(id, objectId, org, stepsInJson.as[List[CompletionStep]])
+  }
+
+  /**
+   * Creates a profile strength for a new person
+   *
+   * @param objectId Person or org identifier
+   * @param org If true objectId is org identifier
+   */
+  def empty(objectId: Long, org: Boolean): ProfileCompletion = {
+    val steps = List(CompletionStep("about", 1),
+      CompletionStep("photo", 4),
+      CompletionStep("social", 1),
+      CompletionStep("member", 2))
+    ProfileCompletion(None, objectId, org, steps)
+  }
+
+  /**
+   * Adds steps for a facilitator to the given profile strength
+   *
+   * @param completion Profile strength
+   * @return Updated profile strength with added steps
+   */
+  def forFacilitator(completion: ProfileCompletion): ProfileCompletion = {
+    val withSignature = if (completion.steps.exists(_.name == "signature"))
+      completion.steps
+    else
+      completion.steps :+ CompletionStep("signature", 1)
+    val withLanguage = if (withSignature.exists(_.name == "language"))
+      withSignature
+    else
+      withSignature :+ CompletionStep("language", 1)
+    completion.copy(steps = withLanguage)
+  }
+
+  /**
+   * Updates steps for a member to the given profile strength
+   *
+   * @param completion Profile strength
+   * @return Updated profile strength
+   */
+  def forMember(completion: ProfileCompletion): ProfileCompletion = {
+    val withoutMember = completion.steps.filterNot(_.name == "member")
+    val withReason = if (withoutMember.exists(_.name == "reason"))
+      withoutMember
+    else
+      withoutMember :+ CompletionStep("reason", 2)
+    completion.copy(steps = withReason)
   }
 }

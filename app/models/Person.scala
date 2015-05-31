@@ -313,11 +313,28 @@ case class Person(
    * @return Returns member object
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
-    val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      renewal = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
-      existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
-    memberService.insert(m)
+    val m = memberService.insert(membership(funder, fee))
+    profileCompletionService.find(id.get, false) map { x ⇒
+      profileCompletionService.update(ProfileCompletion.forMember(x))
+    }
+    m
   }
+
+  /**
+   * Returns a one-year membership object for the given parameters
+   *
+   * @param funder If true member is a funder
+   * @param fee An amount of membership fee
+   */
+  protected def membership(funder: Boolean, fee: Money): Member =
+    new Member(None, id.get, person = true,
+      funder = funder, fee = fee,
+      renewal = true,
+      since = LocalDate.now(),
+      until = LocalDate.now().plusYears(1),
+      existingObject = true,
+      created = DateTime.now(), id.get,
+      DateTime.now(), id.get)
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

@@ -53,11 +53,6 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
   When a person provides valid data the system
     should update a person profile                                      $e5
     should update a person profile if Facebook photo is added           $e6
-
-  When a person provides valid data the system
-    should mark a photo step as Complete if Facebook photo is added     $e7
-    should mark a photo step as Complete if Gravatar photo is added     $e8
-    should mark a photo step as Incomplete if no photo is added         $e9
   """
 
   class TestPeople() extends People with Security with FakeServices
@@ -126,59 +121,6 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val result = controller.updatePhoto(1L).apply(facebookRequest)
     status(result) must equalTo(OK)
-  }
-
-  def e7 = new DefaultPerson {
-    val completion = ProfileCompletion(None, 1L, false, steps(false))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
-    (personService.update _) expects personWithGravatar returning personWithGravatar
-
-    // the main condition we check
-    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(true)) returning completion
-    val result = controller.updatePhoto(1L).apply(gravatarRequest)
-    status(result) must equalTo(OK)
-  }
-
-  def e8 = new DefaultPerson {
-    val completion = ProfileCompletion(None, 1L, false, steps(false))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
-    (personService.update _) expects personWithFacebook returning personWithFacebook
-
-    // the main condition we check
-    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(true)) returning completion
-    val result = controller.updatePhoto(1L).apply(facebookRequest)
-    status(result) must equalTo(OK)
-  }
-
-  def e9 = new DefaultPerson {
-    val completion = ProfileCompletion(None, 1L, false, steps(true))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion)
-    val updatedPerson = person.copy(photo = Photo.empty)
-    (personService.update _) expects updatedPerson returning updatedPerson
-
-    // the main condition we check
-    (profileCompletionService.update _) expects completion.copy(stepsArray = steps(false)) returning completion
-    val result = controller.updatePhoto(1L).apply(noPhotoRequest)
-    status(result) must equalTo(OK)
-  }
-
-  /**
-   * Returns profile completion steps
-   *
-   * @param photoStep Set a photo step to 'complete' or 'incomplete' state
-   */
-  private def steps(photoStep: Boolean): JsArray = {
-    Json.arr(
-      Json.obj(
-        "name" -> "photo",
-        "weight" -> 10,
-        "done" -> photoStep), Json.obj(
-        "name" -> "about",
-        "weight" -> 5,
-        "done" -> false), Json.obj(
-        "name" -> "reason",
-        "weight" -> 5,
-        "done" -> true))
   }
 
   private def gravatarRequest =

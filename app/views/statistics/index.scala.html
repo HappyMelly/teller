@@ -47,11 +47,6 @@
     </div>
   </div>
 
-  @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.Statistics.byFacilitators,
-    routes.javascript.Statistics.byEvents,
-    routes.javascript.Statistics.byCountries
-  )
   <script src="@routes.Assets.at("javascripts/Chart.min.js")"></script>
   <script src="@routes.Assets.at("statistics/index.js")" type="text/javascript"></script>
 }

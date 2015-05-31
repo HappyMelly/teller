@@ -103,13 +103,7 @@ trait Membership extends Enrollment {
             val org = data.orgId map { orgId ⇒ orgService.find(orgId) } getOrElse None
             validatePaymentData(data, user.person, org)
 
-            val key = Play.configuration.getString("stripe.secret_key").get
-            val payment = new Payment(key)
-            val customerId = payment.subscribe(user.person,
-              org,
-              data.token,
-              data.fee)
-
+            val customerId = subscribe(user.person, org, data)
             val fee = Money.of(EUR, data.fee)
             val member = org map { o ⇒
               o.copy(customerId = Some(customerId)).update

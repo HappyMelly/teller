@@ -32,7 +32,7 @@ import play.api.Play.current
 
 import scala.slick.lifted.Query
 
-class PersonService {
+class PersonService extends Services {
 
   /**
    * Deletes the person with the given ID and their account.
@@ -67,7 +67,6 @@ class PersonService {
 
       val saved = person.copy(id = Some(id))
       saved.address_=(address)
-      saved.socialProfile_=(person.socialProfile)
       saved
   }
 
@@ -160,7 +159,36 @@ class PersonService {
     updateQuery.update(personUpdateTuple)
 
     UserAccount.updateSocialNetworkProfiles(person)
+    updateProfileCompletion(person)
+
     person
+  }
+
+  /**
+   * Updates profile completion depending
+   *
+   * @param person Person object to update profile completion for
+   */
+  protected def updateProfileCompletion(person: Person): Unit = {
+    profileCompletionService.find(person.id.get, false) map { completion ⇒
+      val completionWithDesc = if (person.bio.isDefined)
+        completion.markComplete("about")
+      else
+        completion.markIncomplete("about")
+      val completionWithSocial = if (person.socialProfile.complete)
+        completionWithDesc.markComplete("social")
+      else
+        completionWithDesc.markIncomplete("social")
+      val completionWithPhoto = if (person.photo.id.isDefined)
+        completionWithSocial.markComplete("photo")
+      else
+        completionWithSocial.markIncomplete("photo")
+      val completionWithSignature = if (person.signature)
+        completionWithPhoto.markComplete("signature")
+      else
+        completionWithPhoto.markIncomplete("signature")
+      profileCompletionService.update(completionWithSignature)
+    }
   }
 }
 

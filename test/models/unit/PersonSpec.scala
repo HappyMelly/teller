@@ -23,13 +23,11 @@
  */
 package models.unit
 
-import helpers.{ MemberHelper, PersonHelper }
+import helpers.PersonHelper
 import models._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.{ FakeMemberService, FakeServices }
 
 class PersonSpec extends Specification {
 
@@ -77,4 +75,5 @@ class PersonSpec extends Specification {
       person.copy(active = false).socialProfile must_== socialProfile
     }
   }
+
 }

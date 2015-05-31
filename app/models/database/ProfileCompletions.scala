@@ -42,7 +42,8 @@ private[models] object ProfileCompletions extends Table[ProfileCompletion]("PROF
   def steps = column[JsArray]("STEPS")
 
   def * = id.? ~ objectId ~ org ~
-    steps <> (ProfileCompletion.apply _, ProfileCompletion.unapply _)
+    steps <> ({ p ⇒ ProfileCompletion(p._1, p._2, p._3, p._4) },
+      { (p: ProfileCompletion) ⇒ Some((p.id, p.objectId, p.org, p.stepsInJson)) })
 
   def forUpdate = steps
 }

@@ -165,12 +165,12 @@ trait Members extends Enrollment {
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { m ⇒
         memberService.delete(m.objectId, m.person)
-        val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
+        val activity = m.activity(user.person, Activity.Predicate.Deleted).insert
         val url = profileUrl(m)
         val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
           m.name, fullUrl(url))
         slack.send(msg)
-        Redirect(url).flashing("success" -> activty.toString)
+        Redirect(url).flashing("success" -> activity.toString)
       } getOrElse NotFound
   }
 

@@ -90,13 +90,15 @@ object Licenses extends Controller with Security with Services {
   def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      PersonService.get.find(personId).map { person ⇒
+      personService.find(personId).map { person ⇒
         licenseForm.bindFromRequest.fold(
           form ⇒ BadRequest(views.html.license.form(user, None, form, person)),
           license ⇒ {
             val newLicense = licenseService.add(license.copy(licenseeId = personId))
             val brand = brandService.find(newLicense.brandId).get
-
+            profileCompletionService.find(personId, false) map { x ⇒
+              profileCompletionService.update(ProfileCompletion.forFacilitator(x))
+            }
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
             val route = routes.People.details(personId).url + "#facilitation"

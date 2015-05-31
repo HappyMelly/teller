@@ -129,4 +129,35 @@ class ProfileCompletionSpec extends Specification {
       updatedCompletion.incompleteSteps.contains(photo) must_== true
     }
   }
+
+  "Empty profile completion" should {
+    "contains 4 incomplete steps" in {
+      val completion = ProfileCompletion.empty(1L, false)
+      completion.steps.length must_== 4
+      completion.steps.exists(_.name == "about") must_== true
+      completion.steps.exists(_.name == "photo") must_== true
+      completion.steps.exists(_.name == "social") must_== true
+      completion.steps.exists(_.name == "member") must_== true
+    }
+  }
+
+  "For facilitator profile strength" should {
+    "contain 2 additional steps" in {
+      val completion = ProfileCompletion.forFacilitator(ProfileCompletion.empty(1L, false))
+      completion.steps.length must_== 6
+      completion.steps.exists(_.name == "signature") must_== true
+      completion.steps.exists(_.name == "language") must_== true
+    }
+  }
+
+  "For member profile strength" should {
+    "not contain 'Member' step" in {
+      val completion = ProfileCompletion.forMember(ProfileCompletion.empty(1L, false))
+      completion.steps.exists(_.name == "member") must_== false
+    }
+    "contain 'Reason' step" in {
+      val completion = ProfileCompletion.forMember(ProfileCompletion.empty(1L, false))
+      completion.steps.exists(_.name == "reason") must_== true
+    }
+  }
 }

@@ -49,6 +49,15 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   When a reason step is not complete
     the profile completion widget should contain 'Share why you joined the network' step $e4
+
+  When a member step is not complete
+    the profile strength widget should contain 'Become a member' step     $e5
+
+  When a signature step is not complete
+    the profile strength widget should contain 'Upload your signature'    $e6
+
+  When a language step is not complete
+    the profile strength widget should contain 'Add at least 1 language'  $e7
   """
 
   class TestProfileCompletions() extends ProfileCompletions
@@ -117,5 +126,50 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
     val result = controller.personProfile(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Share why you joined the network")
+  }
+
+  def e5 = {
+    val steps = Json.arr(
+      Json.obj(
+        "name" -> "member",
+        "weight" -> 10,
+        "done" -> false))
+    val completion = ProfileCompletion(None, 1L, false, steps);
+
+    (service.find _) expects (1L, false) returning Some(completion)
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
+    val result = controller.personProfile(1L).apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Become a member")
+  }
+
+  def e6 = {
+    val steps = Json.arr(
+      Json.obj(
+        "name" -> "signature",
+        "weight" -> 10,
+        "done" -> false))
+    val completion = ProfileCompletion(None, 1L, false, steps);
+
+    (service.find _) expects (1L, false) returning Some(completion)
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
+    val result = controller.personProfile(1L).apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Upload your signature")
+  }
+
+  def e7 = {
+    val steps = Json.arr(
+      Json.obj(
+        "name" -> "language",
+        "weight" -> 10,
+        "done" -> false))
+    val completion = ProfileCompletion(None, 1L, false, steps);
+
+    (service.find _) expects (1L, false) returning Some(completion)
+    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
+    val result = controller.personProfile(1L).apply(req)
+    status(result) must equalTo(OK)
+    contentAsString(result) must contain("Add at least 1 language")
   }
 }

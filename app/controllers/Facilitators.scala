@@ -25,7 +25,7 @@
 package controllers
 
 import models._
-import models.service.PersonService
+import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -37,7 +37,7 @@ import views.Languages
 /**
  * Facilitators pages
  */
-object Facilitators extends Controller with Security {
+object Facilitators extends Controller with Security with Services {
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {
@@ -84,9 +84,12 @@ object Facilitators extends Controller with Security {
         errors ⇒ BadRequest("Language is not chosen"),
         {
           case (language) ⇒
-            PersonService.get.find(id).map { person ⇒
+            personService.find(id).map { person ⇒
               if (!FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
                 FacilitatorLanguage(id, language).insert
+                profileCompletionService.find(id, false) map { x ⇒
+                  profileCompletionService.update(x.markComplete("language"))
+                }
               }
               val languageName = Languages.all.getOrElse(language, "")
               val desc = Messages("activity.relationship.create",
@@ -109,9 +112,15 @@ object Facilitators extends Controller with Security {
   def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        PersonService.get.find(id).map { person ⇒
-          if (FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
+        personService.find(id).map { person ⇒
+          val languages = FacilitatorLanguage.findByFacilitator(id)
+          if (languages.exists(_.language == language)) {
             FacilitatorLanguage(id, language).delete()
+            if (languages.length == 1) {
+              profileCompletionService.find(id, false) map { x ⇒
+                profileCompletionService.update(x.markIncomplete("language"))
+              }
+            }
           }
           val languageName = Languages.all.getOrElse(language, "")
 
@@ -138,7 +147,7 @@ object Facilitators extends Controller with Security {
           errors ⇒ BadRequest("Country is not chosen"),
           {
             case (country) ⇒
-              PersonService.get.find(id).map { person ⇒
+              personService.find(id).map { person ⇒
                 if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
                   FacilitatorCountry(id, country).insert
                 }
@@ -165,7 +174,7 @@ object Facilitators extends Controller with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
-        PersonService.get.find(id).map { person ⇒
+        personService.find(id).map { person ⇒
           if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
             FacilitatorCountry(id, country).delete()
           }
