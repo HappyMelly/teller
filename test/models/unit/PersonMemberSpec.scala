@@ -25,7 +25,7 @@ package models.unit
 
 import helpers.{ MemberHelper, PersonHelper }
 import models._
-import models.service.ProfileCompletionService
+import models.service.ProfileStrengthService
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
@@ -97,25 +97,25 @@ class PersonMemberSpec extends Specification {
     val member = person.membership(true, fee)
     "the membership data should be saved to database" in new MockContext {
       val memberService = mock[FakeMemberService]
-      val profileCompletionService = mock[ProfileCompletionService]
-      (profileCompletionService.find _) expects (1L, false) returning None
+      val profileStrengthService = mock[ProfileStrengthService]
+      (profileStrengthService.find _) expects (1L, false) returning None
       //the line of interest
       (memberService.insert _) expects member returning member
       person.memberService_=(memberService)
-      person.profileCompletionService_=(profileCompletionService)
+      person.profileStrengthService_=(profileStrengthService)
       person.becomeMember(true, fee)
       ok
     }
     "additional profile strength steps should be added" in new MockContext {
-      val profileStength = ProfileCompletion.empty(1L, false)
-      val profileCompletionService = mock[ProfileCompletionService]
+      val profileStength = ProfileStrength.empty(1L, false)
+      val profileStrengthService = mock[ProfileStrengthService]
       val memberService = mock[FakeMemberService]
       (memberService.insert _) expects member returning member
-      (profileCompletionService.find _) expects (1L, false) returning Some(profileStength)
+      (profileStrengthService.find _) expects (1L, false) returning Some(profileStength)
       //the line of interest
-      (profileCompletionService.update _) expects ProfileCompletion.forMember(profileStength)
+      (profileStrengthService.update _) expects ProfileStrength.forMember(profileStength)
       person.memberService_=(memberService)
-      person.profileCompletionService_=(profileCompletionService)
+      person.profileStrengthService_=(profileStrengthService)
       person.becomeMember(true, fee)
       ok
     }

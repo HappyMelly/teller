@@ -96,8 +96,8 @@ object Licenses extends Controller with Security with Services {
           license ⇒ {
             val newLicense = licenseService.add(license.copy(licenseeId = personId))
             val brand = brandService.find(newLicense.brandId).get
-            profileCompletionService.find(personId, false) map { x ⇒
-              profileCompletionService.update(ProfileCompletion.forFacilitator(x))
+            profileStrengthService.find(personId, false) map { x ⇒
+              profileStrengthService.update(ProfileStrength.forFacilitator(x))
             }
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)

@@ -314,8 +314,8 @@ case class Person(
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
     val m = memberService.insert(membership(funder, fee))
-    profileCompletionService.find(id.get, false) map { x ⇒
-      profileCompletionService.update(ProfileCompletion.forMember(x))
+    profileStrengthService.find(id.get, false) map { x ⇒
+      profileStrengthService.update(ProfileStrength.forMember(x))
     }
     m
   }

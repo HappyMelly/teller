@@ -25,30 +25,30 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ ProfileCompletions, Security }
+import controllers.{ ProfileStrengths, Security }
 import helpers._
-import models.ProfileCompletion
-import models.service.ProfileCompletionService
+import models.ProfileStrength
+import models.service.ProfileStrengthService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.{ Json, JsArray }
 import play.api.test.FakeRequest
 import stubs._
 
-class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
+class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
   When a photo step is not complete
-    the profile completion widget should contain 'Add photo' step         $e1
+    the profile strength widget should contain 'Add photo' step         $e1
 
   When a description step is not complete
-    the profile completion widget should contain 'Add description' step   $e2
+    the profile strength widget should contain 'Add description' step   $e2
 
   When a social profile step is not complete
-    the profile completion widget should contain 'Add 2 social networks' step $e3
+    the profile strength widget should contain 'Add 2 social networks' step $e3
 
   When a reason step is not complete
-    the profile completion widget should contain 'Share why you joined the network' step $e4
+    the profile strength widget should contain 'Share why you joined the network' step $e4
 
   When a member step is not complete
     the profile strength widget should contain 'Become a member' step     $e5
@@ -60,13 +60,13 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
     the profile strength widget should contain 'Add at least 1 language'  $e7
   """
 
-  class TestProfileCompletions() extends ProfileCompletions
+  class TestProfileStrengths() extends ProfileStrengths
     with Security
     with FakeServices
 
-  val controller = new TestProfileCompletions()
-  val service = mock[ProfileCompletionService]
-  controller.profileCompletionService_=(service)
+  val controller = new TestProfileStrengths()
+  val service = mock[ProfileStrengthService]
+  controller.profileStrengthService_=(service)
 
   def e1 = {
     val steps = Json.arr(
@@ -74,11 +74,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "photo",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add photo")
   }
@@ -89,11 +89,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "about",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add description")
   }
@@ -104,11 +104,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "social",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add 2 social networks")
   }
@@ -119,11 +119,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "reason",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Share why you joined the network")
   }
@@ -134,11 +134,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "member",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Become a member")
   }
@@ -149,11 +149,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "signature",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Upload your signature")
   }
@@ -164,11 +164,11 @@ class ProfileCompletionsSpec extends PlayAppSpec with IsolatedMockFactory {
         "name" -> "language",
         "weight" -> 10,
         "done" -> false))
-    val completion = ProfileCompletion(None, 1L, false, steps);
+    val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(completion)
+    (service.find _) expects (1L, false) returning Some(strength)
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personProfile(1L).apply(req)
+    val result = controller.personWidget(1L).apply(req)
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add at least 1 language")
   }

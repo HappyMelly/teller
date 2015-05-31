@@ -25,8 +25,8 @@
 package models.unit
 
 import helpers._
-import models.{ Person, ProfileCompletion, CompletionStep, Photo }
-import models.service.{ PersonService, ProfileCompletionService }
+import models.{ Person, ProfileStrength, CompletionStep, Photo }
+import models.service.{ PersonService, ProfileStrengthService }
 import org.specs2.mutable._
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.libs.json._
@@ -36,13 +36,13 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
 
   class TestPersonService extends PersonService with FakeServices {
 
-    def callUpdateProfileCompletion(person: Person): Unit =
-      updateProfileCompletion(person)
+    def callUpdateProfileStrength(person: Person): Unit =
+      updateProfileStrength(person)
   }
 
   val service = new TestPersonService
-  val profileCompletionService = mock[ProfileCompletionService]
-  service.profileCompletionService_=(profileCompletionService)
+  val profileStrengthService = mock[ProfileStrengthService]
+  service.profileStrengthService_=(profileStrengthService)
 
   override def is = s2"""
 
@@ -77,9 +77,9 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
     val facebookPhoto = Photo(Some("facebook"),
       Some("http://graph.facebook.com/skotlov/picture?type=large"))
     val person = PersonHelper.one().copy(photo = facebookPhoto, bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion())
-    (profileCompletionService.update _) expects completion(photo = true)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
+    (profileStrengthService.update _) expects completion(photo = true)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
@@ -87,50 +87,50 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
     val gravatarPhoto = Photo(Some("gravatar"),
       Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
     val person = PersonHelper.one().copy(photo = gravatarPhoto, bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion())
-    (profileCompletionService.update _) expects completion(photo = true)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
+    (profileStrengthService.update _) expects completion(photo = true)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e3 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(photo = true))
-    (profileCompletionService.update _) expects completion(photo = false)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(photo = true))
+    (profileStrengthService.update _) expects completion(photo = false)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e4 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(about = true))
-    (profileCompletionService.update _) expects completion()
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(about = true))
+    (profileStrengthService.update _) expects completion()
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e5 = {
     val person = PersonHelper.one().copy(bio = Some("test"))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion())
-    (profileCompletionService.update _) expects completion(about = true)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
+    (profileStrengthService.update _) expects completion(about = true)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e6 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(social = true))
-    (profileCompletionService.update _) expects completion()
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(social = true))
+    (profileStrengthService.update _) expects completion()
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e7 = {
     val person = PersonHelper.one().copy(bio = None)
     person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test")))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(social = true))
-    (profileCompletionService.update _) expects completion()
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(social = true))
+    (profileStrengthService.update _) expects completion()
+    service.callUpdateProfileStrength(person)
     ok
   }
 
@@ -138,25 +138,25 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
     val person = PersonHelper.one().copy(bio = None)
     person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test"),
       facebookUrl = Some("test")))
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion())
-    (profileCompletionService.update _) expects completion(social = true)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
+    (profileStrengthService.update _) expects completion(social = true)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e9 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(signature = true))
-    (profileCompletionService.update _) expects completion(signature = false)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(signature = true))
+    (profileStrengthService.update _) expects completion(signature = false)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
   def e10 = {
     val person = PersonHelper.one().copy(bio = None, signature = true)
-    (profileCompletionService.find _) expects (1L, false) returning Some(completion(signature = false))
-    (profileCompletionService.update _) expects completion(signature = true)
-    service.callUpdateProfileCompletion(person)
+    (profileStrengthService.find _) expects (1L, false) returning Some(completion(signature = false))
+    (profileStrengthService.update _) expects completion(signature = true)
+    service.callUpdateProfileStrength(person)
     ok
   }
 
@@ -199,6 +199,6 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
   private def completion(about: Boolean = false,
     photo: Boolean = false,
     social: Boolean = false,
-    signature: Boolean = false): ProfileCompletion =
-    ProfileCompletion(None, 1L, false, steps(about, photo, social, signature))
+    signature: Boolean = false): ProfileStrength =
+    ProfileStrength(None, 1L, false, steps(about, photo, social, signature))
 }

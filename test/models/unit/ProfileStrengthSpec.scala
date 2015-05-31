@@ -23,14 +23,14 @@
  */
 package models.unit
 
-import models.{ CompletionStep, ProfileCompletion }
+import models.{ CompletionStep, ProfileStrength }
 import org.specs2.mutable._
 import play.api.libs.json.{ Json, JsArray }
 
-class ProfileCompletionSpec extends Specification {
+class ProfileStrengthSpec extends Specification {
 
   "Unfinished steps should be taken into account" >> {
-    "while calculating a completion progress" in {
+    "while calculating a strength progress" in {
       val steps = Json.arr(
         Json.obj(
           "name" -> "photo",
@@ -42,11 +42,11 @@ class ProfileCompletionSpec extends Specification {
           "name" -> "reason",
           "weight" -> 5,
           "done" -> true))
-      val completion = ProfileCompletion(None, 1L, false, steps);
-      completion.progress must_== 50
+      val strength = ProfileStrength(None, 1L, false, steps);
+      strength.progress must_== 50
     }
   }
-  "Completion progress should be 100" >> {
+  "Strength progress should be 100" >> {
     "when all steps are completed" in {
       val steps = Json.arr(
         Json.obj(
@@ -59,8 +59,8 @@ class ProfileCompletionSpec extends Specification {
           "name" -> "reason",
           "weight" -> 5,
           "done" -> true))
-      val completion = ProfileCompletion(None, 1L, false, steps);
-      completion.progress must_== 100
+      val strength = ProfileStrength(None, 1L, false, steps);
+      strength.progress must_== 100
     }
   }
 
@@ -77,11 +77,11 @@ class ProfileCompletionSpec extends Specification {
           "name" -> "reason",
           "weight" -> 5,
           "done" -> true))
-      val completion = ProfileCompletion(None, 1L, false, steps)
+      val strength = ProfileStrength(None, 1L, false, steps)
       val photo = CompletionStep("photo", 50, false)
       val about = CompletionStep("about", 25, false)
-      completion.incompleteSteps.contains(photo) must_== true
-      completion.incompleteSteps.contains(about) must_== true
+      strength.incompleteSteps.contains(photo) must_== true
+      strength.incompleteSteps.contains(about) must_== true
     }
   }
 
@@ -98,12 +98,12 @@ class ProfileCompletionSpec extends Specification {
           "name" -> "reason",
           "weight" -> 5,
           "done" -> true))
-      val completion = ProfileCompletion(None, 1L, false, steps)
-      completion.incompleteSteps.length must_== 2
+      val strength = ProfileStrength(None, 1L, false, steps)
+      strength.incompleteSteps.length must_== 2
       val photo = CompletionStep("photo", 50, false)
-      val updatedCompletion = completion.markComplete("about")
-      updatedCompletion.incompleteSteps.length must_== 1
-      updatedCompletion.incompleteSteps.contains(photo) must_== true
+      val updatedStrength = strength.markComplete("about")
+      updatedStrength.incompleteSteps.length must_== 1
+      updatedStrength.incompleteSteps.contains(photo) must_== true
     }
   }
 
@@ -120,44 +120,44 @@ class ProfileCompletionSpec extends Specification {
           "name" -> "reason",
           "weight" -> 5,
           "done" -> true))
-      val completion = ProfileCompletion(None, 1L, false, steps)
-      completion.incompleteSteps.length must_== 1
-      completion.incompleteSteps.exists(_.name == "photo") must_== false
+      val strength = ProfileStrength(None, 1L, false, steps)
+      strength.incompleteSteps.length must_== 1
+      strength.incompleteSteps.exists(_.name == "photo") must_== false
       val photo = CompletionStep("photo", 50, false)
-      val updatedCompletion = completion.markIncomplete("photo")
-      updatedCompletion.incompleteSteps.length must_== 2
-      updatedCompletion.incompleteSteps.contains(photo) must_== true
+      val updatedStrength = strength.markIncomplete("photo")
+      updatedStrength.incompleteSteps.length must_== 2
+      updatedStrength.incompleteSteps.contains(photo) must_== true
     }
   }
 
-  "Empty profile completion" should {
+  "Empty profile strength" should {
     "contains 4 incomplete steps" in {
-      val completion = ProfileCompletion.empty(1L, false)
-      completion.steps.length must_== 4
-      completion.steps.exists(_.name == "about") must_== true
-      completion.steps.exists(_.name == "photo") must_== true
-      completion.steps.exists(_.name == "social") must_== true
-      completion.steps.exists(_.name == "member") must_== true
+      val strength = ProfileStrength.empty(1L, false)
+      strength.steps.length must_== 4
+      strength.steps.exists(_.name == "about") must_== true
+      strength.steps.exists(_.name == "photo") must_== true
+      strength.steps.exists(_.name == "social") must_== true
+      strength.steps.exists(_.name == "member") must_== true
     }
   }
 
   "For facilitator profile strength" should {
     "contain 2 additional steps" in {
-      val completion = ProfileCompletion.forFacilitator(ProfileCompletion.empty(1L, false))
-      completion.steps.length must_== 6
-      completion.steps.exists(_.name == "signature") must_== true
-      completion.steps.exists(_.name == "language") must_== true
+      val strength = ProfileStrength.forFacilitator(ProfileStrength.empty(1L, false))
+      strength.steps.length must_== 6
+      strength.steps.exists(_.name == "signature") must_== true
+      strength.steps.exists(_.name == "language") must_== true
     }
   }
 
   "For member profile strength" should {
     "not contain 'Member' step" in {
-      val completion = ProfileCompletion.forMember(ProfileCompletion.empty(1L, false))
-      completion.steps.exists(_.name == "member") must_== false
+      val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
+      strength.steps.exists(_.name == "member") must_== false
     }
-    "contain 'Reason' step" in {
-      val completion = ProfileCompletion.forMember(ProfileCompletion.empty(1L, false))
-      completion.steps.exists(_.name == "reason") must_== true
-    }
+    // "contain 'Reason' step" in {
+    //   val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
+    //   strength.steps.exists(_.name == "reason") must_== true
+    // }
   }
 }

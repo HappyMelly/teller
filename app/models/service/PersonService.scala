@@ -50,7 +50,7 @@ class PersonService extends Services {
       SocialProfileService.get.delete(id, ProfileType.Person)
       People.where(_.id === id).mutate(_.delete())
       Addresses.where(_.id === person.address.id.get).mutate(_.delete())
-      Query(ProfileCompletions).
+      Query(ProfileStrengths).
         filter(_.objectId === person.id.get).
         filter(_.org === false).mutate(_.delete())
     }
@@ -67,7 +67,7 @@ class PersonService extends Services {
       val id = People.forInsert.insert(person.copy(addressId = address.id.get))
       SocialProfileService.get.insert(person.socialProfile.copy(objectId = id))
       Accounts.insert(Account(personId = Some(id)))
-      profileCompletionService.insert(ProfileCompletion.empty(id, false))
+      profileStrengthService.insert(ProfileStrength.empty(id, false))
       val saved = person.copy(id = Some(id))
       saved.address_=(address)
       saved
@@ -162,35 +162,35 @@ class PersonService extends Services {
     updateQuery.update(personUpdateTuple)
 
     UserAccount.updateSocialNetworkProfiles(person)
-    updateProfileCompletion(person)
+    updateProfileStrength(person)
 
     person
   }
 
   /**
-   * Updates profile completion depending
+   * Updates profile strength depending
    *
-   * @param person Person object to update profile completion for
+   * @param person Person object to update profile strength for
    */
-  protected def updateProfileCompletion(person: Person): Unit = {
-    profileCompletionService.find(person.id.get, false) map { completion ⇒
-      val completionWithDesc = if (person.bio.isDefined)
-        completion.markComplete("about")
+  protected def updateProfileStrength(person: Person): Unit = {
+    profileStrengthService.find(person.id.get, false) map { strength ⇒
+      val strengthWithDesc = if (person.bio.isDefined)
+        strength.markComplete("about")
       else
-        completion.markIncomplete("about")
-      val completionWithSocial = if (person.socialProfile.complete)
-        completionWithDesc.markComplete("social")
+        strength.markIncomplete("about")
+      val strengthWithSocial = if (person.socialProfile.complete)
+        strengthWithDesc.markComplete("social")
       else
-        completionWithDesc.markIncomplete("social")
-      val completionWithPhoto = if (person.photo.id.isDefined)
-        completionWithSocial.markComplete("photo")
+        strengthWithDesc.markIncomplete("social")
+      val strengthWithPhoto = if (person.photo.id.isDefined)
+        strengthWithSocial.markComplete("photo")
       else
-        completionWithSocial.markIncomplete("photo")
-      val completionWithSignature = if (person.signature)
-        completionWithPhoto.markComplete("signature")
+        strengthWithSocial.markIncomplete("photo")
+      val strengthWithSignature = if (person.signature)
+        strengthWithPhoto.markComplete("signature")
       else
-        completionWithPhoto.markIncomplete("signature")
-      profileCompletionService.update(completionWithSignature)
+        strengthWithPhoto.markIncomplete("signature")
+      profileStrengthService.update(strengthWithSignature)
     }
   }
 }

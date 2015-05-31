@@ -28,13 +28,13 @@ import play.api.libs.functional.syntax._
 
 case class CompletionStep(name: String, weight: Int, done: Boolean = false)
 
-case class ProfileCompletion(id: Option[Long],
+case class ProfileStrength(id: Option[Long],
   objectId: Long,
   org: Boolean = false,
   steps: List[CompletionStep]) {
 
   /**
-   * Returns a profile completion progress in percents
+   * Returns a profile strength progress in percents
    */
   def progress: Int = {
     val total = steps.foldRight(0)(_.weight + _)
@@ -62,14 +62,14 @@ case class ProfileCompletion(id: Option[Long],
    *
    * @param name Step name
    */
-  def markComplete(name: String): ProfileCompletion = markStep(name, true)
+  def markComplete(name: String): ProfileStrength = markStep(name, true)
 
   /**
    * Incompletes the given step and returns an updated object
    *
    * @param name Step name
    */
-  def markIncomplete(name: String): ProfileCompletion = markStep(name, false)
+  def markIncomplete(name: String): ProfileStrength = markStep(name, false)
 
   def stepsInJson: JsArray = {
     implicit val stepWriter = new Writes[CompletionStep] {
@@ -87,9 +87,9 @@ case class ProfileCompletion(id: Option[Long],
    *
    * @param name Name of the step
    * @param done Completion state
-   * @return Updated profile completion object
+   * @return Updated profile strength object
    */
-  private def markStep(name: String, done: Boolean): ProfileCompletion = {
+  private def markStep(name: String, done: Boolean): ProfileStrength = {
     steps.find(_.name == name).map { x ⇒
       val completedStep = x.copy(done = done)
       val oldSteps = steps.filterNot(_.name == name)
@@ -99,19 +99,19 @@ case class ProfileCompletion(id: Option[Long],
   }
 }
 
-object ProfileCompletion {
+object ProfileStrength {
 
   def apply(id: Option[Long],
     objectId: Long,
     org: Boolean,
-    stepsInJson: JsArray): ProfileCompletion = {
+    stepsInJson: JsArray): ProfileStrength = {
 
     implicit val stepReader = (
       (__ \ "name").read[String] and
       (__ \ "weight").read[Int] and
       (__ \ "done").read[Boolean])(CompletionStep)
 
-    ProfileCompletion(id, objectId, org, stepsInJson.as[List[CompletionStep]])
+    ProfileStrength(id, objectId, org, stepsInJson.as[List[CompletionStep]])
   }
 
   /**
@@ -120,45 +120,45 @@ object ProfileCompletion {
    * @param objectId Person or org identifier
    * @param org If true objectId is org identifier
    */
-  def empty(objectId: Long, org: Boolean): ProfileCompletion = {
+  def empty(objectId: Long, org: Boolean): ProfileStrength = {
     val steps = List(CompletionStep("about", 1),
       CompletionStep("photo", 4),
       CompletionStep("social", 1),
       CompletionStep("member", 2))
-    ProfileCompletion(None, objectId, org, steps)
+    ProfileStrength(None, objectId, org, steps)
   }
 
   /**
    * Adds steps for a facilitator to the given profile strength
    *
-   * @param completion Profile strength
+   * @param strength Profile strength
    * @return Updated profile strength with added steps
    */
-  def forFacilitator(completion: ProfileCompletion): ProfileCompletion = {
-    val withSignature = if (completion.steps.exists(_.name == "signature"))
-      completion.steps
+  def forFacilitator(strength: ProfileStrength): ProfileStrength = {
+    val withSignature = if (strength.steps.exists(_.name == "signature"))
+      strength.steps
     else
-      completion.steps :+ CompletionStep("signature", 1)
+      strength.steps :+ CompletionStep("signature", 1)
     val withLanguage = if (withSignature.exists(_.name == "language"))
       withSignature
     else
       withSignature :+ CompletionStep("language", 1)
-    completion.copy(steps = withLanguage)
+    strength.copy(steps = withLanguage)
   }
 
   /**
    * Updates steps for a member to the given profile strength
    *
-   * @param completion Profile strength
+   * @param strength Profile strength
    * @return Updated profile strength
    */
-  def forMember(completion: ProfileCompletion): ProfileCompletion = {
-    val withoutMember = completion.steps.filterNot(_.name == "member")
+  def forMember(strength: ProfileStrength): ProfileStrength = {
+    val withoutMember = strength.steps.filterNot(_.name == "member")
     val withReason = withoutMember
     // val withReason = if (withoutMember.exists(_.name == "reason"))
     //   withoutMember
     // else
     //   withoutMember :+ CompletionStep("reason", 2)
-    completion.copy(steps = withReason)
+    strength.copy(steps = withReason)
   }
 }

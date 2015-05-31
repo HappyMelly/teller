@@ -28,7 +28,7 @@ function getPersonId() {
 function reloadCompletionWidget() {
     var userId = $("#activeUserId").val();
     if (userId == getPersonId()) {
-        var url = jsRoutes.controllers.ProfileCompletions.personProfile(userId).url
+        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId).url
         $.get(url, function(data) {
             $('#completionWidget').html(data);
             $('#addPhotoLink').on('click', function(e) {
@@ -36,7 +36,7 @@ function reloadCompletionWidget() {
             });
         });
     } else {
-        var url = jsRoutes.controllers.ProfileCompletions.widgetWithImproveButton(userId).url
+        var url = jsRoutes.controllers.ProfileStrengths.widgetWithImproveButton(userId).url
         $.get(url, function(data) {
             $('#completionWidget').html(data);
         });

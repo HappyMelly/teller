@@ -27,8 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.{ People, Security }
 import helpers._
-import models.{ SocialProfile, Photo, ProfileCompletion }
-import models.service.ProfileCompletionService
+import models.{ SocialProfile, Photo }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -59,9 +58,7 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val controller = new TestPeople()
   val personService = mock[FakePersonService]
-  val profileCompletionService = mock[ProfileCompletionService]
   controller.personService_=(personService)
-  controller.profileCompletionService_=(profileCompletionService)
 
   val person = PersonHelper.one()
   val profile = new SocialProfile(email = "test@test.com")
@@ -71,10 +68,6 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
   trait DefaultPerson extends MockContext {
     person.socialProfile_=(profile)
     (personService.find(_: Long)) expects 1L returning Some(person)
-  }
-
-  trait NoCompletionProfile extends DefaultPerson {
-    (profileCompletionService.find _) expects (1L, false) returning None
   }
 
   def e1 = {
@@ -109,14 +102,14 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must contain("No option is provided")
   }
 
-  def e5 = new NoCompletionProfile {
+  def e5 = new DefaultPerson {
     (personService.update _) expects personWithGravatar returning personWithGravatar
 
     val result = controller.updatePhoto(1L).apply(gravatarRequest)
     status(result) must equalTo(OK)
   }
 
-  def e6 = new NoCompletionProfile {
+  def e6 = new DefaultPerson {
     (personService.update _) expects personWithFacebook returning personWithFacebook
 
     val result = controller.updatePhoto(1L).apply(facebookRequest)

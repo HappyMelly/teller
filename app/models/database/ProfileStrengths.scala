@@ -21,17 +21,16 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models.database
 
-import models.ProfileCompletion
+import models.ProfileStrength
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 
 /**
- * `ProfileCompletion` table mapping
+ * `ProfileStrength` table mapping
  */
-private[models] object ProfileCompletions extends Table[ProfileCompletion]("PROFILE_COMPLETION") {
+private[models] object ProfileStrengths extends Table[ProfileStrength]("PROFILE_STRENGTH") {
 
   implicit val jsArrayMapper = MappedTypeMapper.base[JsArray, String](
     { array ⇒ array.toString }, { str ⇒ Json.parse(str).as[JsArray] })
@@ -42,8 +41,8 @@ private[models] object ProfileCompletions extends Table[ProfileCompletion]("PROF
   def steps = column[JsArray]("STEPS")
 
   def * = id.? ~ objectId ~ org ~
-    steps <> ({ p ⇒ ProfileCompletion(p._1, p._2, p._3, p._4) },
-      { (p: ProfileCompletion) ⇒ Some((p.id, p.objectId, p.org, p.stepsInJson)) })
+    steps <> ({ p ⇒ ProfileStrength(p._1, p._2, p._3, p._4) },
+      { (p: ProfileStrength) ⇒ Some((p.id, p.objectId, p.org, p.stepsInJson)) })
 
   def forInsert = * returning id
 

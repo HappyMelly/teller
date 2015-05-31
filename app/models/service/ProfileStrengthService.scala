@@ -23,49 +23,49 @@
  */
 package models.service
 
-import models.database.ProfileCompletions
-import models.ProfileCompletion
+import models.database.ProfileStrengths
+import models.ProfileStrength
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-class ProfileCompletionService {
+class ProfileStrengthService {
 
   /**
-   * Returns a profile completion object for the given person/org if exists
+   * Returns a profile strength object for the given person/org if exists
    *
    * @param objectId Person or organisation identifier
    * @param org If true, objectId is an organisation identifier
    */
-  def find(objectId: Long, org: Boolean = false): Option[ProfileCompletion] =
+  def find(objectId: Long, org: Boolean = false): Option[ProfileStrength] =
     DB.withSession { implicit session: Session ⇒
-      Query(ProfileCompletions).
+      Query(ProfileStrengths).
         filter(_.objectId === objectId).
         filter(_.org === org).firstOption
     }
 
-  def update(completion: ProfileCompletion): ProfileCompletion = {
+  def update(strength: ProfileStrength): ProfileStrength = {
     DB.withSession { implicit session: Session ⇒
-      Query(ProfileCompletions).
-        filter(_.objectId === completion.objectId).
-        filter(_.org === completion.org).
+      Query(ProfileStrengths).
+        filter(_.objectId === strength.objectId).
+        filter(_.org === strength.org).
         map(_.forUpdate).
-        update(completion.stepsInJson)
+        update(strength.stepsInJson)
 
-      completion
+      strength
     }
   }
 
-  def insert(completion: ProfileCompletion): ProfileCompletion = {
+  def insert(strength: ProfileStrength): ProfileStrength = {
     DB.withSession { implicit session: Session ⇒
-      val id = ProfileCompletions.forInsert.insert(completion)
-      completion.copy(id = Some(id))
+      val id = ProfileStrengths.forInsert.insert(strength)
+      strength.copy(id = Some(id))
     }
   }
 }
 
-object ProfileCompletionService {
-  private val _instance = new ProfileCompletionService
+object ProfileStrengthService {
+  private val _instance = new ProfileStrengthService
 
-  def get: ProfileCompletionService = _instance
+  def get: ProfileStrengthService = _instance
 }

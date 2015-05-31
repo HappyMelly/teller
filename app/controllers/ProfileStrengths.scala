@@ -23,30 +23,35 @@
  */
 package controllers
 
-import models.service.{ ProfileCompletionService, Services }
+import models.service.{ ProfileStrengthService, Services }
 import models.UserRole.Role._
 import play.api.mvc._
 
-trait ProfileCompletions extends Controller with Security with Services {
+trait ProfileStrengths extends Controller with Security with Services {
 
   /**
-   * Returns profile completion widget for a person
+   * Returns profile strength widget for a person
    *
    * @param id Person identifier
    */
-  def personProfile(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def personWidget(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      profileCompletionService.find(id) map { x ⇒
+      profileStrengthService.find(id) map { x ⇒
         Ok(views.html.profile.widget(id, x.progress, x.incompleteSteps))
       } getOrElse NotFound
   }
 
+  /**
+   * Returns profile strength widget for a person with a button 'Improve my profile'
+   *
+   * @param id Person identifier
+   */
   def widgetWithImproveButton(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      profileCompletionService.find(id) map { x ⇒
+      profileStrengthService.find(id) map { x ⇒
         Ok(views.html.profile.widgetWithImproveButton(id, x.progress))
       } getOrElse NotFound
   }
 }
 
-object ProfileCompletions extends ProfileCompletions
+object ProfileStrengths extends ProfileStrengths

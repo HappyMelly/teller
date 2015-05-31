@@ -87,8 +87,8 @@ object Facilitators extends Controller with Security with Services {
             personService.find(id).map { person ⇒
               if (!FacilitatorLanguage.findByFacilitator(id).exists(_.language == language)) {
                 FacilitatorLanguage(id, language).insert
-                profileCompletionService.find(id, false) map { x ⇒
-                  profileCompletionService.update(x.markComplete("language"))
+                profileStrengthService.find(id, false) map { x ⇒
+                  profileStrengthService.update(x.markComplete("language"))
                 }
               }
               val languageName = Languages.all.getOrElse(language, "")
@@ -117,8 +117,8 @@ object Facilitators extends Controller with Security with Services {
           if (languages.exists(_.language == language)) {
             FacilitatorLanguage(id, language).delete()
             if (languages.length == 1) {
-              profileCompletionService.find(id, false) map { x ⇒
-                profileCompletionService.update(x.markIncomplete("language"))
+              profileStrengthService.find(id, false) map { x ⇒
+                profileStrengthService.update(x.markIncomplete("language"))
               }
             }
           }
