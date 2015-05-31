@@ -154,10 +154,11 @@ object ProfileCompletion {
    */
   def forMember(completion: ProfileCompletion): ProfileCompletion = {
     val withoutMember = completion.steps.filterNot(_.name == "member")
-    val withReason = if (withoutMember.exists(_.name == "reason"))
-      withoutMember
-    else
-      withoutMember :+ CompletionStep("reason", 2)
+    val withReason = withoutMember
+    // val withReason = if (withoutMember.exists(_.name == "reason"))
+    //   withoutMember
+    // else
+    //   withoutMember :+ CompletionStep("reason", 2)
     completion.copy(steps = withReason)
   }
 }

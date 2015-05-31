@@ -55,6 +55,13 @@ class ProfileCompletionService {
       completion
     }
   }
+
+  def insert(completion: ProfileCompletion): ProfileCompletion = {
+    DB.withSession { implicit session: Session ⇒
+      val id = ProfileCompletions.forInsert.insert(completion)
+      completion.copy(id = Some(id))
+    }
+  }
 }
 
 object ProfileCompletionService {

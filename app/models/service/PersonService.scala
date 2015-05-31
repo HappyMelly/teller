@@ -50,6 +50,9 @@ class PersonService extends Services {
       SocialProfileService.get.delete(id, ProfileType.Person)
       People.where(_.id === id).mutate(_.delete())
       Addresses.where(_.id === person.address.id.get).mutate(_.delete())
+      Query(ProfileCompletions).
+        filter(_.objectId === person.id.get).
+        filter(_.org === false).mutate(_.delete())
     }
   }
 
@@ -64,7 +67,7 @@ class PersonService extends Services {
       val id = People.forInsert.insert(person.copy(addressId = address.id.get))
       SocialProfileService.get.insert(person.socialProfile.copy(objectId = id))
       Accounts.insert(Account(personId = Some(id)))
-
+      profileCompletionService.insert(ProfileCompletion.empty(id, false))
       val saved = person.copy(id = Some(id))
       saved.address_=(address)
       saved
