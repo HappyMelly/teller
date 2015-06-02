@@ -163,7 +163,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(req)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Supporter")
+    contentAsString(result) must contain("supporter")
     contentAsString(result) must not contain "/member/1/edit"
   }
 
@@ -180,7 +180,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(person.id.get).apply(request)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Funder")
+    contentAsString(result) must contain("funder")
     contentAsString(result) must contain("/member/1/edit")
   }
 
