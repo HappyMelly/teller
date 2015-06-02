@@ -53,6 +53,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         "id" -> member.id.get,
         "funder" -> member.funder,
         "type" -> readableMemberType(member),
+        "reason" -> member.reason,
         "person" -> Json.toJson(member.memberObj._1.get)(personDetailsWrites))
     }
   }

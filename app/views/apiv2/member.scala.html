@@ -27,8 +27,9 @@
       <p>A JSON object, with member properties:</p>
       <ul>
         <li><code>id</code></li>
-        <li><code>type</code> - "person" or "org"</li>
         <li><code>funder</code></li>
+        <li><code>type</code> - "person" or "org"</li>
+        <li><code>reason</code></li>
         <li><code>org</code> - if a member is an organization, this attribute contains <a href="#organization">Organization details</a> </li>
         <li><code>person</code> - if a member is a person, this attribute contains <a href="#person">Person details</a> </li>
       </ul>
@@ -51,6 +52,7 @@
   "id" : 1,
   "funder" : true,
   "type" : "person",
+  "reason": "I joined Happy Melly because...",
   "person" : {
     "id" : 25,
     "unique_name" : "sergey.kotlov",
