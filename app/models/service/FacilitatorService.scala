@@ -24,8 +24,8 @@
 
 package models.service
 
-import models.Facilitator
-import models.database.Facilitators
+import models.{ Facilitator, FacilitatorLanguage }
+import models.database.{ Facilitators, FacilitatorLanguages }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -89,6 +89,16 @@ class FacilitatorService {
         filter(_.brandId === facilitator.brandId).
         map(_.forUpdate).update(facilitator.rating)
       facilitator
+  }
+
+  /**
+   * Returns list of languages the given facilitator talks
+   *
+   * @param personId Person identifier
+   */
+  def languages(personId: Long): List[FacilitatorLanguage] = DB.withSession {
+    implicit session ⇒
+      Query(FacilitatorLanguages).filter(_.personId === personId).list
   }
 }
 

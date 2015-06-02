@@ -6,7 +6,7 @@
 
 @import templates.Formatters._
 
-<div class="col-md-4">
+<div class="col-md-6">
   <address>
     <strong>Address</strong><br/>
     @person.address.street1.map { addressLine =>
@@ -36,13 +36,9 @@
       <br><a href="@url" target="_blank">@url</a></p>
   }
 
-  @person.blog.map { url =>
-    <p><strong>Blog</strong>
-      <br><a href="@url" target="_blank">@url</a></p>
-  }
 
 </div>
-<div class="col-md-4">
+<div class="col-md-6">
   <p><strong>E-mail address</strong>
     <br>
     <a href="mailto:@person.socialProfile.email">
@@ -54,10 +50,14 @@
     <p><strong>Birthday</strong>
       <br>@birthday</p>
   }
+  @person.blog.map { url =>
+    <p><strong>Blog</strong>
+      <br><a href="@url" target="_blank">@url</a></p>
+  }
 
 </div>
 
-<div class="col-md-10">
+<div class="col-md-12">
   @person.bio.map { text =>
     <legend>Bio</legend>
     <p>@text.markdown</p>
@@ -68,7 +68,7 @@
     <p>@text.markdown</p>
   }
 </div>
-<div class="col-md-10">
+<div class="col-md-12">
   <legend>Organisations</legend>
   @views.html.person.blocks.organisations(person, organisations, otherOrganisations)
 </div>

@@ -2,7 +2,7 @@
 
 @import org.joda.time.LocalDate
 
-<div class="col-md-10">
+<div>
   <h3>Expiring licenses</h3>
   @if(licenses.exists(_.license.end.toString < LocalDate.now().toString)) {
     <div class="alert alert-danger">

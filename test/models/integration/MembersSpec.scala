@@ -66,7 +66,7 @@ class MembersSpec extends PlayAppSpec {
     Member(r.<<, r.<<, r.<<, r.<<,
       Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
       r.<<, LocalDate.parse(r.nextString()), LocalDate.parse(r.nextString()),
-      existingObject = false,
+      existingObject = false, Some(r.nextString()),
       DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
       DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
 
@@ -407,6 +407,6 @@ class MembersSpec extends PlayAppSpec {
   private def member(person: Boolean = true, existingObject: Boolean = false): Member = {
     new Member(None, 0, person = person, funder = false,
       Money.parse("EUR 100"), renewal = false, LocalDate.now(), LocalDate.now(),
-      existingObject = existingObject, DateTime.now(), 1L, DateTime.now(), 1L)
+      existingObject = existingObject, None, DateTime.now(), 1L, DateTime.now(), 1L)
   }
 }

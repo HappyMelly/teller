@@ -118,6 +118,7 @@ POST          /member/existing/organisation/                                 con
 POST          /member/existing/person/                                       controllers.Members.updateExistingPerson
 GET           /member/:id/edit                                               controllers.Members.edit(id: Long)
 POST          /member/:id                                                    controllers.Members.update(id: Long)
+POST          /member/:personId/reason                                       controllers.Members.updateReason(personId: Long)
 POST          /member/:id/delete                                             controllers.Members.delete(id: Long)
 
 GET           /membership/welcome                                            controllers.Membership.welcome
@@ -145,6 +146,9 @@ POST          /participant/person                                            con
 GET           /participant/:eventId/:personId/delete/                        controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
 
 GET           /people                                                        controllers.People.index
+
+POST          /person/:personId/photo                                       controllers.People.updatePhoto(personId: Long)
+GET           /person/:personId/photo                                       controllers.People.choosePhoto(personId: Long)
 
 POST          /person/:personId/signature                                    controllers.People.uploadSignature(personId: Long)
 GET           /person/:personId/signature                                    controllers.People.signature(personId: Long)
@@ -180,6 +184,8 @@ POST          /product/:id/picture/delete                                    con
 POST          /product/brand/new                                             controllers.Products.addBrand
 GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
+GET           /profile/:id/person/steps/:steps                               controllers.ProfileStrengths.personWidget(id: Long, steps: Boolean)
+
 GET           /registration/welcome                                          controllers.Registration.welcome
 GET           /registration/step1                                            controllers.Registration.step1(org: Boolean ?= false)
 GET           /registration/step2                                            controllers.Registration.step2
@@ -191,6 +197,7 @@ POST          /registration/payment                                          con
 GET           /registration/authenticate/:provider                           controllers.Registration.authenticate(provider)
 GET           /registration/congratulations                                  controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
+GET           /profile/id/:id/facebook/:name                                 controllers.SocialProfiles.facebookUrl(id: Long, name: String)
 
 GET           /statistics/                                                   controllers.Statistics.index
 GET           /statistics/type/facilitators/brand/:id                        controllers.Statistics.byFacilitators(id: Long)

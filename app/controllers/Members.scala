@@ -37,9 +37,10 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
+import templates.Formatters._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Enrollment {
+trait Members extends Enrollment with JsonController {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -66,6 +67,7 @@ trait Members extends Enrollment {
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
+      "reason" -> ignored(None.asInstanceOf[Option[String]]),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
       "updated" -> ignored(DateTime.now()),
@@ -142,9 +144,8 @@ trait Members extends Enrollment {
             formWithErrors)),
           data ⇒ {
             val updMember = data.copy(id = member.id).
-              copy(person = member.person).
-              copy(objectId = member.objectId).
-              copy(until = member.until).update
+              copy(person = member.person, objectId = member.objectId).
+              copy(until = member.until, reason = member.reason).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
@@ -158,6 +159,32 @@ trait Members extends Enrollment {
   }
 
   /**
+   * Updates a reason for the given person
+   *
+   * @param personId Person identifier
+   */
+  def updateReason(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.member(personId) map { member ⇒
+          val form = Form(single("reason" -> optional(text)))
+          form.bindFromRequest.fold(
+            error ⇒ jsonBadRequest("Reason does not exist"),
+            reason ⇒ {
+              memberService.update(member.copy(reason = reason))
+              profileStrengthService.find(personId, false) map { strength ⇒
+                if (reason.isDefined && reason.get.length > 0) {
+                  profileStrengthService.update(strength.markComplete("reason"))
+                } else {
+                  profileStrengthService.update(strength.markIncomplete("reason"))
+                }
+              }
+              jsonSuccess((reason getOrElse "").markdown.toString)
+            })
+        } getOrElse jsonNotFound("Person is not a member")
+  }
+
+  /**
    * Removes a membership of the given member
    * @param id Member id
    */
@@ -165,19 +192,19 @@ trait Members extends Enrollment {
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { m ⇒
         memberService.delete(m.objectId, m.person)
-        val activty = m.activity(user.person, Activity.Predicate.Deleted).insert
+        val activity = m.activity(user.person, Activity.Predicate.Deleted).insert
         val url = profileUrl(m)
         val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
           m.name, fullUrl(url))
         slack.send(msg)
-        Redirect(url).flashing("success" -> activty.toString)
+        Redirect(url).flashing("success" -> activity.toString)
       } getOrElse NotFound
   }
 
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newPerson(user, None, People.personForm(user)))
+      Ok(views.html.member.newPerson(user, None, People.personForm(user.fullName)))
   }
 
   /** Renders Add new organisation page */
@@ -233,7 +260,7 @@ trait Members extends Enrollment {
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(user).bindFromRequest
+      val personForm = People.personForm(user.fullName).bindFromRequest
       personForm.fold(
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(user, None, hasErrors)),

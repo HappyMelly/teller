@@ -2,8 +2,8 @@
     width: String)
 
 @person.photo.url.map { photo =>
-  <img width="@width" class="img-rounded photo" src="@photo"/>
+  <img id="photo" width="@width" class="img-rounded photo" src="@photo"/>
 }.getOrElse {
-  <img width="@width" class="img-rounded photo"
+  <img id="photo" width="@width" class="img-rounded photo"
     src="@routes.Assets.at("images/happymelly-face-white.png")"/>
 }

@@ -27,8 +27,8 @@
         <a class="btn btn-success"
         href="@routes.Organisations.details(id)">Go to Profile &rarr;</a>
       }.getOrElse {
-        <a class="btn btn-success"
-        href="@routes.People.details(user.person.id.get)">Go to Profile &rarr;</a>
+        <div class="panel panel-success" id="completionWidget">
+        </div>
       }
     </div>
   </div>

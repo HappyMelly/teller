@@ -21,43 +21,30 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package controllers
 
-package models.integration
+import models.{ SocialProfile, Photo }
+import models.UserRole.Role._
+import models.service.{ SocialProfileService, Services }
 
-import _root_.integration.PlayAppSpec
-import helpers.PersonHelper
-import models.service.PersonService
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
+trait SocialProfiles extends JsonController with Security with Services {
 
-class PersonSpec extends PlayAppSpec {
-
-  "Person" should {
-    "become a well-formed supporter" in {
-      val person = PersonHelper.two()
-      val fee = Money.of(EUR, 155)
-      person.becomeMember(funder = false, fee)
-
-      val member = PersonService.get.member(person.id.get)
-      member map { m ⇒
-        m.person must_== true
-        m.funder must_== false
-        m.fee must_== fee
-        m.createdBy must_== 2L
-      } getOrElse ko
-    }
-    "become a well-formed funder" in {
-      val person = PersonHelper.one()
-      val fee = Money.of(EUR, 255)
-      person.becomeMember(funder = true, fee)
-
-      val member = PersonService.get.member(person.id.get)
-      member map { m ⇒
-        m.person must_== true
-        m.funder must_== true
-        m.fee must_== fee
-        m.createdBy must_== 1L
-      } getOrElse ko
-    }
+  /**
+   * Returns an url to a facebook profile photo if this profile is not used
+   *
+   * @param personId Person identifier
+   * @param name Facebook identifier
+   */
+  def facebookUrl(personId: Long, name: String) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val profileUrl = "https://www.facebook.com/" + name
+        val profile = SocialProfile(objectId = personId, email = "dummy",
+          facebookUrl = Some(profileUrl))
+        socialProfileService.findDuplicate(profile) map { x ⇒
+          jsonConflict("This Facebook profile is already taken")
+        } getOrElse jsonSuccess(Photo.facebookUrl(profileUrl))
   }
 }
+
+object SocialProfiles extends SocialProfiles

@@ -111,7 +111,7 @@ case class Organisation(
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
       until = LocalDate.now().plusYears(1), existingObject = true,
-      created = DateTime.now(), userId, DateTime.now(), userId)
+      reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
     memberService.insert(m)
   }
 

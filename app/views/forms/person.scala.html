@@ -6,8 +6,6 @@
 @html.text(form("firstName"), '_label -> "First name")
 @html.text(form("lastName"), '_label -> "Last name")
 @html.email(form("emailAddress"), '_label -> "E-mail address")
-@html.select(form("photo"), List(("none", "None"),("facebook", "Facebook"),("gravatar", "Gravatar (from your email address)")),
-  '_label -> "Photo")
 @html.date(form("birthday"), '_label -> "Birthday")
 @html.text(form("address.street1"), '_label -> "Address line 1")
 @html.text(form("address.street2"), '_label -> "Address line 2")

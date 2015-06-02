@@ -77,7 +77,7 @@ case class Brand(id: Option[Long],
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      SocialProfileService.find(id.getOrElse(0), ProfileType.Brand)
+      SocialProfileService.get.find(id.getOrElse(0), ProfileType.Brand)
     }
   } else {
     _socialProfile.get

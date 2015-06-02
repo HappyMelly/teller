@@ -32,7 +32,7 @@ import play.api.Play.current
 
 import scala.slick.lifted.Query
 
-class PersonService {
+class PersonService extends Services {
 
   /**
    * Deletes the person with the given ID and their account.
@@ -47,9 +47,12 @@ class PersonService {
       UserAccount.delete(id)
       //TODO add evaluation removal
       Participants.where(_.personId === id).mutate(_.delete())
-      SocialProfileService.delete(id, ProfileType.Person)
+      SocialProfileService.get.delete(id, ProfileType.Person)
       People.where(_.id === id).mutate(_.delete())
       Addresses.where(_.id === person.address.id.get).mutate(_.delete())
+      Query(ProfileStrengths).
+        filter(_.objectId === person.id.get).
+        filter(_.org === false).mutate(_.delete())
     }
   }
 
@@ -62,12 +65,11 @@ class PersonService {
     implicit session: Session ⇒
       val address = Address.insert(person.address)
       val id = People.forInsert.insert(person.copy(addressId = address.id.get))
-      SocialProfileService.insert(person.socialProfile.copy(objectId = id))
+      SocialProfileService.get.insert(person.socialProfile.copy(objectId = id))
       Accounts.insert(Account(personId = Some(id)))
-
+      profileStrengthService.insert(ProfileStrength.empty(id, false))
       val saved = person.copy(id = Some(id))
       saved.address_=(address)
-      saved.socialProfile_=(person.socialProfile)
       saved
   }
 
@@ -136,6 +138,45 @@ class PersonService {
     query.sortBy(_.name.toLowerCase).list
   }
 
+  def update(person: Person): Person = DB.withTransaction { implicit session: Session ⇒
+    import models.database.SocialProfiles._
+
+    val addressQuery = for {
+      address ← Addresses if address.id === person.addressId
+    } yield address
+    addressQuery.update(person.address.copy(id = Some(person.addressId)))
+
+    val socialQuery = for {
+      p ← SocialProfiles if p.objectId === person.id.get &&
+        p.objectType === person.socialProfile.objectType
+    } yield p
+
+    socialQuery.update(person.socialProfile.copy(objectId = person.id.get))
+
+    // Skip the id, created, createdBy and active fields.
+    val personUpdateTuple = (person.firstName, person.lastName, person.birthday,
+      person.photo.url, person.signature, person.bio, person.interests,
+      person.webSite, person.blog, person.customerId, person.virtual,
+      person.active, person.dateStamp.updated, person.dateStamp.updatedBy)
+    val updateQuery = People.filter(_.id === person.id).map(_.forUpdate)
+    updateQuery.update(personUpdateTuple)
+
+    UserAccount.updateSocialNetworkProfiles(person)
+    updateProfileStrength(person)
+
+    person
+  }
+
+  /**
+   * Updates profile strength depending
+   *
+   * @param person Person object to update profile strength for
+   */
+  protected def updateProfileStrength(person: Person): Unit = {
+    profileStrengthService.find(person.id.get, false) map { strength ⇒
+      profileStrengthService.update(ProfileStrength.forPerson(strength, person))
+    }
+  }
 }
 
 object PersonService {

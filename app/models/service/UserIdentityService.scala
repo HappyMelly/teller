@@ -86,8 +86,8 @@ class UserIdentityService {
         if (d._4.nonEmpty) {
           val member = new Member(d._4, person.id.get, person = true,
             funder = d._5.get, "EUR" -> d._6.get, d._7.get,
-            d._8.get, d._9.get, existingObject = true, DateTime.now(), 0L,
-            DateTime.now(), 0L)
+            d._8.get, d._9.get, existingObject = true, reason = None,
+            DateTime.now(), 0L, DateTime.now(), 0L)
           person.member_=(member)
         }
         d._1.person_=(person)

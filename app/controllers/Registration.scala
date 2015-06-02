@@ -239,6 +239,7 @@ trait Registration extends Enrollment {
                   person.copy(customerId = Some(customerId), active = true).update
                 }
                 insertAccount(person)
+
                 val fee = Money.of(EUR, data.fee)
                 val member = org map { x ⇒
                   x.becomeMember(funder = false, fee, person.id.get)
@@ -284,26 +285,11 @@ trait Registration extends Enrollment {
    * @param orgId Organisation identifier
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
-    val url: String = orgId map { id ⇒ routes.Organisations.details(id).url
-    } getOrElse routes.Dashboard.profile().url
-    Ok(views.html.registration.congratulations(url))
-  }
-
-  /**
-   * Makes a payment through the payment gateway and creates
-   * an yearly subscription
-   *
-   * @param person Person making all membership-related actions
-   * @param org Organisation which want to become a member
-   * @param data Payment data
-   * @return Returns customer identifier in the payment system
-   */
-  protected def subscribe(person: Person,
-    org: Option[Organisation],
-    data: PaymentData): String = {
-    val key = Play.configuration.getString("stripe.secret_key").get
-    val payment = new Payment(key)
-    payment.subscribe(person, org, data.token, data.fee)
+    orgId map { id ⇒
+      Ok(views.html.registration.congratulations(routes.Organisations.details(id).url, true))
+    } getOrElse {
+      Ok(views.html.registration.congratulations(routes.Dashboard.profile().url, false))
+    }
   }
 
   protected def insertAccount(person: Person) = {

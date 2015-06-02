@@ -22,6 +22,67 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+function switchActivePhoto(object) {
+    $('#choosePhotoContent').find('img').removeClass('active');
+    $(object).addClass('active');
+}
+
+function updateReason() {
+    var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url
+    $.post(url, {reason: $('#reason').val()}, null, "json").done(function(data) {
+        $('#reasonDialog').modal('hide');
+        $('#reasonToJoin').html(data.message);
+        reloadCompletionWidget();
+    }).fail(function(jqXHR, status, error) {
+    });
+}
+
+function updatePhoto() {
+    var url = jsRoutes.controllers.People.updatePhoto(getPersonId()).url
+    var object = $('#choosePhotoContent').find('.active');
+    var type = $(object).parent('div').attr('id');
+    var name = "";
+    if (type == "facebook") {
+        name = $(object).data('name');
+    }
+    var src = $(object).attr('src');
+    $.post(url, {type: type, name: name}, null, "json").done(function(data) {
+        $('#photoDialog').modal('hide');
+        $('#photo').attr('src', src);
+        reloadCompletionWidget();
+    }).fail(function(jqXHR, status, error) {
+    });
+}
+
+function showSelectPhotoForm() {
+    $.get(jsRoutes.controllers.People.choosePhoto(getPersonId()).url, function(data) {
+        $('#choosePhotoContent').html(data);
+        $('#choosePhotoContent img').on('click', function(e) {
+            switchActivePhoto($(this));
+        });
+        $('#saveLink').on('click', updatePhoto);
+        $('#facebookRequest').on('click', retrieveFacebookPhoto);
+    });
+}
+
+function retrieveFacebookPhoto() {
+    var name = $('#facebookName').val();
+    var url = jsRoutes.controllers.SocialProfiles.facebookUrl(getPersonId(), name).url
+    $.get(url, {}, function(data) {
+        $('#facebook').empty();
+        $('#choosePhotoContent').find('img').removeClass('active');
+        var html = "<img class='facebook img-rounded photo active'";
+        html += " data-name='" + name + "' height='200' src='" + data.message + "'/>";
+        $('#facebook').html(html);
+        $('#facebook img').on('click', function(e) {
+            switchActivePhoto($(this));
+        });
+    }, "json").fail(function(jqXHR, status, error) {
+        var message = JSON.parse(jqXHR.responseText).message;
+        alert(message);
+    });
+}
+
 $(document).ready( function() {
 
     // Delete links.
@@ -63,5 +124,10 @@ $(document).ready( function() {
     }
     $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
+    $('#saveReason').on('click', updateReason);
+
+    $('#choosePhotoLink').on('click', function(e) {
+        showSelectPhotoForm();
+    });
 });
 

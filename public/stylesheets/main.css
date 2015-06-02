@@ -87,6 +87,30 @@ td .btn {
 td .btn-link {
     border-width: 0;
 }
+.photo-block a {
+  position: absolute;
+  right: 17%;
+  background-color: white;
+  padding: 5px;
+}
+.photo {
+    border: 1px solid #bbbbbb;
+}
+.photo-selector .photo {
+    cursor: pointer;
+}
+.photo-selector .photo:hover {
+    border: 10px solid #5cb85c;
+}
+.photo-selector .photo.active {
+    border: 10px solid #5cb85c;
+}
+.photo-selector .photo-description {
+    margin: 20px 0px 10px 0px;
+}
+.memberPanel {
+    margin-top: 35px;
+}
 
 .actions form {
     margin-bottom: 1em;
@@ -176,9 +200,6 @@ body.api h3 {
 }
 .role {
     text-align: left;
-}
-.photo {
-    border: 1px solid #bbbbbb;
 }
 
 .cloudbees {

@@ -41,40 +41,15 @@ import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
-import scravatar.Gravatar
 import services.S3Bucket
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.io.Source
 
-trait People extends Controller with Security with Services {
+trait People extends JsonController with Security with Services {
 
   val contentType = "image/jpeg"
-
-  /**
-   * This formatter is used to create a photo object based on its type
-   */
-  val photoFormatter = new Formatter[Photo] {
-
-    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Photo] = {
-      data.getOrElse("photo", "") match {
-        case "facebook" ⇒
-          ("""[\w\.]+$""".r findFirstIn data.getOrElse("profile.facebookUrl", "")).map { userId ⇒
-            Right(Photo(Some("facebook"), Some("http://graph.facebook.com/" + userId + "/picture?type=large")))
-          }.getOrElse(Left(List(FormError("profile.facebookUrl", "Profile URL is invalid. It can't be used to retrieve a photo"))))
-        case "gravatar" ⇒
-          data.get("emailAddress").map { email ⇒
-            Right(Photo(Some("gravatar"), Some(Gravatar(email, ssl = true).size(300).avatarUrl)))
-          }.getOrElse(Right(Photo(None, None)))
-        case _ ⇒ Right(Photo(None, None))
-      }
-    }
-
-    override def unbind(key: String, value: Photo): Map[String, String] = {
-      Map(key -> value.id.getOrElse(""))
-    }
-  }
 
   /**
    * HTML form mapping for a person’s address.
@@ -95,26 +70,26 @@ trait People extends Controller with Security with Services {
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(facebookProfileUrl),
     "linkedInUrl" -> optional(linkedInProfileUrl),
-    "googlePlusUrl" -> optional(googlePlusProfileUrl)) (
-      {
-        (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-          SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
-      })(
-        {
-          (s: SocialProfile) ⇒ Some(s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl)
-        })
+    "googlePlusUrl" -> optional(googlePlusProfileUrl)) ({
+      (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+        SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl,
+          linkedInUrl, googlePlusUrl)
+    })({
+      (s: SocialProfile) ⇒
+        Some(s.twitterHandle, s.facebookUrl,
+          s.linkedInUrl, s.googlePlusUrl)
+    })
 
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(user: UserIdentity) = {
+  def personForm(editorName: String) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> email,
       "birthday" -> optional(jodaLocalDate),
-      "photo" -> of(photoFormatter),
       "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
@@ -125,13 +100,13 @@ trait People extends Controller with Security with Services {
       "active" -> ignored(true),
       "dateStamp" -> mapping(
         "created" -> ignored(DateTime.now()),
-        "createdBy" -> ignored(user.fullName),
+        "createdBy" -> ignored(editorName),
         "updated" -> ignored(DateTime.now()),
-        "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply)) (
-        { (id, firstName, lastName, emailAddress, birthday, photo, signature,
+        "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply)) (
+        { (id, firstName, lastName, emailAddress, birthday, signature,
           address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
           {
-            val person = Person(id, firstName, lastName, birthday, photo,
+            val person = Person(id, firstName, lastName, birthday, Photo.empty,
               signature, address.id.getOrElse(0), bio, interests,
               webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.socialProfile_=(profile.copy(email = emailAddress))
@@ -142,7 +117,7 @@ trait People extends Controller with Security with Services {
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
-                p.photo, p.signature, p.address, p.bio, p.interests,
+                p.signature, p.address, p.bio, p.interests,
                 p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
@@ -179,7 +154,7 @@ trait People extends Controller with Security with Services {
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.person.form(user, None, personForm(user)))
+      Ok(views.html.person.form(user, None, personForm(user.fullName)))
   }
 
   /**
@@ -222,10 +197,9 @@ trait People extends Controller with Security with Services {
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      personForm(user).bindFromRequest.fold(
-        formWithErrors ⇒ {
-          BadRequest(views.html.person.form(user, None, formWithErrors))
-        },
+      personForm(user.fullName).bindFromRequest.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.person.form(user, None, formWithErrors)),
         person ⇒ {
           val updatedPerson = person.insert
           val activity = updatedPerson.activity(
@@ -331,7 +305,8 @@ trait People extends Controller with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.person.form(user, Some(id), personForm(user).fill(person)))
+        Ok(views.html.person.form(user, Some(id),
+          personForm(user.fullName).fill(person)))
       }.getOrElse(NotFound)
   }
 
@@ -344,25 +319,16 @@ trait People extends Controller with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { p ⇒
-          personForm(user).bindFromRequest.fold(
+          personForm(user.fullName).bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
             person ⇒ {
-              val base = person.socialProfile.copy(
-                objectId = id,
-                objectType = ProfileType.Person)
-              SocialProfileService.findDuplicate(base) map { duplicate ⇒
-                var form = personForm(user).fill(person)
-                compareSocialProfiles(duplicate, base).
-                  foreach(err ⇒ form = form.withError(err))
+              checkDuplication(person, id, user.fullName) map { form ⇒
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
-                  .copy(id = Some(id), active = p.active)
-                  .copy(customerId = p.customerId)
-                updatedPerson.socialProfile_=(person.socialProfile)
-                updatedPerson.address_=(person.address)
-                updatedPerson.update
+                  .copy(id = Some(id), active = p.active, photo = p.photo)
+                  .copy(customerId = p.customerId).update
                 val activity = updatedPerson.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
@@ -389,33 +355,34 @@ trait People extends Controller with Security with Services {
    *
    * @param id Person identifier
    */
-  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      val encoding = "ISO-8859-1"
-      personService.find(id).map { person ⇒
-        val route = routes.People.details(person.id.get).url + "#facilitation"
+        val encoding = "ISO-8859-1"
+        personService.find(id).map { person ⇒
+          val route = routes.People.details(person.id.get).url + "#facilitation"
 
-        request.body.asMultipartFormData.get.file("signature").map { picture ⇒
-          val filename = Person.fullFileName(person.id.get)
-          val source = Source.fromFile(picture.ref.file.getPath, encoding)
-          val byteArray = source.toArray.map(_.toByte)
-          source.close()
-          S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-            person.copy(signature = true).update
-            Cache.remove(Person.cacheId(id))
-            val activity = person.activity(
-              user.person,
-              Activity.Predicate.UploadedSign).insert
-            Redirect(route).flashing("success" -> activity.toString)
-          }.recover {
-            case S3Exception(status, code, message, originalXml) ⇒
-              Redirect(route).flashing("error" -> "Image cannot be temporary saved")
+          request.body.asMultipartFormData.get.file("signature").map { picture ⇒
+            val filename = Person.fullFileName(person.id.get)
+            val source = Source.fromFile(picture.ref.file.getPath, encoding)
+            val byteArray = source.toArray.map(_.toByte)
+            source.close()
+            S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+              personService.update(person.copy(signature = true))
+              Cache.remove(Person.cacheId(id))
+              val activity = person.activity(
+                user.person,
+                Activity.Predicate.UploadedSign).insert
+              Redirect(route).flashing("success" -> activity.toString)
+            }.recover {
+              case S3Exception(status, code, message, originalXml) ⇒
+                Redirect(route).flashing("error" -> "Image cannot be temporary saved")
+            }
+          } getOrElse {
+            Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
           }
-        }.getOrElse {
-          Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
-        }
-      }.getOrElse(Future.successful(NotFound))
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -423,20 +390,21 @@ trait People extends Controller with Security with Services {
    *
    * @param personId Person identifier
    */
-  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      personService.find(personId.toLong).map { person ⇒
-        if (person.signature) {
-          S3Bucket.remove(Person.fullFileName(personId))
-          Cache.remove(Person.cacheId(personId))
-        }
-        person.copy(signature = false).update
-        val activity = person.activity(
-          user.person,
-          Activity.Predicate.DeletedSign).insert
-        val route = routes.People.details(personId).url + "#facilitation"
-        Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.find(personId.toLong).map { person ⇒
+          if (person.signature) {
+            S3Bucket.remove(Person.fullFileName(personId))
+            Cache.remove(Person.cacheId(personId))
+          }
+          personService.update(person.copy(signature = false))
+          val activity = person.activity(
+            user.person,
+            Activity.Predicate.DeletedSign).insert
+          val route = routes.People.details(personId).url + "#facilitation"
+          Redirect(route).flashing("success" -> activity.toString)
+        } getOrElse NotFound
   }
 
   /**
@@ -460,6 +428,55 @@ trait People extends Controller with Security with Services {
           Ok(value).as(contentType)
       }
     }
+  }
+
+  /**
+   * Updates profile photo and may be a facebook profile link
+   *
+   * @param id Person identifier
+   */
+  def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val form = Form(tuple("type" -> nonEmptyText, "name" -> text)).bindFromRequest
+        form.fold(
+          withError ⇒ jsonBadRequest("No option is provided"),
+          {
+            case (photoType, facebookName) ⇒
+              personService.find(id) map { person ⇒
+                val profile = person.socialProfile
+                if (photoType == "facebook" && profile.facebookUrl.isEmpty) {
+                  val profileUrl = "https://www.facebook.com/" + facebookName
+                  person.socialProfile_=(profile.copy(facebookUrl = Some(profileUrl)))
+                }
+                val photo = if (photoType == "nophoto")
+                  Photo.empty
+                else
+                  Photo(photoType, person.socialProfile)
+                personService.update(person.copy(photo = photo))
+                jsonSuccess("ok")
+              } getOrElse NotFound
+          })
+  }
+
+  /**
+   * Renders a screen for selecting a profile's photo
+   *
+   * @param id Person identifier
+   */
+  def choosePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.find(id) map { person ⇒
+          val facebook = person.socialProfile.facebookUrl map { url ⇒
+            Some(Photo.facebookUrl(url))
+          } getOrElse None
+          val active = person.photo.id getOrElse "nophoto"
+          Ok(views.html.person.photo(
+            Photo.gravatarUrl(person.socialProfile.email),
+            facebook,
+            active))
+        } getOrElse NotFound
   }
 
   /**
@@ -521,6 +538,24 @@ trait People extends Controller with Security with Services {
     }
     list.toList
   }
+
+  /**
+   * Returns form with erros if a person with identical social networks exists
+   *
+   * @param person Person object with incomplete social profile
+   * @param id Identifier of a person which is updated
+   * @param editorName Name of a user who adds changes
+   */
+  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
+    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
+    socialProfileService.findDuplicate(base) map { duplicate ⇒
+      var form = personForm(editorName).fill(person)
+      compareSocialProfiles(duplicate, base).
+        foreach(err ⇒ form = form.withError(err))
+      Some(form)
+    } getOrElse None
+  }
+
 }
 
 object People extends People with Security

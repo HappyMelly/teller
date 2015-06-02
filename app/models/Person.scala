@@ -38,19 +38,6 @@ import scala.concurrent.Future
 import scala.slick.lifted.Query
 import services.S3Bucket
 
-case class Photo(id: Option[String], url: Option[String])
-
-object Photo {
-
-  def parse(url: Option[String]): Photo = {
-    url.map {
-      case s if s.contains("facebook") ⇒ Photo(Some("facebook"), url)
-      case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
-      case _ ⇒ Photo(None, None)
-    }.getOrElse(Photo(None, None))
-  }
-}
-
 /**
  * A person, such as the owner or employee of an organisation.
  */
@@ -109,7 +96,7 @@ case class Person(
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
     DB.withSession { implicit session: Session ⇒
-      socialProfile_=(SocialProfileService.find(id.getOrElse(0), ProfileType.Person))
+      socialProfile_=(socialProfileService.find(id.getOrElse(0), ProfileType.Person))
       _socialProfile.get
     }
   } else {
@@ -135,7 +122,7 @@ case class Person(
    * A list of languages a facilitator speaks
    */
   def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
-    languages_=(FacilitatorLanguage.findByFacilitator(id.get))
+    languages_=(facilitatorService.languages(id.get))
     _languages.get
   } else {
     _languages.get
@@ -194,6 +181,9 @@ case class Person(
       _member
     } getOrElse None
   }
+
+  /** Returns true if a person is a member */
+  def isMember: Boolean = _member.isDefined
 
   /**
    * Associates this person with given organisation.
@@ -273,33 +263,9 @@ case class Person(
   def insert: Person = personService.insert(this)
 
   /**
-   * Updates this person in the database and returns the saved person.
+   * Updates related info about this person in database
    */
-  def update: Person = DB.withTransaction { implicit session: Session ⇒
-    import models.database.SocialProfiles._
-    val addressId = People.filter(_.id === this.id).map(_.addressId).first
-
-    val addressQuery = for {
-      address ← Addresses if address.id === addressId
-    } yield address
-    addressQuery.update(address.copy(id = Some(addressId)))
-
-    val socialQuery = for {
-      p ← SocialProfiles if p.objectId === id.get && p.objectType === socialProfile.objectType
-    } yield p
-
-    socialQuery.update(socialProfile.copy(objectId = id.get))
-
-    // Skip the id, created, createdBy and active fields.
-    val personUpdateTuple = (firstName, lastName, birthday, photo.url, signature,
-      bio, interests, webSite, blog, customerId, virtual, active,
-      dateStamp.updated, dateStamp.updatedBy)
-    val updateQuery = People.filter(_.id === id).map(_.forUpdate)
-    updateQuery.update(personUpdateTuple)
-
-    UserAccount.updateSocialNetworkProfiles(this)
-    this
-  }
+  def update: Person = personService.update(this)
 
   /**
    * Find all events which were faciliated by a specified facilitator and
@@ -350,11 +316,28 @@ case class Person(
    * @return Returns member object
    */
   def becomeMember(funder: Boolean, fee: Money): Member = {
-    val m = new Member(None, id.get, person = true, funder = funder, fee = fee,
-      renewal = true, since = LocalDate.now(), until = LocalDate.now().plusYears(1),
-      existingObject = true, created = DateTime.now(), id.get, DateTime.now(), id.get)
-    memberService.insert(m)
+    val m = memberService.insert(membership(funder, fee))
+    profileStrengthService.find(id.get, false) map { x ⇒
+      profileStrengthService.update(ProfileStrength.forMember(x))
+    }
+    m
   }
+
+  /**
+   * Returns a one-year membership object for the given parameters
+   *
+   * @param funder If true member is a funder
+   * @param fee An amount of membership fee
+   */
+  protected def membership(funder: Boolean, fee: Money): Member =
+    new Member(None, id.get, person = true,
+      funder = funder, fee = fee,
+      renewal = true,
+      since = LocalDate.now(),
+      until = LocalDate.now().plusYears(1),
+      existingObject = true, reason = None,
+      created = DateTime.now(), id.get,
+      DateTime.now(), id.get)
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

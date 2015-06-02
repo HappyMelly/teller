@@ -26,6 +26,7 @@ package controllers
 
 import models.{ Member, Organisation, Person }
 import models.service.Services
+import models.payment.Payment
 import org.joda.money.Money
 import play.api.Play
 import play.api.data.Form
@@ -87,5 +88,22 @@ trait Enrollment extends Controller
   protected def subscribe(person: Person, member: Member): Boolean = {
     val listId = Play.configuration.getString("mailchimp.listId").getOrElse("")
     mailChimp.subscribe(listId, person, member.funder)
+  }
+
+  /**
+   * Makes a payment through the payment gateway and creates
+   * an yearly subscription
+   *
+   * @param person Person making all membership-related actions
+   * @param org Organisation which want to become a member
+   * @param data Payment data
+   * @return Returns customer identifier in the payment system
+   */
+  protected def subscribe(person: Person,
+    org: Option[Organisation],
+    data: PaymentData): String = {
+    val key = Play.configuration.getString("stripe.secret_key").get
+    val payment = new Payment(key)
+    payment.subscribe(person, org, data.token, data.fee)
   }
 }
