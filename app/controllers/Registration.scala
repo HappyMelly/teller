@@ -285,9 +285,11 @@ trait Registration extends Enrollment {
    * @param orgId Organisation identifier
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
-    val url: String = orgId map { id ⇒ routes.Organisations.details(id).url
-    } getOrElse routes.Dashboard.profile().url
-    Ok(views.html.registration.congratulations(url))
+    orgId map { id ⇒
+      Ok(views.html.registration.congratulations(routes.Organisations.details(id).url, true))
+    } getOrElse {
+      Ok(views.html.registration.congratulations(routes.Dashboard.profile().url, false))
+    }
   }
 
   protected def insertAccount(person: Person) = {

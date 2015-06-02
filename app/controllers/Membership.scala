@@ -55,9 +55,10 @@ trait Membership extends Enrollment {
    *
    * @param orgId Organisation identifier
    */
-  def congratulations(orgId: Option[Long]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.membership.congratulations(user, orgId))
+  def congratulations(orgId: Option[Long]) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Ok(views.html.membership.congratulations(user, orgId))
   }
 
   /**
