@@ -52,14 +52,3 @@ case class FacilitatorLanguage(personId: Long, language: String) {
     FacilitatorLanguages.filter(_.personId === personId).filter(_.language === language).mutate(_.delete())
   }
 }
-
-object FacilitatorLanguage {
-
-  /**
-   * Finds all languages for a particular facilitator
-   */
-  def findByFacilitator(personId: Long): List[FacilitatorLanguage] = DB.withSession { implicit session: Session ⇒
-    Query(FacilitatorLanguages).filter(_.personId === personId).list
-  }
-
-}

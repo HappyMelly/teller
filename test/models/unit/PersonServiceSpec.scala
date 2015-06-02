@@ -25,7 +25,7 @@
 package models.unit
 
 import helpers._
-import models.{ Person, ProfileStrength, CompletionStep, Photo }
+import models.{ Person, ProfileStrength, CompletionStep }
 import models.service.{ PersonService, ProfileStrengthService }
 import org.specs2.mutable._
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -45,128 +45,25 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
   service.profileStrengthService_=(profileStrengthService)
 
   override def is = s2"""
-
-  When a person has a valid photo a photo step should be marked as Complete
-    if a photo is Facebook photo is added                                   $e1
-    if a photo is Gravatar photo is added                                   $e2
-
-  When a person has no valid photo
-    a photo step should be marked as Incomplete                             $e3
-
-  When a person has no bio
-    an about step should be marked as Incomplete                            $e4
-
-  When a person has a bio
-    an about step should be marked as Complete                              $e5
-
-  A social step should be marked as Incomplete
-    when a person has no social network                                     $e6
-    when a person has 1 social network                                      $e7
-
-  A social step should be marked as Complete
-    when a person has at least 2 social networks                            $e8
-
   A signature step should be marked as Incomplete
-    when a person has no signature                                          $e9
-
-  A signature step should be marked as Complete
-    when a person has a signature                                          $e10
+    when a person has no signature                                          $e1
   """
 
   def e1 = {
-    val facebookPhoto = Photo(Some("facebook"),
-      Some("http://graph.facebook.com/skotlov/picture?type=large"))
-    val person = PersonHelper.one().copy(photo = facebookPhoto, bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
-    (profileStrengthService.update _) expects completion(photo = true)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e2 = {
-    val gravatarPhoto = Photo(Some("gravatar"),
-      Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
-    val person = PersonHelper.one().copy(photo = gravatarPhoto, bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
-    (profileStrengthService.update _) expects completion(photo = true)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e3 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(photo = true))
-    (profileStrengthService.update _) expects completion(photo = false)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e4 = {
-    val person = PersonHelper.one().copy(bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(about = true))
-    (profileStrengthService.update _) expects completion()
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e5 = {
-    val person = PersonHelper.one().copy(bio = Some("test"))
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
-    (profileStrengthService.update _) expects completion(about = true)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e6 = {
-    val person = PersonHelper.one().copy(bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(social = true))
-    (profileStrengthService.update _) expects completion()
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e7 = {
-    val person = PersonHelper.one().copy(bio = None)
-    person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test")))
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(social = true))
-    (profileStrengthService.update _) expects completion()
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e8 = {
-    val person = PersonHelper.one().copy(bio = None)
-    person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test"),
-      facebookUrl = Some("test")))
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion())
-    (profileStrengthService.update _) expects completion(social = true)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e9 = {
-    val person = PersonHelper.one().copy(bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(signature = true))
-    (profileStrengthService.update _) expects completion(signature = false)
-    service.callUpdateProfileStrength(person)
-    ok
-  }
-
-  def e10 = {
-    val person = PersonHelper.one().copy(bio = None, signature = true)
-    (profileStrengthService.find _) expects (1L, false) returning Some(completion(signature = false))
-    (profileStrengthService.update _) expects completion(signature = true)
+    (profileStrengthService.find _) expects (1L, false) returning Some(strength(signature = true))
+    (profileStrengthService.update _) expects strength(signature = false)
     service.callUpdateProfileStrength(person)
     ok
   }
 
   /**
-   * Returns profile completion steps
+   * Returns profile strength steps
    *
-   * @param about Sets completion value for 'about' step
-   * @param photo Sets completion value for 'photo' step
-   * @param social Sets completion value for 'social' step
-   * @param signature Sets completion value for 'signature' step
+   * @param about Sets strength value for 'about' step
+   * @param photo Sets strength value for 'photo' step
+   * @param social Sets strength value for 'social' step
+   * @param signature Sets strength value for 'signature' step
    */
   private def steps(about: Boolean = false,
     photo: Boolean = false,
@@ -189,14 +86,14 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
   }
 
   /**
-   * Returns profile completion steps
+   * Returns profile strength steps
    *
-   * @param about Sets completion value for 'about' step
-   * @param photo Sets completion value for 'photo' step
-   * @param social Sets completion value for 'social' step
-   * @param signature Sets completion value for 'signature' step
+   * @param about Sets strength value for 'about' step
+   * @param photo Sets strength value for 'photo' step
+   * @param social Sets strength value for 'social' step
+   * @param signature Sets strength value for 'signature' step
    */
-  private def completion(about: Boolean = false,
+  private def strength(about: Boolean = false,
     photo: Boolean = false,
     social: Boolean = false,
     signature: Boolean = false): ProfileStrength =

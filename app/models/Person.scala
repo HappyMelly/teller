@@ -122,7 +122,7 @@ case class Person(
    * A list of languages a facilitator speaks
    */
   def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
-    languages_=(FacilitatorLanguage.findByFacilitator(id.get))
+    languages_=(facilitatorService.languages(id.get))
     _languages.get
   } else {
     _languages.get
@@ -181,6 +181,9 @@ case class Person(
       _member
     } getOrElse None
   }
+
+  /** Returns true if a person is a member */
+  def isMember: Boolean = _member.isDefined
 
   /**
    * Associates this person with given organisation.

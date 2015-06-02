@@ -174,23 +174,7 @@ class PersonService extends Services {
    */
   protected def updateProfileStrength(person: Person): Unit = {
     profileStrengthService.find(person.id.get, false) map { strength ⇒
-      val strengthWithDesc = if (person.bio.isDefined)
-        strength.markComplete("about")
-      else
-        strength.markIncomplete("about")
-      val strengthWithSocial = if (person.socialProfile.complete)
-        strengthWithDesc.markComplete("social")
-      else
-        strengthWithDesc.markIncomplete("social")
-      val strengthWithPhoto = if (person.photo.id.isDefined)
-        strengthWithSocial.markComplete("photo")
-      else
-        strengthWithSocial.markIncomplete("photo")
-      val strengthWithSignature = if (person.signature)
-        strengthWithPhoto.markComplete("signature")
-      else
-        strengthWithPhoto.markIncomplete("signature")
-      profileStrengthService.update(strengthWithSignature)
+      profileStrengthService.update(ProfileStrength.forPerson(strength, person))
     }
   }
 }

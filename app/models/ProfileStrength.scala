@@ -82,6 +82,7 @@ case class ProfileStrength(id: Option[Long],
     }
     Json.toJson(steps).as[JsArray]
   }
+
   /**
    * Marks the given step as complete or incomplete
    *
@@ -154,11 +155,37 @@ object ProfileStrength {
    */
   def forMember(strength: ProfileStrength): ProfileStrength = {
     val withoutMember = strength.steps.filterNot(_.name == "member")
-    val withReason = withoutMember
-    // val withReason = if (withoutMember.exists(_.name == "reason"))
-    //   withoutMember
-    // else
-    //   withoutMember :+ CompletionStep("reason", 2)
+    val withReason = if (withoutMember.exists(_.name == "reason"))
+      withoutMember
+    else
+      withoutMember :+ CompletionStep("reason", 2)
     strength.copy(steps = withReason)
   }
+
+  /**
+   * Updates steps for a person to the given profile strength
+   *
+   * @param strength Profile strength
+   * @param person Person object
+   * @return Updated profile strength
+   */
+  def forPerson(strength: ProfileStrength, person: Person): ProfileStrength = {
+    val strengthWithDesc = if (person.bio.isDefined)
+      strength.markComplete("about")
+    else
+      strength.markIncomplete("about")
+    val strengthWithSocial = if (person.socialProfile.complete)
+      strengthWithDesc.markComplete("social")
+    else
+      strengthWithDesc.markIncomplete("social")
+    val strengthWithPhoto = if (person.photo.id.isDefined)
+      strengthWithSocial.markComplete("photo")
+    else
+      strengthWithSocial.markIncomplete("photo")
+    if (person.signature)
+      strengthWithPhoto.markComplete("signature")
+    else
+      strengthWithPhoto.markIncomplete("signature")
+  }
+
 }

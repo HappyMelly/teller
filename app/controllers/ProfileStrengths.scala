@@ -23,6 +23,7 @@
  */
 package controllers
 
+import models.{ ProfileStrength, Person }
 import models.service.{ ProfileStrengthService, Services }
 import models.UserRole.Role._
 import play.api.mvc._
@@ -33,24 +34,46 @@ trait ProfileStrengths extends Controller with Security with Services {
    * Returns profile strength widget for a person
    *
    * @param id Person identifier
+   * @param steps If true completion steps are shown
    */
-  def personWidget(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      profileStrengthService.find(id) map { x ⇒
-        Ok(views.html.profile.widget(id, x.progress, x.incompleteSteps))
-      } getOrElse NotFound
+  def personWidget(id: Long, steps: Boolean) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        profileStrengthService.find(id) map { x ⇒
+          Ok(views.html.profile.widget(id, x, steps))
+        } getOrElse {
+          if (id == user.person.id.get) {
+            val profileStrength = initializeProfileStrength(user.person)
+            profileStrengthService.insert(profileStrength)
+            Ok(views.html.profile.widget(id, profileStrength, steps))
+          } else {
+            BadRequest
+          }
+        }
   }
 
   /**
-   * Returns profile strength widget for a person with a button 'Improve my profile'
+   * Returns new profile strength based on the given person data
    *
-   * @param id Person identifier
+   * @param person Person
    */
-  def widgetWithImproveButton(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      profileStrengthService.find(id) map { x ⇒
-        Ok(views.html.profile.widgetWithImproveButton(id, x.progress))
-      } getOrElse NotFound
+  protected def initializeProfileStrength(person: Person): ProfileStrength = {
+    val id = person.id.get
+    val strength = ProfileStrength.empty(id, false)
+    val strengthWithMember = if (person.isMember)
+      ProfileStrength.forMember(strength)
+    else
+      strength
+    val strengthWithFacilitator = if (licenseService.activeLicenses(id).length > 0) {
+      val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
+      if (facilitatorService.languages(person.id.get).length > 0)
+        strengthWithLanguages.markComplete("language")
+      else
+        strengthWithLanguages
+    } else {
+      strengthWithMember
+    }
+    ProfileStrength.forPerson(strengthWithFacilitator, person)
   }
 }
 

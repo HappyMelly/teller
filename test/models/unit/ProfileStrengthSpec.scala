@@ -23,7 +23,8 @@
  */
 package models.unit
 
-import models.{ CompletionStep, ProfileStrength }
+import helpers._
+import models.{ CompletionStep, ProfileStrength, Photo, Person }
 import org.specs2.mutable._
 import play.api.libs.json.{ Json, JsArray }
 
@@ -155,9 +156,120 @@ class ProfileStrengthSpec extends Specification {
       val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
       strength.steps.exists(_.name == "member") must_== false
     }
-    // "contain 'Reason' step" in {
-    //   val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
-    //   strength.steps.exists(_.name == "reason") must_== true
-    // }
+    "contain 'Reason' step" in {
+      val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
+      strength.steps.exists(_.name == "reason") must_== true
+    }
   }
+
+  "When a person has a valid photo a photo step should be marked as Complete" >> {
+    "if a photo is Facebook photo is added" in {
+      val facebookPhoto = Photo(Some("facebook"),
+        Some("http://graph.facebook.com/skotlov/picture?type=large"))
+      val person = PersonHelper.one().copy(photo = facebookPhoto, bio = None)
+      incompleteStep("photo", profileStrength(), person) must_== false
+    }
+    "if a photo is Gravatar photo is added" in {
+      val gravatarPhoto = Photo(Some("gravatar"),
+        Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
+      val person = PersonHelper.one().copy(photo = gravatarPhoto, bio = None)
+      incompleteStep("photo", profileStrength(), person) must_== false
+    }
+  }
+  "When a person has no valid photo" >> {
+    "a photo step should be marked as Incomplete" in {
+      val person = PersonHelper.one().copy(bio = None)
+      incompleteStep("photo", profileStrength(), person) must_== true
+    }
+  }
+  "When a person has no bio" >> {
+    "a bio step should be marked as Incomplete" in {
+      val person = PersonHelper.one().copy(bio = None)
+      incompleteStep("about", profileStrength(about = true), person) must_== true
+    }
+  }
+  "When a person has bio" >> {
+    "a bio step should be marked as Complete" in {
+      val person = PersonHelper.one().copy(bio = Some("test"))
+      incompleteStep("about", profileStrength(), person) must_== false
+    }
+  }
+  "A social step should be marked as Incomplete" >> {
+    "when a person has no social network" in {
+      val person = PersonHelper.one().copy(bio = None)
+      incompleteStep("social", profileStrength(social = true), person) must_== true
+    }
+    "when a person has 1 social network" in {
+      val person = PersonHelper.one().copy(bio = None)
+      person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test")))
+      incompleteStep("social", profileStrength(social = true), person) must_== true
+    }
+  }
+  "A social step should be marked as Complete" >> {
+    "when a person has at least 2 social networks" in {
+      val person = PersonHelper.one().copy(bio = None)
+      person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test"),
+        facebookUrl = Some("test")))
+      incompleteStep("social", profileStrength(), person) must_== false
+    }
+  }
+  "A signature step should be marked as Incomplete" >> {
+    "when a person has no signature" in {
+      val person = PersonHelper.one().copy(bio = None)
+      incompleteStep("signature", profileStrength(signature = true), person) must_== true
+    }
+  }
+  "A signature step should be marked as Complete" >> {
+    "when a person has a signature" in {
+      val person = PersonHelper.one().copy(bio = None, signature = true)
+      incompleteStep("signature", profileStrength(), person) must_== false
+    }
+  }
+
+  protected def incompleteStep(name: String,
+    strength: ProfileStrength,
+    person: Person): Boolean =
+    ProfileStrength.forPerson(strength, person).incompleteSteps.exists(_.name == name)
+
+  /**
+   * Returns profile strength steps
+   *
+   * @param about Sets strength value for 'about' step
+   * @param photo Sets strength value for 'photo' step
+   * @param social Sets strength value for 'social' step
+   * @param signature Sets strength value for 'signature' step
+   */
+  private def steps(about: Boolean = false,
+    photo: Boolean = false,
+    social: Boolean = false,
+    signature: Boolean = false): JsArray = {
+    Json.arr(
+      Json.obj(
+        "name" -> "about",
+        "weight" -> 5,
+        "done" -> about), Json.obj(
+        "name" -> "photo",
+        "weight" -> 10,
+        "done" -> photo), Json.obj(
+        "name" -> "signature",
+        "weight" -> 5,
+        "done" -> signature), Json.obj(
+        "name" -> "social",
+        "weight" -> 5,
+        "done" -> social))
+  }
+
+  /**
+   * Returns profile strength steps
+   *
+   * @param about Sets strength value for 'about' step
+   * @param photo Sets strength value for 'photo' step
+   * @param social Sets strength value for 'social' step
+   * @param signature Sets strength value for 'signature' step
+   */
+  private def profileStrength(about: Boolean = false,
+    photo: Boolean = false,
+    social: Boolean = false,
+    signature: Boolean = false): ProfileStrength =
+    ProfileStrength(None, 1L, false, steps(about, photo, social, signature))
 }

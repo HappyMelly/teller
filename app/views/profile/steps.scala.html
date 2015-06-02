@@ -1,0 +1,32 @@
+@(personId: Long,
+  steps: List[CompletionStep])
+
+<ul class="list-unstyled">
+  @for(step <- steps) {
+    <li>
+      <strong>@(step.weight)%</strong>
+      @if(step.name == "photo") {
+        <a href="#" id="addPhotoLink" data-toggle="modal" data-target="#photoDialog">
+         Add photo</a>
+      }
+      @if(step.name == "about") {
+        <a href="@routes.People.edit(personId)">Add description</a>
+      }
+      @if(step.name == "social") {
+        <a href="@routes.People.edit(personId)">Add 2 social networks</a>
+      }
+      @if(step.name == "reason") {
+        <a href="#">Share why you joined the network</a>
+      }
+      @if(step.name == "member") {
+        <a href="@routes.Membership.welcome()">Become a member</a>
+      }
+      @if(step.name == "signature") {
+        <a href="#" onclick="$('#sidemenu a[href=\'#facilitation\']').tab('show'); return false;">Upload your signature</a>
+      }
+      @if(step.name == "language") {
+        <a href="#" onclick="$('#sidemenu a[href=\'#facilitation\']').tab('show'); return false;">Add at least 1 language</a>
+      }
+    </li>
+  }
+</ul>
