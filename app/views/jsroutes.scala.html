@@ -1,17 +1,18 @@
 @()(implicit request: Request[Any])
 
 @helper.javascriptRouter("jsRoutes")(
-  routes.javascript.People.choosePhoto,
-  routes.javascript.People.updatePhoto,
-  routes.javascript.ProfileStrengths.personWidget,
-  routes.javascript.SocialProfiles.facebookUrl,
-  routes.javascript.ExchangeRates.convert,
-  routes.javascript.People.details,
   routes.javascript.Brands.removeCoordinator,
   routes.javascript.Brands.turnNotificationOn,
   routes.javascript.Brands.turnNotificationOff,
-  routes.javascript.Urls.validate,
+  routes.javascript.ExchangeRates.convert,
+  routes.javascript.Members.updateReason,
+  routes.javascript.People.choosePhoto,
+  routes.javascript.People.updatePhoto,
+  routes.javascript.People.details,
+  routes.javascript.ProfileStrengths.personWidget,
+  routes.javascript.SocialProfiles.facebookUrl,
   routes.javascript.Statistics.byFacilitators,
   routes.javascript.Statistics.byEvents,
-  routes.javascript.Statistics.byCountries
+  routes.javascript.Statistics.byCountries,
+  routes.javascript.Urls.validate
 )

@@ -37,9 +37,10 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
+import templates.Formatters._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Enrollment {
+trait Members extends Enrollment with JsonController {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -66,6 +67,7 @@ trait Members extends Enrollment {
       "existingObject" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
+      "reason" -> ignored(None.asInstanceOf[Option[String]]),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
       "updated" -> ignored(DateTime.now()),
@@ -142,9 +144,8 @@ trait Members extends Enrollment {
             formWithErrors)),
           data ⇒ {
             val updMember = data.copy(id = member.id).
-              copy(person = member.person).
-              copy(objectId = member.objectId).
-              copy(until = member.until).update
+              copy(person = member.person, objectId = member.objectId).
+              copy(until = member.until, reason = member.reason).update
             val activity = updMember.activity(
               user.person,
               Activity.Predicate.Updated).insert
@@ -155,6 +156,32 @@ trait Members extends Enrollment {
             Redirect(url).flashing("success" -> activity.toString)
           })
       } getOrElse NotFound
+  }
+
+  /**
+   * Updates a reason for the given person
+   *
+   * @param personId Person identifier
+   */
+  def updateReason(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        personService.member(personId) map { member ⇒
+          val form = Form(single("reason" -> optional(text)))
+          form.bindFromRequest.fold(
+            error ⇒ jsonBadRequest("Reason does not exist"),
+            reason ⇒ {
+              memberService.update(member.copy(reason = reason))
+              profileStrengthService.find(personId, false) map { strength ⇒
+                if (reason.isDefined && reason.get.length > 0) {
+                  profileStrengthService.update(strength.markComplete("reason"))
+                } else {
+                  profileStrengthService.update(strength.markIncomplete("reason"))
+                }
+              }
+              jsonSuccess((reason getOrElse "").markdown.toString)
+            })
+        } getOrElse jsonNotFound("Person is not a member")
   }
 
   /**

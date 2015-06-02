@@ -37,6 +37,7 @@ case class Member(
   since: LocalDate,
   until: LocalDate,
   existingObject: Boolean,
+  reason: Option[String] = None,
   created: DateTime,
   createdBy: Long,
   updated: DateTime,

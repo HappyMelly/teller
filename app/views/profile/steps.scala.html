@@ -16,7 +16,8 @@
         <a href="@routes.People.edit(personId)">Add 2 social networks</a>
       }
       @if(step.name == "reason") {
-        <a href="#">Share why you joined the network</a>
+        <a href="#" onclick="$('#sidemenu a[href=\'#membership\']').tab('show'); return true;" data-toggle="modal" data-target="#reasonDialog">
+          Share why you joined the network</a>
       }
       @if(step.name == "member") {
         <a href="@routes.Membership.welcome()">Become a member</a>

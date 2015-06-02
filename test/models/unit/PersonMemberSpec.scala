@@ -86,7 +86,7 @@ class PersonMemberSpec extends Specification {
         renewal = true,
         since = LocalDate.now(),
         until = LocalDate.now().plusYears(1),
-        existingObject = true,
+        existingObject = true, None,
         created = DateTime.parse("2015-01-01"), id.get,
         DateTime.parse("2015-01-01"), id.get)
   }

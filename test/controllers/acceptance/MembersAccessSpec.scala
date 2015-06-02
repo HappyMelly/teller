@@ -76,6 +76,8 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
     not be accessible to Viewers                         $e24
     be accessible to Editors                             $e25
 
+  UpdateReason action should
+    not be accessible to Viewers                         $e26
   """
 
   val controller = new TestMembers()
@@ -236,5 +238,12 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
 
     status(result) must equalTo(NOT_FOUND)
   }
+
+  def e26 = {
+    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/")
+    val result = controller.updateReason(1L).apply(req)
+    status(result) must equalTo(SEE_OTHER)
+  }
+
 }
 

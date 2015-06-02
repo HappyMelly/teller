@@ -27,6 +27,16 @@ function switchActivePhoto(object) {
     $(object).addClass('active');
 }
 
+function updateReason() {
+    var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url
+    $.post(url, {reason: $('#reason').val()}, null, "json").done(function(data) {
+        $('#reasonDialog').modal('hide');
+        $('#reasonToJoin').html(data.message);
+        reloadCompletionWidget();
+    }).fail(function(jqXHR, status, error) {
+    });
+}
+
 function updatePhoto() {
     var url = jsRoutes.controllers.People.updatePhoto(getPersonId()).url
     var object = $('#choosePhotoContent').find('.active');
@@ -114,6 +124,7 @@ $(document).ready( function() {
     }
     $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
+    $('#saveReason').on('click', updateReason);
 
     $('#choosePhotoLink').on('click', function(e) {
         showSelectPhotoForm();

@@ -40,21 +40,22 @@ private[models] object Members extends Table[Member]("MEMBER") {
   def renewal = column[Boolean]("RENEWAL")
   def since = column[LocalDate]("SINCE")
   def until = column[LocalDate]("END")
+  def reason = column[Option[String]]("REASON")
   def created = column[DateTime]("CREATED")
   def createdBy = column[Long]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[Long]("UPDATED_BY")
 
-  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~
-    renewal ~ since ~ until ~ created ~ createdBy ~ updated ~ updatedBy <> ({
+  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~ renewal ~
+    since ~ until ~ reason ~ created ~ createdBy ~ updated ~ updatedBy <> ({
       m ⇒
         Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, false,
-          m._10, m._11, m._12, m._13)
+          m._10, m._11, m._12, m._13, m._14)
     }, {
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.renewal, m.since, m.until, m.created, m.createdBy,
-          m.updated, m.updatedBy)
+          m.fee.getAmount, m.renewal, m.since, m.until, m.reason, m.created,
+          m.createdBy, m.updated, m.updatedBy)
     })
 
   def forInsert = * returning id
