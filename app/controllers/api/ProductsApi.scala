@@ -25,7 +25,7 @@
 package controllers.api
 
 import models.service.Services
-import models.{ Product, ProductsCollection }
+import models.{ Product, ProductView, ProductsCollection }
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
@@ -37,34 +37,44 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
 
   import controllers.api.BrandsApi.brandWrites
 
-  implicit val productWrites = new Writes[Product] {
-    def writes(product: Product): JsValue = {
+  implicit val productWithBrandsWrites = new Writes[ProductView] {
+    def writes(obj: ProductView): JsValue = {
       Json.obj(
-        "href" -> product.id.map(productId ⇒ routes.ProductsApi.product(productId).url),
-        "title" -> product.title,
-        "subtitle" -> product.subtitle,
-        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
-        "brands" -> product.brands,
-        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
+        "href" -> obj.product.id.map(id ⇒ routes.ProductsApi.product(id).url),
+        "title" -> obj.product.title,
+        "subtitle" -> obj.product.subtitle,
+        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "brands" -> obj.brands,
+        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
+    }
+  }
+
+  implicit val productWrites = new Writes[Product] {
+    def writes(obj: Product): JsValue = {
+      Json.obj(
+        "title" -> obj.title,
+        "subtitle" -> obj.subtitle,
+        "image" -> obj.picture.map(picture ⇒ controllers.routes.Products.picture(obj.id.get).url),
+        "category" -> obj.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
   }
 
   import controllers.api.ContributionsApi.contributorWrites
 
-  val productDetailsWrites = new Writes[Product] {
-    def writes(product: Product): JsValue = {
+  val productDetailsWrites = new Writes[ProductView] {
+    def writes(obj: ProductView): JsValue = {
       Json.obj(
-        "title" -> product.title,
-        "subtitle" -> product.subtitle,
-        "url" -> product.url,
-        "description" -> product.description,
-        "cta_url" -> product.callToActionUrl,
-        "cta_text" -> product.callToActionText,
-        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
-        "brands" -> product.brands,
-        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
-        "parent" -> product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),
-        "contributors" -> product.contributors)
+        "title" -> obj.product.title,
+        "subtitle" -> obj.product.subtitle,
+        "url" -> obj.product.url,
+        "description" -> obj.product.description,
+        "cta_url" -> obj.product.callToActionUrl,
+        "cta_text" -> obj.product.callToActionText,
+        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "brands" -> obj.brands,
+        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
+        "parent" -> obj.product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),
+        "contributors" -> obj.product.contributors)
     }
   }
 
@@ -72,17 +82,17 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
    * Product details API.
    */
   def product(id: Long) = TokenSecuredAction { implicit request ⇒
-    Product.find(id).map { product ⇒
-      Ok(Json.prettyPrint(Json.toJson(product)(productDetailsWrites)))
-    }.getOrElse(NotFound("Unknown product"))
+    productService.find(id) map { product ⇒
+      val withBrands = ProductView(product, productService.brands(id))
+      Ok(Json.prettyPrint(Json.toJson(withBrands)(productDetailsWrites)))
+    } getOrElse NotFound("Unknown product")
   }
 
   /**
    * Product list API.
    */
   def products = TokenSecuredAction { implicit request ⇒
-    val products = productService.findAll
-    ProductsCollection.brands(products)
+    val products = ProductsCollection.brands(productService.findActive)
     Ok(Json.prettyPrint(Json.toJson(products)))
   }
 }

@@ -172,6 +172,7 @@ GET           /person/:personId/relation/:organisationId/delete              con
 
 GET           /products                                                      controllers.Products.index
 GET           /product/new                                                   controllers.Products.add
+POST          /product/:id/activation                                        controllers.Products.activation(id: Long)
 POST          /product/new                                                   controllers.Products.create
 GET           /product/:id                                                   controllers.Products.details(id: Long)
 POST          /product/:id                                                   controllers.Products.update(id: Long)

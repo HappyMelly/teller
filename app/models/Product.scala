@@ -43,6 +43,8 @@ object ProductCategory extends Enumeration {
   val Course = Value("course")
 }
 
+case class ProductView(product: Product, brands: List[Brand])
+
 /**
  * A thing such as a book, a game or a piece of software
  */
@@ -57,29 +59,11 @@ case class Product(
   picture: Option[String],
   category: Option[ProductCategory.Value],
   parentId: Option[Long],
+  active: Boolean = true,
   created: DateTime,
   createdBy: String,
   updated: DateTime,
   updatedBy: String) {
-
-  private var _brands: Option[List[Brand]] = None
-
-  def brands: List[Brand] = if (_brands.isEmpty) {
-    DB.withSession { implicit session: Session ⇒
-      val query = for {
-        relation ← ProductBrandAssociations if relation.productId === this.id
-        brand ← relation.brand
-      } yield brand
-      brands_=(query.sortBy(_.name.toLowerCase).list)
-      _brands.get
-    }
-  } else {
-    _brands.get
-  }
-
-  def brands_=(brands: List[Brand]): Unit = {
-    _brands = Some(brands)
-  }
 
   def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
 
@@ -102,10 +86,10 @@ case class Product(
     this.copy(id = Some(id))
   }
 
-  def delete(): Unit = Product.delete(this.id.get)
-
   def update: Product = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (title, subtitle, url, description, callToActionUrl, callToActionText, picture, category, parentId, updated, updatedBy)
+    val updateTuple = (title, subtitle, url, description,
+      callToActionUrl, callToActionText, picture, category, parentId,
+      updated, updatedBy)
     val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
@@ -117,30 +101,6 @@ object Product {
   def cacheId(id: Long): String = "products." + id.toString
 
   def generateImageName(filename: String): String = "products/" + Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
-
-  def exists(title: String): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(Products).filter(_.title === title).exists).first
-  }
-  /**
-   * Returns true if and only if there is a product with the given title.
-   */
-  def exists(title: String, id: Long): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(Products).filter(_.title === title).filter(_.id =!= id).exists).first
-  }
-
-  /** Finds a product by ID **/
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Products).filter(_.id === id).firstOption
-  }
-
-  def findDerivatives(parentId: Long): List[Product] = DB.withSession { implicit session: Session ⇒
-    Query(Products).filter(_.parentId === parentId).list
-  }
-
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Products.where(_.id === id).mutate(_.delete())
-  }
-
 }
 
 object ProductsCollection {
@@ -148,15 +108,15 @@ object ProductsCollection {
   /**
    * Fill products with brands (using only one query to database)
    * @param products List of products
-   * @return
    */
-  def brands(products: List[Product]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = products.map(_.id.get).distinct.toList
-    val query = for {
-      relation ← ProductBrandAssociations if relation.productId inSet ids
-      brand ← relation.brand
-    } yield (relation.productId, brand)
-    val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    products.foreach(e ⇒ e.brands_=(brands.getOrElse(e.id.get, List())))
+  def brands(products: List[Product]): List[ProductView] = DB.withSession {
+    implicit session: Session ⇒
+      val ids = products.map(_.id.get).distinct.toList
+      val query = for {
+        relation ← ProductBrandAssociations if relation.productId inSet ids
+        brand ← relation.brand
+      } yield (relation.productId, brand)
+      val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+      products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List())))
   }
 }

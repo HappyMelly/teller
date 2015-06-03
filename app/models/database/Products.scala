@@ -48,6 +48,7 @@ private[models] object Products extends Table[Product]("PRODUCT") {
   def picture = column[Option[String]]("PICTURE")
   def category = column[Option[ProductCategory.Value]]("CATEGORY")
   def parentId = column[Option[Long]]("PARENT_ID")
+  def active = column[Boolean]("ACTIVE")
 
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
@@ -57,12 +58,13 @@ private[models] object Products extends Table[Product]("PRODUCT") {
 
   def parent = Products.where(_.id === parentId)
 
-  def * = id.? ~ title ~ subtitle ~ url ~ description ~ callToActionUrl ~ callToActionText ~ picture ~
-    category ~ parentId ~ created ~ createdBy ~ updated ~ updatedBy <> (Product.apply _, Product.unapply _)
+  def * = id.? ~ title ~ subtitle ~ url ~ description ~ callToActionUrl ~
+    callToActionText ~ picture ~ category ~ parentId ~ active ~ created ~
+    createdBy ~ updated ~ updatedBy <> (Product.apply _, Product.unapply _)
 
   def forInsert = * returning id
 
-  def forUpdate = title ~ subtitle ~ url ~ description ~ callToActionUrl ~ callToActionText ~ picture ~
-    category ~ parentId ~ updated ~ updatedBy
+  def forUpdate = title ~ subtitle ~ url ~ description ~ callToActionUrl ~
+    callToActionText ~ picture ~ category ~ parentId ~ updated ~ updatedBy
 
 }

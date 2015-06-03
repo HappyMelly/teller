@@ -137,9 +137,9 @@ case class Certificate(
     val name = new Phrase(participant.fullName, font)
     val title = new Phrase(event.title, font)
     val dateString = if (event.schedule.start == event.schedule.end) {
-      event.schedule.end.toString("MMMM d")
+      event.schedule.end.toString("MMMM d yyyy")
     } else {
-      event.schedule.start.toString("MMMM d, ") + event.schedule.end.toString("d")
+      event.schedule.start.toString("MMMM d - ") + event.schedule.end.toString("d, yyyy")
     }
     val location = "%s in %s, %s".format(dateString, event.location.city,
       Messages("country." + event.location.countryCode))

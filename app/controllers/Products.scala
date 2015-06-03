@@ -44,7 +44,7 @@ import scala.io.Source
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 
-trait Products extends Controller with Security with Services {
+trait Products extends JsonController with Security with Services {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -79,6 +79,7 @@ trait Products extends Controller with Security with Services {
     "picture" -> optional(text),
     "category" -> optional(categoryMapping),
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
+    "active" -> ignored(true),
     "created" -> ignored(DateTime.now),
     "createdBy" -> ignored(user.fullName),
     "updated" -> ignored(DateTime.now),
@@ -106,7 +107,7 @@ trait Products extends Controller with Security with Services {
       form.fold(
         formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, None, None, formWithErrors))),
         product ⇒ {
-          if (Product.exists(product.title))
+          if (productService.titleExists(product.title))
             Future.successful(BadRequest(views.html.product.form(user, None, None,
               form.withError("title", "constraint.product.title.exists", product.title))))
           else {
@@ -144,8 +145,8 @@ trait Products extends Controller with Security with Services {
         errors ⇒ BadRequest("brandId missing"),
         {
           case (page, productId, brandId) ⇒ {
-            Product.find(productId).map { product ⇒
-              brandService.find(brandId).map { brand ⇒
+            productService.find(productId) map { product ⇒
+              brandService.find(brandId) map { brand ⇒
                 product.addBrand(brandId)
                 val activityObject = Messages("activity.relationship.create", product.title, brand.name)
                 val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
@@ -156,10 +157,31 @@ trait Products extends Controller with Security with Services {
                 else
                   routes.Brands.details(brand.id.get)
                 Redirect(action).flashing("success" -> activity.toString)
-              }.getOrElse(NotFound)
-            }.getOrElse(NotFound)
+              } getOrElse NotFound
+            } getOrElse NotFound
           }
         })
+  }
+
+  /**
+   * Activates/deactivates the given product
+   *
+   * @param id Product id
+   */
+  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      productService.find(id).map { product ⇒
+        Form("active" -> boolean).bindFromRequest.fold(
+          error ⇒ jsonBadRequest("active parameter is not found"),
+          active ⇒ {
+            if (active)
+              productService.activate(id)
+            else
+              productService.deactivate(id)
+            jsonSuccess("ok")
+          })
+      } getOrElse jsonNotFound("Organisation is not found")
   }
 
   /**
@@ -168,7 +190,7 @@ trait Products extends Controller with Security with Services {
   def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Product.find(productId).map { product ⇒
+      productService.find(productId) map { product: Product ⇒
         brandService.find(brandId).map { brand ⇒
           product.deleteBrand(brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
@@ -180,30 +202,29 @@ trait Products extends Controller with Security with Services {
           else
             routes.Brands.details(brand.id.get)
           Redirect(action).flashing("success" -> activity.toString)
-        }
-      }.flatten.getOrElse(NotFound)
+        } getOrElse NotFound
+      } getOrElse NotFound
   }
 
   /** Delete a product **/
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Product.find(id).map {
-        product ⇒
-          product.picture.map { picture ⇒
-            S3Bucket.remove(picture)
-            Cache.remove(Product.cacheId(product.id.get))
-          }
-          Product.delete(id)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, product.title)
-          Redirect(routes.Products.index).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+      productService.find(id) map { product ⇒
+        product.picture.map { picture ⇒
+          S3Bucket.remove(picture)
+          Cache.remove(Product.cacheId(product.id.get))
+        }
+        productService.delete(id)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, product.title)
+        Redirect(routes.Products.index).flashing("success" -> activity.toString)
+      } getOrElse NotFound
   }
 
   /** Delete picture form submits to this action **/
   def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Product.find(id).map { product ⇒
+      productService.find(id) map { product ⇒
         product.picture.map { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
@@ -211,24 +232,28 @@ trait Products extends Controller with Security with Services {
         product.copy(picture = None).update
         val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
         Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /** Details page **/
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Product.find(id).map {
-        product ⇒
-          val derivatives = Product.findDerivatives(id)
-          val parent = if (product.parentId.isDefined) Product.find(product.parentId.get) else None
-          val brands = Brand.findAllWithCoordinator
-          val contributors = Contribution.contributors(id)
-          val people = Person.findAll
-          val organisations = Organisation.findAll
+      productService.find(id) map { product ⇒
+        val view = ProductView(product, productService.brands(id))
+        val derivatives = productService.findDerivatives(id)
+        val parent = if (product.parentId.isDefined)
+          productService.find(product.parentId.get)
+        else
+          None
+        val brands = Brand.findAllWithCoordinator
+        val contributors = Contribution.contributors(id)
+        val people = Person.findAll
+        val organisations = Organisation.findAll
 
-          Ok(views.html.product.details(user, product, derivatives, parent, brands, contributors, people, organisations))
-      }.getOrElse(NotFound)
+        Ok(views.html.product.details(user, view, derivatives, parent, brands,
+          contributors, people, organisations))
+      } getOrElse NotFound
 
   }
 
@@ -236,10 +261,10 @@ trait Products extends Controller with Security with Services {
   def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Product.find(id).map {
+      productService.find(id) map {
         product ⇒
           Ok(views.html.product.form(user, Some(id), Some(product.title), productForm.fill(product)))
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
 
   }
 
@@ -247,13 +272,13 @@ trait Products extends Controller with Security with Services {
   def update(id: Long) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Product.find(id).map { existingProduct ⇒
+      productService.find(id) map { existingProduct ⇒
         val form: Form[Product] = productForm.bindFromRequest
         val title = Some(existingProduct.title)
         form.fold(
           formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, Some(id), title, form))),
           product ⇒ {
-            if (Product.exists(product.title, id))
+            if (productService.isTitleTaken(product.title, id))
               Future.successful(BadRequest(views.html.product.form(user, Some(id), title,
                 form.withError("title", "constraint.product.title.exists", product.title))))
             else {
@@ -282,7 +307,7 @@ trait Products extends Controller with Security with Services {
               }
             }
           })
-      }.getOrElse(Future.successful(NotFound))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -294,7 +319,7 @@ trait Products extends Controller with Security with Services {
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = Product.find(id).map { entry ⇒
+      val image: Future[Array[Byte]] = productService.find(id) map { entry ⇒
         entry.picture.map { picture ⇒
           val result = S3Bucket.get(entry.picture.get)
           result.map {
@@ -302,8 +327,8 @@ trait Products extends Controller with Security with Services {
           }.recover {
             case S3Exception(status, code, message, originalXml) ⇒ empty
           }
-        }.getOrElse(Future.successful(empty))
-      }.getOrElse(Future.successful(empty))
+        } getOrElse Future.successful(empty)
+      } getOrElse Future.successful(empty)
       image.map {
         case value ⇒
           Cache.set(Product.cacheId(id), value)

@@ -88,7 +88,7 @@
       </div>
     </h1>
   </div>
-  @if(event.confirmed) {
+  @if(event.confirmed && !event.free) {
     <div class="alert alert-warning">
       <i class="glyphicon glyphicon-info-sign"></i> You will be
       invoiced for @event.fee.map { fee => @fee}. If the event didn't take place,
@@ -166,10 +166,14 @@
       <dl>
         <dt>License Event Fee</dt>
         <dd>
-          @event.fee.map { fee => @fee }.getOrElse {
-            Fee for this country is not defined yet. Please contact the brand manager.
+          @if(event.free) {
+            Event is free
+          } else {
+            @event.fee.map { fee => @fee }.getOrElse {
+              Fee for this country is not defined yet. Please contact the brand manager.
+            }
+            <a href="#" data-toggle="modal" data-target="#brandfees"><i class="glyphicon glyphicon-info-sign"></i></a>
           }
-          <a href="#" data-toggle="modal" data-target="#brandfees"><i class="glyphicon glyphicon-info-sign"></i></a>
         </dd>
       </dl>
       <dl>
