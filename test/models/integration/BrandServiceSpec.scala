@@ -112,4 +112,26 @@ class BrandServiceSpec extends PlayAppSpec {
       service.isCoordinator(2L, 2L) must_== false
     }
   }
+  "When a product is deactivated, it" should {
+    "change its state from active to inactive" in {
+      service.find(1L) map { x ⇒
+        x.active must_== true
+      } getOrElse ko
+      service.deactivate(1L)
+      service.find(1L) map { x ⇒
+        x.active must_== false
+      } getOrElse ko
+    }
+  }
+  "When a product is activated, it" should {
+    "change its state from inactive to active" in {
+      service.find(1L) map { x ⇒
+        x.active must_== false
+      } getOrElse ko
+      service.activate(1L)
+      service.find(1L) map { x ⇒
+        x.active must_== true
+      } getOrElse ko
+    }
+  }
 }

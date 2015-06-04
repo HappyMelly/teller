@@ -47,6 +47,7 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
   def evaluationHookUrl = column[Option[String]]("EVALUATION_HOOK_URL")
+  def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
   def updated = column[DateTime]("UPDATED")
@@ -55,8 +56,8 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
 
   def * = id.? ~ code ~ uniqueName ~ name ~ coordinatorId ~ description ~ picture ~
-    generateCert ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ created ~
-    createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
+    generateCert ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ active ~
+    created ~ createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
 
   def forInsert = * returning id
 

@@ -173,7 +173,7 @@ trait Products extends JsonController with Security with Services {
 
       productService.find(id).map { product ⇒
         Form("active" -> boolean).bindFromRequest.fold(
-          error ⇒ jsonBadRequest("active parameter is not found"),
+          error ⇒ jsonBadRequest("'active' parameter is not found"),
           active ⇒ {
             if (active)
               productService.activate(id)
@@ -181,7 +181,7 @@ trait Products extends JsonController with Security with Services {
               productService.deactivate(id)
             jsonSuccess("ok")
           })
-      } getOrElse jsonNotFound("Organisation is not found")
+      } getOrElse jsonNotFound("Product is not found")
   }
 
   /**

@@ -104,7 +104,7 @@ trait Brands extends JsonController with Security with Services {
         {
           val brand = Brand(id, code, uniqueName, name, ownerId,
             description, picture, generateCert, tagLine, webSite, blog,
-            evaluationHookUrl, created, createdBy, updated, updatedBy)
+            evaluationHookUrl, true, created, createdBy, updated, updatedBy)
           brand.socialProfile_=(profile)
           brand
         }
@@ -120,6 +120,31 @@ trait Brands extends JsonController with Security with Services {
 
       val brands = models.Brand.findAllWithCoordinator
       Ok(views.html.brand.index(user, brands))
+  }
+
+  /**
+   * Activates/deactivates the given brand
+   *
+   * @param id Product id
+   */
+  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      brandService.find(id).map { brand ⇒
+        Form("active" -> boolean).bindFromRequest.fold(
+          error ⇒ jsonBadRequest("active parameter is not found"),
+          active ⇒ {
+            if (active) {
+              brandService.activate(id)
+            } else {
+              brandService.deactivate(id)
+              for (product ← productService.findByBrand(id)) {
+                productService.deactivate(product.id.get)
+              }
+            }
+            jsonSuccess("ok")
+          })
+      } getOrElse jsonNotFound("Brand is not found")
   }
 
   /**

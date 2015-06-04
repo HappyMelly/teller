@@ -1,6 +1,7 @@
 @()(implicit request: Request[Any])
 
 @helper.javascriptRouter("jsRoutes")(
+  routes.javascript.Brands.activation,
   routes.javascript.Brands.removeCoordinator,
   routes.javascript.Brands.turnNotificationOn,
   routes.javascript.Brands.turnNotificationOff,

@@ -40,6 +40,13 @@ case class BrandWithCoordinators(brand: Brand,
 class BrandService extends Services {
 
   /**
+   * Activates the given brand
+   *
+   * @param id Brand id
+   */
+  def activate(id: Long): Unit = switchState(id, true)
+
+  /**
    * Returns list of coordinators for the given brand
    * @param brandId Brand identifier
    */
@@ -51,6 +58,13 @@ class BrandService extends Services {
       } yield (p, t)
       query.list()
   }
+
+  /**
+   * Deactivates the given brand
+   *
+   * @param id Brand id
+   */
+  def deactivate(id: Long): Unit = switchState(id, false)
 
   /**
    * Deletes brand and all related brand data (which are allowed to be deleted
@@ -170,6 +184,21 @@ class BrandService extends Services {
       }
       u
   }
+
+  /**
+   * Deactivates/actives the given brand
+   *
+   * @param id Brand id
+   * @param active If true, the brand is activated
+   */
+  private def switchState(id: Long, active: Boolean): Unit = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        brand ← Brands if brand.id === id
+      } yield brand.active
+      query.update(active)
+  }
+
 }
 
 object BrandService {

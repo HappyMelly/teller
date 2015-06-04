@@ -32,6 +32,7 @@ GET           /booking/:bookingNumber/attachment                             con
 GET           /booking/:bookingNumber/attachment                             controllers.BookingEntries.s3Callback(bookingNumber: Int)
 POST          /booking/:bookingNumber/attachment/delete                      controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
+POST          /brand/:id/activation                                          controllers.Brands.activation(id: Long)
 GET           /brands                                                        controllers.Brands.index
 GET           /brand/new                                                     controllers.Brands.add
 POST          /brand/new                                                     controllers.Brands.create
