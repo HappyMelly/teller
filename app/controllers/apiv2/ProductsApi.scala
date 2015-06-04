@@ -25,7 +25,7 @@
 package controllers.apiv2
 
 import models.service.Services
-import models.{ Product, ProductsCollection }
+import models.{ Product, ProductsCollection, ProductView }
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
@@ -37,32 +37,43 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
 
   import BrandsApi.brandWrites
 
-  implicit val productWrites = new Writes[Product] {
-    def writes(product: Product): JsValue = {
+  implicit val productWithBrandsWrites = new Writes[ProductView] {
+    def writes(obj: ProductView): JsValue = {
       Json.obj(
-        "title" -> product.title,
-        "subtitle" -> product.subtitle,
-        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
-        "brands" -> product.brands,
-        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
+        "title" -> obj.product.title,
+        "subtitle" -> obj.product.subtitle,
+        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "brands" -> obj.brands,
+        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
   }
+
+  implicit val productWrites = new Writes[Product] {
+    def writes(obj: Product): JsValue = {
+      Json.obj(
+        "title" -> obj.title,
+        "subtitle" -> obj.subtitle,
+        "image" -> obj.picture.map(picture ⇒ controllers.routes.Products.picture(obj.id.get).url),
+        "category" -> obj.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
+    }
+  }
+
   import ContributionsApi.contributorWrites
 
-  val productDetailsWrites = new Writes[Product] {
-    def writes(product: Product): JsValue = {
+  val productDetailsWrites = new Writes[ProductView] {
+    def writes(obj: ProductView): JsValue = {
       Json.obj(
-        "title" -> product.title,
-        "subtitle" -> product.subtitle,
-        "url" -> product.url,
-        "description" -> product.description,
-        "cta_url" -> product.callToActionUrl,
-        "cta_text" -> product.callToActionText,
-        "image" -> product.picture.map(picture ⇒ controllers.routes.Products.picture(product.id.get).url),
-        "brands" -> product.brands,
-        "category" -> product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
-        "parent" -> product.parentId,
-        "contributors" -> product.contributors)
+        "title" -> obj.product.title,
+        "subtitle" -> obj.product.subtitle,
+        "url" -> obj.product.url,
+        "description" -> obj.product.description,
+        "cta_url" -> obj.product.callToActionUrl,
+        "cta_text" -> obj.product.callToActionText,
+        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "brands" -> obj.brands,
+        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
+        "parent" -> obj.product.parentId,
+        "contributors" -> obj.product.contributors)
     }
   }
 
@@ -73,8 +84,9 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
   def product(id: Long) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       implicit token ⇒
-        Product.find(id) map { product ⇒
-          jsonOk(Json.toJson(product)(productDetailsWrites))
+        productService.find(id) map { product ⇒
+          val withBrands = ProductView(product, productService.brands(id))
+          jsonOk(Json.toJson(withBrands)(productDetailsWrites))
         } getOrElse jsonNotFound("Unknown product")
   }
 
@@ -83,8 +95,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
    */
   def products = TokenSecuredAction(readWrite = false) { implicit request ⇒
     implicit token ⇒
-      val products = productService.findAll
-      ProductsCollection.brands(products)
+      val products = ProductsCollection.brands(productService.findActive)
       jsonOk(Json.toJson(products))
   }
 }

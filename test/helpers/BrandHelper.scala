@@ -34,7 +34,8 @@ object BrandHelper {
 
     var brand = new Brand(id, code, brandUniqueName,
       code + " Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      DateTime.now(), "Sergey Kotlov")
     brand.socialProfile_=(socialProfile)
     brand
   }
@@ -46,7 +47,8 @@ object BrandHelper {
 
     var brand = new Brand(Some(1L), brandCode, brandUniqueName,
       "Test Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, None, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      DateTime.now(), "Sergey Kotlov")
     brand.socialProfile_=(socialProfile)
 
     brand

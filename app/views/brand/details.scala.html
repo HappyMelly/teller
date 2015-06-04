@@ -63,6 +63,19 @@
             </div>
           }
           <div class="button">
+              @if(brand.active) {
+                <button id="activate" class="btn btn-warning"
+                  data-id="@brand.id.get" type="submit">
+                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
+                </button>
+              } else {
+                <button id="activate" class="btn btn-success"
+                  data-id="@brand.id.get" type="submit">
+                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
+                </button>
+              }
+          </div>
+          <div class="button">
             <form class="delete form-inline" method="post" text="brand"
             action="@CSRF(routes.Brands.delete(brand.id.get))">
               <button class="btn btn-danger" type="submit"
@@ -78,7 +91,11 @@
       }
     </h1>
   </div>
-    <div class="tab-pane active" id="general">
+  <div class="tab-pane active" id="general">
+    <div id="deactivatedStatus" class="alert alert-warning">
+      <i class="glyphicon glyphicon-info-sign"></i> This brand is <strong>deactivated</strong>.
+    </div>
+
       <div class="col-md-4">
         <p>
           <strong>Brand code / Unique Name</strong><br>

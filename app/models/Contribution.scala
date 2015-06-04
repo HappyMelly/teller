@@ -25,6 +25,7 @@
 package models
 
 import models.database.{ Contributions, People, Organisations }
+import models.service.ProductService
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -58,7 +59,7 @@ case class Contribution(
   def objectType: String = Activity.Type.Contribution
 
   def product: Product = DB.withSession { implicit session: Session ⇒
-    Product.find(this.productId).get
+    ProductService.get.find(this.productId).get
   }
 
   def insert: Contribution = DB.withSession { implicit session: Session ⇒

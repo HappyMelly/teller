@@ -1,6 +1,7 @@
 @()(implicit request: Request[Any])
 
 @helper.javascriptRouter("jsRoutes")(
+  routes.javascript.Brands.activation,
   routes.javascript.Brands.removeCoordinator,
   routes.javascript.Brands.turnNotificationOn,
   routes.javascript.Brands.turnNotificationOff,
@@ -9,6 +10,7 @@
   routes.javascript.People.choosePhoto,
   routes.javascript.People.updatePhoto,
   routes.javascript.People.details,
+  routes.javascript.Products.activation,
   routes.javascript.ProfileStrengths.personWidget,
   routes.javascript.SocialProfiles.facebookUrl,
   routes.javascript.Statistics.byFacilitators,

@@ -40,9 +40,9 @@ class ProductServiceSpec extends PlayAppSpec {
     Seq(
       (ProductHelper.make("one"), one.id.get),
       (ProductHelper.make("two"), one.id.get),
-      (ProductHelper.make("three"), one.id.get),
-      (ProductHelper.make("four"), two.id.get),
-      (ProductHelper.make("five"), two.id.get)).foreach {
+      (ProductHelper.make("three", parentId = Some(1L)), one.id.get),
+      (ProductHelper.make("four", parentId = Some(1L)), two.id.get),
+      (ProductHelper.make("five", parentId = Some(2L)), two.id.get)).foreach {
         case (p, id) ⇒
           val product = p.insert
           product.addBrand(id)
@@ -50,7 +50,7 @@ class ProductServiceSpec extends PlayAppSpec {
   }
 
   val service = new ProductService
-  "The service" should {
+  "When findByBrand method is called, the service" should {
     "return 3 products available in database for brand id = 1" in {
       val products = service.findByBrand(1L)
       products.length must_== 3
@@ -67,6 +67,76 @@ class ProductServiceSpec extends PlayAppSpec {
     "return products sorted by title" in {
       val names = service.findByBrand(1L).map(_.title)
       names must_== Seq("one", "three", "two")
+    }
+  }
+  "Given a product with title 'one' exists, when this title is checked for existence" >> {
+    "then the result should be positive" in {
+      service.titleExists("one") must_== true
+    }
+  }
+  "Given a product with title 'test' doesn't exist, when this title is checked for existence" >> {
+    "then the result should be negative" in {
+      service.titleExists("test") must_== false
+    }
+  }
+  "Given a product with title 'one' and id = 1 exists, when we check if title is taken by any product except with id = 1" >> {
+    "then the result should be negative" in {
+      service.isTitleTaken("one", 1L) must_== false
+    }
+  }
+  "Given a product with title 'two' and id = 2 exists, when we check if title is taken by any product except with id = 1" >> {
+    "then the result should be positive" in {
+      service.isTitleTaken("two", 1L) must_== true
+    }
+  }
+  "When findDerivatives method is called, the service" should {
+    "return 2 products for a product with id = 1" in {
+      val products = service.findDerivatives(1L)
+      products.length must_== 2
+      products.exists(_.title == "three") must_== true
+      products.exists(_.title == "four") must_== true
+    }
+    "return 1 product for a product with id = 2" in {
+      val products = service.findDerivatives(2L)
+      products.length must_== 1
+      products.exists(_.title == "five") must_== true
+    }
+    "return 0 products for a product with id = 3" in {
+      val products = service.findDerivatives(3L)
+      products.length must_== 0
+    }
+  }
+  "When brands mehtod is called, the service" should {
+    "return 1 brand for a product with id = 1" in {
+      val brands = service.brands(1L)
+      brands.length must_== 1
+      brands.exists(_.name == "Test Brand") must_== true
+    }
+    "return 0 brands for a product with id = 10" in {
+      val brands = service.brands(10L)
+      brands.length must_== 0
+    }
+  }
+  "When a product is deactivated, it" should {
+    "change its state from active to inactive" in {
+      service.find(1L) map { x ⇒
+        x.active must_== true
+      } getOrElse ko
+      service.deactivate(1L)
+      service.find(1L) map { x ⇒
+        x.active must_== false
+      } getOrElse ko
+    }
+  }
+  "When a product is activated, it" should {
+    "change its state from inactive to active" in {
+      service.find(1L) map { x ⇒
+        x.active must_== false
+      } getOrElse ko
+      service.activate(1L)
+      service.find(1L) map { x ⇒
+        x.active must_== true
+      } getOrElse ko
     }
   }
 }

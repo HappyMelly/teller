@@ -23,6 +23,23 @@
  */
 
 /**
+ * Changes UI on brand activation/deactivation
+ *
+ * @param active {boolean} if true, brand is active
+ */
+function switchState(active) {
+    if (active) {
+        $('#activate').removeClass('btn-success').addClass('btn-warning');
+        $('#activate').html('<i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate');
+        $('#deactivatedStatus').hide();
+    } else {
+        $('#activate').addClass('btn-success').removeClass('btn-warning');
+        $('#activate').html('<i class="glyphicon-off glyphicon glyphicon-white"></i> Activate');
+        $('#deactivatedStatus').show();
+    }
+}
+
+/**
  * Show notification message
  * @param target jQuery identifier of html element
  * @param message {string}
@@ -266,5 +283,18 @@ $(document).ready( function() {
         hash = 'general';
     }
     showTab($('#sidemenu a[href="#' + hash + '"]'));
+
+    if ($('#activate').hasClass('btn-warning')) {
+        $('#deactivatedStatus').hide();
+    }
+    $('#activate').on('click', function(e) {
+        e.preventDefault();
+        var url = jsRoutes.controllers.Brands.activation($(this).data('id')).url;
+        var active = $(this).hasClass('btn-success');
+        $.post(url, {active: active}, function(data, textStatus, xhr) {
+            switchState(active);
+        });
+    });
+
 });
 

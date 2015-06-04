@@ -13,7 +13,7 @@
     </thead>
     <tbody>
     @for(product <- products) {
-    <tr>
+    <tr @if(!product.active) { class="inactive" title="Deactivated" }>
       <td><a href="@routes.Products.details(product.id.getOrElse(0))">@product.title</a></td>
       <td>
         @product.category.map { name =>

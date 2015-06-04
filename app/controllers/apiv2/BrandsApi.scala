@@ -102,7 +102,8 @@ trait BrandsApi extends Controller with ApiAuthentication {
    */
   def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒
     implicit token ⇒
-      jsonOk(Json.toJson(Brand.findAllWithCoordinator))
+      val views = Brand.findAllWithCoordinator.filter(_.brand.active)
+      jsonOk(Json.toJson(views))
   }
 }
 

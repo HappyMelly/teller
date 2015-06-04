@@ -100,7 +100,8 @@ object BrandsApi extends Controller with ApiAuthentication {
    * Brand list API.
    */
   def brands = TokenSecuredAction { implicit request ⇒
-    Ok(Json.prettyPrint(Json.toJson(Brand.findAllWithCoordinator)))
+    val views = Brand.findAllWithCoordinator.filter(_.brand.active)
+    Ok(Json.prettyPrint(Json.toJson(views)))
   }
 
 }

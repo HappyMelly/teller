@@ -38,9 +38,11 @@ object ProductHelper {
    * @param id Product id
    * @return
    */
-  def make(title: String, id: Option[Long] = None): Product = {
-    Product(id, title, None, None, None, None, None, None, None, None,
-      DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
+  def make(title: String,
+    id: Option[Long] = None,
+    parentId: Option[Long] = None): Product = {
+    Product(id, title, None, None, None, None, None, None, None, parentId,
+      true, DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov")
   }
 
 }
