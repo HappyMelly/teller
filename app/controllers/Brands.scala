@@ -62,13 +62,18 @@ trait Brands extends JsonController with Security with Services {
     "linkedInUrl" -> optional(linkedInProfileUrl),
     "googlePlusUrl" -> optional(googlePlusProfileUrl),
     "skype" -> optional(nonEmptyText),
-    "phone" -> optional(nonEmptyText))(
+    "phone" -> optional(nonEmptyText),
+    "contactForm" -> optional(nonEmptyText))(
       {
-        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone) ⇒
-          SocialProfile(0, ProfileType.Brand, email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone)
+        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
+        phone, contactForm) ⇒
+          SocialProfile(0, ProfileType.Brand, email, twitterHandle,
+            facebookUrl, linkedInUrl, googlePlusUrl, skype, phone, contactForm)
       })(
         {
-          (s: SocialProfile) ⇒ Some(s.email, s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone)
+          (s: SocialProfile) ⇒
+            Some(s.email, s.twitterHandle, s.facebookUrl,
+              s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone, s.contactForm)
         })
 
   /** HTML form mapping for creating and editing. */
@@ -252,8 +257,9 @@ trait Brands extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(id) map { brand ⇒
+          val links = brandService.links(id)
           val coordinator = personService.find(brand.ownerId)
-          Ok(views.html.brand.details(user, brand, coordinator))
+          Ok(views.html.brand.details(user, brand, coordinator, links))
         } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 

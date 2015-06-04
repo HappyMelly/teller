@@ -53,6 +53,13 @@ GET           /brand/:id/facilitators                                        con
 POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 
+POST         /brand/:brandId/link                                            controllers.BrandLinks.create(brandId: Long)
+DELETE       /brand/:brandId/link/:id                                        controllers.BrandLinks.delete(brandId: Long, id: Long)
+
+POST         /brand/:brandId/testimonial                                     controllers.BrandTestimonials.create(brandId: Long)
+POST         /brand/:brandId/testimonial/:id                                 controllers.BrandTestimonials.update(brandId: Long, id: Long)
+DELETE       /brand/:brandId/testimonial/:id                                 controllers.BrandTestimonials.delete(brandId: Long, id: Long)
+
 
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)

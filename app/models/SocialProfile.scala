@@ -44,7 +44,8 @@ case class SocialProfile(
   linkedInUrl: Option[String] = None,
   googlePlusUrl: Option[String] = None,
   skype: Option[String] = None,
-  phone: Option[String] = None) {
+  phone: Option[String] = None,
+  contactForm: Option[String] = None) {
 
   def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
     googlePlusUrl.isDefined || linkedInUrl.isDefined

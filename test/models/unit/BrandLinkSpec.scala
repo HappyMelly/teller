@@ -21,39 +21,26 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package models.unit
 
-package controllers
+import models.brand._
+import org.specs2.mutable._
 
-import play.api.libs.json.{ Json, JsValue }
-import play.api.mvc._
+class BrandLinkSpec extends Specification {
 
-/**
- * Provides a set of functions for handling JSON
- */
-trait JsonController extends Controller {
-
-  protected def jsonUnauthorized = Unauthorized("Unauthorized")
-
-  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
-
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x)
-    } getOrElse Json.obj("message" -> msg)
-    jsonOk(reply)
+  "When link type is valid" >> {
+    "it's not changed" in {
+      val link = BrandLink(None, 1L, "video", "http://test.com")
+      BrandLink.updateType(link).linkType must_== "video"
+      BrandLink.updateType(link.copy(linkType = "blog")).linkType must_== "blog"
+      BrandLink.updateType(link.copy(linkType = "photo")).linkType must_== "photo"
+      BrandLink.updateType(link.copy(linkType = "website")).linkType must_== "website"
+    }
   }
-
-  protected def jsonNotFound(msg: String) = NotFound(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(msg: String) = BadRequest(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(error: JsValue) = BadRequest(Json.obj("message" -> error))
-
-  protected def jsonConflict(msg: String) = Conflict(Json.obj("message" -> msg))
-
-  protected def jsonRequest(status: Int, msg: String) = status match {
-    case NOT_FOUND ⇒ jsonNotFound(msg)
-    case CONFLICT ⇒ jsonConflict(msg)
-    case _ ⇒ jsonBadRequest(msg)
+  "When link type is invalid" >> {
+    "it should be converted to 'other'" in {
+      val link = BrandLink(None, 1L, "invalid", "http://test.com")
+      BrandLink.updateType(link).linkType must_== "other"
+    }
   }
-
 }

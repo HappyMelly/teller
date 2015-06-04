@@ -44,8 +44,10 @@ private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFI
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
   def skype = column[Option[String]]("SKYPE")
   def phone = column[Option[String]]("PHONE")
+  def contactForm = column[Option[String]]("CONTACT_FORM")
 
-  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~ linkedInUrl ~
-    googlePlusUrl ~ skype ~ phone <> (SocialProfile.apply _, SocialProfile.unapply _)
+  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~
+    linkedInUrl ~ googlePlusUrl ~ skype ~ phone ~
+    contactForm <> (SocialProfile.apply _, SocialProfile.unapply _)
 
 }
