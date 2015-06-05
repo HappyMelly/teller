@@ -22,38 +22,25 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package models.database.brand
 
-import play.api.libs.json.{ Json, JsValue }
-import play.api.mvc._
+import models.brand.BrandTestimonial
+import play.api.db.slick.Config.driver.simple._
 
 /**
- * Provides a set of functions for handling JSON
+ * Connects BrandTestimonial object with its database representation
  */
-trait JsonController extends Controller {
+private[models] object BrandTestimonials extends Table[BrandTestimonial]("BRAND_TESTIMONIAL") {
 
-  protected def jsonUnauthorized = Unauthorized("Unauthorized")
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brandId = column[Long]("BRAND_ID")
+  def content = column[String]("CONTENT")
+  def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
+  def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
 
-  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
+  def * = id.? ~ brandId ~ content ~ name ~
+    company <> (BrandTestimonial.apply _, BrandTestimonial.unapply _)
 
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x)
-    } getOrElse Json.obj("message" -> msg)
-    jsonOk(reply)
-  }
-
-  protected def jsonNotFound(msg: String) = NotFound(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(msg: String) = BadRequest(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(error: JsValue) = BadRequest(Json.obj("message" -> error))
-
-  protected def jsonConflict(msg: String) = Conflict(Json.obj("message" -> msg))
-
-  protected def jsonRequest(status: Int, msg: String) = status match {
-    case NOT_FOUND ⇒ jsonNotFound(msg)
-    case CONFLICT ⇒ jsonConflict(msg)
-    case _ ⇒ jsonBadRequest(msg)
-  }
-
+  def forInsert = * returning id
+  def forUpdate = content ~ name ~ company
 }

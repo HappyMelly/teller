@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.brand.{ BrandNotifications, BrandCoordinator }
-import models.database.brand.BrandCoordinators
+import models.brand._
+import models.database.brand._
 import models.database.{ Brands, People, SocialProfiles }
 import models.{ Brand, Person, ProfileType }
 import play.api.Play.current
@@ -78,6 +78,42 @@ class BrandService extends Services {
   }
 
   /**
+   * Deletes brand link from database
+   *
+   * Brand identifier is for security reasons. If a user passes security
+   * check for the brand, the user cannot delete links which aren't belonged to
+   * another brand.
+   *
+   * @param brandId Brand identifier
+   * @param id Link identifier
+   */
+  def deleteLink(brandId: Long, id: Long): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Query(BrandLinks).
+        filter(_.id === id).
+        filter(_.brandId === brandId).
+        mutate(_.delete())
+  }
+
+  /**
+   * Deletes brand testimonial from database
+   *
+   * Brand identifier is for security reasons. If a user passes security
+   * check for the brand, the user cannot delete testimonials which aren't
+   * belonged to another brand.
+   *
+   * @param brandId Brand identifier
+   * @param id Testimonial identifier
+   */
+  def deleteTestimonial(brandId: Long, id: Long): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Query(BrandTestimonials).
+        filter(_.id === id).
+        filter(_.brandId === brandId).
+        mutate(_.delete())
+  }
+
+  /**
    * Returns brand if it exists, otherwise - None
    * @param id Brand identifier
    */
@@ -111,6 +147,16 @@ class BrandService extends Services {
         y ← Brands if y.id === x.brandId
       } yield y
       query.list
+  }
+
+  /**
+   * Returns testimonial if it exists
+   *
+   * @param testimonialId Testimonial identification
+   */
+  def findTestimonial(testimonialId: Long): Option[BrandTestimonial] = DB.withSession {
+    implicit session: Session ⇒
+      Query(BrandTestimonials).filter(_.id === testimonialId).firstOption
   }
 
   /**
@@ -149,6 +195,49 @@ class BrandService extends Services {
   }
 
   /**
+   * Inserts the given link brand to database
+   *
+   * @param link Brand link
+   */
+  def insertLink(link: BrandLink): BrandLink = DB.withSession {
+    implicit session ⇒
+      val id = BrandLinks.forInsert.insert(link)
+      link.copy(id = Some(id))
+  }
+
+  /**
+   * Inserts the given testimonial brand to database
+   *
+   * @param testimonial Brand testimonial
+   */
+  def insertTestimonial(testimonial: BrandTestimonial): BrandTestimonial =
+    DB.withSession {
+      implicit session ⇒
+        val id = BrandTestimonials.forInsert.insert(testimonial)
+        testimonial.copy(id = Some(id))
+    }
+
+  /**
+   * Return list of links for the given brand
+   *
+   * @param brandId Brand identifier
+   */
+  def links(brandId: Long): List[BrandLink] = DB.withSession {
+    implicit session ⇒
+      Query(BrandLinks).filter(_.brandId === brandId).list
+  }
+
+  /**
+   * Return list of testimonials for the given brand
+   *
+   * @param brandId Brand identifier
+   */
+  def testimonials(brandId: Long): List[BrandTestimonial] = DB.withSession {
+    implicit session ⇒
+      Query(BrandTestimonials).filter(_.brandId === brandId).list
+  }
+
+  /**
    * Update brand
    * @param old Brand data before update
    * @param updated Brand data including updated fields from the from
@@ -183,6 +272,19 @@ class BrandService extends Services {
         brandCoordinatorService.insert(owner)
       }
       u
+  }
+
+  /**
+   * Updates brand testimonial in database
+   *
+   * @param testimonial Testimonital to update
+   */
+  def updateTestimonial(testimonial: BrandTestimonial): Unit = DB.withSession {
+    implicit session: Session ⇒
+      Query(BrandTestimonials).
+        filter(_.id === testimonial.id.get).
+        filter(_.brandId === testimonial.brand).
+        update(testimonial)
   }
 
   /**

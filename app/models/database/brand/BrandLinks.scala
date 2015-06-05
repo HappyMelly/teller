@@ -22,38 +22,22 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package models.database.brand
 
-import play.api.libs.json.{ Json, JsValue }
-import play.api.mvc._
+import models.brand.BrandLink
+import play.api.db.slick.Config.driver.simple._
 
 /**
- * Provides a set of functions for handling JSON
+ * Connects BrandLink object with its database representation
  */
-trait JsonController extends Controller {
+private[models] object BrandLinks extends Table[BrandLink]("BRAND_LINK") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def brandId = column[Long]("BRAND_ID")
+  def linkType = column[String]("LINK_TYPE", O.DBType("VARCHAR(10)"))
+  def link = column[String]("LINK", O.DBType("VARCHAR(254)"))
 
-  protected def jsonUnauthorized = Unauthorized("Unauthorized")
+  def * = id.? ~ brandId ~ linkType ~ link <> (BrandLink.apply _, BrandLink.unapply _)
 
-  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
-
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x)
-    } getOrElse Json.obj("message" -> msg)
-    jsonOk(reply)
-  }
-
-  protected def jsonNotFound(msg: String) = NotFound(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(msg: String) = BadRequest(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(error: JsValue) = BadRequest(Json.obj("message" -> error))
-
-  protected def jsonConflict(msg: String) = Conflict(Json.obj("message" -> msg))
-
-  protected def jsonRequest(status: Int, msg: String) = status match {
-    case NOT_FOUND ⇒ jsonNotFound(msg)
-    case CONFLICT ⇒ jsonConflict(msg)
-    case _ ⇒ jsonBadRequest(msg)
-  }
+  def forInsert = * returning id
 
 }

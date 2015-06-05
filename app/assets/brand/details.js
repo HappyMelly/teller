@@ -58,6 +58,10 @@ function showEventTypeNotification(message, type) {
     notify('#notification', message, type)
 }
 
+function showBrandLinkNotification(message, type) {
+    notify('#brandLinkNotification', message, type)
+}
+
 function showTeamNotification(message, type) {
     notify('#teamNotification', message, type);
 }
@@ -180,6 +184,78 @@ function removeMember(personId, name) {
     }
 }
 
+/**
+ * Updates the view after the link was added
+ * @param linkId {int} Link id
+ * @param brandId {int} Brand id
+ * @param linkType {string} Link type
+ * @param link {string} Link
+ */
+function addLink(linkId, brandId, linkType, link) {
+    $('#links').append(
+        $('<tr>')
+            .attr('data-id', linkId)
+            .attr('data-brandid', brandId)
+            .append($('<td>').append(linkType))
+            .append($('<td>')
+                .append($('<a>')
+                    .attr('href', link)
+                    .append(link)))
+            .append($('<td>')
+                .append($('<a>')
+                    .append('<i class="glyphicon glyphicon-trash"></i> Remove')
+                    .addClass('remove')
+                    .attr('href', '#')
+                    .attr('data-id', linkId)
+                    .attr('data-href', jsRoutes.controllers.BrandLinks.remove(brandId, linkId).url)))
+    );
+}
+
+/**
+ * Updates the view after the link was deleted
+ * @param linkId {int} Link id
+ */
+function removeLink(linkId) {
+    $('tr[data-id="' + linkId + '"]').remove();
+}
+
+function initializeLinksActions() {
+    $('#addLinkForm').submit(function(e) {
+        $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
+            addLink(data.id, data.brandId, data.linkType, data.link);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showBrandLinkNotification(error.message, 'danger');
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                showBrandLinkNotification(msg, 'danger');
+            }
+        });
+        // Prevent the form from submitting with the default action
+        return false;
+    });
+    $('#links').on('click', 'a.remove', function(e) {
+        var linkId = $(this).data('id');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            removeLink(linkId, name);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                showBrandLinkNotification(error.message, 'danger');
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                showBrandLinkNotification(msg, 'danger');
+            }
+        });
+        return false;
+    });
+}
+
 function initializeTeamActions() {
     $('#addMemberForm').submit(function(e) {
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
@@ -246,6 +322,7 @@ function initializeTeamActions() {
 function initializeActions() {
     initializeEventTypesActions();
     initializeTeamActions();
+    initializeLinksActions();
 }
 
 /**
@@ -283,6 +360,7 @@ $(document).ready( function() {
         hash = 'general';
     }
     showTab($('#sidemenu a[href="#' + hash + '"]'));
+    initializeActions();
 
     if ($('#activate').hasClass('btn-warning')) {
         $('#deactivatedStatus').hide();

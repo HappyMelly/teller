@@ -26,7 +26,7 @@ package models.integration
 
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.brand.{ BrandCoordinator, BrandNotifications }
+import models.brand._
 import models.service.BrandService
 import models.service.brand.BrandCoordinatorService
 
@@ -46,6 +46,12 @@ class BrandServiceSpec extends PlayAppSpec {
     // records are added automatically
     val coordinator = BrandCoordinator(None, 1L, 2L, BrandNotifications())
     BrandCoordinatorService.get.insert(coordinator)
+    val links = List(BrandLink(None, 1L, "video", "http://test.com"),
+      BrandLink(None, 1L, "blog", "http://test1.com"))
+    links.foreach(BrandService.get.insertLink(_))
+    val testimonials = List(BrandTestimonial(None, 1L, "", "nikolai"),
+      BrandTestimonial(None, 1L, "", "viktor"))
+    testimonials.foreach(BrandService.get.insertTestimonial(_))
   }
 
   val service = new BrandService
@@ -134,4 +140,45 @@ class BrandServiceSpec extends PlayAppSpec {
       } getOrElse ko
     }
   }
+  "Method links" should {
+    "return 2 links for brand with id = 1" in {
+      val links = service.links(1L)
+      links.length must_== 2
+      links.exists(_.link == "http://test.com") must_== true
+      links.exists(_.link == "http://test1.com") must_== true
+    }
+    "return 0 links for brand with id = 2" in {
+      val links = service.links(2L)
+      links.length must_== 0
+    }
+  }
+  "Method deleteLink" should {
+    "delete link with id = 1 from database" in {
+      service.deleteLink(1L, 1L)
+      val links = service.links(1L)
+      links.length must_== 1
+      links.exists(_.link == "http://test1.com") must_== true
+    }
+  }
+  "Method testimonials" should {
+    "return 2 testimonials for brand with id = 1" in {
+      val testimonials = service.testimonials(1L)
+      testimonials.length must_== 2
+      testimonials.exists(_.name == "nikolai") must_== true
+      testimonials.exists(_.name == "viktor") must_== true
+    }
+    "return 0 testimonials for brand with id = 2" in {
+      val testimonials = service.testimonials(2L)
+      testimonials.length must_== 0
+    }
+  }
+  "Method deleteTestimonial" should {
+    "delete testimonial with id = 1 from database" in {
+      service.deleteTestimonial(1L, 1L)
+      val testimonials = service.testimonials(1L)
+      testimonials.length must_== 1
+      testimonials.exists(_.name == "viktor") must_== true
+    }
+  }
+
 }

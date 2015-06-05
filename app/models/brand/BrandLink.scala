@@ -22,38 +22,24 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package models.brand
 
-import play.api.libs.json.{ Json, JsValue }
-import play.api.mvc._
+case class BrandLink(id: Option[Long],
+  brandId: Long,
+  linkType: String,
+  link: String)
 
-/**
- * Provides a set of functions for handling JSON
- */
-trait JsonController extends Controller {
+object BrandLink {
 
-  protected def jsonUnauthorized = Unauthorized("Unauthorized")
-
-  protected def jsonOk(data: JsValue) = Ok(Json.prettyPrint(data))
-
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x)
-    } getOrElse Json.obj("message" -> msg)
-    jsonOk(reply)
+  /**
+   * Returns the given link with updated type
+   *
+   * @param link Brand link object
+   */
+  def updateType(link: BrandLink): BrandLink = {
+    link.linkType match {
+      case "video" | "blog" | "website" | "photo" ⇒ link
+      case _ ⇒ link.copy(linkType = "other")
+    }
   }
-
-  protected def jsonNotFound(msg: String) = NotFound(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(msg: String) = BadRequest(Json.obj("message" -> msg))
-
-  protected def jsonBadRequest(error: JsValue) = BadRequest(Json.obj("message" -> error))
-
-  protected def jsonConflict(msg: String) = Conflict(Json.obj("message" -> msg))
-
-  protected def jsonRequest(status: Int, msg: String) = status match {
-    case NOT_FOUND ⇒ jsonNotFound(msg)
-    case CONFLICT ⇒ jsonConflict(msg)
-    case _ ⇒ jsonBadRequest(msg)
-  }
-
 }

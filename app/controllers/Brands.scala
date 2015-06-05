@@ -62,13 +62,18 @@ trait Brands extends JsonController with Security with Services {
     "linkedInUrl" -> optional(linkedInProfileUrl),
     "googlePlusUrl" -> optional(googlePlusProfileUrl),
     "skype" -> optional(nonEmptyText),
-    "phone" -> optional(nonEmptyText))(
+    "phone" -> optional(nonEmptyText),
+    "contactForm" -> optional(nonEmptyText))(
       {
-        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone) ⇒
-          SocialProfile(0, ProfileType.Brand, email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype, phone)
+        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
+        phone, contactForm) ⇒
+          SocialProfile(0, ProfileType.Brand, email, twitterHandle,
+            facebookUrl, linkedInUrl, googlePlusUrl, skype, phone, contactForm)
       })(
         {
-          (s: SocialProfile) ⇒ Some(s.email, s.twitterHandle, s.facebookUrl, s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone)
+          (s: SocialProfile) ⇒
+            Some(s.email, s.twitterHandle, s.facebookUrl,
+              s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone, s.contactForm)
         })
 
   /** HTML form mapping for creating and editing. */
@@ -252,8 +257,9 @@ trait Brands extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(id) map { brand ⇒
+          val links = brandService.links(id)
           val coordinator = personService.find(brand.ownerId)
-          Ok(views.html.brand.details(user, brand, coordinator))
+          Ok(views.html.brand.details(user, brand, coordinator, links))
         } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
@@ -266,16 +272,19 @@ trait Brands extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         tab match {
-          case "templates" ⇒
-            val templates = certificateService.findByBrand(id)
-            Ok(views.html.brand.tabs.templates(id, templates))
-          case "types" ⇒
-            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
-            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case "team" ⇒
             val members = brandService.coordinators(id).sortBy(_._1.fullName)
             val people = personService.findActive.filterNot(x ⇒ members.contains(x))
             Ok(views.html.brand.tabs.team(id, members, people))
+          case "templates" ⇒
+            val templates = certificateService.findByBrand(id)
+            Ok(views.html.brand.tabs.templates(id, templates))
+          case "testimonials" ⇒
+            val testimonials = brandService.testimonials(id)
+            Ok(views.html.brand.tabs.testimonials(id, testimonials))
+          case "types" ⇒
+            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
+            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case _ ⇒
             val products = productService.findByBrand(id)
             Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.api.templates.Html.empty })
