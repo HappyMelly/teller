@@ -2,12 +2,10 @@
     eventTypes: List[models.brand.EventType]
     )(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import helper.CSRF
 @import models.UserRole.Role._
 
 <p>Event Types help you to categories your events. The brand should have at least

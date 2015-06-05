@@ -36,12 +36,13 @@ trait BrandLinks extends JsonController with Services with Security {
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
       Json.obj(
-        "brandId" -> link.brand,
+        "brandId" -> link.brandId,
         "linkType" -> link.linkType.capitalize,
         "link" -> link.link,
         "id" -> link.id.get)
     }
   }
+
   /**
    * Adds new brand link if the link is valid
    *

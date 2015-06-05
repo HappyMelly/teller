@@ -81,7 +81,7 @@
       </thead>
       <tbody>
         @for(link <- links) {
-          <tr data-id="@link.id.get" data-brandid="@link.brand">
+          <tr data-id="@link.id.get" data-brandid="@link.brandId">
             <td>@link.linkType.capitalize</td>
             <td><a href="@link.link" target="_blank">@link.link</td>
             <td style="font-weight: normal;">

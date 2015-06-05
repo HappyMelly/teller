@@ -150,6 +150,16 @@ class BrandService extends Services {
   }
 
   /**
+   * Returns testimonial if it exists
+   *
+   * @param testimonialId Testimonial identification
+   */
+  def findTestimonial(testimonialId: Long): Option[BrandTestimonial] = DB.withSession {
+    implicit session: Session ⇒
+      Query(BrandTestimonials).filter(_.id === testimonialId).firstOption
+  }
+
+  /**
    * Returns brand with its coordinators if exists; otherwise - None
    * @param id Brand id
    */

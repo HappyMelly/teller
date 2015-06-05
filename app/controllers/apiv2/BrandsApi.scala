@@ -23,7 +23,8 @@
  */
 package controllers.apiv2
 
-import models.{ Brand, BrandView }
+import models.{ Brand, BrandView, Person, Event }
+import models.brand.{ BrandLink, BrandTestimonial }
 import play.api.libs.json._
 import play.mvc.Controller
 
@@ -55,29 +56,72 @@ trait BrandsApi extends Controller with ApiAuthentication {
   import PeopleApi.personWrites
   import ProductsApi.productWrites
 
-  val brandViewDetailsWrites = new Writes[BrandView] {
-    def writes(brandView: BrandView): JsValue = {
+  implicit val brandLinkWrites = new Writes[BrandLink] {
+    def writes(link: BrandLink): JsValue = {
       Json.obj(
-        "code" -> brandView.brand.code,
-        "unique_name" -> brandView.brand.uniqueName,
-        "name" -> brandView.brand.name,
-        "tagline" -> brandView.brand.tagLine,
-        "description" -> brandView.brand.description,
-        "image" -> brandView.brand.picture.map(picture ⇒
-          controllers.routes.Brands.picture(brandView.brand.code).url),
-        "coordinator" -> brandView.coordinator,
+        "type" -> link.linkType,
+        "url" -> link.link)
+    }
+  }
+
+  implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
+    def writes(testimonial: BrandTestimonial): JsValue = {
+      Json.obj(
+        "content" -> testimonial.content,
+        "name" -> testimonial.name,
+        "company" -> testimonial.company)
+    }
+  }
+
+  implicit val eventWrites = new Writes[Event] {
+    def writes(event: Event): JsValue = {
+      Json.obj(
+        "title" -> event.title,
+        "description" -> event.details.description,
+        "spokenLanguages" -> event.spokenLanguages,
+        "start" -> event.schedule.start,
+        "end" -> event.schedule.end,
+        "hoursPerDay" -> event.schedule.hoursPerDay,
+        "totalHours" -> event.schedule.totalHours,
+        "city" -> event.location.city,
+        "country" -> event.location.countryCode,
+        "website" -> event.details.webSite,
+        "registrationPage" -> event.details.registrationPage,
+        "free" -> event.free)
+    }
+  }
+
+  case class BrandFullView(brand: Brand,
+    coordinator: Person,
+    links: List[BrandLink],
+    testimonials: List[BrandTestimonial],
+    events: List[Event])
+
+  val detailsWrites = new Writes[BrandFullView] {
+    def writes(view: BrandFullView): JsValue = {
+      Json.obj(
+        "code" -> view.brand.code,
+        "unique_name" -> view.brand.uniqueName,
+        "name" -> view.brand.name,
+        "tagline" -> view.brand.tagLine,
+        "description" -> view.brand.description,
+        "image" -> view.brand.picture.map(picture ⇒
+          controllers.routes.Brands.picture(view.brand.code).url),
+        "coordinator" -> view.coordinator,
         "contact_info" -> Json.obj(
-          "email" -> brandView.brand.socialProfile.email,
-          "skype" -> brandView.brand.socialProfile.skype,
-          "phone" -> brandView.brand.socialProfile.phone),
+          "email" -> view.brand.socialProfile.email,
+          "skype" -> view.brand.socialProfile.skype,
+          "phone" -> view.brand.socialProfile.phone,
+          "form" -> view.brand.socialProfile.contactForm),
         "social_profile" -> Json.obj(
-          "facebook" -> brandView.brand.socialProfile.facebookUrl,
-          "twitter" -> brandView.brand.socialProfile.twitterHandle,
-          "google_plus" -> brandView.brand.socialProfile.googlePlusUrl,
-          "linkedin" -> brandView.brand.socialProfile.linkedInUrl),
-        "website" -> brandView.brand.webSite,
-        "blog" -> brandView.brand.blog,
-        "products" -> brandView.brand.products)
+          "facebook" -> view.brand.socialProfile.facebookUrl,
+          "twitter" -> view.brand.socialProfile.twitterHandle,
+          "google_plus" -> view.brand.socialProfile.googlePlusUrl,
+          "linkedin" -> view.brand.socialProfile.linkedInUrl),
+        "products" -> view.brand.products,
+        "links" -> view.links,
+        "testimonials" -> view.testimonials,
+        "events" -> view.events)
     }
   }
 
@@ -88,11 +132,11 @@ trait BrandsApi extends Controller with ApiAuthentication {
   def brand(code: String) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       implicit token ⇒
-        Brand.find(code) map { data ⇒
-          jsonOk(Json.toJson(data)(brandViewDetailsWrites))
+        Brand.find(code) map { view ⇒
+          jsonOk(Json.toJson(fullView(view))(detailsWrites))
         } getOrElse {
-          Brand.findByName(code) map { data ⇒
-            jsonOk(Json.toJson(data)(brandViewDetailsWrites))
+          Brand.findByName(code) map { view ⇒
+            jsonOk(Json.toJson(fullView(view))(detailsWrites))
           } getOrElse jsonNotFound("Unknown brand")
         }
   }
@@ -104,6 +148,15 @@ trait BrandsApi extends Controller with ApiAuthentication {
     implicit token ⇒
       val views = Brand.findAllWithCoordinator.filter(_.brand.active)
       jsonOk(Json.toJson(views))
+  }
+
+  protected def fullView(view: BrandView): BrandFullView = {
+    val links = brandService.links(view.brand.id.get)
+    val testimonials = brandService.testimonials(view.brand.id.get)
+    val events = eventService.findByParameters(Some(view.brand.id.get),
+      future = Some(true), public = Some(true), archived = Some(false)).take(3)
+    BrandFullView(view.brand, view.coordinator,
+      links, testimonials, events)
   }
 }
 

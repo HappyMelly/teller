@@ -29,17 +29,49 @@ import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
+import play.api.libs.json.{ JsValue, Writes, Json }
+
+case class TestimonialFormData(content: String,
+  name: String,
+  company: Option[String])
 
 trait BrandTestimonials extends JsonController with Services with Security {
 
-  case class TestimonialFormData(content: String,
-    name: String,
-    company: Option[String])
+  implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
+    def writes(testimonial: BrandTestimonial): JsValue = {
+      Json.obj(
+        "brandId" -> testimonial.brand,
+        "content" -> testimonial.content,
+        "name" -> testimonial.name,
+        "company" -> testimonial.company,
+        "id" -> testimonial.id.get)
+    }
+  }
 
   val form = Form(mapping(
     "content" -> nonEmptyText,
     "name" -> nonEmptyText,
     "company" -> optional(nonEmptyText)) (TestimonialFormData.apply)(TestimonialFormData.unapply))
+
+  def add(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandService.find(brandId) map { brand ⇒
+          Ok(views.html.testimonial.form(user, brandId, form))
+        } getOrElse NotFound(Messages("error.brand.notFound"))
+  }
+
+  def edit(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        brandService.find(brandId) map { brand ⇒
+          brandService.findTestimonial(id) map { testimonial ⇒
+            val formData = TestimonialFormData(testimonial.content,
+              testimonial.name, testimonial.company)
+            Ok(views.html.testimonial.form(user, brandId, form.fill(formData), Some(id)))
+          } getOrElse NotFound("Testimonial is not found")
+        } getOrElse NotFound(Messages("error.brand.notFound"))
+  }
 
   /**
    * Adds new brand testimonial if the testimonial is valid
@@ -51,15 +83,16 @@ trait BrandTestimonials extends JsonController with Services with Security {
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
           form.bindFromRequest.fold(
-            error ⇒ jsonBadRequest(error.errorsAsJson),
+            error ⇒ BadRequest(views.html.testimonial.form(user, brandId, error)),
             testimonialData ⇒ {
               val testimonial = BrandTestimonial(None, brandId,
                 testimonialData.content, testimonialData.name,
                 testimonialData.company)
-              brandService.insertTestimonial(testimonial)
-              jsonSuccess("ok")
+              val testimonialWithId = brandService.insertTestimonial(testimonial)
+              val url = routes.Brands.details(brandId).url + "#testimonials"
+              Redirect(url)
             })
-        } getOrElse jsonNotFound(Messages("error.brand.notFound"))
+        } getOrElse NotFound(Messages("error.brand.notFound"))
   }
 
   /**
@@ -88,13 +121,14 @@ trait BrandTestimonials extends JsonController with Services with Security {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ jsonBadRequest(error.errorsAsJson),
+          error ⇒ BadRequest(views.html.testimonial.form(user, brandId, error)),
           testimonialData ⇒ {
             val testimonial = BrandTestimonial(Some(id), brandId,
               testimonialData.content, testimonialData.name,
               testimonialData.company)
             brandService.updateTestimonial(testimonial)
-            jsonSuccess("ok")
+            val url = routes.Brands.details(brandId).url + "#testimonials"
+            Redirect(url)
           })
   }
 }

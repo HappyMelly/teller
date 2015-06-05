@@ -272,16 +272,19 @@ trait Brands extends JsonController with Security with Services {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         tab match {
-          case "templates" ⇒
-            val templates = certificateService.findByBrand(id)
-            Ok(views.html.brand.tabs.templates(id, templates))
-          case "types" ⇒
-            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
-            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case "team" ⇒
             val members = brandService.coordinators(id).sortBy(_._1.fullName)
             val people = personService.findActive.filterNot(x ⇒ members.contains(x))
             Ok(views.html.brand.tabs.team(id, members, people))
+          case "templates" ⇒
+            val templates = certificateService.findByBrand(id)
+            Ok(views.html.brand.tabs.templates(id, templates))
+          case "testimonials" ⇒
+            val testimonials = brandService.testimonials(id)
+            Ok(views.html.brand.tabs.testimonials(id, testimonials))
+          case "types" ⇒
+            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
+            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case _ ⇒
             val products = productService.findByBrand(id)
             Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.api.templates.Html.empty })

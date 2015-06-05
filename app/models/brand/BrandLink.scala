@@ -25,7 +25,7 @@
 package models.brand
 
 case class BrandLink(id: Option[Long],
-  brand: Long,
+  brandId: Long,
   linkType: String,
   link: String)
 

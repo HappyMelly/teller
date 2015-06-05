@@ -26,6 +26,8 @@
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
         <li class="active"><a href="#general" role="tab" data-toggle="tab">
           General</a></li>
+        <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "testimonials")"
+          href="#testimonials" role="tab" data-toggle="tab">Testimonials</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "products")" href="#products" role="tab" data-toggle="tab">Products</a></li>
         <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
@@ -93,6 +95,7 @@
   <div class="tab-pane active" id="general">
     @views.html.brand.tabs.general(brand, coordinator, links)
   </div>
+  <div class="tab-pane" id="testimonials"></div>
   <div class="tab-pane" id="team"></div>
   <div class="tab-pane" id="products"></div>
   <div class="tab-pane" id="types"></div>
