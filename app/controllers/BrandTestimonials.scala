@@ -71,7 +71,7 @@ trait BrandTestimonials extends JsonController with Services with Security {
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def remove(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.deleteTestimonial(brandId, id)

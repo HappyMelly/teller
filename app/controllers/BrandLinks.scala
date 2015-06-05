@@ -29,9 +29,19 @@ import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
+import play.api.libs.json.{ JsValue, Writes, Json }
 
 trait BrandLinks extends JsonController with Services with Security {
 
+  implicit val brandLinkWrites = new Writes[BrandLink] {
+    def writes(link: BrandLink): JsValue = {
+      Json.obj(
+        "brandId" -> link.brand,
+        "linkType" -> link.linkType.capitalize,
+        "link" -> link.link,
+        "id" -> link.id.get)
+    }
+  }
   /**
    * Adds new brand link if the link is valid
    *
@@ -46,8 +56,8 @@ trait BrandLinks extends JsonController with Services with Security {
             error ⇒ jsonBadRequest("Link cannot be empty"),
             linkData ⇒ {
               val link = BrandLink(None, brandId, linkData._1, linkData._2)
-              brandService.insertLink(BrandLink.updateType(link))
-              jsonSuccess("ok")
+              val insertedLink = brandService.insertLink(BrandLink.updateType(link))
+              jsonOk(Json.toJson(insertedLink))
             })
         } getOrElse jsonNotFound(Messages("error.brand.notFound"))
   }
@@ -61,7 +71,7 @@ trait BrandLinks extends JsonController with Services with Security {
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def remove(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.deleteLink(brandId, id)

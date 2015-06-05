@@ -71,7 +71,7 @@
   }
   <legend>Links</legend>
   @if(links.length > 0) {
-    <table id="eventTypes" class="datatables table table-bordered">
+    <table id="links" class="datatables table table-bordered">
       <thead>
         <tr>
           <th>Type</th>
@@ -86,7 +86,8 @@
             <td><a href="@link.link" target="_blank">@link.link</td>
             <td style="font-weight: normal;">
               @restrict(handler, List(as(Editor.toString))) {
-                <a data-href="@routes.BrandLinks.delete(brand.id.get, link.id.get)">
+                <a data-id="@link.id.get" href="#" class="remove"
+                  data-href="@routes.BrandLinks.remove(brand.id.get, link.id.get)">
                   <i class="glyphicon glyphicon-trash"></i> Remove</a>
               }
             </td>
@@ -95,17 +96,18 @@
       </tbody>
     </table>
   }
+  <div id="brandLinkNotification"></div>
   @restrict(handler, List(as(Editor.toString))) {
-    <form class="form-inline pull-right" method="POST"
+    <form id="addLinkForm" class="form-inline pull-right" method="POST"
       action="@CSRF(routes.BrandLinks.create(brand.id.get))">
-      <select name="linkType" id="linkType" class="form-control input-sm">
+      <select name="type" id="linkType" class="form-control input-sm">
         <option value="blog">Blog</option>
         <option value="photo">Photo</option>
         <option value="video">Video</option>
         <option value="website">Website</option>
         <option value="other">Other</option>
       </select>
-      <input name="link" class="form-control input-sm" style="width: 300px">
+      <input name="url" class="form-control input-sm" style="width: 300px">
       <button class="btn btn-success btn-sm">
         <i class="glyphicon glyphicon-plus"></i>Add Link</button>
     </form>
