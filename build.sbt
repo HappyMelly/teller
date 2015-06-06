@@ -15,6 +15,8 @@ herokuProcessTypes in Compile := Map(
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := false
 
+ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*"
+
 libraryDependencies ++=
   Seq(
     "com.andersen-gott" %% "scravatar" % "1.0.3",

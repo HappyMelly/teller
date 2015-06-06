@@ -53,6 +53,7 @@
                         <li><code>email</code></li>
                         <li><code>skype</code></li>
                         <li><code>phone</code></li>
+                        <li><code>contactForm</code></li>
                     </ul>
                 </li>
                 <li><code>social_profile</code> - a JSON object with properties:
@@ -63,8 +64,6 @@
                         <li><code>linkedin</code></li>
                     </ul>
                 </li>
-                <li><code>website</code></li>
-                <li><code>blog</code></li>
                 <li><code>products</code> - a list of JSON objects
                     <ul>
                         <li><code>href</code> - URL of the <a href="#product">product details</a>
@@ -78,6 +77,35 @@
                             </ul>
                         </li>
                         <li><code>category</code></li>
+                    </ul>
+                </li>
+                <li><code>links</code> - a list of JSON objects
+                    <ul>
+                        <li><code>type</code> - blog, website, video, photo, other</li>
+                        <li><code>url</code></li>
+                    </ul>
+                </li>
+                <li><code>testimonials</code> - a list of JSON objects
+                    <ul>
+                        <li><code>content</code></li>
+                        <li><code>name</code></li>
+                        <li><code>company</code> - company or job role</li>
+                    </ul>
+                </li>
+                <li><code>events</code> - next three future public events
+                    <ul>
+                        <li><code>title</code></li>
+                        <li><code>description</code></li>
+                        <li><code>spokenLanguages</code> - an array of languages</li>
+                        <li><code>start</code></li>
+                        <li><code>end</code></li>
+                        <li><code>hoursPerDay</code></li>
+                        <li><code>totalHours</code></li>
+                        <li><code>city</code></li>
+                        <li><code>country</code> - ISO 8166-2 country code</li>
+                        <li><code>website</code></li>
+                        <li><code>registrationPage</code></li>
+                        <li><code>free</code> - true if the event is free</li>
                     </ul>
                 </li>
             </ul>
@@ -115,7 +143,8 @@
     "contact_info" : {
         "email" : "skotlov@@gmail.com",
         "skype" : null,
-        "phone" : null
+        "phone" : null,
+        "contactForm": null
     },
     "social_profile" : {
         "facebook" : "https://www.facebook.com/Management30",
@@ -123,8 +152,6 @@
         "google_plus" : "https://plus.google.com/+Management30",
         "linkedin" : "https://www.linkedin.com/groups/Management-30-4074448?gid=4074448"
     },
-    "website" : "http://www.management30.com/",
-    "blog" : null,
     "products" : [ {
             "title" : "#Workout",
             "subtitle" : "Engage People, Improve Work, Delight Clients",
@@ -195,8 +222,60 @@
                 "name" : "Management 3.0"
             } ],
             "category" : "Games"
-        }]
-}
+        }],
+      "links" : [ {
+        "type" : "blog",
+        "url" : "http://changegeek.ru"
+      }, {
+        "type" : "video",
+        "url" : "http://chagegeek.ru"
+      } ],
+      "testimonials" : [ {
+        "content" : "My pretty sight",
+        "name" : "Sergey",
+        "company" : null
+      } ],
+      "events" : [ {
+        "title" : "Agile Business Management (Management 3.0)",
+        "description" : null,
+        "spokenLanguages" : [ "English" ],
+        "start" : "2015-06-08",
+        "end" : "2015-06-09",
+        "hoursPerDay" : 8,
+        "totalHours" : 16,
+        "city" : "Singapore",
+        "country" : "SG",
+        "website" : "https://www.eventbrite.com/e/agile-business-management-management-30-in-singapore-tickets-16512069043",
+        "registrationPage" : "https://www.eventbrite.com/e/agile-business-management-management-30-in-singapore-tickets-16512069043",
+        "free" : false
+      }, {
+        "title" : "Regular 2-Day Management 3.0 Course",
+        "description" : null,
+        "spokenLanguages" : [ "English", "English" ],
+        "start" : "2015-06-08",
+        "end" : "2015-06-09",
+        "hoursPerDay" : 8,
+        "totalHours" : 8,
+        "city" : "Istanbul",
+        "country" : "TR",
+        "website" : "http://www.ausculto.de",
+        "registrationPage" : "http://management30turkey.com",
+        "free" : false
+      }, {
+        "title" : "Workout - Paratiques de management",
+        "description" : "Ce workshop d’un jour est différent du cours Management 3.0 sur 2 jours. Il est recommandé, mais non obligatoire, de suivre le cours sur 2 jours avant ce séminaire. Le workshop s’appuie sur les thèmes déjà présentés, mais avec du matériel supplémentaire et nouveau",
+        "spokenLanguages" : [ "French", "English" ],
+        "start" : "2015-06-09",
+        "end" : "2015-06-09",
+        "hoursPerDay" : 8,
+        "totalHours" : 8,
+        "city" : "Lyon",
+        "country" : "FR",
+        "website" : "http://smartgecko.info/fr/formations/management-3-0/management-workout/",
+        "registrationPage" : null,
+        "free" : false
+      } ]
+    }
             </pre>
         </td>
     </tr>
