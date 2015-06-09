@@ -167,7 +167,7 @@ class LicenseService extends Services {
    *
    * @param license License object
    */
-  def update(license: License): Unit = DB.withSession { implicit session: Session ⇒
+  def update(license: License): Unit = DB.withTransaction { implicit session: Session ⇒
     license.id.map { id ⇒
       Query(Licenses).filter(_.id === id).update(license)
     }

@@ -14,7 +14,9 @@
     @if(steps) {
       @views.html.profile.steps(personId, strength.incompleteSteps)
     } else {
-      <a href="@routes.People.details(personId)" class="btn btn-sm btn-default">Improve your profile</a>
+      <a href="@routes.People.details(personId)" class="btn btn-sm btn-default"
+      onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
+      >Improve your profile</a>
     }
   </div>
 </div>

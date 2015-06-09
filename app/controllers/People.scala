@@ -276,8 +276,8 @@ trait People extends JsonController with Security with Services {
           memberships.contains(organisation))
         val licenses = licenseService.licenses(id)
         val facilitation = facilitatorService.findByPerson(id)
-        val facilitatorData = facilitation.
-          map(x ⇒ (licenses.find(_.license.brandId == x.brandId).get, x.rating))
+        val facilitatorData = licenses
+          .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.rating))
         val accountRole = if (user.account.editor)
           userAccountService.findRole(id) else None
         val duplicated = if (user.account.editor)
