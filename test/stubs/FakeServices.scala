@@ -26,7 +26,7 @@ package stubs
 
 import models.service._
 import models.service.admin.ApiTokenService
-import models.service.brand.{ BrandCoordinatorService, BrandFeeService, CertificateTemplateService, EventTypeService }
+import models.service.brand._
 import models.service.event.EventCancellationService
 
 trait FakeServices extends Services {

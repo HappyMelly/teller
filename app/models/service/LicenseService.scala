@@ -26,7 +26,7 @@ package models.service
 
 import com.github.tototoshi.slick.JodaSupport._
 import models.database.{ Licenses, People }
-import models.{ Facilitator, LicenseLicenseeView, LicenseView, License, Person }
+import models._
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -82,6 +82,53 @@ class LicenseService extends Services {
   }
 
   /**
+   * Returns list of licenses expiring this month for the given brands
+   *
+   * @param brands List of brands we want expiring license data from
+   */
+  def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
+    implicit session: Session ⇒
+      val firstDay = LocalDate.now().withDayOfMonth(1)
+      val lowerLimit = firstDay.minusMonths(1)
+      val upperLimit = firstDay.plusMonths(1)
+      val query = for {
+        license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
+        person ← People if person.id === license.licenseeId
+      } yield (license, person)
+      query.filter(_._1.brandId inSet brands).list
+        .map(v ⇒ LicenseLicenseeView(v._1, v._2))
+        .sortBy(_.licensee.fullName)
+  }
+
+  /**
+   * Returns list of licenses for the given brand
+   * @param brandId Brand id
+   */
+  def findByBrand(brandId: Long): List[License] = DB.withSession {
+    implicit session: Session ⇒
+      Query(Licenses).filter(_.brandId === brandId).list
+  }
+
+  /**
+   * Finds a license by ID, joined with brand and licensee
+   *
+   * @param id License id
+   */
+  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] =
+    DB.withSession { implicit session: Session ⇒
+      val query = for {
+        license ← Licenses if license.id === id
+        brand ← license.brand
+        licensee ← license.licensee
+      } yield (license, brand, licensee)
+
+      query.mapResult {
+        case (license, brand, licensee) ⇒
+          LicenseLicenseeBrandView(license, brand, licensee)
+      }.firstOption
+    }
+
+  /**
    * Returns a list of content licenses for the given person
    * @param personId Person identifier
    */
@@ -116,31 +163,18 @@ class LicenseService extends Services {
     }
 
   /**
-   * Returns list of licenses expiring this month for the given brands
+   * Updates the given license in the database.
    *
-   * @param brands List of brands we want expiring license data from
+   * @param license License object
    */
-  def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
-    implicit session: Session ⇒
-      val firstDay = LocalDate.now().withDayOfMonth(1)
-      val lowerLimit = firstDay.minusMonths(1)
-      val upperLimit = firstDay.plusMonths(1)
-      val query = for {
-        license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
-        person ← People if person.id === license.licenseeId
-      } yield (license, person)
-      query.filter(_._1.brandId inSet brands).list
-        .map(v ⇒ LicenseLicenseeView(v._1, v._2))
-        .sortBy(_.licensee.fullName)
-  }
-
-  /**
-   * Returns list of licenses for the given brand
-   * @param brandId Brand id
-   */
-  def findByBrand(brandId: Long): List[License] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Licenses).filter(_.brandId === brandId).list
+  def update(license: License): Unit = DB.withSession { implicit session: Session ⇒
+    license.id.map { id ⇒
+      Query(Licenses).filter(_.id === id).update(license)
+    }
+    if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
+      val facilitator = Facilitator(None, license.licenseeId, license.brandId)
+      facilitatorService.insert(facilitator)
+    }
   }
 
 }

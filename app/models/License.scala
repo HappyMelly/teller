@@ -46,6 +46,7 @@ case class License(
   confirmed: Boolean,
   fee: Money,
   feePaid: Option[Money]) {
+
   def active: Boolean = new Interval(start.toDateMidnight, end.toDateMidnight).containsNow
 }
 
@@ -74,22 +75,6 @@ object License {
    */
   def find(id: Long): Option[License] = DB.withSession { implicit session: Session ⇒
     Query(Licenses).filter(_.id === id).firstOption
-  }
-
-  /**
-   * Finds a license by ID, joined with brand and licensee.
-   */
-  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      license ← Licenses if license.id === id
-      brand ← license.brand
-      licensee ← license.licensee
-    } yield (license, brand, licensee)
-
-    query.mapResult {
-      case (license, brand, licensee) ⇒
-        LicenseLicenseeBrandView(license, brand, licensee)
-    }.firstOption
   }
 
   /**
@@ -128,15 +113,6 @@ object License {
         licensee ← license.licensee
       } yield licensee
       query.sortBy(_.lastName.toLowerCase).list
-  }
-
-  /**
-   * Updates this license in the database.
-   */
-  def update(license: License): Unit = DB.withSession { implicit session: Session ⇒
-    license.id.map { id ⇒
-      Query(Licenses).filter(_.id === id).update(license)
-    }
   }
 
 }

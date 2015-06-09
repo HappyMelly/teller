@@ -37,7 +37,7 @@ import play.api.mvc.Controller
 /**
  * Content license pages and API.
  */
-object Licenses extends Controller with Security with Services {
+trait Licenses extends Controller with Security with Services {
 
   /**
    * HTML form mapping for creating and editing.
@@ -117,7 +117,7 @@ object Licenses extends Controller with Security with Services {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      License.findWithBrandAndLicensee(id).map { view ⇒
+      licenseService.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
         val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
@@ -134,16 +134,18 @@ object Licenses extends Controller with Security with Services {
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      License.findWithBrandAndLicensee(id).map { view ⇒
+      licenseService.findWithBrandAndLicensee(id) map { view ⇒
         licenseForm.bindFromRequest.fold(
           form ⇒ BadRequest(views.html.license.form(user, None, form, view.licensee)),
-          editedLicense ⇒ {
-            License.update(editedLicense.copy(id = Some(id), licenseeId = view.licensee.id.get))
+          license ⇒ {
+            val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
+            licenseService.update(editedLicense)
 
+            //TODO: replace activity section
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
             val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
-            val route = routes.People.details(view.licensee.id.get).url + "#facilitation"
-            Redirect(route).flashing("success" -> activity.toString)
+            val route = routes.People.details(view.license.licenseeId).url + "#facilitation"
+            Redirect(route).flashing("success" -> "License was updated")
           })
       } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
@@ -167,3 +169,5 @@ object Licenses extends Controller with Security with Services {
       }.getOrElse(NotFound)
   }
 }
+
+object Licenses extends Licenses

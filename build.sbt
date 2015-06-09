@@ -15,7 +15,7 @@ herokuProcessTypes in Compile := Map(
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := false
 
-ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*"
+ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*;.*routes_.*"
 
 libraryDependencies ++=
   Seq(

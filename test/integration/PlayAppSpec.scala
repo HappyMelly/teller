@@ -160,17 +160,17 @@ object PlayAppSpec {
   /** Cleans all records from database */
   def truncate() = DB.withSession { implicit session: Session ⇒
     Q.updateNA("SET FOREIGN_KEY_CHECKS = 0;").execute
-    Q.updateNA("TRUNCATE `BRAND_LINK`").execute
-    Q.updateNA("TRUNCATE `BRAND_TESTIMONIAL`").execute
-    Q.updateNA("TRUNCATE `BOOKING_ENTRY`").execute
-    Q.updateNA("TRUNCATE `BOOKING_ENTRY_ACTIVITY`").execute
     Q.updateNA("TRUNCATE `ACCOUNT`").execute
     Q.updateNA("TRUNCATE `ACTIVITY`").execute
     Q.updateNA("TRUNCATE `ADDRESS`").execute
     Q.updateNA("TRUNCATE `API_TOKEN`").execute
+    Q.updateNA("TRUNCATE `BOOKING_ENTRY`").execute
+    Q.updateNA("TRUNCATE `BOOKING_ENTRY_ACTIVITY`").execute
     Q.updateNA("TRUNCATE `BRAND`").execute
     Q.updateNA("TRUNCATE `BRAND_FEE`").execute
     Q.updateNA("TRUNCATE `BRAND_COORDINATOR`").execute
+    Q.updateNA("TRUNCATE `BRAND_LINK`").execute
+    Q.updateNA("TRUNCATE `BRAND_TESTIMONIAL`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
     Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
     Q.updateNA("TRUNCATE `EVALUATION`").execute

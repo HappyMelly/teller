@@ -31,10 +31,13 @@ import models.service.{ FacilitatorService, LicenseService }
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
 import org.joda.time.LocalDate
+import org.scalamock.specs2.MockContext
+import stubs._
 
 class LicenseServiceSpec extends PlayAppSpec {
 
-  val service = new LicenseService
+  class TestLicenseService extends LicenseService with FakeServices
+  val service = new TestLicenseService
 
   "Method `expiring`" should {
     "return only licenses expiring this AND previous months" in {
@@ -99,6 +102,51 @@ class LicenseServiceSpec extends PlayAppSpec {
         "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
         true, Money.of(EUR, 100), Some(Money.of(EUR, 100)))
       service.add(license)
+      ok
+    }
+  }
+  "Given a license exists when the license is requested with brand and licensee" >> {
+    "the license object with additional data should be returned" in new TruncateBefore {
+      val person = PersonHelper.one().insert
+      val brand = BrandHelper.one.insert()
+      val now = LocalDate.now()
+      val license = new License(None, person.id.get, brand.id.get,
+        "1", now.minusYears(1), now.minusDays(1), now.plusDays(2),
+        true, Money.of(EUR, 201), Some(Money.of(EUR, 200)))
+      service.add(license)
+
+      val response = service.findWithBrandAndLicensee(1L)
+      response map { x ⇒
+        x.licensee.fullName must_== "First Tester"
+        x.brand.name must_== "Test Brand"
+        x.license.start.toString must_== now.minusDays(1).toString
+      } getOrElse ko
+    }
+  }
+  "Method 'update'" should {
+    "add facilitator record the record it does not exist" in new MockContext {
+      val now = LocalDate.now()
+      val license = new License(Some(1L), 1L, 1L,
+        "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
+        true, Money.of(EUR, 100), None)
+      val facilitatorService = mock[FacilitatorService]
+      (facilitatorService.find _) expects (1, 1) returning None
+      val facilitator = Facilitator(None, 1L, 1L)
+      (facilitatorService.insert _) expects facilitator
+      service.facilitatorService_=(facilitatorService)
+      service.update(license)
+      ok
+    }
+    "not add facilitator record and successfully execute" in new MockContext {
+      val now = LocalDate.now()
+      val license = new License(Some(1L), 1L, 1L,
+        "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
+        true, Money.of(EUR, 100), None)
+      val facilitatorService = mock[FacilitatorService]
+      val facilitator = Facilitator(None, 1L, 1L)
+      (facilitatorService.find _) expects (1, 1) returning Some(facilitator)
+      service.facilitatorService_=(facilitatorService)
+      service.update(license)
       ok
     }
   }
