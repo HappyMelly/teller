@@ -41,13 +41,14 @@ import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
-import services.S3Bucket
-
+import scala.language.postfixOps
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.io.Source
+import services.S3Bucket
+import services.integrations.Integrations
 
-trait People extends JsonController with Security with Services {
+trait People extends JsonController with Security with Services with Integrations {
 
   val contentType = "image/jpeg"
 
@@ -88,7 +89,7 @@ trait People extends JsonController with Security with Services {
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
-      "emailAddress" -> email,
+      "emailAddress" -> play.api.data.Forms.email,
       "birthday" -> optional(jodaLocalDate),
       "signature" -> boolean,
       "address" -> addressMapping,
@@ -318,7 +319,7 @@ trait People extends JsonController with Security with Services {
   def update(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { p ⇒
+        personService.find(id) map { oldPerson ⇒
           personForm(user.fullName).bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
@@ -327,8 +328,18 @@ trait People extends JsonController with Security with Services {
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
-                  .copy(id = Some(id), active = p.active, photo = p.photo)
-                  .copy(customerId = p.customerId, addressId = p.addressId).update
+                  .copy(id = Some(id), active = oldPerson.active)
+                  .copy(photo = oldPerson.photo, customerId = oldPerson.customerId)
+                  .copy(addressId = oldPerson.addressId)
+                personService.member(id) foreach { x ⇒
+                  val msg = composeSocialNotification(oldPerson, updatedPerson)
+                  msg foreach { slack.send(_) }
+                  val additional = Play.configuration.getString("slack.additional_channel").getOrElse("")
+                  if (additional.length > 0) {
+                    msg foreach { slack.send(_, Some(additional)) }
+                  }
+                }
+                updatedPerson.update
                 val activity = updatedPerson.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
@@ -555,6 +566,56 @@ trait People extends JsonController with Security with Services {
       Some(form)
     } getOrElse None
   }
+
+  /**
+   * Compares social profiles and returns a list of errors for a form
+   *
+   * @param old Person
+   * @param updated Updated person
+   */
+  protected def composeSocialNotification(old: Person,
+    updated: Person): Option[String] = {
+    val updatedProfile = updated.socialProfile
+    val oldProfile = old.socialProfile
+    val notifications = List(
+      composeNotification("twitter", oldProfile.twitterHandle, updatedProfile.twitterHandle),
+      composeNotification("facebook", oldProfile.facebookUrl, updatedProfile.facebookUrl),
+      composeNotification("google", oldProfile.googlePlusUrl, updatedProfile.googlePlusUrl),
+      composeNotification("linkedin", oldProfile.linkedInUrl, updatedProfile.linkedInUrl),
+      composeNotification("blog", old.blog, updated.blog))
+    val nonEmptyNotifications = notifications.filterNot(_.isEmpty)
+    nonEmptyNotifications.headOption map { first ⇒
+      val prefix = "%s updated her/his social profile.".format(updated.fullName)
+      val msg = nonEmptyNotifications.tail.foldLeft(first.get.capitalize)(_ + ", " + _.get)
+      Some(prefix + " " + msg)
+    } getOrElse None
+  }
+
+  /**
+   * Composes notification if the given value was updated
+   *
+   * @param msgType Notification type
+   * @param old Old value
+   * @param updated New value
+   */
+  protected def composeNotification(msgType: String,
+    old: Option[String],
+    updated: Option[String]): Option[String] = {
+    if (updated.isDefined && old != updated)
+      Some(notificatonMsg(msgType, updated.get))
+    else
+      None
+  }
+
+  protected def notificatonMsg(msgType: String, value: String): String =
+    msgType match {
+      case "twitter" ⇒ "follow her/him on <http://twitter.com/%s|Twitter>".format(value)
+      case "facebook" ⇒ "become friends on <%s|Facebook>".format(value)
+      case "google" ⇒ "add her/him to your circles on <%s|G+>".format(value)
+      case "linkedin" ⇒ "connect on <%s|LinkedIn>".format(value)
+      case "blog" ⇒ "read his/her blog <%s|here>".format(value)
+      case _ ⇒ ""
+    }
 
 }
 
