@@ -89,7 +89,7 @@ case class Person(
       person.socialProfile_=(this.socialProfile)
     }
     this._address map { a ⇒
-      person.address_=(this.address)
+      person.address_=(a)
     }
     person
   }

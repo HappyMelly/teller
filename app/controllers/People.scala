@@ -328,7 +328,7 @@ trait People extends JsonController with Security with Services {
               } getOrElse {
                 val updatedPerson = person
                   .copy(id = Some(id), active = p.active, photo = p.photo)
-                  .copy(customerId = p.customerId).update
+                  .copy(customerId = p.customerId, addressId = p.addressId).update
                 val activity = updatedPerson.activity(
                   user.person,
                   Activity.Predicate.Updated).insert
