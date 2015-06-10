@@ -34,7 +34,7 @@ object PeopleApi extends ApiAuthentication {
   implicit val personWrites = new Writes[Person] {
     def writes(person: Person): JsValue = {
       Json.obj(
-        "id" -> person.id.get,
+        "id" -> person.id,
         "unique_name" -> person.uniqueName,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,

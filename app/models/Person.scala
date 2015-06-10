@@ -177,7 +177,7 @@ case class Person(
   /** Returns member data if person is a member, false None */
   def member: Option[Member] = _member map { Some(_) } getOrElse {
     id map { i ⇒
-      _member = PersonService.get.member(i)
+      _member = personService.member(i)
       _member
     } getOrElse None
   }

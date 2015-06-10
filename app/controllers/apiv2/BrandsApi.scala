@@ -150,13 +150,20 @@ trait BrandsApi extends Controller with ApiAuthentication {
       jsonOk(Json.toJson(views))
   }
 
+  /**
+   * Returns brand data with links, testimonials and related events
+   *
+   * @param view Brand of interest
+   */
   protected def fullView(view: BrandView): BrandFullView = {
-    val links = brandService.links(view.brand.id.get)
-    val testimonials = brandService.testimonials(view.brand.id.get)
-    val events = eventService.findByParameters(Some(view.brand.id.get),
+    val id = view.brand.id.get
+    val events = eventService.findByParameters(Some(id),
       future = Some(true), public = Some(true), archived = Some(false)).take(3)
-    BrandFullView(view.brand, view.coordinator,
-      links, testimonials, events)
+    val person = personService.member(view.coordinator.id.get) map { x ⇒
+      view.coordinator.copy(id = x.id)
+    } getOrElse view.coordinator.copy(id = None)
+    BrandFullView(view.brand, person,
+      brandService.links(id), brandService.testimonials(id), events)
   }
 }
 
