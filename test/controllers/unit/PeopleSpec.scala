@@ -25,7 +25,8 @@
 package controllers.unit
 
 import controllers.People
-import models.SocialProfile
+import helpers._
+import models.{ SocialProfile, Person }
 import org.specs2.mutable._
 import play.api.data.FormError
 
@@ -37,11 +38,22 @@ class PeopleSpec extends Specification {
       right: SocialProfile): List[FormError] = {
       compareSocialProfiles(left, right)
     }
+
+    def callComposeSocialNotification(existing: Person,
+      updated: Person): Option[String] = {
+      composeSocialNotification(existing, updated)
+    }
+
+    def callComposeNotification(msgType: String, old: Option[String],
+      updated: Option[String]): Option[String] =
+      composeNotification(msgType, old, updated)
   }
 
   val controller = new TestPeople
   val left = SocialProfile(email = "left@profile.com")
   val right = SocialProfile(email = "right@profile.com")
+  val person = PersonHelper.one
+  val updatedPerson = PersonHelper.one
 
   "Method 'compareSocialProfiles'" should {
     "return an error if twitterHandles are equal" in {
@@ -71,6 +83,82 @@ class PeopleSpec extends Specification {
     "return no errors if all social profiles are empty" in {
       val errors = controller.callCompareSocialProfiles(left, right)
       errors.length must_== 0
+    }
+  }
+
+  "Method 'composeSocialNotification'" should {
+    "produce no notification if no social account has changed" in {
+      controller.callComposeSocialNotification(person, updatedPerson) must_== None
+    }
+    "add Twitter info to notification if Twitter has been added" in {
+      val old = person.socialProfile
+      val updated = old.copy(twitterHandle = Some("skotlov"))
+      updatedPerson.socialProfile_=(updated)
+      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Follow her/him on <http://twitter.com/skotlov|Twitter>")
+      } getOrElse ko
+    }
+    "add Facebook info to notification if Facebook has been added" in {
+      val old = person.socialProfile
+      val updated = old.copy(facebookUrl = Some("https://facebook.com/skotlov"))
+      updatedPerson.socialProfile_=(updated)
+      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Become friends on <https://facebook.com/skotlov|Facebook>")
+      } getOrElse ko
+    }
+    "add Google info to notification if Google has been added" in {
+      val old = person.socialProfile
+      val updated = old.copy(googlePlusUrl = Some("https://plus.google.com/+SergeyKotlov"))
+      updatedPerson.socialProfile_=(updated)
+      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Add her/him to your circles on <https://plus.google.com/+SergeyKotlov|G+>")
+      } getOrElse ko
+    }
+    "add LinkedIn info to notification if LinkedIn has been added" in {
+      val old = person.socialProfile
+      val updated = old.copy(linkedInUrl = Some("https://www.linkedin.com/in/skotlov"))
+      updatedPerson.socialProfile_=(updated)
+      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Connect on <https://www.linkedin.com/in/skotlov|LinkedIn>")
+      } getOrElse ko
+    }
+    "add blog info to notification if blog has been added" in {
+      val updated = person.copy(blog = Some("http://changegeek.ru/blog"))
+      val msg = controller.callComposeSocialNotification(person, updated)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Read his/her blog <http://changegeek.ru/blog|here>")
+      } getOrElse ko
+    }
+    "add Twitter and Facebook info to notification if both have been added" in {
+      val old = person.socialProfile
+      val updated = old.copy(twitterHandle = Some("skotlov"), facebookUrl = Some("https://facebook.com/skotlov"))
+      updatedPerson.socialProfile_=(updated)
+      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      msg map { x ⇒
+        x must contain("First Tester updated her/his social profile.")
+        x must contain("Follow her/him on <http://twitter.com/skotlov|Twitter>")
+        x must contain(", become friends on <https://facebook.com/skotlov|Facebook>")
+      } getOrElse ko
+    }
+  }
+  "Method 'composeNotification'" should {
+    "return no notification if updated value is empty" in {
+      controller.callComposeNotification("twitter", Some("test"), None) must_== None
+    }
+    "return no notification if updated value is equal to old value" in {
+      controller.callComposeNotification("twitter", Some("test"), Some("test")) must_== None
+    }
+    "return a notification msg if updated value is not equal to old value and not empty" in {
+      controller.callComposeNotification("twitter", None, Some("test")).isEmpty must_== false
     }
   }
 }
