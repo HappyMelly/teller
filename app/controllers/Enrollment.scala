@@ -67,7 +67,9 @@ trait Enrollment extends Controller
     } getOrElse routes.People.details(person.id.get).url
     val name = org map (_.name) getOrElse person.fullName
     val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
-    val text = "Hey @channel, we have *new Supporter*. %s, %s. <%s|View profile>".format(
+    val memberType = if (member.funder) "Funder" else "Supporter"
+    val text = "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
+      memberType,
       name,
       fee.toString,
       fullUrl)

@@ -99,10 +99,10 @@ class EnrollmentSpec extends PlayAppSpec {
       val person = PersonHelper.one()
       val fee = Money.parse("EUR 100")
       val org = OrganisationHelper.two
-      val member = MemberHelper.make(Some(1L), 2L, funder = false, person = false)
+      val member = MemberHelper.make(Some(1L), 2L, funder = true, person = false)
       controller.callNotify(person, Some(org), fee, member)
 
-      controller.slack.message must contain("Hey @channel, we have *new Supporter*")
+      controller.slack.message must contain("Hey @channel, we have *new Funder*")
       controller.slack.message must contain("Two")
       controller.slack.message must contain("/organization/2")
       controller.email.to.exists(_.lastName == "Tester") must_== true

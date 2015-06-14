@@ -45,6 +45,7 @@ object Languages {
       "PT" -> "Portuguese",
       "RU" -> "Russian",
       "ES" -> "Spanish",
-      "SV" -> "Swedish")
+      "SV" -> "Swedish",
+      "TR" -> "Turkish")
 
 }
