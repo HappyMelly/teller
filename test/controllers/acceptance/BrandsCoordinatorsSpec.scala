@@ -28,10 +28,10 @@ import controllers.Brands
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.brand.{ BrandCoordinator, BrandNotifications }
-import models.service.BrandService
+import models.service.{ BrandService, PersonService }
 import models.service.brand.BrandCoordinatorService
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{ FakePersonService, FakeServices, FakeUserIdentity }
+import stubs.{ FakeServices, FakeUserIdentity }
 
 /**
  * Tests Brands controller methods, managing brand coordinators
@@ -71,7 +71,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.brandCoordinatorService_=(brandTeamMemberService)
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
-  val personService = mock[FakePersonService]
+  val personService = mock[PersonService]
   controller.personService_=(personService)
 
   def e1 = {

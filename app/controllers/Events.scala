@@ -271,7 +271,7 @@ trait Events extends Controller
       eventService.find(id) map { x ⇒
         val acc = user.account
         //@TODO only funders must be retrieved
-        val funders = if (acc.editor) Organisation.findAll else List()
+        val funders = if (acc.editor) orgService.findAll else List()
         val eventType = eventTypeService.find(x.eventTypeId).get
         val canFacilitate = acc.editor || x.isFacilitator(acc.personId) ||
           brandService.isCoordinator(x.brandId, acc.personId)

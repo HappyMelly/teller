@@ -49,7 +49,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestMembers extends Members with FakeServices
 
   val controller = new TestMembers
-  val personService = mock[FakePersonService]
+  val personService = mock[PersonService]
   val memberService = mock[FakeMemberService]
   val profileStrengthService = mock[ProfileStrengthService]
   controller.personService_=(personService)

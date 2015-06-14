@@ -95,6 +95,24 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       tags = csrfTag).withCookies(authenticator.toCookie)
   }
 
+  def fakeGetRequest(url: String = "") = {
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(GET,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag)
+  }
+
+  def fakePostRequest(url: String = "") = {
+    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
+    FakeRequest(GET,
+      url,
+      headers = FakeHeaders(),
+      body = AnyContentAsEmpty,
+      tags = csrfTag)
+  }
+
   /**
    * Returns a secured request object and sets authenticator object to cache
    *

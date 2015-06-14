@@ -44,7 +44,7 @@ class TestOrganisation(
   active: Boolean = true,
   dateStamp: DateStamp) extends Organisation(id, name, street1, street2, city,
   province, postCode, countryCode, vatNumber, registrationNumber, webSite,
-  blog, customerId, active, dateStamp) with FakeServices
+  blog, customerId, None, true, active, dateStamp) with FakeServices
 
 object OrganisationHelper {
 
@@ -67,7 +67,7 @@ object OrganisationHelper {
     updatedBy: String = "Sergey Kotlov"): TestOrganisation = {
     new TestOrganisation(id, name, street1, street2, city, province, postCode,
       countryCode, vatNumber, registrationNumber, webSite, blog, Some(""),
-      active, DateStamp(created, createdBy, updated, updatedBy))
+      true, DateStamp(created, createdBy, updated, updatedBy))
   }
 
   def one: TestOrganisation = make(id = Some(1L), name = "One")

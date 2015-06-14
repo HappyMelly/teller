@@ -29,6 +29,7 @@ import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
 import models.payment.Record
 import models.{ Organisation, Person, SocialProfile }
+import models.service.PersonService
 import org.joda.money.Money
 import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
 import play.api.mvc.SimpleResult
@@ -39,30 +40,6 @@ import scala.concurrent.Future
 class TestOrganisations() extends Organisations with FakeServices
 
 class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
-
-  val personService = mock[FakePersonService]
-  val orgService = mock[FakeOrganisationService]
-  val productService = mock[FakeProductService]
-  val contributionService = mock[FakeContributionService]
-  val paymentService = mock[FakePaymentRecordService]
-  val org = OrganisationHelper.one
-  val id = 1L
-
-  trait DefaultMockContext extends MockContext {
-    truncateTables()
-    (contributionService.contributions(_, _)).expects(id, false).returning(List())
-    (orgService.find _).expects(id).returning(Some(org))
-    (productService.findAll _).expects().returning(List())
-    (personService.findActive _).expects().returning(List())
-  }
-
-  trait ExtendedMemberMockContext extends DefaultMockContext {
-    (paymentService.findByOrganisation _) expects id returning List()
-  }
-
-  trait ExtendedNonMemberMockContext extends DefaultMockContext {
-    (paymentService.findByOrganisation _).expects(id).returning(List()).never()
-  }
 
   override def is = s2"""
 
@@ -101,6 +78,30 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     not be visible to Viewers                                               $e16
     be visible to Editors                                                   $e17
   """
+
+  val personService = mock[PersonService]
+  val orgService = mock[FakeOrganisationService]
+  val productService = mock[FakeProductService]
+  val contributionService = mock[FakeContributionService]
+  val paymentService = mock[FakePaymentRecordService]
+  val org = OrganisationHelper.one
+  val id = 1L
+
+  trait DefaultMockContext extends MockContext {
+    truncateTables()
+    (contributionService.contributions(_, _)).expects(id, false).returning(List())
+    (orgService.find _).expects(id).returning(Some(org))
+    (productService.findAll _).expects().returning(List())
+    (personService.findActive _).expects().returning(List())
+  }
+
+  trait ExtendedMemberMockContext extends DefaultMockContext {
+    (paymentService.findByOrganisation _) expects id returning List()
+  }
+
+  trait ExtendedNonMemberMockContext extends DefaultMockContext {
+    (paymentService.findByOrganisation _).expects(id).returning(List()).never()
+  }
 
   def e1 = new ExtendedNonMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval

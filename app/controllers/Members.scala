@@ -236,7 +236,7 @@ trait Members extends Enrollment with JsonController {
           success ⇒ {
             val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             cached map { m ⇒
-              val org = success.insert
+              val org = orgService.insert(success)
               org.activity(user.person, Activity.Predicate.Created).insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member

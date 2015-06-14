@@ -80,7 +80,7 @@ trait OrganisationsApi extends Controller with ApiAuthentication with Services {
    */
   def organisations = TokenSecuredAction(readWrite = false) { implicit request ⇒
     implicit token ⇒
-      jsonOk(Json.toJson(Organisation.findAll))
+      jsonOk(Json.toJson(orgService.findAll))
   }
 }
 

@@ -13,6 +13,7 @@
 @html.text(form("province"), '_label -> "Province or state")
 @html.text(form("vatNumber"), '_label -> "VAT number")
 @html.text(form("registrationNumber"), '_label -> "Registration number")
+@html.textarea(form("about"), '_label -> "About", 'rows -> "5", '_help -> views.html.element.markdownHelp())
 @html.text(form("webSite"), '_label -> "Web site",
   'placeholder -> "http://", '_help -> "Web site URL")
 @html.text(form("blog"), '_label -> "Blog",

@@ -150,7 +150,7 @@ case class Person(
    * Returns a list of organisations this person is a member of
    */
   def organisations: List[Organisation] = if (_organisations.isEmpty) {
-    organisations_=(PersonService.get.memberships(this))
+    organisations_=(PersonService.get.memberships(id.get))
     _organisations.get
   } else {
     _organisations.get
@@ -360,7 +360,6 @@ object Person {
   /**
    * Downloads a person's signature form the cloud and puts it into cache
    * @param id Person identifier
-   * @return
    */
   def downloadFromCloud(id: Long): Future[Array[Byte]] = {
     val contentType = "image/jpeg"

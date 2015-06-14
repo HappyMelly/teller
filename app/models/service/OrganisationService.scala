@@ -24,15 +24,42 @@
  */
 package models.service
 
-import models.{ Organisation, Member }
-import models.database.{ Members, Organisations }
+import models.{ Organisation, Member, Account }
+import models.database.{ Members, Organisations, Accounts }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
 import scala.slick.lifted.Query
 
-class OrganisationService {
+class OrganisationService extends Services {
+
+  /**
+   * Activates the organisation, if the parameter is true, or deactivates it
+   *
+   * @param id Organisation identifier
+   * @param active Activate/deactivate flag
+   */
+  def activate(id: Long, active: Boolean): Unit = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        organisation ← Organisations if organisation.id === id
+      } yield organisation.active
+      query.update(active)
+  }
+
+  /**
+   * Deletes the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    find(id) foreach { org ⇒
+      org.account.delete()
+      memberService.delete(id, person = false)
+    }
+    Organisations.where(_.id === id).mutate(_.delete())
+  }
 
   /** Returns list of active organisations */
   def findActive: List[Organisation] = DB.withSession {
@@ -41,6 +68,11 @@ class OrganisationService {
         filter(_.active === true).
         sortBy(_.name.toLowerCase).
         list
+  }
+
+  /** Returns list of all organisation in the system */
+  def findAll: List[Organisation] = DB.withSession { implicit session: Session ⇒
+    Query(Organisations).sortBy(_.name.toLowerCase).list
   }
 
   /** Returns list of organisations which are not members (yet!) */
@@ -58,7 +90,20 @@ class OrganisationService {
    */
   def find(id: Long): Option[Organisation] = DB.withSession {
     implicit session: Session ⇒
-      Query(Organisations).filter(_.id === id).list.headOption
+      Query(Organisations).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Inserts the given organisation into the database, with an inactive account.
+   *
+   * @param org Organisation
+   * @return The Organisation as it is saved (with the id added)
+   */
+  def insert(org: Organisation): Organisation = DB.withSession {
+    implicit session: Session ⇒
+      val organisationId = Organisations.forInsert.insert(org)
+      Accounts.insert(Account(organisationId = Some(organisationId)))
+      org.copy(id = Some(organisationId))
   }
 
   /**
@@ -69,6 +114,26 @@ class OrganisationService {
     Query(Members).
       filter(_.objectId === id).
       filter(_.person === false).firstOption
+  }
+
+  /**
+   * Updates the given organisation in the database
+   *
+   * @param org Organisation
+   * @return the given organisation
+   */
+  def update(org: Organisation) = DB.withSession { implicit session: Session ⇒
+    assert(org.id.isDefined, "Can only update Organisations that have an id")
+    val filter = Query(Organisations).filter(_.id === org.id)
+    val q = filter.map { x ⇒ x.forUpdate }
+
+    // Skip the created, createdBy and active fields.
+    val updateTuple = (org.id, org.name, org.street1, org.street2, org.city,
+      org.province, org.postCode, org.countryCode, org.vatNumber,
+      org.registrationNumber, org.webSite, org.blog, org.customerId,
+      org.about, org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
+    q.update(updateTuple)
+    org
   }
 }
 

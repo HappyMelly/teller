@@ -24,10 +24,11 @@
 
 package models
 
+import models.service.Services
 import org.joda.time.DateTime
 
 /** The 'owner' of an account **/
-trait AccountHolder {
+trait AccountHolder extends Services {
   def name: String
   def levy: Boolean = false
   lazy val account: Account = Account.find(this)
@@ -38,9 +39,12 @@ trait AccountHolder {
       case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(
         updated = DateTime.now(),
         updatedBy = updatedBy)).update
-      case o: Organisation ⇒ o.copy(dateStamp = o.dateStamp.copy(
-        updated = DateTime.now(),
-        updatedBy = updatedBy)).update
+      case o: Organisation ⇒ {
+        val org = o.copy(dateStamp = o.dateStamp.copy(
+          updated = DateTime.now(),
+          updatedBy = updatedBy))
+        orgService.update(org)
+      }
       case _ ⇒ this
     }
   }

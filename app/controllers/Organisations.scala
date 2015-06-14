@@ -54,9 +54,12 @@ trait Organisations extends Controller with Security with Services {
     "country" -> nonEmptyText,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "customerId" -> optional(text),
+    "about" -> optional(text),
+    "picture" -> ignored(false),
     "active" -> ignored(true),
     "dateStamp" -> mapping(
       "created" -> ignored(DateTime.now()),
@@ -76,7 +79,7 @@ trait Organisations extends Controller with Security with Services {
             BadRequest("invalid form data")
           },
           active ⇒ {
-            Organisation.activate(id, active)
+            orgService.activate(id, active)
             val activity = Activity.insert(user.fullName,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
@@ -105,7 +108,7 @@ trait Organisations extends Controller with Security with Services {
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(user, None, formWithErrors)),
         organisation ⇒ {
-          val org = organisation.insert
+          val org = orgService.insert(organisation)
           val activity = Activity.insert(user.fullName, Activity.Predicate.Created, organisation.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
@@ -118,11 +121,10 @@ trait Organisations extends Controller with Security with Services {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      orgService.find(id).map {
-        organisation ⇒
-          Organisation.delete(id)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
-          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+      orgService.find(id).map { organisation ⇒
+        orgService.delete(id)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
+        Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -165,7 +167,7 @@ trait Organisations extends Controller with Security with Services {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val organisations = Organisation.findAll
+      val organisations = orgService.findAll
       Ok(views.html.organisation.index(user, organisations))
   }
 
@@ -186,8 +188,8 @@ trait Organisations extends Controller with Security with Services {
             organisation ⇒ {
               val updatedOrg = organisation.
                 copy(id = Some(id), active = org.active).
-                copy(customerId = org.customerId).
-                update
+                copy(customerId = org.customerId)
+              orgService.update(updatedOrg)
               val activity = updatedOrg.activity(
                 user.person,
                 Activity.Predicate.Updated).insert

@@ -27,12 +27,12 @@ package controllers.acceptance
 import controllers.Evaluations
 import helpers._
 import integration.PlayAppSpec
-import models.service.{ BrandService, EvaluationService, TranslationService }
+import models.service._
 import models.{ EvaluationPair, EvaluationStatus }
 import org.joda.time.DateTime
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.test.FakeRequest
-import stubs.{ FakePersonService, FakeServices, FakeUserIdentity }
+import stubs.{ FakeServices, FakeUserIdentity }
 
 class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   override def is = s2"""
@@ -55,7 +55,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   val translationService = mock[TranslationService]
   val translation = TranslationHelper.en
   controller.translationService_=(translationService)
-  val personService = mock[FakePersonService]
+  val personService = mock[PersonService]
   controller.personService_=(personService)
   val evaluation = EvaluationHelper.make(Some(1L), 1L, 1L,
     EvaluationStatus.Unconfirmed, 10, DateTime.now())

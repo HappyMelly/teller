@@ -28,6 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.{ People, Security }
 import helpers._
 import models.{ SocialProfile, Photo }
+import models.service.PersonService
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -57,7 +58,7 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestPeople() extends People with Security with FakeServices
 
   val controller = new TestPeople()
-  val personService = mock[FakePersonService]
+  val personService = mock[PersonService]
   controller.personService_=(personService)
 
   val person = PersonHelper.one()

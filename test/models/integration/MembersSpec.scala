@@ -77,6 +77,7 @@ class MembersSpec extends PlayAppSpec {
   }
 
   val controller = new TestMembers()
+  val orgService = new OrganisationService()
 
   "While creating membership fee, a system" should {
     "reset objectId and id to 0/None to prevent cheating" in new cleanDb {
@@ -139,7 +140,7 @@ class MembersSpec extends PlayAppSpec {
 
     "be destroyed after successful creation of an organisation" in new cleanDb {
       val m = member()
-      val oldList = Organisation.findAll
+      val oldList = OrganisationService.get.findAll
       val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
@@ -148,22 +149,22 @@ class MembersSpec extends PlayAppSpec {
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
 
-      Organisation.findAll.diff(oldList).headOption map { o ⇒
-        Organisation.delete(o.id.get); success
+      OrganisationService.get.findAll.diff(oldList).headOption map { o ⇒
+        orgService.delete(o.id.get); success
       } getOrElse failure
     }
 
   }
 
   """Incomplete member object can be created with one type of related object
-    |(ex: person) and be connected to another type (ex: org).
-    |
-    |To keep system coherency attribute 'person' in a
-    |member object should be updated""".stripMargin >> {
+    (ex: person) and be connected to another type (ex: org).
+
+    To keep system coherency attribute 'person' in a
+    member object should be updated""".stripMargin >> {
 
     "after the creation of related new organisation" in new cleanDb {
       val m = member(person = true)
-      val oldList = Organisation.findAll
+      val oldList = OrganisationService.get.findAll
       val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
       Cache.set(Members.cacheId(1L), m, 1800)
@@ -171,13 +172,13 @@ class MembersSpec extends PlayAppSpec {
 
       status(result) must equalTo(SEE_OTHER)
 
-      Organisation.findAll.diff(oldList).headOption map { org ⇒
+      orgService.findAll.diff(oldList).headOption map { org ⇒
         retrieveMember(org.id.get.toString) map { upd ⇒
           upd.person must_== false
         } getOrElse failure
 
         // clean up. We don't need this organisation anymore
-        Organisation.delete(org.id.get)
+        orgService.delete(org.id.get)
         success
       } getOrElse failure
     }
@@ -205,7 +206,7 @@ class MembersSpec extends PlayAppSpec {
   "The organisation created on step 2" should {
     "be connected with member data" in new cleanDb {
       val m = member()
-      val oldList = Organisation.findAll
+      val oldList = OrganisationService.get.findAll
       val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
 
@@ -215,13 +216,13 @@ class MembersSpec extends PlayAppSpec {
       headers(result).get("Location").nonEmpty must_== true
       headers(result).get("Location").get must contain("/organization")
 
-      Organisation.findAll.diff(oldList).headOption map { org ⇒
+      orgService.findAll.diff(oldList).headOption map { org ⇒
         val updatedM = retrieveMember(org.id.get.toString)
         updatedM.nonEmpty must_== true
         updatedM.get.objectId must_== org.id.get
 
         // clean up. We don't need this organisation anymore
-        Organisation.delete(org.id.get)
+        orgService.delete(org.id.get)
         success
       } getOrElse failure
 
@@ -295,7 +296,7 @@ class MembersSpec extends PlayAppSpec {
     "when a new organisation becomes a member" in {
       truncateTables()
       val m = member(person = false)
-      val oldList = Organisation.findAll
+      val oldList = OrganisationService.get.findAll
       val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
       Cache.set(Members.cacheId(1L), m, 1800)

@@ -28,6 +28,7 @@ import controllers._
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
 import models.Member
+import models.service.{ OrganisationService, PersonService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -290,7 +291,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
             id = id,
             name = name,
             countryCode = country)
-          org.insert
+          OrganisationService.get.insert(org)
       }
     Seq(
       (2L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
@@ -418,7 +419,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val m = MemberHelper.make(None, 0, person = true, funder = false,
       existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
-    val service = mock[FakePersonService]
+    val service = mock[PersonService]
     (service.find(_: Long)).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.personService_=(service)
@@ -438,7 +439,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
         existingObject = Some(true)).insert
       val person = PersonHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val service = mock[FakePersonService]
+      val service = mock[PersonService]
       (service.find(_: Long)).expects(*).returning(Some(person))
       (service.findNonMembers _).expects().returning(List())
       controller.personService_=(service)

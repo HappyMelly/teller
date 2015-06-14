@@ -26,9 +26,10 @@ package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
 import controllers.{ Security, People }
+import models.service.PersonService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.mvc.SimpleResult
-import stubs.{ FakeUserIdentity, FakeServices, FakePersonService }
+import stubs.{ FakeUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -53,7 +54,7 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   val controller = new TestPeople()
-  val personService = mock[FakePersonService]
+  val personService = mock[PersonService]
   controller.personService_=(personService)
 
   def e1 = {

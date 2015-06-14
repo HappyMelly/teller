@@ -128,11 +128,11 @@ class PersonService extends Services {
 
   /**
    * Returns list of organizations this person is a member of
-   * @param person Person object
+   * @param personId Person identifier
    */
-  def memberships(person: Person): List[Organisation] = DB.withSession { implicit session: Session ⇒
+  def memberships(personId: Long): List[Organisation] = DB.withSession { implicit session: Session ⇒
     val query = for {
-      membership ← OrganisationMemberships if membership.personId === person.id.get
+      membership ← OrganisationMemberships if membership.personId === personId
       organisation ← membership.organisation
     } yield organisation
     query.sortBy(_.name.toLowerCase).list
