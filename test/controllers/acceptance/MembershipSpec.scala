@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Membership
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
-import models.service.PersonService
+import models.service.{ PersonService, OrganisationService }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.test.FakeRequest
 import stubs._
@@ -62,7 +62,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestMembership() extends Membership with FakeSecurity with FakeServices
 
   val controller = new TestMembership()
-  val orgService = mock[FakeOrganisationService]
+  val orgService = mock[OrganisationService]
   val personService = mock[PersonService]
   controller.orgService_=(orgService)
   controller.personService_=(personService)

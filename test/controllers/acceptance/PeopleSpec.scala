@@ -29,7 +29,7 @@ import helpers._
 import _root_.integration.PlayAppSpec
 import models._
 import models.payment.Record
-import models.service.{ FacilitatorService, PersonService }
+import models.service.{ FacilitatorService, PersonService, OrganisationService }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -86,7 +86,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   val personService = mock[PersonService]
-  val orgService = mock[FakeOrganisationService]
+  val orgService = mock[OrganisationService]
   val accountService = mock[FakeUserAccountService]
   val contributionService = mock[FakeContributionService]
   val paymentService = mock[FakePaymentRecordService]

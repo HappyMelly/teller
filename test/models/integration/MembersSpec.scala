@@ -66,7 +66,7 @@ class MembersSpec extends PlayAppSpec {
   trait WithStubs extends MockContext {
     val personService = mock[PersonService]
     val memberService = mock[FakeMemberService]
-    val orgService = mock[FakeOrganisationService]
+    val orgService = mock[OrganisationService]
     controller.orgService_=(orgService)
     controller.personService_=(personService)
     controller.memberService_=(memberService)

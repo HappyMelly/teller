@@ -80,7 +80,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   val personService = mock[PersonService]
-  val orgService = mock[FakeOrganisationService]
+  val orgService = mock[OrganisationService]
   val productService = mock[FakeProductService]
   val contributionService = mock[FakeContributionService]
   val paymentService = mock[FakePaymentRecordService]

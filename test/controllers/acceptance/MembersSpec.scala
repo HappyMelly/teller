@@ -265,7 +265,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
             name = name,
             countryCode = country)
       }
-    val orgService = mock[FakeOrganisationService]
+    val orgService = mock[OrganisationService]
     (orgService.findNonMembers _) expects () returning orgs
     controller.orgService_=(orgService)
 
@@ -289,7 +289,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val m = MemberHelper.make(None, 0, person = false, funder = false,
       existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
-    val service = mock[FakeOrganisationService]
+    val service = mock[OrganisationService]
     (service.find _).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.orgService_=(service)
@@ -308,7 +308,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
         existingObject = Some(true)).insert
       val org = OrganisationHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val service = mock[FakeOrganisationService]
+      val service = mock[OrganisationService]
       (service.find _).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
       controller.orgService_=(service)
