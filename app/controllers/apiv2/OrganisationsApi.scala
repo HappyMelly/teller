@@ -24,15 +24,14 @@
 
 package controllers.apiv2
 
-import models.service.Services
-import models.{ Address, Organisation }
+import models.{ Address, Organisation, OrgView }
 import play.api.libs.json._
 import play.api.mvc.Controller
 
 /**
  * Organisations API.
  */
-trait OrganisationsApi extends Controller with ApiAuthentication with Services {
+trait OrganisationsApi extends Controller {
 
   implicit val organisationWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {
@@ -42,45 +41,6 @@ trait OrganisationsApi extends Controller with ApiAuthentication with Services {
         "country" -> organisation.countryCode,
         "website" -> organisation.webSite)
     }
-  }
-
-  import PeopleApi.{ personWrites, addressWrites }
-  import ContributionsApi.contributionWrites
-
-  val organisationDetailsWrites = new Writes[Organisation] {
-    def writes(org: Organisation): JsValue = {
-      val address = Address(None, org.street1, org.street2, org.city,
-        org.province, org.postCode, org.countryCode)
-
-      Json.obj(
-        "name" -> org.name,
-        "address" -> Json.toJson(address),
-        "vat_number" -> org.vatNumber,
-        "registration_number" -> org.registrationNumber,
-        "website" -> org.webSite,
-        "members" -> org.people,
-        "contributions" -> org.contributions)
-    }
-  }
-
-  /**
-   * Returns organisation in JSON format if exists
-   * @param id Organisation id
-   */
-  def organisation(id: Long) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        orgService.find(id) map { organisation ⇒
-          jsonOk(Json.toJson(organisation)(organisationDetailsWrites))
-        } getOrElse jsonNotFound("Unknown organization")
-  }
-
-  /**
-   * Returns list of organisations in JSON format
-   */
-  def organisations = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      jsonOk(Json.toJson(orgService.findAll))
   }
 }
 

@@ -146,16 +146,15 @@ trait Organisations extends Controller with Security with Services {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      orgService.find(id).map { organisation ⇒
-        val members = organisation.people
+      orgService.findWithProfile(id).map { view ⇒
+        val members = view.org.people
         val otherPeople = personService.findActive.filterNot(person ⇒ members.contains(person))
         val contributions = contributionService.contributions(id, isPerson = false)
         val products = productService.findAll
-        val payments = organisation.member map { v ⇒
+        val payments = view.org.member map { v ⇒
           paymentRecordService.findByOrganisation(id)
         } getOrElse List()
-        Ok(views.html.organisation.details(user, organisation,
-          members, otherPeople,
+        Ok(views.html.organisation.details(user, view, members, otherPeople,
           contributions, products, payments))
       }.getOrElse(NotFound)
   }
@@ -200,8 +199,9 @@ trait Organisations extends Controller with Security with Services {
             view ⇒ {
               val updatedOrg = view.org.
                 copy(id = Some(id), active = view.org.active).
-                copy(customerId = view.org.customerId, logo = view.org.logo)
-              orgService.update(updatedOrg)
+                copy(customerId = view.org.customerId)
+              val updatedProfile = view.profile.forOrg.copy(objectId = id)
+              orgService.update(OrgView(updatedOrg, updatedProfile))
               val activity = updatedOrg.activity(
                 user.person,
                 Activity.Predicate.Updated).insert

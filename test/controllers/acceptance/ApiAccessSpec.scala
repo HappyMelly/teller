@@ -57,10 +57,6 @@ class ApiAccessSpec extends Specification {
     'members' should be read-only $e9
     'member' should be read-only  $e10
 
-  In Organisations API method
-    'organisation' should be read-only $e11
-    'organisations' should be read-only $e12
-
   In Products API method
     'product' should be read-only $e13
     'products' should be read-only $e14
@@ -137,20 +133,6 @@ class ApiAccessSpec extends Specification {
   def e10 = {
     val controller = new TestMembersApi
     controller.member(1L).apply(FakeRequest())
-    controller.readWrite must_== false
-  }
-
-  class TestOrganisationsApi() extends OrganisationsApi with FakeNoCallApiAuthentication
-
-  def e11 = {
-    val controller = new TestOrganisationsApi
-    controller.organisation(1L).apply(FakeRequest())
-    controller.readWrite must_== false
-  }
-
-  def e12 = {
-    val controller = new TestOrganisationsApi
-    controller.organisations().apply(FakeRequest())
     controller.readWrite must_== false
   }
 

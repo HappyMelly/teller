@@ -422,9 +422,13 @@ class MembersSpec extends PlayAppSpec with DataTables {
       money = Some(Money.parse("EUR 200")),
       since = Some(LocalDate.parse("2015-01-15")),
       existingObject = Some(true))
-    member.memberObj_=(PersonHelper.one)
     val memberService = mock[FakeMemberService]
     (memberService.find _) expects 1L returning Some(member)
+    (memberService.update _) expects (where {
+      (m: Member) ⇒
+        m.objectId == 1 && m.person == true && m.funder == false &&
+          m.fee == Money.parse("EUR 100") && m.since == LocalDate.parse("2015-01-31")
+    })
     controller.memberService_=(memberService)
 
     val result = controller.update(member.id.get).apply(request)

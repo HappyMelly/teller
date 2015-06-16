@@ -75,6 +75,11 @@
 </div>
 
 <div class="col-md-10">
+  @organisation.about.map { text =>
+    <legend>About</legend>
+    <p>@text.markdown</p>
+  }
+
   <legend>Members</legend>
   @if(members.isEmpty) {
     @organisation.name has no members.

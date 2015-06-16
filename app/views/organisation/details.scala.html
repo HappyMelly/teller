@@ -1,5 +1,5 @@
 @(user: UserIdentity,
-  organisation: Organisation,
+  view: OrgView,
   members: List[Person],
   otherPeople: List[Person],
   contributions: List[ContributionView],
@@ -14,13 +14,14 @@
 @import templates.Formatters._
 
 
-@main(organisation.name + " - Organization", "orgs", user) {
+@main(view.org.name + " - Organization", "orgs", user) {
 
   <div class="col-md-3 info">
     <div class="page-header">
-      <img width="64" src="/assets/images/flags/32/@(organisation.countryCode.toLowerCase).png"
+      <img width="64" src="/assets/images/flags/32/@(view.org.countryCode.toLowerCase).png"
         align="baseline">
-      @organisation.member.map { m =>
+      @views.html.element.profiles(view.profile, view.org.member)
+      @view.org.member.map { m =>
         @if(m.active) {
           @element.membershipPanel(m)
         }
@@ -29,7 +30,7 @@
     <div class="panel">
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
         <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Org Details</a></li>
-        @if(organisation.member.nonEmpty) {
+        @if(view.org.member.nonEmpty) {
           <li><a href="#membership" role="tab" data-toggle="tab">
             Membership</a></li>
         }
@@ -40,16 +41,16 @@
   <div class="col-md-9 tab-content">
     <div class="page-header">
       <h1>
-        @organisation.name
+        @view.org.name
           <div class="actions pull-right">
-            @if(organisation.member.isEmpty && members.exists(_.id == user.person.id)) {
+            @if(view.org.member.isEmpty && members.exists(_.id == user.person.id)) {
               <div class="button">
                 <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
               </div>
             }
             @dynamic(handler, "organisation", "edit") {
               <div class="button">
-                <a class="btn btn-default" href="@routes.Organisations.edit(organisation.id.get)">
+                <a class="btn btn-default" href="@routes.Organisations.edit(view.org.id.get)">
                   <i class="glyphicon glyphicon-pencil"></i> Edit
                 </a>
               </div>
@@ -57,9 +58,9 @@
             @restrict(handler, List(as(Editor.toString))) {
               <div class="button">
               <form method="post" class="form-inline"
-                action="@CSRF(routes.Organisations.activation(organisation.id.getOrElse(0)))">
-                <input name="active" value="@(!organisation.active)" type="hidden">
-                @if(organisation.active) {
+                action="@CSRF(routes.Organisations.activation(view.org.id.getOrElse(0)))">
+                <input name="active" value="@(!view.org.active)" type="hidden">
+                @if(view.org.active) {
                   <button class="btn btn-warning" type="submit">
                     <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
                   </button>
@@ -72,11 +73,11 @@
               </div>
               <div class="button">
                 <form class="delete form-inline" method="post" text="organisation"
-                  action="@CSRF(routes.Organisations.delete(organisation.id.getOrElse(0)))">
+                  action="@CSRF(routes.Organisations.delete(view.org.id.getOrElse(0)))">
                   <div data-toggle="tooltip" data-placement="bottom"
-                    @if(!organisation.deletable) { title="@Messages("error.organisation.nonDeletable")" }>
+                    @if(!view.org.deletable) { title="@Messages("error.view.org.nonDeletable")" }>
                       <button class="btn btn-danger" type="submit"
-                        @if(!organisation.deletable) { disabled="disabled" }>
+                        @if(!view.org.deletable) { disabled="disabled" }>
                         <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
                       </button>
                   </div>
@@ -87,16 +88,16 @@
       </h1>
     </div>
 
-    @if(!organisation.active) {
+    @if(!view.org.active) {
       <div class="alert alert-warning">
         <i class="glyphicon glyphicon-warning-sign"></i> This organization is <strong>deactivated</strong></div>
     }
     <div class="tab-pane active" id="personal-details">
-      @views.html.organisation.subpages.details(user, organisation, members, otherPeople, contributions, products)
+      @views.html.organisation.subpages.details(user, view.org, members, otherPeople, contributions, products)
     </div>
-    @if(organisation.member.nonEmpty) {
+    @if(view.org.member.nonEmpty) {
       <div class="tab-pane" id="membership">
-        @views.html.organisation.subpages.membership(user, organisation, payments)
+        @views.html.organisation.subpages.membership(user, view.org, payments)
       </div>
     }
 
