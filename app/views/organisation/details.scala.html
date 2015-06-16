@@ -18,15 +18,14 @@
 
   <div class="col-md-3 info">
     <div class="page-header">
-      <img width="64" src="/assets/images/flags/32/@(view.org.countryCode.toLowerCase).png"
-        align="baseline">
-      @views.html.element.profiles(view.profile, view.org.member)
-      @view.org.member.map { m =>
-        @if(m.active) {
-          @element.membershipPanel(m)
-        }
-      }
+      @views.html.organisation.blocks.photo(view.org, "160")
     </div>
+    @views.html.element.profiles(view.profile, view.org.member)
+    @view.org.member.map { m =>
+      @if(m.active) {
+        @element.membershipPanel(m)
+      }
+    }
     <div class="panel">
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
         <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Org Details</a></li>

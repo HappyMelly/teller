@@ -68,7 +68,7 @@ case class Certificate(
     else
       m30Certificate(issued, brand.brand.id.get, event, participant)
     if (renew) {
-      Certificate.removeFromCloud(id)
+      Certificate.file(id).remove()
     }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
       sendEmail(brand, approver, pdf)
@@ -78,10 +78,9 @@ case class Certificate(
   }
 
   def send(brand: BrandWithCoordinators, approver: Person) {
-    val pdf = Certificate.downloadFromCloud(id)
-    pdf.map {
-      case value ⇒
-        sendEmail(brand, approver, value)
+    val pdf = Certificate.file(id).uploadToCache()
+    pdf.foreach { value ⇒
+      sendEmail(brand, approver, value)
     }
   }
 
@@ -160,7 +159,7 @@ case class Certificate(
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 160, 15, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 685, 15, 0)
       if (firstFacilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(firstFacilitator.id.get),
+        val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.setAbsolutePosition(100, 45)
@@ -168,7 +167,7 @@ case class Certificate(
         document.add(signature)
       }
       if (secondFacilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(secondFacilitator.id.get),
+        val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.setAbsolutePosition(630, 45)
@@ -180,7 +179,7 @@ case class Certificate(
       val name = new Phrase(facilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 685, 15, 0)
       if (facilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(facilitator.id.get),
+        val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.scaleToFit(130, 110)
@@ -257,7 +256,7 @@ case class Certificate(
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 595, 165, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 725, 165, 0)
       if (firstFacilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(firstFacilitator.id.get),
+        val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.setAbsolutePosition(535, 185)
@@ -265,7 +264,7 @@ case class Certificate(
         document.add(signature)
       }
       if (secondFacilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(secondFacilitator.id.get),
+        val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.setAbsolutePosition(665, 185)
@@ -277,7 +276,7 @@ case class Certificate(
       val name = new Phrase(facilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 165, 0)
       if (facilitator.signature) {
-        val imageData = Await.result(Person.downloadFromCloud(facilitator.id.get),
+        val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.scaleToFit(155, 100)
@@ -318,23 +317,6 @@ object Certificate {
   def fileName(id: String): String = id + ".pdf"
   def fullFileName(id: String): String = "certificates/" + fileName(id)
 
-  def removeFromCloud(id: String) {
-    Cache.remove(Certificate.cacheId(id))
-    S3Bucket.remove(Certificate.fullFileName(id))
-  }
-
-  def downloadFromCloud(id: String): Future[Array[Byte]] = {
-    val contentType = "application/pdf"
-    val result = S3Bucket.get(Certificate.fullFileName(id))
-    val pdf: Future[Array[Byte]] = result.map {
-      case BucketFile(name, contentType, content, acl, headers) ⇒ content
-    }.recover {
-      case S3Exception(status, code, message, originalXml) ⇒ Array[Byte]()
-    }
-    pdf.map {
-      case value ⇒
-        Cache.set(Certificate.cacheId(id), value)
-        value
-    }
-  }
+  def file(id: String): File =
+    File.pdf(Certificate.fullFileName(id), Certificate.cacheId(id))
 }

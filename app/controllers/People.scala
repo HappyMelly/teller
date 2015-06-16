@@ -48,7 +48,11 @@ import scala.io.Source
 import services.S3Bucket
 import services.integrations.Integrations
 
-trait People extends JsonController with Security with Services with Integrations {
+trait People extends JsonController
+  with Security
+  with Services
+  with Integrations
+  with Files {
 
   val contentType = "image/jpeg"
 
@@ -334,10 +338,6 @@ trait People extends JsonController with Security with Services with Integration
                 personService.member(id) foreach { x ⇒
                   val msg = composeSocialNotification(oldPerson, updatedPerson)
                   msg foreach { slack.send(_) }
-                  val additional = Play.configuration.getString("slack.additional_channel").getOrElse("")
-                  if (additional.length > 0) {
-                    msg foreach { slack.send(_, Some(additional)) }
-                  }
                 }
                 updatedPerson.update
                 val activity = updatedPerson.activity(
@@ -370,28 +370,14 @@ trait People extends JsonController with Security with Services with Integration
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
-        val encoding = "ISO-8859-1"
         personService.find(id).map { person ⇒
           val route = routes.People.details(person.id.get).url + "#facilitation"
-
-          request.body.asMultipartFormData.get.file("signature").map { picture ⇒
-            val filename = Person.fullFileName(person.id.get)
-            val source = Source.fromFile(picture.ref.file.getPath, encoding)
-            val byteArray = source.toArray.map(_.toByte)
-            source.close()
-            S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-              personService.update(person.copy(signature = true))
-              Cache.remove(Person.cacheId(id))
-              val activity = person.activity(
-                user.person,
-                Activity.Predicate.UploadedSign).insert
-              Redirect(route).flashing("success" -> activity.toString)
-            }.recover {
-              case S3Exception(status, code, message, originalXml) ⇒
-                Redirect(route).flashing("error" -> "Image cannot be temporary saved")
-            }
-          } getOrElse {
-            Future.successful(Redirect(route).flashing("error" -> "Please choose an image file"))
+          upload(Person.signature(id), "signature", route) {
+            personService.update(person.copy(signature = true))
+            val activity = person.activity(
+              user.person,
+              Activity.Predicate.UploadedSign).insert
+            Redirect(route).flashing("success" -> activity.toString)
           }
         } getOrElse Future.successful(NotFound)
   }
@@ -404,12 +390,11 @@ trait People extends JsonController with Security with Services with Integration
   def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        personService.find(personId.toLong).map { person ⇒
+        personService.find(personId).map { person ⇒
           if (person.signature) {
-            S3Bucket.remove(Person.fullFileName(personId))
-            Cache.remove(Person.cacheId(personId))
+            Person.signature(personId).remove()
+            personService.update(person.copy(signature = false))
           }
-          personService.update(person.copy(signature = false))
           val activity = person.activity(
             user.person,
             Activity.Predicate.DeletedSign).insert
@@ -423,23 +408,7 @@ trait People extends JsonController with Security with Services with Integration
    *
    * @param personId Person identifier
    */
-  def signature(personId: Long) = Action.async {
-    val cached = Cache.getAs[Array[Byte]](Person.cacheId(personId))
-    if (cached.isDefined) {
-      Future.successful(Ok(cached.get).as(contentType))
-    } else {
-      val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = personService.find(personId).map { person ⇒
-        if (person.signature) {
-          Person.downloadFromCloud(personId)
-        } else Future.successful(empty)
-      }.getOrElse(Future.successful(empty))
-      image.map {
-        case value ⇒
-          Ok(value).as(contentType)
-      }
-    }
-  }
+  def signature(personId: Long) = file(Person.signature(personId))
 
   /**
    * Updates profile photo and may be a facebook profile link

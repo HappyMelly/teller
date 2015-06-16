@@ -24,7 +24,6 @@
 
 package models
 
-import fly.play.s3.{ BucketFile, S3Exception }
 import models.database._
 import models.service._
 import org.joda.money.Money
@@ -32,11 +31,7 @@ import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
-import play.api.cache.Cache
-import play.api.libs.concurrent.Execution.Implicits._
-import scala.concurrent.Future
 import scala.slick.lifted.Query
-import services.S3Bucket
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -348,33 +343,8 @@ object Person {
 
   def fullFileName(id: Long): String = s"signatures/$id"
 
-  /**
-   * Removes a person's signature from the cloud
-   * @param id Person identifier
-   */
-  def removeFromCloud(id: Long) {
-    Cache.remove(Person.cacheId(id))
-    S3Bucket.remove(Person.fullFileName(id))
-  }
-
-  /**
-   * Downloads a person's signature form the cloud and puts it into cache
-   * @param id Person identifier
-   */
-  def downloadFromCloud(id: Long): Future[Array[Byte]] = {
-    val contentType = "image/jpeg"
-    val result = S3Bucket.get(Person.fullFileName(id))
-    val pdf: Future[Array[Byte]] = result.map {
-      case BucketFile(name, contentType, content, acl, headers) ⇒ content
-    }.recover {
-      case S3Exception(status, code, message, originalXml) ⇒ Array[Byte]()
-    }
-    pdf.map {
-      case value ⇒
-        Cache.set(Person.cacheId(id), value)
-        value
-    }
-  }
+  def signature(id: Long): File =
+    File.image(Person.fullFileName(id), Person.cacheId(id))
 
   /**
    * Activates the person, if the parameter is true, or deactivates it.
