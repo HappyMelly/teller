@@ -218,9 +218,13 @@ trait Registration extends Enrollment {
       redirectViewer {
         Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
           val person = unregisteredPerson(userData, user).insert
-          val org = if (userData.org)
-            Some(orgService.insert(unregisteredOrg(userData)))
-          else None
+          val org = if (userData.org) {
+            val profile = SocialProfile(0, ProfileType.Organisation, userData.email)
+            val view = orgService.insert(OrgView(unregisteredOrg(userData), profile))
+            Some(view.org)
+          } else {
+            None
+          }
 
           paymentForm.bindFromRequest.fold(
             hasError ⇒

@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.{ Organisation, Member, Account }
-import models.database.{ Members, Organisations, Accounts }
+import models.{ Organisation, Member, Account, OrgView, ProfileType }
+import models.database.{ Members, Organisations, Accounts, SocialProfiles }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -53,10 +53,11 @@ class OrganisationService extends Services {
    *
    * @param id Organisation identifier
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+  def delete(id: Long): Unit = DB.withTransaction { implicit session: Session ⇒
     find(id) foreach { org ⇒
       org.account.delete()
       memberService.delete(id, person = false)
+      socialProfileService.delete(id, ProfileType.Organisation)
     }
     Organisations.where(_.id === id).mutate(_.delete())
   }
@@ -94,16 +95,33 @@ class OrganisationService extends Services {
   }
 
   /**
-   * Inserts the given organisation into the database, with an inactive account.
+   * Return the requested organisation with its social profile if exists
    *
-   * @param org Organisation
-   * @return The Organisation as it is saved (with the id added)
+   * @param id Organisation id
    */
-  def insert(org: Organisation): Organisation = DB.withSession {
+  def findWithProfile(id: Long): Option[OrgView] = DB.withSession {
     implicit session: Session ⇒
-      val organisationId = Organisations.forInsert.insert(org)
+      import models.database.SocialProfiles._
+
+      val query = for {
+        org ← Organisations if org.id === id
+        profile ← SocialProfiles if profile.objectId === id && profile.objectType === ProfileType.Organisation
+      } yield (org, profile)
+      query.firstOption map { x ⇒ OrgView(x._1, x._2) }
+  }
+
+  /**
+   * Inserts the given organisation into the database, with an inactive account
+   *
+   * @param view Organisation with its social profile
+   * @return The Organisation as it is saved (with the id added) and social profile
+   */
+  def insert(view: OrgView): OrgView = DB.withTransaction {
+    implicit session: Session ⇒
+      val organisationId = Organisations.forInsert.insert(view.org)
       Accounts.insert(Account(organisationId = Some(organisationId)))
-      org.copy(id = Some(organisationId))
+      socialProfileService.insert(view.profile.copy(objectId = organisationId))
+      OrgView(view.org.copy(id = Some(organisationId)), view.profile)
   }
 
   /**
@@ -119,21 +137,38 @@ class OrganisationService extends Services {
   /**
    * Updates the given organisation in the database
    *
+   * @param view Organisation with social profile
+   * @return the given organisation with social profile
+   */
+  def update(view: OrgView): OrgView = DB.withTransaction { implicit session: Session ⇒
+    import models.database.SocialProfiles._
+
+    assert(view.org.id.isDefined, "Can only update Organisations that have an id")
+    socialProfileService.update(view.profile, view.profile.objectType)
+
+    OrgView(update(view.org), view.profile)
+  }
+
+  /**
+   * Updates the given organisation in the database
+   *
    * @param org Organisation
    * @return the given organisation
    */
-  def update(org: Organisation) = DB.withSession { implicit session: Session ⇒
-    assert(org.id.isDefined, "Can only update Organisations that have an id")
-    val filter = Query(Organisations).filter(_.id === org.id)
-    val q = filter.map { x ⇒ x.forUpdate }
+  def update(org: Organisation): Organisation = DB.withSession {
+    implicit session: Session ⇒
 
-    // Skip the created, createdBy and active fields.
-    val updateTuple = (org.id, org.name, org.street1, org.street2, org.city,
-      org.province, org.postCode, org.countryCode, org.vatNumber,
-      org.registrationNumber, org.webSite, org.blog, org.customerId,
-      org.about, org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
-    q.update(updateTuple)
-    org
+      assert(org.id.isDefined, "Can only update Organisations that have an id")
+      val query = Query(Organisations).filter(_.id === org.id).map(_.forUpdate)
+
+      // Skip the created, createdBy and active fields.
+      val updateTuple = (org.id, org.name, org.street1,
+        org.street2, org.city, org.province, org.postCode,
+        org.countryCode, org.vatNumber, org.registrationNumber,
+        org.webSite, org.blog, org.customerId, org.about,
+        org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
+      query.update(updateTuple)
+      org
   }
 }
 

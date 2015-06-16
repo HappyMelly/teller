@@ -1,6 +1,6 @@
 @(user: UserIdentity,
     id: Option[Long],
-    form: Form[Organisation])(implicit flash: Flash,
+    form: Form[OrgView])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)

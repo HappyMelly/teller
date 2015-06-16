@@ -28,8 +28,8 @@ import controllers.Organisations
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
 import models.payment.Record
-import models.{ Organisation, Person, SocialProfile }
-import models.service.PersonService
+import models.{ Organisation, Person, SocialProfile, ProfileType, OrgView }
+import models.service.{ PersonService, OrganisationService }
 import org.joda.money.Money
 import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
 import play.api.mvc.SimpleResult
@@ -86,6 +86,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   val paymentService = mock[FakePaymentRecordService]
   val org = OrganisationHelper.one
   val id = 1L
+  val profile = SocialProfile(0, ProfileType.Organisation, "")
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
@@ -106,7 +107,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e1 = new ExtendedNonMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List(PersonHelper.one()))
 
     val controller = fakedController()
@@ -121,7 +122,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = new ExtendedNonMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List())
     val controller = fakedController()
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
@@ -134,7 +135,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = new ExtendedNonMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List())
     val controller = fakedController()
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
@@ -147,7 +148,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e4 = new ExtendedMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = false)
     org.member_=(member)
     org.people_=(List())
@@ -165,7 +166,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e5 = new ExtendedMemberMockContext {
     // we insert a person object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -183,7 +184,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e6 = new DefaultMockContext {
     // we insert a person object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -212,7 +213,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e7 = new DefaultMockContext {
     // we insert a person object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -241,7 +242,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = new ExtendedMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -261,7 +262,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e9 = new ExtendedMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     val person = PersonHelper.one().insert
@@ -283,7 +284,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e10 = new ExtendedMemberMockContext {
     // we insert a org object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
       renewal = false)
     org.member_=(member)
@@ -304,7 +305,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e11 = new ExtendedMemberMockContext {
     // we insert a org object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
       renewal = false)
     org.member_=(member)
@@ -325,7 +326,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e12 = new ExtendedMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -385,7 +386,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e16 = new ExtendedMemberMockContext {
     // we insert a org object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
@@ -405,7 +406,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e17 = new ExtendedMemberMockContext {
     // we insert a org object here to prevent crashing on account retrieval
     // when @person.deletable is called
-    org.insert
+    OrganisationService.get.insert(OrgView(org, profile))
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())

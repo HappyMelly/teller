@@ -46,12 +46,7 @@ trait Organisations extends Controller with Security with Services {
   def organisationForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "name" -> nonEmptyText,
-    "street1" -> optional(text),
-    "street2" -> optional(text),
-    "city" -> optional(text),
-    "province" -> optional(text),
-    "postCode" -> optional(text),
-    "country" -> nonEmptyText,
+    "address" -> People.addressMapping,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
     "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
@@ -59,13 +54,30 @@ trait Organisations extends Controller with Security with Services {
     "blog" -> optional(webUrl),
     "customerId" -> optional(text),
     "about" -> optional(text),
-    "picture" -> ignored(false),
+    "logo" -> ignored(false),
     "active" -> ignored(true),
     "dateStamp" -> mapping(
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(user.fullName),
       "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))(Organisation.apply)(Organisation.unapply))
+      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))({
+      (id, name, address, vatNumber,
+      registrationNumber, profile, webSite, blog, customerId, about,
+      logo, active, dateStamp) ⇒
+        val org = Organisation(id, name, address.street1, address.street2,
+          address.city, address.province, address.postCode, address.countryCode,
+          vatNumber, registrationNumber, webSite,
+          blog, customerId, about, logo, active, dateStamp)
+        OrgView(org, profile)
+    })({
+      (v: OrgView) ⇒
+        val address = Address(None, v.org.street1, v.org.street2,
+          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
+        Some((v.org.id, v.org.name, address, v.org.vatNumber,
+          v.org.registrationNumber, v.profile, v.org.webSite,
+          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+          v.org.dateStamp))
+    }))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -107,9 +119,9 @@ trait Organisations extends Controller with Security with Services {
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(user, None, formWithErrors)),
-        organisation ⇒ {
-          val org = orgService.insert(organisation)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, organisation.name)
+        view ⇒ {
+          val org = orgService.insert(view)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, view.org.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
   }
@@ -155,9 +167,9 @@ trait Organisations extends Controller with Security with Services {
   def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      orgService.find(id).map {
-        organisation ⇒
-          Ok(views.html.organisation.form(user, Some(id), organisationForm.fill(organisation)))
+      orgService.findWithProfile(id).map { view ⇒
+        Ok(views.html.organisation.form(user, Some(id),
+          organisationForm.fill(OrgView(view.org, view.profile))))
       }.getOrElse(NotFound)
   }
 
@@ -178,17 +190,17 @@ trait Organisations extends Controller with Security with Services {
   def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        orgService.find(id).map { org ⇒
+        orgService.findWithProfile(id).map { view ⇒
           organisationForm.bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.organisation.form(
                 user,
                 Some(id),
                 formWithErrors)),
-            organisation ⇒ {
-              val updatedOrg = organisation.
-                copy(id = Some(id), active = org.active).
-                copy(customerId = org.customerId)
+            view ⇒ {
+              val updatedOrg = view.org.
+                copy(id = Some(id), active = view.org.active).
+                copy(customerId = view.org.customerId, logo = view.org.logo)
               orgService.update(updatedOrg)
               val activity = updatedOrg.activity(
                 user.person,

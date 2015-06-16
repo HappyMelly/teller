@@ -26,14 +26,16 @@ package models.integration
 
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.Member
-import models.service.MemberService
+import models.{ Member, OrgView, ProfileType, SocialProfile }
+import models.service.{ MemberService, OrganisationService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.specs2.matcher.DataTables
 
 class MemberServiceSpec extends PlayAppSpec with DataTables {
+
+  val profile = SocialProfile(0, ProfileType.Organisation, "")
 
   "Method findAll" should {
     "return 6 members" in {
@@ -85,7 +87,8 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     "return membership data with org object" in {
       truncateTables()
       val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
-      OrganisationHelper.one.insert
+
+      OrganisationService.get.insert(OrgView(OrganisationHelper.one, profile))
       val data = MemberService.get.find(1L)
       data map { v ⇒
         v.objectId must_== m.objectId
@@ -104,7 +107,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
     }
     "not delete membership data" in {
       truncateTables()
-      OrganisationHelper.one.insert
+      OrganisationService.get.insert(OrgView(OrganisationHelper.one, profile))
       val m = MemberHelper.make(None, 1L, person = false, funder = false).insert
       MemberService.get.delete(m.objectId, person = true)
       MemberService.get.find(m.id.get) must_!= None
@@ -124,7 +127,7 @@ class MemberServiceSpec extends PlayAppSpec with DataTables {
             id = id,
             name = name,
             countryCode = country)
-          org.insert
+          OrganisationService.get.insert(OrgView(org, profile))
       }
     Seq(
       (Some(1L), "First", "Tester"),

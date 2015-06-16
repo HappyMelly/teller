@@ -1,6 +1,6 @@
 @(user: UserIdentity,
   id: Option[Long],
-  form: Form[Organisation])(implicit flash: Flash,
+  form: Form[OrgView])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
@@ -8,7 +8,7 @@
 @import helper.CSRF
 @import views.ViewHelpers._
 
-@defining(form.value.map(org => "Organization %s".format(org.name)).getOrElse("Add organization")) { name =>
+@defining(form.value.map(view => "Organization %s".format(view.org.name)).getOrElse("Add organization")) { name =>
   @main("Organizations", "orgs", user) {
     @if(form.hasErrors) {
       @html.error()

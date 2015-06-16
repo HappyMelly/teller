@@ -25,7 +25,6 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.service.Services
 import models.{ Activity, Member }
 import services.integrations.Integrations
 import org.joda.money.Money
@@ -137,20 +136,21 @@ trait Members extends Enrollment with JsonController {
    */
   def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      memberService.find(id) map { member ⇒
+      memberService.find(id) map { existing ⇒
         form(user.person.id.get).bindFromRequest.fold(
           formWithErrors ⇒ BadRequest(views.html.member.form(user,
-            Some(member),
+            Some(existing),
             formWithErrors)),
           data ⇒ {
-            val updMember = data.copy(id = member.id).
-              copy(person = member.person, objectId = member.objectId).
-              copy(until = member.until, reason = member.reason).update
-            val activity = updMember.activity(
+            val updated = data.copy(id = existing.id).
+              copy(person = existing.person, objectId = existing.objectId).
+              copy(until = existing.until, reason = existing.reason)
+            memberService.update(updated)
+            val activity = updated.activity(
               user.person,
               Activity.Predicate.Updated).insert
-            val url = profileUrl(updMember)
-            updatedMemberMsg(member, updMember, url) map { msg ⇒
+            val url = profileUrl(updated)
+            updatedMemberMsg(existing, updated, url) map { msg ⇒
               slack.send(msg)
             }
             Redirect(url).flashing("success" -> activity.toString)
@@ -233,14 +233,15 @@ trait Members extends Enrollment with JsonController {
         orgForm.fold(
           hasErrors ⇒
             BadRequest(views.html.member.newOrg(user, None, hasErrors)),
-          success ⇒ {
+          view ⇒ {
             val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             cached map { m ⇒
-              val org = orgService.insert(success)
+              val org = orgService.insert(view).org
               org.activity(user.person, Activity.Predicate.Created).insert
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
-              val member = m.copy(objectId = org.id.get).copy(person = false).insert
+              val member = memberService.insert(m.copy(objectId = org.id.get,
+                person = false))
               Cache.remove(Members.cacheId(user.person.id.get))
               val activity = member.activity(
                 user.person,
@@ -267,10 +268,10 @@ trait Members extends Enrollment with JsonController {
         success ⇒ {
           val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
           cached map { m ⇒
-            val person = success.insert
-            person.activity(user.person, Activity.Predicate.Created).insert
-            val member = m.copy(objectId = person.id.get).copy(person = true).insert
+            val person = personService.insert(success)
+            val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
             Cache.remove(Members.cacheId(user.person.id.get))
+            person.activity(user.person, Activity.Predicate.Created).insert
             val activity = member.activity(
               user.person,
               Activity.Predicate.Made,
@@ -307,7 +308,7 @@ trait Members extends Enrollment with JsonController {
                     peopleNonMembers,
                     personForm))
                 } else {
-                  val member = m.copy(objectId = person.id.get).copy(person = true).insert
+                  val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = member.activity(
                     user.person,
@@ -353,7 +354,7 @@ trait Members extends Enrollment with JsonController {
                     orgsNonMembers,
                     orgForm))
                 } else {
-                  val member = m.copy(objectId = org.id.get).copy(person = false).insert
+                  val member = memberService.insert(m.copy(objectId = org.id.get, person = false))
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val activity = member.activity(
                     user.person,
@@ -456,7 +457,7 @@ trait Members extends Enrollment with JsonController {
     map(p ⇒ (p.id.get.toString, p.fullName))
 }
 
-object Members extends Members with Security with Services {
+object Members extends Members {
 
   /**
    * Returns cache identifier to store incomplete member object

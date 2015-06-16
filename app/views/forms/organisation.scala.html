@@ -1,19 +1,48 @@
-@(form: Form[Organisation])
+@(form: Form[OrgView])
 
 @import views.Countries
 @import views.ViewHelpers._
 
 @html.text(form("name"), '_label -> "Name", 'class -> "mail")
-@html.select(form("country"), ("", "Choose a country") +: Countries.all,
+@html.select(form("address.country"), ("", "Choose a country") +: Countries.all,
   '_label -> "Country")
-@html.text(form("street1"), '_label -> "Address line 1")
-@html.text(form("street2"), '_label -> "Address line 2")
-@html.text(form("postCode"), '_label -> "Post code")
-@html.text(form("city"), '_label -> "City")
-@html.text(form("province"), '_label -> "Province or state")
+@html.text(form("address.street1"), '_label -> "Address line 1")
+@html.text(form("address.street2"), '_label -> "Address line 2")
+@html.text(form("address.postCode"), '_label -> "Post code")
+@html.text(form("address.city"), '_label -> "City")
+@html.text(form("address.province"), '_label -> "Province or state")
 @html.text(form("vatNumber"), '_label -> "VAT number")
 @html.text(form("registrationNumber"), '_label -> "Registration number")
 @html.textarea(form("about"), '_label -> "About", 'rows -> "5", '_help -> views.html.element.markdownHelp())
+
+@html.email(form("profile.email"), '_label -> "E-mail address")
+
+@defining(form("profile.twitterHandle")) { field =>
+  <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+    <label for="@field.id" class="col-sm-3 control-label">Twitter user name</label>
+    <div class="col-sm-9">
+      <div class="input-group">
+        <span class="input-group-addon">@@</span>
+        <input type="text" id="@field.id" name="@field.name"
+        value="@field.value.getOrElse("")"
+        placeholder="MyTwitter"
+        class="form-control">
+      </div>
+      <span class="help-block">
+      @if(field.hasErrors) {
+        @field.errors.map(error => Messages(error.message)).mkString(", ")
+      }
+      </span>
+    </div>
+  </div>
+}
+@html.text(form("profile.facebookUrl"), '_label -> "Facebook profile",
+  'placeholder -> "http://www.facebook.com/my.profile", '_help -> "")
+@html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn profile",
+  'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
+@html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
+  'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+
 @html.text(form("webSite"), '_label -> "Web site",
   'placeholder -> "http://", '_help -> "Web site URL")
 @html.text(form("blog"), '_label -> "Blog",

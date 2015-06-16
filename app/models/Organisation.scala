@@ -34,6 +34,8 @@ import play.api.db.slick.DB
 
 import scala.slick.lifted.Query
 
+case class OrgView(org: Organisation, profile: SocialProfile)
+
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
@@ -141,10 +143,6 @@ case class Organisation(
    */
   def objectType: String = Activity.Type.Org
 
-  /**
-   * @deprecated
-   */
-  def insert: Organisation = orgService.insert(this)
 }
 
 object Organisation {

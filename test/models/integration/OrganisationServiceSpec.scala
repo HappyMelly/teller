@@ -26,8 +26,8 @@ package models.integration
 
 import helpers.{ MemberHelper, OrganisationHelper }
 import integration.PlayAppSpec
-import models.Member
-import models.service.OrganisationService
+import models.{ Member, SocialProfile, ProfileType, OrgView }
+import models.service.{ OrganisationService, SocialProfileService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -39,6 +39,7 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
     addOrgs()
     add()
   }
+
   val service = new OrganisationService
 
   "Method findNonMembers" should {
@@ -94,6 +95,17 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
     }
   }
 
+  "Method 'findWithProfile'" should {
+    "return an organisation together with social profile" in {
+      val id = 1L
+      service.findWithProfile(id) map { x ⇒
+        x.org.name must_== "First org"
+        x.org.id must_== Some(id)
+        x.profile.email must_== "test@test.ru"
+      } getOrElse ko
+    }
+  }
+
   private def addOrgs() = {
     Seq(
       (Some(1L), "First org", "DE"),
@@ -107,7 +119,8 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
             id = id,
             name = name,
             countryCode = country)
-          org.insert
+          val profile = SocialProfile(0, ProfileType.Organisation, "test@test.ru")
+          OrganisationService.get.insert(OrgView(org, profile))
       }
   }
   private def add() = {

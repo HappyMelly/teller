@@ -24,92 +24,83 @@
 */
 package models.integration
 
-import java.math.RoundingMode
-
-import controllers.{ Members, Security }
+import controllers.Members
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
 import models.service.{ OrganisationService, PersonService }
-import models.{ Member, Organisation, Person }
+import models._
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
-import org.scalamock.specs2.MockContext
-import org.specs2.mutable.After
+import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.db.slick._
-import play.api.mvc.SimpleResult
-import services.integrations.Slack
-import stubs.{ FakeServices, FakeUserIdentity, FakeMemberService }
-import stubs.services.{ FakeIntegrations, FakeSlack }
-
-import scala.concurrent.Future
-import scala.slick.jdbc.{ GetResult, StaticQuery ⇒ Q }
-import scala.slick.session.Session
+import services.integrations.{ Slack, Email }
+import stubs._
+import stubs.services.{ FakeIntegrations, FakeSlack, FakeEmail }
 
 class TestMembers() extends Members
-  with Security
+  with FakeSecurity
   with FakeServices {
 
   val slackInstance = new FakeSlack
+  val emailInstance = new FakeEmail
   var counter: Int = 0
 
   override def slack: Slack = {
     counter += 1
     slackInstance
   }
+
+  override def email: Email = emailInstance
+
+  override protected def subscribe(person: Person, member: Member) = true
 }
 
 class MembersSpec extends PlayAppSpec {
 
-  implicit val getMemberResult = GetResult(r ⇒
-    Member(r.<<, r.<<, r.<<, r.<<,
-      Money.of(CurrencyUnit.of(r.nextString()), r.nextBigDecimal().bigDecimal, RoundingMode.DOWN),
-      r.<<, LocalDate.parse(r.nextString()), LocalDate.parse(r.nextString()),
-      existingObject = false, Some(r.nextString()),
-      DateTime.parse(r.nextString().replace(' ', 'T')), r.<<,
-      DateTime.parse(r.nextString().replace(' ', 'T')), r.<<))
+  val controller = new TestMembers()
+  val person = PersonHelper.one
+  val org = OrganisationHelper.one
+  val profile = SocialProfile(0, ProfileType.Organisation, "")
 
-  trait cleanDb extends After {
-    def after = DB.withSession { implicit session: Session ⇒
-      truncateTables()
-    }
+  trait WithStubs extends MockContext {
+    val personService = mock[PersonService]
+    val memberService = mock[FakeMemberService]
+    val orgService = mock[FakeOrganisationService]
+    controller.orgService_=(orgService)
+    controller.personService_=(personService)
+    controller.memberService_=(memberService)
   }
 
-  val controller = new TestMembers()
-  val orgService = new OrganisationService()
-
   "While creating membership fee, a system" should {
-    "reset objectId and id to 0/None to prevent cheating" in new cleanDb {
+    "reset objectId and id to 0/None to prevent cheating" in {
       val m = member()
       val fakeId = 400
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "0"),
           ("fee.currency", m.fee.getCurrencyUnit.toString),
           ("fee.amount", m.fee.getAmountMajorLong.toString),
           ("since", m.since.toString), ("existingObject", "0"))
-      val result: Future[SimpleResult] = controller.create().apply(req)
+      controller.create().apply(req)
 
-      status(result) must equalTo(SEE_OTHER)
-      val insertedM = Cache.getAs[Member](Members.cacheId(1L))
-      insertedM.nonEmpty must_== true
-      insertedM.get.id must_!= fakeId
-      insertedM.get.objectId must_== 0
+      val inserted = Cache.getAs[Member](Members.cacheId(1L))
+      inserted.nonEmpty must_== true
+      inserted.get.id must_!= fakeId
+      inserted.get.objectId must_== 0
     }
-    "pass all fields from form to object" in new cleanDb {
+    "pass all fields from form to object" in {
       val fakeId = 400
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("id", fakeId.toString),
           ("objectId", "3"),
           ("person", "1"), ("funder", "1"),
           ("fee.currency", "EUR"),
           ("fee.amount", "100"),
           ("since", "2015-01-15"), ("existingObject", "1"))
-      val result: Future[SimpleResult] = controller.create().apply(req)
+      controller.create().apply(req)
 
-      status(result) must equalTo(SEE_OTHER)
       Cache.getAs[Member](Members.cacheId(1L)) map { m ⇒
         m.id must_== None
         m.objectId must_== 0
@@ -118,40 +109,40 @@ class MembersSpec extends PlayAppSpec {
         m.funder must_== true
         m.fee.getCurrencyUnit.getCode must_== "EUR"
         m.since.toString must_== "2015-01-15"
-      } getOrElse failure
+      } getOrElse ko
     }
   }
 
   "Incomplete member object" should {
-    "be destroyed after successful creation of a person" in new cleanDb {
-      val m = member()
-      val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
-          ("address.country", "RU"), ("firstName", "Test"),
+    "be destroyed after successful creation of a person" in new WithStubs {
+      val request = fakePostRequest().
+        withFormUrlEncodedBody(("emailAddress", "ttt@test.ru"),
+          ("address.country", "GB"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
-
+      (personService.insert _) expects * returning PersonHelper.one
+      val m = member().copy(objectId = 1L)
+      (memberService.insert _) expects m returning m.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       controller.createNewPerson().apply(request)
-      // test check
+
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
     }
 
-    "be destroyed after successful creation of an organisation" in new cleanDb {
+    "be destroyed after successful creation of an organisation" in new WithStubs {
       val m = member()
-      val oldList = OrganisationService.get.findAll
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      val req = fakePostRequest().
+        withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
+          ("profile.email", "test@test.ru"))
 
+      (orgService.insert _) expects * returning OrgView(org, profile)
+      val updated = m.copy(objectId = 1, person = false)
+      (memberService.insert _) expects * returning updated
       Cache.set(Members.cacheId(1L), m, 1800)
+
       controller.createNewOrganisation().apply(req)
       // test check
       Cache.getAs[Member](Members.cacheId(1L)).isEmpty must_== true
-
-      OrganisationService.get.findAll.diff(oldList).headOption map { o ⇒
-        orgService.delete(o.id.get); success
-      } getOrElse failure
     }
 
   }
@@ -162,247 +153,157 @@ class MembersSpec extends PlayAppSpec {
     To keep system coherency attribute 'person' in a
     member object should be updated""".stripMargin >> {
 
-    "after the creation of related new organisation" in new cleanDb {
+    "after the creation of related new organisation" in new WithStubs {
       val m = member(person = true)
-      val oldList = OrganisationService.get.findAll
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      val req = fakePostRequest().
+        withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
+          ("profile.email", "test@test.ru"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val result = controller.createNewOrganisation().apply(req)
+      (orgService.insert _) expects * returning OrgView(org, profile)
+      val updated = m.copy(objectId = 1, person = false)
+      //test line
+      (memberService.insert _) expects updated returning updated
 
-      status(result) must equalTo(SEE_OTHER)
-
-      orgService.findAll.diff(oldList).headOption map { org ⇒
-        retrieveMember(org.id.get.toString) map { upd ⇒
-          upd.person must_== false
-        } getOrElse failure
-
-        // clean up. We don't need this organisation anymore
-        orgService.delete(org.id.get)
-        success
-      } getOrElse failure
+      controller.createNewOrganisation().apply(req)
+      ok
     }
-    "after the creation of related new person" in new cleanDb {
+    "after the creation of related new person" in new WithStubs {
       val m = member(person = false, existingObject = true)
-      val oldList = Person.findAll
+
       val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val result = controller.createNewPerson().apply(req)
-
-      status(result) must equalTo(SEE_OTHER)
-
-      Person.findAll.diff(oldList).headOption map { person ⇒
-        retrieveMember(person.id.toString) map { upd ⇒
-          upd.person must_== true
-        } getOrElse failure
-      } getOrElse failure
-    }
-  }
-
-  "The organisation created on step 2" should {
-    "be connected with member data" in new cleanDb {
-      val m = member()
-      val oldList = OrganisationService.get.findAll
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
-
-      Cache.set(Members.cacheId(1L), m, 1800)
-      val result = controller.createNewOrganisation().apply(req)
-      status(result) must equalTo(SEE_OTHER)
-      headers(result).get("Location").nonEmpty must_== true
-      headers(result).get("Location").get must contain("/organization")
-
-      orgService.findAll.diff(oldList).headOption map { org ⇒
-        val updatedM = retrieveMember(org.id.get.toString)
-        updatedM.nonEmpty must_== true
-        updatedM.get.objectId must_== org.id.get
-
-        // clean up. We don't need this organisation anymore
-        orgService.delete(org.id.get)
-        success
-      } getOrElse failure
-
-    }
-  }
-
-  "The person created on step 2" should {
-    "be connected with member data" in new cleanDb {
-      val m = member()
-      val oldList = Person.findAll
-      val request = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
-          ("address.country", "RU"), ("firstName", "Test"),
-          ("lastName", "Test"), ("signature", "false"),
-          ("role", "0"))
-
-      Cache.set(Members.cacheId(1L), m, 1800)
-      val result = controller.createNewPerson().apply(request)
-      status(result) must equalTo(SEE_OTHER)
-      headers(result).get("Location").nonEmpty must_== true
-      headers(result).get("Location").get must contain("/person")
-
-      Person.findAll.diff(oldList).headOption map { person ⇒
-        val updatedM = retrieveMember(person.id.toString)
-        updatedM.nonEmpty must_== true
-        updatedM.get.objectId must_== person.id
-      } getOrElse failure
+      (personService.insert _) expects * returning person
+      val updated = m.copy(person = true, objectId = 1)
+      //test line
+      (memberService.insert _) expects updated returning updated.copy(id = Some(1L))
+      controller.createNewPerson().apply(req)
+      ok
     }
   }
 
   "On step 2 an existing organisation " should {
-    "be linked to a member object" in new cleanDb {
-      val m = member(person = false)
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("id", "1"))
-      val org = OrganisationHelper.one.copy(id = Some(1L)).insert
+    "be linked to a member object" in new WithStubs {
+      (orgService.find _) expects 1L returning Some(org)
+      val m = member(person = false).copy(objectId = 1L)
+      //test line
+      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      OrganisationService.get.find(1L) map { o ⇒
-        o.member must_== None
-      } getOrElse failure
-      val result = controller.updateExistingOrg().apply(req)
-      status(result) must equalTo(SEE_OTHER)
 
-      OrganisationService.get.find(1L) map { o ⇒
-        o.member.nonEmpty must_== true
-      } getOrElse failure
+      controller.updateExistingOrg().apply(req)
+      ok
     }
   }
 
   "On step 2 an existing person" should {
-    "be linked to a member object" in new cleanDb {
-      truncateTables()
-      val m = member(person = true)
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("id", "1"))
-      val person = PersonHelper.one().insert
+    "be linked to a member object" in new WithStubs {
+      (personService.find(_: Long)) expects 1L returning Some(person)
+      val m = member(person = true).copy(objectId = 1L)
       Cache.set(Members.cacheId(1L), m, 1800)
-      PersonService.get.find(1L) map { p ⇒
-        p.member must_== None
-      } getOrElse failure
-      val result = controller.updateExistingPerson().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      //test line
+      (memberService.insert _) expects m returning m.copy(id = Some(1L))
 
-      PersonService.get.find(1L) map { p ⇒
-        p.member.nonEmpty must_== true
-      } getOrElse failure
+      val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
+      controller.updateExistingPerson().apply(req)
+      ok
     }
   }
 
   "Slack notification should be sent" >> {
-    "when a new organisation becomes a member" in {
-      truncateTables()
+    "when a new organisation becomes a member" in new WithStubs {
+      val org = OrganisationHelper.make(id = Some(1L), name = "Test")
+      (orgService.insert _) expects * returning OrgView(org, profile)
       val m = member(person = false)
-      val oldList = OrganisationService.get.findAll
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      val req = fakePostRequest().
+        withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
+          ("profile.email", "test@test.com"))
       Cache.set(Members.cacheId(1L), m, 1800)
-
       controller.counter = 0
-      val result = controller.createNewOrganisation().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      controller.createNewOrganisation().apply(req)
+
       controller.counter must_== 1
       controller.slackInstance.message must contain("Test")
     }
-    "when a new person becomes a member" in {
+    "when a new person becomes a member" in new WithStubs {
+      (personService.insert _) expects * returning person
       val m = member().copy(funder = true)
-      val oldList = Person.findAll
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      Cache.set(Members.cacheId(1L), m, 1800)
+      controller.counter = 0
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
-          ("address.country", "RU"), ("firstName", "Test"),
-          ("lastName", "Buddy"), ("signature", "false"),
+          ("address.country", "RU"), ("firstName", "First"),
+          ("lastName", "Tester"), ("signature", "false"),
           ("role", "0"))
-      Cache.set(Members.cacheId(1L), m, 1800)
-      controller.counter = 0
-      val result = controller.createNewPerson().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      controller.createNewPerson().apply(req)
+
       controller.counter must_== 1
-      controller.slackInstance.message must contain("Test Buddy")
+      controller.slackInstance.message must contain("First Tester")
     }
-    "when an existing organisation becomes a member" in {
-      truncateTables()
-      val m = member(person = false)
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("id", "1"))
-      val org = OrganisationHelper.one.copy(id = Some(1L)).insert
+    "when an existing organisation becomes a member" in new WithStubs {
+      (orgService.find _) expects 1L returning Some(org)
+      val m = member(person = false).copy(id = Some(1L))
+      (memberService.insert _) expects * returning m
+      val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      OrganisationService.get.find(1L) map { o ⇒
-        o.member must_== None
-      } getOrElse failure
       controller.counter = 0
-      val result = controller.updateExistingOrg().apply(req)
-      status(result) must equalTo(SEE_OTHER)
-      headers(result).get("Location").get must contain("/organization/1")
+
+      controller.updateExistingOrg().apply(req)
+
+      // headers(result).get("Location").get must contain("/organization/1")
       controller.counter must_== 1
       controller.slackInstance.message must contain("One")
     }
-    "when an existing person becomes a member" in {
-      truncateTables()
+    "when an existing person becomes a member" in new WithStubs {
+      (personService.find(_: Long)) expects 1L returning Some(person)
       val m = member(person = true)
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-        withFormUrlEncodedBody(("id", "1"))
-      val person = PersonHelper.one().insert
+      (memberService.insert _) expects * returning m.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
-      PersonService.get.find(1L) map { p ⇒
-        p.member must_== None
-      } getOrElse failure
       controller.counter = 0
-      val result = controller.updateExistingPerson().apply(req)
-      status(result) must equalTo(SEE_OTHER)
-      headers(result).get("Location").get must contain("/person/1")
+
+      val request = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
+      val result = controller.updateExistingPerson().apply(request)
+
       controller.counter must_== 1
       controller.slackInstance.message must contain("First Tester")
     }
-    "membership is revoked" in new MockContext {
-      val memberService = mock[FakeMemberService]
-      val person = PersonHelper.one()
+    "membership is revoked" in new WithStubs {
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find _).expects(2L).returning(Some(member))
-      (memberService.delete(_, _)).expects(1L, true)
-      controller.memberService_=(memberService)
+      (memberService.find _) expects 2L returning Some(member)
+      (memberService.delete _) expects (1L, true)
       controller.counter = 0
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-      val result = controller.delete(2L).apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      controller.delete(2L).apply(fakePostRequest())
+
       controller.counter must_== 1
       controller.slackInstance.message must contain("First Tester")
     }
-    "when membership is changed" in new MockContext {
-      val memberService = mock[FakeMemberService]
-      val person = PersonHelper.one()
-      val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false).insert
+    "when membership is changed" in new WithStubs {
+      val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find _).expects(2L).returning(Some(member))
-      val controller = new TestMembers
-      controller.memberService_=(memberService)
+      (memberService.find _) expects 2L returning Some(member)
+      (memberService.update _) expects *
+      // (memberService.update _) expects (where {
+      //   (m: Member) ⇒ m.funder == true && m.since.toString == "2015-01-01"
+      // })
       controller.counter = 0
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(
           ("objectId", member.objectId.toString), ("person", "1"),
           ("funder", "1"), ("fee.currency", "EUR"),
-          ("fee.amount", "200"), ("subscription", member.renewal.toString),
+          ("fee.amount", "100"), ("subscription", member.renewal.toString),
           ("since", "2015-01-01"), ("end", member.until.toString),
           ("existingObject", "1"))
-      val result = controller.update(2L).apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      controller.update(2L).apply(req)
+
       controller.counter must_== 1
       controller.slackInstance.message must contain("First Tester")
     }
-  }
-
-  /**
-   * Retrieves member from database if it exists
-   * @param id Id of related object
-   * @return Member or None
-   */
-  private def retrieveMember(id: String) = DB.withSession {
-    implicit session: Session ⇒
-      val q = Q.queryNA[Member]("SELECT * FROM MEMBER WHERE OBJECT_ID = " + id)
-      q.firstOption
   }
 
   private def member(person: Boolean = true, existingObject: Boolean = false): Member = {

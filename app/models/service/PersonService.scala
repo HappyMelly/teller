@@ -65,7 +65,7 @@ class PersonService extends Services {
     implicit session: Session ⇒
       val address = Address.insert(person.address)
       val id = People.forInsert.insert(person.copy(addressId = address.id.get))
-      SocialProfileService.get.insert(person.socialProfile.copy(objectId = id))
+      socialProfileService.insert(person.socialProfile.copy(objectId = id))
       Accounts.insert(Account(personId = Some(id)))
       profileStrengthService.insert(ProfileStrength.empty(id, false))
       val saved = person.copy(id = Some(id))
