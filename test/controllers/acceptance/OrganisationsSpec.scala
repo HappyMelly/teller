@@ -91,7 +91,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   trait DefaultMockContext extends MockContext {
     truncateTables()
     (contributionService.contributions(_, _)).expects(id, false).returning(List())
-    (orgService.find _).expects(id).returning(Some(org))
+    (orgService.findWithProfile _) expects id returning Some(OrgView(org, profile))
     (productService.findAll _).expects().returning(List())
     (personService.findActive _).expects().returning(List())
   }

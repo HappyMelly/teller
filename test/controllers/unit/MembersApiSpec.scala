@@ -64,7 +64,7 @@ class MembersApiSpec extends Specification {
         "name" -> "Apple",
         "type" -> "org",
         "funder" -> true,
-        "image" -> None.asInstanceOf[Option[String]])
+        "image" -> "/organization/2/logo")
       data.value(1) must_== Json.obj(
         "id" -> 1,
         "name" -> "First Tester",
@@ -110,7 +110,7 @@ class MembersApiSpec extends Specification {
         "name" -> "Two",
         "type" -> "org",
         "funder" -> true,
-        "image" -> None.asInstanceOf[Option[String]])
+        "image" -> "/organization/2/logo")
     }
     "return supporters only if supporter = true" in new MockContext {
       memberOne.memberObj_=(PersonHelper.one())
