@@ -52,30 +52,6 @@ trait Brands extends JsonController with Security with Services {
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 
-  /**
-   * HTML form mapping for a brand’s social profile.
-   */
-  val socialProfileMapping = mapping(
-    "email" -> nonEmptyText,
-    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-    "facebookUrl" -> optional(facebookProfileUrl),
-    "linkedInUrl" -> optional(linkedInProfileUrl),
-    "googlePlusUrl" -> optional(googlePlusProfileUrl),
-    "skype" -> optional(nonEmptyText),
-    "phone" -> optional(nonEmptyText),
-    "contactForm" -> optional(nonEmptyText))(
-      {
-        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
-        phone, contactForm) ⇒
-          SocialProfile(0, ProfileType.Brand, email, twitterHandle,
-            facebookUrl, linkedInUrl, googlePlusUrl, skype, phone, contactForm)
-      })(
-        {
-          (s: SocialProfile) ⇒
-            Some(s.email, s.twitterHandle, s.facebookUrl,
-              s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone, s.contactForm)
-        })
-
   /** HTML form mapping for creating and editing. */
   def brandsForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -97,7 +73,7 @@ trait Brands extends JsonController with Security with Services {
     "tagLine" -> optional(text),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
-    "profile" -> socialProfileMapping,
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
     "evaluationHookUrl" -> optional(webUrl),
     "created" -> ignored(DateTime.now()),
     "createdBy" -> ignored(user.fullName),

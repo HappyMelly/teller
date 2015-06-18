@@ -26,8 +26,8 @@ package models.integration
 
 import helpers.{ MemberHelper, OrganisationHelper }
 import integration.PlayAppSpec
-import models.Member
-import models.service.OrganisationService
+import models.{ Member, SocialProfile, ProfileType, OrgView }
+import models.service.{ OrganisationService, SocialProfileService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -40,9 +40,11 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
     add()
   }
 
+  val service = new OrganisationService
+
   "Method findNonMembers" should {
     "return 4 non members" in {
-      val orgs = OrganisationService.get.findNonMembers
+      val orgs = service.findNonMembers
       orgs.length must_== 4
       orgs.exists(_.id == Some(3L)) must_== true
       orgs.exists(_.id == Some(4L)) must_== true
@@ -52,7 +54,7 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
 
     "return 4 non members" in {
       MemberHelper.make(None, 3L, person = true, funder = true).insert
-      val orgs = OrganisationService.get.findNonMembers
+      val orgs = service.findNonMembers
 
       orgs.length must_== 4
       orgs.exists(_.id == Some(3L)) must_== true
@@ -64,13 +66,60 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
 
   "Method member" should {
     "return None if org is not a member" in {
-      val r = OrganisationService.get.member(3L)
+      val r = service.member(3L)
       r must_== None
     }
     "return member data if org is a member" in {
-      OrganisationService.get.member(1L) map { o ⇒
+      service.member(1L) map { o ⇒
         o.person must_== false
         o.funder must_== false
+      } getOrElse ko
+    }
+  }
+  "Method 'activate'" should {
+    "deactivate an organisation if it's active" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.active must_== true
+        service.activate(id, false)
+        service.find(id).get.active must_== false
+      } getOrElse ko
+    }
+    "activate an organisation if it's inactive" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.active must_== false
+        service.activate(id, true)
+        service.find(id).get.active must_== true
+      } getOrElse ko
+    }
+  }
+
+  "Method 'findWithProfile'" should {
+    "return an organisation together with social profile" in {
+      val id = 1L
+      service.findWithProfile(id) map { x ⇒
+        x.org.name must_== "First org"
+        x.org.id must_== Some(id)
+        x.profile.email must_== "test@test.ru"
+      } getOrElse ko
+    }
+  }
+  "Method 'updateLogo'" should {
+    "remove a logo from the organisation" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.logo must_== true
+        service.updateLogo(id, false)
+        service.find(id).get.logo must_== false
+      } getOrElse ko
+    }
+    "add a logo to the organisation" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.logo must_== false
+        service.updateLogo(id, true)
+        service.find(id).get.logo must_== true
       } getOrElse ko
     }
   }
@@ -88,7 +137,8 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
             id = id,
             name = name,
             countryCode = country)
-          org.insert
+          val profile = SocialProfile(0, ProfileType.Organisation, "test@test.ru")
+          OrganisationService.get.insert(OrgView(org, profile))
       }
   }
   private def add() = {

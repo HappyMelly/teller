@@ -60,5 +60,9 @@ case class SocialProfile(
       googlePlusUrl.isDefined + linkedInUrl.isDefined
     (counter >= 2)
   }
+
+  def forBrand: SocialProfile = this.copy(objectType = ProfileType.Brand)
+  def forOrg: SocialProfile = this.copy(objectType = ProfileType.Organisation)
+  def forPerson: SocialProfile = this.copy(objectType = ProfileType.Person)
 }
 

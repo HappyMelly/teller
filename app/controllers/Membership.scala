@@ -45,7 +45,7 @@ trait Membership extends Enrollment {
    */
   def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val orgs = user.person.organisations.filter(_.member.isEmpty)
+      val orgs = personService.memberships(user.person.id.get).filter(_.member.isEmpty)
       Ok(views.html.membership.welcome(user, orgs))
   }
 
@@ -73,7 +73,7 @@ trait Membership extends Enrollment {
         val publicKey = Play.configuration.getString("stripe.public_key").get
         orgId map { id ⇒
           orgService.find(id) map { org ⇒
-            if (user.person.organisations.exists(_.id == org.id)) {
+            if (personService.memberships(user.person.id.get).exists(_.id == org.id)) {
               val fee = Payment.countryBasedFees(org.countryCode)
               Ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
             } else {
@@ -107,7 +107,7 @@ trait Membership extends Enrollment {
             val customerId = subscribe(user.person, org, data)
             val fee = Money.of(EUR, data.fee)
             val member = org map { o ⇒
-              o.copy(customerId = Some(customerId)).update
+              orgService.update(o.copy(customerId = Some(customerId)))
               o.becomeMember(funder = false, fee, user.person.id.get)
             } getOrElse {
               user.person.copy(customerId = Some(customerId)).update

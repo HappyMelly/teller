@@ -14,7 +14,7 @@
 @import models.UserRole.Role._
 @import templates.Formatters._
 
-<div class="col-md-4">
+<div class="col-md-6">
   <address>
     <strong>Address</strong><br>
     @organisation.street1.map { addressLine =>
@@ -48,7 +48,7 @@
   }
 </div>
 
-<div class="col-md-4">
+<div class="col-md-6">
   @restrict(handler, List(as(Editor.toString))) {
     <p>
       <strong>Financial account</strong>
@@ -74,7 +74,12 @@
   }
 </div>
 
-<div class="col-md-10">
+<div class="col-md-12">
+  @organisation.about.map { text =>
+    <legend>About</legend>
+    <p>@text.markdown</p>
+  }
+
   <legend>Members</legend>
   @if(members.isEmpty) {
     @organisation.name has no members.
@@ -101,7 +106,7 @@
   <br><br>
 </div>
 
-<div class="col-md-10">
+<div class="col-md-12">
   <legend>Products Contribution</legend>
   @if(contributions.isEmpty) {
     <p>@organisation.name has no contributions.</p>

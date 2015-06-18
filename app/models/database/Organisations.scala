@@ -51,6 +51,9 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def blog = column[Option[String]]("BLOG")
   def customerId = column[Option[String]]("CUSTOMER_ID")
 
+  def about = column[Option[String]]("ABOUT", O.DBType("TEXT"))
+  def logo = column[Boolean]("LOGO")
+
   def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
@@ -59,20 +62,22 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
 
   def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
     countryCode ~ vatNumber ~ registrationNumber ~ webSite ~ blog ~
-    customerId ~ active ~ created ~ createdBy ~ updated ~
+    customerId ~ about ~ logo ~ active ~ created ~ createdBy ~ updated ~
     updatedBy <> ({ o ⇒
       Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
-        o._11, o._12, o._13, o._14, DateStamp(o._15, o._16, o._17, o._18))
+        o._11, o._12, o._13, o._14, o._15, o._16,
+        DateStamp(o._17, o._18, o._19, o._20))
     }, { (o: Organisation) ⇒
       Some(o.id, o.name, o.street1, o.street2, o.city,
         o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
-        o.webSite, o.blog, o.customerId, o.active, o.dateStamp.created,
-        o.dateStamp.createdBy, o.dateStamp.updated, o.dateStamp.updatedBy)
+        o.webSite, o.blog, o.customerId, o.about, o.logo, o.active,
+        o.dateStamp.created, o.dateStamp.createdBy, o.dateStamp.updated,
+        o.dateStamp.updatedBy)
     })
 
   def forInsert = * returning id
 
   def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
     countryCode ~ vatNumber ~ registrationNumber ~ webSite ~ blog ~
-    customerId ~ active ~ updated ~ updatedBy
+    customerId ~ about ~ active ~ updated ~ updatedBy
 }

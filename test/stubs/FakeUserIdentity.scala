@@ -24,7 +24,7 @@
 package stubs
 
 import helpers.PersonHelper
-import models.{ UserRole, UserAccount }
+import models.{ UserRole, UserAccount, Person }
 import securesocial.core.AuthenticationMethod
 import securesocial.core.IdentityId
 
@@ -34,11 +34,12 @@ class FakeUserIdentity(
   override val firstName: String,
   override val lastName: String,
   override val fullName: String,
-  override val email: Option[String]) extends models.UserIdentity(uid, identityId,
+  override val email: Option[String],
+  val activeUser: Option[Person] = None) extends models.UserIdentity(uid, identityId,
   firstName, lastName, fullName, email, None, AuthenticationMethod.OAuth2, None,
   None, None, "api_token", None, None, None, None) {
 
-  override def person = PersonHelper.one()
+  override def person = activeUser getOrElse PersonHelper.one()
 
   override def account = {
     val role = identityId.userId
@@ -47,7 +48,6 @@ class FakeUserIdentity(
     account.roles_=(UserRole.forName(role).list)
     account
   }
-
 }
 
 object FakeUserIdentity {

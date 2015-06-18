@@ -23,9 +23,13 @@
  */
 package controllers
 
-import models.{ SocialProfile, Photo }
+import controllers.Forms._
+import models.{ SocialProfile, Photo, ProfileType }
 import models.UserRole.Role._
 import models.service.{ SocialProfileService, Services }
+import play.api.data.Forms._
+import play.api.data.validation.Constraints
+import play.api.data.validation.Constraints._
 
 trait SocialProfiles extends JsonController with Security with Services {
 
@@ -47,4 +51,31 @@ trait SocialProfiles extends JsonController with Security with Services {
   }
 }
 
-object SocialProfiles extends SocialProfiles
+object SocialProfiles extends SocialProfiles {
+
+  /**
+   * Returns html form mapping for social profile
+   *
+   * @param profileType Sets of which profile type mapping is
+   */
+  def profileMapping(profileType: ProfileType.Value) = mapping(
+    "email" -> nonEmptyText,
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl),
+    "skype" -> optional(nonEmptyText),
+    "phone" -> optional(nonEmptyText),
+    "contactForm" -> optional(webUrl))(
+      {
+        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
+        phone, contactForm) ⇒
+          SocialProfile(0, profileType, email, twitterHandle,
+            facebookUrl, linkedInUrl, googlePlusUrl, skype, phone, contactForm)
+      })(
+        {
+          (s: SocialProfile) ⇒
+            Some(s.email, s.twitterHandle, s.facebookUrl,
+              s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone, s.contactForm)
+        })
+}

@@ -27,7 +27,8 @@ package controllers.acceptance
 import controllers._
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
-import models.Member
+import models.{ Member, OrgView, ProfileType, SocialProfile }
+import models.service.{ OrganisationService, PersonService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -35,22 +36,13 @@ import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import org.specs2.mutable.After
 import play.api.cache.Cache
-import play.api.db.slick._
-import play.api.mvc.{ AnyContentAsEmpty, SimpleResult }
+import play.api.mvc.AnyContentAsEmpty
 import play.api.Play.current
 import play.api.test.FakeRequest
 import stubs._
 import stubs.services.FakeIntegrations
 
-import scala.concurrent.Future
-import scala.slick.jdbc.{ StaticQuery ⇒ Q }
-import scala.slick.session.Session
-
 class MembersSpec extends PlayAppSpec with DataTables {
-  class TestMembers() extends Members
-    with Security
-    with FakeServices
-    with FakeIntegrations
 
   override def is = s2"""
 
@@ -97,14 +89,16 @@ class MembersSpec extends PlayAppSpec with DataTables {
     be able to delete a membership from the existing member        $e27
   """
 
+  class TestMembers() extends Members
+    with FakeSecurity
+    with FakeServices
+    with FakeIntegrations
+
   val controller = new TestMembers()
   val MSG = "You are trying to complete step 2 while adding new member without completing step 1"
 
   def e1 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/members")
-
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest("/members"))
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Members")
     contentAsString(result) must contain("/person/1")
@@ -114,8 +108,6 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e6 = {
-    val identity = FakeUserIdentity.editor
-
     "objectId" || "person" | "funder" | "currency" | "amount" | "since" | "existingObject" |
       // empty currency
       "0" !! "1" ! "false" ! "" ! "100" ! "2015-01-01" ! "1" |
@@ -143,7 +135,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       "0" !! "1" ! "false" ! "EUR" ! "105.05" ! "2015-01-01" ! "1.00" |> {
         (objectId, person, funder, currency, amount, since, existingObject) ⇒
           {
-            val req = prepareSecuredPostRequest(identity, "/member/new").
+            val req = fakePostRequest("/member/new").
               withFormUrlEncodedBody(("objectId", objectId),
                 ("person", person),
                 ("funder", funder),
@@ -151,7 +143,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
                 ("fee.amount", amount),
                 ("since", since),
                 ("existingObject", existingObject))
-            val result: Future[SimpleResult] = controller.create().apply(req)
+            val result = controller.create().apply(req)
 
             status(result) must equalTo(BAD_REQUEST)
           }
@@ -159,73 +151,62 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e7 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val uReq = addMemberData(req, since = "2014-01-01")
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
+    val request = addMemberData(fakePostRequest(), since = "2014-01-01")
+    val result = controller.create().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("Membership date cannot be earlier than 2015-01-01")
   }
 
   def e8 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-
     val now = LocalDate.now()
     val firstDay = now.dayOfMonth().withMaximumValue().plusDays(1)
 
-    val req1 = addMemberData(req, since = firstDay.plusDays(3).toString)
-    val result1: Future[SimpleResult] = controller.create().apply(req1)
+    val req1 = addMemberData(fakePostRequest(), since = firstDay.plusDays(3).toString)
+    val result1 = controller.create().apply(req1)
     status(result1) must equalTo(BAD_REQUEST)
     contentAsString(result1) must contain("Membership date cannot be later than the first day of the next month")
-    val req2 = addMemberData(req, since = firstDay.toString)
-    val result2: Future[SimpleResult] = controller.create().apply(req2)
+    val req2 = addMemberData(fakePostRequest(), since = firstDay.toString)
+    val result2 = controller.create().apply(req2)
     status(result2) must equalTo(SEE_OTHER)
   }
 
-  def e9 = new cleanup {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "0")
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
+  def e9 = {
+    val request = addMemberData(fakePostRequest(), person = "0")
+    val result = controller.create().apply(request)
 
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/new/organisation"
   }
 
-  def e10 = new cleanup {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "1")
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
+  def e10 = {
+    val request = addMemberData(fakePostRequest(), person = "1")
+    val result = controller.create().apply(request)
 
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/new/person"
   }
 
-  def e11 = new cleanup {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "0", existingObject = "1")
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
+  def e11 = {
+    val req = addMemberData(fakePostRequest(), person = "0", existingObject = "1")
+    val result = controller.create().apply(req)
 
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/existing/organisation"
   }
 
   def e12 = new cleanup {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val uReq = addMemberData(req, person = "1", existingObject = "1")
-    val result: Future[SimpleResult] = controller.create().apply(uReq)
+    val req = addMemberData(fakePostRequest(), person = "1", existingObject = "1")
+    val result = controller.create().apply(req)
 
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").nonEmpty must_== true
     headers(result).get("Location").get must_== "/member/existing/person"
   }
 
   def e13 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/organisation").
-      withFormUrlEncodedBody(("name", "Test"), ("country", "RU"))
+    val request = fakePostRequest("/member/organisation").
+      withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
+        ("profile.email", "test@test.ru"))
     val result = controller.createNewOrganisation().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
@@ -233,8 +214,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e14 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/person").
+    val request = fakePostRequest("/member/person").
       withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"), ("address.country", "RU"),
         ("firstName", "Test"), ("lastName", "Test"), ("signature", "false"),
         ("role", "0"))
@@ -245,8 +225,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e15 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+    val request = fakePostRequest("/member/existing/organisation").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingOrg().apply(request)
 
@@ -255,8 +234,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e16 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/existing/person").
+    val request = fakePostRequest("/member/existing/person").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingPerson().apply(request)
 
@@ -265,49 +243,35 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e17 = {
-    val req = prepareSecuredGetRequest(
-      FakeUserIdentity.editor,
-      "/member/existing/organisation")
-    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
+    val req = fakeGetRequest("/member/existing/organisation")
+    val result = controller.addExistingOrganisation().apply(req)
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("Add member")
     contentAsString(result) must contain("Step 2: Existing organisation")
     contentAsString(result) must contain(routes.Members.updateExistingOrg.url)
     contentAsString(result) must contain("<select")
   }
 
-  def e18 = {
-    Seq(
+  def e18 = new MockContext {
+
+    val orgs = List(
       (Some(1L), "First org", "DE"),
-      (Some(2L), "Second org", "DE"),
       (Some(3L), "Third org", "DE"),
       (Some(4L), "Fourth org", "DE"),
-      (Some(5L), "Firth org", "DE"),
-      (Some(6L), "Sixth org", "DE")).foreach {
+      (Some(6L), "Sixth org", "DE")).map {
         case (id, name, country) ⇒
-          val org = OrganisationHelper.make(
+          OrganisationHelper.make(
             id = id,
             name = name,
             countryCode = country)
-          org.insert
       }
-    Seq(
-      (2L, false, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (5L, false, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
-        case (objectId, person, funder, fee, since, createdBy) ⇒
-          val member = new Member(None, objectId, person, funder, fee,
-            renewal = false, since, since.plusYears(1), existingObject = false,
-            None, DateTime.now(), createdBy, DateTime.now(), createdBy)
-          member.insert
-      }
+    val orgService = mock[OrganisationService]
+    (orgService.findNonMembers _) expects () returning orgs
+    controller.orgService_=(orgService)
 
-    val req = prepareSecuredGetRequest(
-      FakeUserIdentity.editor,
-      "/member/existing/organisation")
-    val result: Future[SimpleResult] = controller.addExistingOrganisation().apply(req)
+    val req = fakeGetRequest("/member/existing/organisation")
+    val result = controller.addExistingOrganisation().apply(req)
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("<select")
     contentAsString(result) must contain("Select organisation")
     contentAsString(result) must contain("value=\"1\"")
@@ -325,12 +289,11 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val m = MemberHelper.make(None, 0, person = false, funder = false,
       existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
-    val service = mock[FakeOrganisationService]
+    val service = mock[OrganisationService]
     (service.find _).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.orgService_=(service)
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
+    val request = fakePostRequest("/member/existing/organisation").
       withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingOrg().apply(request)
 
@@ -345,7 +308,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
         existingObject = Some(true)).insert
       val org = OrganisationHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val service = mock[FakeOrganisationService]
+      val service = mock[OrganisationService]
       (service.find _).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
       controller.orgService_=(service)
@@ -360,47 +323,28 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e21 = {
-    val req = prepareSecuredGetRequest(
-      FakeUserIdentity.editor,
-      "/member/existing/person")
-    val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
+    val result = controller.addExistingPerson().apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("Add member")
     contentAsString(result) must contain("Step 2: Existing person")
     contentAsString(result) must contain(routes.Members.updateExistingPerson.url)
     contentAsString(result) must contain("<select")
   }
 
-  def e22 = {
-    Seq(
+  def e22 = new MockContext {
+    val people = List(
       (Some(1L), "First", "Tester"),
-      (Some(2L), "Second", "Tester"),
       (Some(3L), "Third", "Tester"),
       (Some(4L), "Fourth", "Tester"),
-      (Some(5L), "Firth", "Tester"),
-      (Some(6L), "Sixth", "Tester")).foreach {
+      (Some(6L), "Sixth", "Tester")).map {
         case (id, firstName, lastName) ⇒
-          val person = PersonHelper.make(id = id, firstName = firstName,
-            lastName = lastName)
-          person.insert
+          PersonHelper.make(id = id, firstName = firstName, lastName = lastName)
       }
-    Seq(
-      (2L, true, false, Money.of(EUR, 100), LocalDate.now(), 1L),
-      (5L, true, true, Money.of(EUR, 200), LocalDate.now(), 1L)).foreach {
-        case (objectId, person, funder, fee, since, createdBy) ⇒
-          val member = new Member(None, objectId, person, funder, fee,
-            renewal = false, since, since.plusYears(1), existingObject = false,
-            None, DateTime.now(), createdBy, DateTime.now(), createdBy)
-          member.insert
-      }
+    val personService = mock[PersonService]
+    (personService.findNonMembers _) expects () returning people
+    controller.personService_=(personService)
+    val result = controller.addExistingPerson().apply(fakeGetRequest())
 
-    val req = prepareSecuredGetRequest(
-      FakeUserIdentity.editor,
-      "/member/existing/person")
-    val result: Future[SimpleResult] = controller.addExistingPerson().apply(req)
-
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("<select")
     contentAsString(result) must contain("Select person")
     contentAsString(result) must contain("value=\"1\"")
@@ -418,13 +362,11 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val m = MemberHelper.make(None, 0, person = true, funder = false,
       existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
-    val service = mock[FakePersonService]
+    val service = mock[PersonService]
     (service.find(_: Long)).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.personService_=(service)
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredPostRequest(identity, "/member/existing/person").
-      withFormUrlEncodedBody(("id", "1"))
+    val request = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
     val result = controller.updateExistingPerson().apply(request)
 
     status(result) must equalTo(BAD_REQUEST)
@@ -438,13 +380,11 @@ class MembersSpec extends PlayAppSpec with DataTables {
         existingObject = Some(true)).insert
       val person = PersonHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
-      val service = mock[FakePersonService]
+      val service = mock[PersonService]
       (service.find(_: Long)).expects(*).returning(Some(person))
       (service.findNonMembers _).expects().returning(List())
       controller.personService_=(service)
-      val identity = FakeUserIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/existing/person").
-        withFormUrlEncodedBody(("id", "1"))
+      val request = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingPerson().apply(request)
 
       status(result) must equalTo(BAD_REQUEST)
@@ -452,18 +392,16 @@ class MembersSpec extends PlayAppSpec with DataTables {
     }
   }
 
-  def e25 = {
-    truncateTables()
-    val m = MemberHelper.make(None, 1L, person = true, funder = false,
-      existingObject = Some(true)).insert
-    val person = PersonHelper.one.insert
+  def e25 = new MockContext {
+    val member = MemberHelper.make(Some(1L), 1L, person = true, funder = false,
+      existingObject = Some(true))
+    member.memberObj_=(PersonHelper.one)
+    val memberService = mock[FakeMemberService]
+    (memberService.find _) expects 1L returning Some(member)
+    controller.memberService_=(memberService)
 
-    val req = prepareSecuredGetRequest(
-      FakeUserIdentity.editor,
-      "/member/1")
-    val result: Future[SimpleResult] = controller.edit(1L).apply(req)
+    val result = controller.edit(1L).apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("Edit member First Tester")
     contentAsString(result) must not contain "Step 1"
     contentAsString(result) must not contain "New person"
@@ -475,37 +413,39 @@ class MembersSpec extends PlayAppSpec with DataTables {
   }
 
   def e26 = new MockContext {
-    truncateTables()
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-      withFormUrlEncodedBody(
-        ("objectId", "0"), ("person", "0"),
-        ("funder", "0"), ("fee.currency", "EUR"),
-        ("fee.amount", "100"), ("since", "2015-01-31"),
-        ("existingObject", "0"))
-    val m = MemberHelper.make(None, 1L, person = true, funder = true,
+    val request = fakePostRequest().withFormUrlEncodedBody(
+      ("objectId", "0"), ("person", "0"),
+      ("funder", "0"), ("fee.currency", "EUR"),
+      ("fee.amount", "100"), ("since", "2015-01-31"),
+      ("existingObject", "0"))
+    val member = MemberHelper.make(Some(1L), 1L, person = true, funder = true,
       money = Some(Money.parse("EUR 200")),
       since = Some(LocalDate.parse("2015-01-15")),
-      existingObject = Some(true)).insert
-    PersonHelper.one().insert
+      existingObject = Some(true))
+    val memberService = mock[FakeMemberService]
+    (memberService.find _) expects 1L returning Some(member)
+    (memberService.update _) expects (where {
+      (m: Member) ⇒
+        m.objectId == 1 && m.person == true && m.funder == false &&
+          m.fee == Money.parse("EUR 100") && m.since == LocalDate.parse("2015-01-31")
+    })
+    controller.memberService_=(memberService)
 
-    val result: Future[SimpleResult] = controller.update(m.id.get).apply(req)
+    val result = controller.update(member.id.get).apply(request)
 
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location") map { loc ⇒
-      loc must_== "/person/" + m.id.get.toString
+      loc must_== "/person/" + member.id.get.toString
     } getOrElse failure
   }
 
   def e27 = new MockContext {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val memberService = mock[FakeMemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
     (memberService.find _).expects(1L).returning(Some(member))
     (memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
+    val result = controller.delete(1L).apply(fakePostRequest())
 
-    val result: Future[SimpleResult] = controller.delete(1L).apply(req)
-    status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location") map { loc ⇒
       loc must_== "/person/2"
     } getOrElse failure
@@ -530,8 +470,5 @@ class MembersSpec extends PlayAppSpec with DataTables {
 }
 
 trait cleanup extends After {
-  def after = DB.withSession { implicit session: Session ⇒
-    Q.updateNA("TRUNCATE `MEMBER`").execute
-    Cache.remove(Members.cacheId(1L))
-  }
+  def after = Cache.remove(Members.cacheId(1L))
 }

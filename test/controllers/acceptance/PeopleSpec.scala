@@ -29,7 +29,7 @@ import helpers._
 import _root_.integration.PlayAppSpec
 import models._
 import models.payment.Record
-import models.service.FacilitatorService
+import models.service.{ FacilitatorService, PersonService, OrganisationService }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -85,8 +85,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     be visible to Editors                                                $e20
   """
 
-  val personService = mock[FakePersonService]
-  val orgService = mock[FakeOrganisationService]
+  val personService = mock[PersonService]
+  val orgService = mock[OrganisationService]
   val accountService = mock[FakeUserAccountService]
   val contributionService = mock[FakeContributionService]
   val paymentService = mock[FakePaymentRecordService]
@@ -128,7 +128,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     new MockContext {
       val controller = new TestPeople()
-      val mockService = mock[FakePersonService]
+      val mockService = mock[PersonService]
       // if this method is called it means we have passed a security check
       (mockService.find(_: Long)) expects id returning None
       controller.personService_=(mockService)

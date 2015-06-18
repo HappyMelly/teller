@@ -28,33 +28,7 @@
     <div class="page-header">
       @views.html.person.blocks.photo(person, "160")
     </div>
-    <div class="social">
-      @person.socialProfile.twitterHandle.map { handle =>
-        <a href="http://twitter.com/@handle" target="_blank">
-          <img width="25" src="@routes.Assets.at("images/securesocial/twitter.png")"/>
-        </a>
-      }
-      @person.socialProfile.facebookUrl.map { url =>
-        <a href="@url" target="_blank">
-          <img width="25" src="@routes.Assets.at("images/securesocial/facebook.png")"/>
-        </a>
-      }
-      @person.socialProfile.linkedInUrl.map { url =>
-        <a href="@url" target="_blank">
-          <img width="25" src="@routes.Assets.at("images/securesocial/linkedin.png")"/>
-        </a>
-      }
-      @person.socialProfile.googlePlusUrl.map { url =>
-        <a href="@url" target="_blank">
-          <img width="25" src="@routes.Assets.at("images/securesocial/google.png")"/>
-        </a>
-      }
-      @person.member.map { m =>
-        <a href="@m.profileUrl" target="_blank">
-          <img width="25" src="@routes.Assets.at("images/hm-face.jpg")"/>
-        </a>
-      }
-    </div>
+    @views.html.element.profiles(person.socialProfile, person.member)
     <div class="panel">
       <ul class="nav nav-stacked nav-pills" role="tablist" id="sidemenu">
         <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">

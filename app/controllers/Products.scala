@@ -249,7 +249,7 @@ trait Products extends JsonController with Security with Services {
         val brands = Brand.findAllWithCoordinator
         val contributors = Contribution.contributors(id)
         val people = Person.findAll
-        val organisations = Organisation.findAll
+        val organisations = orgService.findAll
 
         Ok(views.html.product.details(user, view, derivatives, parent, brands,
           contributors, people, organisations))

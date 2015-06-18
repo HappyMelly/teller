@@ -33,12 +33,15 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
-import play.api.data.format.Formatter
 import play.api.i18n.Messages
-import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.Json
 import play.api.{ Logger, Play }
 
-trait Organisations extends Controller with Security with Services {
+trait Organisations extends JsonController
+  with Security
+  with Services
+  with Files {
 
   /**
    * HTML form mapping for creating and editing.
@@ -46,23 +49,38 @@ trait Organisations extends Controller with Security with Services {
   def organisationForm(implicit user: UserIdentity) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "name" -> nonEmptyText,
-    "street1" -> optional(text),
-    "street2" -> optional(text),
-    "city" -> optional(text),
-    "province" -> optional(text),
-    "postCode" -> optional(text),
-    "country" -> nonEmptyText,
+    "address" -> People.addressMapping,
     "vatNumber" -> optional(text),
     "registrationNumber" -> optional(text),
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "customerId" -> optional(text),
+    "about" -> optional(text),
+    "logo" -> ignored(false),
     "active" -> ignored(true),
     "dateStamp" -> mapping(
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(user.fullName),
       "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))(Organisation.apply)(Organisation.unapply))
+      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))({
+      (id, name, address, vatNumber,
+      registrationNumber, profile, webSite, blog, customerId, about,
+      logo, active, dateStamp) ⇒
+        val org = Organisation(id, name, address.street1, address.street2,
+          address.city, address.province, address.postCode, address.countryCode,
+          vatNumber, registrationNumber, webSite,
+          blog, customerId, about, logo, active, dateStamp)
+        OrgView(org, profile)
+    })({
+      (v: OrgView) ⇒
+        val address = Address(None, v.org.street1, v.org.street2,
+          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
+        Some((v.org.id, v.org.name, address, v.org.vatNumber,
+          v.org.registrationNumber, v.profile, v.org.webSite,
+          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+          v.org.dateStamp))
+    }))
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -76,7 +94,7 @@ trait Organisations extends Controller with Security with Services {
             BadRequest("invalid form data")
           },
           active ⇒ {
-            Organisation.activate(id, active)
+            orgService.activate(id, active)
             val activity = Activity.insert(user.fullName,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
@@ -104,9 +122,9 @@ trait Organisations extends Controller with Security with Services {
       organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(user, None, formWithErrors)),
-        organisation ⇒ {
-          val org = organisation.insert
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, organisation.name)
+        view ⇒ {
+          val org = orgService.insert(view)
+          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, view.org.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
   }
@@ -118,11 +136,10 @@ trait Organisations extends Controller with Security with Services {
   def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      orgService.find(id).map {
-        organisation ⇒
-          Organisation.delete(id)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
-          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+      orgService.find(id).map { organisation ⇒
+        orgService.delete(id)
+        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
+        Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
 
@@ -132,16 +149,15 @@ trait Organisations extends Controller with Security with Services {
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      orgService.find(id).map { organisation ⇒
-        val members = organisation.people
+      orgService.findWithProfile(id).map { view ⇒
+        val members = view.org.people
         val otherPeople = personService.findActive.filterNot(person ⇒ members.contains(person))
         val contributions = contributionService.contributions(id, isPerson = false)
         val products = productService.findAll
-        val payments = organisation.member map { v ⇒
+        val payments = view.org.member map { v ⇒
           paymentRecordService.findByOrganisation(id)
         } getOrElse List()
-        Ok(views.html.organisation.details(user, organisation,
-          members, otherPeople,
+        Ok(views.html.organisation.details(user, view, members, otherPeople,
           contributions, products, payments))
       }.getOrElse(NotFound)
   }
@@ -153,9 +169,9 @@ trait Organisations extends Controller with Security with Services {
   def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      orgService.find(id).map {
-        organisation ⇒
-          Ok(views.html.organisation.form(user, Some(id), organisationForm.fill(organisation)))
+      orgService.findWithProfile(id).map { view ⇒
+        Ok(views.html.organisation.form(user, Some(id),
+          organisationForm.fill(OrgView(view.org, view.profile))))
       }.getOrElse(NotFound)
   }
 
@@ -165,7 +181,7 @@ trait Organisations extends Controller with Security with Services {
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val organisations = Organisation.findAll
+      val organisations = orgService.findAll
       Ok(views.html.organisation.index(user, organisations))
   }
 
@@ -176,18 +192,19 @@ trait Organisations extends Controller with Security with Services {
   def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        orgService.find(id).map { org ⇒
+        orgService.findWithProfile(id).map { view ⇒
           organisationForm.bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.organisation.form(
                 user,
                 Some(id),
                 formWithErrors)),
-            organisation ⇒ {
-              val updatedOrg = organisation.
-                copy(id = Some(id), active = org.active).
-                copy(customerId = org.customerId).
-                update
+            view ⇒ {
+              val updatedOrg = view.org.
+                copy(id = Some(id), active = view.org.active).
+                copy(customerId = view.org.customerId)
+              val updatedProfile = view.profile.forOrg.copy(objectId = id)
+              orgService.update(OrgView(updatedOrg, updatedProfile))
               val activity = updatedOrg.activity(
                 user.person,
                 Activity.Predicate.Updated).insert
@@ -232,6 +249,44 @@ trait Organisations extends Controller with Security with Services {
           }
         } getOrElse NotFound
   }
+
+  /**
+   * Upload a new logo to Amazon
+   *
+   * @param id Organisation identifier
+   */
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        upload(Organisation.logo(id), "logo") map { _ ⇒
+          orgService.updateLogo(id, true)
+          val route = routes.Organisations.details(id).url
+          jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
+        } recover {
+          case e ⇒ jsonBadRequest(e.getMessage)
+        }
+  }
+
+  /**
+   * Deletes logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Organisation.logo(id).remove()
+        orgService.updateLogo(id, false)
+        val route = routes.Organisations.details(id).url
+        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
+  }
+
+  /**
+   * Retrieve and cache a logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def logo(id: Long) = file(Organisation.logo(id))
 }
 
 object Organisations extends Organisations with Security with Services

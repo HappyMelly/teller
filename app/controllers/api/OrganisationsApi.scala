@@ -76,6 +76,6 @@ object OrganisationsApi extends Controller with ApiAuthentication with Services 
 
   /** Returns a list of all organisations in JSON format */
   def organisations = TokenSecuredAction { implicit request ⇒
-    Ok(Json.prettyPrint(Json.toJson(Organisation.findAll)))
+    Ok(Json.prettyPrint(Json.toJson(orgService.findAll)))
   }
 }

@@ -27,6 +27,8 @@ package controllers.integration
 import controllers.apiv2.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
+import models._
+import models.service.OrganisationService
 import org.scalamock.specs2.MockContext
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -44,13 +46,14 @@ class MembersApiSpec extends PlayAppSpec {
 
   "Method 'member'" should {
     "return well-formed JSON if a member is a person" in new MockContext {
-      memberOne.memberObj_=(PersonHelper.one())
+      memberOne.memberObj_=(PersonHelper.one)
 
       val service = mock[FakeMemberService]
-      (service.find _).expects(1L).returning(Some(memberOne))
+      (service.find _) expects 1L returning Some(memberOne)
       controller.memberService_=(service)
       val res = controller.member(1L).apply(FakeRequest())
       val data = contentAsJson(res).asInstanceOf[JsObject]
+
       (data \ "id").as[JsNumber].value must_== BigDecimal(1L)
       (data \ "funder").as[JsBoolean].value must_== false
       (data \ "type").as[JsString].value must_== "person"
@@ -62,19 +65,28 @@ class MembersApiSpec extends PlayAppSpec {
       keys.contains("organizations") must_== true
     }
     "return well-formed JSON if a member is an org" in new MockContext {
-      memberTwo.memberObj_=(OrganisationHelper.two)
-
-      val service = mock[FakeMemberService]
-      (service.find _).expects(2L).returning(Some(memberTwo))
-      controller.memberService_=(service)
+      val memberService = mock[FakeMemberService]
+      controller.memberService_=(memberService)
+      val orgService = mock[OrganisationService]
+      controller.orgService_=(orgService)
+      (memberService.find _) expects 2L returning Some(memberTwo)
+      val profile = SocialProfile(0, ProfileType.Organisation, "")
+      val view = OrgView(OrganisationHelper.one, profile)
+      (orgService.findWithProfile _) expects 2L returning Some(view)
       val res = controller.member(2L).apply(FakeRequest())
       val data = contentAsJson(res).asInstanceOf[JsObject]
+
       (data \ "id").as[JsNumber].value must_== BigDecimal(2L)
       (data \ "funder").as[JsBoolean].value must_== true
       (data \ "type").as[JsString].value must_== "org"
       data \ "person" must haveClass[JsUndefined]
       val keys = (data \ "org").as[JsObject].keys
       keys.contains("name") must_== true
+      keys.contains("about") must_== true
+      keys.contains("twitter_handle") must_== true
+      keys.contains("facebook_url") must_== true
+      keys.contains("linkedin_url") must_== true
+      keys.contains("google_plus_url") must_== true
       keys.contains("members") must_== true
       keys.contains("contributions") must_== true
     }

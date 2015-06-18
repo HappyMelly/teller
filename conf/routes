@@ -145,6 +145,10 @@ POST          /organization/:id                                              con
 POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
 POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
 POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
+POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
+GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
+DELETE        /organization/:id/logo/delete                                  controllers.Organisations.deleteLogo(id: Long)
+
 
 GET           /participants                                                  controllers.Participants.index
 GET           /participants/brand/:brandId                                   controllers.Participants.participantsByBrand(brandId: Long)
@@ -279,9 +283,6 @@ GET           /api/v2/members                                                con
 GET           /api/v2/member/:id                                             controllers.apiv2.MembersApi.member(id: Long)
 
 POST          /api/v2/participant                                            controllers.apiv2.ParticipantsApi.create
-
-GET           /api/v2/organizations                                          controllers.apiv2.OrganisationsApi.organisations
-GET           /api/v2/organization/:id                                       controllers.apiv2.OrganisationsApi.organisation(id: Long)
 
 GET           /api/v2/people                                                 controllers.apiv2.PeopleApi.people(active: Option[Boolean], q: Option[String])
 GET           /api/v2/person/:identifier                                     controllers.apiv2.PeopleApi.person(identifier: String)

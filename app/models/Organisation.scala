@@ -25,7 +25,7 @@
 package models
 
 import models.database.{ Accounts, OrganisationMemberships, Organisations }
-import models.service.{ ContributionService, MemberService, OrganisationService, Services }
+import models.service.{ Services, OrganisationService, MemberService }
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
@@ -33,6 +33,8 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
 import scala.slick.lifted.Query
+
+case class OrgView(org: Organisation, profile: SocialProfile)
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
@@ -51,6 +53,8 @@ case class Organisation(
   webSite: Option[String],
   blog: Option[String],
   customerId: Option[String] = None,
+  about: Option[String] = None,
+  logo: Boolean = false,
   active: Boolean = true,
   dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
 
@@ -139,32 +143,17 @@ case class Organisation(
    */
   def objectType: String = Activity.Type.Org
 
-  /**
-   * Inserts this organisation into the database, with an inactive account.
-   * @return The Organisation as it is saved (with the id added)
-   */
-  def insert: Organisation = DB.withSession { implicit session: Session ⇒
-    val organisationId = Organisations.forInsert.insert(this)
-    Accounts.insert(Account(organisationId = Some(organisationId)))
-    this.copy(id = Some(organisationId))
-  }
-
-  def update = DB.withSession { implicit session: Session ⇒
-    assert(id.isDefined, "Can only update Organisations that have an id")
-    val filter: Query[Organisations.type, Organisation] = Query(Organisations).filter(_.id === id)
-    val q = filter.map { org ⇒ org.forUpdate }
-
-    // Skip the created, createdBy and active fields.
-    val updateTuple = (id, name, street1, street2, city, province, postCode,
-      countryCode, vatNumber, registrationNumber, webSite, blog,
-      customerId, active, dateStamp.updated, dateStamp.updatedBy)
-    q.update(updateTuple)
-    this
-  }
-
 }
 
 object Organisation {
+
+  /**
+   * Returns logo for the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def logo(id: Long): File =
+    File.image(s"organisations/$id", s"organisations.$id")
 
   /**
    * Returns an organisation with only two required fields filled
@@ -174,33 +163,7 @@ object Organisation {
   def apply(name: String, countryCode: String): Organisation = {
     val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
     Organisation(None, name, None, None, None, None, None, countryCode,
-      None, None, None, None, None, active = false, date)
+      None, None, None, None, None, None, logo = false, active = false, date)
   }
-
-  /**
-   * Activates the organisation, if the parameter is true, or deactivates it.
-   */
-  def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      organisation ← Organisations if organisation.id === id
-    } yield organisation.active
-    query.update(active)
-  }
-
-  /**
-   * Deletes an organisation.
-   */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    OrganisationService.get.find(id).map { org ⇒
-      org.account.delete()
-      MemberService.get.delete(id, person = false)
-    }
-    Organisations.where(_.id === id).mutate(_.delete())
-  }
-
-  def findAll: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    Query(Organisations).sortBy(_.name.toLowerCase).list
-  }
-
 }
 

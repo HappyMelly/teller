@@ -21,13 +21,43 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
+package models
 
-import models.{ Person, Organisation }
-import models.service.PersonService
+import fly.play.s3.{ BucketFile, S3Exception }
+import play.api.Play.current
+import play.api.cache.Cache
+import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.Future
+import services.S3Bucket
 
-class FakePersonService extends PersonService {
+case class File(fileType: String,
+  name: String,
+  cacheKey: String) {
 
-  override def memberships(person: Person): List[Organisation] = List()
+  def remove() {
+    Cache.remove(cacheKey)
+    S3Bucket.remove(name)
+  }
 
+  def uploadToCache(): Future[Array[Byte]] = {
+    val result = S3Bucket.get(name)
+    val file: Future[Array[Byte]] = result.map {
+      case BucketFile(name, contentType, content, acl, headers) ⇒ content
+    }.recover {
+      case S3Exception(status, code, message, originalXml) ⇒ Array[Byte]()
+    }
+    file.map { value ⇒
+      Cache.set(cacheKey, value)
+      value
+    }
+  }
+}
+
+object File {
+
+  def image(name: String, cacheKey: String): File =
+    File("image/jpeg", name, cacheKey)
+
+  def pdf(name: String, cacheKey: String): File =
+    File("application/pdf", name, cacheKey)
 }

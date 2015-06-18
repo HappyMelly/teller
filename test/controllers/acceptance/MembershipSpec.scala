@@ -24,23 +24,17 @@
 
 package controllers.acceptance
 
-import controllers.{ Membership, Security }
-import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import _root_.integration.PlayAppSpec
-import org.scalamock.specs2.MockContext
-import play.api.mvc.SimpleResult
+import controllers.Membership
+import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
+import models.service.{ PersonService, OrganisationService }
+import org.scalamock.specs2.IsolatedMockFactory
 import play.api.test.FakeRequest
-import scala.concurrent.Future
-import stubs.{ FakeOrganisationService, FakeUserIdentity, FakeServices }
+import stubs._
 
-class MembershipSpec extends PlayAppSpec {
-  class TestMembership() extends Membership with Security with FakeServices
+class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
-
-  Welcome page for person should
-    not be visible to unauthorized user                  $e1
-    be visible to authorized user                        $e2
 
   On welcome page button 'Become a Supporter' as individual should
     be active for a non-member                             $e3
@@ -65,69 +59,57 @@ class MembershipSpec extends PlayAppSpec {
     see minimum, regular and elite fees for the org                   $e14
   """
 
+  class TestMembership() extends Membership with FakeSecurity with FakeServices
+
   val controller = new TestMembership()
-
-  def e1 = {
-    val result: Future[SimpleResult] = controller.welcome().apply(FakeRequest())
-
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome.which(_.contains("login"))
-  }
-
-  def e2 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Join Happy Melly network")
-  }
+  val orgService = mock[OrganisationService]
+  val personService = mock[PersonService]
+  controller.orgService_=(orgService)
+  controller.personService_=(personService)
+  val person = PersonHelper.one
 
   def e3 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    (personService.memberships _) expects 1L returning List()
+    val result = controller.welcome().apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("Become a Supporter")
     contentAsString(result) must contain("href=\"/membership/payment\"")
   }
 
   def e4 = {
-    MemberHelper.make(objectId = 1L, person = true, funder = false).insert
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    (personService.memberships _) expects 1L returning List()
+    person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = false))
+    controller.activeUser_=(person)
+    val result = controller.welcome().apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("You're already a Supporter")
     contentAsString(result) must not contain "Become a Supporter"
   }
 
   def e5 = {
-    truncateTables()
-    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
+    (personService.memberships _) expects 1L returning List()
+    person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
+    controller.activeUser_=(person)
+    val result = controller.welcome().apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("You're a Funder")
     contentAsString(result) must not contain "Become a Supporter"
   }
 
   def e6 = {
-    truncateTables()
-    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/").
+    person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
+    controller.activeUser_=(person)
+    val req = fakePostRequest().
       withFormUrlEncodedBody(("token", "stub"), ("fee", "20"))
-    val result: Future[SimpleResult] = controller.charge().apply(req)
+    val result = controller.charge().apply(req)
 
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("This person is already a member")
   }
 
   def e7 = {
-    truncateTables()
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.payment(None).apply(req)
-    status(result) must equalTo(OK)
+    val result = controller.payment(None).apply(fakeGetRequest())
+
     contentAsString(result) must contain("the minimum fee is <b>EUR 20</b>")
     contentAsString(result) must contain("the regular fee is <b>EUR 40</b>")
     contentAsString(result) must contain("the elite fee is <b>EUR 80</b>")
@@ -135,21 +117,15 @@ class MembershipSpec extends PlayAppSpec {
   }
 
   def e8 = {
-    truncateTables()
-    val person = PersonHelper.one().insert
-    val org1 = OrganisationHelper.one.insert
-    val org2 = OrganisationHelper.two.insert
-    val org3 = OrganisationHelper.make(id = Some(3L), name = "Three").insert
-    person.addRelation(1L)
-    person.addRelation(2L)
-    person.addRelation(3L)
-    //the person and org3 are members
-    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    MemberHelper.make(objectId = 3L, person = false, funder = false).insert
+    val org1 = OrganisationHelper.one
+    val org2 = OrganisationHelper.two
+    val org3 = OrganisationHelper.make(id = Some(3L), name = "Three")
+    org3.member_=(MemberHelper.make(objectId = 3L, person = false, funder = false))
+    (personService.memberships _) expects 1L returning List(org1, org2, org3)
+    person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
+    controller.activeUser_=(person)
+    val result = controller.welcome().apply(fakeGetRequest())
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
-    status(result) must equalTo(OK)
     contentAsString(result) must contain(">Select organisation<")
     contentAsString(result) must contain(">One<")
     contentAsString(result) must contain(">Two<")
@@ -157,97 +133,64 @@ class MembershipSpec extends PlayAppSpec {
   }
 
   def e9 = {
-    truncateTables()
-    val person = PersonHelper.one().insert
-    val org1 = OrganisationHelper.one.insert
-    val org2 = OrganisationHelper.two.insert
-    person.addRelation(1L)
-    person.addRelation(2L)
-    //the person and all orgs are members
-    MemberHelper.make(objectId = 1L, person = true, funder = true).insert
-    MemberHelper.make(objectId = 1L, person = false, funder = false).insert
-    MemberHelper.make(objectId = 2L, person = false, funder = false).insert
+    person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
+    controller.activeUser_=(person)
+    val org1 = OrganisationHelper.one
+    org1.member_=(MemberHelper.make(objectId = 1L, person = false, funder = false))
+    val org2 = OrganisationHelper.two
+    org2.member_=(MemberHelper.make(objectId = 2L, person = false, funder = false))
+    (personService.memberships _) expects 1L returning List(org1, org2)
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
-    status(result) must equalTo(OK)
+    val result = controller.welcome().apply(fakeGetRequest())
     contentAsString(result) must not contain ">Select organisation<"
     contentAsString(result) must contain("All your organisations are members")
   }
 
   def e10 = {
-    truncateTables()
-    val person = PersonHelper.one().insert
-    val org1 = OrganisationHelper.one.insert
-    person.addRelation(1L)
+    val org = OrganisationHelper.make(Some(4L), "One")
+    (personService.memberships _) expects 1L returning List(org)
+    val result = controller.welcome().apply(fakeGetRequest())
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result: Future[SimpleResult] = controller.welcome().apply(req)
-    status(result) must equalTo(OK)
     contentAsString(result) must contain(">Select organisation<")
     contentAsString(result) must contain(">One<")
     contentAsString(result) must contain("Make My Organisation a Supporter")
   }
 
-  def e11 = new MockContext {
-    val orgService = mock[FakeOrganisationService]
+  def e11 = {
     (orgService.find _).expects(1L).returning(None)
-    controller.orgService_=(orgService)
+    val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
-    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("membership/welcome"))
   }
 
-  def e12 = new MockContext {
-    truncateTables()
-
+  def e12 = {
     val org = OrganisationHelper.one
-    val orgService = mock[FakeOrganisationService]
     (orgService.find _).expects(1L).returning(Some(org))
-    controller.orgService_=(orgService)
+    (personService.memberships _) expects 1L returning List()
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
-    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+    val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
-    status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("membership/welcome"))
   }
 
-  def e13 = new MockContext {
-    truncateTables()
-
-    val org = OrganisationHelper.one.insert
-    val orgService = mock[FakeOrganisationService]
+  def e13 = {
+    val org = OrganisationHelper.one
     (orgService.find _).expects(1L).returning(Some(org))
-    controller.orgService_=(orgService)
-    val person = PersonHelper.one().insert
-    person.addRelation(1L)
+    (personService.memberships _) expects 1L returning List(org)
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
-    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+    val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("Make My Organisation a Supporter")
   }
 
-  def e14 = new MockContext {
-    truncateTables()
-
-    val org = OrganisationHelper.one.copy(countryCode = "NL").insert
-    val orgService = mock[FakeOrganisationService]
+  def e14 = {
+    val org = OrganisationHelper.one.copy(countryCode = "NL")
     (orgService.find _).expects(1L).returning(Some(org))
-    controller.orgService_=(orgService)
-    // this person is from United Kingdom
-    val person = PersonHelper.one().insert
-    person.addRelation(1L)
+    // default person is from United Kingdom
+    (personService.memberships _) expects 1L returning List(org)
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "")
-    val result: Future[SimpleResult] = controller.payment(Some(1L)).apply(req)
+    val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
-    status(result) must equalTo(OK)
     contentAsString(result) must contain("One is from Netherlands")
     contentAsString(result) must not contain "You are from United Kingdom"
     contentAsString(result) must contain("the minimum fee is <b>EUR 25</b>")

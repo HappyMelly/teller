@@ -23,7 +23,7 @@
  */
 package models.unit
 
-import models.SocialProfile
+import models.{ SocialProfile, ProfileType }
 import org.specs2.mutable._
 
 class SocialProfileSpec extends Specification {
@@ -63,6 +63,21 @@ class SocialProfileSpec extends Specification {
     }
     "when no social network is set" in {
       profile.complete must_== false
+    }
+  }
+  "Method 'forBrand'" should {
+    "convert current profile to the one of Brand type" in {
+      profile.forBrand.objectType must_== ProfileType.Brand
+    }
+  }
+  "Method 'forOrg'" should {
+    "convert current profile to the one of Organisation type" in {
+      profile.forOrg.objectType must_== ProfileType.Organisation
+    }
+  }
+  "Method 'forPerson'" should {
+    "convert current profile to the one of Person type" in {
+      profile.forOrg.forPerson.objectType must_== ProfileType.Person
     }
   }
 }

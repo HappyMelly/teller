@@ -37,11 +37,16 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
   implicit val memberSummaryWrites = new Writes[Member] {
     def writes(member: Member): JsValue = {
       Json.obj(
-        "id" -> member.id.get,
+        "id" -> member.id,
         "name" -> member.name,
         "type" -> readableMemberType(member),
         "funder" -> member.funder,
-        "image" -> member.image)
+        "image" -> {
+          if (member.person)
+            member.image
+          else
+            controllers.routes.Organisations.logo(member.objectId).url
+        })
     }
   }
 
@@ -58,15 +63,40 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  import OrganisationsApi.organisationDetailsWrites
+  import PeopleApi.{ personWrites, addressWrites }
+  import ContributionsApi.contributionWrites
 
-  val orgMemberWrites = new Writes[Member] {
-    def writes(member: Member): JsValue = {
+  val organisationDetailsWrites = new Writes[OrgView] {
+    def writes(view: OrgView): JsValue = {
+      val address = Address(None, view.org.street1, view.org.street2,
+        view.org.city, view.org.province, view.org.postCode, view.org.countryCode)
+
       Json.obj(
-        "id" -> member.id.get,
-        "funder" -> member.funder,
-        "type" -> readableMemberType(member),
-        "org" -> Json.toJson(member.memberObj._2.get)(organisationDetailsWrites))
+        "logo" -> controllers.routes.Organisations.logo(view.org.id.get).url,
+        "name" -> view.org.name,
+        "about" -> view.org.about,
+        "address" -> Json.toJson(address),
+        "vat_number" -> view.org.vatNumber,
+        "registration_number" -> view.org.registrationNumber,
+        "website" -> view.org.webSite,
+        "twitter_handle" -> view.profile.twitterHandle,
+        "facebook_url" -> view.profile.facebookUrl,
+        "linkedin_url" -> view.profile.linkedInUrl,
+        "google_plus_url" -> view.profile.googlePlusUrl,
+        "members" -> view.org.people,
+        "contributions" -> view.org.contributions)
+    }
+  }
+
+  case class MemberOrgView(member: Member, orgView: OrgView)
+
+  val orgMemberWrites = new Writes[MemberOrgView] {
+    def writes(view: MemberOrgView): JsValue = {
+      Json.obj(
+        "id" -> view.member.id,
+        "funder" -> view.member.funder,
+        "type" -> readableMemberType(view.member),
+        "org" -> Json.toJson(view.orgView)(organisationDetailsWrites))
     }
   }
 
@@ -92,10 +122,13 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
     implicit request ⇒
       implicit token ⇒
         memberService.find(id) map { member ⇒
-          if (member.person)
+          if (member.person) {
             jsonOk(Json.toJson(member)(personMemberWrites))
-          else
-            jsonOk(Json.toJson(member)(orgMemberWrites))
+          } else {
+            orgService.findWithProfile(member.objectId) map { x ⇒
+              jsonOk(Json.toJson(MemberOrgView(member, x))(orgMemberWrites))
+            } getOrElse jsonNotFound("Organisation does not exist")
+          }
         } getOrElse jsonNotFound("Member does not exist")
   }
 

@@ -218,9 +218,13 @@ trait Registration extends Enrollment {
       redirectViewer {
         Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
           val person = unregisteredPerson(userData, user).insert
-          val org = if (userData.org)
-            Some(unregisteredOrg(userData).insert)
-          else None
+          val org = if (userData.org) {
+            val profile = SocialProfile(0, ProfileType.Organisation, userData.email)
+            val view = orgService.insert(OrgView(unregisteredOrg(userData), profile))
+            Some(view.org)
+          } else {
+            None
+          }
 
           paymentForm.bindFromRequest.fold(
             hasError ⇒
@@ -232,7 +236,7 @@ trait Registration extends Enrollment {
                 }
                 val customerId = subscribe(person, org, data)
                 org map { x ⇒
-                  x.copy(customerId = Some(customerId), active = true).update
+                  orgService.update(x.copy(customerId = Some(customerId), active = true))
                   person.copy(active = true).update
                   person.addRelation(x.id.get)
                 } getOrElse {
@@ -392,9 +396,7 @@ trait Registration extends Enrollment {
    */
   private def clean(person: Person, org: Option[Organisation]) = {
     personService.delete(person.id.get)
-    org map { x ⇒
-      Organisation.delete(x.id.get)
-    }
+    org foreach { x ⇒ orgService.delete(x.id.get) }
   }
 }
 

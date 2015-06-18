@@ -30,7 +30,49 @@
         <li><code>funder</code></li>
         <li><code>type</code> - "person" or "org"</li>
         <li><code>reason</code></li>
-        <li><code>org</code> - if a member is an organization, this attribute contains <a href="#organization">Organization details</a> </li>
+        <li><code>org</code> - if a member is an organization, this attribute contains organisation details
+          <ul>
+            <li><code>logo</code></li>
+            <li><code>name</code></li>
+            <li><code>address</code> - address object with properties:
+              <ul>
+                <li><code>street1</code></li>
+                <li><code>street1</code></li>
+                <li><code>city</code></li>
+                <li><code>province</code></li>
+                <li><code>post_code</code></li>
+                <li><code>country</code> - ISO 8166-2 country code</li>
+              </ul>
+            </li>
+            <li><code>vat_number</code></li>
+            <li><code>registration_number</code></li>
+            <li><code>category</code> - <code>brandentity</code> or <code>legalentity</code></li>
+            <li><code>website</code></li>
+            <li><code>twitter_handle</code> - Twitter user name, without the leading <code>@@</code></li>
+            <li><code>facebook_url</code></li>
+            <li><code>linkedin_url</code></li>
+            <li><code>google_plus_url</code></li>
+            <li><code>members</code> - array of objects with properties:
+              <ul>
+                <li><code>first_name</code></li>
+                <li><code>last_name</code></li>
+                <li><code>country</code> - ISO 8166-2 country code</li>
+              </ul>
+            </li>
+            <li><code>contributions</code> - array of objects with properties:
+              <ul>
+                <li><code>product</code>
+                  <ul>
+                    <li><code>href</code> - URL of the <a href="#product">product details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+                    <li><code>title</code></li>
+                    <li><code>category</code></li>
+                  </ul>
+                </li>
+                <li><code>role</code></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
         <li><code>person</code> - if a member is a person, this attribute contains <a href="#person">Person details</a> </li>
       </ul>
     </td>
@@ -141,7 +183,9 @@
   "funder" : true,
   "type" : "org",
   "org" : {
+    "logo": null,
     "name" : "Happy Melly One BV",
+    "about": "We are a team of Ruby developers...",
     "address" : {
       "street1" : "Handelsplein 37",
       "street2" : null,
@@ -153,6 +197,10 @@
     "vat_number" : "NL852530699B01",
     "registration_number" : "57321736",
     "website" : null,
+    "twitter_handle" : "skotlov",
+    "facebook_url" : null,
+    "linkedin_url" : null,
+    "google_plus_url" : null,
     "members" : [ {
       "id" : 22,
       "unique_name" : "jurgen.appelo",

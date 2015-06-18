@@ -18,11 +18,13 @@
       <div class="page-header">
         @if(edit) {
           <h1>Edit member @member.get.name</h1>
+
         } else {
           <h1>Add member</h1>
           <h3>Step 1: Fee</h3>
         }
       </div>
+
       @html.form(action = CSRF(if(edit) { routes.Members.update(member.get.id.get) } else { routes.Members.create() } )) {
         <input type="hidden" value="@form("objectId").value.getOrElse(0)"
           id="objectId" name="objectId"/>
@@ -30,6 +32,7 @@
           id="person" name="person"/>
         <input type="hidden" value="@form("existingObject").value.getOrElse(0)"
           id="existingObject" name="existingObject"/>
+
         @defining(form("funder")) { field =>
           <div class="form-group @if(field.hasErrors) {has-error}" id="funder">
             @defining(field.value.getOrElse("0")) { value =>
@@ -52,6 +55,7 @@
             </span>
           </div>
         }
+
         @html.money("fee", form("fee.currency"), form("fee.amount"),
           '_label -> "Fee", '_currency -> "EUR")
         @html.date(form("since"), '_label -> "Member since")

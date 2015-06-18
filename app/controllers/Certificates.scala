@@ -34,7 +34,10 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.Play.current
 import scala.concurrent.Future
 
-object Certificates extends Controller with Security with Services {
+object Certificates extends Controller
+  with Security
+  with Services
+  with Files {
 
   /**
    * Generate new certificate
@@ -81,17 +84,6 @@ object Certificates extends Controller with Security with Services {
    *
    * @param certificateId Certificate identifier
    */
-  def certificate(certificateId: String) = Action.async {
-    val contentType = "application/pdf"
-    val cached = Cache.getAs[Array[Byte]](Certificate.cacheId(certificateId))
-    if (cached.isDefined) {
-      Future.successful(Ok(cached.get).as(contentType))
-    } else {
-      val pdf = Certificate.downloadFromCloud(certificateId)
-      pdf.map {
-        case value ⇒ Ok(value).as(contentType)
-      }
-    }
-  }
+  def certificate(certificateId: String) = file(Certificate.file(certificateId))
 
 }

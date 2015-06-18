@@ -1,0 +1,31 @@
+@(profile: SocialProfile, member: Option[Member])
+
+<div class="social">
+  @profile.twitterHandle.map { handle =>
+    <a href="http://twitter.com/@handle" target="_blank">
+      <img width="25" src="@routes.Assets.at("images/securesocial/twitter.png")"/>
+    </a>
+  }
+  @profile.facebookUrl.map { url =>
+    <a href="@url" target="_blank">
+      <img width="25" src="@routes.Assets.at("images/securesocial/facebook.png")"/>
+    </a>
+  }
+  @profile.linkedInUrl.map { url =>
+    <a href="@url" target="_blank">
+      <img width="25" src="@routes.Assets.at("images/securesocial/linkedin.png")"/>
+    </a>
+  }
+  @profile.googlePlusUrl.map { url =>
+    <a href="@url" target="_blank">
+      <img width="25" src="@routes.Assets.at("images/securesocial/google.png")"/>
+    </a>
+  }
+  @member.map { m =>
+    @if(m.active) {
+      <a href="@m.profileUrl" target="_blank">
+        <img width="25" src="@routes.Assets.at("images/hm-face.jpg")"/>
+      </a>
+    }
+  }
+</div>
