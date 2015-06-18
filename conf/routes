@@ -145,6 +145,10 @@ POST          /organization/:id                                              con
 POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
 POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
 POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
+POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
+GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
+DELETE        /organization/:id/logo/delete                                  controllers.Organisations.deleteLogo(id: Long)
+
 
 GET           /participants                                                  controllers.Participants.index
 GET           /participants/brand/:brandId                                   controllers.Participants.participantsByBrand(brandId: Long)

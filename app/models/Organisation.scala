@@ -148,6 +148,14 @@ case class Organisation(
 object Organisation {
 
   /**
+   * Returns logo for the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def logo(id: Long): File =
+    File.image(s"organisations/$id", s"organisations.$id")
+
+  /**
    * Returns an organisation with only two required fields filled
    * @param name Organisation name
    * @param countryCode Country of residence

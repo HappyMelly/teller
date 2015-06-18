@@ -105,6 +105,24 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
       } getOrElse ko
     }
   }
+  "Method 'updateLogo'" should {
+    "remove a logo from the organisation" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.logo must_== true
+        service.updateLogo(id, false)
+        service.find(id).get.logo must_== false
+      } getOrElse ko
+    }
+    "add a logo to the organisation" in {
+      val id = 1L
+      service.find(id) map { x ⇒
+        x.logo must_== false
+        service.updateLogo(id, true)
+        service.find(id).get.logo must_== true
+      } getOrElse ko
+    }
+  }
 
   private def addOrgs() = {
     Seq(

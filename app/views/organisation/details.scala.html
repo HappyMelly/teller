@@ -5,7 +5,10 @@
   contributions: List[ContributionView],
   products: List[Product],
   payments: List[payment.Record]
-  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  )(implicit request: Request[Any],
+  flash: Flash,
+  handler: AuthorisationHandler,
+  token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -16,9 +19,9 @@
 
 @main(view.org.name + " - Organization", "orgs", user) {
 
-  <div class="col-md-3 info">
+  <div class="col-md-2 info">
     <div class="page-header">
-      @views.html.organisation.blocks.photo(view.org, "160")
+      @views.html.organisation.blocks.logo(view.org, "160")
     </div>
     @views.html.element.profiles(view.profile, view.org.member)
     @view.org.member.map { m =>
@@ -37,7 +40,7 @@
     </div>
   </div>
 
-  <div class="col-md-9 tab-content">
+  <div class="col-md-7 tab-content">
     <div class="page-header">
       <h1>
         @view.org.name
@@ -101,5 +104,11 @@
     }
 
   </div>
+  <script src="@routes.Assets.at("javascripts/jquery.ui.widget.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/load-image.all.min.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/canvas-to-blob.min.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/jquery.fileupload.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/jquery.fileupload-process.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("javascripts/jquery.fileupload-image.js")" type="text/javascript"></script>
 	<script src="@routes.Assets.at("organisation/details.js")" type="text/javascript"></script>
 }

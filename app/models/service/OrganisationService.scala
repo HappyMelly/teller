@@ -170,6 +170,21 @@ class OrganisationService extends Services {
       query.update(updateTuple)
       org
   }
+
+  /**
+   * Updates if the given organisation has or doesn't have a logo
+   *
+   * @param id Organisation identifier
+   * @param logo Activate/deactivate flag
+   */
+  def updateLogo(id: Long, logo: Boolean): Unit = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        organisation ← Organisations if organisation.id === id
+      } yield organisation.logo
+      query.update(logo)
+  }
+
 }
 
 object OrganisationService {

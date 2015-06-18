@@ -372,12 +372,14 @@ trait People extends JsonController
 
         personService.find(id).map { person ⇒
           val route = routes.People.details(person.id.get).url + "#facilitation"
-          upload(Person.signature(id), "signature", route) {
+          upload(Person.signature(id), "signature") map { _ ⇒
             personService.update(person.copy(signature = true))
             val activity = person.activity(
               user.person,
               Activity.Predicate.UploadedSign).insert
             Redirect(route).flashing("success" -> activity.toString)
+          } recover {
+            case e ⇒ Redirect(route).flashing("error" -> e.getMessage)
           }
         } getOrElse Future.successful(NotFound)
   }

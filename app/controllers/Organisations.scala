@@ -33,12 +33,15 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
-import play.api.data.format.Formatter
 import play.api.i18n.Messages
-import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.Json
 import play.api.{ Logger, Play }
 
-trait Organisations extends Controller with Security with Services {
+trait Organisations extends JsonController
+  with Security
+  with Services
+  with Files {
 
   /**
    * HTML form mapping for creating and editing.
@@ -246,6 +249,44 @@ trait Organisations extends Controller with Security with Services {
           }
         } getOrElse NotFound
   }
+
+  /**
+   * Upload a new logo to Amazon
+   *
+   * @param id Organisation identifier
+   */
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        upload(Organisation.logo(id), "logo") map { _ ⇒
+          orgService.updateLogo(id, true)
+          val route = routes.Organisations.details(id).url
+          jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
+        } recover {
+          case e ⇒ jsonBadRequest(e.getMessage)
+        }
+  }
+
+  /**
+   * Deletes logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Organisation.logo(id).remove()
+        orgService.updateLogo(id, false)
+        val route = routes.Organisations.details(id).url
+        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
+  }
+
+  /**
+   * Retrieve and cache a logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def logo(id: Long) = file(Organisation.logo(id))
 }
 
 object Organisations extends Organisations with Security with Services

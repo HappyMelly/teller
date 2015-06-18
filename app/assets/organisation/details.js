@@ -63,5 +63,40 @@ $(document).ready( function() {
     }
     $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
+    var btnLogoUpload = '#btnLogoUpload';
+    var btnLogoDelete = '#btnLogoDelete';
+    $('#logoUpload').fileupload({
+        dataType: 'json',
+        disableImageResize: false,
+        imageMaxWidth: 300,
+        imageMaxHeight: 300,
+        imageCrop: false,
+        autoUpload: false,
+        replaceFileInput: false,
+        done: function (e, data) {
+            $('#photo').attr('src', data.result.link);
+            $(btnLogoUpload).text('Upload').hide();
+        }
+    }).bind('fileuploadadd', function (e, data) {
+        $(btnLogoUpload).show();
+        $('#logo').attr('src', URL.createObjectURL(data.files[0]));
+        $(btnLogoUpload).off('click');
+        $(btnLogoUpload).on('click', function(e) {
+            $(btnLogoUpload).text('Uploading...');
+            data.submit();
+        });
+    });
+    $(btnLogoDelete).on('click', function(e) {
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('#photo').attr('src', data.link);
+            $('#logo').attr('src', data.link);
+        });
+        return false;
+    });
+    $(btnLogoUpload).hide();
 });
 

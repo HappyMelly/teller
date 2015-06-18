@@ -23,7 +23,7 @@
  */
 package controllers
 
-import fly.play.s3.{ BucketFile, S3Exception }
+import fly.play.s3.BucketFile
 import models.File
 import play.api.Play.current
 import play.api.cache.Cache
@@ -35,6 +35,11 @@ import services.S3Bucket
 
 trait Files extends Controller {
 
+  /**
+   * Retrieves the given file from Amazon cloud and loads it to cache
+   *
+   * @param file File
+   */
   protected def file(file: File) = Action.async {
     val cached = Cache.getAs[Array[Byte]](file.cacheKey)
     if (cached.isDefined) {
@@ -46,22 +51,27 @@ trait Files extends Controller {
     }
   }
 
-  protected def upload(file: File, fieldName: String, route: String)(
-    f: SimpleResult)(implicit request: Request[AnyContent]): Future[SimpleResult] = {
-    request.body.asMultipartFormData.get.file(fieldName).map { picture ⇒
-      val encoding = "ISO-8859-1"
-      val source = Source.fromFile(picture.ref.file.getPath, encoding)
-      val byteArray = source.toArray.map(_.toByte)
-      source.close()
-      S3Bucket.add(BucketFile(file.name, file.fileType, byteArray)).map { unit ⇒
-        Cache.remove(file.cacheKey)
-        f
-      }.recover {
-        case S3Exception(status, code, message, originalXml) ⇒
-          Redirect(route).flashing("error" -> "File cannot be temporary saved")
-      }
-    } getOrElse {
-      Future.successful(Redirect(route).flashing("error" -> "Please choose a file"))
-    }
+  /**
+   * Uploads file from form Amazon cloud
+   *
+   * @param file File object
+   * @param fieldName Name of a file field on the form
+   */
+  protected def upload(file: File, fieldName: String)(
+    implicit request: Request[AnyContent]): Future[Boolean] = {
+    request.body.asMultipartFormData.map { data ⇒
+      data.file(fieldName).map { picture ⇒
+        val encoding = "ISO-8859-1"
+        val source = Source.fromFile(picture.ref.file.getPath, encoding)
+        val byteArray = source.toArray.map(_.toByte)
+        source.close()
+        S3Bucket.add(BucketFile(file.name, file.fileType, byteArray)).map { unit ⇒
+          Cache.remove(file.cacheKey)
+          true
+        }.recover {
+          case _ ⇒ throw new RuntimeException("File cannot be temporary saved")
+        }
+      } getOrElse { throw new RuntimeException("File field does not exist") }
+    } getOrElse { throw new RuntimeException("Please choose a file") }
   }
 }

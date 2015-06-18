@@ -37,11 +37,16 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
   implicit val memberSummaryWrites = new Writes[Member] {
     def writes(member: Member): JsValue = {
       Json.obj(
-        "id" -> member.id.get,
+        "id" -> member.id,
         "name" -> member.name,
         "type" -> readableMemberType(member),
         "funder" -> member.funder,
-        "image" -> member.image)
+        "image" -> {
+          if (member.person)
+            member.image
+          else
+            controllers.routes.Organisations.logo(member.objectId).url
+        })
     }
   }
 
@@ -67,6 +72,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         view.org.city, view.org.province, view.org.postCode, view.org.countryCode)
 
       Json.obj(
+        "logo" -> controllers.routes.Organisations.logo(view.org.id.get).url,
         "name" -> view.org.name,
         "about" -> view.org.about,
         "address" -> Json.toJson(address),
