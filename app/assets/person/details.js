@@ -42,11 +42,9 @@ function updatePhoto() {
     var object = $('#choosePhotoContent').find('.active');
     var type = $(object).parent('div').attr('id');
     var name = "";
-    if (type == "facebook") {
-        name = $(object).data('name');
-    }
+
     var src = $(object).attr('src');
-    $.post(url, {type: type, name: name}, null, "json").done(function(data) {
+    $.post(url, { type: type }, null, "json").done(function(data) {
         $('#photoDialog').modal('hide');
         $('#photo').attr('src', src);
         reloadCompletionWidget();
@@ -61,26 +59,49 @@ function showSelectPhotoForm() {
             switchActivePhoto($(this));
         });
         $('#saveLink').on('click', updatePhoto);
-        $('#facebookRequest').on('click', retrieveFacebookPhoto);
+        setupCustomPhotoActions();
     });
 }
 
-function retrieveFacebookPhoto() {
-    var name = $('#facebookName').val();
-    var url = jsRoutes.controllers.SocialProfiles.facebookUrl(getPersonId(), name).url
-    $.get(url, {}, function(data) {
-        $('#facebook').empty();
-        $('#choosePhotoContent').find('img').removeClass('active');
-        var html = "<img class='facebook img-rounded photo active'";
-        html += " data-name='" + name + "' height='200' src='" + data.message + "'/>";
-        $('#facebook').html(html);
-        $('#facebook img').on('click', function(e) {
-            switchActivePhoto($(this));
+function setupCustomPhotoActions() {
+    var btnPhotoUpload = '#btnPhotoUpload';
+    var btnPhotoDelete = '#btnPhotoDelete';
+    $('#photoUpload').fileupload({
+        dataType: 'json',
+        disableImageResize: false,
+        imageMaxWidth: 300,
+        imageMaxHeight: 300,
+        imageCrop: false,
+        autoUpload: false,
+        replaceFileInput: false,
+        done: function (e, data) {
+            $('#customPhoto').attr('src', data.result.link);
+            $(btnPhotoUpload).text('Upload').hide();
+        }
+    }).bind('fileuploadadd', function (e, data) {
+        $(btnPhotoUpload).show();
+        $('#customPhoto').attr('src', URL.createObjectURL(data.files[0]));
+        $('#customPhoto').addClass('photo')
+        $(btnPhotoUpload).off('click');
+        $(btnPhotoUpload).on('click', function(e) {
+            $(btnPhotoUpload).text('Uploading...');
+            data.submit();
         });
-    }, "json").fail(function(jqXHR, status, error) {
-        var message = JSON.parse(jqXHR.responseText).message;
-        alert(message);
     });
+    $(btnPhotoDelete).on('click', function(e) {
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('#customPhoto').
+                attr('src', data.link).
+                removeClass('photo').
+                removeClass('active');
+        });
+        return false;
+    });
+    $(btnPhotoUpload).hide();
 }
 
 $(document).ready( function() {
@@ -129,5 +150,6 @@ $(document).ready( function() {
     $('#choosePhotoLink').on('click', function(e) {
         showSelectPhotoForm();
     });
+
 });
 

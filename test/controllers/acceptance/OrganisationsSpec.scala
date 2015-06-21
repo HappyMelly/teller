@@ -177,7 +177,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val result: Future[SimpleResult] = controller.details(org.id.get).apply(request)
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Funder")
+    contentAsString(result) must contain("funder.jpg")
     contentAsString(result) must contain("/member/1/edit")
   }
 

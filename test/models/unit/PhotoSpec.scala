@@ -28,27 +28,12 @@ import org.specs2.mutable._
 
 class PhotoSpec extends Specification {
 
-  "Url to Facebook photo" should {
-    "be returned when url to profile is valid" in {
-      Photo.facebookUrl("http://www.facebook.com/skotlov") must_== "http://graph.facebook.com/skotlov/picture?type=large"
-      Photo.facebookUrl("https://www.facebook.com/aolchik") must_== "http://graph.facebook.com/aolchik/picture?type=large"
-    }
-    "not be returned when url to profile is invalid" in {
-      Photo.facebookUrl("http://www.facebook.com/") must_== ""
-    }
-  }
-
   "Photo object with a valid type should be returned" >> {
     "if the type is Gravatar" in {
       val profile = SocialProfile(email = "test@test.com")
       Photo("gravatar", profile).id must_== Some("gravatar")
     }
-    "if the type is Facebook" in {
-      val profile = SocialProfile(email = "test@test.com",
-        facebookUrl = Some("http://www.facebook.com/skotlov"))
-      Photo("facebook", profile).id must_== Some("facebook")
-    }
-    "if the type is anything but Gravatar and Facebook" in {
+    "if the type is anything but Gravatar" in {
       val profile = SocialProfile(email = "test@test.com")
       Photo("test", profile).id must_== None
     }

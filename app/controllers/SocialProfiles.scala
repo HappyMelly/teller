@@ -31,25 +31,7 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.data.validation.Constraints._
 
-trait SocialProfiles extends JsonController with Security with Services {
-
-  /**
-   * Returns an url to a facebook profile photo if this profile is not used
-   *
-   * @param personId Person identifier
-   * @param name Facebook identifier
-   */
-  def facebookUrl(personId: Long, name: String) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val profileUrl = "https://www.facebook.com/" + name
-        val profile = SocialProfile(objectId = personId, email = "dummy",
-          facebookUrl = Some(profileUrl))
-        socialProfileService.findDuplicate(profile) map { x ⇒
-          jsonConflict("This Facebook profile is already taken")
-        } getOrElse jsonSuccess(Photo.facebookUrl(profileUrl))
-  }
-}
+trait SocialProfiles extends JsonController with Security with Services
 
 object SocialProfiles extends SocialProfiles {
 
