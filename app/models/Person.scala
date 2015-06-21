@@ -346,6 +346,9 @@ object Person {
   def signature(id: Long): File =
     File.image(Person.fullFileName(id), Person.cacheId(id))
 
+  def photo(id: Long): File =
+    File.image(s"photos/$id", s"photos.$id")
+
   /**
    * Activates the person, if the parameter is true, or deactivates it.
    * During activization, a person also becomes a real person

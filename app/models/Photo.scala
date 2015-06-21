@@ -34,6 +34,7 @@ object Photo {
     url map {
       case s if s.contains("facebook") ⇒ Photo(Some("facebook"), url)
       case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
+      case s if s.contains("photo") ⇒ Photo(Some("custom"), url)
       case _ ⇒ Photo.empty
     } getOrElse Photo.empty
   }
@@ -49,16 +50,6 @@ object Photo {
     Gravatar(email, ssl = true).size(300).avatarUrl
 
   /**
-   * Returns url to a Facebook photo based on the given Facebook profile
-   *
-   * @param url Url to Facebook profile
-   */
-  def facebookUrl(url: String): String =
-    ("""[\w\.]+$""".r findFirstIn url) map { userId ⇒
-      "http://graph.facebook.com/" + userId + "/picture?type=large"
-    } getOrElse ""
-
-  /**
    * Returns photo object based on the given type
    *
    * @param photoType One of three possible types: facebool, gravatar, nophoto
@@ -67,8 +58,6 @@ object Photo {
   def apply(photoType: String, profile: SocialProfile): Photo = {
     photoType match {
       case "gravatar" ⇒ Photo(Some("gravatar"), Some(gravatarUrl(profile.email)))
-      case "facebook" ⇒ Photo(Some("facebook"),
-        Some(facebookUrl(profile.facebookUrl.getOrElse(""))))
       case _ ⇒ Photo.empty
     }
   }

@@ -25,7 +25,6 @@
 package controllers
 
 import controllers.Forms._
-import fly.play.s3.{ BucketFile, S3Exception }
 import models.UserRole.Role._
 import models._
 import models.payment.{ GatewayWrapper, PaymentException, RequestException }
@@ -33,19 +32,18 @@ import models.service.{ SocialProfileService, Services }
 import org.joda.time.DateTime
 import play.api.{ Logger, Play }
 import play.api.Play.current
-import play.api.cache.Cache
 import play.api.data.Forms._
 import play.api.data.format.Formatter
 import play.api.data.validation.Constraints
 import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.Json
 import play.api.mvc._
 import scala.language.postfixOps
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.io.Source
-import services.S3Bucket
 import services.integrations.Integrations
 
 trait People extends JsonController
@@ -251,12 +249,10 @@ trait People extends JsonController
         personService.find(personId).map { person ⇒
           orgService.find(organisationId).map { organisation ⇒
             person.deleteRelation(organisationId)
-
             val activity = person.activity(
               user.person,
               Activity.Predicate.Disconnected,
               Some(organisation)).insert
-
             // Redirect to the page we came from - either the person or
             // organisation details page.
             val action = if (page == "person")
@@ -413,6 +409,44 @@ trait People extends JsonController
   def signature(personId: Long) = file(Person.signature(personId))
 
   /**
+   * Upload a new photo to Amazon
+   *
+   * @param id Person identifier
+   */
+  def uploadPhoto(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        upload(Person.photo(id), "photo") map { _ ⇒
+          // orgService.updatePhoto(id, true)
+          val route = routes.People.details(id).url
+          jsonOk(Json.obj("link" -> routes.People.photo(id).url))
+        } recover {
+          case e ⇒ jsonBadRequest(e.getMessage)
+        }
+  }
+
+  /**
+   * Deletes photo of the given person
+   *
+   * @param id Person identifier
+   */
+  def deletePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Person.photo(id).remove()
+        // orgService.updateLogo(id, false)
+        val route = routes.People.details(id).url
+        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
+  }
+
+  /**
+   * Retrieve and cache a photo of the given person
+   *
+   * @param id Person identifier
+   */
+  def photo(id: Long) = file(Person.photo(id))
+
+  /**
    * Updates profile photo and may be a facebook profile link
    *
    * @param id Person identifier
@@ -420,21 +454,19 @@ trait People extends JsonController
   def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        val form = Form(tuple("type" -> nonEmptyText, "name" -> text)).bindFromRequest
+        val form = Form(single("type" -> nonEmptyText)).bindFromRequest
         form.fold(
           withError ⇒ jsonBadRequest("No option is provided"),
           {
-            case (photoType, facebookName) ⇒
+            case photoType ⇒
               personService.find(id) map { person ⇒
                 val profile = person.socialProfile
-                if (photoType == "facebook" && profile.facebookUrl.isEmpty) {
-                  val profileUrl = "https://www.facebook.com/" + facebookName
-                  person.socialProfile_=(profile.copy(facebookUrl = Some(profileUrl)))
+                var photo = photoType match {
+                  case "nophoto" ⇒ Photo.empty
+                  case "gravatar" ⇒ Photo(photoType, profile)
+                  case _ ⇒ Photo(Some(photoType),
+                    Some(fullUrl(routes.People.photo(id).url)))
                 }
-                val photo = if (photoType == "nophoto")
-                  Photo.empty
-                else
-                  Photo(photoType, person.socialProfile)
                 personService.update(person.copy(photo = photo))
                 jsonSuccess("ok")
               } getOrElse NotFound
@@ -450,14 +482,10 @@ trait People extends JsonController
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
-          val facebook = person.socialProfile.facebookUrl map { url ⇒
-            Some(Photo.facebookUrl(url))
-          } getOrElse None
           val active = person.photo.id getOrElse "nophoto"
-          Ok(views.html.person.photo(
+          Ok(views.html.person.photoSelection(id,
             Photo.gravatarUrl(person.socialProfile.email),
-            facebook,
-            active))
+            routes.People.photo(id).url, active))
         } getOrElse NotFound
   }
 
@@ -576,6 +604,14 @@ trait People extends JsonController
       Some(notificatonMsg(msgType, updated.get))
     else
       None
+  }
+
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  private def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 
   protected def notificatonMsg(msgType: String, value: String): String =

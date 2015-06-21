@@ -11,26 +11,9 @@
 @org.member.map { m =>
 
   <div class="col-md-12">
-    <div class="col-md-4 block">
-      Member status:
-      @if(m.funder) {
-        <h2>Funder</h2>
-      } else {
-        <h2>Supporter</h2>
-      }
-      since <b>@m.since</b><br/>
-      until <b>@m.until</b>
-    </div>
-    <div class="col-md-8">
-      <p><b>Public profile:</b> <a href="@m.profileUrl"
-      target="_blank">@org.name</a>
-      </p>
-      <p><b>Available benefits:</b> <a href="http://happymelly.com/benefits"
-      target="_blank">list</a>
-      </p>
-    </div>
-
+    @views.html.element.badge(m)
     <div class="col-md-12 block">
+      <legend>Payments</legend>
       <table class="payments table table-bordered">
         <thead>
           <tr>
@@ -57,7 +40,6 @@
         </tbody>
       </table>
     </div>
-    @views.html.element.badge(m)
     <div class="col-md-12 block">
       <legend>Membership Renewal</legend>
       @if(m.renewal) {

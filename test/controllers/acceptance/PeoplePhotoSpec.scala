@@ -38,13 +38,7 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
-  When a person has a Facebook profile
-    a photo from Facebook should be shown as an option                  $e1
-
-  When a peson does not have a Facebook profile
-    a field requesting Facebook name should be shown as an option       $e2
-
-  Gravatar and No photo options should
+  Gravatar and Custom options should
     be always available to a person to choose from                      $e3
 
   When a person provides incomplete data about new photo the system
@@ -52,7 +46,6 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
   When a person provides valid data the system
     should update a person profile                                      $e5
-    should update a person profile if Facebook photo is added           $e6
   """
 
   class TestPeople() extends People with Security with FakeServices
@@ -63,30 +56,10 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val person = PersonHelper.one()
   val profile = new SocialProfile(email = "test@test.com")
-  val facebookPhoto = Photo(Some("facebook"),
-    Some("http://graph.facebook.com/skotlov/picture?type=large"))
 
   trait DefaultPerson extends MockContext {
     person.socialProfile_=(profile)
     (personService.find(_: Long)) expects 1L returning Some(person)
-  }
-
-  def e1 = {
-    person.socialProfile_=(new SocialProfile(email = "test@test.com",
-      facebookUrl = Some("https://www.facebook.com/skotlov")))
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.choosePhoto(1L).apply(req)
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("<img class=\"facebook")
-    contentAsString(result) must contain("http://graph.facebook.com")
-  }
-
-  def e2 = new DefaultPerson {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.choosePhoto(1L).apply(req)
-    contentAsString(result) must not contain "http://graph.facebook.com"
-    contentAsString(result) must contain("Enter Facebook name")
   }
 
   def e3 = new DefaultPerson {
@@ -110,31 +83,13 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     status(result) must equalTo(OK)
   }
 
-  def e6 = new DefaultPerson {
-    (personService.update _) expects personWithFacebook returning personWithFacebook
-
-    val result = controller.updatePhoto(1L).apply(facebookRequest)
-    status(result) must equalTo(OK)
-  }
-
   private def gravatarRequest =
     prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
       withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
 
-  private def facebookRequest =
-    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-
   private def noPhotoRequest =
     prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
       withFormUrlEncodedBody(("type" -> "nophoto"), ("name" -> ""))
-
-  private def personWithFacebook = {
-    val updatedPerson = person.copy(photo = facebookPhoto)
-    val facebookUrl = "https://www.facebook.com/skotlov"
-    updatedPerson.socialProfile_=(profile.copy(facebookUrl = Some(facebookUrl)))
-    updatedPerson
-  }
 
   private def personWithGravatar = {
     val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
