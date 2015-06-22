@@ -266,8 +266,7 @@ trait People extends JsonController
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
-        val licenses = licenseService.licenses(id)
-        val showFacilitationTab = if (licenses.length > 0) true else false
+        val facilitator = (licenseService.licenses(id).length > 0)
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
@@ -278,7 +277,7 @@ trait People extends JsonController
         else None
         Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
-          showFacilitationTab, accountRole, duplicated))
+          facilitator, accountRole, duplicated))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -412,6 +411,23 @@ trait People extends JsonController
   }
 
   /**
+   * Returns form with erros if a person with identical social networks exists
+   *
+   * @param person Person object with incomplete social profile
+   * @param id Identifier of a person which is updated
+   * @param editorName Name of a user who adds changes
+   */
+  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
+    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
+    socialProfileService.findDuplicate(base) map { duplicate ⇒
+      var form = personForm(editorName).fill(person)
+      compareSocialProfiles(duplicate, base).
+        foreach(err ⇒ form = form.withError(err))
+      Some(form)
+    } getOrElse None
+  }
+
+  /**
    * Compares social profiles and returns a list of errors for a form
    * @param left Social profile object
    * @param right Social profile object
@@ -437,38 +453,21 @@ trait People extends JsonController
   }
 
   /**
-   * Returns form with erros if a person with identical social networks exists
-   *
-   * @param person Person object with incomplete social profile
-   * @param id Identifier of a person which is updated
-   * @param editorName Name of a user who adds changes
-   */
-  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
-    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
-    socialProfileService.findDuplicate(base) map { duplicate ⇒
-      var form = personForm(editorName).fill(person)
-      compareSocialProfiles(duplicate, base).
-        foreach(err ⇒ form = form.withError(err))
-      Some(form)
-    } getOrElse None
-  }
-
-  /**
    * Compares social profiles and returns a list of errors for a form
    *
-   * @param old Person
+   * @param existing Person
    * @param updated Updated person
    */
-  protected def composeSocialNotification(old: Person,
+  protected def composeSocialNotification(existing: Person,
     updated: Person): Option[String] = {
     val updatedProfile = updated.socialProfile
-    val oldProfile = old.socialProfile
+    val oldProfile = existing.socialProfile
     val notifications = List(
       composeNotification("twitter", oldProfile.twitterHandle, updatedProfile.twitterHandle),
       composeNotification("facebook", oldProfile.facebookUrl, updatedProfile.facebookUrl),
       composeNotification("google", oldProfile.googlePlusUrl, updatedProfile.googlePlusUrl),
       composeNotification("linkedin", oldProfile.linkedInUrl, updatedProfile.linkedInUrl),
-      composeNotification("blog", old.blog, updated.blog))
+      composeNotification("blog", existing.blog, updated.blog))
     val nonEmptyNotifications = notifications.filterNot(_.isEmpty)
     nonEmptyNotifications.headOption map { first ⇒
       val prefix = "%s updated her/his social profile.".format(updated.fullName)
