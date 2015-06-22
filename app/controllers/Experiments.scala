@@ -52,23 +52,29 @@ trait Experiments extends JsonController
   def add(memberId: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        memberService.find(memberId) map { member ⇒
-          Ok(views.html.experiment.form(user, memberId, form))
-        } getOrElse NotFound("Member not found")
+        Ok(views.html.experiment.form(user, memberId, form))
   }
 
+  /**
+   * Creates new experiment for the given member
+   *
+   * @param memberId Member identifier
+   */
   def create(memberId: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        memberService.find(memberId) map { member ⇒
-          form.bindFromRequest.fold(
-            error ⇒ BadRequest(views.html.experiment.form(user, memberId, error)),
-            experiment ⇒ {
+        form.bindFromRequest.fold(
+          error ⇒ BadRequest(views.html.experiment.form(user, memberId, error)),
+          experiment ⇒ {
+            memberService.find(memberId) map { member ⇒
               experimentService.insert(experiment.copy(memberId = memberId))
-              val url = routes.People.details(member.objectId).url + "#experiments"
-              Redirect(url)
-            })
-        } getOrElse NotFound("Member not found")
+              val url = if (member.person)
+                routes.People.details(member.objectId).url
+              else
+                routes.Organisations.details(member.objectId).url
+              Redirect(url + "#experiments")
+            } getOrElse NotFound("Member not found")
+          })
   }
 
   /**
@@ -78,7 +84,7 @@ trait Experiments extends JsonController
    * Member identifier is used to check access rights
    *
    * @param memberId Member identifier
-   * @param id Testimonial identifier
+   * @param id Experiment identifier
    */
   def delete(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
@@ -87,12 +93,21 @@ trait Experiments extends JsonController
         jsonSuccess("ok")
   }
 
+  /**
+   * Renders an edit form for the given experiment if the experiment exists and is
+   * belonged to the given member
+   *
+   * Member identifier is used to check access rights
+   *
+   * @param memberId Member identifier
+   * @param id Experiment identifier
+   */
   def edit(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
           Ok(views.html.experiment.form(user, memberId, form.fill(experiment), Some(id)))
-        } getOrElse NotFound("Experiment is not found")
+        } getOrElse NotFound("Experiment not found")
   }
 
   /**
@@ -119,9 +134,17 @@ trait Experiments extends JsonController
         form.bindFromRequest.fold(
           error ⇒ BadRequest(views.html.experiment.form(user, memberId, error)),
           experiment ⇒ {
-            experimentService.update(experiment)
-            val url = routes.Brands.details(memberId).url + "#testimonials"
-            Redirect(url)
+            experimentService.find(id) map { existing ⇒
+              memberService.find(memberId) map { member ⇒
+                experimentService.update(experiment.copy(id = Some(id),
+                  memberId = memberId))
+                val url = if (member.person)
+                  routes.People.details(member.objectId).url
+                else
+                  routes.Organisations.details(member.objectId).url
+                Redirect(url + "#experiments")
+              } getOrElse NotFound("Member not found")
+            } getOrElse NotFound("Experiment not found")
           })
   }
 }
