@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ People, Security }
+import controllers.{ ProfilePhotos, Security }
 import helpers._
 import models.{ SocialProfile, Photo }
 import models.service.PersonService
@@ -34,7 +34,7 @@ import play.api.libs.json._
 import play.api.test.FakeRequest
 import stubs._
 
-class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
+class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
@@ -48,9 +48,9 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
     should update a person profile                                      $e5
   """
 
-  class TestPeople() extends People with Security with FakeServices
+  class TestProfilePhotos() extends ProfilePhotos with Security with FakeServices
 
-  val controller = new TestPeople()
+  val controller = new TestProfilePhotos()
   val personService = mock[PersonService]
   controller.personService_=(personService)
 
@@ -64,14 +64,14 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = new DefaultPerson {
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.choosePhoto(1L).apply(req)
+    val result = controller.choose(1L).apply(req)
     contentAsString(result) must contain("https://secure.gravatar.com")
     contentAsString(result) must contain("happymelly-face-white.png")
   }
 
   def e4 = {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.updatePhoto(1L).apply(req)
+    val result = controller.update(1L).apply(req)
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("No option is provided")
   }
@@ -79,7 +79,7 @@ class PeoplePhotoSpec extends PlayAppSpec with IsolatedMockFactory {
   def e5 = new DefaultPerson {
     (personService.update _) expects personWithGravatar returning personWithGravatar
 
-    val result = controller.updatePhoto(1L).apply(gravatarRequest)
+    val result = controller.update(1L).apply(gravatarRequest)
     status(result) must equalTo(OK)
   }
 

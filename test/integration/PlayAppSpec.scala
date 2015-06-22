@@ -201,6 +201,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `EVENT_PARTICIPANT`").execute
     Q.updateNA("TRUNCATE `EVENT_TYPE`").execute
     Q.updateNA("TRUNCATE `EXCHANGE_RATE`").execute
+    Q.updateNA("TRUNCATE `EXPERIMENT`").execute
     Q.updateNA("TRUNCATE `FACILITATOR`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_COUNTRY`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_LANGUAGE`").execute

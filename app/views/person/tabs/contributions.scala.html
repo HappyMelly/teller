@@ -1,7 +1,6 @@
-@(person: Person,
-  contributions: List[ContributionView])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+@(contributions: List[ContributionView])(implicit request: Request[Any],
+  handler: AuthorisationHandler,
+  token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -9,7 +8,7 @@
 @import models.UserRole.Role._
 
 @if(contributions.isEmpty) {
-    <p>@person.fullName has no contributions.</p>
+    <p>There are no contributions.</p>
 } else {
     <table class="datatables table table-bordered">
         <thead>

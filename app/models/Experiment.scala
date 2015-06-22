@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,38 +21,11 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package models
 
-package models.brand
-
-import models.service.BrandService
-import models.{ Activity, ActivityRecorder, Brand }
-
-case class EventType(id: Option[Long],
-  brandId: Long,
+case class Experiment(id: Option[Long],
+  memberId: Long,
   name: String,
-  defaultTitle: Option[String],
-  maxHours: Int,
-  free: Boolean) extends ActivityRecorder {
-
-  /**
-   * Returns identifier of the object
-   */
-  def identifier: Long = id.getOrElse(0)
-
-  /**
-   * Returns string identifier which can be understood by human
-   *
-   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
-   */
-  def humanIdentifier: String = name
-
-  /**
-   * Returns type of this object
-   */
-  def objectType: String = Activity.Type.EventType
-
-  /**
-   * @deprecated
-   */
-  def brand: Brand = BrandService.get.find(this.brandId).get
-}
+  description: String,
+  picture: Boolean,
+  url: Option[String])

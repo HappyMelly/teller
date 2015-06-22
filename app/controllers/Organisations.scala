@@ -258,7 +258,7 @@ trait Organisations extends JsonController
   def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        upload(Organisation.logo(id), "logo") map { _ ⇒
+        uploadFile(Organisation.logo(id), "logo") map { _ ⇒
           orgService.updateLogo(id, true)
           val route = routes.Organisations.details(id).url
           jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))

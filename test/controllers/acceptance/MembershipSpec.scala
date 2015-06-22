@@ -29,7 +29,6 @@ import controllers.Membership
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import models.service.{ PersonService, OrganisationService }
 import org.scalamock.specs2.IsolatedMockFactory
-import play.api.test.FakeRequest
 import stubs._
 
 class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {

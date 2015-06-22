@@ -24,9 +24,9 @@
 
 package controllers
 
+import models.{ DynamicResourceChecker, UserAccount, UserIdentity, UserRole }
 import models.UserRole.DynamicRole
-import models._
-import models.service.{ Services, EventService }
+import models.service.Services
 import securesocial.core._
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }

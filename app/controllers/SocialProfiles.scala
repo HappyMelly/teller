@@ -24,12 +24,10 @@
 package controllers
 
 import controllers.Forms._
-import models.{ SocialProfile, Photo, ProfileType }
-import models.UserRole.Role._
-import models.service.{ SocialProfileService, Services }
+import models.{ SocialProfile, ProfileType }
+import models.service.Services
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
-import play.api.data.validation.Constraints._
 
 trait SocialProfiles extends JsonController with Security with Services
 

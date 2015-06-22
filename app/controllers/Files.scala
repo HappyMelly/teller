@@ -57,7 +57,7 @@ trait Files extends Controller {
    * @param file File object
    * @param fieldName Name of a file field on the form
    */
-  protected def upload(file: File, fieldName: String)(
+  protected def uploadFile(file: File, fieldName: String)(
     implicit request: Request[AnyContent]): Future[Boolean] = {
     request.body.asMultipartFormData.map { data ⇒
       data.file(fieldName).map { picture ⇒

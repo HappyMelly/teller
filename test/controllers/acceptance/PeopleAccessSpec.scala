@@ -42,15 +42,6 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
       be accessible to the owner of the profile              $e2
       not be accessible to Viewers                           $e3
 
-    'Update photo' action should
-      be accessible to Editors                               $e4
-      be accessible to the owner of the profile              $e5
-      not be accessible to Viewers                           $e6
-
-    'Choose photo' action should
-      be accessible to Editors                               $e7
-      be accessible to the owner of the profile              $e8
-      not be accessible to Viewers                           $e9
   """
 
   val controller = new TestPeople()
@@ -79,53 +70,4 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(SEE_OTHER)
   }
-
-  def e4 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.updatePhoto(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e5 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.updatePhoto(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e6 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.updatePhoto(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
-  }
-
-  def e7 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val result = controller.choosePhoto(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e8 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/photo")
-    val result = controller.choosePhoto(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e9 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.choosePhoto(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
-  }
-
 }

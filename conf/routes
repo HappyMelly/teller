@@ -161,10 +161,6 @@ GET           /participant/:eventId/:personId/delete/                        con
 
 GET           /people                                                        controllers.People.index
 
-POST          /person/:personId/signature                                    controllers.People.uploadSignature(personId: Long)
-GET           /person/:personId/signature                                    controllers.People.signature(personId: Long)
-POST          /person/:personId/signature/delete                             controllers.People.deleteSignature(personId: Long)
-
 GET           /person/new                                                    controllers.People.add
 POST          /person/new                                                    controllers.People.create
 GET           /person/:id                                                    controllers.People.details(id: Long)
@@ -173,12 +169,13 @@ GET           /person/:id/edit                                               con
 POST          /person/:id/activation                                         controllers.People.activation(id: Long)
 POST          /person/:id/delete                                             controllers.People.delete(id: Long)
 POST          /person/:id/cancel                                             controllers.People.cancel(id: Long)
+GET           /person/:id/tabs                                               controllers.People.renderTabs(id: Long, tab: String)
 
-POST          /person/:id/photo/upload                                       controllers.People.uploadPhoto(id: Long)
-GET           /person/:id/photo                                              controllers.People.photo(id: Long)
-DELETE        /person/:id/photo/delete                                       controllers.People.deletePhoto(id: Long)
-POST          /person/:personId/photo                                        controllers.People.updatePhoto(personId: Long)
-GET           /person/:personId/photo/choose                                 controllers.People.choosePhoto(personId: Long)
+POST          /person/:id/photo/upload                                       controllers.ProfilePhotos.upload(id: Long)
+GET           /person/:id/photo                                              controllers.ProfilePhotos.photo(id: Long)
+DELETE        /person/:id/photo/delete                                       controllers.ProfilePhotos.delete(id: Long)
+POST          /person/:id/photo                                              controllers.ProfilePhotos.update(id: Long)
+GET           /person/:id/photo/choose                                       controllers.ProfilePhotos.choose(id: Long)
 
 
 GET           /person/:id/licenses/new                                       controllers.Licenses.add(id: Long)
@@ -214,6 +211,10 @@ GET           /registration/payment                                          con
 POST          /registration/payment                                          controllers.Registration.charge
 GET           /registration/authenticate/:provider                           controllers.Registration.authenticate(provider)
 GET           /registration/congratulations                                  controllers.Registration.congratulations(orgId: Option[Long] ?= None)
+
+POST          /person/:personId/signature                                    controllers.Signatures.upload(personId: Long)
+GET           /person/:personId/signature                                    controllers.Signatures.signature(personId: Long)
+POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
 GET           /statistics/                                                   controllers.Statistics.index
 GET           /statistics/type/facilitators/brand/:id                        controllers.Statistics.byFacilitators(id: Long)

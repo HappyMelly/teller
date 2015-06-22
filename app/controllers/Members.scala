@@ -26,7 +26,6 @@ package controllers
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.{ Activity, Member }
-import services.integrations.Integrations
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play

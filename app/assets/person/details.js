@@ -104,6 +104,26 @@ function setupCustomPhotoActions() {
     $(btnPhotoUpload).hide();
 }
 
+/**
+ * Loads tab content (if needed) and shows it to a user
+ * @param elem Tab button
+ * @returns {boolean}
+ */
+function showTab(elem) {
+    var url = $(elem).attr('data-href'),
+        target = $(elem).attr('href');
+    if ($.inArray(target, loadedTabs) < 0 && url) {
+        $.get(url, function(data) {
+            $(target).html(data);
+        });
+        loadedTabs[loadedTabs.length] = target;
+    }
+    $(elem).tab('show');
+    return false;
+}
+
+var loadedTabs = [];
+
 $(document).ready( function() {
 
     // Delete links.
@@ -136,14 +156,13 @@ $(document).ready( function() {
     });
 
     $('#sidemenu a').click(function (e) {
-        e.preventDefault();
-        $(this).tab('show');
+        showTab($(this));
     });
+    showTab($('#sidemenu a[href="#' + hash + '"]'));
     var hash = window.location.hash.substring(1);
     if (!hash) {
         hash = 'personal-details';
     }
-    $('#sidemenu a[href="#' + hash + '"]').tab('show');
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 

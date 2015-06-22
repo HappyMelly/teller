@@ -36,7 +36,6 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints
 import play.api.data.validation.Constraints._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._

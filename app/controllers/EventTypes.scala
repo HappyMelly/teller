@@ -24,17 +24,15 @@
 
 package controllers
 
-import models.{ Event, Brand, Activity }
+import models.Activity
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
-import models.service.{ Services, EventService }
-import play.api.mvc._
+import models.service.Services
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
-import securesocial.core.SecuredRequest
 
 trait EventTypes extends JsonController with Security with Services {
 

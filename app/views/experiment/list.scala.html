@@ -1,0 +1,35 @@
+@(memberId: Long,
+  experiments: List[Experiment])(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
+
+<p>Share with everyone what satisfied customers say about you</p>
+<div id="experimentList">
+  @if(experiments.length > 0) {
+    @for(experiment <- experiments) {
+      <div class="panel panel-default" data-id="@experiment.id.get">
+        <div class="panel-heading text-right">
+          <a class="btn btn-sm btn-default" type="button"
+              href="@routes.BrandTestimonials.update(memberId, experiment.id.get)">
+              <i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          <button href="#" data-id="@experiment.id.get"
+              class="remove btn btn-sm btn-danger" type="button"
+              data-href="@routes.BrandTestimonials.remove(memberId, experiment.id.get)">
+              <i class="glyphicon glyphicon-trash"></i> Remove</button>
+        </div>
+        <div class="panel-body">
+          <h3>@experiment.name</h3>
+          <p>@experiment.description</p>
+        </div>
+      </div>
+    }
+  }
+</div>
+@restrict(handler, List(as(Editor.toString))) {
+  <a type="button" class="btn btn-success pull-right"
+    href="@routes.BrandTestimonials.add(memberId)">
+    <i class="glyphicon glyphicon-plus"></i> Add Experiment</a>
+}
