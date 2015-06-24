@@ -263,7 +263,7 @@ trait Organisations extends JsonController
           val route = routes.Organisations.details(id).url
           jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
         } recover {
-          case e ⇒ jsonBadRequest(e.getMessage)
+          case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
         }
   }
 

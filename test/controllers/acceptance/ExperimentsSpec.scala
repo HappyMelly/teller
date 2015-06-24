@@ -46,10 +46,12 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
       then a user should get "Member not found" error                        $e2
 
   Given a member exists and this member is a person
+      and the user has uploaded a file
     when new experiment is created for this member
       then a user should be redirected to the person's profile               $e3
 
   Given a member exists and this member is an organisation
+      and the user hasn't uploaded a file
     when new experiment is created for this member
       then a user should be redirected to the organisation's profile         $e4
 
@@ -70,10 +72,28 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
       and a member this experiment is belonged to is an organisation
     when new experiment is created for this member
       then a user should be redirected to the organisation's profile         $e8
+
+  Given a member doesn't exist
+    when an experiment is updated for this member
+      then a user should get "Member not found" error                        $e9
+
+  Given an experiment doesn't exist
+    when the experiment is updated for this member
+      then a user should get "Experiment not found" error                   $e10
+
+  Given a member exists and this member is a person
+      and the user has uploaded a file
+    when the experiment is updated for this member
+      then a user should be redirected to the person's profile              $e11
+
+  Given a member exists and this member is an organisation
+      and the user hasn't uploaded a file
+    when the experiment is updated for this member
+      then a user should be redirected to the organisation's profile        $e12
   """
 
   class TestExperiments extends Experiments
-    with FakeServices with FakeSecurity with FakeIntegrations
+    with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles
 
   val controller = new TestExperiments
   val experimentService = mock[ExperimentService]
@@ -90,9 +110,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     (memberService.find _) expects 1L returning None
-    val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
-      "name" -> "Test", "description" -> "Test", "picture" -> "0", "url" -> "")
-    val result = controller.create(1L).apply(req)
+    val result = controller.create(1L).apply(postReq)
+
     status(result) must equalTo(NOT_FOUND)
   }
 
@@ -100,10 +119,10 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
     (memberService.find _) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None)
-    (experimentService.insert _) expects experiment
-    val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
-      "name" -> "Test", "description" -> "Test", "picture" -> "0")
-    val result = controller.create(1L).apply(req)
+    (experimentService.insert _) expects experiment returning experiment.copy(id = Some(1L))
+    (experimentService.update _) expects experiment.copy(id = Some(1L), picture = true)
+    val result = controller.create(1L).apply(postReq)
+
     header("Location", result) must beSome.which(_.contains("/person/5"))
   }
 
@@ -111,10 +130,11 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
     (memberService.find _) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None)
-    (experimentService.insert _) expects experiment
-    val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
-      "name" -> "Test", "description" -> "Test", "picture" -> "0")
-    val result = controller.create(1L).apply(req)
+    (experimentService.insert _) expects experiment returning experiment.copy(id = Some(1L))
+    controller._uploadValue = false
+    val result = controller.create(1L).apply(postReq)
+    controller._uploadValue = true
+
     header("Location", result) must beSome.which(_.contains("/organization/5"))
   }
 
@@ -126,9 +146,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e6 = {
     (experimentService.find _) expects 1L returning None
-    val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
-      "name" -> "Test", "description" -> "Test", "picture" -> "0")
-    val result = controller.update(1L, 1L).apply(req)
+    val result = controller.update(1L, 1L).apply(postReq)
+
     status(result) must equalTo(NOT_FOUND)
   }
 
@@ -138,10 +157,9 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     (experimentService.update _) expects experiment.copy(id = Some(1),
-      memberId = 1, name = "Test", description = "Test")
-    val req = fakePostRequest().withFormUrlEncodedBody("id" -> "3",
-      "memberId" -> "2", "name" -> "Test", "description" -> "Test", "picture" -> "0")
-    val result = controller.update(1L, 1L).apply(req)
+      memberId = 1, name = "Test", description = "Test", picture = true)
+    val result = controller.update(1L, 1L).apply(postReq)
+
     header("Location", result) must beSome.which(_.contains("/person/5"))
   }
 
@@ -151,10 +169,50 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     (experimentService.update _) expects experiment.copy(id = Some(1),
-      memberId = 1, name = "Test", description = "Test")
-    val req = fakePostRequest().withFormUrlEncodedBody("id" -> "3",
-      "memberId" -> "2", "name" -> "Test", "description" -> "Test", "picture" -> "0")
-    val result = controller.update(1L, 1L).apply(req)
+      memberId = 1, name = "Test", description = "Test", picture = true)
+    val result = controller.update(1L, 1L).apply(postReq)
+
+    header("Location", result) must beSome.which(_.contains("/organization/5"))
+  }
+
+  def e9 = {
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
+    (experimentService.find _) expects 1L returning Some(experiment)
+    (memberService.find _) expects 5L returning None
+    val result = controller.update(5L, 1L).apply(postReq)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+
+  def e10 = {
+    (experimentService.find _) expects 1L returning None
+    val result = controller.update(5L, 1L).apply(postReq)
+
+    status(result) must equalTo(NOT_FOUND)
+  }
+
+  def e11 = {
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
+    (experimentService.find _) expects 1L returning Some(experiment)
+    val member = MemberHelper.make(Some(5L), 5L, person = true, funder = false)
+    (memberService.find _) expects 5L returning Some(member)
+    (experimentService.update _) expects experiment.copy(id = Some(1L),
+      name = "Test", description = "Test", memberId = 5L, picture = true)
+    val result = controller.update(5L, 1L).apply(postReq)
+    header("Location", result) must beSome.which(_.contains("/person/5"))
+  }
+
+  def e12 = {
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
+    (experimentService.find _) expects 1L returning Some(experiment)
+    val member = MemberHelper.make(Some(5L), 5L, person = false, funder = false)
+    (memberService.find _) expects 5L returning Some(member)
+    (experimentService.update _) expects experiment.copy(id = Some(1L),
+      name = "Test", description = "Test", memberId = 5L) returning * once
+    val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
+      "name" -> "Test", "description" -> "Test", "picture" -> "0")
+    controller._uploadValue = false
+    val result = controller.update(5L, 1L).apply(postReq)
     header("Location", result) must beSome.which(_.contains("/organization/5"))
   }
 
@@ -162,4 +220,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     List(Experiment(Some(1L), 1L, "Exp 1", "Desc", true, None),
       Experiment(Some(2L), 1L, "Exp 2", "Desc", true, Some("http://test2.ru")))
   }
+
+  private def postReq = fakePostRequest().withFormUrlEncodedBody(
+    "memberId" -> "2", "name" -> "Test", "description" -> "Test", "picture" -> "0")
 }

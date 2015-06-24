@@ -85,7 +85,7 @@ trait Signatures extends JsonController
               Activity.Predicate.UploadedSign).insert
             Redirect(route).flashing("success" -> activity.toString)
           } recover {
-            case e ⇒ Redirect(route).flashing("error" -> e.getMessage)
+            case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)
           }
         } getOrElse Future.successful(NotFound)
   }

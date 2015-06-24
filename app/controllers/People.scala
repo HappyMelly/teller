@@ -335,7 +335,7 @@ trait People extends JsonController
 
   /**
    * Renders tab for the given person
-   * @param id Person identifier
+   * @param id Person or Member identifier
    * @param tab Tab identifier
    */
   def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) {
@@ -360,6 +360,9 @@ trait People extends JsonController
                 Ok(views.html.person.tabs.membership(user, person, payments))
               } getOrElse Ok("Person is not a member")
             } getOrElse NotFound("Person not found")
+          case "experiments" ⇒
+            val experiments = experimentService.findByMember(id)
+            Ok(views.html.experiment.list(id, experiments))
           case _ ⇒ Ok("")
         }
   }

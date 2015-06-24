@@ -33,8 +33,8 @@
             href="#facilitation" role="tab" data-toggle="tab">
             Facilitation</a></li>
         }
-        @if(person.member.nonEmpty) {
-          <li><a data-href="@routes.People.renderTabs(person.id.get, "experiments")"
+        @person.member.map { member =>
+          <li><a data-href="@routes.People.renderTabs(member.id.get, "experiments")"
             href="#experiments" role="tab" data-toggle="tab">
             Experiments</a></li>
           <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"

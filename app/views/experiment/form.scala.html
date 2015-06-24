@@ -15,13 +15,14 @@
       <h1>Add Experiment</h1>
     </div>
     @html.form(action = testimonialId.map { id =>
-      CSRF(routes.BrandTestimonials.update(memberId, id))
+      CSRF(routes.Experiments.update(memberId, id))
     }.getOrElse {
-      CSRF(routes.BrandTestimonials.create(memberId))
-    }) {
+      CSRF(routes.Experiments.create(memberId))
+    }, 'enctype -> "multipart/form-data") {
       @html.text(form("name"), '_label -> "Name")
       @html.textarea(form("description"), '_label -> "Description",
         'rows -> "5", '_help -> views.html.element.markdownHelp())
+      @html.file(form("file"), '_label -> "Picture")
       @html.text(form("url"), '_label -> "Url",
         'placeholder -> "http://", '_help -> "Web site URL")
 

@@ -106,6 +106,15 @@ GET           /exchangerate                                                  con
 GET           /exchangerate/:target/:amount                                  controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
 GET           /exchangerates/:base                                           controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
 
+GET           /member/:id/experiment                                         controllers.Experiments.add(id: Long)
+POST          /member/:id/experiment                                         controllers.Experiments.create(id: Long)
+GET           /member/:id/experiment/:experimentId                           controllers.Experiments.edit(id: Long, experimentId: Long)
+POST          /member/:id/experiment/:experimentId                           controllers.Experiments.update(id: Long, experimentId: Long)
+DELETE        /member/:id/experiment/:experimentId                           controllers.Experiments.delete(id: Long, experimentId: Long)
+DELETE        /member/:id/experiment/:experimentId/picture                   controllers.Experiments.deletePicture(id: Long, experimentId: Long)
+
+GET           /experiment/:id/picture                                        controllers.Experiments.picture(id: Long)
+
 POST          /facilitator/:id/country                                       controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                      controllers.Facilitators.addLanguage(id: Long)
 GET           /facilitator/:id/country/:country/delete                       controllers.Facilitators.deleteCountry(id: Long, country: String)

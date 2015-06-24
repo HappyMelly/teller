@@ -29,16 +29,19 @@ import models.UserRole.Role._
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.Future
 import services.integrations.Integrations
 
 trait Experiments extends JsonController
   with Services
   with Security
-  with Integrations {
+  with Integrations
+  with Files {
 
   val form = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "memberId" -> longNumber,
+    "memberId" -> ignored(0L),
     "name" -> nonEmptyText,
     "description" -> nonEmptyText,
     "picture" -> ignored(false),
@@ -60,20 +63,27 @@ trait Experiments extends JsonController
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = SecuredRestrictedAction(Viewer) {
+  def create(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.experiment.form(user, memberId, error)),
+          error ⇒ Future.successful(
+            BadRequest(views.html.experiment.form(user, memberId, error))),
           experiment ⇒ {
             memberService.find(memberId) map { member ⇒
-              experimentService.insert(experiment.copy(memberId = memberId))
-              val url = if (member.person)
-                routes.People.details(member.objectId).url
-              else
-                routes.Organisations.details(member.objectId).url
-              Redirect(url + "#experiments")
-            } getOrElse NotFound("Member not found")
+              val inserted = experimentService.insert(experiment.copy(memberId = memberId))
+              uploadFile(Experiment.picture(inserted.id.get), "file") map { _ ⇒
+                experimentService.update(inserted.copy(picture = true))
+              } recover {
+                case e: RuntimeException ⇒ Unit
+              } map { _ ⇒
+                val url = if (member.person)
+                  routes.People.details(member.objectId).url
+                else
+                  routes.Organisations.details(member.objectId).url
+                Redirect(url + "#experiments")
+              }
+            } getOrElse Future.successful(NotFound("Member not found"))
           })
   }
 
@@ -91,6 +101,24 @@ trait Experiments extends JsonController
       implicit handler ⇒ implicit user ⇒
         experimentService.delete(memberId, id)
         jsonSuccess("ok")
+  }
+
+  /**
+   * Deletes picture of the given experiment
+   *
+   * Member identifier is used to check access rights
+   *
+   * @param memberId Member identifier
+   * @param id Experiment identifier
+   */
+  def deletePicture(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        experimentService.find(id) map { experiment ⇒
+          Experiment.picture(id).remove()
+          experimentService.update(experiment.copy(picture = false))
+          jsonSuccess("ok")
+        } getOrElse jsonNotFound("Experiment not found")
   }
 
   /**
@@ -123,28 +151,44 @@ trait Experiments extends JsonController
   }
 
   /**
+   * Retrieve and cache a picture of the given experiment
+   *
+   * @param id Experiment identifier
+   */
+  def picture(id: Long) = file(Experiment.picture(id))
+
+  /**
    * Updates the given member experiment if it's valid
    *
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
+  def update(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.experiment.form(user, memberId, error)),
+          error ⇒ Future.successful(
+            BadRequest(views.html.experiment.form(user, memberId, error))),
           experiment ⇒ {
             experimentService.find(id) map { existing ⇒
               memberService.find(memberId) map { member ⇒
-                experimentService.update(experiment.copy(id = Some(id),
-                  memberId = memberId))
-                val url = if (member.person)
-                  routes.People.details(member.objectId).url
-                else
-                  routes.Organisations.details(member.objectId).url
-                Redirect(url + "#experiments")
-              } getOrElse NotFound("Member not found")
-            } getOrElse NotFound("Experiment not found")
+                uploadFile(Experiment.picture(existing.id.get), "file") map { _ ⇒
+                  experimentService.update(experiment.copy(id = Some(id),
+                    memberId = memberId, picture = true))
+                } recover {
+                  case e: RuntimeException ⇒ experimentService.update(experiment.copy(id = Some(id),
+                    memberId = memberId, picture = existing.picture))
+                } map { _ ⇒
+                  val url = if (member.person)
+                    routes.People.details(member.objectId).url
+                  else
+                    routes.Organisations.details(member.objectId).url
+                  Redirect(url + "#experiments")
+                }
+              } getOrElse Future.successful(NotFound("Member not found"))
+            } getOrElse Future.successful(NotFound("Experiment not found"))
           })
   }
 }
+
+object Experiments extends Experiments

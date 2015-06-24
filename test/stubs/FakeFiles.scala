@@ -17,24 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
+package stubs
 
+import controllers.Files
 import models.File
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.mvc._
+import scala.concurrent.Future
 
-case class Experiment(id: Option[Long],
-  memberId: Long,
-  name: String,
-  description: String,
-  picture: Boolean,
-  url: Option[String])
+trait FakeFiles extends Files {
 
-object Experiment {
+  var _uploadValue: Boolean = true
 
-  def picture(id: Long): File =
-    File.image(s"experiments/$id", s"experiments.$id")
-
+  /**
+   * Uploads file from form Amazon cloud
+   *
+   * @param file File object
+   * @param fieldName Name of a file field on the form
+   */
+  override def uploadFile(file: File, fieldName: String)(
+    implicit request: Request[AnyContent]): Future[Any] = {
+    if (_uploadValue)
+      Future[Boolean](_uploadValue)
+    else
+      Future.failed(new RuntimeException("error"))
+  }
 }

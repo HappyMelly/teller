@@ -38,7 +38,7 @@ function updateReason() {
 }
 
 function updatePhoto() {
-    var url = jsRoutes.controllers.People.updatePhoto(getPersonId()).url
+    var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url
     var object = $('#choosePhotoContent').find('.active');
     var type = $(object).parent('div').attr('id');
     var name = "";
@@ -53,7 +53,7 @@ function updatePhoto() {
 }
 
 function showSelectPhotoForm() {
-    $.get(jsRoutes.controllers.People.choosePhoto(getPersonId()).url, function(data) {
+    $.get(jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url, function(data) {
         $('#choosePhotoContent').html(data);
         $('#choosePhotoContent img').on('click', function(e) {
             switchActivePhoto($(this));
@@ -77,6 +77,7 @@ function setupCustomPhotoActions() {
         done: function (e, data) {
             $('#customPhoto').attr('src', data.result.link);
             $(btnPhotoUpload).text('Upload').hide();
+            switchActivePhoto($('#customPhoto'));
         }
     }).bind('fileuploadadd', function (e, data) {
         $(btnPhotoUpload).show();
@@ -115,11 +116,43 @@ function showTab(elem) {
     if ($.inArray(target, loadedTabs) < 0 && url) {
         $.get(url, function(data) {
             $(target).html(data);
+            initializeActions();
         });
         loadedTabs[loadedTabs.length] = target;
     }
     $(elem).tab('show');
     return false;
+}
+
+function initializeActions() {
+    $('#experimentList').on('click', 'button.remove', function(e) {
+        var experimentId = $(this).data('id');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('div[data-id="' + experimentId + '"]').remove();
+        }).fail(function(jqXHR, status, error) {
+            //empty
+        });
+        return false;
+    });
+    $('#experimentList').on('click', 'button.deletePicture', function(e) {
+        var experimentId = $(this).data('id');
+        var that = this;
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('div[data-id="' + experimentId + '"]').find('.picture').remove();
+            $(that).remove();
+        }).fail(function(jqXHR, status, error) {
+            //empty
+        });
+        return false;
+    });
 }
 
 var loadedTabs = [];
@@ -158,11 +191,12 @@ $(document).ready( function() {
     $('#sidemenu a').click(function (e) {
         showTab($(this));
     });
-    showTab($('#sidemenu a[href="#' + hash + '"]'));
     var hash = window.location.hash.substring(1);
     if (!hash) {
         hash = 'personal-details';
     }
+    showTab($('#sidemenu a[href="#' + hash + '"]'));
+
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 

@@ -28,6 +28,7 @@ import controllers.{ AuthorisationHandler, Security }
 import models.{ UserIdentity, UserRole, Person }
 import play.api.mvc.{ Action, SimpleResult, AnyContent, Request }
 import securesocial.core.SecuredRequest
+import scala.concurrent.Future
 
 trait FakeSecurity extends Security {
 
@@ -45,6 +46,18 @@ trait FakeSecurity extends Security {
       val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(Some(user.account))
       Action(f(_)(handler)(user))(SecuredRequest(identity, request))
+    }
+  }
+
+  override def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val identity = new FakeUserIdentity(Some(123213L), FakeUserIdentity.viewer,
+        "Sergey", "Kotlov", "Sergey Kotlov", None, _activeUser)
+      val request: SecuredRequest[AnyContent] = SecuredRequest(identity, req)
+      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
+      val handler = new AuthorisationHandler(Some(user.account))
+      Action.async(f(_)(handler)(user))(SecuredRequest(identity, request))
     }
   }
 }
