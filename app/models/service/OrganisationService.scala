@@ -24,8 +24,8 @@
  */
 package models.service
 
-import models.{ Organisation, Member, Account, OrgView, ProfileType }
-import models.database.{ Members, Organisations, Accounts, SocialProfiles }
+import models.{ Organisation, Member, Account, OrgView, ProfileType, Person }
+import models.database.{ Members, Organisations, Accounts, SocialProfiles, OrganisationMemberships }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -147,6 +147,19 @@ class OrganisationService extends Services {
     socialProfileService.update(view.profile, view.profile.objectType)
 
     OrgView(update(view.org), view.profile)
+  }
+
+  /**
+   * Returns list of people working in the given organisation
+   *
+   * @param id OrganisationId
+   */
+  def people(id: Long): List[Person] = DB.withSession { implicit session: Session ⇒
+    val query = for {
+      relation ← OrganisationMemberships if relation.organisationId === id
+      person ← relation.person
+    } yield person
+    query.sortBy(_.lastName.toLowerCase).list
   }
 
   /**

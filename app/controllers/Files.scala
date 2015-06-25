@@ -33,6 +33,8 @@ import scala.concurrent.Future
 import scala.io.Source
 import services.S3Bucket
 
+class FileNotExist(msg: String) extends RuntimeException(msg)
+
 trait Files extends Controller {
 
   /**
@@ -57,8 +59,8 @@ trait Files extends Controller {
    * @param file File object
    * @param fieldName Name of a file field on the form
    */
-  protected def upload(file: File, fieldName: String)(
-    implicit request: Request[AnyContent]): Future[Boolean] = {
+  protected def uploadFile(file: File, fieldName: String)(
+    implicit request: Request[AnyContent]): Future[Any] = {
     request.body.asMultipartFormData.map { data ⇒
       data.file(fieldName).map { picture ⇒
         val encoding = "ISO-8859-1"
@@ -69,9 +71,9 @@ trait Files extends Controller {
           Cache.remove(file.cacheKey)
           true
         }.recover {
-          case _ ⇒ throw new RuntimeException("File cannot be temporary saved")
+          case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))
         }
-      } getOrElse { throw new RuntimeException("File field does not exist") }
-    } getOrElse { throw new RuntimeException("Please choose a file") }
+      } getOrElse Future.failed(new FileNotExist("File field does not exist"))
+    } getOrElse Future.failed(new RuntimeException("Please choose a file"))
   }
 }

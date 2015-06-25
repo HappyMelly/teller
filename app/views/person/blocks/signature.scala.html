@@ -13,14 +13,14 @@
   </p>
   <div class="col-md-4">
     @if(person.signature) {
-      <img width="200" class="img-thumbnail" src="@routes.People.signature(person.id.getOrElse(0))"/>
+      <img width="200" class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
     } else {
       <img width="200" class="img-thumbnail" src="@routes.Assets.at("images/no-signature.png")"/>
     }
   </div>
   <div class="col-md-4">
     @dynamic(handler, "person", "edit") {
-      <form action="@CSRF(routes.People.uploadSignature(person.id.getOrElse(0)))"
+      <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
       method="post" enctype="multipart/form-data">
         <div class="form-group">
           <input type="file" id="signature" class="form-control input-sm" name="signature"/>
@@ -33,7 +33,7 @@
         }
       </form>
       @if(person.signature) {
-        <form method="post" action="@CSRF(routes.People.deleteSignature(person.id.getOrElse(0)))" id="deleteSig">
+        <form method="post" action="@CSRF(routes.Signatures.delete(person.id.getOrElse(0)))" id="deleteSig">
         </form>
       }
     }

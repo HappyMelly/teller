@@ -37,6 +37,7 @@ import play.filters.csrf.CSRF
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
 import scala.slick.session.Session
 import securesocial.core.{ Authenticator, IdentityId }
+import stubs.FakeUserIdentity
 
 trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   sequential
@@ -74,6 +75,15 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
 
   def setupDb() {}
   def cleanupDb() {}
+
+  def viewerGetRequest(url: String = "") =
+    prepareSecuredGetRequest(FakeUserIdentity.viewer, url)
+
+  def editorGetRequest(url: String = "") =
+    prepareSecuredGetRequest(FakeUserIdentity.editor, url)
+
+  def adminGetRequest(url: String = "") =
+    prepareSecuredGetRequest(FakeUserIdentity.admin, url)
 
   /**
    * Returns a secured GET request object and sets authenticator object to cache
@@ -201,6 +211,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `EVENT_PARTICIPANT`").execute
     Q.updateNA("TRUNCATE `EVENT_TYPE`").execute
     Q.updateNA("TRUNCATE `EXCHANGE_RATE`").execute
+    Q.updateNA("TRUNCATE `EXPERIMENT`").execute
     Q.updateNA("TRUNCATE `FACILITATOR`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_COUNTRY`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_LANGUAGE`").execute

@@ -28,22 +28,16 @@ import controllers.Forms._
 import models.UserRole.Role._
 import models._
 import models.payment.{ GatewayWrapper, PaymentException, RequestException }
-import models.service.{ SocialProfileService, Services }
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.{ Logger, Play }
 import play.api.Play.current
 import play.api.data.Forms._
-import play.api.data.format.Formatter
 import play.api.data.validation.Constraints
 import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.Json
-import play.api.mvc._
 import scala.language.postfixOps
 import scala.collection.mutable
-import scala.concurrent.Future
-import scala.io.Source
 import services.integrations.Integrations
 
 trait People extends JsonController
@@ -272,25 +266,18 @@ trait People extends JsonController
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
+        val facilitator = (licenseService.licenses(id).length > 0)
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
-        val licenses = licenseService.licenses(id)
-        val facilitation = facilitatorService.findByPerson(id)
-        val facilitatorData = licenses
-          .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.rating))
         val accountRole = if (user.account.editor)
           userAccountService.findRole(id) else None
         val duplicated = if (user.account.editor)
           userAccountService.findDuplicateIdentity(person)
         else None
-        val contributions = contributionService.contributions(id, isPerson = true)
-        val payments = person.member map { v ⇒
-          Some(paymentRecordService.findByPerson(id))
-        } getOrElse None
         Ok(views.html.person.details(user, person,
           memberships, otherOrganisations,
-          contributions, facilitatorData, accountRole, duplicated, payments))
+          facilitator, accountRole, duplicated))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -347,6 +334,37 @@ trait People extends JsonController
   }
 
   /**
+   * Renders tab for the given person
+   * @param id Person or Member identifier
+   * @param tab Tab identifier
+   */
+  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        tab match {
+          case "contributions" ⇒
+            val contributions = contributionService.contributions(id, isPerson = true)
+            Ok(views.html.person.tabs.contributions(contributions))
+          case "facilitation" ⇒
+            personService.find(id) map { person ⇒
+              val licenses = licenseService.licenses(id)
+              val facilitation = facilitatorService.findByPerson(id)
+              val facilitatorData = licenses
+                .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.rating))
+              Ok(views.html.person.tabs.facilitation(person, facilitatorData))
+            } getOrElse NotFound("Person not found")
+          case "membership" ⇒
+            personService.find(id) map { person ⇒
+              person.member map { v ⇒
+                val payments = paymentRecordService.findByPerson(id)
+                Ok(views.html.person.tabs.membership(user, person, payments))
+              } getOrElse Ok("Person is not a member")
+            } getOrElse NotFound("Person not found")
+          case _ ⇒ Ok("")
+        }
+  }
+
+  /**
    * Render a list of people in the network
    *
    * @return
@@ -355,138 +373,6 @@ trait People extends JsonController
     implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
       Ok(views.html.person.index(user, people))
-  }
-
-  /**
-   * Upload a new signature to Amazon
-   *
-   * @param id Person identifier
-   */
-  def uploadSignature(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        personService.find(id).map { person ⇒
-          val route = routes.People.details(person.id.get).url + "#facilitation"
-          upload(Person.signature(id), "signature") map { _ ⇒
-            personService.update(person.copy(signature = true))
-            val activity = person.activity(
-              user.person,
-              Activity.Predicate.UploadedSign).insert
-            Redirect(route).flashing("success" -> activity.toString)
-          } recover {
-            case e ⇒ Redirect(route).flashing("error" -> e.getMessage)
-          }
-        } getOrElse Future.successful(NotFound)
-  }
-
-  /**
-   * Delete signature form submits to this action
-   *
-   * @param personId Person identifier
-   */
-  def deleteSignature(personId: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId).map { person ⇒
-          if (person.signature) {
-            Person.signature(personId).remove()
-            personService.update(person.copy(signature = false))
-          }
-          val activity = person.activity(
-            user.person,
-            Activity.Predicate.DeletedSign).insert
-          val route = routes.People.details(personId).url + "#facilitation"
-          Redirect(route).flashing("success" -> activity.toString)
-        } getOrElse NotFound
-  }
-
-  /**
-   * Retrieve and cache a signature of a person
-   *
-   * @param personId Person identifier
-   */
-  def signature(personId: Long) = file(Person.signature(personId))
-
-  /**
-   * Upload a new photo to Amazon
-   *
-   * @param id Person identifier
-   */
-  def uploadPhoto(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        upload(Person.photo(id), "photo") map { _ ⇒
-          // orgService.updatePhoto(id, true)
-          val route = routes.People.details(id).url
-          jsonOk(Json.obj("link" -> routes.People.photo(id).url))
-        } recover {
-          case e ⇒ jsonBadRequest(e.getMessage)
-        }
-  }
-
-  /**
-   * Deletes photo of the given person
-   *
-   * @param id Person identifier
-   */
-  def deletePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Person.photo(id).remove()
-        // orgService.updateLogo(id, false)
-        val route = routes.People.details(id).url
-        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
-  }
-
-  /**
-   * Retrieve and cache a photo of the given person
-   *
-   * @param id Person identifier
-   */
-  def photo(id: Long) = file(Person.photo(id))
-
-  /**
-   * Updates profile photo and may be a facebook profile link
-   *
-   * @param id Person identifier
-   */
-  def updatePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val form = Form(single("type" -> nonEmptyText)).bindFromRequest
-        form.fold(
-          withError ⇒ jsonBadRequest("No option is provided"),
-          {
-            case photoType ⇒
-              personService.find(id) map { person ⇒
-                val profile = person.socialProfile
-                var photo = photoType match {
-                  case "nophoto" ⇒ Photo.empty
-                  case "gravatar" ⇒ Photo(photoType, profile)
-                  case _ ⇒ Photo(Some(photoType),
-                    Some(fullUrl(routes.People.photo(id).url)))
-                }
-                personService.update(person.copy(photo = photo))
-                jsonSuccess("ok")
-              } getOrElse NotFound
-          })
-  }
-
-  /**
-   * Renders a screen for selecting a profile's photo
-   *
-   * @param id Person identifier
-   */
-  def choosePhoto(id: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { person ⇒
-          val active = person.photo.id getOrElse "nophoto"
-          Ok(views.html.person.photoSelection(id,
-            Photo.gravatarUrl(person.socialProfile.email),
-            routes.People.photo(id).url, active))
-        } getOrElse NotFound
   }
 
   /**
@@ -525,6 +411,23 @@ trait People extends JsonController
   }
 
   /**
+   * Returns form with erros if a person with identical social networks exists
+   *
+   * @param person Person object with incomplete social profile
+   * @param id Identifier of a person which is updated
+   * @param editorName Name of a user who adds changes
+   */
+  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
+    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
+    socialProfileService.findDuplicate(base) map { duplicate ⇒
+      var form = personForm(editorName).fill(person)
+      compareSocialProfiles(duplicate, base).
+        foreach(err ⇒ form = form.withError(err))
+      Some(form)
+    } getOrElse None
+  }
+
+  /**
    * Compares social profiles and returns a list of errors for a form
    * @param left Social profile object
    * @param right Social profile object
@@ -550,38 +453,21 @@ trait People extends JsonController
   }
 
   /**
-   * Returns form with erros if a person with identical social networks exists
-   *
-   * @param person Person object with incomplete social profile
-   * @param id Identifier of a person which is updated
-   * @param editorName Name of a user who adds changes
-   */
-  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
-    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
-    socialProfileService.findDuplicate(base) map { duplicate ⇒
-      var form = personForm(editorName).fill(person)
-      compareSocialProfiles(duplicate, base).
-        foreach(err ⇒ form = form.withError(err))
-      Some(form)
-    } getOrElse None
-  }
-
-  /**
    * Compares social profiles and returns a list of errors for a form
    *
-   * @param old Person
+   * @param existing Person
    * @param updated Updated person
    */
-  protected def composeSocialNotification(old: Person,
+  protected def composeSocialNotification(existing: Person,
     updated: Person): Option[String] = {
     val updatedProfile = updated.socialProfile
-    val oldProfile = old.socialProfile
+    val oldProfile = existing.socialProfile
     val notifications = List(
       composeNotification("twitter", oldProfile.twitterHandle, updatedProfile.twitterHandle),
       composeNotification("facebook", oldProfile.facebookUrl, updatedProfile.facebookUrl),
       composeNotification("google", oldProfile.googlePlusUrl, updatedProfile.googlePlusUrl),
       composeNotification("linkedin", oldProfile.linkedInUrl, updatedProfile.linkedInUrl),
-      composeNotification("blog", old.blog, updated.blog))
+      composeNotification("blog", existing.blog, updated.blog))
     val nonEmptyNotifications = notifications.filterNot(_.isEmpty)
     nonEmptyNotifications.headOption map { first ⇒
       val prefix = "%s updated her/his social profile.".format(updated.fullName)
@@ -605,15 +491,6 @@ trait People extends JsonController
     else
       None
   }
-
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
-
   protected def notificatonMsg(msgType: String, value: String): String =
     msgType match {
       case "twitter" ⇒ "follow her/him on <http://twitter.com/%s|Twitter>".format(value)

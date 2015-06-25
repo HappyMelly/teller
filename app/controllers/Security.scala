@@ -24,9 +24,9 @@
 
 package controllers
 
+import models.{ DynamicResourceChecker, UserAccount, UserIdentity, UserRole }
 import models.UserRole.DynamicRole
-import models._
-import models.service.{ Services, EventService }
+import models.service.Services
 import securesocial.core._
 import play.api.mvc._
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
@@ -59,7 +59,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct a handler
             // (to look up account role) for Deadbolt authorisation
-            val handler = new AuthorisationHandler(Some(user.account))
+            val handler = new AuthorisationHandler(user)
             val restrictedAction = Restrict(
               Array(role.toString),
               handler)(Action(f(_)(handler)(user)))
@@ -88,7 +88,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation
-            val handler = new AuthorisationHandler(Some(user.account))
+            val handler = new AuthorisationHandler(user)
             val restrictedAction = Dynamic(name, meta, handler)(Action(f(_)(handler)(user)))
             val result: Future[SimpleResult] = restrictedAction(request)
             result
@@ -114,7 +114,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
-            val handler = new AuthorisationHandler(Some(user.account))
+            val handler = new AuthorisationHandler(user)
             val restrictedAction = Restrict(
               Array(role.toString),
               handler)(Action.async(f(_)(handler)(user)))
@@ -143,7 +143,7 @@ trait Security extends SecureSocial with DeadboltActions {
           try {
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
-            val handler = new AuthorisationHandler(Some(user.account))
+            val handler = new AuthorisationHandler(user)
             val restrictedAction = Dynamic(name, level, handler)(Action.async(f(_)(handler)(user)))
             restrictedAction(request)
           } catch {
@@ -160,59 +160,58 @@ trait Security extends SecureSocial with DeadboltActions {
  *
  * The system supports three roles - Viewer, Editor and Admin.
  */
-class TellerResourceHandler(account: Option[UserAccount])
+class TellerResourceHandler(identity: UserIdentity)
   extends DynamicResourceHandler
   with Services {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    account.exists { existingAccount ⇒
-      val userId = existingAccount.personId
-      name match {
-        case "brand" ⇒ checkBrandPermission(existingAccount, meta, request.uri)
-        case "evaluation" ⇒ checkEvaluationPermission(existingAccount, meta, request.uri)
-        case "event" ⇒ checkEventPermission(existingAccount, meta, request.uri)
-        case "person" ⇒
-          meta match {
-            case "edit" ⇒
-              val personId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
-              //   where the person was a participant
-              existingAccount.editor || personId.get.toLong == existingAccount.personId || {
-                personService.find(personId.get.toLong).exists { person ⇒
-                  if (person.virtual) {
-                    person.participateInEvents(userId).nonEmpty
-                  } else {
-                    false
-                  }
+    val userId = identity.account.personId
+    name match {
+      case "brand" ⇒ checkBrandPermission(identity.account, meta, request.uri)
+      case "evaluation" ⇒ checkEvaluationPermission(identity.account, meta, request.uri)
+      case "event" ⇒ checkEventPermission(identity.account, meta, request.uri)
+      case "member" ⇒ checkMemberPermission(identity, request.uri)
+      case "person" ⇒
+        meta match {
+          case "edit" ⇒
+            val personId = """\d+""".r findFirstIn request.uri
+            // A User should have an Editor role, it should be her own profile or he's a facilitator of the event
+            //   where the person was a participant
+            identity.account.editor || personId.get.toLong == userId || {
+              personService.find(personId.get.toLong).exists { person ⇒
+                if (person.virtual) {
+                  person.participateInEvents(userId).nonEmpty
+                } else {
+                  false
                 }
               }
-            case "delete" ⇒
-              val personId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role or he's a facilitator of the event where the person was a participant
-              existingAccount.editor || {
-                personService.find(personId.get.toLong).exists { person ⇒
-                  if (person.virtual) {
-                    person.participateInEvents(existingAccount.personId).nonEmpty
-                  } else {
-                    false
-                  }
+            }
+          case "delete" ⇒
+            val personId = """\d+""".r findFirstIn request.uri
+            // A User should have an Editor role or he's a facilitator of the event where the person was a participant
+            identity.account.editor || {
+              personService.find(personId.get.toLong).exists { person ⇒
+                if (person.virtual) {
+                  person.participateInEvents(identity.account.personId).nonEmpty
+                } else {
+                  false
                 }
               }
-            case _ ⇒ true
-          }
-        case "organisation" ⇒
-          meta match {
-            case "edit" ⇒
-              val organisationId = """\d+""".r findFirstIn request.uri
-              // A User should have an Editor role or should be a member of the organisation
-              existingAccount.editor ||
-                (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
-                  _.people.find(_.id == Some(existingAccount.personId)).nonEmpty
-                })
-            case _ ⇒ true
-          }
-        case _ ⇒ false
-      }
+            }
+          case _ ⇒ true
+        }
+      case "organisation" ⇒
+        meta match {
+          case "edit" ⇒
+            val organisationId = """\d+""".r findFirstIn request.uri
+            // A User should have an Editor role or should be a member of the organisation
+            identity.account.editor ||
+              (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
+                _.people.find(_.id == Some(identity.account.personId)).nonEmpty
+              })
+          case _ ⇒ true
+        }
+      case _ ⇒ false
     }
   }
 
@@ -271,6 +270,25 @@ class TellerResourceHandler(account: Option[UserAccount])
       case DynamicRole.Coordinator ⇒
         id(url) exists { brandId ⇒ checker(account).isBrandCoordinator(brandId) }
       case _ ⇒ false
+    }
+  }
+
+  /**
+   * Returns true if the given user is allowed to execute a member-related action
+   * @param identity User identity
+   * @param url Request url
+   */
+  protected def checkMemberPermission(identity: UserIdentity, url: String): Boolean = {
+    id(url) exists { memberId ⇒
+      if (identity.person.member.exists(_.id == Some(memberId)))
+        true
+      else
+        memberService.find(memberId) exists { member ⇒
+          if (member.person)
+            false
+          else
+            orgService.people(member.objectId).exists(_.id == Some(identity.account.personId))
+        }
     }
   }
 

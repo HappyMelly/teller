@@ -30,6 +30,14 @@
         <li><code>funder</code></li>
         <li><code>type</code> - "person" or "org"</li>
         <li><code>reason</code></li>
+        <li><code>experiments</code>
+          <ul>
+            <li><code>name</code></li>
+            <li><code>description</code></li>
+            <li><code>url</code> - optional link</li>
+            <li><code>image</code> - optional image</li>
+          </ul>
+        </li>
         <li><code>org</code> - if a member is an organization, this attribute contains organisation details
           <ul>
             <li><code>logo</code></li>
@@ -95,6 +103,22 @@
   "funder" : true,
   "type" : "person",
   "reason": "I joined Happy Melly because...",
+  "experiments" : [ {
+    "name" : "ChangeGeek113",
+    "description" : "Test",
+    "url" : "http://mail.ru",
+    "image" : ""
+  }, {
+    "name" : "Change For Happiness 32",
+    "description" : "rewqrewqr",
+    "url" : null,
+    "image" : "/experiment/5/picture"
+  }, {
+    "name" : "Conference Talk321",
+    "description" : "fdsfsa",
+    "url" : null,
+    "image" : ""
+  } ],
   "person" : {
     "id" : 25,
     "unique_name" : "sergey.kotlov",
@@ -182,6 +206,22 @@
   "id" : 4,
   "funder" : true,
   "type" : "org",
+  "experiments" : [ {
+    "name" : "ChangeGeek113",
+    "description" : "Test",
+    "url" : "http://mail.ru",
+    "image" : ""
+  }, {
+    "name" : "Change For Happiness 32",
+    "description" : "rewqrewqr",
+    "url" : null,
+    "image" : "/experiment/5/picture"
+  }, {
+    "name" : "Conference Talk321",
+    "description" : "fdsfsa",
+    "url" : null,
+    "image" : ""
+  } ],
   "org" : {
     "logo": null,
     "name" : "Happy Melly One BV",

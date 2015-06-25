@@ -36,11 +36,11 @@
         <p class="text-uppercase"><strong>Custom<p class="text-uppercase"></strong><p>
         <div class="form-group col-md-10 col-md-offset-1">
           <input type="file" id="photoUpload" class="form-control input-sm" name="photo"
-            data-url="@routes.People.uploadPhoto(personId)"/>
+            data-url="@routes.ProfilePhotos.upload(personId)"/>
         </div>
         <button class="btn btn-primary btn-sm" id="btnPhotoUpload">Upload</button>
         <button class="btn btn-danger btn-sm" id="btnPhotoDelete"
-          data-href="@routes.People.deletePhoto(personId)">
+          data-href="@routes.ProfilePhotos.delete(personId)">
           <i class="glyphicon glyphicon-trash glyphicon-white"></i> Delete</button>
       </div>
     </div>

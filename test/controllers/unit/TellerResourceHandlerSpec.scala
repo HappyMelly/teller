@@ -25,26 +25,31 @@
 package controllers.unit
 
 import controllers.TellerResourceHandler
+import helpers.{ MemberHelper, PersonHelper }
+import models.UserIdentity
 import models.UserRole.DynamicRole
-import models.{ UserAccount, UserRole, DynamicResourceChecker }
+import models.{ UserAccount, UserRole, DynamicResourceChecker, UserIdentity }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable.Specification
-import stubs.FakeServices
+import stubs.{ FakeServices, FakeUserIdentity }
 
 class TellerResourceHandlerSpec extends Specification {
 
-  class TestTellerResourceHandler(account: Option[UserAccount],
+  class TestTellerResourceHandler(identity: UserIdentity,
     checker: DynamicResourceChecker)
-    extends TellerResourceHandler(account) with FakeServices {
+    extends TellerResourceHandler(identity) with FakeServices {
 
     def callCheckBrandPermission(account: UserAccount, meta: String, url: String): Boolean =
-      checkBrandPermission(account, meta, url)
+      checkBrandPermission(identity.account, meta, url)
 
     def callCheckEventPermission(account: UserAccount, meta: String, url: String): Boolean =
-      checkEventPermission(account, meta, url)
+      checkEventPermission(identity.account, meta, url)
 
     def callCheckEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean =
-      checkEvaluationPermission(account, meta, url)
+      checkEvaluationPermission(identity.account, meta, url)
+
+    def callCheckMemberPermission(identity: UserIdentity, url: String): Boolean =
+      checkMemberPermission(identity, url)
 
     override def checker(account: UserAccount): DynamicResourceChecker = checker
   }
@@ -53,15 +58,19 @@ class TellerResourceHandlerSpec extends Specification {
   editor.roles_=(List(UserRole.forName("editor")))
   val viewer = editor.copy(role = "viewer")
   viewer.roles_=(List(UserRole.forName("viewer")))
+  val person = PersonHelper.one
+  person.member_=(MemberHelper.make(Some(1L), 1L, person = true, funder = false))
+  val identity = new FakeUserIdentity(Some(123213L), FakeUserIdentity.viewer,
+    "Sergey", "Kotlov", "Sergey Kotlov", None, Some(person))
 
   val checker = new DynamicResourceChecker(editor)
-  val handler = new TestTellerResourceHandler(None, checker)
+  val handler = new TestTellerResourceHandler(identity, checker)
 
   "When brand permissions are checked for coordinator" >> {
     "isBrandCoordinator function should be called" in new MockContext {
       class MockedChecker extends DynamicResourceChecker(editor)
       val checker = mock[MockedChecker]
-      val handler = new TestTellerResourceHandler(None, checker)
+      val handler = new TestTellerResourceHandler(identity, checker)
       (checker.isBrandCoordinator _) expects 1L returning true
       handler.callCheckBrandPermission(editor, DynamicRole.Coordinator, "/1") must_== true
     }
@@ -79,7 +88,7 @@ class TellerResourceHandlerSpec extends Specification {
     "isEventCoordinator function should be called" in new MockContext {
       class MockedChecker extends DynamicResourceChecker(editor)
       val checker = mock[MockedChecker]
-      val handler = new TestTellerResourceHandler(None, checker)
+      val handler = new TestTellerResourceHandler(identity, checker)
       (checker.isEventCoordinator _) expects 1L returning true
       handler.callCheckEventPermission(viewer, DynamicRole.Coordinator, "/1") must_== true
     }
@@ -91,7 +100,7 @@ class TellerResourceHandlerSpec extends Specification {
     "isEventFacilitator function should be called" in new MockContext {
       class MockedChecker extends DynamicResourceChecker(editor)
       val checker = mock[MockedChecker]
-      val handler = new TestTellerResourceHandler(None, checker)
+      val handler = new TestTellerResourceHandler(identity, checker)
       (checker.isEventFacilitator _) expects 1L returning true
       handler.callCheckEventPermission(editor, DynamicRole.Facilitator, "/1") must_== true
     }
@@ -109,7 +118,7 @@ class TellerResourceHandlerSpec extends Specification {
     "isEvaluationCoordinator function should be called" in new MockContext {
       class MockedChecker extends DynamicResourceChecker(editor)
       val checker = mock[MockedChecker]
-      val handler = new TestTellerResourceHandler(None, checker)
+      val handler = new TestTellerResourceHandler(identity, checker)
       (checker.isEvaluationCoordinator _) expects 1L returning true
       handler.callCheckEvaluationPermission(editor, DynamicRole.Coordinator, "/1") must_== true
     }
@@ -122,7 +131,7 @@ class TellerResourceHandlerSpec extends Specification {
     "isEvaluationFacilitator function should be called" in new MockContext {
       class MockedChecker extends DynamicResourceChecker(editor)
       val checker = mock[MockedChecker]
-      val handler = new TestTellerResourceHandler(None, checker)
+      val handler = new TestTellerResourceHandler(identity, checker)
       (checker.isEvaluationFacilitator _) expects 1L returning true
       handler.callCheckEvaluationPermission(editor, DynamicRole.Facilitator, "/1") must_== true
     }
@@ -133,6 +142,15 @@ class TellerResourceHandlerSpec extends Specification {
   "When evaluation permissions are checked for random role" >> {
     "then permission should not be granted" in {
       handler.callCheckEvaluationPermission(editor, "anything", "/1") must_== false
+    }
+  }
+
+  "When member permissions are checked" >> {
+    "and the user is a member and checks his own profile then permission should be granted" in {
+      handler.callCheckMemberPermission(identity, "/1") must_== true
+    }
+    "and url doesn't contain member id then permission should not be granted" in {
+      handler.callCheckMemberPermission(identity, "/") must_== false
     }
   }
 }

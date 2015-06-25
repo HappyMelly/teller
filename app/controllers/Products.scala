@@ -37,7 +37,6 @@ import play.api.i18n.Messages
 import play.api.cache.Cache
 import services._
 import play.api.data.FormError
-import securesocial.core.SecuredRequest
 import fly.play.s3.{ BucketFile, S3Exception }
 import play.api.Play.current
 import scala.io.Source

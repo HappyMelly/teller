@@ -29,7 +29,12 @@
         <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">Org Details</a></li>
         <li><a href="#contributions" role="tab" data-toggle="tab">
           Contributions</a></li>
-        @if(view.org.member.nonEmpty) {
+        @view.org.member.map { member =>
+          @if(!member.funder) {
+            <li><a data-href="@routes.Experiments.experiments(member.id.get)"
+              href="#experiments" role="tab" data-toggle="tab">
+              Experiments</a></li>
+          }
           <li><a href="#membership" role="tab" data-toggle="tab">
             Membership</a></li>
         }
@@ -97,7 +102,8 @@
     <div class="tab-pane" id="contributions">
       @views.html.organisation.subpages.contributions(view.org, contributions)
     </div>
-    @if(view.org.member.nonEmpty) {
+    @view.org.member.map { member =>
+      <div class="tab-pane" id="experiments"></div>
       <div class="tab-pane" id="membership">
         @views.html.organisation.subpages.membership(user, view.org, payments)
       </div>

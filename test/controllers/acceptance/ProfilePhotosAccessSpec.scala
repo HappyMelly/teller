@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ Security, People }
+import controllers.{ Security, ProfilePhotos }
 import models.service.PersonService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.mvc.SimpleResult
@@ -33,15 +33,10 @@ import stubs.{ FakeUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 
-class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
-  class TestPeople() extends People with Security with FakeServices
+class ProfilePhotosAccessSpec extends PlayAppSpec with IsolatedMockFactory {
+  class TestProfilePhotos() extends ProfilePhotos with Security with FakeServices
 
   override def is = s2"""
-    'Cancel' action should
-      be accessible to Editors                               $e1
-      be accessible to the owner of the profile              $e2
-      not be accessible to Viewers                           $e3
-
     'Update photo' action should
       be accessible to Editors                               $e4
       be accessible to the owner of the profile              $e5
@@ -53,38 +48,15 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
       not be accessible to Viewers                           $e9
   """
 
-  val controller = new TestPeople()
+  val controller = new TestProfilePhotos()
   val personService = mock[PersonService]
   controller.personService_=(personService)
-
-  def e1 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e2 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/membership/1/cancel")
-    val result: Future[SimpleResult] = controller.cancel(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e3 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/membership/2/cancel")
-    val result: Future[SimpleResult] = controller.cancel(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
-  }
 
   def e4 = {
     (personService.find(_: Long)) expects 1L returning None
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
       withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.updatePhoto(1L).apply(req)
+    val result = controller.update(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
@@ -93,14 +65,14 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects 1L returning None
     val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/1/photo").
       withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.updatePhoto(1L).apply(req)
+    val result = controller.update(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e6 = {
     val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.updatePhoto(2L).apply(req)
+    val result = controller.update(2L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
   }
@@ -108,7 +80,7 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
   def e7 = {
     (personService.find(_: Long)) expects 1L returning None
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val result = controller.choosePhoto(1L).apply(req)
+    val result = controller.choose(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
@@ -116,14 +88,14 @@ class PeopleAccessSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     (personService.find(_: Long)) expects 1L returning None
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/photo")
-    val result = controller.choosePhoto(1L).apply(req)
+    val result = controller.choose(1L).apply(req)
 
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e9 = {
     val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.choosePhoto(2L).apply(req)
+    val result = controller.choose(2L).apply(req)
 
     status(result) must equalTo(SEE_OTHER)
   }

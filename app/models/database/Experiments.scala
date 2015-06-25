@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,38 +21,25 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package models.database
 
-package models.brand
+import models.Experiment
+import play.api.db.slick.Config.driver.simple._
 
-import models.service.BrandService
-import models.{ Activity, ActivityRecorder, Brand }
+/**
+ * `Experiment` database table mapping.
+ */
+private[models] object Experiments extends Table[Experiment]("EXPERIMENT") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def memberId = column[Long]("MEMBER_ID")
+  def name = column[String]("NAME")
+  def picture = column[Boolean]("PICTURE")
+  def description = column[String]("DESCRIPTION")
+  def url = column[Option[String]]("URL")
 
-case class EventType(id: Option[Long],
-  brandId: Long,
-  name: String,
-  defaultTitle: Option[String],
-  maxHours: Int,
-  free: Boolean) extends ActivityRecorder {
+  def * = id.? ~ memberId ~ name ~ description ~ picture ~
+    url <> (Experiment.apply _, Experiment.unapply _)
 
-  /**
-   * Returns identifier of the object
-   */
-  def identifier: Long = id.getOrElse(0)
-
-  /**
-   * Returns string identifier which can be understood by human
-   *
-   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
-   */
-  def humanIdentifier: String = name
-
-  /**
-   * Returns type of this object
-   */
-  def objectType: String = Activity.Type.EventType
-
-  /**
-   * @deprecated
-   */
-  def brand: Brand = BrandService.get.find(this.brandId).get
+  def forInsert = * returning id
+  def forUpdate = name ~ description ~ picture ~ url
 }

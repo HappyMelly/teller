@@ -97,4 +97,13 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
       x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
     }
   }
+
+  /**
+   * Returns true if the user is a member editor
+   *
+   * @param memberId Member identifier
+   */
+  def isMemberEditor(memberId: Long): Boolean = {
+    user.editor || brandService.isCoordinator(memberId, user.personId)
+  }
 }

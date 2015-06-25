@@ -1,0 +1,55 @@
+@(memberId: Long,
+  experiments: List[Experiment])(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
+
+<p>As a Supporter you could add an unlimited number of experiments you run. These
+experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
+website.</p>
+
+<div id="experimentList">
+  @if(experiments.length > 0) {
+    @for(experiment <- experiments) {
+      <div class="panel panel-default" data-id="@experiment.id.get">
+        @dynamic(handler, "member", "editor") {
+          <div class="panel-heading text-right">
+            <a class="btn btn-sm btn-default" type="button"
+                href="@routes.Experiments.update(memberId, experiment.id.get)">
+                <i class="glyphicon glyphicon-pencil"></i> Edit</a>
+            @if(experiment.picture) {
+              <button href="#" data-id="@experiment.id.get"
+                  class="deletePicture btn btn-sm btn-danger" type="button"
+                  data-href="@routes.Experiments.deletePicture(memberId, experiment.id.get)">
+                  <i class="glyphicon glyphicon-trash"></i> Delete Picture</button>
+            }
+            <button href="#" data-id="@experiment.id.get"
+                class="remove btn btn-sm btn-danger" type="button"
+                data-href="@routes.Experiments.delete(memberId, experiment.id.get)">
+                <i class="glyphicon glyphicon-trash"></i> Remove</button>
+          </div>
+        }
+        <div class="panel-body">
+          <div class="col-md-12"><h3>@experiment.name</h3></div>
+          @if(experiment.picture) {
+            <div class="col-md-3 picture">
+              <img width="100" class="img-rounded"
+                src="@routes.Experiments.picture(experiment.id.get)"/>
+            </div>
+          }
+          <div class="col-md-9">@experiment.description</div>
+          @experiment.url.map { url =>
+            <div class="col-md-12"><a href="@url" target="_blank">@url</a></div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>
+@dynamic(handler, "member", "editor") {
+  <a type="button" class="btn btn-success pull-right"
+    href="@routes.Experiments.add(memberId)">
+    <i class="glyphicon glyphicon-plus"></i> Add Experiment</a>
+}

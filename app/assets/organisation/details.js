@@ -22,47 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-$(document).ready( function() {
-
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
-
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "order": [[ 0, "asc" ]],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
-    $('.payments').dataTable( {
-        "sPaginationType": "bootstrap",
-        "order": [[ 2, "desc" ]],
-        "columnDefs": [
-            { "orderable": false, "targets": 0 },
-            { "orderable": false, "targets": 1 }
-        ],
-        "bFilter": false,
-        "bInfo": false,
-        "bLengthChange": false,
-        "bPaginate": false
-    });
-
-    $('#sidemenu a').click(function (e) {
-        e.preventDefault();
-        $(this).tab('show');
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'personal-details';
-    }
-    $('#sidemenu a[href="#' + hash + '"]').tab('show');
-    $('[data-toggle="tooltip"]').tooltip();
+function setupLogoActions() {
     var btnLogoUpload = '#btnLogoUpload';
     var btnLogoDelete = '#btnLogoDelete';
     $('#logoUpload').fileupload({
@@ -98,5 +58,100 @@ $(document).ready( function() {
         return false;
     });
     $(btnLogoUpload).hide();
+}
+
+/**
+ * Loads tab content (if needed) and shows it to a user
+ * @param elem Tab button
+ * @returns {boolean}
+ */
+function showTab(elem) {
+    var url = $(elem).attr('data-href'),
+        target = $(elem).attr('href');
+    if ($.inArray(target, loadedTabs) < 0 && url) {
+        $.get(url, function(data) {
+            $(target).html(data);
+            initializeActions();
+        });
+        loadedTabs[loadedTabs.length] = target;
+    }
+    $(elem).tab('show');
+    return false;
+}
+
+function initializeActions() {
+    $('#experimentList').on('click', 'button.remove', function(e) {
+        var experimentId = $(this).data('id');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('div[data-id="' + experimentId + '"]').remove();
+        }).fail(function(jqXHR, status, error) {
+            //empty
+        });
+        return false;
+    });
+    $('#experimentList').on('click', 'button.deletePicture', function(e) {
+        var experimentId = $(this).data('id');
+        var that = this;
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('div[data-id="' + experimentId + '"]').find('.picture').remove();
+            $(that).remove();
+        }).fail(function(jqXHR, status, error) {
+            //empty
+        });
+        return false;
+    });
+}
+
+var loadedTabs = [];
+
+$(document).ready( function() {
+
+    // Delete links.
+    $('form.delete').submit(function() {
+        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
+    });
+
+    $('.datatables').each(function() {
+        $(this).dataTable( {
+            "sPaginationType": "bootstrap",
+            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
+            "order": [[ 0, "asc" ]],
+            "bFilter": false,
+            "bInfo": false,
+            "bLengthChange": false,
+            "bPaginate": false
+        });
+    });
+    $('.payments').dataTable( {
+        "sPaginationType": "bootstrap",
+        "order": [[ 2, "desc" ]],
+        "columnDefs": [
+            { "orderable": false, "targets": 0 },
+            { "orderable": false, "targets": 1 }
+        ],
+        "bFilter": false,
+        "bInfo": false,
+        "bLengthChange": false,
+        "bPaginate": false
+    });
+
+    $('#sidemenu a').click(function (e) {
+        showTab($(this));
+    });
+    var hash = window.location.hash.substring(1);
+    if (!hash) {
+        hash = 'personal-details';
+    }
+    showTab($('#sidemenu a[href="#' + hash + '"]'));
+    $('[data-toggle="tooltip"]').tooltip();
+    setupLogoActions();
 });
 
