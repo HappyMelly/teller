@@ -25,14 +25,15 @@
 package controllers.unit
 
 import controllers.Events
-import org.specs2.mutable._
-import org.scalamock.specs2.IsolatedMockFactory
+import helpers.EventHelper
 import models.{ Event, UserAccount, UserRole, DynamicResourceChecker }
 import models.brand.EventType
+import models.service.LicenseService
 import models.service.brand.EventTypeService
-import stubs.{ FakeServices, FakeLicenseService }
-import helpers.EventHelper
 import org.joda.time.LocalDate
+import org.specs2.mutable._
+import org.scalamock.specs2.IsolatedMockFactory
+import stubs.FakeServices
 
 class EventsSpec extends Specification with IsolatedMockFactory {
 
@@ -54,7 +55,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
   val controller = new TestEvents
   val user = UserAccount(None, 1L, "editor", None, None, None, None)
   user.roles_=(List(UserRole.forName("editor")))
-  val licenseService = mock[FakeLicenseService]
+  val licenseService = mock[LicenseService]
   val eventTypeService = mock[EventTypeService]
   controller.licenseService_=(licenseService)
   controller.eventTypeService_=(eventTypeService)

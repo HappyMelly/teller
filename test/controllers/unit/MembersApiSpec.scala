@@ -27,13 +27,14 @@ package controllers.unit
 import controllers.apiv2.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.Photo
+import models.service.MemberService
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
 import play.api.libs.json.{ JsArray, Json }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeApiAuthentication, FakeMemberService, FakeServices }
+import stubs.{ FakeApiAuthentication, FakeServices }
 
 class MembersApiSpec extends Specification {
 
@@ -51,7 +52,7 @@ class MembersApiSpec extends Specification {
       memberOne.memberObj_=(PersonHelper.one().copy(photo = photo))
       memberTwo.memberObj_=(OrganisationHelper.two.copy(name = "Apple"))
 
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.findAll _).expects().returning(List(memberOne, memberTwo))
       controller.memberService_=(service)
       val res = controller.members().apply(FakeRequest())
@@ -84,7 +85,7 @@ class MembersApiSpec extends Specification {
       inactiveOne.memberObj_=(PersonHelper.two())
       inactiveTwo.memberObj_=(OrganisationHelper.one)
 
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.findAll _).expects().returning(
         List(memberOne, memberTwo, inactiveOne, inactiveTwo))
       controller.memberService_=(service)
@@ -98,7 +99,7 @@ class MembersApiSpec extends Specification {
       memberOne.memberObj_=(PersonHelper.one())
       memberTwo.memberObj_=(OrganisationHelper.two)
 
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.findAll _).expects().returning(List(memberOne, memberTwo))
       controller.memberService_=(service)
       val res = controller.members(Some(true)).apply(FakeRequest())
@@ -116,7 +117,7 @@ class MembersApiSpec extends Specification {
       memberOne.memberObj_=(PersonHelper.one())
       memberTwo.memberObj_=(OrganisationHelper.two)
 
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.findAll _).expects().returning(List(memberOne, memberTwo))
       controller.memberService_=(service)
       val res = controller.members(Some(false)).apply(FakeRequest())

@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers._
 import helpers._
 import models.ProfileStrength
-import models.service.{ ProfileStrengthService, PersonService }
+import models.service.{ ProfileStrengthService, PersonService, MemberService }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -50,7 +50,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val controller = new TestMembers
   val personService = mock[PersonService]
-  val memberService = mock[FakeMemberService]
+  val memberService = mock[MemberService]
   val profileStrengthService = mock[ProfileStrengthService]
   controller.personService_=(personService)
   controller.memberService_=(memberService)

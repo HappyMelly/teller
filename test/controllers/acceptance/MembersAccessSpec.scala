@@ -24,13 +24,14 @@
 */
 package controllers.acceptance
 
-import controllers._
 import _root_.integration.PlayAppSpec
+import controllers._
+import models.service.MemberService
 import org.scalamock.specs2.MockContext
 import org.specs2.matcher._
 import play.api.mvc.SimpleResult
 import play.api.test.FakeRequest
-import stubs.{ FakeMemberService, FakeUserIdentity, FakeServices }
+import stubs.{ FakeUserIdentity, FakeServices }
 
 import scala.concurrent.Future
 
@@ -92,7 +93,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   def e2 = {
     new MockContext {
       val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.findAll _).expects().returning(List()).once()
       controller.memberService_=(service)
       val result: Future[SimpleResult] = controller.index().apply(req)
@@ -127,7 +128,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
 
   def e7 = new MockContext {
     val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val service = mock[FakeMemberService]
+    val service = mock[MemberService]
     (service.find _).expects(1L).returning(None)
     controller.memberService_=(service)
     val result: Future[SimpleResult] = controller.edit(1L).apply(req)
@@ -144,7 +145,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
 
   def e9 = new MockContext {
     val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val service = mock[FakeMemberService]
+    val service = mock[MemberService]
     (service.find _).expects(1L).returning(None)
     controller.memberService_=(service)
     val result: Future[SimpleResult] = controller.update(1L).apply(req)
@@ -229,7 +230,7 @@ class MembersAccessSpec extends PlayAppSpec with DataTables {
   }
 
   def e25 = new MockContext {
-    val memberService = mock[FakeMemberService]
+    val memberService = mock[MemberService]
     // the existance of call itself proves that the authentication passed
     (memberService.find _).expects(1L).returning(None)
     controller.memberService_=(memberService)

@@ -28,12 +28,12 @@ import controllers.Statistics
 import helpers.EventHelper
 import integration.PlayAppSpec
 import models.License
-import models.service.EventService
+import models.service.{ EventService, LicenseService }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
-import stubs.{ FakeLicenseService, FakeServices, FakeUserIdentity }
+import stubs.{ FakeServices, FakeUserIdentity }
 
 class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
@@ -53,7 +53,7 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestStatistics extends Statistics with FakeServices
 
   val controller = new TestStatistics
-  val licenseService = mock[FakeLicenseService]
+  val licenseService = mock[LicenseService]
   controller.licenseService_=(licenseService)
   val eventService = mock[EventService]
   controller.eventService_=(eventService)

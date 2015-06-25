@@ -28,10 +28,10 @@ import controllers.Brands
 import helpers.{ PersonHelper, ProductHelper }
 import integration.PlayAppSpec
 import models.brand.{ BrandCoordinator, CertificateTemplate, EventType }
-import models.service.BrandService
+import models.service.{ BrandService, ProductService }
 import models.service.brand.{ CertificateTemplateService, EventTypeService }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
-import stubs.{ FakeProductService, FakeUserIdentity, FakeServices }
+import stubs.{ FakeUserIdentity, FakeServices }
 
 /**
  * Tests Brands controller methods, rendering Details page
@@ -67,7 +67,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   val controller = new TestBrands
   val eventTypeService = mock[EventTypeService]
   controller.eventTypeService_=(eventTypeService)
-  val productService = mock[FakeProductService]
+  val productService = mock[ProductService]
   controller.productService_=(productService)
   val certificateService = mock[CertificateTemplateService]
   controller.certificateService_=(certificateService)

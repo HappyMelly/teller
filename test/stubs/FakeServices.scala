@@ -36,7 +36,7 @@ trait FakeServices extends Services {
   private var _brandService = new BrandService
   private var _brandTeamMemberService = new BrandCoordinatorService
   private var _certificateService = new CertificateTemplateService
-  private var _contributionService = new FakeContributionService
+  private var _contributionService = new ContributionService
   private var _evaluationService = new EvaluationService
   private var _eventService = new EventService
   private var _eventCancellationService = new EventCancellationService
@@ -44,16 +44,16 @@ trait FakeServices extends Services {
   private var _experimentService = new ExperimentService
   private var _facilitatorService = new FacilitatorService
   private var _feeService = new BrandFeeService
-  private var _licenseService = new FakeLicenseService
-  private var _memberService = new FakeMemberService
+  private var _licenseService = new LicenseService
+  private var _memberService = new MemberService
   private var _orgService = new OrganisationService
-  private var _paymentRecordService = new FakePaymentRecordService
+  private var _paymentRecordService = new PaymentRecordService
   private var _personService = new PersonService
-  private var _productService = new FakeProductService
+  private var _productService = new ProductService
   private var _profileStrengthService = new ProfileStrengthService
   private var _socialProfileService = new SocialProfileService
   private var _translationService = new TranslationService
-  private var _userAccountService = new FakeUserAccountService
+  private var _userAccountService = new UserAccountService
 
   def activityService_=(service: ActivityService) = _activityService = service
   override def activityService: ActivityService = _activityService
@@ -71,11 +71,8 @@ trait FakeServices extends Services {
   def certificateService_=(service: CertificateTemplateService) = _certificateService = service
   override def certificateService: CertificateTemplateService = _certificateService
 
-  def contributionService_=(service: FakeContributionService) = {
-    _contributionService = service
-  }
-
-  override def contributionService: FakeContributionService = _contributionService
+  def contributionService_=(service: ContributionService) = _contributionService = service
+  override def contributionService: ContributionService = _contributionService
 
   def evaluationService_=(service: EvaluationService) = _evaluationService = service
   override def evaluationService: EvaluationService = _evaluationService
@@ -99,33 +96,22 @@ trait FakeServices extends Services {
   def feeService_=(service: BrandFeeService) = _feeService = service
   override def feeService: BrandFeeService = _feeService
 
-  def licenseService_=(service: FakeLicenseService) = {
-    _licenseService = service
-  }
+  def licenseService_=(service: LicenseService) = _licenseService = service
+  override def licenseService: LicenseService = _licenseService
 
-  override def licenseService: FakeLicenseService = _licenseService
+  def memberService_=(service: MemberService) = _memberService = service
+  override def memberService: MemberService = _memberService
 
-  def memberService_=(service: FakeMemberService) = {
-    _memberService = service
-  }
-
-  override def memberService: FakeMemberService = _memberService
-
-  def paymentRecordService_=(service: FakePaymentRecordService) = {
+  def paymentRecordService_=(service: PaymentRecordService) = {
     _paymentRecordService = service
   }
-  override def paymentRecordService: FakePaymentRecordService = _paymentRecordService
+  override def paymentRecordService: PaymentRecordService = _paymentRecordService
 
-  def personService_=(service: PersonService) = {
-    _personService = service
-  }
-
+  def personService_=(service: PersonService) = _personService = service
   override def personService: PersonService = _personService
 
-  def productService_=(service: FakeProductService) = {
-    _productService = service
-  }
-  override def productService: FakeProductService = _productService
+  def productService_=(service: ProductService) = _productService = service
+  override def productService: ProductService = _productService
 
   def profileStrengthService_=(service: ProfileStrengthService) =
     _profileStrengthService = service
@@ -143,10 +129,7 @@ trait FakeServices extends Services {
   def translationService_=(service: TranslationService) = _translationService = service
   override def translationService: TranslationService = _translationService
 
-  def userAccountService_=(service: FakeUserAccountService) = {
-    _userAccountService = service
-  }
-
-  override def userAccountService: FakeUserAccountService = _userAccountService
+  def userAccountService_=(service: UserAccountService) = _userAccountService = service
+  override def userAccountService: UserAccountService = _userAccountService
 
 }

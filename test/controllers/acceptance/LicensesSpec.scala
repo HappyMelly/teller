@@ -28,6 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.{ Licenses, Security }
 import helpers._
 import models.{ LicenseLicenseeBrandView, Brand, License, Person }
+import models.service.LicenseService
 import org.joda.time.LocalDate
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
@@ -50,7 +51,7 @@ class LicensesSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestLicenses() extends Licenses with Security with FakeServices
 
   val controller = new TestLicenses()
-  val licenseService = mock[FakeLicenseService]
+  val licenseService = mock[LicenseService]
   controller.licenseService_=(licenseService)
 
   def e1 = {

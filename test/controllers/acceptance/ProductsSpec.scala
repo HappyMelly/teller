@@ -48,7 +48,7 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   class TestProducts extends Products with FakeServices
   val controller = new TestProducts
-  val productService = mock[FakeProductService]
+  val productService = mock[ProductService]
   controller.productService_=(productService)
 
   def e1 = {

@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import helpers.MemberHelper
 import models.{ Experiment, Member }
-import models.service.ExperimentService
+import models.service.{ ExperimentService, MemberService }
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
 import stubs.services.FakeIntegrations
@@ -102,7 +102,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val controller = new TestExperiments
   val experimentService = mock[ExperimentService]
-  val memberService = mock[FakeMemberService]
+  val memberService = mock[MemberService]
   controller.memberService_=(memberService)
   controller.experimentService_=(experimentService)
 

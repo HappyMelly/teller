@@ -27,7 +27,7 @@ package controllers.unit
 import controllers.{ ProfileStrengths, Security }
 import helpers._
 import models._
-import models.service.FacilitatorService
+import models.service.{ LicenseService, FacilitatorService }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
@@ -42,7 +42,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
       initializeProfileStrength(person)
   }
   val controller = new TestProfileStrengths
-  val licenseService = mock[FakeLicenseService]
+  val licenseService = mock[LicenseService]
   val facilitatorService = mock[FacilitatorService]
   controller.facilitatorService_=(facilitatorService)
   controller.licenseService_=(licenseService)

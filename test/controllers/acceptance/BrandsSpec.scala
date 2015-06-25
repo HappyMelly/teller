@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Brands
 import helpers._
 import models.Brand
-import models.service.BrandService
+import models.service.{ BrandService, ProductService }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -52,7 +52,7 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
   class TestBrands extends Brands with FakeServices
   val controller = new TestBrands
   val brandService = mock[BrandService]
-  val productService = mock[FakeProductService]
+  val productService = mock[ProductService]
   controller.productService_=(productService)
   controller.brandService_=(brandService)
 

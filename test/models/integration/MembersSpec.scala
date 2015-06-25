@@ -27,7 +27,7 @@ package models.integration
 import controllers.Members
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
-import models.service.{ OrganisationService, PersonService }
+import models.service.{ OrganisationService, PersonService, MemberService }
 import models._
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
@@ -65,7 +65,7 @@ class MembersSpec extends PlayAppSpec {
 
   trait WithStubs extends MockContext {
     val personService = mock[PersonService]
-    val memberService = mock[FakeMemberService]
+    val memberService = mock[MemberService]
     val orgService = mock[OrganisationService]
     controller.orgService_=(orgService)
     controller.personService_=(personService)

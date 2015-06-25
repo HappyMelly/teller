@@ -29,7 +29,7 @@ import controllers.{ People, Security }
 import helpers._
 import models.{ SocialProfile, License, LicenseView }
 import models.payment.Record
-import models.service.{ FacilitatorService, PersonService, OrganisationService }
+import models.service._
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -60,8 +60,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val personService = mock[PersonService]
   val orgService = mock[OrganisationService]
-  val accountService = mock[FakeUserAccountService]
-  val licenseService = mock[FakeLicenseService]
+  val accountService = mock[UserAccountService]
+  val licenseService = mock[LicenseService]
   val controller = new TestPeople()
   controller.personService_=(personService)
   controller.orgService_=(orgService)

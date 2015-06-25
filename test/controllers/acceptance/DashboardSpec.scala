@@ -72,7 +72,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.brandService_=(brandService)
   val eventService = mock[EventService]
   controller.eventService_=(eventService)
-  val licenseService = mock[FakeLicenseService]
+  val licenseService = mock[LicenseService]
   controller.licenseService_=(licenseService)
   val evaluationService = mock[EvaluationService]
   controller.evaluationService_=(evaluationService)

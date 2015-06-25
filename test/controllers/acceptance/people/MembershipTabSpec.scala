@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.{ People, Security }
 import helpers.{ PersonHelper, MemberHelper }
 import models.payment.Record
-import models.service.{ PersonService }
+import models.service.{ PersonService, PaymentRecordService }
 import org.joda.money.Money
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -89,7 +89,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val controller = new TestPeople()
   val personService = mock[PersonService]
-  val paymentService = mock[FakePaymentRecordService]
+  val paymentService = mock[PaymentRecordService]
   controller.personService_=(personService)
   controller.paymentRecordService_=(paymentService)
 

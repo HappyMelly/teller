@@ -24,13 +24,13 @@
 
 package models
 
-import models.service.BrandService
+import helpers.EventHelper
+import models.service.{ BrandService, EventService, LicenseService }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.specs2.mutable.Specification
 import org.scalamock.specs2.MockContext
-import stubs.{ FakeServices, StubEventService, FakeLicenseService }
-import helpers.EventHelper
+import stubs.FakeServices
 
 class DynamicResourceCheckerSpec extends Specification {
 
@@ -77,7 +77,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a facilitator then permission should be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val licenseService = mock[FakeLicenseService]
+      val licenseService = mock[LicenseService]
       val license = License(None, 1L, 1L, "1", LocalDate.now(),
         LocalDate.now(), LocalDate.now(), true, Money.parse("EUR 100"),
         Some(Money.parse("EUR 100")))
@@ -90,7 +90,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a Viewer then permission should not be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val licenseService = mock[FakeLicenseService]
+      val licenseService = mock[LicenseService]
       (licenseService.activeLicense _) expects (1L, 1L) returning None
       val checker = new TestDynamicResourceChecker(viewer)
       checker.licenseService_=(licenseService)
@@ -107,7 +107,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a coordinator then permission should be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(Some(EventHelper.one))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -117,7 +117,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a Viewer then permission should not be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(Some(EventHelper.one))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -125,7 +125,7 @@ class DynamicResourceCheckerSpec extends Specification {
       checker.isEventCoordinator(1L) must_== false
     }
     "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(None)
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -143,7 +143,7 @@ class DynamicResourceCheckerSpec extends Specification {
 
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -154,7 +154,7 @@ class DynamicResourceCheckerSpec extends Specification {
       val event = EventHelper.one
       event.facilitatorIds_=(List(1))
 
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -166,7 +166,7 @@ class DynamicResourceCheckerSpec extends Specification {
 
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -174,7 +174,7 @@ class DynamicResourceCheckerSpec extends Specification {
       checker.isEventFacilitator(1L) must_== false
     }
     "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.find(_)).expects(1L).returning(None)
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -190,7 +190,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a coordinator then permission should be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(Some(EventHelper.one))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -200,7 +200,7 @@ class DynamicResourceCheckerSpec extends Specification {
     "and user is a Viewer then permission should not be granted" in new MockContext {
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(Some(EventHelper.one))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -208,7 +208,7 @@ class DynamicResourceCheckerSpec extends Specification {
       checker.isEvaluationCoordinator(1L) must_== false
     }
     "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(None)
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -227,7 +227,7 @@ class DynamicResourceCheckerSpec extends Specification {
 
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(true)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -238,7 +238,7 @@ class DynamicResourceCheckerSpec extends Specification {
       val event = EventHelper.one
       event.facilitatorIds_=(List(1))
 
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -250,7 +250,7 @@ class DynamicResourceCheckerSpec extends Specification {
 
       val brandService = mock[BrandService]
       (brandService.isCoordinator(_, _)).expects(1L, 1L).returning(false)
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(Some(event))
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)
@@ -258,7 +258,7 @@ class DynamicResourceCheckerSpec extends Specification {
       checker.isEvaluationFacilitator(1L) must_== false
     }
     "and requested event doesn't not exist then permission should not be granted" in new MockContext {
-      val eventService = mock[StubEventService]
+      val eventService = mock[EventService]
       (eventService.findByEvaluation(_)).expects(1L).returning(None)
       val checker = new TestDynamicResourceChecker(viewer)
       checker.eventService_=(eventService)

@@ -25,12 +25,12 @@ package models.unit
 
 import helpers.{ MemberHelper, PersonHelper }
 import models._
-import models.service.ProfileStrengthService
+import models.service.{ ProfileStrengthService, MemberService }
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.{ FakeMemberService, FakeServices }
+import stubs.FakeServices
 
 class PersonMemberSpec extends Specification {
 
@@ -96,7 +96,7 @@ class PersonMemberSpec extends Specification {
     val fee = Money.parse("EUR 200")
     val member = person.membership(true, fee)
     "the membership data should be saved to database" in new MockContext {
-      val memberService = mock[FakeMemberService]
+      val memberService = mock[MemberService]
       val profileStrengthService = mock[ProfileStrengthService]
       (profileStrengthService.find _) expects (1L, false) returning None
       //the line of interest
@@ -109,7 +109,7 @@ class PersonMemberSpec extends Specification {
     "additional profile strength steps should be added" in new MockContext {
       val profileStength = ProfileStrength.empty(1L, false)
       val profileStrengthService = mock[ProfileStrengthService]
-      val memberService = mock[FakeMemberService]
+      val memberService = mock[MemberService]
       (memberService.insert _) expects member returning member
       (profileStrengthService.find _) expects (1L, false) returning Some(profileStength)
       //the line of interest

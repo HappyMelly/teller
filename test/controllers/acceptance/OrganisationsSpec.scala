@@ -29,7 +29,7 @@ import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
 import models.payment.Record
 import models.{ Organisation, Person, SocialProfile, ProfileType, OrgView }
-import models.service.{ PersonService, OrganisationService }
+import models.service._
 import org.joda.money.Money
 import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
 import play.api.mvc.SimpleResult
@@ -81,9 +81,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val personService = mock[PersonService]
   val orgService = mock[OrganisationService]
-  val productService = mock[FakeProductService]
-  val contributionService = mock[FakeContributionService]
-  val paymentService = mock[FakePaymentRecordService]
+  val productService = mock[ProductService]
+  val contributionService = mock[ContributionService]
+  val paymentService = mock[PaymentRecordService]
   val org = OrganisationHelper.one
   val id = 1L
   val profile = SocialProfile(0, ProfileType.Organisation, "")

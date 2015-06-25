@@ -28,11 +28,11 @@ import controllers.apiv2.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import models._
-import models.service.OrganisationService
+import models.service.{ OrganisationService, MemberService }
 import org.scalamock.specs2.MockContext
 import play.api.libs.json._
 import play.api.test.FakeRequest
-import stubs.{ FakeApiAuthentication, FakeMemberService, FakeServices }
+import stubs.{ FakeApiAuthentication, FakeServices }
 
 class MembersApiSpec extends PlayAppSpec {
 
@@ -48,7 +48,7 @@ class MembersApiSpec extends PlayAppSpec {
     "return well-formed JSON if a member is a person" in new MockContext {
       memberOne.memberObj_=(PersonHelper.one)
 
-      val service = mock[FakeMemberService]
+      val service = mock[MemberService]
       (service.find _) expects 1L returning Some(memberOne)
       controller.memberService_=(service)
       val res = controller.member(1L).apply(FakeRequest())
@@ -65,7 +65,7 @@ class MembersApiSpec extends PlayAppSpec {
       keys.contains("organizations") must_== true
     }
     "return well-formed JSON if a member is an org" in new MockContext {
-      val memberService = mock[FakeMemberService]
+      val memberService = mock[MemberService]
       controller.memberService_=(memberService)
       val orgService = mock[OrganisationService]
       controller.orgService_=(orgService)
