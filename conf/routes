@@ -108,10 +108,11 @@ GET           /exchangerates/:base                                           con
 
 GET           /member/:id/experiment                                         controllers.Experiments.add(id: Long)
 POST          /member/:id/experiment                                         controllers.Experiments.create(id: Long)
-GET           /member/:id/experiment/:experimentId                           controllers.Experiments.edit(id: Long, experimentId: Long)
-POST          /member/:id/experiment/:experimentId                           controllers.Experiments.update(id: Long, experimentId: Long)
 DELETE        /member/:id/experiment/:experimentId                           controllers.Experiments.delete(id: Long, experimentId: Long)
 DELETE        /member/:id/experiment/:experimentId/picture                   controllers.Experiments.deletePicture(id: Long, experimentId: Long)
+GET           /member/:id/experiment/:experimentId                           controllers.Experiments.edit(id: Long, experimentId: Long)
+GET           /member/:id/experiments                                        controllers.Experiments.experiments(id: Long)
+POST          /member/:id/experiment/:experimentId                           controllers.Experiments.update(id: Long, experimentId: Long)
 
 GET           /experiment/:id/picture                                        controllers.Experiments.picture(id: Long)
 

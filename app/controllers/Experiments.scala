@@ -52,10 +52,10 @@ trait Experiments extends JsonController
    *
    * @param memberId Member identifier
    */
-  def add(memberId: Long) = SecuredRestrictedAction(Viewer) {
+  def add(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Ok(views.html.experiment.form(user, memberId, form))
+        Future.successful(Ok(views.html.experiment.form(user, memberId, form)))
   }
 
   /**
@@ -63,7 +63,7 @@ trait Experiments extends JsonController
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
+  def create(memberId: Long) = AsyncSecuredDynamicAction("member", "editor") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
@@ -96,11 +96,11 @@ trait Experiments extends JsonController
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.delete(memberId, id)
-        jsonSuccess("ok")
+        Future.successful(jsonSuccess("ok"))
   }
 
   /**
@@ -111,14 +111,14 @@ trait Experiments extends JsonController
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
+  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
           Experiment.picture(id).remove()
           experimentService.update(experiment.copy(picture = false))
-          jsonSuccess("ok")
-        } getOrElse jsonNotFound("Experiment not found")
+          Future.successful(jsonSuccess("ok"))
+        } getOrElse Future.successful(jsonNotFound("Experiment not found"))
   }
 
   /**
@@ -130,12 +130,13 @@ trait Experiments extends JsonController
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def edit(memberId: Long, id: Long) = SecuredRestrictedAction(Viewer) {
+  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
-          Ok(views.html.experiment.form(user, memberId, form.fill(experiment), Some(id)))
-        } getOrElse NotFound("Experiment not found")
+          Future.successful(
+            Ok(views.html.experiment.form(user, memberId, form.fill(experiment), Some(id))))
+        } getOrElse Future.successful(NotFound("Experiment not found"))
   }
 
   /**
@@ -143,11 +144,11 @@ trait Experiments extends JsonController
    *
    * @param memberId Member
    */
-  def experiments(memberId: Long) = SecuredRestrictedAction(Viewer) {
+  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val experiments = experimentService.findByMember(memberId)
-        Ok(views.html.experiment.list(memberId, experiments))
+        Future.successful(Ok(views.html.experiment.list(memberId, experiments)))
   }
 
   /**
@@ -163,7 +164,7 @@ trait Experiments extends JsonController
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) {
+  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(

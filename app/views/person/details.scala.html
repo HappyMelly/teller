@@ -34,7 +34,7 @@
             Facilitation</a></li>
         }
         @person.member.map { member =>
-          <li><a data-href="@routes.People.renderTabs(member.id.get, "experiments")"
+          <li><a data-href="@routes.Experiments.experiments(member.id.get)"
             href="#experiments" role="tab" data-toggle="tab">
             Experiments</a></li>
           <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"

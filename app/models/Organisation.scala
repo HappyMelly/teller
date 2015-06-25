@@ -79,13 +79,7 @@ case class Organisation(
    * Returns a list of people working in this organisation
    */
   def people: List[Person] = _people getOrElse {
-    val people = DB.withSession { implicit session: Session ⇒
-      val query = for {
-        relation ← OrganisationMemberships if relation.organisationId === this.id
-        person ← relation.person
-      } yield person
-      query.sortBy(_.lastName.toLowerCase).list
-    }
+    val people = orgService.people(this.id.get)
     people_=(people)
     people
   }

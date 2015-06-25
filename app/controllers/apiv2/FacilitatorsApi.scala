@@ -42,7 +42,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "photo" -> value._1.photo.url,
         "country" -> value._1.address.countryCode,
         "languages" -> value._1.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
-        "countries" -> value._1.countries.map(_.country).toList,
+        "countries" -> value._1.countries.map(_.country).distinct.toList,
         "rating" -> value._2)
     }
   }

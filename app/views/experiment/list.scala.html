@@ -14,21 +14,23 @@ website.</p>
   @if(experiments.length > 0) {
     @for(experiment <- experiments) {
       <div class="panel panel-default" data-id="@experiment.id.get">
-        <div class="panel-heading text-right">
-          @if(experiment.picture) {
+        @dynamic(handler, "member", "editor") {
+          <div class="panel-heading text-right">
+            <a class="btn btn-sm btn-default" type="button"
+                href="@routes.Experiments.update(memberId, experiment.id.get)">
+                <i class="glyphicon glyphicon-pencil"></i> Edit</a>
+            @if(experiment.picture) {
+              <button href="#" data-id="@experiment.id.get"
+                  class="deletePicture btn btn-sm btn-danger" type="button"
+                  data-href="@routes.Experiments.deletePicture(memberId, experiment.id.get)">
+                  <i class="glyphicon glyphicon-trash"></i> Delete Picture</button>
+            }
             <button href="#" data-id="@experiment.id.get"
-                class="deletePicture btn btn-sm btn-danger" type="button"
-                data-href="@routes.Experiments.deletePicture(memberId, experiment.id.get)">
-                <i class="glyphicon glyphicon-trash"></i> Delete Picture</button>
-          }
-          <a class="btn btn-sm btn-default" type="button"
-              href="@routes.Experiments.update(memberId, experiment.id.get)">
-              <i class="glyphicon glyphicon-pencil"></i> Edit</a>
-          <button href="#" data-id="@experiment.id.get"
-              class="remove btn btn-sm btn-danger" type="button"
-              data-href="@routes.Experiments.delete(memberId, experiment.id.get)">
-              <i class="glyphicon glyphicon-trash"></i> Remove</button>
-        </div>
+                class="remove btn btn-sm btn-danger" type="button"
+                data-href="@routes.Experiments.delete(memberId, experiment.id.get)">
+                <i class="glyphicon glyphicon-trash"></i> Remove</button>
+          </div>
+        }
         <div class="panel-body">
           <div class="col-md-12"><h3>@experiment.name</h3></div>
           @if(experiment.picture) {
@@ -46,7 +48,7 @@ website.</p>
     }
   }
 </div>
-@restrict(handler, List(as(Editor.toString))) {
+@dynamic(handler, "member", "editor") {
   <a type="button" class="btn btn-success pull-right"
     href="@routes.Experiments.add(memberId)">
     <i class="glyphicon glyphicon-plus"></i> Add Experiment</a>

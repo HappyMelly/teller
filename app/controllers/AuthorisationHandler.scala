@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -26,23 +26,46 @@ package controllers
 
 import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltHandler }
 import be.objectify.deadbolt.core.models.Subject
-import models.UserAccount
-import play.api.mvc.{ SimpleResult, Request, Result }
+import models.UserIdentity
 import play.api.i18n.Messages
+import play.api.mvc.{ SimpleResult, Request }
 import play.api.mvc.Results.Redirect
 import scala.concurrent.Future
 
 /**
  * Deadbolt authorisation handler.
  */
-class AuthorisationHandler(account: Option[UserAccount]) extends DeadboltHandler {
+class AuthorisationHandler(identity: UserIdentity) extends DeadboltHandler {
 
-  override def getSubject[A](request: Request[A]): Option[Subject] = account
-
+  /**
+   * Invoked prior to a constraint's test.  If Option.None is returned, the constraint is applied. If
+   * the option contains a result, the constraint will not be applied and the wrapped action will not
+   * be invoked.
+   *
+   * @return an option possible containing a Result.
+   */
   def beforeAuthCheck[A](request: Request[A]) = None
 
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = Some(new TellerResourceHandler(account))
+  /**
+   * Gets the current subject e.g. the current user.
+   *
+   * @return an option containing the current subject
+   */
+  override def getSubject[A](request: Request[A]): Option[Subject] = Some(identity.account)
 
+  /**
+   * Gets the handler used for dealing with resources restricted to specific users/groups.
+   *
+   * @return an option containing the handler for restricted resources
+   */
+  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] =
+    Some(new TellerResourceHandler(identity))
+
+  /**
+   * Invoked when an authorisation failure is detected for the request.
+   *
+   * @return the action
+   */
   def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
     Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
   }

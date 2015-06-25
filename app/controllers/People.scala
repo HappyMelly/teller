@@ -360,9 +360,6 @@ trait People extends JsonController
                 Ok(views.html.person.tabs.membership(user, person, payments))
               } getOrElse Ok("Person is not a member")
             } getOrElse NotFound("Person not found")
-          case "experiments" ⇒
-            val experiments = experimentService.findByMember(id)
-            Ok(views.html.experiment.list(id, experiments))
           case _ ⇒ Ok("")
         }
   }
