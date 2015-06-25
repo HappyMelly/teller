@@ -23,8 +23,6 @@
  */
 package models
 
-import models.File
-
 case class Experiment(id: Option[Long],
   memberId: Long,
   name: String,

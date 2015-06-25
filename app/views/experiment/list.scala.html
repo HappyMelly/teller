@@ -5,6 +5,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import models.UserRole.Role._
+@import templates.Formatters._
 
 <p>As a Supporter you could add an unlimited number of experiments you run. These
 experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
@@ -39,7 +40,7 @@ website.</p>
                 src="@routes.Experiments.picture(experiment.id.get)"/>
             </div>
           }
-          <div class="col-md-9">@experiment.description</div>
+          <div class="col-md-9">@experiment.description.markdown</div>
           @experiment.url.map { url =>
             <div class="col-md-12"><a href="@url" target="_blank">@url</a></div>
           }

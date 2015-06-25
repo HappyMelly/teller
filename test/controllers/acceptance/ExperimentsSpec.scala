@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import helpers.MemberHelper
-import models.Experiment
+import models.{ Experiment, Member }
 import models.service.ExperimentService
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -93,7 +93,12 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestExperiments extends Experiments
-    with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles
+    with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles {
+
+    override def notifyMembers(member: Member,
+      experiment: Experiment,
+      url: String) {}
+  }
 
   val controller = new TestExperiments
   val experimentService = mock[ExperimentService]

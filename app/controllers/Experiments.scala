@@ -24,9 +24,11 @@
 package controllers
 
 import controllers.Forms._
-import models.Experiment
+import models.{ Experiment, Member }
 import models.UserRole.Role._
 import models.service.Services
+import play.api.Play
+import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -81,6 +83,7 @@ trait Experiments extends JsonController
                   routes.People.details(member.objectId).url
                 else
                   routes.Organisations.details(member.objectId).url
+                notifyMembers(member, experiment, url + "#experiments")
                 Redirect(url + "#experiments")
               }
             } getOrElse Future.successful(NotFound("Member not found"))
@@ -189,6 +192,31 @@ trait Experiments extends JsonController
               } getOrElse Future.successful(NotFound("Member not found"))
             } getOrElse Future.successful(NotFound("Experiment not found"))
           })
+  }
+
+  /**
+   * Sends a message to Slack about new experiment
+   *
+   * @param member Member who created the experiment
+   * @param experiment Experiment
+   * @param url Link to the member's profile
+   */
+  protected def notifyMembers(member: Member, experiment: Experiment, url: String) {
+    val who = "%s started a new experiment,".format(member.name)
+    val what = "%s *%s* and it's awesome!".format(who, experiment.name)
+    val msg = "%s Check it here %s. You may find it useful :wink:".format(what,
+      fullUrl(url))
+    Play.configuration.getString("slack.additional_channel") map { name ⇒
+      slack.send(msg, Some(name))
+    }
+  }
+
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  private def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }
 
