@@ -34,9 +34,11 @@
             Facilitation</a></li>
         }
         @person.member.map { member =>
-          <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-            href="#experiments" role="tab" data-toggle="tab">
-            Experiments</a></li>
+          @if(!member.funder) {
+            <li><a data-href="@routes.Experiments.experiments(member.id.get)"
+              href="#experiments" role="tab" data-toggle="tab">
+              Experiments</a></li>
+          }
           <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"
             href="#membership" role="tab" data-toggle="tab">
             Membership</a></li>
@@ -93,7 +95,7 @@
     @if(showFacilitationTab) {
       <div class="tab-pane" id="facilitation"></div>
     }
-    @if(person.member.nonEmpty) {
+    @person.member.map { member =>
       <div class="tab-pane" id="experiments"></div>
       <div class="tab-pane" id="membership"></div>
     }
