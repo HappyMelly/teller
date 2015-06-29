@@ -35,7 +35,7 @@ import play.api.i18n.Messages
 import scala.concurrent.ExecutionContext.Implicits.global
 import services.CurrencyConverter.NoExchangeRateException
 
-object Accounts extends Controller with Security {
+object Accounts extends Controller with Security with Activities {
 
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 
@@ -102,11 +102,10 @@ object Accounts extends Controller with Security {
               form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
                 account.activate(currency)
-                val activity = account.activity(user.person,
-                  Activity.Predicate.Activated).insert
+                val log = activity(account, user.person).activated.insert()
                 account.accountHolder.updated(user.fullName)
                 Redirect(routes.Accounts.details(id)).flashing(
-                  "success" -> activity.toString)
+                  "success" -> log.toString)
               })
           } else {
             Unauthorized("You are not allowed to activate this account")
@@ -121,11 +120,10 @@ object Accounts extends Controller with Security {
         Account.find(id).map(account ⇒
           if (account.editableBy(user.account)) {
             account.deactivate()
-            val activity = account.activity(user.person,
-              Activity.Predicate.Deactivated).insert
             account.accountHolder.updated(user.fullName)
+            val log = activity(account, user.person).deactivated.insert()
             Redirect(routes.Accounts.details(id)).flashing(
-              "success" -> activity.toString)
+              "success" -> log.toString)
           } else {
             Unauthorized("You are not allowed to deactivate this account")
           }).getOrElse(NotFound)

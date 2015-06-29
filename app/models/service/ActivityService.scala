@@ -41,7 +41,7 @@ class ActivityService {
    * Returns 50 latest activity stream entries in reverse chronological order
    */
   def findAll: List[Activity] = DB.withSession { implicit session ⇒
-    Query(Activities).sortBy(_.created.desc).take(50).list
+    Query(Activities).sortBy(_.timestamp.desc).take(50).list
   }
 
 }

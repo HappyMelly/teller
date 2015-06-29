@@ -43,11 +43,11 @@ private[models] object Activities extends Table[Activity]("ACTIVITY") {
   def supportiveObjectType = column[Option[String]]("SUPPORTIVE_OBJECT_TYPE")
   def supportiveObjectId = column[Option[Long]]("SUPPORTIVE_OBJECT_ID")
   def supportiveObject = column[Option[String]]("SUPPORTIVE_OBJECT")
-  def created = column[DateTime]("CREATED")
+  def timestamp = column[DateTime]("CREATED")
 
   def * = id.? ~ subjectId ~ subject ~ predicate ~ objectType ~ objectId ~
     activityObject ~ supportiveObjectType ~ supportiveObjectId ~
-    supportiveObject ~ created <> (Activity.apply _, Activity.unapply _)
+    supportiveObject ~ timestamp <> (Activity.apply _, Activity.unapply _)
 
   def forInsert = * returning id
 }

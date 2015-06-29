@@ -42,6 +42,8 @@ case class EventInvoice(id: Option[Long],
 
 object EventInvoice {
 
+  def empty: EventInvoice = EventInvoice(None, None, 0, None, None)
+
   def findByEvent(id: Long): EventInvoice = DB.withSession { implicit session: Session ⇒
     Query(EventInvoices).filter(_.eventId === id).first
   }

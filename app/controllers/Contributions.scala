@@ -26,12 +26,15 @@ package controllers
 
 import models.UserRole.Role._
 import models.service.Services
-import models.{ Activity, ActivityRecorder, Contribution }
+import models.{ ActivityRecorder, Contribution }
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc._
 
-object Contributions extends Controller with Security with Services {
+object Contributions extends Controller
+  with Security
+  with Services
+  with Activities {
 
   /** HTML form mapping for creating and editing. */
   def contributionForm = Form(mapping(
@@ -67,11 +70,8 @@ object Contributions extends Controller with Security with Services {
             orgService.find(success.contributorId)
           contributor map { c ⇒
             val contribution = success.insert
-            val activity = contribution.activity(
-              user.person,
-              Activity.Predicate.Connected,
-              contributor).insert
-            Redirect(route).flashing("success" -> activity.toString)
+            val log = activity(contribution, user.person).connected.insert()
+            Redirect(route).flashing("success" -> log.toString)
           } getOrElse {
             Redirect(route).flashing("error" -> "Contributor does not exist")
           }
@@ -95,11 +95,7 @@ object Contributions extends Controller with Security with Services {
           orgService.find(contribution.contributorId).get
         Contribution.delete(id)
 
-        val activity = contribution.activity(
-          user.person,
-          Activity.Predicate.Disconnected,
-          Some(contributor)).insert
-
+        val log = activity(contribution, user.person).disconnected.insert()
         val route = if (page == "organisation") {
           routes.Organisations.details(contribution.contributorId).url
         } else if (page == "product") {
@@ -107,7 +103,7 @@ object Contributions extends Controller with Security with Services {
         } else {
           routes.People.details(contribution.contributorId).url + "#contributions"
         }
-        Redirect(route).flashing("success" -> activity.toString)
+        Redirect(route).flashing("success" -> log.toString)
       }.getOrElse(NotFound)
   }
 

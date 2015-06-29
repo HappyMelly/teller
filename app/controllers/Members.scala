@@ -25,7 +25,7 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.{ Activity, Member }
+import models.Member
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play
@@ -38,7 +38,7 @@ import play.api.mvc._
 import templates.Formatters._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Enrollment with JsonController {
+trait Members extends Enrollment with JsonController with Activities {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -145,14 +145,12 @@ trait Members extends Enrollment with JsonController {
               copy(person = existing.person, objectId = existing.objectId).
               copy(until = existing.until, reason = existing.reason)
             memberService.update(updated)
-            val activity = updated.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
+            val log = activity(updated, user.person).updated.insert()
             val url = profileUrl(updated)
             updatedMemberMsg(existing, updated, url) map { msg ⇒
               slack.send(msg)
             }
-            Redirect(url).flashing("success" -> activity.toString)
+            Redirect(url).flashing("success" -> log.toString)
           })
       } getOrElse NotFound
   }
@@ -191,12 +189,12 @@ trait Members extends Enrollment with JsonController {
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { m ⇒
         memberService.delete(m.objectId, m.person)
-        val activity = m.activity(user.person, Activity.Predicate.Deleted).insert
+        val log = activity(m, user.person).deleted.insert()
         val url = profileUrl(m)
         val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
           m.name, fullUrl(url))
         slack.send(msg)
-        Redirect(url).flashing("success" -> activity.toString)
+        Redirect(url).flashing("success" -> log.toString)
       } getOrElse NotFound
   }
 
@@ -236,20 +234,17 @@ trait Members extends Enrollment with JsonController {
             val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
             cached map { m ⇒
               val org = orgService.insert(view).org
-              org.activity(user.person, Activity.Predicate.Created).insert
+              activity(org, user.person).created.insert()
               // rewrite 'person' attribute in case if incomplete object was
               //  created for different type of member
               val member = memberService.insert(m.copy(objectId = org.id.get,
                 person = false))
               Cache.remove(Members.cacheId(user.person.id.get))
-              val activity = member.activity(
-                user.person,
-                Activity.Predicate.Made,
-                Some(org)).insert
+              val log = activity(member, user.person, Some(org)).made.insert()
               val profileUrl = routes.Organisations.details(org.id.get).url
               val text = newMemberMsg(member, org.name, profileUrl)
               slack.send(text)
-              Redirect(profileUrl).flashing("success" -> activity.toString)
+              Redirect(profileUrl).flashing("success" -> log.toString)
             } getOrElse {
               implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
               BadRequest(views.html.member.newOrg(user, None, orgForm))
@@ -270,16 +265,13 @@ trait Members extends Enrollment with JsonController {
             val person = personService.insert(success)
             val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
             Cache.remove(Members.cacheId(user.person.id.get))
-            person.activity(user.person, Activity.Predicate.Created).insert
-            val activity = member.activity(
-              user.person,
-              Activity.Predicate.Made,
-              Some(person)).insert
+            activity(person, user.person).created.insert()
+            val log = activity(member, user.person).made.insert()
             notify(person, None, member.fee, member)
             subscribe(person, member)
 
             val profileUrl = routes.People.details(person.id.get).url
-            Redirect(profileUrl).flashing("success" -> activity.toString)
+            Redirect(profileUrl).flashing("success" -> log.toString)
           } getOrElse {
             implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
             BadRequest(views.html.member.newPerson(user, None, personForm))
@@ -309,15 +301,12 @@ trait Members extends Enrollment with JsonController {
                 } else {
                   val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
                   Cache.remove(Members.cacheId(user.person.id.get))
-                  val activity = member.activity(
-                    user.person,
-                    Activity.Predicate.Made,
-                    Some(person)).insert
+                  val log = activity(member, user.person).made.insert()
                   notify(person, None, member.fee, member)
                   subscribe(person, member)
 
                   val profileUrl = routes.People.details(person.id.get).url
-                  Redirect(profileUrl).flashing("success" -> activity.toString)
+                  Redirect(profileUrl).flashing("success" -> log.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
@@ -355,14 +344,11 @@ trait Members extends Enrollment with JsonController {
                 } else {
                   val member = memberService.insert(m.copy(objectId = org.id.get, person = false))
                   Cache.remove(Members.cacheId(user.person.id.get))
-                  val activity = member.activity(
-                    user.person,
-                    Activity.Predicate.Made,
-                    Some(org)).insert
+                  val log = activity(member, user.person, Some(org)).made.insert()
                   val profileUrl = routes.Organisations.details(org.id.get).url
                   val text = newMemberMsg(member, org.name, profileUrl)
                   slack.send(text)
-                  Redirect(profileUrl).flashing("success" -> activity.toString)
+                  Redirect(profileUrl).flashing("success" -> log.toString)
                 }
               } getOrElse {
                 implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))

@@ -3,7 +3,7 @@
   brands: List[Brand],
   currentUserId: Long,
   emptyForm: Boolean,
-  form: Form[Event])(implicit flash: Flash,
+  form: Form[EventView])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -21,7 +21,7 @@
   }
 }
 
-@defining(form.value.map(event => "Event %s".format(event.title)).getOrElse("Add event")) { eventTitle =>
+@defining(form.value.map(view => "Event %s".format(view.event.title)).getOrElse("Add event")) { eventTitle =>
   @main("Events", "events", user) {
     <div id="error">
       @if(form.hasErrors) {

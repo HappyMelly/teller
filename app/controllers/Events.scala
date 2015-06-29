@@ -45,7 +45,8 @@ import views.Countries
 trait Events extends Controller
   with Security
   with Services
-  with Integrations {
+  with Integrations
+  with Activities {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -126,14 +127,15 @@ trait Events extends Controller
           val event = Event(id, eventTypeId, brandId, title, language,
             location, details, schedule, notPublic, archived, confirmed, free,
             0.0f, None)
-          event.invoice_=(invoice)
           event.facilitatorIds_=(facilitatorIds)
-          event
+          EventView(event, invoice)
         }
-      })({ (e: Event) ⇒
-        Some((e.id, e.eventTypeId, e.brandId, e.title, e.language, e.location,
-          e.details, e.schedule, e.notPublic, e.archived, e.confirmed, e.free,
-          e.invoice, e.facilitatorIds))
+      })({ (view: EventView) ⇒
+        Some((view.event.id, view.event.eventTypeId, view.event.brandId,
+          view.event.title, view.event.language, view.event.location,
+          view.event.details, view.event.schedule, view.event.notPublic,
+          view.event.archived, view.event.confirmed, view.event.free,
+          view.invoice, view.event.facilitatorIds))
 
       }))
 
@@ -150,10 +152,10 @@ trait Events extends Controller
         Location("", ""), defaultDetails, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, free = false,
         0.0f, None)
-      default.invoice_=(defaultInvoice)
+      val view = EventView(default, defaultInvoice)
       val account = user.account
       val brands = Brand.findByUser(account)
-      Ok(views.html.event.form(user, None, brands, account.personId, true, eventForm.fill(default)))
+      Ok(views.html.event.form(user, None, brands, account.personId, true, eventForm.fill(view)))
   }
 
   /**
@@ -164,11 +166,10 @@ trait Events extends Controller
   def duplicate(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map {
-        event ⇒
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(event)))
+      eventService.findWithInvoice(id) map { view ⇒
+        val account = user.account
+        val brands = Brand.findByUser(account)
+        Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(view)))
       } getOrElse NotFound
   }
 
@@ -181,18 +182,16 @@ trait Events extends Controller
       val form = eventForm.bindFromRequest
       form.fold(
         formWithErrors ⇒ formError(user, formWithErrors, None),
-        x ⇒ {
-          validateEvent(x, user.account) map { errors ⇒
+        view ⇒ {
+          validateEvent(view.event, user.account) map { errors ⇒
             formError(user,
               form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
               None)
           } getOrElse {
-            val event = eventService.insert(x)
-            val activity = event.activity(
-              user.person,
-              Activity.Predicate.Created).insert
-            sendEmailNotification(event, List.empty, activity)
-            Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+            val inserted = eventService.insert(view)
+            val log = activity(inserted.event, user.person).created.insert()
+            sendEmailNotification(view.event, List.empty, log)
+            Redirect(routes.Events.index()).flashing("success" -> log.toString)
 
           }
         })
@@ -223,11 +222,9 @@ trait Events extends Controller
               data ⇒ {
                 event.cancel(user.person.id.get, data.reason,
                   data.participants, data.details)
-                val activity = event.activity(
-                  user.person,
-                  Activity.Predicate.Deleted).insert
-                sendEmailNotification(event, List.empty, activity)
-                Redirect(routes.Events.index()).flashing("success" -> activity.toString)
+                val log = activity(event, user.person).deleted.insert()
+                sendEmailNotification(event, List.empty, log)
+                Redirect(routes.Events.index()).flashing("success" -> log.toString)
               })
           } else {
             Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
@@ -253,9 +250,7 @@ trait Events extends Controller
           eventInvoice ⇒ {
             val invoice = EventInvoice.findByEvent(id)
             EventInvoice.update(eventInvoice.copy(id = invoice.id).copy(eventId = invoice.eventId))
-            event.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
+            activity(event, user.person).updated.insert()
             Redirect(routes.Events.details(id)).flashing("success" -> "Invoice data was successfully updated")
           })
       } getOrElse NotFound
@@ -268,25 +263,25 @@ trait Events extends Controller
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map { x ⇒
+      eventService.findWithInvoice(id) map { x ⇒
         val acc = user.account
         //@TODO only funders must be retrieved
         val funders = if (acc.editor) orgService.findAll else List()
-        val eventType = eventTypeService.find(x.eventTypeId).get
-        val canFacilitate = acc.editor || x.isFacilitator(acc.personId) ||
-          brandService.isCoordinator(x.brandId, acc.personId)
-        val fees = feeService.findByBrand(x.brandId)
+        val eventType = eventTypeService.find(x.event.eventTypeId).get
+        val canFacilitate = acc.editor || x.event.isFacilitator(acc.personId) ||
+          brandService.isCoordinator(x.event.brandId, acc.personId)
+        val fees = feeService.findByBrand(x.event.brandId)
         val printableFees = fees.
           map(x ⇒ (Countries.name(x.country), x.fee.toString)).
           sortBy(_._1)
-        val brand = brandService.find(x.brandId).get
-        val event = fees.find(_.country == x.location.countryCode) map { y ⇒
-          Event.withFee(x, y.fee, eventType.maxHours)
-        } getOrElse x
+        val brand = brandService.find(x.event.brandId).get
+        val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+          Event.withFee(x.event, y.fee, eventType.maxHours)
+        } getOrElse x.event
         Ok(views.html.event.details(user,
           canFacilitate,
           funders,
-          event,
+          EventView(event, x.invoice),
           eventType.name,
           brand.name,
           printableFees))
@@ -300,11 +295,10 @@ trait Events extends Controller
   def edit(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      eventService.find(id) map {
-        event ⇒
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(event)))
+      eventService.findWithInvoice(id) map { view ⇒
+        val account = user.account
+        val brands = Brand.findByUser(account)
+        Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(view)))
       } getOrElse NotFound
   }
 
@@ -372,7 +366,7 @@ trait Events extends Controller
           events.filter(e ⇒ e.notPublic &&
             e.facilitators.exists(_.id.get == account.personId))
 
-      eventService.applyInvoices(filteredEvents)
+      val views = eventService.withInvoices(filteredEvents)
 
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -381,47 +375,47 @@ trait Events extends Controller
             "url" -> routes.People.details(data.id.get).url)
         }
       }
-      implicit val eventWrites = new Writes[Event] {
-        def writes(data: Event): JsValue = {
+      implicit val eventWrites = new Writes[EventView] {
+        def writes(data: EventView): JsValue = {
           Json.obj(
             "event" -> Json.obj(
-              "id" -> data.id,
-              "url" -> routes.Events.details(data.id.get).url,
-              "title" -> data.title),
+              "id" -> data.event.id,
+              "url" -> routes.Events.details(data.event.id.get).url,
+              "title" -> data.event.title),
             "location" -> Json.obj(
-              "country" -> data.location.countryCode.toLowerCase,
-              "city" -> data.location.city),
-            "facilitators" -> data.facilitators,
+              "country" -> data.event.location.countryCode.toLowerCase,
+              "city" -> data.event.location.city),
+            "facilitators" -> data.event.facilitators,
             "schedule" -> Json.obj(
-              "start" -> data.schedule.start.toString,
-              "end" -> data.schedule.end.toString),
-            "totalHours" -> data.schedule.totalHours,
-            "materialsLanguage" -> data.materialsLanguage,
-            "confirmed" -> data.confirmed,
+              "start" -> data.event.schedule.start.toString,
+              "end" -> data.event.schedule.end.toString),
+            "totalHours" -> data.event.schedule.totalHours,
+            "materialsLanguage" -> data.event.materialsLanguage,
+            "confirmed" -> data.event.confirmed,
             "invoice" -> Json.obj(
-              "free" -> data.free,
+              "free" -> data.event.free,
               "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" })),
             "actions" -> {
               Json.obj(
                 "edit" -> {
-                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.edit(data.id.get).url
+                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.edit(data.event.id.get).url
                   } else ""
                 },
                 "duplicate" -> {
-                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.duplicate(data.id.get).url
+                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.duplicate(data.event.id.get).url
                   } else ""
                 },
                 "cancel" -> {
-                  if (account.editor || data.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.cancel(data.id.get).url
+                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
+                    routes.Events.cancel(data.event.id.get).url
                   } else ""
                 })
             })
         }
       }
-      Ok(Json.toJson(filteredEvents))
+      Ok(Json.toJson(views))
   }
   /**
    * Edit form submits to this action.
@@ -434,31 +428,27 @@ trait Events extends Controller
       form.fold(
         formWithErrors ⇒ formError(user, formWithErrors, Some(id)),
         received ⇒ {
-          validateEvent(received, user.account) map { errors ⇒
+          validateEvent(received.event, user.account) map { errors ⇒
             formError(user,
               form.withError("facilitatorIds", Messages("error.event.invalidLicense")),
               Some(id))
           } getOrElse {
-            val existingEvent = eventService.find(id).get
+            val existingView = eventService.findWithInvoice(id).get
 
-            val updated = received.copy(id = Some(id))
-            updated.invoice_=(received.invoice.copy(id = existingEvent.invoice.id))
-            updated.facilitatorIds_=(received.facilitatorIds)
+            val updated = received.copy(event = received.event.copy(id = Some(id)),
+              invoice = received.invoice.copy(id = existingView.invoice.id))
+            updated.event.facilitatorIds_=(received.event.facilitatorIds)
 
             // it's important to compare before updating as with lazy
             // initialization invoice and facilitators data
             // for an old event will be destroyed
-            val changes = Comparator.compare(existingEvent, updated)
+            val changes = Comparator.compare(existingView, updated)
             eventService.update(updated)
 
-            val activity = updated.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
-            sendEmailNotification(updated,
-              changes,
-              activity)
+            val log = activity(updated.event, user.person).updated.insert()
+            sendEmailNotification(updated.event, changes, log)
 
-            Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+            Redirect(routes.Events.details(id)).flashing("success" -> log.toString)
           }
         })
   }
@@ -469,15 +459,12 @@ trait Events extends Controller
    */
   def confirm(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventService.find(id).map { event ⇒
-        val updated = event.copy(id = Some(id)).copy(confirmed = true)
-        updated.invoice_=(event.invoice.copy(id = event.invoice.id))
-        updated.facilitatorIds_=(event.facilitatorIds)
+      eventService.findWithInvoice(id).map { view ⇒
+        val updated = view.copy(event = view.event.copy(id = Some(id)).copy(confirmed = true))
+        updated.event.facilitatorIds_=(view.event.facilitatorIds)
         eventService.update(updated)
-        val activity = event.activity(
-          user.person,
-          Activity.Predicate.Confirmed).insert
-        Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+        val log = activity(updated.event, user.person).confirmed.insert()
+        Redirect(routes.Events.details(id)).flashing("success" -> log.toString)
       }.getOrElse(NotFound)
   }
 
@@ -589,7 +576,7 @@ trait Events extends Controller
    * @param eventId Event identifier if exists
    */
   protected def formError(user: UserIdentity,
-    form: Form[Event],
+    form: Form[EventView],
     eventId: Option[Long])(implicit flash: play.api.mvc.Flash,
       request: Request[Any],
       handler: AuthorisationHandler,

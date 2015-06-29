@@ -31,6 +31,8 @@ import play.api.Play.current
 import scala.slick.lifted.Query
 import play.api.i18n.Messages
 
+class InvalidActivityPredicate extends RuntimeException
+
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
  * such as (Peter, created, organisation Acme Corp).
@@ -50,7 +52,7 @@ case class Activity(id: Option[Long],
   supportiveObjectType: Option[String] = None,
   supportiveObjectId: Option[Long] = None,
   supportiveObject: Option[String] = None,
-  created: DateTime = DateTime.now()) {
+  timestamp: DateTime = DateTime.now()) {
 
   // Full description including subject (current user’s name).
   def description = {
@@ -78,10 +80,31 @@ case class Activity(id: Option[Long],
     } getOrElse Messages("activity." + predicate, "", what).trim.capitalize
   }
 
-  def insert: Activity = DB.withSession { implicit session: Session ⇒
-    val id = Activities.forInsert.insert(this)
-    this.copy(id = Some(id))
-  }
+  def signedUp: Activity = this.copy(predicate = Activity.Predicate.SignedUp)
+  def created: Activity = this.copy(predicate = Activity.Predicate.Created)
+  def updated: Activity = this.copy(predicate = Activity.Predicate.Updated)
+  def deleted: Activity = this.copy(predicate = Activity.Predicate.Deleted)
+  def activated: Activity = this.copy(predicate = Activity.Predicate.Activated)
+  def deactivated: Activity = this.copy(predicate = Activity.Predicate.Deactivated)
+  def added: Activity = this.copy(predicate = Activity.Predicate.Added)
+  def replaced: Activity = this.copy(predicate = Activity.Predicate.Replaced)
+  def balanced: Activity = this.copy(predicate = Activity.Predicate.BalancedAccounts)
+  def confirmed: Activity = this.copy(predicate = Activity.Predicate.Confirmed)
+  def approved: Activity = this.copy(predicate = Activity.Predicate.Approved)
+  def rejected: Activity = this.copy(predicate = Activity.Predicate.Rejected)
+  def sent: Activity = this.copy(predicate = Activity.Predicate.Sent)
+  def connected: Activity = this.copy(predicate = Activity.Predicate.Connected)
+  def disconnected: Activity = this.copy(predicate = Activity.Predicate.Disconnected)
+  def uploadedSign: Activity = this.copy(predicate = Activity.Predicate.UploadedSign)
+  def deletedSign: Activity = this.copy(predicate = Activity.Predicate.DeletedSign)
+  def deletedImage: Activity = this.copy(predicate = Activity.Predicate.DeletedImage)
+  def made: Activity = this.copy(predicate = Activity.Predicate.Made)
+  def becameSupporter: Activity = this.copy(predicate = Activity.Predicate.BecameSupporter)
+
+  def insert(): Activity = if (predicate == Activity.Predicate.None)
+    throw new InvalidActivityPredicate
+  else
+    Activity.insert(this)
 }
 
 /**
@@ -105,37 +128,6 @@ trait ActivityRecorder {
    * Returns type of this object
    */
   def objectType: String
-
-  /**
-   * Returns activity object with data from a particular object
-   * @param subject Person who does an activity
-   * @param action Name of action
-   */
-  def activity(subject: Person,
-    action: String,
-    supportiveObj: Option[ActivityRecorder] = None): Activity = {
-    supportiveObj map { obj ⇒
-      new Activity(None,
-        subject.id.get,
-        subject.fullName,
-        action.toString,
-        objectType,
-        identifier,
-        Some(humanIdentifier),
-        Some(obj.objectType),
-        Some(obj.identifier),
-        Some(obj.humanIdentifier))
-    } getOrElse {
-      new Activity(None,
-        subject.id.get,
-        subject.fullName,
-        action.toString,
-        objectType,
-        identifier,
-        Some(humanIdentifier))
-    }
-  }
-
 }
 /**
  * The possible activity stream actions, e.g. ‘deleted’.
@@ -143,6 +135,7 @@ trait ActivityRecorder {
 object Activity {
 
   object Predicate extends Enumeration {
+    val None = "none"
     val SignedUp = "signup"
     val Created = "create"
     val Updated = "update"
@@ -194,7 +187,7 @@ object Activity {
       entryActivity ← BookingEntryActivities if entryActivity.bookingEntryId === bookingEntryId
       activity ← Activities if activity.id === entryActivity.activityId
     } yield activity
-    query.sortBy(_.created.desc).list
+    query.sortBy(_.timestamp.desc).list
   }
 
   def insert(subject: String, predicate: String): Activity = {
@@ -215,6 +208,11 @@ object Activity {
 
   def insert(subject: String, predicate: String, activityObject: String): Activity = {
     insert(0L, subject, predicate, Some(activityObject))
+  }
+
+  def insert(activity: Activity): Activity = DB.withSession { implicit session ⇒
+    val id = Activities.forInsert.insert(activity)
+    activity.copy(id = Some(id))
   }
 
   /** Returns new activity record */

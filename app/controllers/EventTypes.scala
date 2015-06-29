@@ -24,7 +24,6 @@
 
 package controllers
 
-import models.Activity
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
@@ -34,7 +33,10 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 
-trait EventTypes extends JsonController with Security with Services {
+trait EventTypes extends JsonController
+  with Security
+  with Services
+  with Activities {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
@@ -98,11 +100,9 @@ trait EventTypes extends JsonController with Security with Services {
               BadRequest(views.html.eventtype.form(user, brand, withErrors))
             } getOrElse {
               val inserted = eventTypeService.insert(received.copy(brandId = brandId))
-              val activity = inserted.activity(user.person,
-                Activity.Predicate.Connected,
-                Some(brand)).insert
+              val log = activity(inserted, user.person, Some(brand)).connected.insert()
               val route = routes.Brands.details(brandId).url + "#types"
-              Redirect(route).flashing("success" -> activity.toString)
+              Redirect(route).flashing("success" -> log.toString)
             })
         } getOrElse Redirect(routes.Brands.index()).
           flashing("error" -> Messages("error.brand.notFound"))
@@ -145,10 +145,8 @@ trait EventTypes extends JsonController with Security with Services {
           Redirect(route).flashing("error" -> Messages("error.eventType.tooManyEvents"))
         } else {
           eventTypeService.delete(id)
-          val activity = eventType.activity(user.person,
-            Activity.Predicate.Disconnected,
-            Some(brand)).insert
-          Redirect(route).flashing("success" -> activity.toString)
+          val log = activity(eventType, user.person, Some(brand)).disconnected.insert()
+          Redirect(route).flashing("success" -> log.toString)
         }
       }.getOrElse(NotFound)
   }

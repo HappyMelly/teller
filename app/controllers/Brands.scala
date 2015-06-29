@@ -46,7 +46,10 @@ import services._
 import scala.concurrent.Future
 import scala.io.Source
 
-trait Brands extends JsonController with Security with Services {
+trait Brands extends JsonController
+  with Security
+  with Services
+  with Activities {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -164,20 +167,16 @@ trait Brands extends JsonController with Security with Services {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 brand.copy(picture = Some(filename)).insert
-                val activity = brand.activity(
-                  user.person,
-                  Activity.Predicate.Created).insert
-                Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+                val log = activity(brand, user.person).created.insert()
+                Redirect(routes.Brands.index()).flashing("success" -> log.toString)
               }.recover {
                 case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.brand.form(user, None, people,
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
               val b = brand.insert
-              val activity = b.activity(
-                user.person,
-                Activity.Predicate.Created).insert
-              Future.successful(Redirect(routes.Brands.index()).flashing("success" -> activity.toString))
+              val log = activity(b, user.person).insert()
+              Future.successful(Redirect(routes.Brands.index()).flashing("success" -> log.toString))
             }
           }
         })
@@ -196,10 +195,8 @@ trait Brands extends JsonController with Security with Services {
           Cache.remove(Brand.cacheId(brand.code))
         }
         brand.delete()
-        val activity = brand.activity(
-          user.person,
-          Activity.Predicate.Deleted).insert
-        Redirect(routes.Brands.index()).flashing("success" -> activity.toString)
+        val log = activity(brand, user.person).deleted.insert()
+        Redirect(routes.Brands.index()).flashing("success" -> log.toString)
       } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
@@ -216,10 +213,8 @@ trait Brands extends JsonController with Security with Services {
           Cache.remove(Brand.cacheId(brand.code))
         }
         brandService.update(brand, brand, None)
-        val activity = brand.activity(
-          user.person,
-          Activity.Predicate.DeletedImage).insert
-        Redirect(routes.Brands.details(id)).flashing("success" -> activity.toString)
+        val log = activity(brand, user.person).deletedImage.insert()
+        Redirect(routes.Brands.details(id)).flashing("success" -> log.toString)
       }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
   }
 
@@ -390,11 +385,9 @@ trait Brands extends JsonController with Security with Services {
                   x.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = brand.activity(
-                    user.person,
-                    Activity.Predicate.Updated).insert
+                  val log = activity(brand, user.person).updated.insert()
                   Redirect(routes.Brands.details(id)).flashing(
-                    "success" -> activity.toString)
+                    "success" -> log.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
                     BadRequest(views.html.brand.form(user, Some(id), people,
@@ -402,11 +395,9 @@ trait Brands extends JsonController with Security with Services {
                 }
               }.getOrElse {
                 val updatedBrand = brandService.update(x, brand, x.picture)
-                val activity = updatedBrand.activity(
-                  user.person,
-                  Activity.Predicate.Updated).insert
+                val log = activity(updatedBrand, user.person).updated.insert()
                 val route = routes.Brands.details(id)
-                Future.successful(Redirect(route).flashing("success" -> activity.toString))
+                Future.successful(Redirect(route).flashing("success" -> log.toString))
               }
             }
           })

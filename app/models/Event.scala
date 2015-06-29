@@ -86,6 +86,8 @@ case class Location(city: String, countryCode: String)
  */
 case class Language(spoken: String, secondSpoken: Option[String], materials: Option[String])
 
+case class EventView(event: Event, invoice: EventInvoice)
+
 /** An event such as a Management 3.0 course or a DARE Festival */
 case class Event(
   id: Option[Long],
@@ -104,7 +106,6 @@ case class Event(
   fee: Option[Money] = None) extends ActivityRecorder with Services {
 
   private var _facilitators: Option[List[Person]] = None
-  private var _invoice: Option[EventInvoice] = None
   private var _facilitatorIds: Option[List[Long]] = None
 
   /**
@@ -141,18 +142,6 @@ case class Event(
 
   def facilitators_=(facilitators: List[Person]): Unit = {
     _facilitators = Some(facilitators)
-  }
-
-  /** Returns (and retrieves from db if needed) an invoice data */
-  def invoice: EventInvoice = if (_invoice.isEmpty) {
-    invoice_=(EventInvoice findByEvent id.get)
-    _invoice.get
-  } else {
-    _invoice.get
-  }
-
-  def invoice_=(invoice: EventInvoice): Unit = {
-    _invoice = Some(invoice)
   }
 
   def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {

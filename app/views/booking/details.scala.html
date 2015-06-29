@@ -167,7 +167,7 @@
             <i class="glyphicon glyphicon-activity-@activity.predicate"></i>
             @Messages("activity." + activity.predicate, activity.subject, activity.activityObject.getOrElse(""))
           </td>
-          <td><small>@activity.created.format</small></td>
+          <td><small>@activity.timestamp.format</small></td>
         </tr>
         }
       </table>

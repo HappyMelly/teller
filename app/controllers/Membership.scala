@@ -35,7 +35,7 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.{ Logger, Play }
 
-trait Membership extends Enrollment {
+trait Membership extends Enrollment with Activities {
 
   class ValidationException(msg: String) extends RuntimeException(msg) {}
 
@@ -121,9 +121,7 @@ trait Membership extends Enrollment {
             notify(user.person, org, fee, member)
             subscribe(user.person, member)
 
-            member.activity(
-              user.person,
-              Activity.Predicate.BecameSupporter).insert
+            activity(member, user.person).becameSupporter.insert()
 
             Ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
           } catch {

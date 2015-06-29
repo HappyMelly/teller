@@ -1,7 +1,7 @@
 @(user: UserIdentity,
     canFacilitate: Boolean,
     funders: List[Organisation],
-    event: Event,
+    view: EventView,
     typeName: String,
     brandName: String,
     fees: List[(String, String)])(implicit
@@ -18,7 +18,7 @@
 @import views.Countries
 @import views.ViewHelpers.dateInterval
 
-@main(event.title + " - Event", "events", user) {
+@main(view.event.title + " - Event", "events", user) {
 
   @dynamic(handler, "event", DynamicRole.Facilitator) {
     <!-- Confirm Modal -->
@@ -32,13 +32,13 @@
           </div>
           <div class="modal-body">
             I confirm that this event
-            @if(event.schedule.start.toString >= LocalDate.now().toString) { will take} else { took}
+            @if(view.event.schedule.start.toString >= LocalDate.now().toString) { will take} else { took}
             place and understand I will get
-            an invoice for @event.fee.map { fee => @fee} from a brand manager.
+            an invoice for @view.event.fee.map { fee => @fee} from a brand manager.
           </div>
           <div class="modal-footer">
             <form method="post" class="form-inline"
-            action="@CSRF(routes.Events.confirm(event.id.getOrElse(0)))">
+            action="@CSRF(routes.Events.confirm(view.event.id.getOrElse(0)))">
               <button class="btn btn-warning" type="submit">Confirm</button>
               <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
             </form>
@@ -50,23 +50,23 @@
 
   @element.evaluationActions()
   @views.html.event.reason()
-  @views.html.event.requestEvaluation(event)
+  @views.html.event.requestEvaluation(view.event)
   <div class="page-header">
     <h1>
-      @event.title
+      @view.event.title
       <div class="actions pull-right">
       @dynamic(handler, "event", DynamicRole.Facilitator) {
         <div class="button">
-          <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
+          <a class="btn btn-default" href="@routes.Events.edit(view.event.id.get)">
             <i class="glyphicon glyphicon-pencil"></i> Edit
           </a>
         </div>
         <div class="button">
-          <a class="btn btn-success" href="@routes.Events.duplicate(event.id.get)">
+          <a class="btn btn-success" href="@routes.Events.duplicate(view.event.id.get)">
             <i class="glyphicon glyphicon-edit"></i> Duplicate
           </a>
         </div>
-        @if(!event.confirmed) {
+        @if(!view.event.confirmed) {
           <div class="button">
             <a href="#" class="btn btn-warning" data-toggle="modal" data-target="#confirm">
               <i class="glyphicon-ok glyphicon glyphicon-white"></i> Confirm
@@ -75,11 +75,11 @@
         }
         <div class="button">
           <div data-toggle="tooltip" data-placement="bottom"
-            @if(!event.deletable) {
+            @if(!view.event.deletable) {
               title="@Messages("error.event.nonDeletable")" }>
-            <a data-href="@routes.Events.cancel(event.id.get)" class="btn btn-danger"
+            <a data-href="@routes.Events.cancel(view.event.id.get)" class="btn btn-danger"
               data-toggle="modal" data-target="#cancelDialog" id="cancelButton"
-              @if(!event.deletable) {disabled="disabled"}>
+              @if(!view.event.deletable) {disabled="disabled"}>
               <i class="glyphicon-white glyphicon glyphicon-trash"></i> Cancel
             </a>
           </div>
@@ -88,15 +88,15 @@
       </div>
     </h1>
   </div>
-  @if(event.confirmed && !event.free) {
+  @if(view.event.confirmed && !view.event.free) {
     <div class="alert alert-warning">
       <i class="glyphicon glyphicon-info-sign"></i> You will be
-      invoiced for @event.fee.map { fee => @fee}. If the event didn't take place,
+      invoiced for @view.event.fee.map { fee => @fee}. If the event didn't take place,
       <b>delete it</b>.
     </div>
   }
   @dynamic(handler, "event", DynamicRole.Coordinator) {
-    @if(!event.schedule.validateTotalHours) {
+    @if(!view.event.schedule.validateTotalHours) {
       <div class="alert alert-warning">
         <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
         suspiciosly less than a number of hours per day multiplied to a number of days.
@@ -104,48 +104,48 @@
     }
   }
 
-    <input type="hidden" disabled id="brandId" value="@event.brandId"/>
+    <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
   <div class="col-md-8">
     <div class="col-md-9">
       <dl class="dl-horizontal">
         <dt>When</dt>
-        <dd>@dateInterval(event.schedule.start, event.schedule.end)</dd>
+        <dd>@dateInterval(view.event.schedule.start, view.event.schedule.end)</dd>
         <dt>Where</dt>
-        <dd>@event.location.city, @Countries.name(event.location.countryCode)</dd>
+        <dd>@view.event.location.city, @Countries.name(view.event.location.countryCode)</dd>
         <dt>Spoken Language</dt>
-        <dd>@event.spokenLanguage</dd>
+        <dd>@view.event.spokenLanguage</dd>
         <dt>Materials in</dt>
-        <dd>@event.materialsLanguage</dd>
+        <dd>@view.event.materialsLanguage</dd>
         <dt>Hours</dt>
-        <dd>@event.schedule.totalHours (per day: @event.schedule.hoursPerDay)</dd>
-        @event.details.webSite.map { url =>
+        <dd>@view.event.schedule.totalHours (per day: @view.event.schedule.hoursPerDay)</dd>
+        @view.event.details.webSite.map { url =>
           <dt>Website</dt>
           <dd><a href="@url" target="_blank">@url</a></dd>
         }
-        @event.details.registrationPage.map { url =>
+        @view.event.details.registrationPage.map { url =>
           <dt>Registration</dt>
           <dd><a href="@url" target="_blank">@url</a></dd>
         }
       </dl>
       <dl class="dl-horizontal">
         <dt class="text-muted">Brand</dt>
-        <dd class="text-muted"><a href="@routes.Brands.details(event.brandId)">@brandName</a></dd>
+        <dd class="text-muted"><a href="@routes.Brands.details(view.event.brandId)">@brandName</a></dd>
         <dt class="text-muted">Event type</dt>
         <dd class="text-muted">@typeName</dd>
       </dl>
       <dl class="dl-horizontal">
         <dt></dt>
-        <dd>@if(event.notPublic) {
+        <dd>@if(view.event.notPublic) {
           <span class="label label-danger">private</span>
         } else {
           <span class="label label-default">public</span>
         }
-          @if(event.archived) {
+          @if(view.event.archived) {
             <span class="label label-warning">archived</span>
           } else {
             <span class="label label-info">active</span>
           }
-          @if(event.confirmed) {
+          @if(view.event.confirmed) {
             <span class="label label-success">confirmed</span>
           } else {
             <span class="label label-primary">unconfirmed</span>
@@ -156,7 +156,7 @@
     <div class="col-md-3">
       <dl>
         <dt>Facilitators</dt>
-        @for(facilitator <- event.facilitators) {
+        @for(facilitator <- view.event.facilitators) {
           <dd>
             @element.photo(facilitator, "25")
             <a href="@routes.People.details(facilitator.id.getOrElse(0))"> @facilitator.fullName</a> <br/>
@@ -166,10 +166,10 @@
       <dl>
         <dt>License Event Fee</dt>
         <dd>
-          @if(event.free) {
+          @if(view.event.free) {
             Event is free
           } else {
-            @event.fee.map { fee => @fee }.getOrElse {
+            @view.event.fee.map { fee => @fee }.getOrElse {
               Fee for this country is not defined yet. Please contact the brand manager.
             }
             <a href="#" data-toggle="modal" data-target="#brandfees"><i class="glyphicon glyphicon-info-sign"></i></a>
@@ -178,45 +178,45 @@
       </dl>
       <dl>
         <dt>Event Rating</dt>
-        <dd>@views.html.element.rating(event.rating)</dd>
+        <dd>@views.html.element.rating(view.event.rating)</dd>
       </dl>
     </div>
   </div>
   @views.html.element.brandFees(brandName, fees)
   <div class="col-md-3 col-md-offset-1x">
     <legend>Invoice</legend>
-    @if(event.free) {
+    @if(view.event.free) {
       <p>No invoice. Event is <b>free</b>.</p>
     } else {
       <p>
         <strong>
-          To:</strong> <a href="@routes.Organisations.details(event.invoice.invoiceTo)">@event.invoice.invoiceToOrg.get.name</a>
-        @event.invoice.invoiceBy.map { id =>
+          To:</strong> <a href="@routes.Organisations.details(view.invoice.invoiceTo)">@view.invoice.invoiceToOrg.get.name</a>
+        @view.invoice.invoiceBy.map { id =>
           &nbsp;&nbsp;&nbsp; <strong>
-            By:</strong> <a href="@routes.Organisations.details(id)">@event.invoice.invoiceByOrg.get.name</a>
+            By:</strong> <a href="@routes.Organisations.details(id)">@view.invoice.invoiceByOrg.get.name</a>
         }
-        @event.invoice.number.map { number =>
+        @view.invoice.number.map { number =>
           <br/>
           <strong>Invoice #:</strong> @number
         }
       </p>
       @dynamic(handler, "event", DynamicRole.Coordinator) {
-        <form method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
-          <input type="hidden" name="id" value="@event.invoice.id">
-          <input type="hidden" name="invoiceTo" id="invoiceTo" value="@event.invoice.invoiceTo">
-          <input type="hidden" name="eventId" id="eventId" value="@event.id">
+        <form method="POST" action="@CSRF(routes.Events.invoice(view.event.id.get))">
+          <input type="hidden" name="id" value="@view.invoice.id">
+          <input type="hidden" name="invoiceTo" id="invoiceTo" value="@view.invoice.invoiceTo">
+          <input type="hidden" name="eventId" id="eventId" value="@view.event.id">
           <div class="form-group" id="invoiceBy_field">
             <label for="invoiceBy" class="control-label">Invoiced By</label>
             <select name="invoiceBy" class="form-control" id="invoiceBy">
               <option value="">Choose an organisation</option>
               @funders.map { entity =>
-                <option value="@entity.id" @if(event.invoice.invoiceBy.exists(_ == entity.id.get)) {selected}>@entity.name </option>
+                <option value="@entity.id" @if(view.invoice.invoiceBy.exists(_ == entity.id.get)) {selected}>@entity.name </option>
               }
             </select>
           </div>
           <div class="form-group" id="number_field">
             <label for="number" class="control-label">Invoice Number</label>
-            <input id="number" class="form-control" type="text" name="number" value="@event.invoice.number">
+            <input id="number" class="form-control" type="text" name="number" value="@view.invoice.number">
           </div>
           <p>
             <button class="btn btn-success">Update Invoice Info</button>
@@ -225,7 +225,7 @@
       }
     }
   </div>
-  <div id="currentEventId" value="@event.id"></div>
+  <div id="currentEventId" value="@view.event.id"></div>
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="details">
       <li><a href="#description">Description</a></li>
@@ -236,12 +236,12 @@
     <div class="tab-content">
       <div class="tab-pane" id="description">
         <br/>
-        @event.details.description.map { desc =>
+        @view.event.details.description.map { desc =>
           <p>
             <strong>Short description</strong><br/>@desc.markdown
           </p>
         }
-        @event.details.specialAttention.map { attention =>
+        @view.event.details.specialAttention.map { attention =>
           <p>
             <strong>Special attention</strong><br/>@attention.markdown
           </p>
@@ -252,7 +252,7 @@
           <div id="filter-containter">
             <div class="pull-right">
               <a class="input-sm" tabindex="-1"
-              href="@routes.Participants.add(Some(event.brandId), event.id, Some("event")).url" title="Add Participant">
+              href="@routes.Participants.add(Some(view.event.brandId), view.event.id, Some("event")).url" title="Add Participant">
                 <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
               <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                 <i class="glyphicon glyphicon-envelope"></i>

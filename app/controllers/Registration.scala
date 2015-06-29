@@ -68,7 +68,7 @@ case class OrgData(name: String, country: String)
  * -v
  * Contains actions for a registration process
  */
-trait Registration extends Enrollment {
+trait Registration extends Enrollment with Activities {
 
   val REGISTRATION_COOKIE = "registration"
 
@@ -253,7 +253,7 @@ trait Registration extends Enrollment {
                 notify(person, org, fee, member)
                 subscribe(person, member)
 
-                member.activity(person, Activity.Predicate.BecameSupporter).insert
+                activity(member, person).becameSupporter.insert()
 
                 val orgId = org map (_.id) getOrElse None
                 Ok(Json.obj("redirect" -> routes.Registration.congratulations(orgId).url))

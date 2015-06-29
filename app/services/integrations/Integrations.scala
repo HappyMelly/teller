@@ -26,6 +26,7 @@ package services.integrations
 
 import play.api._
 import play.api.Play.current
+
 /**
  * Contains all integrations available in the system
  */
