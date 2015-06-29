@@ -22,11 +22,12 @@
  * or in writing
  * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package stubs
 
-import models.{ ActivityRecorder, Activity, Person }
+import controllers.Activities
+import models.{ BaseActivity, Activity, ActivityRecorder, Person }
 
-trait Activities {
+trait FakeActivities extends Activities {
 
   /**
    * Returns activity object with data from the given object
@@ -35,11 +36,11 @@ trait Activities {
    * @param subject Person who does an activity
    * @param supportiveObj Optional supportive object
    */
-  def activity(obj: ActivityRecorder,
+  override def activity(obj: ActivityRecorder,
     subject: Person,
-    supportiveObj: Option[ActivityRecorder] = None): Activity = {
+    supportiveObj: Option[ActivityRecorder] = None): BaseActivity = {
     supportiveObj map { supportive ⇒
-      new Activity(None,
+      new FakeActivity(None,
         subject.id.get,
         subject.fullName,
         Activity.Predicate.None,
@@ -50,7 +51,7 @@ trait Activities {
         Some(supportive.identifier),
         Some(supportive.humanIdentifier))
     } getOrElse {
-      new Activity(None,
+      new FakeActivity(None,
         subject.id.get,
         subject.fullName,
         Activity.Predicate.None,

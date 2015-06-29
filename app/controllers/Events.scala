@@ -39,6 +39,7 @@ import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
+import scala.concurrent.Future
 import services.integrations.Integrations
 import views.Countries
 
@@ -78,16 +79,9 @@ trait Events extends Controller
   /**
    * HTML form mapping for an event’s invoice.
    */
-  val invoiceMapping = mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "eventId" -> ignored(Option.empty[Long]),
-    "invoiceTo" -> longNumber.verifying(
-      "Such organization doesn't exist", (invoiceTo: Long) ⇒ orgService.find(invoiceTo).isDefined),
-    "invoiceBy" -> optional(longNumber).verifying(
-      "Such organization doesn't exist", (invoiceBy: Option[Long]) ⇒ invoiceBy.map { value ⇒
-        orgService.find(value).isDefined
-      }.getOrElse(true)),
-    "number" -> optional(nonEmptyText))(EventInvoice.apply)(EventInvoice.unapply)
+  val invoiceForm = Form(tuple(
+    "invoiceBy" -> longNumber,
+    "number" -> optional(nonEmptyText)))
 
   /**
    * HTML form mapping for creating and editing.
@@ -118,15 +112,16 @@ trait Events extends Controller
     "archived" -> default(boolean, false),
     "confirmed" -> default(boolean, false),
     "free" -> default(boolean, false),
-    "invoice" -> invoiceMapping,
+    "invoice" -> longNumber(min = 1),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandId, title, language, location, details, schedule,
-        notPublic, archived, confirmed, free, invoice, facilitatorIds) ⇒
+        notPublic, archived, confirmed, free, invoiceTo, facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandId, title, language,
             location, details, schedule, notPublic, archived, confirmed, free,
             0.0f, None)
+          val invoice = EventInvoice.empty.copy(eventId = id, invoiceTo = invoiceTo)
           event.facilitatorIds_=(facilitatorIds)
           EventView(event, invoice)
         }
@@ -135,7 +130,7 @@ trait Events extends Controller
           view.event.title, view.event.language, view.event.location,
           view.event.details, view.event.schedule, view.event.notPublic,
           view.event.archived, view.event.confirmed, view.event.free,
-          view.invoice, view.event.facilitatorIds))
+          view.invoice.invoiceTo, view.event.facilitatorIds))
 
       }))
 
@@ -233,27 +228,42 @@ trait Events extends Controller
   }
 
   /**
-   * Update an invoice data for an event
+   * Confirm form submits to this action.
+   * @param id Event ID
+   */
+  def confirm(id: Long) = AsyncSecuredDynamicAction("event", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        eventService.find(id) map { event ⇒
+          eventService.confirm(id)
+          val log = activity(event, user.person).confirmed.insert()
+          success(id, log.toString)
+        } getOrElse Future.successful(NotFound)
+  }
+
+  /**
+   * Updates invoice data for the given event
    *
    * @param id Event ID
    * @return
    */
-  def invoice(id: Long) = SecuredDynamicAction("event", DynamicRole.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      eventService.find(id) map { event ⇒
-        val form = Form(invoiceMapping).bindFromRequest
-        form.fold(
-          formWithErrors ⇒ {
-            Redirect(routes.Events.details(id)).flashing("error" -> "Invoice data are wrong. Please try again")
-          },
-          eventInvoice ⇒ {
-            val invoice = EventInvoice.findByEvent(id)
-            EventInvoice.update(eventInvoice.copy(id = invoice.id).copy(eventId = invoice.eventId))
-            activity(event, user.person).updated.insert()
-            Redirect(routes.Events.details(id)).flashing("success" -> "Invoice data was successfully updated")
-          })
-      } getOrElse NotFound
+  def invoice(id: Long) = AsyncSecuredDynamicAction("event", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        eventService.findWithInvoice(id) map { view ⇒
+          invoiceForm.bindFromRequest.fold(
+            formWithErrors ⇒ error(id, "Invoice data are wrong. Please try again"),
+            invoiceData ⇒ {
+              val (invoiceBy, number) = invoiceData
+              orgService.find(invoiceBy) map { _ ⇒
+                val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy),
+                  number = number)
+                eventInvoiceService.update(invoice)
+                activity(view.event, user.person).updated.insert()
+                success(id, "Invoice data was successfully updated")
+              } getOrElse Future.successful(NotFound("Organisation not found"))
+            })
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -454,21 +464,6 @@ trait Events extends Controller
   }
 
   /**
-   * Confirm form submits to this action.
-   * @param id Event ID
-   */
-  def confirm(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      eventService.findWithInvoice(id).map { view ⇒
-        val updated = view.copy(event = view.event.copy(id = Some(id)).copy(confirmed = true))
-        updated.event.facilitatorIds_=(view.event.facilitatorIds)
-        eventService.update(updated)
-        val log = activity(updated.event, user.person).confirmed.insert()
-        Redirect(routes.Events.details(id)).flashing("success" -> log.toString)
-      }.getOrElse(NotFound)
-  }
-
-  /**
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
@@ -596,7 +591,7 @@ trait Events extends Controller
    */
   protected def sendEmailNotification(event: Event,
     changes: List[FieldChange],
-    activity: Activity)(implicit request: RequestHeader): Unit = {
+    activity: BaseActivity)(implicit request: RequestHeader): Unit = {
 
     brandService.findWithCoordinators(event.brandId) foreach { x ⇒
       val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
@@ -605,6 +600,26 @@ trait Events extends Controller
         mail.html.event(event, x.brand, changes).toString, richMessage = true)
     }
   }
+
+  /**
+   * Return redirect object with success message for the given event
+   *
+   * @param id Event identifier
+   * @param msg Message
+   */
+  private def success(id: Long, msg: String) =
+    Future.successful(
+      Redirect(routes.Events.details(id)).flashing("success" -> msg))
+
+  /**
+   * Return redirect object with error message for the given event
+   *
+   * @param id Event identifier
+   * @param msg Message
+   */
+  private def error(id: Long, msg: String) =
+    Future.successful(
+      Redirect(routes.Events.details(id)).flashing("error" -> msg))
 }
 
 object Events extends Events

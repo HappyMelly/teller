@@ -40,6 +40,15 @@ import scala.slick.lifted.Query
 class EventService extends Integrations with Services {
 
   /**
+   * Confirms the given event
+   *
+   * @param id Event identifier
+   */
+  def confirm(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.id === id).map(_.confirmed).update(true)
+  }
+
+  /**
    * Deletes the given event and all related data from database
    *
    * @param id Event identifier
@@ -63,7 +72,9 @@ class EventService extends Integrations with Services {
   }
 
   /**
-   * @todo test
+   * Returns event with related invoice if it exists
+   *
+   * @param id Event identifier
    */
   def findWithInvoice(id: Long): Option[EventView] = DB.withSession {
     implicit session: Session ⇒

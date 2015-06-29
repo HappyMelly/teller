@@ -212,4 +212,17 @@ class EventServiceSpec extends PlayAppSpec {
       ok
     }
   }
+
+  "Method 'confirm'" should {
+    "update event confirmed state in database" in {
+      val id = 2L
+      service.find(id) map { x ⇒
+        x.confirmed must_== false
+        service.confirm(id)
+        service.find(id) map { y ⇒
+          y.confirmed must_== true
+        } getOrElse ko
+      } getOrElse ko
+    }
+  }
 }

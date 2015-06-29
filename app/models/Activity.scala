@@ -33,6 +33,32 @@ import play.api.i18n.Messages
 
 class InvalidActivityPredicate extends RuntimeException
 
+abstract class BaseActivity {
+
+  def signedUp: BaseActivity
+  def created: BaseActivity
+  def updated: BaseActivity
+  def deleted: BaseActivity
+  def activated: BaseActivity
+  def deactivated: BaseActivity
+  def added: BaseActivity
+  def replaced: BaseActivity
+  def balanced: BaseActivity
+  def confirmed: BaseActivity
+  def approved: BaseActivity
+  def rejected: BaseActivity
+  def sent: BaseActivity
+  def connected: BaseActivity
+  def disconnected: BaseActivity
+  def uploadedSign: BaseActivity
+  def deletedSign: BaseActivity
+  def deletedImage: BaseActivity
+  def made: BaseActivity
+  def becameSupporter: BaseActivity
+
+  def description: String
+  def insert(): BaseActivity
+}
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
  * such as (Peter, created, organisation Acme Corp).
@@ -52,10 +78,10 @@ case class Activity(id: Option[Long],
   supportiveObjectType: Option[String] = None,
   supportiveObjectId: Option[Long] = None,
   supportiveObject: Option[String] = None,
-  timestamp: DateTime = DateTime.now()) {
+  timestamp: DateTime = DateTime.now()) extends BaseActivity {
 
   // Full description including subject (current user’s name).
-  def description = {
+  override def description: String = {
     val who = subject + " (id = %s)".format(subjectId)
     val what = activityObject map { a ⇒
       "%s (id = %s) %s".format(objectType, objectId, a)
@@ -80,28 +106,28 @@ case class Activity(id: Option[Long],
     } getOrElse Messages("activity." + predicate, "", what).trim.capitalize
   }
 
-  def signedUp: Activity = this.copy(predicate = Activity.Predicate.SignedUp)
-  def created: Activity = this.copy(predicate = Activity.Predicate.Created)
-  def updated: Activity = this.copy(predicate = Activity.Predicate.Updated)
-  def deleted: Activity = this.copy(predicate = Activity.Predicate.Deleted)
-  def activated: Activity = this.copy(predicate = Activity.Predicate.Activated)
-  def deactivated: Activity = this.copy(predicate = Activity.Predicate.Deactivated)
-  def added: Activity = this.copy(predicate = Activity.Predicate.Added)
-  def replaced: Activity = this.copy(predicate = Activity.Predicate.Replaced)
-  def balanced: Activity = this.copy(predicate = Activity.Predicate.BalancedAccounts)
-  def confirmed: Activity = this.copy(predicate = Activity.Predicate.Confirmed)
-  def approved: Activity = this.copy(predicate = Activity.Predicate.Approved)
-  def rejected: Activity = this.copy(predicate = Activity.Predicate.Rejected)
-  def sent: Activity = this.copy(predicate = Activity.Predicate.Sent)
-  def connected: Activity = this.copy(predicate = Activity.Predicate.Connected)
-  def disconnected: Activity = this.copy(predicate = Activity.Predicate.Disconnected)
-  def uploadedSign: Activity = this.copy(predicate = Activity.Predicate.UploadedSign)
-  def deletedSign: Activity = this.copy(predicate = Activity.Predicate.DeletedSign)
-  def deletedImage: Activity = this.copy(predicate = Activity.Predicate.DeletedImage)
-  def made: Activity = this.copy(predicate = Activity.Predicate.Made)
-  def becameSupporter: Activity = this.copy(predicate = Activity.Predicate.BecameSupporter)
+  override def signedUp: Activity = this.copy(predicate = Activity.Predicate.SignedUp)
+  override def created: Activity = this.copy(predicate = Activity.Predicate.Created)
+  override def updated: Activity = this.copy(predicate = Activity.Predicate.Updated)
+  override def deleted: Activity = this.copy(predicate = Activity.Predicate.Deleted)
+  override def activated: Activity = this.copy(predicate = Activity.Predicate.Activated)
+  override def deactivated: Activity = this.copy(predicate = Activity.Predicate.Deactivated)
+  override def added: Activity = this.copy(predicate = Activity.Predicate.Added)
+  override def replaced: Activity = this.copy(predicate = Activity.Predicate.Replaced)
+  override def balanced: Activity = this.copy(predicate = Activity.Predicate.BalancedAccounts)
+  override def confirmed: Activity = this.copy(predicate = Activity.Predicate.Confirmed)
+  override def approved: Activity = this.copy(predicate = Activity.Predicate.Approved)
+  override def rejected: Activity = this.copy(predicate = Activity.Predicate.Rejected)
+  override def sent: Activity = this.copy(predicate = Activity.Predicate.Sent)
+  override def connected: Activity = this.copy(predicate = Activity.Predicate.Connected)
+  override def disconnected: Activity = this.copy(predicate = Activity.Predicate.Disconnected)
+  override def uploadedSign: Activity = this.copy(predicate = Activity.Predicate.UploadedSign)
+  override def deletedSign: Activity = this.copy(predicate = Activity.Predicate.DeletedSign)
+  override def deletedImage: Activity = this.copy(predicate = Activity.Predicate.DeletedImage)
+  override def made: Activity = this.copy(predicate = Activity.Predicate.Made)
+  override def becameSupporter: Activity = this.copy(predicate = Activity.Predicate.BecameSupporter)
 
-  def insert(): Activity = if (predicate == Activity.Predicate.None)
+  override def insert(): Activity = if (predicate == Activity.Predicate.None)
     throw new InvalidActivityPredicate
   else
     Activity.insert(this)

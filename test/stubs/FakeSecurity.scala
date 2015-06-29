@@ -37,16 +37,6 @@ trait FakeSecurity extends Security {
 
   def activeUser_=(user: Person) = _activeUser = Some(user)
 
-  override def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
-    Action.async { implicit req ⇒
-      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
-      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
-      val handler = new AuthorisationHandler(user)
-      Action(f(_)(handler)(user))(SecuredRequest(viewer, request))
-    }
-  }
-
   override def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
     Action.async { implicit req ⇒
@@ -64,6 +54,26 @@ trait FakeSecurity extends Security {
       val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(user)
       Action.async(f(_)(handler)(user))(SecuredRequest(viewer, request))
+    }
+  }
+
+  override def SecuredDynamicAction(name: String, level: String)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
+      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
+      val handler = new AuthorisationHandler(user)
+      Action(f(_)(handler)(user))(SecuredRequest(viewer, request))
+    }
+  }
+
+  override def SecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
+      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
+      val handler = new AuthorisationHandler(user)
+      Action(f(_)(handler)(user))(SecuredRequest(viewer, request))
     }
   }
 
@@ -80,10 +90,11 @@ trait AccessCheckSecurity extends Security {
   var checkedDynamicObject: Option[String] = None
   var checkedDynamicLevel: Option[String] = None
 
-  override def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+  override def AsyncSecuredDynamicAction(name: String, level: String)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
     cleanTrace()
-    checkedRole = Some(role)
+    checkedDynamicObject = Some(name)
+    checkedDynamicLevel = Some(level)
     Action({ Ok("") })
   }
 
@@ -94,11 +105,18 @@ trait AccessCheckSecurity extends Security {
     Action({ Ok("") })
   }
 
-  override def AsyncSecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+  override def SecuredDynamicAction(name: String, level: String)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
     cleanTrace()
     checkedDynamicObject = Some(name)
     checkedDynamicLevel = Some(level)
+    Action({ Ok("") })
+  }
+
+  override def SecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    cleanTrace()
+    checkedRole = Some(role)
     Action({ Ok("") })
   }
 

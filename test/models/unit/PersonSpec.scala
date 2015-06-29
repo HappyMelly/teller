@@ -32,15 +32,11 @@ import org.specs2.mutable._
 class PersonSpec extends Specification {
 
   "Person" should {
-    "return well-formed activity object" in {
+    "return well-formed activity data" in {
       val person = PersonHelper.one()
-      val subject = PersonHelper.two()
-      val activity = person.activity(subject, Activity.Predicate.Added)
-      activity.subjectId must_== 2
-      activity.subject must_== "Second Tester"
-      activity.objectType must_== Activity.Type.Person
-      activity.objectId must_== 1
-      activity.activityObject must_== Some("First Tester")
+      person.identifier must_== 1
+      person.humanIdentifier must_== "First Tester"
+      person.objectType must_== Activity.Type.Person
     }
     "change any field on 'copy'" in {
       val person = PersonHelper.one()
