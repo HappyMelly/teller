@@ -111,7 +111,11 @@
         <dt>When</dt>
         <dd>@dateInterval(view.event.schedule.start, view.event.schedule.end)</dd>
         <dt>Where</dt>
-        <dd>@view.event.location.city, @Countries.name(view.event.location.countryCode)</dd>
+        @if(view.event.location.online) {
+          <dd>online</dd>
+        } else {
+          <dd>@view.event.location.city, @Countries.name(view.event.location.countryCode)</dd>
+        }
         <dt>Spoken Language</dt>
         <dd>@view.event.spokenLanguage</dd>
         <dt>Materials in</dt>

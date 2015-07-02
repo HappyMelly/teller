@@ -393,6 +393,7 @@ trait Events extends Controller
               "url" -> routes.Events.details(data.event.id.get).url,
               "title" -> data.event.title),
             "location" -> Json.obj(
+              "online" -> data.event.location.online,
               "country" -> data.event.location.countryCode.toLowerCase,
               "city" -> data.event.location.city),
             "facilitators" -> data.event.facilitators,
@@ -576,6 +577,7 @@ trait Events extends Controller
       request: Request[Any],
       handler: AuthorisationHandler,
       token: play.filters.csrf.CSRF.Token) = {
+    println(form.errorsAsJson)
     val account = user.account
     val brands = Brand.findByUser(account)
     BadRequest(views.html.event.form(user, eventId, brands, account.personId, false, form))

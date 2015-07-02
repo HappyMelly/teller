@@ -79,7 +79,10 @@ case class Details(
 /**
  * Contains location-related data
  */
-case class Location(city: String, countryCode: String)
+case class Location(city: String, countryCode: String) {
+
+  lazy val online: Boolean = countryCode == "00"
+}
 
 /**
  * Contains language-related data

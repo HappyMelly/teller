@@ -185,6 +185,7 @@ success.brand.deleteMember = You removed a coordinator
 
 # ISO 8166-2 Country codes
 # Source: http://cldr.unicode.org
+country.00 = Online
 country.AF = Afghanistan
 country.AL = Albania
 country.DZ = Algeria

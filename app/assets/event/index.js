@@ -203,8 +203,12 @@ $(document).ready( function() {
             "targets": 1
         },{
             "render": function(data) {
-                return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
-                    data.country + '.png"/> ' + data.city;
+                if (data.online) {
+                    return data.city;
+                } else {
+                    return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
+                        data.country + '.png"/> ' + data.city;
+                }
             },
             "targets": 2
         }, {

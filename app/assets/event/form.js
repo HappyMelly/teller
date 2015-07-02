@@ -91,7 +91,7 @@ function updateTitle(title) {
  * @param selectedId Int
  */
 function updateInvoicingOrganisations(organisations, selectedId) {
-    $('#invoice_invoiceTo')
+    $('#invoice')
         .empty()
         .append($("<option></option>").attr("value", 0).text("Choose an organisation"));
     if (organisations.length == 0) {
@@ -110,7 +110,7 @@ function updateInvoicingOrganisations(organisations, selectedId) {
         if (key == selectedId) {
             option.attr('selected', 'selected');
         }
-        $('#invoice_invoiceTo').append(option);
+        $('#invoice').append(option);
     }
 }
 
@@ -193,6 +193,19 @@ function toggleFreeCheckbox(value) {
         $("#free_field").show();
     } else {
         $("#free_field").hide();
+    }
+}
+
+/**
+ * Updates city depending on the chosen country
+ *
+ * @param obj Country selector
+ */
+function updateCity(obj) {
+    if ($(obj).find(':selected').val() == "00") {
+        $('#location_city').val('online');
+    } else if ($('#location_city').val() == 'online') {
+        $('#location_city').val('');
     }
 }
 
@@ -392,5 +405,9 @@ $(document).ready( function() {
             $("#confirmed-alert").hide();
         }
     });
+    $('#location_country').chosen().change(function(e) {
+        updateCity($(this));
+    });
+    updateCity($('#location_country'));
 });
 

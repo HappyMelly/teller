@@ -37,7 +37,7 @@
       @html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
         <div id="currentUserId" value="@currentUserId"></div>
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
-        <div id="currentInvoiceToId" value="@form("invoice.invoiceTo").value"></div>
+        <div id="currentInvoiceToId" value="@form("invoice").value"></div>
         @html.select(form("brandId"), brands.map(v => v.id.get.toString -> v.name),
           '_label -> "Brand", '_help -> "")
         @html.twoInRow(form("eventTypeId"),
@@ -55,7 +55,7 @@
         @html.select(form("language.materials"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
           '_label -> "Materials Language", '_help -> "Optional")
         @html.twoInRow(form("location.country"),
-          html.select(form("location.country"), ("", "Choose a country") +: Countries.all)(asIs, implicitly[Lang]),
+          views.html.event.countries(form("location.country"), Countries.all)(asIs, implicitly[Lang]),
           form("location.city"),
           html.text(form("location.city"))(asIs, implicitly[Lang]),
           "Country & City", help = ""
@@ -126,7 +126,7 @@
           '_help -> "")
 
         <legend>Invoice</legend>
-        @html.select(form("invoice.invoiceTo"), Nil, '_label -> "Invoice To", '_help -> "")
+        @html.select(form("invoice"), Nil, '_label -> "Invoice To", '_help -> "")
         <div clas="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
