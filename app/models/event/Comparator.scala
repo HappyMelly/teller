@@ -28,7 +28,7 @@ import laika.parse.markdown.Markdown
 import laika.render.HTML
 import models.service.brand.EventTypeService
 import models.service.{ Services, OrganisationService, PersonService }
-import models.{ Brand, Event }
+import models.{ Brand, EventView }
 import play.api.i18n.Messages
 import views.Languages
 
@@ -106,34 +106,34 @@ object Comparator extends Services {
    * @param was The event with ‘old’ values.
    * @param now The event with ‘new’ values.
    */
-  def compare(was: Event, now: Event): List[FieldChange] = {
+  def compare(was: EventView, now: EventView): List[FieldChange] = {
     val changes = List(
-      new BrandChange("Brand", was.brandId, now.brandId),
-      new EventTypeChange("Event Type", was.eventTypeId, now.eventTypeId),
-      new SimpleFieldChange("Title", was.title, now.title),
-      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.language.spoken, ""),
-        Languages.all.getOrElse(now.language.spoken, "")),
-      new SimpleFieldChange("Second Spoken Language", Languages.all.getOrElse(was.language.secondSpoken.getOrElse(""), ""),
-        Languages.all.getOrElse(now.language.secondSpoken.getOrElse(""), "")),
-      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.language.materials.getOrElse(""), ""),
-        Languages.all.getOrElse(now.language.materials.getOrElse(""), "")),
-      new SimpleFieldChange("City", was.location.city, now.location.city),
-      new SimpleFieldChange("Country", Messages("country." + was.location.countryCode), Messages("country." + now.location.countryCode)),
+      new BrandChange("Brand", was.event.brandId, now.event.brandId),
+      new EventTypeChange("Event Type", was.event.eventTypeId, now.event.eventTypeId),
+      new SimpleFieldChange("Title", was.event.title, now.event.title),
+      new SimpleFieldChange("Spoken Language", Languages.all.getOrElse(was.event.language.spoken, ""),
+        Languages.all.getOrElse(now.event.language.spoken, "")),
+      new SimpleFieldChange("Second Spoken Language", Languages.all.getOrElse(was.event.language.secondSpoken.getOrElse(""), ""),
+        Languages.all.getOrElse(now.event.language.secondSpoken.getOrElse(""), "")),
+      new SimpleFieldChange("Materials Language", Languages.all.getOrElse(was.event.language.materials.getOrElse(""), ""),
+        Languages.all.getOrElse(now.event.language.materials.getOrElse(""), "")),
+      new SimpleFieldChange("City", was.event.location.city, now.event.location.city),
+      new SimpleFieldChange("Country", Messages("country." + was.event.location.countryCode), Messages("country." + now.event.location.countryCode)),
       new SimpleFieldChange("Description",
-        Transform from Markdown to HTML fromString was.details.description.getOrElse("") toString,
-        Transform from Markdown to HTML fromString now.details.description.getOrElse("") toString),
+        Transform from Markdown to HTML fromString was.event.details.description.getOrElse("") toString,
+        Transform from Markdown to HTML fromString now.event.details.description.getOrElse("") toString),
       new SimpleFieldChange("Special Attention",
-        Transform from Markdown to HTML fromString was.details.specialAttention.getOrElse("") toString,
-        Transform from Markdown to HTML fromString now.details.specialAttention.getOrElse("") toString),
-      new SimpleFieldChange("Start Date", was.schedule.start.toString, now.schedule.start.toString),
-      new SimpleFieldChange("End Date", was.schedule.end.toString, now.schedule.end.toString),
-      new SimpleFieldChange("Hours Per Day", was.schedule.hoursPerDay.toString, now.schedule.hoursPerDay.toString),
-      new SimpleFieldChange("Total Hours", was.schedule.totalHours.toString, now.schedule.totalHours.toString),
-      new SimpleFieldChange("Organizer Website", was.details.webSite.getOrElse(""), now.details.webSite.getOrElse("")),
-      new SimpleFieldChange("Registration Page", was.details.registrationPage.getOrElse(""), now.details.registrationPage.getOrElse("")),
-      new SimpleFieldChange("Private Event", was.notPublic.toString, now.notPublic.toString),
-      new SimpleFieldChange("Achived Event", was.archived.toString, now.archived.toString),
-      new FacilitatorChange("Facilitators", was.facilitatorIds, now.facilitatorIds),
+        Transform from Markdown to HTML fromString was.event.details.specialAttention.getOrElse("") toString,
+        Transform from Markdown to HTML fromString now.event.details.specialAttention.getOrElse("") toString),
+      new SimpleFieldChange("Start Date", was.event.schedule.start.toString, now.event.schedule.start.toString),
+      new SimpleFieldChange("End Date", was.event.schedule.end.toString, now.event.schedule.end.toString),
+      new SimpleFieldChange("Hours Per Day", was.event.schedule.hoursPerDay.toString, now.event.schedule.hoursPerDay.toString),
+      new SimpleFieldChange("Total Hours", was.event.schedule.totalHours.toString, now.event.schedule.totalHours.toString),
+      new SimpleFieldChange("Organizer Website", was.event.details.webSite.getOrElse(""), now.event.details.webSite.getOrElse("")),
+      new SimpleFieldChange("Registration Page", was.event.details.registrationPage.getOrElse(""), now.event.details.registrationPage.getOrElse("")),
+      new SimpleFieldChange("Private Event", was.event.notPublic.toString, now.event.notPublic.toString),
+      new SimpleFieldChange("Achived Event", was.event.archived.toString, now.event.archived.toString),
+      new FacilitatorChange("Facilitators", was.event.facilitatorIds, now.event.facilitatorIds),
       new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
 
     changes.filter(change ⇒ change.changed())

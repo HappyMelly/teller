@@ -21,32 +21,32 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package controllers
 
-package services.integrations
-
-import play.api._
+import models.UserRole.Role._
+import models.service.Services
 import play.api.Play.current
+import play.api.mvc._
+import scala.concurrent.Future
+import views.Countries
 
-/**
- * Contains all integrations available in the system
- */
-trait Integrations {
+trait BrandFees extends Controller with Services with Security {
 
-  /** Returns Email notifier */
-  def email: Email = new Email
-
-  /** Returns Slack notifier */
-  def slack: Slack = {
-    val webhook = Play.configuration.getString("slack.webhook").getOrElse("")
-    val channel = Play.configuration.getString("slack.channel").getOrElse("")
-    val username = Play.configuration.getString("slack.username").getOrElse("")
-    new Slack(webhook, channel, username)
-  }
-
-  /** Returns MailChimp service */
-  def mailChimp: MailChimp = {
-    val apiUrl = Play.configuration.getString("mailchimp.url").getOrElse("")
-    val apiToken = Play.configuration.getString("mailchimp.token").getOrElse("")
-    new MailChimp(apiUrl, apiToken)
+  /**
+   * Renders list of available fees for the given brand
+   *
+   * @param brandId Brand identifier
+   */
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      brandService.find(brandId) map { brand ⇒
+        val fees = feeService.findByBrand(brandId)
+        val printableFees = fees.
+          map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+          sortBy(_._1)
+        Ok(views.html.fee.index(brand.name, printableFees))
+      } getOrElse NotFound("Brand not found")
   }
 }
+
+object BrandFees extends BrandFees

@@ -89,7 +89,8 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
         "public" -> true,
         "archived" -> false,
         "confirmed" -> false,
-        "free" -> false)
+        "free" -> false,
+        "online" -> false)
     }
     "return 404 error with error message when an event doesn't exist" in {
       (eventService.find _) expects 101L returning None

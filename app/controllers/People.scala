@@ -44,7 +44,8 @@ trait People extends JsonController
   with Security
   with Services
   with Integrations
-  with Files {
+  with Files
+  with Activities {
 
   val contentType = "image/jpeg"
 
@@ -132,13 +133,11 @@ trait People extends JsonController
           form ⇒ BadRequest("invalid form data"),
           active ⇒ {
             Person.activate(id, active)
-            val activity = person.activity(
-              user.person,
-              if (active)
-                Activity.Predicate.Activated
-              else
-                Activity.Predicate.Deactivated).insert
-            Redirect(routes.People.details(id)).flashing("success" -> activity.toString)
+            val log = if (active)
+              activity(person, user.person).activated.insert()
+            else
+              activity(person, user.person).deactivated.insert()
+            Redirect(routes.People.details(id)).flashing("success" -> log.toString)
           })
       } getOrElse {
         Redirect(routes.People.index()).flashing(
@@ -172,17 +171,14 @@ trait People extends JsonController
               orgService.find(organisationId).map { organisation ⇒
                 person.addRelation(organisationId)
 
-                val activity = person.activity(
-                  user.person,
-                  Activity.Predicate.Connected,
-                  Some(organisation)).insert
-
+                val log = activity(person, user.person,
+                  Some(organisation)).connected.insert()
                 // Redirect to the page we came from - either the person or organisation details page.
                 val action = if (page == "person")
                   routes.People.details(personId).url
                 else
                   routes.Organisations.details(organisationId).url
-                Redirect(action).flashing("success" -> activity.toString)
+                Redirect(action).flashing("success" -> log.toString)
               }.getOrElse(NotFound)
             }.getOrElse(NotFound)
         })
@@ -199,10 +195,8 @@ trait People extends JsonController
           BadRequest(views.html.person.form(user, None, formWithErrors)),
         person ⇒ {
           val updatedPerson = person.insert
-          val activity = updatedPerson.activity(
-            user.person,
-            Activity.Predicate.Created).insert
-          Redirect(routes.People.index()).flashing("success" -> activity.toString)
+          val log = activity(updatedPerson, user.person).created.insert()
+          Redirect(routes.People.index()).flashing("success" -> log.toString)
         })
   }
 
@@ -219,10 +213,8 @@ trait People extends JsonController
           Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
         } else {
           personService.delete(id)
-          val activity = person.activity(
-            user.person,
-            Activity.Predicate.Deleted).insert
-          Redirect(routes.People.index()).flashing("success" -> activity.toString)
+          val log = activity(person, user.person).deleted.insert()
+          Redirect(routes.People.index()).flashing("success" -> log.toString)
         }
       }.getOrElse(NotFound)
   }
@@ -243,17 +235,15 @@ trait People extends JsonController
         personService.find(personId).map { person ⇒
           orgService.find(organisationId).map { organisation ⇒
             person.deleteRelation(organisationId)
-            val activity = person.activity(
-              user.person,
-              Activity.Predicate.Disconnected,
-              Some(organisation)).insert
+            val log = activity(person, user.person,
+              Some(organisation)).disconnected.insert()
             // Redirect to the page we came from - either the person or
             // organisation details page.
             val action = if (page == "person")
               routes.People.details(personId).url
             else
               routes.Organisations.details(organisationId).url
-            Redirect(action).flashing("success" -> activity.toString)
+            Redirect(action).flashing("success" -> log.toString)
           }
         }.flatten.getOrElse(NotFound)
   }
@@ -323,11 +313,9 @@ trait People extends JsonController
                   msg foreach { slack.send(_) }
                 }
                 updatedPerson.update
-                val activity = updatedPerson.activity(
-                  user.person,
-                  Activity.Predicate.Updated).insert
+                val log = activity(updatedPerson, user.person).updated.insert()
                 Redirect(routes.People.details(id)).flashing(
-                  "success" -> activity.toString)
+                  "success" -> log.toString)
               }
             })
         } getOrElse NotFound

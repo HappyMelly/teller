@@ -40,6 +40,15 @@ import scala.slick.lifted.Query
 class EventService extends Integrations with Services {
 
   /**
+   * Confirms the given event
+   *
+   * @param id Event identifier
+   */
+  def confirm(id: Long): Unit = DB.withSession { implicit session: Session ⇒
+    Query(Events).filter(_.id === id).map(_.confirmed).update(true)
+  }
+
+  /**
    * Deletes the given event and all related data from database
    *
    * @param id Event identifier
@@ -60,6 +69,20 @@ class EventService extends Integrations with Services {
   def find(id: Long): Option[Event] = DB.withSession {
     implicit session: Session ⇒
       Query(Events).filter(_.id === id).firstOption
+  }
+
+  /**
+   * Returns event with related invoice if it exists
+   *
+   * @param id Event identifier
+   */
+  def findWithInvoice(id: Long): Option[EventView] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        event ← Events if event.id === id
+        invoice ← EventInvoices if invoice.eventId === id
+      } yield (event, invoice)
+      query.firstOption.map(x ⇒ EventView(x._1, x._2))
   }
 
   /**
@@ -170,22 +193,24 @@ class EventService extends Integrations with Services {
   /**
    * Adds event and related objects to database
    *
-   * @param event Event object
+   * @param view Event object
    * @return Updated event object with id
    */
-  def insert(event: Event): Event = DB.withTransaction { implicit session: Session ⇒
-    val insertTuple = (event.eventTypeId, event.brandId, event.title,
-      event.language.spoken, event.language.secondSpoken, event.language.materials,
-      event.location.city, event.location.countryCode, event.details.description,
-      event.details.specialAttention, event.details.webSite,
-      event.details.registrationPage, event.schedule.start, event.schedule.end,
-      event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
-      event.archived, event.confirmed, event.free)
+  def insert(view: EventView): EventView = DB.withTransaction { implicit session: Session ⇒
+    val insertTuple = (view.event.eventTypeId, view.event.brandId,
+      view.event.title, view.event.language.spoken, view.event.language.secondSpoken,
+      view.event.language.materials, view.event.location.city,
+      view.event.location.countryCode, view.event.details.description,
+      view.event.details.specialAttention, view.event.details.webSite,
+      view.event.details.registrationPage, view.event.schedule.start,
+      view.event.schedule.end, view.event.schedule.hoursPerDay,
+      view.event.schedule.totalHours, view.event.notPublic,
+      view.event.archived, view.event.confirmed, view.event.free)
     val id = Events.forInsert.insert(insertTuple)
-    event.facilitatorIds.distinct.foreach(facilitatorId ⇒
+    view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
       EventFacilitators.insert((id, facilitatorId)))
-    EventInvoices.forInsert.insert(event.invoice.copy(eventId = Some(id)))
-    event.copy(id = Some(id))
+    EventInvoices.forInsert.insert(view.invoice.copy(eventId = Some(id)))
+    view.copy(event = view.event.copy(id = Some(id)))
   }
 
   /**
@@ -236,45 +261,48 @@ class EventService extends Integrations with Services {
 
   /**
    * Fill events with invoices (using only one query to database)
-   * @todo Cover with tests
+   * @todo test
+   * @todo comment
    * @param events List of events
-   * @return
    */
-  def applyInvoices(events: List[Event]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = events.map(_.id.get).distinct.toList
-    val query = for {
-      invoice ← EventInvoices if invoice.eventId inSet ids
-    } yield invoice
-    val invoices = query.list
-    events.foreach(e ⇒
-      e.invoice_=(invoices
-        .find(_.eventId == e.id)
-        .getOrElse(EventInvoice(None, None, 0, None, None))))
+  def withInvoices(events: List[Event]): List[EventView] = DB.withSession {
+    implicit session: Session ⇒
+      val ids = events.map(_.id.get).distinct
+      val query = for {
+        invoice ← EventInvoices if invoice.eventId inSet ids
+      } yield invoice
+      val invoices = query.list
+      events.map { e ⇒
+        EventView(e, invoices.find(_.eventId == e.id).getOrElse(EventInvoice.empty))
+      }
   }
 
   /**
    * Updates event and related objects in database
    *
-   * @param event Event
+   * @param view Event
    * @return Updated event object with id
    */
-  def update(event: Event): Event = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (event.eventTypeId, event.brandId, event.title,
-      event.language.spoken, event.language.secondSpoken, event.language.materials,
-      event.location.city, event.location.countryCode, event.details.description,
-      event.details.specialAttention, event.details.webSite,
-      event.details.registrationPage, event.schedule.start, event.schedule.end,
-      event.schedule.hoursPerDay, event.schedule.totalHours, event.notPublic,
-      event.archived, event.confirmed, event.free)
+  def update(view: EventView): EventView = DB.withSession { implicit session: Session ⇒
+    val updateTuple = (view.event.eventTypeId, view.event.brandId,
+      view.event.title, view.event.language.spoken,
+      view.event.language.secondSpoken, view.event.language.materials,
+      view.event.location.city, view.event.location.countryCode,
+      view.event.details.description, view.event.details.specialAttention,
+      view.event.details.webSite, view.event.details.registrationPage,
+      view.event.schedule.start, view.event.schedule.end,
+      view.event.schedule.hoursPerDay, view.event.schedule.totalHours,
+      view.event.notPublic, view.event.archived, view.event.confirmed,
+      view.event.free)
 
-    val updateQuery = Events.filter(_.id === event.id).map(_.forUpdate)
+    val updateQuery = Events.filter(_.id === view.event.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
-    EventFacilitators.where(_.eventId === event.id).mutate(_.delete())
-    event.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      EventFacilitators.insert((event.id.get, facilitatorId)))
-    EventInvoice._update(event.invoice)
+    EventFacilitators.where(_.eventId === view.event.id).mutate(_.delete())
+    view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
+      EventFacilitators.insert((view.event.id.get, facilitatorId)))
+    EventInvoice._update(view.invoice)
 
-    event
+    view
   }
 
   /**

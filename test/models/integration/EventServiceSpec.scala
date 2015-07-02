@@ -199,7 +199,8 @@ class EventServiceSpec extends PlayAppSpec {
 
   "Method updateRating" should {
     "set new rating to 6.5" in {
-      val event = EventService.get.insert(EventHelper.one)
+      val view = EventView(EventHelper.one, EventInvoice.empty.copy(invoiceTo = 1))
+      val event = EventService.get.insert(view).event
       event.rating must_== 0.0f
       EventService.get.updateRating(event.id.get, 6.5f)
       EventService.get.find(event.id.get) map { x ⇒
@@ -209,6 +210,19 @@ class EventServiceSpec extends PlayAppSpec {
     "throw no exception if the event doesn't exist" in {
       EventService.get.updateRating(567, 7.0f)
       ok
+    }
+  }
+
+  "Method 'confirm'" should {
+    "update event confirmed state in database" in {
+      val id = 2L
+      service.find(id) map { x ⇒
+        x.confirmed must_== false
+        service.confirm(id)
+        service.find(id) map { y ⇒
+          y.confirmed must_== true
+        } getOrElse ko
+      } getOrElse ko
     }
   }
 }

@@ -42,7 +42,10 @@ case class FakeCertificateTemplate(language: String,
   template: Option[String],
   templateNoFacilitator: Option[String])
 
-object CertificateTemplates extends Controller with Security with Services {
+object CertificateTemplates extends Controller
+  with Security
+  with Services
+  with Activities {
 
   val encoding = "ISO-8859-1"
 
@@ -115,11 +118,9 @@ object CertificateTemplates extends Controller with Security with Services {
                   secondSource.toArray.map(_.toByte)).insert
                 firstSource.close()
                 secondSource.close()
-                val activity = tpl.activity(
-                  user.person,
-                  Activity.Predicate.Created).insert
+                val log = activity(tpl, user.person).created.insert()
                 Redirect(routes.Brands.details(brandId).url + "#templates").flashing(
-                  "success" -> activity.toString)
+                  "success" -> log.toString)
               }
             }
           })
@@ -155,11 +156,9 @@ object CertificateTemplates extends Controller with Security with Services {
 
       CertificateTemplate.find(id).map { tpl ⇒
         tpl.delete()
-        val activity = tpl.activity(
-          user.person,
-          Activity.Predicate.Deleted).insert
+        val log = activity(tpl, user.person).deleted.insert()
         Redirect(routes.Brands.details(tpl.brandId).url + "#templates").flashing(
-          "success" -> activity.toString)
+          "success" -> log.toString)
       }.getOrElse(NotFound)
   }
 }

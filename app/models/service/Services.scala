@@ -47,6 +47,8 @@ trait Services {
 
   def eventService: EventService = EventService.get
 
+  def eventInvoiceService: EventInvoiceService = EventInvoiceService.get
+
   def eventCancellationService: EventCancellationService = EventCancellationService.get
 
   def eventTypeService: EventTypeService = EventTypeService.get

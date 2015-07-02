@@ -58,7 +58,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "public" -> !event.notPublic,
         "archived" -> event.archived,
         "confirmed" -> event.confirmed,
-        "free" -> event.free)
+        "free" -> event.free,
+        "online" -> event.location.online)
     }
   }
 
@@ -139,7 +140,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
           "registrationPage" -> event.details.registrationPage,
           "rating" -> event.rating,
           "confirmed" -> event.confirmed,
-          "free" -> event.free)
+          "free" -> event.free,
+          "online" -> event.location.online)
       }
     }
     Json.toJson(events)

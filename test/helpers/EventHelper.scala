@@ -47,7 +47,8 @@ object EventHelper {
     invoice: Option[EventInvoice] = None,
     facilitatorIds: Option[List[Long]] = None): Event = {
 
-    val invoice = new EventInvoice(None, None, 1, None, None)
+    // val invoice = new EventInvoice(None, None, 1, None, None)
+    // event.invoice_=(invoice)
     val language = new Language(
       spokenLanguage.getOrElse("DE"),
       secondSpokenLanguage,
@@ -60,7 +61,6 @@ object EventHelper {
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
       false, 0.0f, None)
     event.facilitatorIds_=(facilitatorIds.getOrElse(1 :: Nil))
-    event.invoice_=(invoice)
 
     event
   }
@@ -86,7 +86,8 @@ object EventHelper {
             country = Some(code),
             eventTypeId = Some(eventType),
             facilitatorIds = Some(facilitators))
-          EventService.get.insert(event)
+          val invoice = EventInvoice.empty.copy(invoiceTo = 1)
+          EventService.get.insert(EventView(event, invoice))
         }
       }
   }
@@ -150,7 +151,8 @@ object EventHelper {
     "registrationPage" -> None.asInstanceOf[Option[String]],
     "rating" -> 0.0,
     "confirmed" -> false,
-    "free" -> false)
+    "free" -> false,
+    "online" -> false)
 
   def twoAsJson: JsValue = Json.obj(
     "id" -> 2,
@@ -174,6 +176,7 @@ object EventHelper {
     "registrationPage" -> None.asInstanceOf[Option[String]],
     "rating" -> 0.0,
     "confirmed" -> false,
-    "free" -> false)
+    "free" -> false,
+    "online" -> false)
 
 }

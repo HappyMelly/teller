@@ -39,7 +39,8 @@ import services.integrations.Integrations
 trait Evaluations extends EvaluationsController
   with Security
   with Integrations
-  with Services {
+  with Services
+  with Activities {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -99,8 +100,8 @@ trait Evaluations extends EvaluationsController
         evaluation ⇒ {
           val defaultHook = request.host + routes.Evaluations.confirm("").url
           val eval = evaluation.add(defaultHook, withConfirmation = true)
-          val activity = eval.activity(user.person, Activity.Predicate.Created).insert
-          Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+          val log = activity(eval, user.person).created.insert()
+          Redirect(routes.Participants.index()).flashing("success" -> log.toString)
         })
   }
 
@@ -120,13 +121,13 @@ trait Evaluations extends EvaluationsController
           Event.ratingActor ! x.eventId
           Facilitator.ratingActor ! x.eventId
 
-          val activity = x.activity(user.person, Activity.Predicate.Deleted).insert
+          val log = activity(x, user.person).deleted.insert()
 
           val route = ref match {
             case Some("index") ⇒ routes.Participants.index().url
             case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
           }
-          Redirect(route).flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> log.toString)
         }.getOrElse(NotFound)
   }
 
@@ -147,10 +148,8 @@ trait Evaluations extends EvaluationsController
             f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
             eventId ⇒ {
               if (eventId == evaluation.eventId) {
-                val activity = evaluation.activity(
-                  user.person,
-                  Activity.Predicate.Updated).insert
-                Ok(Json.obj("success" -> activity.toString))
+                val log = activity(evaluation, user.person).updated.insert()
+                Ok(Json.obj("success" -> log.toString))
               } else {
                 EventService.get.find(eventId).map { event ⇒
                   Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
@@ -164,10 +163,8 @@ trait Evaluations extends EvaluationsController
                       oldParticipant.copy(eventId = eventId).update
                     }
                     evaluation.copy(eventId = eventId).update
-                    val activity = evaluation.activity(
-                      user.person,
-                      Activity.Predicate.Updated).insert
-                    Ok(Json.obj("success" -> activity.toString))
+                    val log = activity(evaluation, user.person).updated.insert()
+                    Ok(Json.obj("success" -> log.toString))
                   }.getOrElse(NotFound)
                 }.getOrElse(NotFound)
               }
@@ -235,11 +232,8 @@ trait Evaluations extends EvaluationsController
           },
           evaluation ⇒ {
             val eval = evaluation.copy(id = Some(id)).update()
-            val activity = eval.activity(
-              user.person,
-              Activity.Predicate.Updated).insert
-
-            Redirect(routes.Participants.index()).flashing("success" -> activity.toString)
+            val log = activity(eval, user.person).updated.insert()
+            Redirect(routes.Participants.index()).flashing("success" -> log.toString)
           })
       }.getOrElse(NotFound)
   }
@@ -265,12 +259,10 @@ trait Evaluations extends EvaluationsController
             Event.ratingActor ! evaluation.eventId
             Facilitator.ratingActor ! evaluation.eventId
 
-            val activity = evaluation.activity(
-              user.person,
-              Activity.Predicate.Approved).insert
+            val log = activity(evaluation, user.person).approved.insert()
             sendApprovalConfirmation(user.person, evaluation, x.event)
 
-            Redirect(route).flashing("success" -> activity.toString)
+            Redirect(route).flashing("success" -> log.toString)
           } else {
             val error = x.eval.status match {
               case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
@@ -302,13 +294,10 @@ trait Evaluations extends EvaluationsController
           Event.ratingActor ! x.eval.eventId
           Facilitator.ratingActor ! x.eval.eventId
 
-          val activity = x.eval.activity(
-            user.person,
-            Activity.Predicate.Rejected).insert
-
+          val log = activity(x.eval, user.person).rejected.insert()
           sendRejectionConfirmation(user.person, x.eval.participant, x.event)
 
-          Redirect(route).flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> log.toString)
         } else {
           val error = x.eval.status match {
             case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"

@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ Person, Activity }
+import models.Person
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
@@ -37,7 +37,8 @@ import scala.concurrent.Future
 trait Signatures extends JsonController
   with Security
   with Services
-  with Files {
+  with Files
+  with Activities {
 
   /**
    * Delete signature form submits to this action
@@ -52,11 +53,9 @@ trait Signatures extends JsonController
             Person.signature(personId).remove()
             personService.update(person.copy(signature = false))
           }
-          val activity = person.activity(
-            user.person,
-            Activity.Predicate.DeletedSign).insert
+          val log = activity(person, user.person).deletedSign.insert()
           val route = routes.People.details(personId).url + "#facilitation"
-          Redirect(route).flashing("success" -> activity.toString)
+          Redirect(route).flashing("success" -> log.toString)
         } getOrElse NotFound
   }
 
@@ -80,10 +79,9 @@ trait Signatures extends JsonController
           val route = routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
             personService.update(person.copy(signature = true))
-            val activity = person.activity(
-              user.person,
-              Activity.Predicate.UploadedSign).insert
-            Redirect(route).flashing("success" -> activity.toString)
+            val log = activity(person, user.person).uploadedSign.insert()
+
+            Redirect(route).flashing("success" -> log.toString)
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)
           }

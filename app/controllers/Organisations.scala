@@ -41,7 +41,8 @@ import play.api.{ Logger, Play }
 trait Organisations extends JsonController
   with Security
   with Services
-  with Files {
+  with Files
+  with Activities {
 
   /**
    * HTML form mapping for creating and editing.
@@ -205,11 +206,9 @@ trait Organisations extends JsonController
                 copy(customerId = view.org.customerId)
               val updatedProfile = view.profile.forOrg.copy(objectId = id)
               orgService.update(OrgView(updatedOrg, updatedProfile))
-              val activity = updatedOrg.activity(
-                user.person,
-                Activity.Predicate.Updated).insert
+              val log = activity(updatedOrg, user.person).updated.insert()
               Redirect(routes.Organisations.details(id)).
-                flashing("success" -> activity.toString)
+                flashing("success" -> log.toString)
             })
         }.getOrElse(NotFound)
   }

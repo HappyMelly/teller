@@ -18,36 +18,26 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
- * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
+ * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
+ * The Netherlands, 3071 PR
  */
+package models.unit
 
-package models.service
+import models.Location
+import org.specs2.mutable.Specification
 
-import models.Activity
-import models.database.Activities
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+class LocationSpec extends Specification {
 
-import scala.slick.lifted.Query
-
-/**
- * Contains a set of activity-related functions to work with database
- */
-class ActivityService {
-
-  /**
-   * Returns 50 latest activity stream entries in reverse chronological order
-   */
-  def findAll: List[Activity] = DB.withSession { implicit session ⇒
-    Query(Activities).sortBy(_.timestamp.desc).take(50).list
+  "Location should be 'online'" >> {
+    "when country code is 00" in {
+      Location("test", "00").online must_== true
+    }
+  }
+  "Location should not be 'online'" >> {
+    "when country code is not 00" in {
+      Location("test", "RU").online must_== false
+    }
   }
 
-}
-
-object ActivityService {
-  private val instance = new ActivityService
-
-  def get: ActivityService = instance
 }
