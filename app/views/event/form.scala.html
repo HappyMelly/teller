@@ -102,11 +102,15 @@
           Please check if it's a mistake or not.
         </div>
 
-        <legend>Misc</legend>
+        <legend>Organizer</legend>
+        @html.text(form("organizer"), '_label -> "Organizer",
+          'placeholder -> "Start typing organizer's name")
         @html.text(form("details.webSite"), '_label -> "Organizer website",
           'placeholder -> "http://", '_help -> "Web site URL")
         @html.text(form("details.registrationPage"), '_label -> "Registration page",
           'placeholder -> "http:// or mailto:", '_help -> "Web site URL or email address")
+
+        <legend>Misc</legend>
         @html.checkbox(form("notPublic"),
           '_label -> "Private Event : Private events are not shown on the calendar, but evaluation is still possible",
           '_help -> "")
@@ -127,6 +131,7 @@
 
         <legend>Invoice</legend>
         @html.select(form("invoice"), Nil, '_label -> "Invoice To", '_help -> "")
+
         <div clas="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
@@ -135,6 +140,9 @@
         </div>
       }
     </div>
+    <script src='@routes.Assets.at("javascripts/ImageSelect.jquery.js")' type="text/javascript"></script>
+    <script src='@routes.Assets.at("javascripts/jquery.autocomplete.min.js")' type="text/javascript"></script>
+    <script src='@routes.Assets.at("event/facilitators.js")' type="text/javascript"></script>
     <script src='@routes.Assets.at("event/form.js")' type="text/javascript"></script>
   }
 }

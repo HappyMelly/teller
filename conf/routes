@@ -146,18 +146,19 @@ GET           /membership/payment                                            con
 POST          /membership/payment                                            controllers.Membership.charge
 GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
-GET           /organizations                                                 controllers.Organisations.index
-POST          /organizations                                                 controllers.Organisations.create
-GET           /organization/new                                              controllers.Organisations.add
-GET           /organization/:id/edit                                         controllers.Organisations.edit(id: Long)
-GET           /organization/:id                                              controllers.Organisations.details(id: Long)
-POST          /organization/:id                                              controllers.Organisations.update(id: Long)
-POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
 POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
+GET           /organization/new                                              controllers.Organisations.add
 POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
-POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
-GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
+POST          /organizations                                                 controllers.Organisations.create
+POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
 DELETE        /organization/:id/logo/delete                                  controllers.Organisations.deleteLogo(id: Long)
+GET           /organization/:id                                              controllers.Organisations.details(id: Long)
+GET           /organization/:id/edit                                         controllers.Organisations.edit(id: Long)
+GET           /organizations                                                 controllers.Organisations.index
+GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
+POST          /organization/:id                                              controllers.Organisations.update(id: Long)
+GET           /organizations/search                                           controllers.Organisations.search(query: Option[String])
+POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
 
 
 GET           /participants                                                  controllers.Participants.index

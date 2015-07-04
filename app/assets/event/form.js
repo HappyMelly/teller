@@ -22,16 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-function User(data) {
-    this.name = data["first_name"] + " " + data["last_name"];
-    this.id = data["id"];
-    this.memberships = data["memberships"];
-}
-
-User.prototype.isFacilitator = function(userId) {
-    return this.id == userId;
-};
-
 function showError(message) {
     $('#error').append(
         $('<div class="alert alert-danger">')
@@ -209,136 +199,25 @@ function updateCity(obj) {
     }
 }
 
-$(document).ready( function() {
-
-    /**
-     * Check if we should add a user to the list of chosen facilitators or not
-     * @param user User
-     * @param chosenFacilitators Array[Int]
-     * @returns Boolean
-     */
-    function isChosenOne(user, chosenFacilitators) {
-        if (user.isFacilitator(facilitators.userId)) return true;
-        return (chosenFacilitators && chosenFacilitators.indexOf(user.id.toString()) >= 0);
-    }
-
-    /**
-     * Retrieve a list of facilitators for the brand and fill 'chosen' and 'retrieved' arrays
-     * in 'facilitators' object
-     * @param brandId String
-     * @param chosenFacilitators Array[Int] or null
-     */
-    function getFacilitators(brandId, chosenFacilitators) {
-        $.ajax({
-            url: '/brand/' + brandId + '/facilitators',
-            dataType: "json"
-        }).done(function(data) {
-            for(var i = 0; i < data.length; i++) {
-                var user = new User(data[i]);
-                if (isChosenOne(user, chosenFacilitators)) {
-                    facilitators.chosen[facilitators.chosen.length] = user;
-                } else {
-                    facilitators.retrieved[facilitators.retrieved.length] = user;
-                }
-            }
-            facilitators.updateState();
-        }).fail(function() {
-            showError("Sorry we don't know anything about the brand you try to request");
-        });
-    }
-
-    var facilitators = {
-        retrieved: [],
-        chosen: [],
-        userId: 0,
-        invoiceOrgId: 0,
-        initialize: function(brandId) {
-            this.userId = parseInt($('#currentUserId').attr('value'));
-            this.invoiceOrgId = parseInt($('#currentInvoiceToId').attr('value'));
-            var values = $('#chosenFacilitators').attr('value').split(',');
-            getFacilitators(brandId, values);
-        },
-        retrieve: function(brandId) {
-            this.retrieved = [];
-            this.chosen = [];
-            getFacilitators(brandId, null);
-        },
-        updateState: function() {
-            // update a list of available facilitators
-            $('#facilitatorIds')
-                .empty()
-                .append($("<option></option>").attr("value", 0).text(""));
-            this.retrieved.sort(this.sortByName);
-            for(var i = 0; i < this.retrieved.length; i++) {
-                var name = this.retrieved[i].name;
-                $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i].id).text(name));
-            }
-            // update a list of chosen facilitators
-            $('#chosenFacilitators').empty();
-            this.chosen.sort(this.sortByName);
-            var organisations = [];
-            for(var i = 0; i < this.chosen.length; i++) {
-                var user = this.chosen[i];
-                for(var j = 0; j < user.memberships.length; j++) {
-                    var company = user.memberships[j];
-                    if (organisations.indexOf(company.id) > 0) {
-                        continue;
-                    } else {
-                        organisations[company.id] = company.name;
-                    }
-                }
-                var parentDiv = $("<div>").append(
-                    $("<input readonly type='hidden'>")
-                        .attr("value", user.id)
-                        .attr("id", "facilitatorIds_" + i)
-                        .attr('name', 'facilitatorIds[' + i + ']')
-                );
-                var div = $("<div class='input-group'>").append(
-                    $("<input readonly type='text' class='form-control'>")
-                        .attr("value", user.name)
-                );
-                parentDiv.append(div);
-                var trashCan = $('<i>')
-                    .attr('class', 'glyphicon glyphicon-trash');
-                var button = $('<button>').attr('type', 'button');
-                if (!user.isFacilitator(this.userId)) {
-                    button.attr('class', 'btn btn-danger deselect');
-                } else {
-                    button
-                        .attr('class', 'btn btn-danger')
-                        .attr('disabled', 'disabled');
-                }
-                button.append(trashCan);
-                var span = $('<span class="input-group-btn">').append(button);
-                div.append(span);
-                $('#chosenFacilitators').append(parentDiv);
-            }
-            updateInvoicingOrganisations(organisations, this.invoiceOrgId);
-        },
-        select: function(id) {
-            this.move(id, this.retrieved, this.chosen);
-        },
-        deselect: function(id) {
-            this.move(id, this.chosen, this.retrieved);
-        },
-        move: function(id, from, to) {
-            var index = -1;
-            for(var i = 0; i < from.length; i++) {
-                if (from[i].id == id) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index != -1) {
-                to[to.length] = from[index];
-                from.splice(index, 1);
-            }
-            this.updateState();
-        },
-        sortByName: function(left, right) {
-            return left.name.localeCompare(right.name);
+function initializeEmptyForm() {
+    $("#schedule_start").on("dp.change", function (e) {
+        $('#schedule_end').data("DateTimePicker").setDate(e.date.add(1, 'days'))
+    });
+    $("#eventTypeId").change(function() {
+        var option = $(this).find(':selected');
+        if (option.attr('defaultTitle')) {
+            updateTitle(option.attr('defaultTitle'));
         }
-    };
+    });
+    $("#title").on('keyup', function() {
+        $("#eventTypeId").unbind('change');
+    });
+    updateTotalHours(8);
+    $("#free_field").hide();
+}
+
+
+$(document).ready( function() {
 
     // Binds
     $("#brandId").change(function() {
@@ -374,20 +253,7 @@ $(document).ready( function() {
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
     facilitators.initialize(brandId);
     if ($("#emptyForm").attr("value") == 'true') {
-        $("#schedule_start").on("dp.change", function (e) {
-            $('#schedule_end').data("DateTimePicker").setDate(e.date.add(1, 'days'))
-        });
-        $("#eventTypeId").change(function() {
-            var option = $(this).find(':selected');
-            if (option.attr('defaultTitle')) {
-                updateTitle(option.attr('defaultTitle'));
-            }
-        });
-        $("#title").on('keyup', function() {
-            $("#eventTypeId").unbind('change');
-        });
-        updateTotalHours(8);
-        $("#free_field").hide();
+        initializeEmptyForm();
     }
     $("#eventTypeId").change(function(event) {
         var option = $(this).find(':selected');
@@ -409,5 +275,47 @@ $(document).ready( function() {
         updateCity($(this));
     });
     updateCity($('#location_country'));
+
+    var orgs = [
+        { id: 1, name: 'Happy Melly', countryCode: 'DE' },
+        { id: 2, name: 'Futurice', countryCode: 'FI'},
+        { id: 3, name: 'Happy Melly Ru', countryCode: 'RU' }
+    ];
+    var countries = [
+        { value: "Zimbabve", data: "ZZ"},
+        { value: "Argentina", data: "AG"}
+    ];
+
+    $("#organizer").autocomplete({
+        serviceUrl: jsRoutes.controllers.Organisations.search().url,
+        paramName: 'query',
+        minChars: 3,
+        preserveInput: true,
+        showNoSuggestionNotice: true,
+        noSuggestionNotice: $('<div class="new-organizer">').append(
+                $('<a>').attr('href', '#').text("Add new organizer")),
+        formatResult: function (suggestion, currentValue) {
+            return suggestion.value;
+        },
+        onSelect: function (suggestion) {
+            $(this).val(suggestion.name);
+            return true;
+        },
+        transformResult: function(response) {
+            return {
+                suggestions: $.map($.parseJSON(response), function(dataItem) {
+                    var filename = dataItem.countryCode + '.png';
+                    var url = jsRoutes.controllers.Assets.at('images/flags/16/' + filename).url;
+                    var text = '<img src="' + url + '"/>&nbsp;' + dataItem.name;
+                    return { data: dataItem.id, value: text, name: dataItem.name };
+                })
+            };
+        },
+        beforeRender: function(container) {
+            var action = $('<div class="new-organizer">').append(
+                $('<a>').attr('href', '#').text("Add new organizer"));
+            $(container).append(action);
+        }
+    });
 });
 

@@ -35,8 +35,10 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.Json
+import play.api.libs.json._
 import play.api.{ Logger, Play }
+
+import scala.concurrent.Future
 
 trait Organisations extends JsonController
   with Security
@@ -115,6 +117,42 @@ trait Organisations extends JsonController
   }
 
   /**
+   * Cancels a subscription for yearly-renewing membership
+   * @param id Organisation id
+   */
+  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val url = routes.Organisations.details(id).url + "#membership"
+        orgService.find(id) map { org ⇒
+          org.member map { m ⇒
+            if (m.renewal) {
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val gateway = new GatewayWrapper(key)
+              try {
+                gateway.cancel(org.customerId.get)
+                m.copy(renewal = false).update
+              } catch {
+                case e: PaymentException ⇒
+                  Redirect(url).flashing("error" -> Messages(e.msg))
+                case e: RequestException ⇒
+                  e.log.foreach(Logger.error(_))
+                  Redirect(url).flashing("error" -> Messages(e.getMessage))
+              }
+              Redirect(url).
+                flashing("success" -> "Subscription was successfully canceled")
+            } else {
+              Redirect(url).
+                flashing("error" -> Messages("error.membership.noSubscription"))
+            }
+          } getOrElse {
+            Redirect(url).
+              flashing("error" -> Messages("error.membership.noSubscription"))
+          }
+        } getOrElse NotFound
+  }
+
+  /**
    * Create form submits to this action.
    */
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
@@ -142,6 +180,20 @@ trait Organisations extends JsonController
         val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
         Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Deletes logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        Organisation.logo(id).remove()
+        orgService.updateLogo(id, false)
+        val route = routes.Organisations.details(id).url
+        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
   }
 
   /**
@@ -187,6 +239,38 @@ trait Organisations extends JsonController
   }
 
   /**
+   * Retrieve and cache a logo of the given organisation
+   *
+   * @param id Organisation identifier
+   */
+  def logo(id: Long) = file(Organisation.logo(id))
+
+  /**
+   * Returns list of organisations for the given query
+   *
+   * @param query Search query
+   */
+  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        implicit val orgWrites = new Writes[Organisation] {
+          def writes(data: Organisation): JsValue = {
+            Json.obj(
+              "id" -> data.id,
+              "name" -> data.name,
+              "countryCode" -> data.countryCode)
+          }
+        }
+        val orgs: List[Organisation] = query map { q ⇒
+          if (q.length < 3)
+            List()
+          else
+            orgService.search(q)
+        } getOrElse List()
+        Future.successful(jsonOk(Json.toJson(orgs)))
+  }
+
+  /**
    * Updates an organisation
    * @param id Organisation ID
    */
@@ -214,42 +298,6 @@ trait Organisations extends JsonController
   }
 
   /**
-   * Cancels a subscription for yearly-renewing membership
-   * @param id Organisation id
-   */
-  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val url = routes.Organisations.details(id).url + "#membership"
-        orgService.find(id) map { org ⇒
-          org.member map { m ⇒
-            if (m.renewal) {
-              val key = Play.configuration.getString("stripe.secret_key").get
-              val gateway = new GatewayWrapper(key)
-              try {
-                gateway.cancel(org.customerId.get)
-                m.copy(renewal = false).update
-              } catch {
-                case e: PaymentException ⇒
-                  Redirect(url).flashing("error" -> Messages(e.msg))
-                case e: RequestException ⇒
-                  e.log.foreach(Logger.error(_))
-                  Redirect(url).flashing("error" -> Messages(e.getMessage))
-              }
-              Redirect(url).
-                flashing("success" -> "Subscription was successfully canceled")
-            } else {
-              Redirect(url).
-                flashing("error" -> Messages("error.membership.noSubscription"))
-            }
-          } getOrElse {
-            Redirect(url).
-              flashing("error" -> Messages("error.membership.noSubscription"))
-          }
-        } getOrElse NotFound
-  }
-
-  /**
    * Upload a new logo to Amazon
    *
    * @param id Organisation identifier
@@ -265,27 +313,6 @@ trait Organisations extends JsonController
           case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
         }
   }
-
-  /**
-   * Deletes logo of the given organisation
-   *
-   * @param id Organisation identifier
-   */
-  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Organisation.logo(id).remove()
-        orgService.updateLogo(id, false)
-        val route = routes.Organisations.details(id).url
-        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
-  }
-
-  /**
-   * Retrieve and cache a logo of the given organisation
-   *
-   * @param id Organisation identifier
-   */
-  def logo(id: Long) = file(Organisation.logo(id))
 }
 
 object Organisations extends Organisations with Security with Services

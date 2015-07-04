@@ -163,6 +163,20 @@ class OrganisationService extends Services {
   }
 
   /**
+   * Returns list of organisations by part of their names
+   *
+   * @param needle Search string
+   */
+  def search(needle: String): List[Organisation] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        org ← Organisations if org.name.toLowerCase like "%" + needle.toLowerCase + "%"
+      } yield org
+
+      query.list
+  }
+
+  /**
    * Updates the given organisation in the database
    *
    * @param org Organisation

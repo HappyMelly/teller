@@ -22,16 +22,16 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.acceptance
+package controllers.acceptance.organisations
 
-import controllers.Organisations
-import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
+import controllers.Organisations
+import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.payment.Record
-import models.{ Organisation, Person, SocialProfile, ProfileType, OrgView }
 import models.service._
+import models.{ OrgView, ProfileType, SocialProfile }
 import org.joda.money.Money
-import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
+import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.mvc.SimpleResult
 import stubs._
 
@@ -39,7 +39,7 @@ import scala.concurrent.Future
 
 class TestOrganisations() extends Organisations with FakeServices
 
-class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
+class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
