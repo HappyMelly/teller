@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@(user: ActiveUser)
 
 <h3 id="people">People</h3>
 <table class="table table-bordered">
@@ -44,6 +44,6 @@
     </tr>
     <tr>
         <th>Examples</th>
-        <td><a href="/api/v1/people?api_token=@user.apiToken">GET /api/v1/people</a></td>
+        <td><a href="/api/v1/people?api_token=@user.identity.apiToken">GET /api/v1/people</a></td>
     </tr>
 </table>

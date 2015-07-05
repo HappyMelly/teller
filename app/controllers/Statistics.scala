@@ -24,9 +24,11 @@
 
 package controllers
 
+import securesocial.core.RuntimeEnvironment
+
 import scala.util.Random
 
-import models.{ License, Event }
+import models.{ ActiveUser, License, Event }
 import models.UserRole.Role._
 import models.service.Services
 import org.joda.time.{ LocalDate, Months }
@@ -38,7 +40,12 @@ import scala.language.postfixOps
 /**
  * Contains a set of functions for handling brand statistics
  */
-trait Statistics extends JsonController with Security with Services {
+class Statistics(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders index page with statistics for brands
@@ -201,5 +208,3 @@ trait Statistics extends JsonController with Security with Services {
     rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
   }
 }
-
-object Statistics extends Statistics

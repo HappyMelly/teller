@@ -30,7 +30,7 @@ import org.scalamock.specs2.MockContext
 import org.specs2.Specification
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeServices, FakeApiAuthentication }
+import stubs.{ FakeServices, FakeApiAuthentication, FakeSecurity }
 
 class EvaluationsApiSpec extends Specification {
   def is = s2"""

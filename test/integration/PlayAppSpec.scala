@@ -35,8 +35,6 @@ import play.api.Play
 import play.api.Play.current
 import play.filters.csrf.CSRF
 import scala.slick.jdbc.{ StaticQuery ⇒ Q }
-import scala.slick.session.Session
-import securesocial.core.{ Authenticator, IdentityId }
 import stubs.FakeUserIdentity
 
 trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
@@ -51,13 +49,10 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       "ehcacheplugin" -> "enabled",
       "stripe.public_key" -> "none",
       "mailchimp.listId" -> "testId")
-    val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin",
-      "services.LoginIdentityService")
-    val withPlugins = List("stubs.StubLoginIdentityService")
+    val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
     FakeApplication(
       additionalConfiguration = conf,
-      withoutPlugins = withoutPlugins,
-      additionalPlugins = withPlugins)
+      withoutPlugins = withoutPlugins)
   }
 
   def beforeAll() {
@@ -76,35 +71,6 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   def setupDb() {}
   def cleanupDb() {}
 
-  def viewerGetRequest(url: String = "") =
-    prepareSecuredGetRequest(FakeUserIdentity.viewer, url)
-
-  def editorGetRequest(url: String = "") =
-    prepareSecuredGetRequest(FakeUserIdentity.editor, url)
-
-  def adminGetRequest(url: String = "") =
-    prepareSecuredGetRequest(FakeUserIdentity.admin, url)
-
-  /**
-   * Returns a secured GET request object and sets authenticator object to cache
-   *
-   * @param identity Identity object
-   * @param url Path
-   */
-  def prepareSecuredGetRequest(identity: IdentityId, url: String) = {
-    val authenticator = new Authenticator("auth.1", identity,
-      DateTime.now().minusHours(1),
-      DateTime.now(),
-      DateTime.now().plusHours(5))
-    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
-    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
-    FakeRequest(GET,
-      url,
-      headers = FakeHeaders(),
-      body = AnyContentAsEmpty,
-      tags = csrfTag).withCookies(authenticator.toCookie)
-  }
-
   def fakeGetRequest(url: String = "") = {
     val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
     FakeRequest(GET,
@@ -116,53 +82,20 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
 
   def fakePostRequest(url: String = "") = {
     val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
-    FakeRequest(GET,
+    FakeRequest(POST,
       url,
       headers = FakeHeaders(),
       body = AnyContentAsEmpty,
       tags = csrfTag)
   }
 
-  /**
-   * Returns a secured request object and sets authenticator object to cache
-   *
-   * @param identity Identity object
-   * @param url Path
-   */
-  def prepareSecuredDeleteRequest(identity: IdentityId,
-    url: String) = {
-    val authenticator = new Authenticator("auth.1", identity,
-      DateTime.now().minusHours(1),
-      DateTime.now(),
-      DateTime.now().plusHours(5))
-    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
+  def fakeDeleteRequest(url: String = "") = {
     val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
     FakeRequest(DELETE,
       url,
       headers = FakeHeaders(),
       body = AnyContentAsEmpty,
-      tags = csrfTag).withCookies(authenticator.toCookie)
-  }
-
-  /**
-   * Returns a secured request object and sets authenticator object to cache
-   *
-   * @param identity Identity object
-   * @param url Path
-   */
-  def prepareSecuredPostRequest(identity: IdentityId,
-    url: String) = {
-    val authenticator = new Authenticator("auth.1", identity,
-      DateTime.now().minusHours(1),
-      DateTime.now(),
-      DateTime.now().plusHours(5))
-    Cache.set(authenticator.id, authenticator, Authenticator.absoluteTimeoutInSeconds)
-    val csrfTag = Map(CSRF.Token.RequestTag -> CSRF.SignedTokenProvider.generateToken)
-    FakeRequest(POST,
-      url,
-      headers = FakeHeaders(),
-      body = AnyContentAsEmpty,
-      tags = csrfTag).withCookies(authenticator.toCookie)
+      tags = csrfTag)
   }
 }
 import org.specs2.specification.Step
@@ -186,7 +119,7 @@ trait TruncateBefore extends Before {
 object PlayAppSpec {
 
   /** Cleans all records from database */
-  def truncate() = DB.withSession { implicit session: Session ⇒
+  def truncate() = DB.withSession { implicit session ⇒
     Q.updateNA("SET FOREIGN_KEY_CHECKS = 0;").execute
     Q.updateNA("TRUNCATE `ACCOUNT`").execute
     Q.updateNA("TRUNCATE `ACTIVITY`").execute

@@ -35,11 +35,11 @@ import play.api.Play.current
  *   a development of a Product
  */
 case class Contribution(
-  id: Option[Long],
-  contributorId: Long,
-  productId: Long,
-  isPerson: Boolean,
-  role: String) extends ActivityRecorder {
+    id: Option[Long],
+    contributorId: Long,
+    productId: Long,
+    isPerson: Boolean,
+    role: String) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -58,12 +58,11 @@ case class Contribution(
    */
   def objectType: String = Activity.Type.Contribution
 
-  def product: Product = DB.withSession { implicit session: Session ⇒
-    ProductService.get.find(this.productId).get
-  }
+  def product: Product = ProductService.get.find(this.productId).get
 
-  def insert: Contribution = DB.withSession { implicit session: Session ⇒
-    val id = Contributions.forInsert.insert(this)
+  def insert: Contribution = DB.withSession { implicit session ⇒
+    val contributions = TableQuery[Contributions]
+    val id = (contributions returning contributions.map(_.id)) += this
     this.copy(id = Some(id))
   }
 
@@ -78,10 +77,11 @@ object Contribution {
   /**
    * Returns a list of contributors for the given product
    */
-  def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session: Session ⇒
+  def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session ⇒
+    val contributions = TableQuery[Contributions]
     val peopleQuery = for {
-      contribution ← Contributions if contribution.productId === productId && contribution.isPerson === true
-      person ← People if person.id === contribution.contributorId
+      contribution ← contributions if contribution.productId === productId && contribution.isPerson === true
+      person ← TableQuery[People] if person.id === contribution.contributorId
     } yield (contribution, person)
 
     val people = peopleQuery.list.map {
@@ -90,8 +90,8 @@ object Contribution {
     }
 
     val orgQuery = for {
-      contribution ← Contributions if contribution.productId === productId && contribution.isPerson === false
-      organisation ← Organisations if organisation.id === contribution.contributorId
+      contribution ← contributions if contribution.productId === productId && contribution.isPerson === false
+      organisation ← TableQuery[Organisations] if organisation.id === contribution.contributorId
     } yield (contribution, organisation)
 
     val organisations = orgQuery.list.map {
@@ -104,12 +104,12 @@ object Contribution {
   /**
    * Finds a contribution by ID.
    */
-  def find(id: Long): Option[Contribution] = DB.withSession { implicit session: Session ⇒
-    Query(Contributions).filter(_.id === id).firstOption
+  def find(id: Long): Option[Contribution] = DB.withSession { implicit session ⇒
+    TableQuery[Contributions].filter(_.id === id).firstOption
   }
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Contributions.filter(_.id === id).mutate(_.delete)
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    TableQuery[Contributions].filter(_.id === id).delete
   }
 
 }

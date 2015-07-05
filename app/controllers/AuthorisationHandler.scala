@@ -24,18 +24,19 @@
 
 package controllers
 
-import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltHandler }
 import be.objectify.deadbolt.core.models.Subject
-import models.UserIdentity
+import be.objectify.deadbolt.scala.{ DeadboltHandler, DynamicResourceHandler }
+import models.{ ActiveUser, ResourceHandler }
 import play.api.i18n.Messages
-import play.api.mvc.{ SimpleResult, Request }
 import play.api.mvc.Results.Redirect
+import play.api.mvc.{ Request, Result }
+
 import scala.concurrent.Future
 
 /**
  * Deadbolt authorisation handler.
  */
-class AuthorisationHandler(identity: UserIdentity) extends DeadboltHandler {
+class AuthorisationHandler(user: ActiveUser) extends DeadboltHandler {
 
   /**
    * Invoked prior to a constraint's test.  If Option.None is returned, the constraint is applied. If
@@ -51,7 +52,7 @@ class AuthorisationHandler(identity: UserIdentity) extends DeadboltHandler {
    *
    * @return an option containing the current subject
    */
-  override def getSubject[A](request: Request[A]): Option[Subject] = Some(identity.account)
+  override def getSubject[A](request: Request[A]): Option[Subject] = Some(user.account)
 
   /**
    * Gets the handler used for dealing with resources restricted to specific users/groups.
@@ -59,14 +60,14 @@ class AuthorisationHandler(identity: UserIdentity) extends DeadboltHandler {
    * @return an option containing the handler for restricted resources
    */
   override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] =
-    Some(new TellerResourceHandler(identity))
+    Some(new ResourceHandler(user))
 
   /**
    * Invoked when an authorisation failure is detected for the request.
    *
    * @return the action
    */
-  def onAuthFailure[A](request: Request[A]): Future[SimpleResult] = Future.successful {
+  def onAuthFailure[A](request: Request[A]): Future[Result] = Future.successful {
     Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
   }
 }

@@ -24,12 +24,13 @@
 
 package services
 
-import org.joda.money.CurrencyUnit
 import models.ExchangeRate
+import math.BigDecimal.int2bigDecimal
+import org.joda.money.CurrencyUnit
+import org.joda.time.DateTime
+import play.api.Play.current
 import play.api.libs.ws.WS
 import scala.concurrent.Future
-import org.joda.time.DateTime
-import math.BigDecimal.int2bigDecimal
 
 /**
  * A trait for anything that can return the current exchange rate for two given currencies.

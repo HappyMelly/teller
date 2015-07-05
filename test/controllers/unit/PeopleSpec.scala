@@ -29,10 +29,11 @@ import helpers._
 import models.{ SocialProfile, Person }
 import org.specs2.mutable._
 import play.api.data.FormError
+import stubs.FakeRuntimeEnvironment
 
 class PeopleSpec extends Specification {
 
-  class TestPeople extends People {
+  class TestPeople extends People(FakeRuntimeEnvironment) {
 
     def callCompareSocialProfiles(left: SocialProfile,
       right: SocialProfile): List[FormError] = {

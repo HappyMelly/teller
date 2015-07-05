@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@(user: ActiveUser)
 
 <h3 id="members">Brand fees</h3>
 
@@ -40,6 +40,6 @@
   </tr>
   <tr>
     <th>Example</th>
-    <td><a href="/api/v1/fees/mgt30?api_token=@user.apiToken">GET /api/v1/fees/mgt30</a>
+    <td><a href="/api/v1/fees/mgt30?api_token=@user.identity.apiToken">GET /api/v1/fees/mgt30</a>
   </tr>
 </table>

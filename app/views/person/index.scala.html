@@ -1,4 +1,4 @@
-@(user: UserIdentity, people: List[PersonSummary])(implicit request: Request[Any],
+@(user: ActiveUser, people: List[PersonSummary])(implicit request: Request[Any],
   flash: Flash,
   handler: AuthorisationHandler)
 @import models.UserRole.Role._

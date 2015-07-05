@@ -31,7 +31,7 @@ import models.brand.{ BrandCoordinator, CertificateTemplate, EventType }
 import models.service.{ BrandService, ProductService }
 import models.service.brand.{ CertificateTemplateService, EventTypeService }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
-import stubs.{ FakeUserIdentity, FakeServices }
+import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeServices, FakeSecurity }
 
 /**
  * Tests Brands controller methods, rendering Details page
@@ -62,7 +62,8 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   """
 
-  class TestBrands extends Brands with FakeServices
+  class TestBrands extends Brands(FakeRuntimeEnvironment)
+    with FakeServices with FakeSecurity
 
   val controller = new TestBrands
   val eventTypeService = mock[EventTypeService]
@@ -74,14 +75,13 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
 
-  def e1 = new MockContext {
+  def e1 = {
     val eventTypes = List(
       EventType(Some(1L), 1L, "Meetup", Some("Yay, meetup!"), 8, false),
       EventType(Some(2L), 1L, "Meeting", None, 1, false),
       EventType(Some(3L), 1L, "CodeFest", Some("Coding sessions"), 16, false))
     (eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "types").apply(req)
+    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Meetup")
     contentAsString(res) must contain("Yay, meetup!")
@@ -90,114 +90,107 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(res) must contain("Coding sessions")
   }
 
-  def e2 = new MockContext {
+  def e2 = {
     (eventTypeService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "types").apply(req)
+    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
-  def e3 = new MockContext {
+  def e3 = {
     (eventTypeService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "types").apply(req)
+    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Event Type"
   }
 
-  def e4 = new MockContext {
+  def e4 = {
     (eventTypeService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val res = controller.renderTabs(1L, "types").apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Event Type")
   }
 
-  def e5 = new MockContext {
+  def e5 = {
     val products = List(
       ProductHelper.make("One", Some(1L)),
       ProductHelper.make("Two", Some(2L)),
       ProductHelper.make("Three", Some(3L)))
     (productService.findByBrand _).expects(1L).returning(products)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "products").apply(req)
+    controller.identity_=(FakeUserIdentity.viewer)
+    val res = controller.renderTabs(1L, "products").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("One")
     contentAsString(res) must contain("Two")
     contentAsString(res) must contain("Three")
   }
 
-  def e6 = new MockContext {
+  def e6 = {
     (productService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "products").apply(req)
+    val res = controller.renderTabs(1L, "products").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
-  def e7 = new MockContext {
+  def e7 = {
     val templates = List(
       CertificateTemplate(Some(1L), 1L, "EN", Array[Byte](), Array[Byte]()),
       CertificateTemplate(Some(2L), 1L, "DE", Array[Byte](), Array[Byte]()))
     (certificateService.findByBrand _).expects(1L).returning(templates)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "templates").apply(req)
+    val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("English")
     contentAsString(res) must contain("German")
   }
 
-  def e8 = new MockContext {
+  def e8 = {
     (certificateService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "templates").apply(req)
+    val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
-  def e9 = new MockContext {
+  def e9 = {
     (certificateService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val res = controller.renderTabs(1L, "templates").apply(req)
+    val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Certificate Template"
   }
 
-  def e10 = new MockContext {
+  def e10 = {
     (certificateService.findByBrand _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val res = controller.renderTabs(1L, "templates").apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Certificate Template")
   }
 
-  def e11 = new MockContext {
+  def e11 = {
     val team = List(
       (PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)),
       (PersonHelper.two(), BrandCoordinator(Some(2L), 1L, 2L)))
     (brandService.coordinators _).expects(1L).returning(team)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/details/1")
-    val res = controller.renderTabs(1L, "team").apply(req)
+    controller.identity_=(FakeUserIdentity.viewer)
+    val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("First Tester")
     contentAsString(res) must contain("Second Tester")
   }
 
-  def e13 = new MockContext {
+  def e13 = {
     (brandService.coordinators _).expects(1L).returning(List())
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/details/1")
-    val res = controller.renderTabs(1L, "team").apply(req)
+    val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Coordinator"
     contentAsString(res) must not contain "glyphicon-trash"
   }
 
-  def e14 = new MockContext {
+  def e14 = {
     val coordinators = List((PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)))
     (brandService.coordinators _) expects 1L returning coordinators
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/details/1")
-    val res = controller.renderTabs(1L, "team").apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val res = controller.renderTabs(1L, "team").apply(fakeGetRequest("/1"))
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Add Coordinator")
     contentAsString(res) must contain("glyphicon-trash")

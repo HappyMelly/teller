@@ -27,10 +27,10 @@ package controllers.acceptance.events
 import _root_.integration.PlayAppSpec
 import controllers.Events
 import models.UserRole.{ DynamicRole, Role }
-import stubs.AccessCheckSecurity
+import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
 
 class EventsAccessSpec extends PlayAppSpec {
-  class TestEvents() extends Events with AccessCheckSecurity
+  class TestEvents() extends Events(FakeRuntimeEnvironment) with AccessCheckSecurity
 
   val controller = new TestEvents()
 

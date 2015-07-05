@@ -1,10 +1,10 @@
-@(user: UserIdentity,
+@(user: ActiveUser,
   id: Option[Long],
   brands: List[Brand],
   currentUserId: Long,
   emptyForm: Boolean,
-  form: Form[EventView])(implicit flash: Flash,
-    request: Request[Any],
+  form: Form[EventView])(implicit request: Request[Any],
+    flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 

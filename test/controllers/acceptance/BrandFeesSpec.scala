@@ -47,7 +47,9 @@ class BrandFeesSpec extends PlayAppSpec with IsolatedMockFactory {
       then a list of fees should be returned                                 $e2
   """
 
-  class TestBrandFees extends BrandFees with FakeServices with FakeSecurity
+  class TestBrandFees
+      extends BrandFees(FakeRuntimeEnvironment) with FakeServices with FakeSecurity {
+  }
 
   val controller = new TestBrandFees
   val brandService = mock[BrandService]

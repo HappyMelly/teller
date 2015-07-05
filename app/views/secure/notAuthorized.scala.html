@@ -1,4 +1,4 @@
-@()(implicit flash: Flash, request: Request[Any])
+@()(implicit request: RequestHeader)
 
 @layout.unauthorized(Messages("securesocial.notAuthorized.title")) {
     <div class="page-header">

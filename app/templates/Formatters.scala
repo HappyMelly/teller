@@ -24,12 +24,12 @@
 
 package templates
 
-import org.joda.time.{ LocalDate, DateTimeZone, DateTime }
-import play.api.templates.Html
-import org.pegdown.PegDownProcessor
 import org.joda.money.Money
+import org.joda.time.{ LocalDate, DateTimeZone, DateTime }
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
+import org.pegdown.PegDownProcessor
+import play.twirl.api.Html
 
 /**
  * Custom formatters for use in templates.

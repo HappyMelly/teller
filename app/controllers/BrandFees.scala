@@ -23,14 +23,21 @@
  */
 package controllers
 
+import models.ActiveUser
 import models.UserRole.Role._
 import models.service.Services
 import play.api.Play.current
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import scala.concurrent.Future
 import views.Countries
 
-trait BrandFees extends Controller with Services with Security {
+class BrandFees(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Services
+    with Security {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders list of available fees for the given brand
@@ -48,5 +55,3 @@ trait BrandFees extends Controller with Services with Security {
       } getOrElse NotFound("Brand not found")
   }
 }
-
-object BrandFees extends BrandFees

@@ -27,10 +27,11 @@ package controllers.acceptance.organisations
 import _root_.integration.PlayAppSpec
 import controllers.Organisations
 import models.UserRole.{ DynamicRole, Role }
-import stubs.AccessCheckSecurity
+import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
 
 class AccessSpec extends PlayAppSpec {
-  class TestOrganisations() extends Organisations with AccessCheckSecurity
+  class TestOrganisations() extends Organisations(FakeRuntimeEnvironment)
+    with AccessCheckSecurity
 
   val controller = new TestOrganisations
 

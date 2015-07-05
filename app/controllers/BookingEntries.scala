@@ -33,21 +33,29 @@ import models.JodaMoney._
 import models.UserRole.Role._
 import models.admin.TransactionType
 import models.{ AccountSummary, _ }
+import models.service.Services
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import play.api.mvc.{ SimpleResult, _ }
+import play.api.mvc.{ Result, _ }
+import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 import services.{ CurrencyConverter, S3Bucket }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object BookingEntries extends Controller with Security with Integrations {
+class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Integrations
+    with Services {
 
-  def bookingEntryForm(implicit user: UserIdentity) = Form(mapping(
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+
+  def bookingEntryForm(implicit user: ActiveUser) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "ownerId" -> ignored(0L),
     "bookingNumber" -> ignored(Option.empty[Int]),
@@ -127,8 +135,8 @@ object BookingEntries extends Controller with Security with Integrations {
             // Create booking entry.
             val insertedEntry = entry.copy(ownerId = currentUser.personId).insert
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
-            Activity.link(insertedEntry, activity)
+            val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
+            activityService.link(insertedEntry, activity)
             sendEmailNotification(insertedEntry, List.empty, activity, entry.participants)
             sendEmailNotification(insertedEntry, List.empty, activity, Person.findActiveAdmins -- entry.participants)
             nextPageResult(form("next").value, activity.toString, form, currentUser, user)
@@ -159,7 +167,7 @@ object BookingEntries extends Controller with Security with Integrations {
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         val currentUser = user.account
-        val activity = Activity.findForBookingEntry(bookingEntry.id.getOrElse(0))
+        val activity = activityService.findForBookingEntry(bookingEntry.id.getOrElse(0))
         Ok(views.html.booking.details(user, bookingEntry, currentUser, attachmentForm, activity))
       }.getOrElse(NotFound)
   }
@@ -186,8 +194,8 @@ object BookingEntries extends Controller with Security with Integrations {
         //Construct activity
         val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(user.fullName, activityPredicate, activityObject)
-        Activity.link(entry, activity)
+        val activity = Activity.insert(user.name, activityPredicate, activityObject)
+        activityService.link(entry, activity)
         val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), decodedKey.split("/").last))
         sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
 
@@ -207,8 +215,8 @@ object BookingEntries extends Controller with Security with Integrations {
         BookingEntry.update(updatedEntry)
 
         val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
-        Activity.link(entry, activity)
+        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
+        activityService.link(entry, activity)
         val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), ""))
         sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
 
@@ -240,8 +248,8 @@ object BookingEntries extends Controller with Security with Integrations {
             val deletedEntry = entry.copy()
             BookingEntry.delete(id)
             val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
-            Activity.link(entry, activity)
+            val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
+            activityService.link(entry, activity)
             sendEmailNotification(deletedEntry, List.empty, activity, Person.findActiveAdmins)
             Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
           }.getOrElse(NotFound)
@@ -267,7 +275,7 @@ object BookingEntries extends Controller with Security with Integrations {
     }
   }
 
-  private def isAccessible(user: UserIdentity, accountId: Long): Boolean = {
+  private def isAccessible(user: ActiveUser, accountId: Long): Boolean = {
     val account = user.account
     if (account.admin) {
       true
@@ -333,8 +341,8 @@ object BookingEntries extends Controller with Security with Integrations {
                   ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
 
                 val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
-                Activity.link(existingEntry, activity)
+                val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
+                activityService.link(existingEntry, activity)
 
                 val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)
                 sendEmailNotification(populatedUpdatedEntry, changes, activity, Person.findActiveAdmins)
@@ -360,8 +368,8 @@ object BookingEntries extends Controller with Security with Integrations {
     successMessage: String,
     form: Form[BookingEntry],
     currentUser: UserAccount,
-    user: UserIdentity)(implicit request: Request[AnyContent],
-      handler: AuthorisationHandler): SimpleResult = {
+    user: ActiveUser)(implicit request: Request[AnyContent],
+      handler: AuthorisationHandler): Result = {
 
     next match {
       case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
@@ -385,14 +393,14 @@ object BookingEntries extends Controller with Security with Integrations {
    * @see http://docs.aws.amazon.com/AmazonS3/latest/dev/ACLOverview.html?CannedACL
    */
   private def s3Form(bookingNumber: Int)(implicit request: RequestHeader) = {
-    import fly.play.s3.upload.Condition._
+    import fly.play.aws.policy.Condition._
     import fly.play.s3.upload.Form
-    val policy = S3Bucket.uploadPolicy(expiration = DateTime.now().plusHours(1).toDate)
+    val builder = S3Bucket.uploadPolicy(expiration = DateTime.now().plusHours(1).toDate)
       .withConditions(key startsWith attachmentKeyPath(bookingNumber),
         acl eq BUCKET_OWNER_FULL_CONTROL,
         successActionRedirect eq routes.BookingEntries.s3Callback(bookingNumber).absoluteURL())
 
-    Form(policy)
+    Form(builder.toPolicy)
   }
 
   /** Constructs the path for an attachmentKey **/

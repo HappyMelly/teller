@@ -26,8 +26,7 @@ package controllers.acceptance
 import controllers.Urls
 import integration.PlayAppSpec
 import play.api.libs.json.JsObject
-import play.api.mvc.SimpleResult
-import stubs.FakeUserIdentity
+import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeSecurity }
 
 class UrlsSpec extends PlayAppSpec {
 
@@ -40,10 +39,13 @@ class UrlsSpec extends PlayAppSpec {
     'valid' should be returned    $e2
   """
 
+  class TestUrls extends Urls(FakeRuntimeEnvironment) with FakeSecurity
+
+  val controller = new TestUrls
+
   def e1 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val url = "http://notexisting312312398098dsalfjda.com"
-    val result = Urls.validate(url).apply(req)
+    val result = controller.validate(url).apply(fakePostRequest())
 
     status(result) must equalTo(OK)
     val data = contentAsJson(result).asInstanceOf[JsObject]
@@ -51,9 +53,8 @@ class UrlsSpec extends PlayAppSpec {
   }
 
   def e2 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
     val url = "http://t.co"
-    val result = Urls.validate(url).apply(req)
+    val result = controller.validate(url).apply(fakePostRequest())
 
     status(result) must equalTo(OK)
     val data = contentAsJson(result).asInstanceOf[JsObject]

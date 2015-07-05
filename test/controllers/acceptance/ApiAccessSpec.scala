@@ -62,7 +62,8 @@ class ApiAccessSpec extends Specification {
     'products' should be read-only $e14
   """
 
-  class TestBrandFeesApi() extends BrandFeesApi with FakeNoCallApiAuthentication
+  class TestBrandFeesApi() extends BrandFeesApi
+    with FakeNoCallApiAuthentication
 
   def e1 = {
     val controller = new TestBrandFeesApi()
@@ -70,7 +71,8 @@ class ApiAccessSpec extends Specification {
     controller.readWrite must_== false
   }
 
-  class TestBrandsApi() extends BrandsApi with FakeNoCallApiAuthentication
+  class TestBrandsApi() extends BrandsApi
+    with FakeNoCallApiAuthentication
 
   def e2 = {
     val controller = new TestBrandsApi()

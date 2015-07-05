@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -31,7 +31,6 @@ import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
-import scala.slick.lifted.Query
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -52,8 +51,8 @@ case class Person(
   virtual: Boolean = false,
   active: Boolean = true,
   dateStamp: DateStamp) extends AccountHolder
-  with ActivityRecorder
-  with Services {
+    with ActivityRecorder
+    with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
@@ -80,10 +79,10 @@ case class Person(
     val person = Person(id, firstName, lastName, birthday, photo,
       signature, addressId, bio, interests, webSite, blog,
       customerId, virtual, active, dateStamp)
-    this._socialProfile map { p ⇒
+    this._socialProfile foreach { p ⇒
       person.socialProfile_=(this.socialProfile)
     }
-    this._address map { a ⇒
+    this._address foreach { a ⇒
       person.address_=(a)
     }
     person
@@ -183,10 +182,8 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addRelation(organisationId: Long): Unit = DB.withSession {
-    implicit session: Session ⇒
-      OrganisationMemberships.forInsert.insert(this.id.get, organisationId)
-  }
+  def addRelation(organisationId: Long): Unit =
+    personService.addRelation(this.id.get, organisationId)
 
   /**
    * Returns true if it is possible to grant log in access to this user.
@@ -206,19 +203,15 @@ case class Person(
    *
    * @param organisationId Organisation identifier
    */
-  def deleteRelation(organisationId: Long): Unit = DB.withSession {
-    implicit session: Session ⇒
-      OrganisationMemberships.
-        filter(membership ⇒ membership.personId === id && membership.organisationId === organisationId).
-        mutate(_.delete)
-  }
+  def deleteRelation(organisationId: Long): Unit =
+    personService.deleteRelation(this.id.get, organisationId)
 
   /**
    * Returns a list of this person’s content licenses.
    */
-  lazy val licenses: List[LicenseView] = DB.withSession { implicit session: Session ⇒
+  lazy val licenses: List[LicenseView] = DB.withSession { implicit session ⇒
     val query = for {
-      license ← Licenses if license.licenseeId === this.id
+      license ← TableQuery[Licenses] if license.licenseeId === this.id
       brand ← license.brand
     } yield (license, brand)
 
@@ -230,9 +223,8 @@ case class Person(
   /**
    * Returns a list of this person's contributions.
    */
-  lazy val contributions: List[ContributionView] = {
-    ContributionService.get.contributions(this.id.get, isPerson = true)
-  }
+  lazy val contributions: List[ContributionView] =
+    contributionService.contributions(this.id.get, isPerson = true)
 
   /**
    * Returns identifier of the object
@@ -263,26 +255,6 @@ case class Person(
   def update: Person = personService.update(this)
 
   /**
-   * Find all events which were faciliated by a specified facilitator and
-   * where the person participated
-   *
-   * @param facilitatorId Facilitator identifier
-   */
-  def participateInEvents(facilitatorId: Long): List[Event] = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        facilitation ← EventFacilitators if facilitation.facilitatorId === facilitatorId
-        event ← Events if facilitation.eventId === event.id
-        participation ← Participants if participation.eventId === event.id
-      } yield (event, facilitation, participation)
-
-      query
-        .filter(_._3.personId === this.id)
-        .mapResult(_._1)
-        .list
-  }
-
-  /**
    * Finds the active `Account`s that this `Person` has access rights to.
    *
    * Currently, ‘having access rights to an account’ means that:
@@ -291,11 +263,11 @@ case class Person(
    *
    * @return The list of accounts that this person has access to
    */
-  def findAccessibleAccounts: List[AccountSummary] = DB.withSession { implicit session: Session ⇒
+  def findAccessibleAccounts: List[AccountSummary] = DB.withSession { implicit session ⇒
     val query = for {
-      account ← Accounts if account.active
-      organisation ← Organisations if account.organisationId === organisation.id.?
-      membership ← OrganisationMemberships if membership.organisationId === organisation.id
+      account ← TableQuery[Accounts] if account.active
+      organisation ← TableQuery[Organisations] if account.organisationId === organisation.id.?
+      membership ← TableQuery[OrganisationMemberships] if membership.organisationId === organisation.id
       if membership.personId.? === this.id
     } yield (account.id, organisation.name, account.currency, account.active)
 
@@ -339,6 +311,13 @@ case class PersonSummary(id: Long, firstName: String, lastName: String, active: 
 
 object Person {
 
+  def apply(firstName: String, lastName: String): Person = {
+    val creator = firstName + " " + lastName
+    Person(None, firstName, lastName, None, Photo.empty, signature = false,
+      addressId = 0, bio = None, interests = None, webSite = None, blog = None,
+      dateStamp = DateStamp(DateTime.now(), creator, DateTime.now(), creator))
+  }
+
   def cacheId(id: Long): String = s"signatures.$id"
 
   def fullFileName(id: Long): String = s"signatures/$id"
@@ -357,8 +336,8 @@ object Person {
    * @param active True if we activate a person, False if otherwise
    */
   def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
-    People.filter(_.id === id)
-      .map(p ⇒ p.active ~ p.virtual)
+    TableQuery[People].filter(_.id === id)
+      .map(p ⇒ (p.active, p.virtual))
       .update((active, false))
   }
 
@@ -373,9 +352,10 @@ object Person {
     query: Option[String]): List[Person] = DB.withSession {
 
     implicit session: Session ⇒
+      val people = TableQuery[People]
       val baseQuery = query.map { q ⇒
-        Query(People).filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
-      }.getOrElse(Query(People))
+        people.filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
+      } getOrElse people
       val activeQuery = active.map { value ⇒
         baseQuery.filter(_.active === value)
       }.getOrElse(baseQuery)
@@ -387,8 +367,8 @@ object Person {
    */
   def findActiveAdmins: Set[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
-      account ← UserAccounts if account.role === UserRole.Role.Admin.toString
-      person ← People if person.id === account.personId
+      account ← TableQuery[UserAccounts] if account.role === UserRole.Role.Admin.toString
+      person ← TableQuery[People] if person.id === account.personId
     } yield person
     query.list.toSet
   }
@@ -398,8 +378,8 @@ object Person {
    */
   def findAll: List[PersonSummary] = DB.withSession { implicit session: Session ⇒
     (for {
-      person ← People
-      address ← Addresses if person.addressId === address.id
+      person ← TableQuery[People]
+      address ← TableQuery[Addresses] if person.addressId === address.id
     } yield (person.id, person.firstName, person.lastName, person.active, address.countryCode))
       .sortBy(_._2.toLowerCase)
       .mapResult(PersonSummary.tupled).list
@@ -415,9 +395,9 @@ object PeopleCollection {
    * @return
    */
   def addresses(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.addressId).distinct.toList
+    val ids = people.map(_.addressId).distinct
     val query = for {
-      address ← Addresses if address.id inSet ids
+      address ← TableQuery[Addresses] if address.id inSet ids
     } yield address
     val addresses = query.list
     people.foreach(p ⇒ p.address_=(addresses.find(_.id.get == p.addressId).get))
@@ -429,9 +409,9 @@ object PeopleCollection {
    * @return
    */
   def languages(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct.toList
+    val ids = people.map(_.id.get).distinct
     val query = for {
-      language ← FacilitatorLanguages if language.personId inSet ids
+      language ← TableQuery[FacilitatorLanguages] if language.personId inSet ids
     } yield language
     val lanuages = query.list.groupBy(_.personId)
     people.foreach(p ⇒ p.languages_=(lanuages.getOrElse(p.id.get, List())))
@@ -443,9 +423,9 @@ object PeopleCollection {
    * @return
    */
   def countries(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct.toList
+    val ids = people.map(_.id.get).distinct
     val query = for {
-      country ← FacilitatorCountries if country.personId inSet ids
+      country ← TableQuery[FacilitatorCountries] if country.personId inSet ids
     } yield country
     val countries = query.list.groupBy(_.personId)
     people.foreach(p ⇒ {
@@ -461,9 +441,9 @@ object PeopleCollection {
    * @return
    */
   def organisations(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct.toList
+    val ids = people.map(_.id.get).distinct
     val query = for {
-      membership ← OrganisationMemberships if membership.personId inSet ids
+      membership ← TableQuery[OrganisationMemberships] if membership.personId inSet ids
       organisation ← membership.organisation
     } yield (membership.personId, organisation)
     val organisations = query.list.groupBy(_._1).map(o ⇒ (o._1, o._2.map(_._2)))

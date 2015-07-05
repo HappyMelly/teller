@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@(user: ActiveUser)
 
 <h3 id="events">Events</h3>
 
@@ -75,8 +75,8 @@
   <tr>
     <th>Examples</th>
     <td>
-      <a href="/api/v1/brand/mgt30/events?api_token=@user.apiToken">GET /api/v1/brand/mgt30/events</a>
-      <br><a href="/api/v1/brand/mgt30/events?future=true&public=true&api_token=@user.apiToken">GET /api/v1/brand/mgt30/events?future=true&public=true</a>
+      <a href="/api/v1/brand/mgt30/events?api_token=@user.identity.apiToken">GET /api/v1/brand/mgt30/events</a>
+      <br><a href="/api/v1/brand/mgt30/events?future=true&public=true&api_token=@user.identity.apiToken">GET /api/v1/brand/mgt30/events?future=true&public=true</a>
     </td>
   </tr>
 </table>

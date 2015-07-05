@@ -25,11 +25,10 @@
 package controllers.acceptance.people
 
 import _root_.integration.PlayAppSpec
-import controllers.{ People, Security }
+import controllers.People
 import helpers._
-import models.{ SocialProfile, License, LicenseView }
-import models.payment.Record
 import models.service._
+import models.{ License, LicenseView, SocialProfile }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
@@ -56,7 +55,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     return an error if there is not subscription                         $e18
   """
 
-  class TestPeople() extends People with Security with FakeServices
+  class TestPeople() extends People(FakeRuntimeEnvironment)
+    with FakeSecurity with FakeServices
 
   val personService = mock[PersonService]
   val orgService = mock[OrganisationService]
@@ -96,7 +96,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-    val result = controller.details(person.id.get).apply(adminGetRequest())
+    controller.identity_=(FakeUserIdentity.admin)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Financial account"
     contentAsString(result) must not contain "Account history"
@@ -106,9 +107,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-
-    val req = viewerGetRequest("/person/1")
-    val result = controller.details(person.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.viewer)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("supporter")
     contentAsString(result) must not contain "/member/1/edit"
@@ -120,7 +120,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    val result = controller.details(person.id.get).apply(editorGetRequest())
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("funder")
   }
@@ -129,7 +130,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    val result = controller.details(person.id.get).apply(editorGetRequest())
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     // contentAsString(result) must contain("/person/1/licenses/new")
     contentAsString(result) must contain("Make a Facilitator")
@@ -147,7 +149,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     licenseService.licenses _ expects id returning licenses
     accountService.findRole _ expects id returning None
     accountService.findDuplicateIdentity _ expects person returning None
-    val result = controller.details(person.id.get).apply(editorGetRequest())
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Make a Facilitator"
   }
@@ -156,9 +159,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-
-    val req = viewerGetRequest("/person/1")
-    val result = controller.details(person.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.viewer)
+    val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "/person/1/licenses/new"
     contentAsString(result) must not contain "Make a Facilitator"
@@ -167,8 +169,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e16 = new MockContext {
     truncateTables()
     (personService.find(_: Long)) expects id returning None
-    val req = viewerGetRequest("/person/1/cancel")
-    val result = controller.cancel(person.id.get).apply(req)
+    val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(NOT_FOUND)
   }
@@ -178,8 +179,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.one()
     person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     (personService.find(_: Long)) expects id returning Some(person)
-    val req = viewerGetRequest("/person/1/cancel")
-    val result = controller.cancel(person.id.get).apply(req)
+    val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/person/1"))
@@ -193,8 +193,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       renewal = false)
     person.member_=(member)
     (personService.find(_: Long)) expects id returning Some(person)
-    val req = viewerGetRequest("/person/1/cancel")
-    val result = controller.cancel(person.id.get).apply(req)
+    val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/person/1"))

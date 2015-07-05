@@ -58,7 +58,8 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     see minimum, regular and elite fees for the org                   $e14
   """
 
-  class TestMembership() extends Membership with FakeSecurity with FakeServices
+  class TestMembership() extends Membership(FakeRuntimeEnvironment)
+    with FakeSecurity with FakeServices
 
   val controller = new TestMembership()
   val orgService = mock[OrganisationService]

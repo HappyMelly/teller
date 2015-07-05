@@ -55,6 +55,7 @@ trait FakeServices extends Services {
   private var _socialProfileService = new SocialProfileService
   private var _translationService = new TranslationService
   private var _userAccountService = new UserAccountService
+  private var _userIdentityService = new UserIdentityService
 
   def activityService_=(service: ActivityService) = _activityService = service
   override def activityService: ActivityService = _activityService
@@ -135,5 +136,8 @@ trait FakeServices extends Services {
 
   def userAccountService_=(service: UserAccountService) = _userAccountService = service
   override def userAccountService: UserAccountService = _userAccountService
+
+  def userIdentityService_=(service: UserIdentityService) = _userIdentityService = service
+  override def userIdentityService: UserIdentityService = _userIdentityService
 
 }

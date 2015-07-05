@@ -24,14 +24,14 @@
 
 package models.database
 
+import models.database.PortableJodaSupport._
 import models.ExchangeRate
-import com.github.tototoshi.slick.JodaSupport._
-import play.api.db.slick.Config.driver.simple._
-import models.JodaMoney.CurrencyMapper
+import models.JodaMoney._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
+import play.api.db.slick.Config.driver.simple._
 
-object ExchangeRates extends Table[ExchangeRate]("EXCHANGE_RATE") {
+class ExchangeRates(tag: Tag) extends Table[ExchangeRate](tag, "EXCHANGE_RATE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def base = column[CurrencyUnit]("base")
@@ -39,7 +39,7 @@ object ExchangeRates extends Table[ExchangeRate]("EXCHANGE_RATE") {
   def rate = column[BigDecimal]("rate")
   def timestamp = column[DateTime]("timestamp")
 
-  def * = id.? ~ base ~ counter ~ rate ~ timestamp <> (ExchangeRate.apply _, ExchangeRate.unapply _)
+  def * = (id.?, base, counter, rate, timestamp) <> (
+    (ExchangeRate.apply _).tupled, ExchangeRate.unapply)
 
-  def forInsert = * returning id
 }

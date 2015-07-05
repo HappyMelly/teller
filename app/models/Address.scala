@@ -40,17 +40,18 @@ case class Address(
 
 object Address {
 
-  def find(id: Long): Address = DB.withSession { implicit session: Session ⇒
-    Query(Addresses).filter(_.id === id).first
+  def find(id: Long): Address = DB.withSession { implicit session ⇒
+    TableQuery[Addresses].filter(_.id === id).first
   }
 
-  def insert(address: Address): Address = DB.withSession { implicit session: Session ⇒
-    val id = Addresses.forInsert.insert(address)
+  def insert(address: Address): Address = DB.withSession { implicit session ⇒
+    val addresses = TableQuery[Addresses]
+    val id = (addresses returning addresses.map(_.id)) += address
     address.copy(id = Some(id))
   }
 
-  def update(address: Address): Unit = DB.withSession { implicit session: Session ⇒
-    Addresses.filter(_.id === address.id).update(address)
+  def update(address: Address): Unit = DB.withSession { implicit session ⇒
+    TableQuery[Addresses].filter(_.id === address.id).update(address)
   }
 }
 

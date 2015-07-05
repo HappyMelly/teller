@@ -36,8 +36,8 @@ import stubs.services.FakeIntegrations
 class EnrollmentSpec extends PlayAppSpec {
 
   class TestEnrollment extends Enrollment
-    with FakeIntegrations
-    with FakeServices {
+      with FakeIntegrations
+      with FakeServices {
 
     /**
      * Renders welcome screen for existing users with two options:

@@ -24,13 +24,14 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.JodaMoney._
 import models.payment.Record
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
-private[models] object PaymentRecords extends Table[Record]("PAYMENT_RECORD") {
+private[models] class PaymentRecords(tag: Tag)
+    extends Table[Record](tag, "PAYMENT_RECORD") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def remoteId = column[String]("REMOTE_ID")
@@ -42,13 +43,15 @@ private[models] object PaymentRecords extends Table[Record]("PAYMENT_RECORD") {
   def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
   def created = column[DateTime]("CREATED")
 
-  def * = id.? ~ remoteId ~ payerId ~ objectId ~ person ~ description ~
-    feeCurrency ~ fee ~ created <> ({ r ⇒
-      Record(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9)
-    }, { (r: Record) ⇒
-      Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
-        r.fee.getCurrencyUnit.getCode, r.fee.getAmount, r.created)
-    })
+  type PaymentRecordsFields = (Option[Long], String, Long, Long, Boolean, String, String, BigDecimal, DateTime)
 
-  def forInsert = * returning id
+  def * = (id.?, remoteId, payerId, objectId, person, description,
+    feeCurrency, fee, created) <> (
+      (r: PaymentRecordsFields) ⇒
+        Record(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9),
+      (r: Record) ⇒
+        Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
+          r.fee.getCurrencyUnit.getCode, BigDecimal(r.fee.getAmount),
+          r.created))
+
 }

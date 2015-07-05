@@ -34,14 +34,16 @@ import play.api.Play.current
 /** Provides operations with database related to payment records */
 class PaymentRecordService {
 
+  private val records = TableQuery[PaymentRecords]
+
   /**
    * Deletes a record from database
    * @param objectId Object id
    * @param person If true, object is a person, otherwise - org
    */
   def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
-    implicit session: Session ⇒
-      PaymentRecords.
+    implicit session ⇒
+      records.
         filter(_.objectId === objectId).
         filter(_.person === person).delete
   }
@@ -52,10 +54,9 @@ class PaymentRecordService {
    * @param r Object to insert
    * @return Returns member object with updated id
    */
-  def insert(r: Record): Record = DB.withSession {
-    implicit session ⇒
-      val id: Long = PaymentRecords.forInsert.insert(r)
-      r.copy(id = Some(id))
+  def insert(r: Record): Record = DB.withSession { implicit session ⇒
+    val id = (records returning records.map(_.id)) += r
+    r.copy(id = Some(id))
   }
 
   /**
@@ -65,7 +66,7 @@ class PaymentRecordService {
    */
   def findByPerson(personId: Long): List[Record] = DB.withSession {
     implicit session ⇒
-      Query(PaymentRecords).
+      records.
         filter(_.objectId === personId).
         filter(_.person === true).
         sortBy(_.created).list
@@ -78,7 +79,7 @@ class PaymentRecordService {
    */
   def findByOrganisation(orgId: Long): List[Record] = DB.withSession {
     implicit session ⇒
-      Query(PaymentRecords).
+      records.
         filter(_.objectId === orgId).
         filter(_.person === false).
         sortBy(_.created).list

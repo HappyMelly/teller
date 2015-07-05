@@ -57,13 +57,13 @@ trait ParticipantsApi extends ApiAuthentication with Services {
       "postcode" -> optional(nonEmptyText),
       "province" -> optional(nonEmptyText),
       "organisation" -> optional(nonEmptyText),
-      "comment" -> optional(nonEmptyText)) ({
+      "comment" -> optional(nonEmptyText))({
         (id, event_id, first_name, last_name, birthday, email, city, country, street_1, street_2, postcode, province,
         organisation, comment) ⇒
           ParticipantData(id, event_id, first_name, last_name, birthday, email,
             Address(None, street_1, street_2, Some(city), province, postcode, country), organisation, comment,
             DateTime.now(), userName, DateTime.now(), userName)
-      }) ({
+      })({
         (p: ParticipantData) ⇒
           Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode, p.address.street1, p.address.street2,
@@ -94,10 +94,10 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
     //@TODO this should be changed as soon as API is refactored
     val name = "Teller API"
-
-    val testFrom = existingPersonForm(identity.account).bindFromRequest()(request)
+    val account = userAccountService.findByIdentity(identity)
+    val testFrom = existingPersonForm(account).bindFromRequest()(request)
     if (testFrom.data.contains("person_id")) {
-      val form: Form[Participant] = existingPersonForm(identity.account).bindFromRequest()(request)
+      val form: Form[Participant] = existingPersonForm(account).bindFromRequest()(request)
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
@@ -110,7 +110,7 @@ trait ParticipantsApi extends ApiAuthentication with Services {
           Ok(Json.prettyPrint(Json.obj("participant_id" -> createdParticipant.personId)))
         })
     } else {
-      val form: Form[ParticipantData] = participantForm(identity.account, name).bindFromRequest()(request)
+      val form: Form[ParticipantData] = participantForm(account, name).bindFromRequest()(request)
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))

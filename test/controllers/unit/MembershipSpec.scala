@@ -30,11 +30,12 @@ import models.{ Organisation, Person }
 import models.service.OrganisationService
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.FakeServices
+import stubs.{ FakeRuntimeEnvironment, FakeServices }
 
 class MembershipSpec extends Specification {
 
-  class TestMembership() extends Membership with FakeServices {
+  class TestMembership() extends Membership(FakeRuntimeEnvironment)
+      with FakeServices {
 
     def call(data: PaymentData, person: Person, org: Option[Organisation]) = {
       validatePaymentData(data, person, org)

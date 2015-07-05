@@ -41,8 +41,8 @@ class CertificateTemplateService {
    * @param brandId Unique brand identifier
    */
   def findByBrand(brandId: Long): List[CertificateTemplate] = DB.withSession {
-    implicit session: Session ⇒
-      Query(CertificateTemplates).filter(_.brandId === brandId).sortBy(_.language).list
+    implicit session ⇒
+      TableQuery[CertificateTemplates].filter(_.brandId === brandId).sortBy(_.language).list
   }
 }
 

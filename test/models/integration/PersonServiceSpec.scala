@@ -28,7 +28,7 @@ import helpers.{ MemberHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.{ UserAccount, ProfileType, Member }
 import models.payment.Record
-import models.service.{ SocialProfileService, PaymentRecordService, PersonService }
+import models.service.{ SocialProfileService, PaymentRecordService, PersonService, UserAccountService }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -92,21 +92,21 @@ class PersonServiceSpec extends PlayAppSpec {
         funder = false).insert
       Record("123", id, id, person = true, "desc", Money.parse("EUR 100")).insert
       Record("234", id, id, person = true, "desc", Money.parse("EUR 200")).insert
-      UserAccount.insert(UserAccount(None, id, "viewer", Some("test"), None, None, None))
+      UserAccountService.get.insert(UserAccount(None, id, "viewer", Some("test"), None, None, None))
       //test
       val addressId = person.address.id.get
       service.delete(id)
 
       //check
-      DB.withSession { implicit session: Session ⇒
+      DB.withSession { implicit session ⇒
         import models.database._
-        Accounts.where(_.personId === id).firstOption must_== None
-        Addresses.where(_.id === addressId).firstOption must_== None
-        Members.where(_.objectId === id).where(_.person === true).firstOption must_== None
-        PaymentRecords.where(_.objectId === id).where(_.person === true).list must_== List()
+        TableQuery[Accounts].filter(_.personId === id).firstOption must_== None
+        TableQuery[Addresses].filter(_.id === addressId).firstOption must_== None
+        TableQuery[Members].filter(_.objectId === id).filter(_.person === true).firstOption must_== None
+        TableQuery[PaymentRecords].filter(_.objectId === id).filter(_.person === true).list must_== List()
         // we can skip a type check here as there's only one record in database
-        SocialProfiles.where(_.objectId === id).firstOption must_== None
-        UserAccounts.where(_.personId === id).firstOption must_== None
+        TableQuery[SocialProfiles].filter(_.objectId === id).firstOption must_== None
+        TableQuery[UserAccounts].filter(_.personId === id).firstOption must_== None
       }
     }
   }

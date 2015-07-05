@@ -24,26 +24,31 @@
 
 package controllers
 
+import fly.play.s3.{ BucketFile, S3Exception }
+import models.UserRole.Role._
 import models._
 import models.service.Services
-import play.api.mvc._
 import org.joda.time._
-import play.api.data._
-import play.api.data.validation.Constraints._
-import play.api.data.Forms._
-import models.UserRole.Role._
-import play.api.data.format.Formatter
-import play.api.i18n.Messages
-import play.api.cache.Cache
-import services._
-import play.api.data.FormError
-import fly.play.s3.{ BucketFile, S3Exception }
 import play.api.Play.current
-import scala.io.Source
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
+import play.api.cache.Cache
+import play.api.data.Forms._
+import play.api.data.{ FormError, _ }
+import play.api.data.format.Formatter
+import play.api.data.validation.Constraints._
+import play.api.i18n.Messages
+import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
+import services._
 
-trait Products extends JsonController with Security with Services {
+import scala.concurrent.Future
+import scala.io.Source
+
+class Products(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -67,7 +72,7 @@ trait Products extends JsonController with Security with Services {
   val categoryMapping = of[ProductCategory.Value]
 
   /** HTML form mapping for creating and editing. */
-  def productForm(implicit user: UserIdentity) = Form(mapping(
+  def productForm(implicit user: ActiveUser) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "title" -> text.verifying(nonEmpty),
     "subtitle" -> optional(text),
@@ -80,9 +85,9 @@ trait Products extends JsonController with Security with Services {
     "parentId" -> optional(nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString)),
     "active" -> ignored(true),
     "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(user.fullName),
+    "createdBy" -> ignored(user.name),
     "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(user.fullName))(Product.apply)(Product.unapply))
+    "updatedBy" -> ignored(user.name))(Product.apply)(Product.unapply))
 
   /** Show all products **/
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
@@ -117,7 +122,8 @@ trait Products extends JsonController with Security with Services {
               source.close()
               S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                 product.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
+                val activity = Activity.insert(user.name,
+                  Activity.Predicate.Created, product.title)
                 Redirect(routes.Products.index()).flashing("success" -> activity.toString)
               }.recover {
                 case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(user, None, None,
@@ -125,7 +131,8 @@ trait Products extends JsonController with Security with Services {
               }
             }.getOrElse {
               product.insert
-              val activity = Activity.insert(user.fullName, Activity.Predicate.Created, product.title)
+              val activity = Activity.insert(user.name,
+                Activity.Predicate.Created, product.title)
               Future.successful(Redirect(routes.Products.index()).flashing("success" -> activity.toString))
             }
           }
@@ -148,7 +155,8 @@ trait Products extends JsonController with Security with Services {
               brandService.find(brandId) map { brand ⇒
                 product.addBrand(brandId)
                 val activityObject = Messages("activity.relationship.create", product.title, brand.name)
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
+                val activity = Activity.insert(user.name,
+                  Activity.Predicate.Created, activityObject)
 
                 // Redirect to the page we came from - either the product or brand details page.
                 val action = if (page == "product")
@@ -193,7 +201,8 @@ trait Products extends JsonController with Security with Services {
         brandService.find(brandId).map { brand ⇒
           product.deleteBrand(brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.name,
+            Activity.Predicate.Deleted, activityObject)
 
           // Redirect to the page we came from - either the product or brand details page.
           val action = if (page == "product")
@@ -210,12 +219,13 @@ trait Products extends JsonController with Security with Services {
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map { product ⇒
-        product.picture.map { picture ⇒
+        product.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
         }
         productService.delete(id)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, product.title)
+        val activity = Activity.insert(user.name,
+          Activity.Predicate.Deleted, product.title)
         Redirect(routes.Products.index).flashing("success" -> activity.toString)
       } getOrElse NotFound
   }
@@ -224,12 +234,13 @@ trait Products extends JsonController with Security with Services {
   def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       productService.find(id) map { product ⇒
-        product.picture.map { picture ⇒
+        product.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
         }
         product.copy(picture = None).update
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "image from the product " + product.title)
+        val activity = Activity.insert(user.name,
+          Activity.Predicate.Deleted, "image from the product " + product.title)
         Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
       } getOrElse NotFound
   }
@@ -292,7 +303,8 @@ trait Products extends JsonController with Security with Services {
                   existingProduct.picture.map { oldPicture ⇒
                     S3Bucket.remove(oldPicture)
                   }
-                  val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
+                  val activity = Activity.insert(user.name,
+                    Activity.Predicate.Updated, product.title)
                   Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
@@ -301,7 +313,8 @@ trait Products extends JsonController with Security with Services {
                 }
               }.getOrElse {
                 product.copy(id = Some(id)).copy(picture = existingProduct.picture).update
-                val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, product.title)
+                val activity = Activity.insert(user.name,
+                  Activity.Predicate.Updated, product.title)
                 Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
               }
             }
@@ -337,6 +350,4 @@ trait Products extends JsonController with Security with Services {
   }
 
 }
-
-object Products extends Products with Security with Services
 

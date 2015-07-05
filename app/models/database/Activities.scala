@@ -23,7 +23,7 @@
  */
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.Activity
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -31,7 +31,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Activity` database table mapping.
  */
-private[models] object Activities extends Table[Activity]("ACTIVITY") {
+private[models] class Activities(tag: Tag) extends Table[Activity](tag, "ACTIVITY") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def subjectId = column[Long]("SUBJECT_ID")
@@ -45,9 +45,7 @@ private[models] object Activities extends Table[Activity]("ACTIVITY") {
   def supportiveObject = column[Option[String]]("SUPPORTIVE_OBJECT")
   def timestamp = column[DateTime]("CREATED")
 
-  def * = id.? ~ subjectId ~ subject ~ predicate ~ objectType ~ objectId ~
-    activityObject ~ supportiveObjectType ~ supportiveObjectId ~
-    supportiveObject ~ timestamp <> (Activity.apply _, Activity.unapply _)
-
-  def forInsert = * returning id
+  def * = (id.?, subjectId, subject, predicate, objectType, objectId,
+    activityObject, supportiveObjectType, supportiveObjectId,
+    supportiveObject, timestamp) <> ((Activity.apply _).tupled, Activity.unapply)
 }

@@ -39,8 +39,7 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
-import securesocial.core.{ IdentityId, SecureSocial }
-import services.integrations.Integrations
+import securesocial.core.{ RuntimeEnvironment, SecureSocial }
 import views.Countries
 
 /**
@@ -68,7 +67,13 @@ case class OrgData(name: String, country: String)
  * -v
  * Contains actions for a registration process
  */
-trait Registration extends Enrollment with Activities {
+class Registration(environment: RuntimeEnvironment[ActiveUser])
+    extends Enrollment
+    with Security
+    with Activities
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val REGISTRATION_COOKIE = "registration"
 
@@ -99,7 +104,7 @@ trait Registration extends Enrollment with Activities {
     val session = request.session -
       SecureSocial.OriginalUrlKey +
       (SecureSocial.OriginalUrlKey -> routes.Registration.step2().url)
-    val route = securesocial.controllers.routes.ProviderController.authenticate(provider)
+    val route = env.routes.authenticationUrl(provider)
     Redirect(route).withSession(session)
   }
 
@@ -131,10 +136,10 @@ trait Registration extends Enrollment with Activities {
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        val (firstName, lastName) = userNames(user)
+        val (firstName, lastName) = userNames(user.identity)
         val form = userForm.bind(Map(("firstName", firstName),
           ("lastName", lastName),
-          ("email", user.email.getOrElse(""))))
+          ("email", user.identity.profile.email.getOrElse(""))))
         Ok(views.html.registration.step2(user, form))
       }
   }
@@ -158,7 +163,7 @@ trait Registration extends Enrollment with Activities {
         userForm.bindFromRequest.fold(
           errForm ⇒ BadRequest(views.html.registration.step2(user, errForm)),
           data ⇒ {
-            val id = personCacheId(user.identityId)
+            val id = personCacheId(user.identity.profile.userId)
             Cache.set(id, data, 900)
             val paymentUrl = routes.Registration.payment().url
             val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
@@ -182,7 +187,7 @@ trait Registration extends Enrollment with Activities {
           orgForm.bindFromRequest.fold(
             errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
             data ⇒ {
-              val id = personCacheId(user.identityId)
+              val id = personCacheId(user.identity.profile.userId)
               Cache.set(id, userData.copy(org = true, orgData = data), 900)
               Redirect(routes.Registration.payment())
             })
@@ -198,7 +203,7 @@ trait Registration extends Enrollment with Activities {
       redirectViewer {
         checkPersonData { implicit userData ⇒
           val publicKey = Play.configuration.getString("stripe.public_key").get
-          val person = unregisteredPerson(userData, user)
+          val person = unregisteredPerson(userData, user.identity)
           val country = if (userData.org) userData.orgData.country else userData.country
           val org = if (userData.org)
             Some(Organisation(userData.orgData.name, userData.orgData.country))
@@ -216,8 +221,8 @@ trait Registration extends Enrollment with Activities {
   def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
-          val person = unregisteredPerson(userData, user).insert
+        Cache.getAs[UserData](personCacheId(user.identity.profile.userId)) map { userData ⇒
+          val person = unregisteredPerson(userData, user.identity).insert
           val org = if (userData.org) {
             val profile = SocialProfile(0, ProfileType.Organisation, userData.email)
             val view = orgService.insert(OrgView(unregisteredOrg(userData), profile))
@@ -242,7 +247,7 @@ trait Registration extends Enrollment with Activities {
                 } getOrElse {
                   person.copy(customerId = Some(customerId), active = true).update
                 }
-                insertAccount(person)
+                updateRole(user.identity, person)
 
                 val fee = Money.of(EUR, data.fee)
                 val member = org map { x ⇒
@@ -296,29 +301,41 @@ trait Registration extends Enrollment with Activities {
     }
   }
 
-  protected def insertAccount(person: Person) = {
+  /**
+   * Adds new person as a viewer and updates cached object
+   *
+   * By updating cached object we give the user a full access to the system
+   *  without relogging
+   *
+   * @param identity Identity object
+   * @param person Person
+   */
+  protected def updateRole(identity: UserIdentity, person: Person)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get, "viewer",
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,
       person.socialProfile.googlePlusUrl)
-    UserAccount.insert(account)
+    val inserted = userAccountService.insert(account)
+    env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+      _.updateUser(ActiveUser(identity, inserted, person))
+    })
   }
 
   /**
    * Returns an unique cache id for a person object of current user
-   * @param id Identity object
+   * @param userId User identifier from a social network
    */
-  protected def personCacheId(id: IdentityId): String = {
-    "user_" + id.userId
+  protected def personCacheId(userId: String): String = {
+    "user_" + userId
   }
 
   /**
    * Redirects Viewer to an index page. Otherwise - run action
    */
-  protected def redirectViewer(f: SimpleResult)(implicit request: Request[Any],
+  protected def redirectViewer(f: Result)(implicit request: Request[Any],
     handler: AuthorisationHandler,
-    user: UserIdentity): SimpleResult = if (user.account.viewer)
+    user: ActiveUser): Result = if (user.account.viewer)
     Redirect(routes.Dashboard.index())
   else
     f
@@ -326,10 +343,10 @@ trait Registration extends Enrollment with Activities {
   /**
    * Checks if person data are in cache and redirects to a person data form if not
    */
-  protected def checkPersonData(f: UserData ⇒ SimpleResult)(implicit request: Request[Any],
+  protected def checkPersonData(f: UserData ⇒ Result)(implicit request: Request[Any],
     handler: AuthorisationHandler,
-    user: UserIdentity): SimpleResult = {
-    Cache.getAs[UserData](personCacheId(user.identityId)) map { userData ⇒
+    user: ActiveUser): Result = {
+    Cache.getAs[UserData](personCacheId(user.identity.profile.userId)) map { userData ⇒
       f(userData)
     } getOrElse {
       Redirect(routes.Registration.step2()).
@@ -342,15 +359,16 @@ trait Registration extends Enrollment with Activities {
    * @param user User object
    */
   protected def userNames(user: UserIdentity): (String, String) = {
-    if (user.firstName.length == 0) {
-      val tokens: Array[String] = user.fullName.split(" ")
+    if (user.profile.firstName.exists(_.trim.isEmpty)) {
+      val tokens: Array[String] = user.name.split(" ")
       tokens.length match {
         case 0 ⇒ ("", "")
         case 1 ⇒ (tokens(0), "")
         case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
       }
     } else
-      (user.firstName, user.lastName)
+      (user.profile.firstName.getOrElse(""),
+        user.profile.lastName.getOrElse(""))
   }
 
   /**
@@ -399,5 +417,3 @@ trait Registration extends Enrollment with Activities {
     org foreach { x ⇒ orgService.delete(x.id.get) }
   }
 }
-
-object Registration extends Registration

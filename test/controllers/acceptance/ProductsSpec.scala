@@ -46,15 +46,17 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
     an Editor should be able to deactivate the product                    $e3
   """
 
-  class TestProducts extends Products with FakeServices
+  class TestProducts extends Products(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
+
   val controller = new TestProducts
   val productService = mock[ProductService]
   controller.productService_=(productService)
 
   def e1 = {
     (productService.find _) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "")
-    val res = controller.activation(1L).apply(req)
+    val res = controller.activation(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must contain("not found")
@@ -64,8 +66,7 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
     val product = ProductHelper.make("Test", Some(1L))
     (productService.find _) expects 1L returning Some(product)
     (productService.activate _) expects 1L
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "").
-      withFormUrlEncodedBody("active" -> "true")
+    val req = fakePostRequest().withFormUrlEncodedBody("active" -> "true")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
   }
@@ -74,8 +75,7 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
     val product = ProductHelper.make("Test", Some(1L))
     (productService.find _) expects 1L returning Some(product)
     (productService.deactivate _) expects 1L
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "").
-      withFormUrlEncodedBody("active" -> "false")
+    val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
   }

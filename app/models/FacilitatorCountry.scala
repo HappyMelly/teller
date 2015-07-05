@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -24,7 +24,7 @@
 
 package models
 
-import models.database.{ FacilitatorLanguages, FacilitatorCountries }
+import models.database.FacilitatorCountries
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -40,16 +40,18 @@ case class FacilitatorCountry(personId: Long, country: String) {
    * Insert a new country to DB
    * @return
    */
-  def insert: FacilitatorCountry = DB.withSession { implicit session: Session ⇒
-    FacilitatorCountries.forInsert.insert(this)
+  def insert: FacilitatorCountry = DB.withSession { implicit session ⇒
+    TableQuery[FacilitatorCountries] += this
     this
   }
 
   /**
    * Delete a country-facilitator connection
    */
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    FacilitatorCountries.filter(_.personId === personId).filter(_.country === country).mutate(_.delete())
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    TableQuery[FacilitatorCountries].
+      filter(_.personId === personId).
+      filter(_.country === country).delete
   }
 
 }
@@ -59,8 +61,9 @@ object FacilitatorCountry {
   /**
    * Finds all countries for a particular facilitator
    */
-  def findByFacilitator(personId: Long): List[FacilitatorCountry] = DB.withSession { implicit session: Session ⇒
-    Query(FacilitatorCountries).filter(_.personId === personId).list
+  def findByFacilitator(personId: Long): List[FacilitatorCountry] = DB.withSession {
+    implicit session ⇒
+      TableQuery[FacilitatorCountries].filter(_.personId === personId).list
   }
 
 }

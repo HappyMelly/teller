@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -40,15 +40,17 @@ case class FacilitatorLanguage(personId: Long, language: String) {
    * Insert a new language to DB
    * @return
    */
-  def insert: FacilitatorLanguage = DB.withSession { implicit session: Session ⇒
-    FacilitatorLanguages.forInsert.insert(this)
+  def insert: FacilitatorLanguage = DB.withSession { implicit session ⇒
+    TableQuery[FacilitatorLanguages] += this
     this
   }
 
   /**
    * Delete a language-facilitator connection
    */
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    FacilitatorLanguages.filter(_.personId === personId).filter(_.language === language).mutate(_.delete())
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    TableQuery[FacilitatorLanguages].
+      filter(_.personId === personId).
+      filter(_.language === language).delete
   }
 }

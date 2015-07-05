@@ -30,21 +30,22 @@ import play.api.libs.json._
 /**
  * `ProfileStrength` table mapping
  */
-private[models] object ProfileStrengths extends Table[ProfileStrength]("PROFILE_STRENGTH") {
+private[models] class ProfileStrengths(tag: Tag)
+    extends Table[ProfileStrength](tag, "PROFILE_STRENGTH") {
 
-  implicit val jsArrayMapper = MappedTypeMapper.base[JsArray, String](
-    { array ⇒ array.toString }, { str ⇒ Json.parse(str).as[JsArray] })
+  implicit val jsArrayMapper = MappedColumnType.base[JsArray, String](
+    { array ⇒ array.toString() }, { str ⇒ Json.parse(str).as[JsArray] })
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def objectId = column[Long]("OBJECT_ID")
   def org = column[Boolean]("ORG")
   def steps = column[JsArray]("STEPS")
 
-  def * = id.? ~ objectId ~ org ~
-    steps <> ({ p ⇒ ProfileStrength(p._1, p._2, p._3, p._4) },
-      { (p: ProfileStrength) ⇒ Some((p.id, p.objectId, p.org, p.stepsInJson)) })
+  type ProfileStrengthsFields = (Option[Long], Long, Boolean, JsArray)
 
-  def forInsert = * returning id
+  def * = (id.?, objectId, org, steps) <> (
+    (f: ProfileStrengthsFields) ⇒ ProfileStrength(f._1, f._2, f._3, f._4),
+    (p: ProfileStrength) ⇒ Some((p.id, p.objectId, p.org, p.stepsInJson)))
 
   def forUpdate = steps
 }

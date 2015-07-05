@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import PortableJodaSupport._
 import models._
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
@@ -32,7 +32,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Organisation` database table mapping.
  */
-private[models] object People extends Table[Person]("PERSON") {
+private[models] class People(tag: Tag) extends Table[Person](tag, "PERSON") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def firstName = column[String]("FIRST_NAME")
@@ -57,25 +57,23 @@ private[models] object People extends Table[Person]("PERSON") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def address = foreignKey("ADDRESS_FK", addressId, Addresses)(_.id)
+  def address = foreignKey("ADDRESS_FK", addressId, TableQuery[Addresses])(_.id)
 
-  // Note that this projection does not include the address and social profile, which must be joined in queries.
-  def * = id.? ~ firstName ~ lastName ~ birthday ~ photo ~ signature ~ addressId ~
-    bio ~ interests ~ webSite ~ blog ~ customerId ~ virtual ~ active ~
-    created ~ createdBy ~ updated ~ updatedBy <> (
-      { p ⇒
-        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, p._7, p._8, p._9, p._10,
-          p._11, p._12, p._13, p._14, DateStamp(p._15, p._16, p._17, p._18))
-      },
-      { (p: Person) ⇒
+  type PeopleFields = (Option[Long], String, String, Option[LocalDate], Option[String], Boolean, Long, Option[String], Option[String], Option[String], Option[String], Option[String], Boolean, Boolean, DateTime, String, DateTime, String)
+
+  def * = (id.?, firstName, lastName, birthday, photo, signature, addressId,
+    bio, interests, webSite, blog, customerId, virtual, active,
+    created, createdBy, updated, updatedBy) <> (
+      (p: PeopleFields) ⇒
+        Person(p._1, p._2, p._3, p._4, Photo.parse(p._5), p._6, p._7, p._8,
+          p._9, p._10, p._11, p._12, p._13, p._14,
+          DateStamp(p._15, p._16, p._17, p._18)),
+      (p: Person) ⇒
         Some((p.id, p.firstName, p.lastName, p.birthday, p.photo.url,
           p.signature, p.addressId, p.bio, p.interests, p.webSite, p.blog,
           p.customerId, p.virtual, p.active, p.dateStamp.created,
-          p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy))
-      })
+          p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy)))
 
-  def forInsert = * returning id
-
-  def forUpdate = firstName ~ lastName ~ birthday ~ photo ~ signature ~ bio ~ interests ~
-    webSite ~ blog ~ customerId ~ virtual ~ active ~ updated ~ updatedBy
+  def forUpdate = (firstName, lastName, birthday, photo, signature, bio, interests,
+    webSite, blog, customerId, virtual, active, updated, updatedBy)
 }

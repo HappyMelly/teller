@@ -32,6 +32,8 @@ import play.api.db.slick.DB
 
 class ExperimentService extends Services {
 
+  private val experiments = TableQuery[Experiments]
+
   /**
    * Deletes an experiment from database
    *
@@ -43,11 +45,8 @@ class ExperimentService extends Services {
    * @param id Experiment identifier
    */
   def delete(memberId: Long, id: Long): Unit = DB.withSession {
-    implicit session: Session ⇒
-      Query(Experiments).
-        filter(_.id === id).
-        filter(_.memberId === memberId).
-        mutate(_.delete())
+    implicit session ⇒
+      experiments.filter(_.id === id).filter(_.memberId === memberId).delete
   }
 
   /**
@@ -55,9 +54,8 @@ class ExperimentService extends Services {
    *
    * @param id Experiment id
    */
-  def find(id: Long): Option[Experiment] = DB.withSession {
-    implicit session ⇒
-      Query(Experiments).filter(_.id === id).firstOption
+  def find(id: Long): Option[Experiment] = DB.withSession { implicit session ⇒
+    experiments.filter(_.id === id).firstOption
   }
 
   /**
@@ -67,7 +65,7 @@ class ExperimentService extends Services {
    */
   def findByMember(memberId: Long): List[Experiment] = DB.withSession {
     implicit session ⇒
-      Query(Experiments).filter(_.memberId === memberId).list
+      experiments.filter(_.memberId === memberId).list
   }
 
   /**
@@ -77,7 +75,7 @@ class ExperimentService extends Services {
    */
   def insert(experiment: Experiment): Experiment = DB.withSession {
     implicit session ⇒
-      val id = Experiments.forInsert.insert(experiment)
+      val id = (experiments returning experiments.map(_.id)) += experiment
       experiment.copy(id = Some(id))
   }
 
@@ -86,11 +84,8 @@ class ExperimentService extends Services {
    *
    * @param experiment Experiment
    */
-  def update(experiment: Experiment): Unit = DB.withSession {
-    implicit session: Session ⇒
-      Query(Experiments).
-        filter(_.id === experiment.id.get).
-        update(experiment)
+  def update(experiment: Experiment): Unit = DB.withSession { implicit session ⇒
+    experiments.filter(_.id === experiment.id.get).update(experiment)
   }
 }
 

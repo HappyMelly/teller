@@ -29,9 +29,9 @@ import play.api.libs.functional.syntax._
 case class CompletionStep(name: String, weight: Int, done: Boolean = false)
 
 case class ProfileStrength(id: Option[Long],
-  objectId: Long,
-  org: Boolean = false,
-  steps: List[CompletionStep]) {
+    objectId: Long,
+    org: Boolean = false,
+    steps: List[CompletionStep]) {
 
   /**
    * Returns a profile strength progress in percents

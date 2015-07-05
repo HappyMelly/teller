@@ -1,6 +1,6 @@
-@(user: UserIdentity,
+@(user: ActiveUser,
         brands: List[Brand],
-        brandId: Long)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+        brandId: Long)(implicit request: Request[Any], request2flash: Flash, handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 

@@ -34,7 +34,7 @@ import services.integrations.Slack
 import stubs._
 import stubs.services.FakeSlack
 
-class TestMembers extends Members with FakeServices {
+class TestMembers extends Members(FakeRuntimeEnvironment) with FakeServices {
   val slackInstance = new FakeSlack
   var counter: Int = 0
 

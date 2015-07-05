@@ -30,7 +30,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EventInvoice` table mapping
  */
-private[models] object EventInvoices extends Table[EventInvoice]("EVENT_INVOICE") {
+private[models] class EventInvoices(tag: Tag) extends Table[EventInvoice](tag, "EVENT_INVOICE") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Option[Long]]("EVENT_ID")
@@ -38,12 +38,11 @@ private[models] object EventInvoices extends Table[EventInvoice]("EVENT_INVOICE"
   def invoiceBy = column[Option[Long]]("INVOICE_BY")
   def number = column[Option[String]]("NUMBER")
 
-  def event = foreignKey("EVENT_INVOICE_FK", eventId, Events)(_.id)
-  def invoicedOrg = foreignKey("INVOICE_TO_FK", invoiceTo, Organisations)(_.id)
+  def event = foreignKey("EVENT_INVOICE_FK", eventId, TableQuery[Events])(_.id)
+  def invoicedOrg = foreignKey("INVOICE_TO_FK", invoiceTo, TableQuery[Organisations])(_.id)
 
-  def * = id.? ~ eventId ~ invoiceTo ~ invoiceBy ~ number <> (EventInvoice.apply _, EventInvoice.unapply _)
+  def * = (id.?, eventId, invoiceTo, invoiceBy, number) <> (
+    (EventInvoice.apply _).tupled, EventInvoice.unapply)
 
-  def forInsert = * returning id
-
-  def forUpdate = invoiceTo ~ invoiceBy ~ number
+  def forUpdate = (invoiceTo, invoiceBy, number)
 }

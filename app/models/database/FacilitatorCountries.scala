@@ -30,11 +30,11 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `FacilitatorCountries` database table mapping.
  */
-private[models] object FacilitatorCountries extends Table[FacilitatorCountry]("FACILITATOR_COUNTRY") {
+private[models] class FacilitatorCountries(tag: Tag)
+    extends Table[FacilitatorCountry](tag, "FACILITATOR_COUNTRY") {
+
   def personId = column[Long]("PERSON_ID")
   def country = column[String]("COUNTRY")
 
-  def * = personId ~ country <> (FacilitatorCountry.apply _, FacilitatorCountry.unapply _)
-
-  def forInsert = *
+  def * = (personId, country) <> ((FacilitatorCountry.apply _).tupled, FacilitatorCountry.unapply)
 }

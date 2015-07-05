@@ -22,7 +22,7 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package controllers.acceptance
+package controllers.acceptance.members
 
 import controllers._
 import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
@@ -89,7 +89,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     be able to delete a membership from the existing member        $e27
   """
 
-  class TestMembers() extends Members
+  class TestMembers() extends Members(FakeRuntimeEnvironment)
     with FakeSecurity
     with FakeServices
     with FakeIntegrations
@@ -327,9 +327,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (service.find _).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
       controller.orgService_=(service)
-      val identity = FakeUserIdentity.editor
-      val request = prepareSecuredPostRequest(identity, "/member/existing/organisation").
-        withFormUrlEncodedBody(("id", "1"))
+      // val identity = FakeUserIdentity.editor
+      val request = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingOrg().apply(request)
 
       status(result) must equalTo(BAD_REQUEST)
@@ -399,7 +398,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (service.find(_: Long)).expects(*).returning(Some(person))
       (service.findNonMembers _).expects().returning(List())
       controller.personService_=(service)
-      val request = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
+      controller.identity_=(FakeUserIdentity.editor)
+      val request = fakePostRequest("/1").withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingPerson().apply(request)
 
       status(result) must equalTo(BAD_REQUEST)

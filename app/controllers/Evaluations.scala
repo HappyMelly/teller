@@ -34,13 +34,17 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
-trait Evaluations extends EvaluationsController
-  with Security
-  with Integrations
-  with Services
-  with Activities {
+class Evaluations(environment: RuntimeEnvironment[ActiveUser])
+    extends EvaluationsController
+    with Security
+    with Integrations
+    with Services
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
@@ -79,7 +83,7 @@ trait Evaluations extends EvaluationsController
         val account = user.account
         val events = findEvents(account)
         val en = translationService.find("EN").get
-        Ok(views.html.evaluation.form(user, None, evaluationForm(user.fullName), events, eventId, participantId, en))
+        Ok(views.html.evaluation.form(user, None, evaluationForm(user.name), events, eventId, participantId, en))
   }
 
   /**
@@ -89,7 +93,7 @@ trait Evaluations extends EvaluationsController
   def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val form: Form[Evaluation] = evaluationForm(user.fullName).bindFromRequest
+      val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
       form.fold(
         formWithErrors ⇒ {
           val account = user.account
@@ -144,7 +148,7 @@ trait Evaluations extends EvaluationsController
           val form = Form(single(
             "eventId" -> longNumber))
           val (eventId) = form.bindFromRequest
-          form.bindFromRequest.fold (
+          form.bindFromRequest.fold(
             f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
             eventId ⇒ {
               if (eventId == evaluation.eventId) {
@@ -206,7 +210,7 @@ trait Evaluations extends EvaluationsController
         val en = translationService.find("EN").get
 
         Ok(views.html.evaluation.form(user, Some(evaluation),
-          evaluationForm(user.fullName).fill(evaluation), events, None, None, en))
+          evaluationForm(user.name).fill(evaluation), events, None, None, en))
       }.getOrElse(NotFound)
 
   }
@@ -221,7 +225,7 @@ trait Evaluations extends EvaluationsController
     implicit handler ⇒ implicit user ⇒
 
       Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm(user.fullName, edit = true).bindFromRequest
+        val form: Form[Evaluation] = evaluationForm(user.name, edit = true).bindFromRequest
         form.fold(
           formWithErrors ⇒ {
             val account = user.account
@@ -393,5 +397,3 @@ trait Evaluations extends EvaluationsController
     }
   }
 }
-
-object Evaluations extends Evaluations

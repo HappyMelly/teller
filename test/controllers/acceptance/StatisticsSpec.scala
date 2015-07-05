@@ -33,7 +33,7 @@ import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
-import stubs.{ FakeServices, FakeUserIdentity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeUserIdentity, FakeSecurity }
 
 class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
@@ -50,7 +50,9 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
   After calculating number of events per country the system should
     request only confirmed and past events                                  $e5
   """
-  class TestStatistics extends Statistics with FakeServices
+  class TestStatistics extends Statistics(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
 
   val controller = new TestStatistics
   val licenseService = mock[LicenseService]
@@ -71,9 +73,8 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
     default.copy(start = LocalDate.parse("2013-05-11")))
 
   def e1 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     (licenseService.findByBrand _) expects 1L returning licenses
-    val res = controller.byFacilitators(1L).apply(req)
+    val res = controller.byFacilitators(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
     val dataset = (contentAsJson(res) \ "datasets").as[List[JsObject]]
     val data = (dataset.head \ "data").as[List[Int]]
@@ -83,38 +84,34 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     (licenseService.findByBrand _) expects 1L returning List()
-    val res = controller.byFacilitators(1L).apply(req)
+    val res = controller.byFacilitators(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
     val months = (contentAsJson(res) \ "labels").as[List[String]]
     months.length must_== 0
   }
 
   def e3 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     (eventService.findByParameters _)
       .expects(Some(1L), Some(false), None, None, Some(true), None, None)
       .returning(List(EventHelper.one))
-    val res = controller.byEvents(1L).apply(req)
+    val res = controller.byEvents(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
   }
 
   def e4 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     (eventService.findByParameters _)
       .expects(Some(1L), Some(false), None, None, Some(true), None, None)
       .returning(List())
-    val res = controller.byEvents(1L).apply(req)
+    val res = controller.byEvents(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
   }
 
   def e5 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
     (eventService.findByParameters _)
       .expects(Some(1L), Some(false), None, None, Some(true), None, None)
       .returning(List(EventHelper.one))
-    val res = controller.byEvents(1L).apply(req)
+    val res = controller.byEvents(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
   }
 }

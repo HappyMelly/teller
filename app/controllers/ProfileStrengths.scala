@@ -23,12 +23,18 @@
  */
 package controllers
 
-import models.{ ProfileStrength, Person }
+import models.{ ActiveUser, ProfileStrength, Person }
 import models.service.{ ProfileStrengthService, Services }
 import models.UserRole.Role._
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 
-trait ProfileStrengths extends Controller with Security with Services {
+class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Returns profile strength widget for a person
@@ -76,5 +82,3 @@ trait ProfileStrengths extends Controller with Security with Services {
     ProfileStrength.forPerson(strengthWithFacilitator, person)
   }
 }
-
-object ProfileStrengths extends ProfileStrengths

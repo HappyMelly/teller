@@ -22,17 +22,15 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package controllers.acceptance
+package controllers.acceptance.members
 
 import _root_.integration.PlayAppSpec
 import controllers._
 import helpers._
 import models.ProfileStrength
-import models.service.{ ProfileStrengthService, PersonService, MemberService }
+import models.service.{ MemberService, PersonService, ProfileStrengthService }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
-import play.api.test.FakeRequest
-
 import stubs._
 
 class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
@@ -46,7 +44,9 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
     then the system should update the reason                               $e2
     then the system should complete 'Reason' step                          $e3
   """
-  class TestMembers extends Members with FakeServices
+  class TestMembers extends Members(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
 
   val controller = new TestMembers
   val personService = mock[PersonService]
@@ -60,8 +60,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     (personService.member _) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/")
-    val res = controller.updateReason(1L).apply(req)
+    val res = controller.updateReason(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
   }
 
@@ -69,8 +68,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.member _) expects 1L returning Some(member)
     (memberService.update _) expects member.copy(reason = Some(reason))
     (profileStrengthService.find _) expects (1L, false) returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-      withFormUrlEncodedBody("reason" -> reason)
+    val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)
     status(res) must equalTo(OK)
     val data = contentAsJson(res).as[JsObject]
@@ -83,8 +81,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
     (memberService.update _) expects member.copy(reason = Some(reason))
     (profileStrengthService.find _) expects (1L, false) returning Some(strength)
     (profileStrengthService.update _) expects strength.markComplete("reason")
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-      withFormUrlEncodedBody("reason" -> reason)
+    val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)
     status(res) must equalTo(OK)
   }

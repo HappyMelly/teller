@@ -37,16 +37,17 @@ class ContributionService {
    * @param contributorId Contributor identifier
    * @param isPerson If true this contributor is a person, otherwise - company
    */
-  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession { implicit session: Session ⇒
+  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        contribution ← TableQuery[Contributions] if contribution.contributorId === contributorId &&
+          contribution.isPerson === isPerson
+        product ← contribution.product
+      } yield (contribution, product)
 
-    val query = for {
-      contribution ← Contributions if contribution.contributorId === contributorId && contribution.isPerson === isPerson
-      product ← contribution.product
-    } yield (contribution, product)
-
-    query.sortBy(_._2.title.toLowerCase).list.map {
-      case (contribution, product) ⇒ ContributionView(product, contribution)
-    }
+      query.sortBy(_._2.title.toLowerCase).list.map {
+        case (contribution, product) ⇒ ContributionView(product, contribution)
+      }
   }
 }
 

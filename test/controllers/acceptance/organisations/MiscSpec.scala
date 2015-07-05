@@ -30,7 +30,7 @@ import helpers.OrganisationHelper
 import models.service.OrganisationService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.{ JsArray, Json }
-import stubs.{ FakeServices, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSecurity }
 
 class MiscSpec extends PlayAppSpec with IsolatedMockFactory {
 
@@ -45,7 +45,7 @@ class MiscSpec extends PlayAppSpec with IsolatedMockFactory {
       then well-formed json should be returned                               $e2
   """
 
-  class TestOrganisations extends Organisations
+  class TestOrganisations extends Organisations(FakeRuntimeEnvironment)
     with FakeServices with FakeSecurity
 
   val controller = new TestOrganisations

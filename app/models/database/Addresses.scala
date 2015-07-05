@@ -30,7 +30,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Address` table mapping
  */
-private[models] object Addresses extends Table[Address]("ADDRESS") {
+private[models] class Addresses(tag: Tag) extends Table[Address](tag, "ADDRESS") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def street1 = column[Option[String]]("STREET_1")
@@ -40,7 +40,7 @@ private[models] object Addresses extends Table[Address]("ADDRESS") {
   def postCode = column[Option[String]]("POST_CODE")
   def countryCode = column[String]("COUNTRY_CODE")
 
-  def * = id.? ~ street1 ~ street2 ~ city ~ province ~ postCode ~ countryCode <> (Address.apply _, Address.unapply _)
+  def * = (id.?, street1, street2, city, province, postCode,
+    countryCode) <> ((Address.apply _).tupled, Address.unapply)
 
-  def forInsert = * returning id
 }

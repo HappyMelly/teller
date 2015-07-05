@@ -34,11 +34,11 @@ import play.api.db.slick.DB
  * A thing such as a book, a game or a piece of software
  */
 case class CertificateTemplate(
-  id: Option[Long],
-  brandId: Long,
-  language: String,
-  oneFacilitator: Array[Byte],
-  twoFacilitators: Array[Byte]) extends ActivityRecorder {
+    id: Option[Long],
+    brandId: Long,
+    language: String,
+    oneFacilitator: Array[Byte],
+    twoFacilitators: Array[Byte]) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -57,13 +57,14 @@ case class CertificateTemplate(
    */
   def objectType: String = Activity.Type.CertificateTemplate
 
-  def insert: CertificateTemplate = DB.withSession { implicit session: Session ⇒
-    val id = CertificateTemplates.forInsert.insert(this)
+  def insert: CertificateTemplate = DB.withSession { implicit session ⇒
+    val templates = TableQuery[CertificateTemplates]
+    val id = (templates returning templates.map(_.id)) += this
     this.copy(id = Some(id))
   }
 
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    CertificateTemplates.where(_.id === this.id).mutate(_.delete())
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    TableQuery[CertificateTemplates].filter(_.id === this.id).delete
   }
 }
 
@@ -75,8 +76,8 @@ object CertificateTemplate {
    * @param id Unique identifier
    * @return
    */
-  def find(id: Long): Option[CertificateTemplate] = DB.withSession { implicit session: Session ⇒
-    Query(CertificateTemplates).filter(_.id === id).firstOption
+  def find(id: Long): Option[CertificateTemplate] = DB.withSession { implicit session ⇒
+    TableQuery[CertificateTemplates].filter(_.id === id).firstOption
   }
 
 }

@@ -29,12 +29,13 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EventFacilitator` database table mapping.
  */
-private[models] object EventFacilitators extends Table[(Long, Long)]("EVENT_FACILITATOR") {
+private[models] class EventFacilitators(tag: Tag)
+    extends Table[(Long, Long)](tag, "EVENT_FACILITATOR") {
   def eventId = column[Long]("EVENT_ID")
   def facilitatorId = column[Long]("FACILITATOR_ID")
 
-  def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
-  def facilitator = foreignKey("FACILITATOR_FK", facilitatorId, People)(_.id)
+  def event = foreignKey("EVENT_FK", eventId, TableQuery[Events])(_.id)
+  def facilitator = foreignKey("FACILITATOR_FK", facilitatorId, TableQuery[People])(_.id)
 
-  def * = eventId ~ facilitatorId
+  def * = (eventId, facilitatorId)
 }

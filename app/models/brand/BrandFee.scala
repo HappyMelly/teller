@@ -35,9 +35,9 @@ import org.joda.money.Money
  * @param fee Fee
  */
 case class BrandFee(id: Option[Long],
-  brand: Long,
-  country: String,
-  fee: Money) extends Services {
+    brand: Long,
+    country: String,
+    fee: Money) extends Services {
 
   /**
    * Inserts current fee into database and returns the updated fee with ID

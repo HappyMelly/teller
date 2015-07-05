@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.ActiveUser
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
@@ -32,11 +33,15 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
+import securesocial.core.RuntimeEnvironment
 
-trait EventTypes extends JsonController
-  with Security
-  with Services
-  with Activities {
+class EventTypes(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
@@ -56,16 +61,6 @@ trait EventTypes extends JsonController
         "free" -> data.free,
         "id" -> data.id.get)
     }
-  }
-
-  /**
-   * Returns a list of event types for the given brand in JSON format
-   *
-   * @param brandId Brand id
-   */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
   }
 
   /**
@@ -109,25 +104,6 @@ trait EventTypes extends JsonController
   }
 
   /**
-   * Updates the given event type
-   *
-   * @param id Event type identifier
-   */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      eventTypeForm.bindFromRequest.fold(
-        hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
-        updated ⇒ brandService.find(updated.brandId) map { brand ⇒
-          validateUpdatedEventType(id, updated) map { x ⇒
-            jsonRequest(x._1, Messages(x._2))
-          } getOrElse {
-            eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
-            jsonSuccess("success")
-          }
-        } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
-  }
-
-  /**
    * Deletes an event type
    *
    * @param id Type identifier
@@ -149,6 +125,35 @@ trait EventTypes extends JsonController
           Redirect(route).flashing("success" -> log.toString)
         }
       }.getOrElse(NotFound)
+  }
+
+  /**
+   * Returns a list of event types for the given brand in JSON format
+   *
+   * @param brandId Brand id
+   */
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
+  }
+
+  /**
+   * Updates the given event type
+   *
+   * @param id Event type identifier
+   */
+  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      eventTypeForm.bindFromRequest.fold(
+        hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
+        updated ⇒ brandService.find(updated.brandId) map { brand ⇒
+          validateUpdatedEventType(id, updated) map { x ⇒
+            jsonRequest(x._1, Messages(x._2))
+          } getOrElse {
+            eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
+            jsonSuccess("success")
+          }
+        } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
   }
 
   /**
@@ -189,5 +194,3 @@ trait EventTypes extends JsonController
       None
   }
 }
-
-object EventTypes extends EventTypes

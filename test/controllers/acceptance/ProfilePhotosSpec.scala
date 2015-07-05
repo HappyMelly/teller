@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ ProfilePhotos, Security }
+import controllers.ProfilePhotos
 import helpers._
 import models.{ SocialProfile, Photo }
 import models.service.PersonService
@@ -48,7 +48,8 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
     should update a person profile                                      $e5
   """
 
-  class TestProfilePhotos() extends ProfilePhotos with Security with FakeServices
+  class TestProfilePhotos() extends ProfilePhotos(FakeRuntimeEnvironment)
+    with FakeSecurity with FakeServices
 
   val controller = new TestProfilePhotos()
   val personService = mock[PersonService]
@@ -63,15 +64,13 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = new DefaultPerson {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.choose(1L).apply(req)
+    val result = controller.choose(1L).apply(fakeGetRequest())
     contentAsString(result) must contain("https://secure.gravatar.com")
     contentAsString(result) must contain("happymelly-face-white.png")
   }
 
   def e4 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo")
-    val result = controller.update(1L).apply(req)
+    val result = controller.update(1L).apply(fakePostRequest())
     status(result) must equalTo(BAD_REQUEST)
     contentAsString(result) must contain("No option is provided")
   }
@@ -83,13 +82,8 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
     status(result) must equalTo(OK)
   }
 
-  private def gravatarRequest =
-    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
-
-  private def noPhotoRequest =
-    prepareSecuredPostRequest(FakeUserIdentity.editor, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "nophoto"), ("name" -> ""))
+  private def gravatarRequest = fakePostRequest().
+    withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
 
   private def personWithGravatar = {
     val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))

@@ -43,9 +43,8 @@ case class PaymentData(token: String,
  * Defines an interface for enrollment classes
  */
 trait Enrollment extends Controller
-  with Security
-  with Services
-  with Integrations {
+    with Services
+    with Integrations {
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,

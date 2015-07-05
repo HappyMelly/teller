@@ -25,7 +25,8 @@
 package controllers.apiv2
 
 import models.service.Services
-import models.{ Product, ProductsCollection, ProductView }
+import models.{ Product, ProductView }
+import models.service.ProductsCollection
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller

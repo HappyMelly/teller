@@ -1,4 +1,4 @@
-@(user: UserIdentity,
+@(user: ActiveUser,
     member: Option[Member],
     form: Form[Member])(implicit flash: Flash,
         request: Request[Any],
@@ -28,7 +28,7 @@
       @html.form(action = CSRF(if(edit) { routes.Members.update(member.get.id.get) } else { routes.Members.create() } )) {
         <input type="hidden" value="@form("objectId").value.getOrElse(0)"
           id="objectId" name="objectId"/>
-        <input type="hidden" value="@form("person").value.getOrElse(0)"
+        <input type="hidden" value="@form("person").value.getOrElse(1)"
           id="person" name="person"/>
         <input type="hidden" value="@form("existingObject").value.getOrElse(0)"
           id="existingObject" name="existingObject"/>

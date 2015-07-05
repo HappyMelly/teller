@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -29,14 +29,15 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Database table mapping for the association between Product and Brand
  */
-private[models] object ProductBrandAssociations extends Table[(Option[Long], Long, Long)]("PRODUCT_BRAND_ASSOCIATION") {
+private[models] class ProductBrandAssociations(tag: Tag)
+    extends Table[(Option[Long], Long, Long)](tag, "PRODUCT_BRAND_ASSOCIATION") {
+
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def productId = column[Long]("PRODUCT_ID")
   def brandId = column[Long]("BRAND_ID")
 
-  def product = foreignKey("PRODUCT_BRAND_FK", productId, Products)(_.id)
-  def brand = foreignKey("PRODUCT_BRAND_FK", brandId, Brands)(_.id)
+  def product = foreignKey("PRODUCT_BRAND_FK", productId, TableQuery[Products])(_.id)
+  def brand = foreignKey("PRODUCT_BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  def * = id.? ~ productId ~ brandId
-  def forInsert = productId ~ brandId returning id
+  def * = (id.?, productId, brandId)
 }

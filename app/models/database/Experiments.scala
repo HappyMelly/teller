@@ -29,7 +29,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Experiment` database table mapping.
  */
-private[models] object Experiments extends Table[Experiment]("EXPERIMENT") {
+private[models] class Experiments(tag: Tag) extends Table[Experiment](tag, "EXPERIMENT") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def memberId = column[Long]("MEMBER_ID")
   def name = column[String]("NAME")
@@ -37,9 +37,8 @@ private[models] object Experiments extends Table[Experiment]("EXPERIMENT") {
   def description = column[String]("DESCRIPTION")
   def url = column[Option[String]]("URL")
 
-  def * = id.? ~ memberId ~ name ~ description ~ picture ~
-    url <> (Experiment.apply _, Experiment.unapply _)
+  def * = (id.?, memberId, name, description, picture,
+    url) <> ((Experiment.apply _).tupled, Experiment.unapply)
 
-  def forInsert = * returning id
-  def forUpdate = name ~ description ~ picture ~ url
+  def forUpdate = (name, description, picture, url)
 }

@@ -30,9 +30,9 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
-import scala.slick.lifted.Query
-
 class OrganisationService extends Services {
+
+  private val orgs = TableQuery[Organisations]
 
   /**
    * Activates the organisation, if the parameter is true, or deactivates it
@@ -41,11 +41,8 @@ class OrganisationService extends Services {
    * @param active Activate/deactivate flag
    */
   def activate(id: Long, active: Boolean): Unit = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        organisation ← Organisations if organisation.id === id
-      } yield organisation.active
-      query.update(active)
+    implicit session ⇒
+      orgs.filter(_.id === id).map(_.active).update(active)
   }
 
   /**
@@ -53,45 +50,40 @@ class OrganisationService extends Services {
    *
    * @param id Organisation identifier
    */
-  def delete(id: Long): Unit = DB.withTransaction { implicit session: Session ⇒
+  def delete(id: Long): Unit = DB.withTransaction { implicit session ⇒
     find(id) foreach { org ⇒
       org.account.delete()
       memberService.delete(id, person = false)
       socialProfileService.delete(id, ProfileType.Organisation)
     }
-    Organisations.where(_.id === id).mutate(_.delete())
+    orgs.filter(_.id === id).delete
   }
 
   /** Returns list of active organisations */
-  def findActive: List[Organisation] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Organisations).
-        filter(_.active === true).
-        sortBy(_.name.toLowerCase).
-        list
+  def findActive: List[Organisation] = DB.withSession { implicit session ⇒
+    orgs.filter(_.active === true).sortBy(_.name.toLowerCase).list
   }
 
   /** Returns list of all organisation in the system */
-  def findAll: List[Organisation] = DB.withSession { implicit session: Session ⇒
-    Query(Organisations).sortBy(_.name.toLowerCase).list
+  def findAll: List[Organisation] = DB.withSession { implicit session ⇒
+    orgs.sortBy(_.name.toLowerCase).list
   }
 
   /** Returns list of organisations which are not members (yet!) */
   def findNonMembers: List[Organisation] = DB.withSession { implicit session ⇒
     import scala.language.postfixOps
 
-    val members = for { m ← Members if m.person === false } yield m.objectId
+    val members = for { m ← TableQuery[Members] if m.person === false } yield m.objectId
     val ids = members.list
-    Query(Organisations).filter(row ⇒ !(row.id inSet ids)).sortBy(_.name).list
+    orgs.filter(row ⇒ !(row.id inSet ids)).sortBy(_.name).list
   }
 
   /**
    * Returns organisation if exists, otherwise None
    * @param id Organisation id
    */
-  def find(id: Long): Option[Organisation] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Organisations).filter(_.id === id).firstOption
+  def find(id: Long): Option[Organisation] = DB.withSession { implicit session ⇒
+    orgs.filter(_.id === id).firstOption
   }
 
   /**
@@ -100,12 +92,13 @@ class OrganisationService extends Services {
    * @param id Organisation id
    */
   def findWithProfile(id: Long): Option[OrgView] = DB.withSession {
-    implicit session: Session ⇒
-      import models.database.SocialProfiles._
+    implicit session ⇒
+      import models.database.SocialProfilesStatic._
 
       val query = for {
-        org ← Organisations if org.id === id
-        profile ← SocialProfiles if profile.objectId === id && profile.objectType === ProfileType.Organisation
+        org ← orgs if org.id === id
+        profile ← TableQuery[SocialProfiles] if profile.objectId === id &&
+          profile.objectType === ProfileType.Organisation
       } yield (org, profile)
       query.firstOption map { x ⇒ OrgView(x._1, x._2) }
   }
@@ -116,12 +109,11 @@ class OrganisationService extends Services {
    * @param view Organisation with its social profile
    * @return The Organisation as it is saved (with the id added) and social profile
    */
-  def insert(view: OrgView): OrgView = DB.withTransaction {
-    implicit session: Session ⇒
-      val organisationId = Organisations.forInsert.insert(view.org)
-      Accounts.insert(Account(organisationId = Some(organisationId)))
-      socialProfileService.insert(view.profile.copy(objectId = organisationId))
-      OrgView(view.org.copy(id = Some(organisationId)), view.profile)
+  def insert(view: OrgView): OrgView = DB.withTransaction { implicit session ⇒
+    val organisationId = (orgs returning orgs.map(_.id)) += view.org
+    TableQuery[Accounts] += Account(organisationId = Some(organisationId))
+    socialProfileService.insert(view.profile.copy(objectId = organisationId))
+    OrgView(view.org.copy(id = Some(organisationId)), view.profile)
   }
 
   /**
@@ -129,7 +121,7 @@ class OrganisationService extends Services {
    * @param id Organisation id
    */
   def member(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    Query(Members).
+    TableQuery[Members].
       filter(_.objectId === id).
       filter(_.person === false).firstOption
   }
@@ -140,9 +132,7 @@ class OrganisationService extends Services {
    * @param view Organisation with social profile
    * @return the given organisation with social profile
    */
-  def update(view: OrgView): OrgView = DB.withTransaction { implicit session: Session ⇒
-    import models.database.SocialProfiles._
-
+  def update(view: OrgView): OrgView = DB.withTransaction { implicit session ⇒
     assert(view.org.id.isDefined, "Can only update Organisations that have an id")
     socialProfileService.update(view.profile, view.profile.objectType)
 
@@ -154,9 +144,9 @@ class OrganisationService extends Services {
    *
    * @param id OrganisationId
    */
-  def people(id: Long): List[Person] = DB.withSession { implicit session: Session ⇒
+  def people(id: Long): List[Person] = DB.withSession { implicit session ⇒
     val query = for {
-      relation ← OrganisationMemberships if relation.organisationId === id
+      relation ← TableQuery[OrganisationMemberships] if relation.organisationId === id
       person ← relation.person
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
@@ -167,13 +157,12 @@ class OrganisationService extends Services {
    *
    * @param needle Search string
    */
-  def search(needle: String): List[Organisation] = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        org ← Organisations if org.name.toLowerCase like "%" + needle.toLowerCase + "%"
-      } yield org
+  def search(needle: String): List[Organisation] = DB.withSession { implicit session ⇒
+    val query = for {
+      org ← orgs if org.name.toLowerCase like "%" + needle.toLowerCase + "%"
+    } yield org
 
-      query.list
+    query.list
   }
 
   /**
@@ -183,10 +172,10 @@ class OrganisationService extends Services {
    * @return the given organisation
    */
   def update(org: Organisation): Organisation = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
 
       assert(org.id.isDefined, "Can only update Organisations that have an id")
-      val query = Query(Organisations).filter(_.id === org.id).map(_.forUpdate)
+      val query = orgs.filter(_.id === org.id).map(_.forUpdate)
 
       // Skip the created, createdBy and active fields.
       val updateTuple = (org.id, org.name, org.street1,
@@ -205,11 +194,8 @@ class OrganisationService extends Services {
    * @param logo Activate/deactivate flag
    */
   def updateLogo(id: Long, logo: Boolean): Unit = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        organisation ← Organisations if organisation.id === id
-      } yield organisation.logo
-      query.update(logo)
+    implicit session ⇒
+      orgs.filter(_.id === id).map(_.logo).update(logo)
   }
 
 }

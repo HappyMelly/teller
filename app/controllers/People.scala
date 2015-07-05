@@ -36,89 +36,22 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.data.{ Form, FormError }
 import play.api.i18n.Messages
+import securesocial.core.RuntimeEnvironment
 import scala.language.postfixOps
 import scala.collection.mutable
 import services.integrations.Integrations
 
-trait People extends JsonController
-  with Security
-  with Services
-  with Integrations
-  with Files
-  with Activities {
+class People(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Integrations
+    with Files
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val contentType = "image/jpeg"
-
-  /**
-   * HTML form mapping for a person’s address.
-   */
-  val addressMapping = mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "street1" -> optional(text),
-    "street2" -> optional(text),
-    "city" -> optional(text),
-    "province" -> optional(text),
-    "postCode" -> optional(text),
-    "country" -> nonEmptyText)(Address.apply)(Address.unapply)
-
-  /**
-   * HTML form mapping for a person’s social profile.
-   */
-  val socialProfileMapping = mapping(
-    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
-    "facebookUrl" -> optional(facebookProfileUrl),
-    "linkedInUrl" -> optional(linkedInProfileUrl),
-    "googlePlusUrl" -> optional(googlePlusProfileUrl)) ({
-      (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-        SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl,
-          linkedInUrl, googlePlusUrl)
-    })({
-      (s: SocialProfile) ⇒
-        Some(s.twitterHandle, s.facebookUrl,
-          s.linkedInUrl, s.googlePlusUrl)
-    })
-
-  /**
-   * HTML form mapping for creating and editing.
-   */
-  def personForm(editorName: String) = {
-    Form(mapping(
-      "id" -> ignored(Option.empty[Long]),
-      "firstName" -> nonEmptyText,
-      "lastName" -> nonEmptyText,
-      "emailAddress" -> play.api.data.Forms.email,
-      "birthday" -> optional(jodaLocalDate),
-      "signature" -> boolean,
-      "address" -> addressMapping,
-      "bio" -> optional(text),
-      "interests" -> optional(text),
-      "profile" -> socialProfileMapping,
-      "webSite" -> optional(webUrl),
-      "blog" -> optional(webUrl),
-      "active" -> ignored(true),
-      "dateStamp" -> mapping(
-        "created" -> ignored(DateTime.now()),
-        "createdBy" -> ignored(editorName),
-        "updated" -> ignored(DateTime.now()),
-        "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply)) (
-        { (id, firstName, lastName, emailAddress, birthday, signature,
-          address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
-          {
-            val person = Person(id, firstName, lastName, birthday, Photo.empty,
-              signature, address.id.getOrElse(0), bio, interests,
-              webSite, blog, customerId = None, virtual = false, active, dateStamp)
-            person.socialProfile_=(profile.copy(email = emailAddress))
-            person.address_=(address)
-            person
-          }
-        })(
-          { (p: Person) ⇒
-            Some(
-              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
-                p.signature, p.address, p.bio, p.interests,
-                p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
-          }))
-  }
 
   /**
    * Form target for toggling whether a person is active
@@ -150,7 +83,7 @@ trait People extends JsonController
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.person.form(user, None, personForm(user.fullName)))
+      Ok(views.html.person.form(user, None, People.personForm(user.name)))
   }
 
   /**
@@ -190,7 +123,7 @@ trait People extends JsonController
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      personForm(user.fullName).bindFromRequest.fold(
+      People.personForm(user.name).bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.person.form(user, None, formWithErrors)),
         person ⇒ {
@@ -284,7 +217,7 @@ trait People extends JsonController
 
       personService.find(id).map { person ⇒
         Ok(views.html.person.form(user, Some(id),
-          personForm(user.fullName).fill(person)))
+          People.personForm(user.name).fill(person)))
       }.getOrElse(NotFound)
   }
 
@@ -297,11 +230,11 @@ trait People extends JsonController
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { oldPerson ⇒
-          personForm(user.fullName).bindFromRequest.fold(
+          People.personForm(user.name).bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
             person ⇒ {
-              checkDuplication(person, id, user.fullName) map { form ⇒
+              checkDuplication(person, id, user.name) map { form ⇒
                 BadRequest(views.html.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
@@ -408,7 +341,7 @@ trait People extends JsonController
   protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
     val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
     socialProfileService.findDuplicate(base) map { duplicate ⇒
-      var form = personForm(editorName).fill(person)
+      var form = People.personForm(editorName).fill(person)
       compareSocialProfiles(duplicate, base).
         foreach(err ⇒ form = form.withError(err))
       Some(form)
@@ -488,7 +421,78 @@ trait People extends JsonController
       case "blog" ⇒ "read his/her blog <%s|here>".format(value)
       case _ ⇒ ""
     }
-
 }
 
-object People extends People with Security
+object People {
+
+  /**
+   * HTML form mapping for a person’s address.
+   */
+  val addressMapping = mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "street1" -> optional(text),
+    "street2" -> optional(text),
+    "city" -> optional(text),
+    "province" -> optional(text),
+    "postCode" -> optional(text),
+    "country" -> nonEmptyText)(Address.apply)(Address.unapply)
+
+  /**
+   * HTML form mapping for a person’s social profile.
+   */
+  val socialProfileMapping = mapping(
+    "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
+    "facebookUrl" -> optional(facebookProfileUrl),
+    "linkedInUrl" -> optional(linkedInProfileUrl),
+    "googlePlusUrl" -> optional(googlePlusProfileUrl))({
+      (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+        SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl,
+          linkedInUrl, googlePlusUrl)
+    })({
+      (s: SocialProfile) ⇒
+        Some(s.twitterHandle, s.facebookUrl,
+          s.linkedInUrl, s.googlePlusUrl)
+    })
+
+  /**
+   * HTML form mapping for creating and editing.
+   */
+  def personForm(editorName: String) = {
+    Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "emailAddress" -> play.api.data.Forms.email,
+      "birthday" -> optional(jodaLocalDate),
+      "signature" -> boolean,
+      "address" -> addressMapping,
+      "bio" -> optional(text),
+      "interests" -> optional(text),
+      "profile" -> socialProfileMapping,
+      "webSite" -> optional(webUrl),
+      "blog" -> optional(webUrl),
+      "active" -> ignored(true),
+      "dateStamp" -> mapping(
+        "created" -> ignored(DateTime.now()),
+        "createdBy" -> ignored(editorName),
+        "updated" -> ignored(DateTime.now()),
+        "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))(
+        { (id, firstName, lastName, emailAddress, birthday, signature,
+          address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
+          {
+            val person = Person(id, firstName, lastName, birthday, Photo.empty,
+              signature, address.id.getOrElse(0), bio, interests,
+              webSite, blog, customerId = None, virtual = false, active, dateStamp)
+            person.socialProfile_=(profile.copy(email = emailAddress))
+            person.address_=(address)
+            person
+          }
+        })(
+          { (p: Person) ⇒
+            Some(
+              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
+                p.signature, p.address, p.bio, p.interests,
+                p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
+          }))
+  }
+}

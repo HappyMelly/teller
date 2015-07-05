@@ -31,22 +31,19 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Connects EventFee object with its database representation
  */
-private[models] object BrandFees extends Table[BrandFee]("BRAND_FEE") {
+private[models] class BrandFees(tag: Tag) extends Table[BrandFee](tag, "BRAND_FEE") {
+
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
   def country = column[String]("COUNTRY", O.DBType("CHAR(2)"))
   def feeCurrency = column[String]("FEE_CURRENCY", O.DBType("CHAR(3)"))
   def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
 
-  def * = id.? ~ brandId ~ country ~ feeCurrency ~ feeAmount <> ({
-    _ match {
-      case (id, brand, country, feeCurrency, feeAmount) ⇒
-        BrandFee(id, brand, country, feeCurrency -> feeAmount)
-    }
-  }, { (f: BrandFee) ⇒
-    Some(f.id, f.brand, f.country, f.fee.getCurrencyUnit.getCode, f.fee.getAmount)
-  })
+  type BrandFeesFields = (Option[Long], Long, String, String, BigDecimal)
 
-  def forInsert = * returning id
+  def * = (id.?, brandId, country, feeCurrency, feeAmount) <> (
+    (f: BrandFeesFields) ⇒ BrandFee(f._1, f._2, f._3, f._4 -> f._5),
+    (f: BrandFee) ⇒ Some(f.id, f.brand, f.country,
+      f.fee.getCurrencyUnit.getCode, BigDecimal(f.fee.getAmount)))
 
 }

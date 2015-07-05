@@ -24,99 +24,37 @@
 
 package models
 
-import models.database.{ People, UserAccounts, UserIdentities }
-import models.service.UserIdentityService
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.libs.Crypto
+import models.service.{ PersonService, UserAccountService, UserIdentityService }
 import play.api.Play.current
 import play.api.cache.Cache
-import scala.slick.lifted.Query
-import scala.util.Random
-import securesocial.core._
-import scala.Predef._
-import securesocial.core.OAuth2Info
-import securesocial.core.OAuth1Info
-import securesocial.core.IdentityId
-import securesocial.core.PasswordInfo
+import play.api.libs.Crypto
 import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
+import securesocial.core.{ OAuth1Info, OAuth2Info, PasswordInfo, _ }
+
+import scala.Predef._
+import scala.util.Random
+
+case class ActiveUser(identity: UserIdentity,
+    account: UserAccount,
+    person: Person) {
+
+  val name: String = person.fullName
+}
 
 /**
  * Contains profile and authentication info for a SecureSocial Identity
  */
 case class UserIdentity(uid: Option[Long],
-  identityId: IdentityId,
-  firstName: String,
-  lastName: String,
-  fullName: String,
-  email: Option[String],
-  avatarUrl: Option[String],
-  authMethod: AuthenticationMethod,
-  oAuth1Info: Option[OAuth1Info],
-  oAuth2Info: Option[OAuth2Info],
-  passwordInfo: Option[PasswordInfo] = None,
-  apiToken: String,
-  twitterHandle: Option[String],
-  facebookUrl: Option[String],
-  googlePlusUrl: Option[String],
-  linkedInUrl: Option[String]) extends Identity {
+    profile: BasicProfile,
+    apiToken: String,
+    twitterHandle: Option[String],
+    facebookUrl: Option[String],
+    googlePlusUrl: Option[String],
+    linkedInUrl: Option[String]) {
 
-  private var _account: Option[UserAccount] = None
-  private var _person: Option[Person] = None
-
-  /**
-   * Returns the database query that will fetch this identity’s `UserAccount`, for the appropriate provider.
-   */
-  private def accountQuery: Query[UserAccounts.type, UserAccount] = identityId.providerId match {
-    case TwitterProvider.Twitter ⇒ {
-      Query(UserAccounts).filter(_.twitterHandle === twitterHandle)
-    }
-    case FacebookProvider.Facebook ⇒ {
-      Query(UserAccounts).filter(_.facebookUrl like "https?".r.replaceFirstIn(facebookUrl.getOrElse(""), "%"))
-    }
-    case GoogleProvider.Google ⇒ {
-      Query(UserAccounts).filter(_.googlePlusUrl === googlePlusUrl)
-    }
-    case LinkedInProvider.LinkedIn ⇒ {
-      Query(UserAccounts).filter(_.linkedInUrl like "https?".r.replaceFirstIn(linkedInUrl.getOrElse(""), "%"))
-    }
+  def name: String = profile.fullName getOrElse {
+    profile.firstName.getOrElse("") + " " + profile.lastName.getOrElse("")
   }
-
-  def name = identityId.providerId match {
-    case TwitterProvider.Twitter ⇒ twitterHandle
-    case FacebookProvider.Facebook ⇒ facebookUrl
-    case GoogleProvider.Google ⇒ googlePlusUrl
-    case LinkedInProvider.LinkedIn ⇒ linkedInUrl
-  }
-
-  /**
-   * Returns the `Person` associated with this identity.
-   */
-  def person: Person = _person.get
-
-  def person_=(person: Person) = _person = Some(person)
-
-  /**
-   * Returns user account associated with this identity
-   */
-  def account: UserAccount = _account map { v ⇒ v } getOrElse {
-    //@deprecated
-    //@todo this part should be removed as soon as Teller API is refactored
-    val account = DB.withSession { implicit session: Session ⇒
-      accountQuery.first
-    }
-    val roles = UserRole.forName(account.role)
-    account.roles_=(roles.list)
-    _account = Some(account)
-    _account.get
-  }
-
-  /**
-   * Sets account attribute
-   * @param account Account object
-   */
-  def account_=(account: Option[UserAccount]) = _account = account
-
 }
 
 object UserIdentity {
@@ -124,62 +62,38 @@ object UserIdentity {
   /**
    * Factory method to return a Twitter login identity.
    */
-  def forTwitterHandle(i: Identity, twitterHandle: String): UserIdentity = UserIdentity(None, i.identityId,
-    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), Some(twitterHandle), None, None, None)
+  def forTwitterHandle(i: GenericProfile, twitterHandle: String): UserIdentity = UserIdentity(None,
+    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
+      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
+    generateApiToken(i.userId), Some(twitterHandle), None, None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forFacebookUrl(i: Identity, facebookUrl: String): UserIdentity = UserIdentity(None, i.identityId,
-    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, Some(facebookUrl), None, None)
+  def forFacebookUrl(i: GenericProfile, facebookUrl: String): UserIdentity = UserIdentity(None,
+    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
+      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
+    generateApiToken(i.userId), None, Some(facebookUrl), None, None)
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forGooglePlusUrl(i: Identity, googlePlusUrl: String): UserIdentity = UserIdentity(None, i.identityId,
-    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, None, Some(googlePlusUrl), None)
+  def forGooglePlusUrl(i: GenericProfile, googlePlusUrl: String): UserIdentity = UserIdentity(None,
+    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
+      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
+    generateApiToken(i.userId), None, None, Some(googlePlusUrl), None)
 
   /**
    * Factory method to return a LinkedIn login identity.
    */
-  def forLinkedInUrl(i: Identity, linkedInUrl: String): UserIdentity = UserIdentity(None, i.identityId,
-    i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl, i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo,
-    generateApiToken(i), None, None, None, Some(linkedInUrl))
+  def forLinkedInUrl(i: GenericProfile, linkedInUrl: String): UserIdentity = UserIdentity(None,
+    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
+      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
+    generateApiToken(i.userId), None, None, None, Some(linkedInUrl))
 
-  private def generateApiToken(i: Identity) = {
-    Crypto.sign("%s-%s".format(i.identityId.userId, Random.nextInt()))
+  private def generateApiToken(userId: String) = {
+    Crypto.sign("%s-%s".format(userId, Random.nextInt()))
   }
 
-  def findBytoken(token: String): Option[UserIdentity] = DB.withSession { implicit session: Session ⇒
-    Query(UserIdentities).filter(_.apiToken === token).list.headOption
-  }
-
-  def save(user: UserIdentity) = DB.withSession { implicit session: Session ⇒
-    UserIdentityService.get.findByUserId(user.identityId) match {
-      case None ⇒ {
-        Activity.insert(user.fullName, Activity.Predicate.SignedUp)
-        val uid = UserIdentities.forInsert.insert(user)
-        val updatedUser = user.copy(uid = Some(uid))
-        Cache.set("identity." + updatedUser.apiToken, updatedUser)
-        updatedUser
-      }
-      case Some(existingUser) ⇒ {
-        val userRow = for {
-          u ← UserIdentities
-          if u.uid is existingUser.uid
-        } yield u
-
-        val updatedUser = user.copy(uid = existingUser.uid, apiToken = existingUser.apiToken)
-        userRow.update(updatedUser)
-        val cacheKey = "identity." + updatedUser.apiToken
-        Cache.remove(cacheKey)
-        Cache.set(cacheKey, updatedUser)
-        updatedUser
-      }
-    }
-  }
 }
 

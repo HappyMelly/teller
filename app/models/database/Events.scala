@@ -24,15 +24,15 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models._
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
 
 /**
  * `Event` database table mapping.
  */
-private[models] object Events extends Table[Event]("EVENT") {
+private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventTypeId = column[Long]("EVENT_TYPE_ID")
@@ -62,15 +62,18 @@ private[models] object Events extends Table[Event]("EVENT") {
 
   def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
 
-  def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
+  def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  def * = id.? ~ eventTypeId ~ brandId ~ title ~ spokenLanguage ~
-    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
-    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
-    totalHours ~ notPublic ~ archived ~ confirmed ~ free ~ rating <> (
-      e ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7),
+  type EventsFields = (Option[Long], Long, Long, String, String, Option[String], Option[String], String, String, Option[String], Option[String], Option[String], Option[String], LocalDate, LocalDate, Int, Int, Boolean, Boolean, Boolean, Boolean, Float)
+
+  def * = (id.?, eventTypeId, brandId, title, spokenLanguage,
+    secondSpokenLanguage, materialsLanguage, city, countryCode, description,
+    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
+    totalHours, notPublic, archived, confirmed, free, rating) <> (
+      (e: EventsFields) ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7),
         Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
         Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, e._21, e._22),
+
       (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandId, e.title,
         e.language.spoken, e.language.secondSpoken, e.language.materials,
         e.location.city, e.location.countryCode, e.details.description,
@@ -79,13 +82,13 @@ private[models] object Events extends Table[Event]("EVENT") {
         e.schedule.totalHours, e.notPublic, e.archived, e.confirmed, e.free,
         e.rating)))
 
-  def forInsert = eventTypeId ~ brandId ~ title ~ spokenLanguage ~
-    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
-    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
-    totalHours ~ notPublic ~ archived ~ confirmed ~ free returning id
+  def forInsert = (eventTypeId, brandId, title, spokenLanguage,
+    secondSpokenLanguage, materialsLanguage, city, countryCode, description,
+    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
+    totalHours, notPublic, archived, confirmed, free)
 
-  def forUpdate = eventTypeId ~ brandId ~ title ~ spokenLanguage ~
-    secondSpokenLanguage ~ materialsLanguage ~ city ~ countryCode ~ description ~
-    specialAttention ~ webSite ~ registrationPage ~ start ~ end ~ hoursPerDay ~
-    totalHours ~ notPublic ~ archived ~ confirmed ~ free
+  def forUpdate = (eventTypeId, brandId, title, spokenLanguage,
+    secondSpokenLanguage, materialsLanguage, city, countryCode, description,
+    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
+    totalHours, notPublic, archived, confirmed, free)
 }

@@ -24,20 +24,20 @@
 
 package controllers
 
+import models.{ Participant, ActiveUser, Certificate }
 import models.UserRole.DynamicRole
-import models._
 import models.service.Services
 import org.joda.time.LocalDate
 import play.api.mvc._
-import play.api.cache.Cache
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.Play.current
-import scala.concurrent.Future
+import securesocial.core.RuntimeEnvironment
 
-object Certificates extends Controller
-  with Security
-  with Services
-  with Files {
+class Certificates(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services
+    with Files {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Generate new certificate

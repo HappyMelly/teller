@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.Participant
 import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
@@ -32,7 +32,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Participant` database table mapping.
  */
-private[models] object Participants extends Table[Participant]("EVENT_PARTICIPANT") {
+private[models] class Participants(tag: Tag) extends Table[Participant](tag, "EVENT_PARTICIPANT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
@@ -43,11 +43,12 @@ private[models] object Participants extends Table[Participant]("EVENT_PARTICIPAN
   def organisation = column[Option[String]]("ORGANISATION")
   def comment = column[Option[String]]("COMMENT")
 
-  def event = foreignKey("EVENT_FK", eventId, Events)(_.id)
-  def participant = foreignKey("PARTICIPANT_FK", personId, People)(_.id)
+  def event = foreignKey("EVENT_FK", eventId, TableQuery[Events])(_.id)
+  def participant = foreignKey("PARTICIPANT_FK", personId, TableQuery[People])(_.id)
 
-  def * = id.? ~ eventId ~ personId ~ evaluationId ~ certificate ~ issued ~
-    organisation ~ comment <> (Participant.apply _, Participant.unapply _)
-  def forInsert = * returning id
-  def forUpdate = eventId ~ evaluationId ~ certificate ~ issued
+  def * = (id.?, eventId, personId, evaluationId, certificate, issued,
+    organisation, comment) <> (
+      (Participant.apply _).tupled, Participant.unapply)
+
+  def forUpdate = (eventId, evaluationId, certificate, issued)
 }

@@ -36,16 +36,16 @@ object ProfileType extends Enumeration {
 }
 
 case class SocialProfile(
-  objectId: Long = 0,
-  objectType: ProfileType.Value = ProfileType.Person,
-  email: String,
-  twitterHandle: Option[String] = None,
-  facebookUrl: Option[String] = None,
-  linkedInUrl: Option[String] = None,
-  googlePlusUrl: Option[String] = None,
-  skype: Option[String] = None,
-  phone: Option[String] = None,
-  contactForm: Option[String] = None) {
+    objectId: Long = 0,
+    objectType: ProfileType.Value = ProfileType.Person,
+    email: String,
+    twitterHandle: Option[String] = None,
+    facebookUrl: Option[String] = None,
+    linkedInUrl: Option[String] = None,
+    googlePlusUrl: Option[String] = None,
+    skype: Option[String] = None,
+    phone: Option[String] = None,
+    contactForm: Option[String] = None) {
 
   def defined: Boolean = twitterHandle.isDefined || facebookUrl.isDefined ||
     googlePlusUrl.isDefined || linkedInUrl.isDefined

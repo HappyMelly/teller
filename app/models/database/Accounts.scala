@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -25,11 +25,11 @@
 package models.database
 
 import models.Account
-import play.api.db.slick.Config.driver.simple._
-import models.JodaMoney.CurrencyMapper
+import models.JodaMoney._
 import org.joda.money.CurrencyUnit
+import play.api.db.slick.Config.driver.simple._
 
-private[models] object Accounts extends Table[Account]("ACCOUNT") {
+private[models] class Accounts(tag: Tag) extends Table[Account](tag, "ACCOUNT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Option[Long]]("PERSON_ID")
@@ -37,10 +37,10 @@ private[models] object Accounts extends Table[Account]("ACCOUNT") {
   def currency = column[CurrencyUnit]("CURRENCY", O.DBType("CHAR(3)"), O.Default(CurrencyUnit.of("EUR")))
   def active = column[Boolean]("ACTIVE", O.Default(false))
 
-  def person = foreignKey("PERSON_FK", personId, People)(_.id)
-  def organisation = foreignKey("PERSON_FK", organisationId, Organisations)(_.id)
+  def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
+  def organisation = foreignKey("PERSON_FK", organisationId, TableQuery[Organisations])(_.id)
 
-  def * = id.? ~ organisationId ~ personId ~ currency ~ active <> (Account.apply _, Account.unapply _)
+  def * = (id.?, organisationId, personId, currency, active) <> (
+    (Account.apply _).tupled, Account.unapply)
 
-  def forInsert = * returning id
 }

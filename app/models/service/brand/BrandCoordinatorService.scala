@@ -30,23 +30,22 @@ import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-import scala.slick.session.Session
-
 /**
  * Contains a set of functions for managing team members in database
  */
 class BrandCoordinatorService {
+
+  private val coordinators = TableQuery[BrandCoordinators]
 
   /**
    * Removes the given person from the given brand
    * @param brandId Brand identifier
    * @param personId Person identifier
    */
-  def delete(brandId: Long, personId: Long) = DB.withSession {
-    implicit session: Session ⇒
-      Query(BrandCoordinators).
-        filter(_.brandId === brandId).
-        filter(_.personId === personId).mutate(_.delete())
+  def delete(brandId: Long, personId: Long) = DB.withSession { implicit session ⇒
+    coordinators.
+      filter(_.brandId === brandId).
+      filter(_.personId === personId).delete
   }
 
   /**
@@ -54,21 +53,19 @@ class BrandCoordinatorService {
    * @param coordinator Brand object
    */
   def insert(coordinator: BrandCoordinator) = DB.withSession {
-    implicit session: Session ⇒
-      _insert(coordinator)
+    implicit session ⇒ _insert(coordinator)
   }
 
   def update(brandId: Long, personId: Long, notification: String, value: Boolean) =
-    DB.withSession {
-      implicit session: Session ⇒
-        val query = Query(BrandCoordinators).
-          filter(_.brandId === brandId).
-          filter(_.personId === personId)
-        notification match {
-          case "event" ⇒ query.map(_.event).update(value)
-          case "evaluation" ⇒ query.map(_.evaluation).update(value)
-          case _ ⇒ query.map(_.certificate).update(value)
-        }
+    DB.withSession { implicit session ⇒
+      val query = coordinators.
+        filter(_.brandId === brandId).
+        filter(_.personId === personId)
+      notification match {
+        case "event" ⇒ query.map(_.event).update(value)
+        case "evaluation" ⇒ query.map(_.evaluation).update(value)
+        case _ ⇒ query.map(_.certificate).update(value)
+      }
     }
 
   /**
@@ -79,7 +76,7 @@ class BrandCoordinatorService {
    * @param session Session object
    */
   def _insert(coordinator: BrandCoordinator)(implicit session: Session) =
-    BrandCoordinators.forInsert.insert(coordinator)
+    coordinators += coordinator
 }
 
 object BrandCoordinatorService {

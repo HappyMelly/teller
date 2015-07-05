@@ -24,7 +24,7 @@
  */
 package models.service.event
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.event.EventCancellation
 import models.database.event.EventCancellations
 import models.service.Services
@@ -39,14 +39,16 @@ import scala.slick.lifted.Query
 
 class EventCancellationService extends Services {
 
+  private val cancellations = TableQuery[EventCancellations]
+
   /**
    * Returs list of event cancellation belonged the given brands
    *
    * @param brands List of brand identifiers
    */
   def findByBrands(brands: List[Long]): List[EventCancellation] =
-    DB.withSession { implicit session: Session ⇒
-      Query(EventCancellations).filter(_.brandId inSet brands).list
+    DB.withSession { implicit session ⇒
+      cancellations.filter(_.brandId inSet brands).list
     }
 
   /**
@@ -56,8 +58,8 @@ class EventCancellationService extends Services {
    * @return Updated object object with id
    */
   def insert(cancellation: EventCancellation): EventCancellation = DB.withSession {
-    implicit session: Session ⇒
-      val id = EventCancellations.forInsert.insert(cancellation)
+    implicit session ⇒
+      val id = (cancellations returning cancellations.map(_.id)) += cancellation
       cancellation.copy(id = Some(id))
   }
 

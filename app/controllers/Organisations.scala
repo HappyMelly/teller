@@ -34,56 +34,20 @@ import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json._
 import play.api.{ Logger, Play }
+import securesocial.core.RuntimeEnvironment
 
 import scala.concurrent.Future
 
-trait Organisations extends JsonController
-  with Security
-  with Services
-  with Files
-  with Activities {
+class Organisations(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Files
+    with Activities {
 
-  /**
-   * HTML form mapping for creating and editing.
-   */
-  def organisationForm(implicit user: UserIdentity) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "name" -> nonEmptyText,
-    "address" -> People.addressMapping,
-    "vatNumber" -> optional(text),
-    "registrationNumber" -> optional(text),
-    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
-    "webSite" -> optional(webUrl),
-    "blog" -> optional(webUrl),
-    "customerId" -> optional(text),
-    "about" -> optional(text),
-    "logo" -> ignored(false),
-    "active" -> ignored(true),
-    "dateStamp" -> mapping(
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(user.fullName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))({
-      (id, name, address, vatNumber,
-      registrationNumber, profile, webSite, blog, customerId, about,
-      logo, active, dateStamp) ⇒
-        val org = Organisation(id, name, address.street1, address.street2,
-          address.city, address.province, address.postCode, address.countryCode,
-          vatNumber, registrationNumber, webSite,
-          blog, customerId, about, logo, active, dateStamp)
-        OrgView(org, profile)
-    })({
-      (v: OrgView) ⇒
-        val address = Address(None, v.org.street1, v.org.street2,
-          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
-        Some((v.org.id, v.org.name, address, v.org.vatNumber,
-          v.org.registrationNumber, v.profile, v.org.webSite,
-          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
-          v.org.dateStamp))
-    }))
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -98,7 +62,7 @@ trait Organisations extends JsonController
           },
           active ⇒ {
             orgService.activate(id, active)
-            val activity = Activity.insert(user.fullName,
+            val activity = Activity.insert(user.name,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
           })
@@ -113,7 +77,7 @@ trait Organisations extends JsonController
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Ok(views.html.organisation.form(user, None, organisationForm))
+      Ok(views.html.organisation.form(user, None, Organisations.organisationForm))
   }
 
   /**
@@ -158,12 +122,12 @@ trait Organisations extends JsonController
   def create = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      organisationForm.bindFromRequest.fold(
+      Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
           BadRequest(views.html.organisation.form(user, None, formWithErrors)),
         view ⇒ {
           val org = orgService.insert(view)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, view.org.name)
+          val activity = Activity.insert(user.name, Activity.Predicate.Created, view.org.name)
           Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
         })
   }
@@ -177,7 +141,7 @@ trait Organisations extends JsonController
 
       orgService.find(id).map { organisation ⇒
         orgService.delete(id)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
+        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)
         Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
   }
@@ -224,7 +188,7 @@ trait Organisations extends JsonController
 
       orgService.findWithProfile(id).map { view ⇒
         Ok(views.html.organisation.form(user, Some(id),
-          organisationForm.fill(OrgView(view.org, view.profile))))
+          Organisations.organisationForm.fill(OrgView(view.org, view.profile))))
       }.getOrElse(NotFound)
   }
 
@@ -278,7 +242,7 @@ trait Organisations extends JsonController
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         orgService.findWithProfile(id).map { view ⇒
-          organisationForm.bindFromRequest.fold(
+          Organisations.organisationForm.bindFromRequest.fold(
             formWithErrors ⇒
               BadRequest(views.html.organisation.form(
                 user,
@@ -315,4 +279,44 @@ trait Organisations extends JsonController
   }
 }
 
-object Organisations extends Organisations with Security with Services
+object Organisations {
+
+  /**
+   * HTML form mapping for creating and editing.
+   */
+  def organisationForm(implicit user: ActiveUser) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "name" -> nonEmptyText,
+    "address" -> People.addressMapping,
+    "vatNumber" -> optional(text),
+    "registrationNumber" -> optional(text),
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
+    "webSite" -> optional(webUrl),
+    "blog" -> optional(webUrl),
+    "customerId" -> optional(text),
+    "about" -> optional(text),
+    "logo" -> ignored(false),
+    "active" -> ignored(true),
+    "dateStamp" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(user.name),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(user.name))(DateStamp.apply)(DateStamp.unapply))({
+      (id, name, address, vatNumber,
+      registrationNumber, profile, webSite, blog, customerId, about,
+      logo, active, dateStamp) ⇒
+        val org = Organisation(id, name, address.street1, address.street2,
+          address.city, address.province, address.postCode, address.countryCode,
+          vatNumber, registrationNumber, webSite,
+          blog, customerId, about, logo, active, dateStamp)
+        OrgView(org, profile)
+    })({
+      (v: OrgView) ⇒
+        val address = Address(None, v.org.street1, v.org.street2,
+          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
+        Some((v.org.id, v.org.name, address, v.org.vatNumber,
+          v.org.registrationNumber, v.profile, v.org.webSite,
+          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+          v.org.dateStamp))
+    }))
+}

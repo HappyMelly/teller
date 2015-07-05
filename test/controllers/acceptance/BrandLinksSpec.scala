@@ -52,15 +52,17 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
     successful response should be always returned                        $e4
   """
 
-  class TestBrandLinks extends BrandLinks with FakeServices
+  class TestBrandLinks extends BrandLinks(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
+
   val controller = new TestBrandLinks
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
 
   def e1 = {
     (brandService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/link")
-    val res = controller.create(1L).apply(req)
+    val res = controller.create(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must_== "Brand is not found"
@@ -69,7 +71,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     val brand = BrandHelper.one
     (brandService.find(_: Long)) expects 1L returning Some(brand)
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/link").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "video", "url" -> "")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
@@ -82,7 +84,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
     (brandService.find(_: Long)) expects 1L returning Some(brand)
     val brandLink = BrandLink(None, 1L, "other", "http://test.com")
     (brandService.insertLink _) expects brandLink returning brandLink.copy(id = Some(1L))
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/link").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "blabla", "url" -> "http://test.com")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(OK)
@@ -90,8 +92,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     (brandService.deleteLink _) expects (2L, 1L)
-    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "brand/2/link")
-    val res = controller.remove(2L, 1L).apply(req)
+    val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }
 

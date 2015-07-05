@@ -32,13 +32,15 @@ import play.api.Play.current
 
 class BrandFeeService {
 
+  private val fees = TableQuery[BrandFees]
+
   /**
    * Returns a list of fees belonged to the given brand
    * @param brandId Brand id
    */
   def findByBrand(brandId: Long): List[BrandFee] = DB.withSession {
     implicit session ⇒
-      Query(BrandFees).filter(_.brandId === brandId).list
+      fees.filter(_.brandId === brandId).list
   }
 
   /**
@@ -46,7 +48,7 @@ class BrandFeeService {
    * @param fee Fee
    */
   def insert(fee: BrandFee): BrandFee = DB.withSession { implicit session ⇒
-    val id = BrandFees.forInsert.insert(fee)
+    val id = (fees returning fees.map(_.id)) += fee
     fee.copy(id = Some(id))
   }
 }

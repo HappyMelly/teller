@@ -27,11 +27,12 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import models.UserRole.Role._
-import stubs.AccessCheckSecurity
+import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
 
 class ExperimentsAccessSpec extends PlayAppSpec {
 
-  class TestExperiments extends Experiments with AccessCheckSecurity
+  class TestExperiments extends Experiments(FakeRuntimeEnvironment)
+    with AccessCheckSecurity
   val controller = new TestExperiments
 
   "Method 'add'" should {

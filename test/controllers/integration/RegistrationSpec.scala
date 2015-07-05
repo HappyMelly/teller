@@ -31,20 +31,21 @@ import models.{ Member, Organisation, Person }
 import org.joda.money.Money
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.mvc.{ Cookie, SimpleResult }
+import play.api.mvc.{ Cookie, Result }
 import play.api.test.FakeRequest
-import securesocial.core.IdentityId
-import stubs.FakeUserIdentity
+import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeSecurity }
 import stubs.services.FakeIntegrations
 
 import scala.concurrent.Future
 
 class RegistrationSpec extends PlayAppSpec {
 
-  class TestRegistration extends Registration with FakeIntegrations {
+  class TestRegistration extends Registration(FakeRuntimeEnvironment)
+      with FakeIntegrations
+      with FakeSecurity {
     var notifyData: Option[(Person, Option[Organisation], Money, Member)] = None
 
-    def callPersonCacheId(id: IdentityId): String = personCacheId(id)
+    def callPersonCacheId(userId: String): String = personCacheId(userId)
 
     override def subscribe(person: Person,
       org: Option[Organisation],
@@ -58,7 +59,9 @@ class RegistrationSpec extends PlayAppSpec {
     }
   }
 
-  class AnotherTestRegistration extends Registration with FakeIntegrations {
+  class AnotherTestRegistration extends Registration(FakeRuntimeEnvironment)
+      with FakeIntegrations
+      with FakeSecurity {
 
     def callNotify(person: Person,
       org: Option[Organisation],
@@ -71,11 +74,11 @@ class RegistrationSpec extends PlayAppSpec {
 
   "On step1 the system" should {
     "set cookie 'registration'=org if org parameter is true" in {
-      val res = controller.step1(org = true).apply(FakeRequest())
+      val res = controller.step1(org = true).apply(fakeGetRequest())
       cookies(res).get("registration") map { _.value must_== "org" } getOrElse ko
     }
     "discard cookie 'registration' if org parameter is false" in {
-      val cookie = Cookie(Registration.REGISTRATION_COOKIE, "org")
+      val cookie = Cookie(controller.REGISTRATION_COOKIE, "org")
       val res = controller.step1(org = false).apply(FakeRequest().withCookies(cookie))
       cookies(res).get("registration") map { _.maxAge.get must beLessThan(-1) } getOrElse ko
     }
@@ -83,13 +86,14 @@ class RegistrationSpec extends PlayAppSpec {
   "While saving a person the system" should {
     "put the person's data to cache" in {
       val identity = FakeUserIdentity.unregistered
-      val req = prepareSecuredPostRequest(identity, "").
+      controller.identity_=(identity)
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("firstName", "First"),
           ("lastName", "Tester"), ("email", "tt@ttt.ru"), ("country", "RU"))
-      val result: Future[SimpleResult] = controller.savePerson().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      val result = controller.savePerson().apply(req)
+
       headers(result).get("Location").get must contain("/registration/payment")
-      val cacheId = controller.callPersonCacheId(identity)
+      val cacheId = controller.callPersonCacheId(identity._1)
       Cache.getAs[UserData](cacheId) map { userData ⇒
         userData.firstName must_== "First"
         userData.lastName must_== "Tester"
@@ -102,23 +106,24 @@ class RegistrationSpec extends PlayAppSpec {
   "While saving an org the system" should {
     "redirect to Step 2 if a user data are not in the cache" in {
       val identity = FakeUserIdentity.unregistered
-      val req = prepareSecuredPostRequest(identity, "").
+      controller.identity_=(identity)
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("name", "One"), ("country", "RU"))
-      val cacheId = controller.callPersonCacheId(identity)
+      val cacheId = controller.callPersonCacheId(identity._1)
       Cache.remove(cacheId)
-      val result: Future[SimpleResult] = controller.saveOrg().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      val result = controller.saveOrg().apply(req)
       headers(result).get("Location").get must contain("/registration/step2")
     }
     "put the org's data to cache" in {
       val identity = FakeUserIdentity.unregistered
-      val req = prepareSecuredPostRequest(identity, "").
+      controller.identity_=(identity)
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("name", "One"), ("country", "RU"))
-      val cacheId = controller.callPersonCacheId(identity)
+      val cacheId = controller.callPersonCacheId(identity._1)
       val userData = UserData("First", "Tester", "t@ttt.ru", "RU")
       Cache.set(cacheId, userData, 900)
-      val result: Future[SimpleResult] = controller.saveOrg().apply(req)
-      status(result) must equalTo(SEE_OTHER)
+      val result = controller.saveOrg().apply(req)
+
       headers(result).get("Location").get must contain("/registration/payment")
       Cache.getAs[UserData](cacheId) map { userData ⇒
         userData.org must_== true
@@ -129,11 +134,12 @@ class RegistrationSpec extends PlayAppSpec {
   }
   "On charging the system" should {
     val identity = FakeUserIdentity.unregistered
-    val cacheId = controller.callPersonCacheId(identity)
+    controller.identity_=(identity)
+    val cacheId = controller.callPersonCacheId(identity._1)
     val userData = UserData("First", "Member", "t@ttt.ru", "RU")
     "create a new person and make her a member" in new TruncateBefore {
       Cache.set(cacheId, userData, 900)
-      val req = prepareSecuredPostRequest(identity, "").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("token", "test"), ("fee", "50"))
       val res = controller.charge().apply(req)
 
@@ -153,7 +159,7 @@ class RegistrationSpec extends PlayAppSpec {
     "create a new org and make it a member" in new TruncateBefore {
       val data = userData.copy(org = true, orgData = OrgData("OneMember", "DE"))
       Cache.set(cacheId, data, 900)
-      val req = prepareSecuredPostRequest(identity, "").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("token", "test"), ("fee", "50"))
       val res = controller.charge().apply(req)
 
@@ -173,7 +179,7 @@ class RegistrationSpec extends PlayAppSpec {
     "make a new person a member of new org" in new TruncateBefore {
       val data = userData.copy(org = true, orgData = OrgData("OneMember", "DE"))
       Cache.set(cacheId, data, 900)
-      val req = prepareSecuredPostRequest(identity, "").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("token", "test"), ("fee", "50"))
       val res = controller.charge().apply(req)
 
@@ -187,7 +193,7 @@ class RegistrationSpec extends PlayAppSpec {
 
     "send notifications when a new person becomes a member" in new TruncateBefore {
       Cache.set(cacheId, userData, 900)
-      val req = prepareSecuredPostRequest(identity, "").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("token", "test"), ("fee", "50"))
       val res = controller.charge().apply(req)
 
@@ -201,7 +207,7 @@ class RegistrationSpec extends PlayAppSpec {
     "send notifications when a new org becomes a member" in new TruncateBefore {
       val data = userData.copy(org = true, orgData = OrgData("OneMember", "DE"))
       Cache.set(cacheId, data, 900)
-      val req = prepareSecuredPostRequest(identity, "").
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("token", "test"), ("fee", "50"))
       val res = controller.charge().apply(req)
 

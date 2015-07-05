@@ -23,36 +23,24 @@
  */
 package stubs
 
-import helpers.PersonHelper
-import models.{ UserRole, UserAccount, Person }
-import securesocial.core.AuthenticationMethod
-import securesocial.core.IdentityId
+import securesocial.core.{ AuthenticationMethod, BasicProfile }
 
 class FakeUserIdentity(
   override val uid: Option[Long],
-  override val identityId: IdentityId,
-  override val firstName: String,
-  override val lastName: String,
-  override val fullName: String,
-  override val email: Option[String],
-  val activeUser: Option[Person] = None) extends models.UserIdentity(uid, identityId,
-  firstName, lastName, fullName, email, None, AuthenticationMethod.OAuth2, None,
-  None, None, "api_token", None, None, None, None) {
+  identity: (String, String),
+  firstName: String,
+  lastName: String,
+  fullName: String,
+  email: Option[String]) extends models.UserIdentity(uid,
+  BasicProfile(identity._2, identity._1, Some(firstName), Some(lastName),
+    Some(fullName), email, None, AuthenticationMethod.OAuth2, None,
+    None, None), "api_token", None, None, None, None) {
 
-  override def person = activeUser getOrElse PersonHelper.one()
-
-  override def account = {
-    val role = identityId.userId
-    val account = new UserAccount(Some(1L), person.id.get, role,
-      None, None, None, None)
-    account.roles_=(UserRole.forName(role).list)
-    account
-  }
 }
 
 object FakeUserIdentity {
-  def unregistered: IdentityId = new IdentityId("unregistered", "twitter")
-  def viewer: IdentityId = new IdentityId("viewer", "twitter")
-  def editor: IdentityId = new IdentityId("editor", "twitter")
-  def admin: IdentityId = new IdentityId("admin", "twitter")
+  val unregistered: (String, String) = ("unregistered", "twitter")
+  val viewer: (String, String) = ("viewer", "twitter")
+  val editor: (String, String) = ("editor", "twitter")
+  val admin: (String, String) = ("admin", "twitter")
 }

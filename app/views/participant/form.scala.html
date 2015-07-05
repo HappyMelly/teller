@@ -1,4 +1,4 @@
-@(user: UserIdentity,
+@(user: ActiveUser,
   id: Option[Long],
   brands: List[Brand],
   people: List[Person],
@@ -7,7 +7,7 @@
   showExistingPersonForm: Boolean = true,
   currentBrand: Option[Long],
   currentEvent: Option[Long],
-  ref: Option[String])(implicit flash: Flash,
+  ref: Option[String])(implicit request2flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)

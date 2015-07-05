@@ -23,12 +23,8 @@
  */
 package models
 
-import models.database.{ BookingEntryActivities, Activities }
+import models.service.ActivityService
 import org.joda.time.DateTime
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-import scala.slick.lifted.Query
 import play.api.i18n.Messages
 
 class InvalidActivityPredicate extends RuntimeException
@@ -69,16 +65,16 @@ abstract class BaseActivity {
  * @param activityObject The name of the data the action was
  */
 case class Activity(id: Option[Long],
-  subjectId: Long,
-  subject: String,
-  predicate: String,
-  objectType: String,
-  objectId: Long,
-  activityObject: Option[String],
-  supportiveObjectType: Option[String] = None,
-  supportiveObjectId: Option[Long] = None,
-  supportiveObject: Option[String] = None,
-  timestamp: DateTime = DateTime.now()) extends BaseActivity {
+    subjectId: Long,
+    subject: String,
+    predicate: String,
+    objectType: String,
+    objectId: Long,
+    activityObject: Option[String],
+    supportiveObjectType: Option[String] = None,
+    supportiveObjectId: Option[Long] = None,
+    supportiveObject: Option[String] = None,
+    timestamp: DateTime = DateTime.now()) extends BaseActivity {
 
   // Full description including subject (current user’s name).
   override def description: String = {
@@ -130,7 +126,7 @@ case class Activity(id: Option[Long],
   override def insert(): Activity = if (predicate == Activity.Predicate.None)
     throw new InvalidActivityPredicate
   else
-    Activity.insert(this)
+    ActivityService.get.insert(this)
 }
 
 /**
@@ -155,6 +151,7 @@ trait ActivityRecorder {
    */
   def objectType: String
 }
+
 /**
  * The possible activity stream actions, e.g. ‘deleted’.
  */
@@ -205,17 +202,6 @@ object Activity {
     val Translation = "translation"
   }
 
-  /**
-   * Returns activity stream entries for the given booking entry
-   */
-  def findForBookingEntry(bookingEntryId: Long): List[Activity] = DB.withSession { implicit session ⇒
-    val query = for {
-      entryActivity ← BookingEntryActivities if entryActivity.bookingEntryId === bookingEntryId
-      activity ← Activities if activity.id === entryActivity.activityId
-    } yield activity
-    query.sortBy(_.timestamp.desc).list
-  }
-
   def insert(subject: String, predicate: String): Activity = {
     insert(0L, subject, predicate, None)
   }
@@ -236,11 +222,6 @@ object Activity {
     insert(0L, subject, predicate, Some(activityObject))
   }
 
-  def insert(activity: Activity): Activity = DB.withSession { implicit session ⇒
-    val id = Activities.forInsert.insert(activity)
-    activity.copy(id = Some(id))
-  }
-
   /** Returns new activity record */
   def create(
     subject: String,
@@ -250,30 +231,18 @@ object Activity {
   }
 
   /**
-   * Links the given booking entry and activity.
-   */
-  def link(entry: BookingEntry, activity: Activity): Unit = DB.withSession { implicit session: Session ⇒
-    for (entryId ← entry.id; activityId ← activity.id) {
-      BookingEntryActivities.insert(entryId, activityId)
-    }
-  }
-
-  /**
    * Inserts a new activity stream entry.
    */
   private def insert(subjectId: Long,
     subject: String,
     predicate: String,
     activityObject: Option[String]): Activity = {
-    DB.withSession { implicit session ⇒
-      val activity = Activity(None, subjectId, subject,
-        predicate,
-        "null",
-        0L,
-        activityObject)
-      val id = Activities.forInsert.insert(activity)
-      activity.copy(id = Some(id))
-    }
+    val activity = Activity(None, subjectId, subject,
+      predicate,
+      "null",
+      0L,
+      activityObject)
+    ActivityService.get.insert(activity)
   }
 }
 

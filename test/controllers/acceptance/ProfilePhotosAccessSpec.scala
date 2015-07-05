@@ -27,77 +27,31 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.{ Security, ProfilePhotos }
 import models.service.PersonService
-import org.scalamock.specs2.IsolatedMockFactory
-import play.api.mvc.SimpleResult
-import stubs.{ FakeUserIdentity, FakeServices }
+import play.api.mvc.Result
+import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
 
 import scala.concurrent.Future
 
-class ProfilePhotosAccessSpec extends PlayAppSpec with IsolatedMockFactory {
-  class TestProfilePhotos() extends ProfilePhotos with Security with FakeServices
-
-  override def is = s2"""
-    'Update photo' action should
-      be accessible to Editors                               $e4
-      be accessible to the owner of the profile              $e5
-      not be accessible to Viewers                           $e6
-
-    'Choose photo' action should
-      be accessible to Editors                               $e7
-      be accessible to the owner of the profile              $e8
-      not be accessible to Viewers                           $e9
-  """
+class ProfilePhotosAccessSpec extends PlayAppSpec {
+  class TestProfilePhotos() extends ProfilePhotos(FakeRuntimeEnvironment)
+    with AccessCheckSecurity
 
   val controller = new TestProfilePhotos()
-  val personService = mock[PersonService]
-  controller.personService_=(personService)
 
-  def e4 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.update(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
+  "Method 'update'" should {
+    "have 'edit' access rights for 'person' object" in {
+      controller.update(1L).apply(fakePostRequest())
+      controller.checkedDynamicObject must_== Some("person")
+      controller.checkedDynamicLevel must_== Some("edit")
+    }
   }
 
-  def e5 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/1/photo").
-      withFormUrlEncodedBody(("type" -> "facebook"), ("name" -> "skotlov"))
-    val result = controller.update(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e6 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.update(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
-  }
-
-  def e7 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/")
-    val result = controller.choose(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e8 = {
-    (personService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/1/photo")
-    val result = controller.choose(1L).apply(req)
-
-    status(result) must equalTo(NOT_FOUND)
-  }
-
-  def e9 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/person/2/photo")
-    val result = controller.choose(2L).apply(req)
-
-    status(result) must equalTo(SEE_OTHER)
+  "Method 'choose'" should {
+    "have 'edit' access rights for 'person' object" in {
+      controller.choose(1L).apply(fakeGetRequest())
+      controller.checkedDynamicObject must_== Some("person")
+      controller.checkedDynamicLevel must_== Some("edit")
+    }
   }
 
 }

@@ -22,7 +22,7 @@
 * or in writing Happy Melly One, Handelsplein 37, Rotterdam,
 * The Netherlands, 3071 PR
 */
-package controllers.acceptance
+package controllers.acceptance.dashboard
 
 import _root_.integration.PlayAppSpec
 import controllers.{ Dashboard, Security }
@@ -33,29 +33,18 @@ import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
-import play.api.mvc.SimpleResult
+import play.api.mvc.Result
 import stubs._
 
 import scala.collection.mutable
 import scala.concurrent.Future
 
-class TestDashboard() extends Dashboard with Security with FakeServices
+class TestDashboard() extends Dashboard(FakeRuntimeEnvironment)
+  with FakeSecurity with FakeServices
 
 class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
-
-    About page should
-      not be visible to Viewer                  $e1
-      and be visible to Editor                  $e2
-
-    API page should
-      not be visible to Viewer                  $e3
-      and be visible to Editor                  $e4
-
-    Activity stream on the dashboard should
-      not be visible to Editor                  $e5
-      not be visible to Admin                   $e6
 
     On facilitator's dashboard there should be
       three nearest future events               $e7
@@ -77,61 +66,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   val evaluationService = mock[EvaluationService]
   controller.evaluationService_=(evaluationService)
 
-  def e1 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/about")
-    val result: Future[SimpleResult] = controller.about().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-  }
-
-  def e2 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/about")
-    val result: Future[SimpleResult] = controller.about().apply(request)
-    status(result) must equalTo(OK)
-  }
-
-  def e3 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/api")
-    val result: Future[SimpleResult] = controller.api().apply(request)
-    status(result) must equalTo(SEE_OTHER)
-  }
-
-  def e4 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/api")
-    val result: Future[SimpleResult] = controller.api().apply(request)
-    status(result) must equalTo(OK)
-  }
-
-  def e5 = {
-    val identity = FakeUserIdentity.editor
-    val request = prepareSecuredGetRequest(identity, "/")
-    (brandService.findByCoordinator _) expects 1L returning List()
-    (eventService.findByFacilitator _) expects (1L, None, None, None, None) returning List()
-    (evaluationService.findByEvents _) expects List() returning List()
-    val result: Future[SimpleResult] = controller.index().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Latest activity"
-  }
-
-  def e6 = {
-    val identity = FakeUserIdentity.admin
-    val request = prepareSecuredGetRequest(identity, "/")
-    (brandService.findByCoordinator _) expects 1L returning List()
-    (eventService.findByFacilitator _) expects (1L, None, None, None, None) returning List()
-    (evaluationService.findByEvents _) expects List() returning List()
-    val result: Future[SimpleResult] = controller.index().apply(request)
-    status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Latest activity"
-  }
-
   def e7 = {
-    //@TODO use FakeSecurity here
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
     val events = List(EventHelper.future(1, 1), EventHelper.future(2, 2),
       EventHelper.future(3, 3), EventHelper.future(4, 4),
       EventHelper.past(5, 3), EventHelper.past(6, 2))
@@ -139,7 +74,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
     (evaluationService.findByEvents _) expects List(6L, 5L) returning List()
 
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Upcoming events")
     contentAsString(result) must contain("/event/1")
@@ -149,10 +84,6 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e8 = {
-    //@TODO use FakeSecurity here
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
     val evalStatus = EvaluationStatus.Pending
     val evaluations: List[(Event, Person, Evaluation)] = List(
       (EventHelper.one, PersonHelper.one(),
@@ -181,7 +112,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     (evaluationService.findByEvents _) expects List() returning evaluations
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning List()
 
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Latest evaluations")
     contentAsString(result) must not contain "/evaluation/13"
@@ -198,9 +129,6 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e9 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
     val facilitators = Map(1L -> PersonHelper.one(),
       2L -> PersonHelper.two())
     val now = LocalDate.now()
@@ -220,7 +148,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     (evaluationService.findByEvents _) expects List() returning List()
     (licenseService.expiring _) expects (List(1L)) returning licenses.toList
 
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
     val title = "Expiring licenses"
     contentAsString(result) must contain(title)
@@ -236,22 +164,17 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e10 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning List()
     (evaluationService.findByEvents _) expects List() returning List()
 
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
     val title = "Expiring licenses in " + month(LocalDate.now().getMonthOfYear)
     contentAsString(result) must not contain title
   }
 
   def e11 = {
-    val identity = FakeUserIdentity.viewer
-    val request = prepareSecuredGetRequest(identity, "/")
-
     val events = List(EventHelper.future(1, 1), EventHelper.future(2, 2),
       EventHelper.past(3, 3), EventHelper.past(4, 2),
       EventHelper.past(5, 3), EventHelper.past(6, 1))
@@ -259,7 +182,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
     (evaluationService.findByEvents _) expects List(6L, 4L, 3L, 5L) returning List()
 
-    val result: Future[SimpleResult] = controller.index().apply(request)
+    val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Last past events")
     contentAsString(result) must contain("/event/6")

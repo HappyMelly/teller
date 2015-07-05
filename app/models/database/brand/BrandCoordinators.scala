@@ -30,7 +30,8 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Database table mapping for the association between brand and team members
  */
-private[models] object BrandCoordinators extends Table[BrandCoordinator]("BRAND_COORDINATOR") {
+private[models] class BrandCoordinators(tag: Tag)
+    extends Table[BrandCoordinator](tag, "BRAND_COORDINATOR") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
@@ -39,14 +40,13 @@ private[models] object BrandCoordinators extends Table[BrandCoordinator]("BRAND_
   def evaluation = column[Boolean]("EVALUATION")
   def certificate = column[Boolean]("CERTIFICATE")
 
-  def * = id.? ~ brandId ~ personId ~ event ~ evaluation ~
-    certificate <> ({
-      x ⇒ BrandCoordinator(x._1, x._2, x._3, BrandNotifications(x._4, x._5, x._6))
-    }, { (x: BrandCoordinator) ⇒
-      Some(x.id, x.brandId, x.personId,
-        x.notification.event, x.notification.evaluation, x.notification.certificate)
-    })
+  type BrandCoordinatorsFields = (Option[Long], Long, Long, Boolean, Boolean, Boolean)
 
-  def forInsert = * returning id
-  def forUpdate = event ~ evaluation ~ certificate
+  def * = (id.?, brandId, personId, event, evaluation, certificate) <> (
+    (x: BrandCoordinatorsFields) ⇒
+      BrandCoordinator(x._1, x._2, x._3, BrandNotifications(x._4, x._5, x._6)),
+    (x: BrandCoordinator) ⇒ Some(x.id, x.brandId, x.personId,
+      x.notification.event, x.notification.evaluation, x.notification.certificate))
+
+  def forUpdate = (event, evaluation, certificate)
 }

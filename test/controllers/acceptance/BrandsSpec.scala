@@ -27,11 +27,9 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Brands
 import helpers._
-import models.Brand
 import models.service.{ BrandService, ProductService }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
-import play.api.test.FakeRequest
 import stubs._
 
 class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
@@ -49,7 +47,10 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     related products should be also deactivated                         $e4
   """
 
-  class TestBrands extends Brands with FakeServices
+  class TestBrands extends Brands(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
+
   val controller = new TestBrands
   val brandService = mock[BrandService]
   val productService = mock[ProductService]
@@ -58,8 +59,8 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     (brandService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "")
-    val res = controller.activation(1L).apply(req)
+    // val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "")
+    val res = controller.activation(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must_== "Brand is not found"
@@ -69,8 +70,7 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     val brand = BrandHelper.one
     (brandService.find(_: Long)) expects 1L returning Some(brand)
     (brandService.activate _) expects 1L
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "").
-      withFormUrlEncodedBody("active" -> "true")
+    val req = fakePostRequest().withFormUrlEncodedBody("active" -> "true")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
   }
@@ -80,8 +80,7 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     (brandService.find(_: Long)) expects 1L returning Some(brand)
     (brandService.deactivate _) expects 1L
     (productService.findByBrand _) expects 1L returning List()
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "").
-      withFormUrlEncodedBody("active" -> "false")
+    val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
   }
@@ -95,8 +94,7 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
     (productService.findByBrand _) expects 1L returning products
     (productService.deactivate _) expects 1L
     (productService.deactivate _) expects 2L
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "").
-      withFormUrlEncodedBody("active" -> "false")
+    val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
   }

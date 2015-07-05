@@ -23,24 +23,27 @@
  */
 package stubs
 
-import play.api.Application
-import securesocial.core.{ Identity, IdentityId }
 import _root_.services.LoginIdentityService
+import helpers.PersonHelper
+import models.{ UserAccount, ActiveUser }
+import securesocial.core.BasicProfile
+import securesocial.core.services.SaveMode
+import scala.concurrent.Future
 
-class StubLoginIdentityService(application: Application)
-  extends LoginIdentityService(application) {
+class StubLoginIdentityService extends LoginIdentityService {
 
-  override def find(id: IdentityId) = {
-    val identityId = id
-    val identity = new FakeUserIdentity(Some(123213L), identityId,
+  override def find(providerId: String, userId: String) = {
+    val identity = new FakeUserIdentity(Some(123213L), (providerId, userId),
       "Sergey", "Kotlov", "Sergey Kotlov", None)
-    Some(identity)
+    Future.successful(Some(identity.profile))
   }
 
-  override def save(user: Identity) = {
-    val identityId = new IdentityId("123", "twitter")
-    new FakeUserIdentity(Some(123213L), identityId,
+  override def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
+    val identity = new FakeUserIdentity(Some(123213L), ("123", "twitter"),
       "Sergey", "kotlov", "Sergey Kotlov", None)
+    val account = UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
+    val person = PersonHelper.one()
+    Future.successful(ActiveUser(identity, account, person))
   }
 
 }

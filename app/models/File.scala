@@ -31,8 +31,8 @@ import scala.concurrent.Future
 import services.S3Bucket
 
 case class File(fileType: String,
-  name: String,
-  cacheKey: String) {
+    name: String,
+    cacheKey: String) {
 
   def remove() {
     Cache.remove(cacheKey)

@@ -106,4 +106,31 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
   def isMemberEditor(memberId: Long): Boolean = {
     user.editor || brandService.isCoordinator(memberId, user.personId)
   }
+
+  /**
+   * Returns true if the user can edit the given person
+   * @param personId Person identifier
+   */
+  def canEditPerson(personId: Long): Boolean = {
+    user.editor || user.personId == personId ||
+      personService.find(personId).exists { person ⇒
+        if (person.virtual)
+          eventService.findByParticipation(personId, user.personId).nonEmpty
+        else
+          false
+      }
+  }
+
+  /**
+   * Returns true if the user can delete the given person
+   * @param personId Person identifier
+   */
+  def canDeletePerson(personId: Long): Boolean = {
+    user.editor || personService.find(personId).exists { person ⇒
+      if (person.virtual)
+        eventService.findByParticipation(personId, user.personId).nonEmpty
+      else
+        false
+    }
+  }
 }

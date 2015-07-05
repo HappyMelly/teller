@@ -31,7 +31,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EventType` database table mapping.
  */
-private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
+private[models] class EventTypes(tag: Tag) extends Table[EventType](tag, "EVENT_TYPE") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
   def name = column[String]("NAME")
@@ -39,11 +39,10 @@ private[models] object EventTypes extends Table[EventType]("EVENT_TYPE") {
   def maxHours = column[Int]("MAX_HOURS")
   def free = column[Boolean]("FREE")
 
-  def brand = foreignKey("EVENT_BRAND_FK", brandId, Brands)(_.id)
+  def brand = foreignKey("EVENT_BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  def * = id.? ~ brandId ~ name ~ defaultTitle ~
-    maxHours ~ free <> (EventType.apply _, EventType.unapply _)
+  def * = (id.?, brandId, name, defaultTitle,
+    maxHours, free) <> (EventType.tupled, EventType.unapply)
 
-  def forInsert = * returning id
-  def forUpdate = name ~ defaultTitle ~ maxHours ~ free
+  def forUpdate = (name, defaultTitle, maxHours, free)
 }

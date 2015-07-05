@@ -64,7 +64,10 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
     then the system should just update it                                $e8
   """
 
-  class TestBrandTestimonials extends BrandTestimonials with FakeServices
+  class TestBrandTestimonials extends BrandTestimonials(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
+
   val controller = new TestBrandTestimonials
   val brandService = mock[BrandService]
   controller.brandService_=(brandService)
@@ -72,14 +75,13 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     (brandService.find(_: Long)) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial")
-    val res = controller.create(1L).apply(req)
+    val res = controller.create(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
   }
 
   def e2 = {
     (brandService.find(_: Long)) expects 1L returning Some(brand)
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "", "name" -> "katja")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
@@ -88,7 +90,7 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     (brandService.find(_: Long)) expects 1L returning Some(brand)
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "test", "name" -> "")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
@@ -99,7 +101,7 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
     (brandService.find(_: Long)) expects 1L returning Some(brand)
     val brandTestimonial = BrandTestimonial(None, 1L, "blabla", "katja", Some("test"))
     (brandService.insertTestimonial _) expects brandTestimonial
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(SEE_OTHER)
@@ -107,13 +109,12 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e5 = {
     (brandService.deleteTestimonial _) expects (2L, 1L)
-    val req = prepareSecuredDeleteRequest(FakeUserIdentity.editor, "brand/2/testimonial")
-    val res = controller.remove(2L, 1L).apply(req)
+    val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }
 
   def e6 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "", "name" -> "katja")
     val res = controller.update(2L, 1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
@@ -121,7 +122,7 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e7 = {
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/1/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "test", "name" -> "")
     val res = controller.update(2L, 1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
@@ -131,7 +132,7 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     val brandTestimonial = BrandTestimonial(Some(2L), 1L, "blabla", "katja", Some("test"))
     (brandService.updateTestimonial _) expects brandTestimonial
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "brand/2/testimonial").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.update(1L, 2L).apply(req)
     status(res) must equalTo(SEE_OTHER)

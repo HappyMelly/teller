@@ -45,7 +45,7 @@ trait ApiAuthentication extends Controller with Services {
       Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
         Some(f(request))
       }.getOrElse {
-        UserIdentity.findBytoken(token).map { identity ⇒
+        userIdentityService.findBytoken(token).map { identity ⇒
           Cache.set("identity." + token, identity)
           f(request)
         }
@@ -62,7 +62,7 @@ trait ApiAuthentication extends Controller with Services {
       Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
         Some(f(request, identity))
       }.getOrElse {
-        UserIdentity.findBytoken(token).map { identity ⇒
+        userIdentityService.findBytoken(token).map { identity ⇒
           Cache.set("identity." + token, identity)
           f(request, identity)
         }

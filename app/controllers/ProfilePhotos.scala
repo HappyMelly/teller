@@ -24,19 +24,22 @@
 
 package controllers
 
-import models.{ Photo, Person }
+import models.{ ActiveUser, Photo, Person }
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
+import securesocial.core.RuntimeEnvironment
 
-trait ProfilePhotos extends JsonController
-  with Security
-  with Services
-  with Files {
+class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Files {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders a screen for selecting a profile's photo
@@ -127,5 +130,3 @@ trait ProfilePhotos extends JsonController
   }
 
 }
-
-object ProfilePhotos extends ProfilePhotos

@@ -48,7 +48,8 @@ class LicensesSpec extends PlayAppSpec with IsolatedMockFactory {
     the system should replace license id and licensee id on update  $e2
   """
 
-  class TestLicenses() extends Licenses with Security with FakeServices
+  class TestLicenses() extends Licenses(FakeRuntimeEnvironment)
+    with FakeSecurity with FakeServices
 
   val controller = new TestLicenses()
   val licenseService = mock[LicenseService]
@@ -56,8 +57,7 @@ class LicensesSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     (licenseService.findWithBrandAndLicensee _) expects 1L returning None
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/license/1")
-    val result = controller.update(1L).apply(req)
+    val result = controller.update(1L).apply(fakePostRequest())
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome("/people")
   }
@@ -74,7 +74,7 @@ class LicensesSpec extends PlayAppSpec with IsolatedMockFactory {
     (licenseService.findWithBrandAndLicensee _) expects 1L returning Some(view)
     (licenseService.update _) expects license.copy(version = "v1")
 
-    val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/license/1").
+    val req = fakePostRequest().
       withFormUrlEncodedBody("id" -> "3", "licenseeId" -> "4", "brandId" -> "1",
         "version" -> "v1", "signed" -> license.signed.toString,
         "start" -> license.start.toString, "end" -> license.end.toString,

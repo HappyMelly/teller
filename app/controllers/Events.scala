@@ -39,15 +39,19 @@ import play.api.data.format.Formatter
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import scala.concurrent.Future
 import services.integrations.Integrations
 import views.Countries
 
-trait Events extends Controller
-  with Security
-  with Services
-  with Integrations
-  with Activities {
+class Events(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services
+    with Integrations
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -86,7 +90,7 @@ trait Events extends Controller
   /**
    * HTML form mapping for creating and editing.
    */
-  def eventForm(implicit user: UserIdentity) = Form(mapping(
+  def eventForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> longNumber(min = 1),
     "brandId" -> longNumber(min = 1),
@@ -97,7 +101,7 @@ trait Events extends Controller
       "materials" -> optional(language))(Language.apply)(Language.unapply),
     "location" -> mapping(
       "city" -> nonEmptyText,
-      "country" -> nonEmptyText) (Location.apply)(Location.unapply),
+      "country" -> nonEmptyText)(Location.apply)(Location.unapply),
     "details" -> mapping(
       "description" -> optional(text),
       "specialAttention" -> optional(text),
@@ -499,7 +503,7 @@ trait Events extends Controller
                   mail.evaluation.html.request(brand, participant, body).toString(), richMessage = true)
               }
 
-              val activity = Activity.insert(user.fullName, Activity.Predicate.Sent, event.title)
+              val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
               Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
             } else {
               Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event.")
@@ -571,13 +575,11 @@ trait Events extends Controller
    * @param form Form with errors
    * @param eventId Event identifier if exists
    */
-  protected def formError(user: UserIdentity,
+  protected def formError(user: ActiveUser,
     form: Form[EventView],
-    eventId: Option[Long])(implicit flash: play.api.mvc.Flash,
-      request: Request[Any],
+    eventId: Option[Long])(implicit request: Request[Any],
       handler: AuthorisationHandler,
       token: play.filters.csrf.CSRF.Token) = {
-    println(form.errorsAsJson)
     val account = user.account
     val brands = Brand.findByUser(account)
     BadRequest(views.html.event.form(user, eventId, brands, account.personId, false, form))
@@ -623,5 +625,3 @@ trait Events extends Controller
     Future.successful(
       Redirect(routes.Events.details(id)).flashing("error" -> msg))
 }
-
-object Events extends Events

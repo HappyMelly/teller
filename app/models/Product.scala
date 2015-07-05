@@ -24,12 +24,10 @@
 
 package models
 
-import models.database.{ ProductBrandAssociations, Products }
+import models.service.ProductService
 import org.joda.time.DateTime
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
 import play.api.libs.Crypto
+
 import scala.util.Random
 
 /**
@@ -49,51 +47,37 @@ case class ProductView(product: Product, brands: List[Brand])
  * A thing such as a book, a game or a piece of software
  */
 case class Product(
-  id: Option[Long],
-  title: String,
-  subtitle: Option[String],
-  url: Option[String],
-  description: Option[String],
-  callToActionUrl: Option[String],
-  callToActionText: Option[String],
-  picture: Option[String],
-  category: Option[ProductCategory.Value],
-  parentId: Option[Long],
-  active: Boolean = true,
-  created: DateTime,
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) {
+    id: Option[Long],
+    title: String,
+    subtitle: Option[String],
+    url: Option[String],
+    description: Option[String],
+    callToActionUrl: Option[String],
+    callToActionText: Option[String],
+    picture: Option[String],
+    category: Option[ProductCategory.Value],
+    parentId: Option[Long],
+    active: Boolean = true,
+    created: DateTime,
+    createdBy: String,
+    updated: DateTime,
+    updatedBy: String) {
 
   def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
 
   /**
    * Assign this product to a brand
    */
-  def addBrand(brandId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    ProductBrandAssociations.forInsert.insert(this.id.get, brandId)
-  }
+  def addBrand(brandId: Long) = ProductService.get.addBrand(this.id.get, brandId)
 
   /**
    * Unassign this product to a brand
    */
-  def deleteBrand(brandId: Long): Unit = DB.withSession { implicit session: Session ⇒
-    ProductBrandAssociations.filter(relation ⇒ relation.productId === id && relation.brandId === brandId).mutate(_.delete)
-  }
+  def deleteBrand(brandId: Long) = ProductService.get.deleteBrand(this.id.get, brandId)
 
-  def insert: Product = DB.withSession { implicit session: Session ⇒
-    val id = Products.forInsert.insert(this)
-    this.copy(id = Some(id))
-  }
+  def insert: Product = ProductService.get.insert(this)
 
-  def update: Product = DB.withSession { implicit session: Session ⇒
-    val updateTuple = (title, subtitle, url, description,
-      callToActionUrl, callToActionText, picture, category, parentId,
-      updated, updatedBy)
-    val updateQuery = Products.filter(_.id === this.id).map(_.forUpdate)
-    updateQuery.update(updateTuple)
-    this
-  }
+  def update: Product = ProductService.get.update(this)
 }
 
 object Product {
@@ -101,22 +85,4 @@ object Product {
   def cacheId(id: Long): String = "products." + id.toString
 
   def generateImageName(filename: String): String = "products/" + Crypto.sign("%s-%s".format(filename, Random.nextInt())) + ".png"
-}
-
-object ProductsCollection {
-
-  /**
-   * Fill products with brands (using only one query to database)
-   * @param products List of products
-   */
-  def brands(products: List[Product]): List[ProductView] = DB.withSession {
-    implicit session: Session ⇒
-      val ids = products.map(_.id.get).distinct.toList
-      val query = for {
-        relation ← ProductBrandAssociations if relation.productId inSet ids
-        brand ← relation.brand
-      } yield (relation.productId, brand)
-      val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-      products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List())))
-  }
 }

@@ -24,51 +24,44 @@
 
 package controllers
 
-import play.api.mvc.{ Flash, Action, Controller }
+import models.ActiveUser
 import play.api.Play
 import play.api.Play.current
+import securesocial.controllers.BaseLoginPage
 import securesocial.core._
-import securesocial.core.providers.utils.RoutesHelper
+import securesocial.core.utils._
+
+import scala.concurrent.Future
 
 /**
  * This controller is a partial copy of securesocial.controllers.LoginPage
  *
  * Its logout method allows to pass error message to login page
  */
-object LoginPage extends Controller {
-
-  /**
-   * The property that specifies the page the user is redirected to after logging out.
-   */
-  val onLogoutGoTo = "securesocial.onLogoutGoTo"
+class LoginPage(override implicit val env: RuntimeEnvironment[ActiveUser]) extends BaseLoginPage[ActiveUser] {
 
   /**
    * Logs out the user by clearing the credentials from the session.
-   * The browser is redirected either to the login page or to the page specified
-   * in the onLogoutGoTo property.
+   * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
    *
-   * The difference between this method and the one in securesocial.controllers.LoginPage
-   * is that this method passes error message to login page using Flash object
-   *
-   * @param error Message which will be passed to login page
+   * @return
    */
-  def logout(error: Option[String] = None) = Action { implicit request ⇒
-    val to = Play.configuration.getString(onLogoutGoTo).getOrElse(RoutesHelper.login().absoluteURL(IdentityProvider.sslEnabled))
-    val user = for (
-      authenticator ← SecureSocial.authenticatorFromRequest;
-      user ← UserService.find(authenticator.identityId)
-    ) yield {
-      Authenticator.delete(authenticator.id)
-      user
-    }
-    val result = Redirect(to).
-      discardingCookies(Authenticator.discardingCookie)
-    val resultWithFlash = error map { e ⇒
-      result.flashing("error" -> e)
-    } getOrElse result
-    user match {
-      case Some(u) ⇒ resultWithFlash.withSession(session)
-      case None ⇒ resultWithFlash
-    }
+  def logout(error: Option[String] = None) = UserAwareAction.async {
+    implicit request ⇒
+      val redirectTo = Redirect(Play.configuration.getString(onLogoutGoTo).getOrElse(env.routes.loginPageUrl))
+      val result = for {
+        user ← request.user
+        authenticator ← request.authenticator
+      } yield {
+        redirectTo.discardingAuthenticator(authenticator).map { auth ⇒
+          val flashedAuth = error map { value ⇒
+            auth.flashing("error" -> value)
+          } getOrElse auth
+          flashedAuth.withSession(Events.fire(new LogoutEvent(user)).getOrElse(request.session))
+        }
+      }
+      result.getOrElse {
+        Future.successful(redirectTo)
+      }
   }
 }

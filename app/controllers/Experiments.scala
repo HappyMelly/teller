@@ -24,22 +24,25 @@
 package controllers
 
 import controllers.Forms._
-import models.{ Experiment, Member }
+import models.{ ActiveUser, Experiment, Member }
 import models.UserRole.Role._
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.concurrent.Execution.Implicits._
+import securesocial.core.RuntimeEnvironment
 import scala.concurrent.Future
 import services.integrations.Integrations
 
-trait Experiments extends JsonController
-  with Services
-  with Security
-  with Integrations
-  with Files {
+class Experiments(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Services
+    with Security
+    with Integrations
+    with Files {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val form = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -219,5 +222,3 @@ trait Experiments extends JsonController
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }
-
-object Experiments extends Experiments

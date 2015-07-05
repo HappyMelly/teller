@@ -28,9 +28,8 @@ import akka.actor.{ Actor, Props }
 import models.database.{ EventFacilitators, Events, Participants }
 import models.event.EventCancellation
 import models.service.{ EventService, Services }
-import models.service.event.EventCancellationService
 import org.joda.money.Money
-import org.joda.time.{ Days, DateTime, LocalDate }
+import org.joda.time.{ Days, LocalDate }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -38,7 +37,6 @@ import play.api.libs.concurrent.Akka
 import views.Languages
 
 import scala.language.postfixOps
-import scala.slick.lifted.Query
 
 /**
  * Contains schedule-related data
@@ -48,9 +46,9 @@ import scala.slick.lifted.Query
  *   - how many total hours it takes
  */
 case class Schedule(start: LocalDate,
-  end: LocalDate,
-  hoursPerDay: Int,
-  totalHours: Int) {
+    end: LocalDate,
+    hoursPerDay: Int,
+    totalHours: Int) {
 
   /**
    * Returns true if number of total hours is inside a threshold for an allowed
@@ -93,20 +91,20 @@ case class EventView(event: Event, invoice: EventInvoice)
 
 /** An event such as a Management 3.0 course or a DARE Festival */
 case class Event(
-  id: Option[Long],
-  eventTypeId: Long,
-  brandId: Long,
-  title: String,
-  language: Language,
-  location: Location,
-  details: Details,
-  schedule: Schedule,
-  notPublic: Boolean = false,
-  archived: Boolean = false,
-  confirmed: Boolean = false,
-  free: Boolean = false,
-  rating: Float = 0.0f,
-  fee: Option[Money] = None) extends ActivityRecorder with Services {
+    id: Option[Long],
+    eventTypeId: Long,
+    brandId: Long,
+    title: String,
+    language: Language,
+    location: Location,
+    details: Details,
+    schedule: Schedule,
+    notPublic: Boolean = false,
+    archived: Boolean = false,
+    confirmed: Boolean = false,
+    free: Boolean = false,
+    rating: Float = 0.0f,
+    fee: Option[Money] = None) extends ActivityRecorder with Services {
 
   private var _facilitators: Option[List[Person]] = None
   private var _facilitatorIds: Option[List[Long]] = None
@@ -130,9 +128,9 @@ case class Event(
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators: List[Person] = if (_facilitators.isEmpty) {
-    val data = DB.withSession { implicit session: Session ⇒
+    val data = DB.withSession { implicit session ⇒
       val query = for {
-        facilitation ← EventFacilitators if facilitation.eventId === this.id
+        facilitation ← TableQuery[EventFacilitators] if facilitation.eventId === this.id
         person ← facilitation.facilitator
       } yield person
       query.sortBy(_.lastName.toLowerCase).list
@@ -148,9 +146,9 @@ case class Event(
   }
 
   def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {
-    val ids = DB.withSession { implicit session: Session ⇒
+    val ids = DB.withSession { implicit session ⇒
       (for {
-        e ← EventFacilitators if e.eventId === id.getOrElse(0L)
+        e ← TableQuery[EventFacilitators] if e.eventId === id.getOrElse(0L)
       } yield (e)).list.map(_._2)
     }
     facilitatorIds_=(ids)
@@ -185,9 +183,9 @@ case class Event(
     List(Languages.all.getOrElse(language.spoken, ""),
       Languages.all.getOrElse(language.secondSpoken.get, ""))
 
-  lazy val participants: List[Person] = DB.withSession { implicit session: Session ⇒
+  lazy val participants: List[Person] = DB.withSession { implicit session ⇒
     val query = for {
-      participation ← Participants if participation.eventId === this.id
+      participation ← TableQuery[Participants] if participation.eventId === this.id
       person ← participation.participant
     } yield person
     query.sortBy(_.lastName.toLowerCase).list
@@ -252,11 +250,11 @@ object Event {
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
     if (user.editor)
-      Query(Events).filter(_.archived === false).sortBy(_.start).list
+      TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
     else {
       val brands = Brand.findByUser(user)
-      if (brands.length > 0) {
-        val events = Query(Events).filter(_.archived === false).sortBy(_.start).list
+      if (brands.nonEmpty) {
+        val events = TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
         events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
       } else {
         List[Event]()

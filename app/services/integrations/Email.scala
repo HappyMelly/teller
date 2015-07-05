@@ -107,7 +107,7 @@ object EmailService {
         if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
           Logger.debug(s"${message.body}")
         } else {
-          preparedMail.setSSL(true)
+          preparedMail.setSSLOnConnect(true)
           preparedMail.setHostName(Play.configuration.getString("smtp.host").get)
           preparedMail.setAuthenticator(new mail.DefaultAuthenticator(
             Play.configuration.getString("smtp.user").get,

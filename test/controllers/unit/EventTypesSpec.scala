@@ -31,11 +31,11 @@ import models.service.brand.EventTypeService
 import org.specs2.mutable._
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.http.Status._
-import stubs.FakeServices
+import stubs.{ FakeRuntimeEnvironment, FakeServices }
 
 class EventTypesSpec extends Specification with IsolatedMockFactory {
 
-  class TestEventTypes extends EventTypes with FakeServices {
+  class TestEventTypes extends EventTypes(FakeRuntimeEnvironment) with FakeServices {
 
     def callValidatedEventType(brandId: Long,
       value: EventType): Option[(String, String)] =

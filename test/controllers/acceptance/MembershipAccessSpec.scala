@@ -25,40 +25,21 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ Membership, Security }
-import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
-import models.service.PersonService
-import org.scalamock.specs2.IsolatedMockFactory
-import play.api.test.FakeRequest
-import stubs._
+import controllers.Membership
+import models.UserRole.Role
+import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
 
-class MembershipAccessSpec extends PlayAppSpec with IsolatedMockFactory {
+class MembershipAccessSpec extends PlayAppSpec {
 
-  override def is = s2"""
-
-  Welcome page for person should
-    not be visible to unauthorized user                  $e1
-    be visible to authorized user                        $e2
-  """
-
-  class TestMembership() extends Membership with Security with FakeServices
+  class TestMembership() extends Membership(FakeRuntimeEnvironment)
+    with AccessCheckSecurity
 
   val controller = new TestMembership()
-  val personService = mock[PersonService]
-  controller.personService_=(personService)
 
-  def e1 = {
-    val result = controller.welcome().apply(FakeRequest())
-
-    status(result) must equalTo(SEE_OTHER)
-    header("Location", result) must beSome.which(_.contains("login"))
-  }
-
-  def e2 = {
-    (personService.memberships _) expects 1L returning List()
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/")
-    val result = controller.welcome().apply(req)
-
-    contentAsString(result) must contain("Join Happy Melly network")
+  "Method 'welcome'" should {
+    "have Viewer access rights" in {
+      controller.welcome().apply(fakePostRequest())
+      controller.checkedRole must_== Some(Role.Viewer)
+    }
   }
 }

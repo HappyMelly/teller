@@ -38,9 +38,9 @@ import services.integrations.{ Slack, Email }
 import stubs._
 import stubs.services.{ FakeIntegrations, FakeSlack, FakeEmail }
 
-class TestMembers() extends Members
-  with FakeSecurity
-  with FakeServices {
+class TestMembers() extends Members(FakeRuntimeEnvironment)
+    with FakeSecurity
+    with FakeServices {
 
   val slackInstance = new FakeSlack
   val emailInstance = new FakeEmail
@@ -170,7 +170,8 @@ class MembersSpec extends PlayAppSpec {
     "after the creation of related new person" in new WithStubs {
       val m = member(person = false, existingObject = true)
 
-      val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "/").
+      //editor
+      val req = fakePostRequest().
         withFormUrlEncodedBody(("emailAddress", "ttt@ttt.ru"),
           ("address.country", "RU"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
