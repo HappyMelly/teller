@@ -156,33 +156,33 @@ case class Certificate(
     val issueDate = new Phrase(issued, arialFont)
 
     if (cofacilitator) {
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 65, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 518, 90, 0)
       val firstFacilitator = facilitators.head
       val secondFacilitator = facilitators.last
       val firstName = new Phrase(firstFacilitator.fullName.toUpperCase, arialFont)
       val secondName = new Phrase(secondFacilitator.fullName.toUpperCase, arialFont)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
-        firstName, 480, 150, 0)
+        firstName, 400, 150, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
-        secondName, 480, 95, 0)
+        secondName, 640, 150, 0)
       if (firstFacilitator.signature) {
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(430, 170)
-        signature.scaleToFit(100, 90)
+        signature.setAbsolutePosition(350, 175)
+        signature.scaleToFit(90, 80)
         document.add(signature)
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(430, 110)
-        signature.scaleToFit(100, 90)
+        signature.setAbsolutePosition(590, 175)
+        signature.scaleToFit(90, 80)
         document.add(signature)
       }
     } else {
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 118, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 90, 0)
       val facilitator = facilitators.head
       val name = new Phrase(facilitator.fullName.toUpperCase, arialFont)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 480, 150, 0)
@@ -190,8 +190,8 @@ case class Certificate(
         val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.scaleToFit(130, 110)
-        signature.setAbsolutePosition(430, 170)
+        signature.scaleToFit(115, 100)
+        signature.setAbsolutePosition(410, 170)
         document.add(signature)
       }
     }
@@ -252,9 +252,9 @@ case class Certificate(
     font.setColor(150, 150, 150)
     ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateIdBlock, 680, 450, 0)
     font.setColor(0, 0, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 200, 290, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 200, 235, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 200, 180, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 207, 290, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 208, 235, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 208, 183, 0)
 
     if (cofacilitator) {
       val firstFacilitator = facilitators.head
@@ -267,16 +267,16 @@ case class Certificate(
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(595, 310)
-        signature.scaleToFit(115, 100)
+        signature.setAbsolutePosition(595, 300)
+        signature.scaleToFit(100, 95)
         document.add(signature)
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(595, 205)
-        signature.scaleToFit(115, 100)
+        signature.setAbsolutePosition(595, 180)
+        signature.scaleToFit(100, 95)
         document.add(signature)
       }
     } else {

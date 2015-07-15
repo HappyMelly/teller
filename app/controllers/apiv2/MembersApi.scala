@@ -27,7 +27,7 @@ package controllers.apiv2
 import ContributionsApi.contributionWrites
 import PeopleApi.personDetailsWrites
 import PeopleApi.{ personWrites, addressWrites }
-import models.{ Address, Member, Experiment, OrgView }
+import models.{ Address, Member, Experiment, OrgView, Organisation }
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
@@ -46,12 +46,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         "name" -> member.name,
         "type" -> readableMemberType(member),
         "funder" -> member.funder,
-        "image" -> {
-          if (member.person)
-            member.image
-          else
-            fullUrl(controllers.routes.Organisations.logo(member.objectId).url)
-        })
+        "image" -> memberImageUrl(member))
     }
   }
 
@@ -61,12 +56,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         "name" -> experiment.name,
         "description" -> experiment.description,
         "url" -> experiment.url,
-        "image" -> {
-          if (experiment.picture)
-            controllers.routes.Experiments.picture(experiment.id.get).url
-          else
-            ""
-        })
+        "image" -> experimentImageUrl(experiment))
     }
   }
 
@@ -90,7 +80,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         view.org.city, view.org.province, view.org.postCode, view.org.countryCode)
 
       Json.obj(
-        "image" -> fullUrl(controllers.routes.Organisations.logo(view.org.id.get).url),
+        "image" -> orgImageUrl(view.org),
         "name" -> view.org.name,
         "about" -> view.org.about,
         "address" -> Json.toJson(address),
@@ -152,6 +142,44 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
             } getOrElse jsonNotFound("Organisation does not exist")
           }
         } getOrElse jsonNotFound("Member does not exist")
+  }
+
+  /**
+   * Returns image url for the given experiment
+   *
+   * @param experiment Experiment
+   */
+  protected def experimentImageUrl(experiment: Experiment): Option[String] = {
+    if (experiment.picture)
+      Some(fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url))
+    else
+      None
+  }
+
+  /**
+   * Returns image url for the given member depending on its type
+   *
+   * @param member Member object
+   */
+  protected def memberImageUrl(member: Member): Option[String] = {
+    if (member.person)
+      member.image
+    else if (member.memberObj._2.get.logo)
+      Some(fullUrl(controllers.routes.Organisations.logo(member.objectId).url))
+    else
+      None
+  }
+
+  /**
+   * Returns image url for the given org
+   *
+   * @param org Organisation
+   */
+  protected def orgImageUrl(org: Organisation): Option[String] = {
+    if (org.logo)
+      Some(fullUrl(controllers.routes.Organisations.logo(org.id.get).url))
+    else
+      None
   }
 
   /**
