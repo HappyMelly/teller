@@ -29,6 +29,8 @@ import PeopleApi.personDetailsWrites
 import PeopleApi.{ personWrites, addressWrites }
 import models.{ Address, Member, Experiment, OrgView }
 import models.service.Services
+import play.api.Play
+import play.api.Play.current
 import play.api.libs.json._
 import play.mvc.Controller
 
@@ -48,7 +50,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
           if (member.person)
             member.image
           else
-            controllers.routes.Organisations.logo(member.objectId).url
+            fullUrl(controllers.routes.Organisations.logo(member.objectId).url)
         })
     }
   }
@@ -88,7 +90,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         view.org.city, view.org.province, view.org.postCode, view.org.countryCode)
 
       Json.obj(
-        "image" -> controllers.routes.Organisations.logo(view.org.id.get).url,
+        "image" -> fullUrl(controllers.routes.Organisations.logo(view.org.id.get).url),
         "name" -> view.org.name,
         "about" -> view.org.about,
         "address" -> Json.toJson(address),
@@ -161,6 +163,14 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
       "person"
     else
       "org"
+  }
+
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  private def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }
 
