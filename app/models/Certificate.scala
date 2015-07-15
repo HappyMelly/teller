@@ -27,7 +27,7 @@ package models
 import java.io.ByteArrayOutputStream
 
 import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
-import com.itextpdf.text.{ Document, Element, Font, Image, PageSize, Phrase }
+import com.itextpdf.text._
 import fly.play.s3.{ BucketFile, S3Exception }
 import models.brand.CertificateTemplate
 import models.service.BrandWithCoordinators
@@ -119,6 +119,8 @@ case class Certificate(
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
       BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+    val arialFont = FontFactory.getFont("Arial Bold",
+      BaseFont.IDENTITY_H, true, 12, Font.BOLD)
 
     val output = new ByteArrayOutputStream()
     val writer = PdfWriter.getInstance(document, output)
@@ -127,7 +129,7 @@ case class Certificate(
     val cofacilitator = if (facilitators.length > 1) true else false
     val img = template(brandId, event, cofacilitator)
     img.setAbsolutePosition(28, 0)
-    img.scalePercent(77)
+    img.scalePercent(24)
     document.add(img)
 
     val font = new Font(baseFont, 40)
@@ -138,7 +140,7 @@ case class Certificate(
     val dateString = if (event.schedule.start == event.schedule.end) {
       event.schedule.end.toString("MMMM d yyyy")
     } else {
-      event.schedule.start.toString("MMMM d - ") + event.schedule.end.toString("d, yyyy")
+      event.schedule.start.toString("MMMM d, ") + event.schedule.end.toString("d yyyy")
     }
     val location = "%s in %s, %s".format(dateString, event.location.city,
       Messages("country." + event.location.countryCode))
@@ -146,44 +148,50 @@ case class Certificate(
 
     val canvas = writer.getDirectContent
     canvas.saveState()
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 320, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 410, 0)
     font.setSize(30)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, locationPhrase, PageSize.A4.getHeight / 2, 178, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, locationPhrase, PageSize.A4.getHeight / 2, 283, 0)
     font.setSize(18)
+    val issued = LocalDate.now().toString("MMMM d, yyyy").toUpperCase
+    val issueDate = new Phrase(issued, arialFont)
 
     if (cofacilitator) {
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 65, 0)
       val firstFacilitator = facilitators.head
       val secondFacilitator = facilitators.last
-      val firstName = new Phrase(firstFacilitator.fullName, font)
-      val secondName = new Phrase(secondFacilitator.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 160, 15, 0)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 685, 15, 0)
+      val firstName = new Phrase(firstFacilitator.fullName.toUpperCase, arialFont)
+      val secondName = new Phrase(secondFacilitator.fullName.toUpperCase, arialFont)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
+        firstName, 480, 150, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
+        secondName, 480, 95, 0)
       if (firstFacilitator.signature) {
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(100, 45)
-        signature.scaleToFit(130, 110)
+        signature.setAbsolutePosition(430, 170)
+        signature.scaleToFit(100, 90)
         document.add(signature)
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(630, 45)
-        signature.scaleToFit(130, 110)
+        signature.setAbsolutePosition(430, 110)
+        signature.scaleToFit(100, 90)
         document.add(signature)
       }
     } else {
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 118, 0)
       val facilitator = facilitators.head
-      val name = new Phrase(facilitator.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 685, 15, 0)
+      val name = new Phrase(facilitator.fullName.toUpperCase, arialFont)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 480, 150, 0)
       if (facilitator.signature) {
         val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.scaleToFit(130, 110)
-        signature.setAbsolutePosition(630, 45)
+        signature.setAbsolutePosition(430, 170)
         document.add(signature)
       }
     }
@@ -216,8 +224,8 @@ case class Certificate(
     val facilitators = event.facilitators
     val cofacilitator = if (facilitators.length > 1) true else false
     val img = template(brandId, event, cofacilitator)
-    img.setAbsolutePosition(7, 10)
-    img.scalePercent(55)
+    img.setAbsolutePosition(7, 2)
+    img.scalePercent(48)
     document.add(img)
 
     val font = new Font(baseFont, 20)
@@ -238,28 +246,28 @@ case class Certificate(
 
     val canvas = writer.getDirectContent
     canvas.saveState()
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 450, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, title, PageSize.A4.getHeight / 2, 340, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, PageSize.A4.getHeight / 2, 415, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, title, PageSize.A4.getHeight / 2, 330, 0)
     font.setSize(12)
     font.setColor(150, 150, 150)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateIdBlock, 560, 490, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, certificateIdBlock, 680, 450, 0)
     font.setColor(0, 0, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 190, 275, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 190, 220, 0)
-    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 190, 165, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, eventDate, 200, 290, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, location, 200, 235, 0)
+    ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, date, 200, 180, 0)
 
     if (cofacilitator) {
       val firstFacilitator = facilitators.head
       val secondFacilitator = facilitators.last
       val firstName = new Phrase(firstFacilitator.fullName, font)
       val secondName = new Phrase(secondFacilitator.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 595, 165, 0)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 725, 165, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 650, 290, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 650, 185, 0)
       if (firstFacilitator.signature) {
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(535, 185)
+        signature.setAbsolutePosition(595, 310)
         signature.scaleToFit(115, 100)
         document.add(signature)
       }
@@ -267,20 +275,20 @@ case class Certificate(
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(665, 185)
+        signature.setAbsolutePosition(595, 205)
         signature.scaleToFit(115, 100)
         document.add(signature)
       }
     } else {
       val facilitator = facilitators.head
       val name = new Phrase(facilitator.fullName, font)
-      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 165, 0)
+      ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 185, 0)
       if (facilitator.signature) {
         val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
         val signature = Image.getInstance(imageData, true)
         signature.scaleToFit(155, 100)
-        signature.setAbsolutePosition(570, 185)
+        signature.setAbsolutePosition(570, 205)
         document.add(signature)
       }
     }

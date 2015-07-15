@@ -157,7 +157,7 @@ class LicenseService extends Services {
       implicit session: Session ⇒
         val query = for {
           license ← Licenses if license.start <= date && license.end >= date && license.brandId === brandId
-          licensee ← license.licensee
+          licensee ← license.licensee if licensee.active === true
         } yield licensee
         query.sortBy(_.lastName.toLowerCase).list
     }

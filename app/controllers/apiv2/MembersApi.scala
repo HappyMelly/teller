@@ -88,7 +88,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         view.org.city, view.org.province, view.org.postCode, view.org.countryCode)
 
       Json.obj(
-        "logo" -> controllers.routes.Organisations.logo(view.org.id.get).url,
+        "image" -> controllers.routes.Organisations.logo(view.org.id.get).url,
         "name" -> view.org.name,
         "about" -> view.org.about,
         "address" -> Json.toJson(address),
