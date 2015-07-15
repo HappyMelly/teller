@@ -106,6 +106,7 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
         "id" -> view.member.id,
         "funder" -> view.member.funder,
         "type" -> readableMemberType(view.member),
+        "reason" -> view.member.reason,
         "experiments" -> view.experiments,
         "org" -> Json.toJson(view.orgView)(organisationDetailsWrites))
     }
