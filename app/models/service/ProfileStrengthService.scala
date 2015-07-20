@@ -38,15 +38,15 @@ class ProfileStrengthService {
    * @param org If true, objectId is an organisation identifier
    */
   def find(objectId: Long, org: Boolean = false): Option[ProfileStrength] =
-    DB.withSession { implicit session: Session ⇒
-      Query(ProfileStrengths).
+    DB.withSession { implicit session ⇒
+      TableQuery[ProfileStrengths].
         filter(_.objectId === objectId).
         filter(_.org === org).firstOption
     }
 
   def update(strength: ProfileStrength): ProfileStrength = {
-    DB.withSession { implicit session: Session ⇒
-      Query(ProfileStrengths).
+    DB.withSession { implicit session ⇒
+      TableQuery[ProfileStrengths].
         filter(_.objectId === strength.objectId).
         filter(_.org === strength.org).
         map(_.forUpdate).
@@ -57,8 +57,9 @@ class ProfileStrengthService {
   }
 
   def insert(strength: ProfileStrength): ProfileStrength = {
-    DB.withSession { implicit session: Session ⇒
-      val id = ProfileStrengths.forInsert.insert(strength)
+    DB.withSession { implicit session ⇒
+      val strengths = TableQuery[ProfileStrengths]
+      val id = (strengths returning strengths.map(_.id)) += strength
       strength.copy(id = Some(id))
     }
   }

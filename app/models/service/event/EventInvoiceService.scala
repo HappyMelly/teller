@@ -38,7 +38,7 @@ class EventInvoiceService {
   }
 
   def _update(invoice: EventInvoice)(implicit session: Session): Unit =
-    EventInvoices.filter(_.id === invoice.id)
+    TableQuery[EventInvoices].filter(_.id === invoice.id)
       .map(_.forUpdate)
       .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
 }

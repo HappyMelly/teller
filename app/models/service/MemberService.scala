@@ -33,21 +33,23 @@ import play.api.Play.current
 /** Provides operations with database related to members */
 class MemberService {
 
+  private val members = TableQuery[Members]
+
   /**
    * Returns a list of people and organisations which have member profiles
    *  both active and inactive
    */
   def findAll: List[Member] = DB.withSession { implicit session ⇒
     val peopleQuery = for {
-      m ← Members if m.person === true
-      p ← People if p.id === m.objectId
+      m ← members if m.person === true
+      p ← TableQuery[People] if p.id === m.objectId
     } yield (m, p)
     val result1 = peopleQuery.list
     result1.foreach(d ⇒ d._1.memberObj_=(d._2))
 
     val orgQuery = for {
-      m ← Members if m.person === false
-      o ← Organisations if o.id === m.objectId
+      m ← members if m.person === false
+      o ← TableQuery[Organisations] if o.id === m.objectId
     } yield (m, o)
     val result2 = orgQuery.list
     result2.foreach(d ⇒ d._1.memberObj_=(d._2))
@@ -60,14 +62,14 @@ class MemberService {
    * @param id Member identifier
    */
   def find(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    val member = Query(Members).filter(_.id === id).firstOption
+    val member = members.filter(_.id === id).firstOption
     if (member.nonEmpty) {
       val m = member.get
       if (m.person) {
-        val person = Query(People).filter(_.id === m.objectId).first
+        val person = TableQuery[People].filter(_.id === m.objectId).first
         m.memberObj_=(person)
       } else {
-        val org = Query(Organisations).filter(_.id === m.objectId).first
+        val org = TableQuery[Organisations].filter(_.id === m.objectId).first
         m.memberObj_=(org)
       }
     }
@@ -81,7 +83,7 @@ class MemberService {
    * @return Returns member object with updated id
    */
   def insert(m: Member): Member = DB.withSession { implicit session ⇒
-    val id: Long = Members.forInsert.insert(m)
+    val id = (members returning members.map(_.id)) += m
     m.copy(id = Some(id))
   }
 
@@ -91,7 +93,7 @@ class MemberService {
    * @return Updated member
    */
   def update(m: Member): Member = DB.withSession { implicit session ⇒
-    Members.filter(_.id === m.id).update(m)
+    members.filter(_.id === m.id).update(m)
     m
   }
 
@@ -101,10 +103,8 @@ class MemberService {
    * @param person If true, object is a person, otherwise - org
    */
   def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
-    implicit session: Session ⇒
-      Members.
-        filter(_.objectId === objectId).
-        filter(_.person === person).delete
+    implicit session ⇒
+      members.filter(_.objectId === objectId).filter(_.person === person).delete
   }
 }
 

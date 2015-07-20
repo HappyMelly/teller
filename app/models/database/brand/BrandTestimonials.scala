@@ -30,7 +30,8 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Connects BrandTestimonial object with its database representation
  */
-private[models] object BrandTestimonials extends Table[BrandTestimonial]("BRAND_TESTIMONIAL") {
+private[models] class BrandTestimonials(tag: Tag)
+    extends Table[BrandTestimonial](tag, "BRAND_TESTIMONIAL") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
@@ -38,9 +39,8 @@ private[models] object BrandTestimonials extends Table[BrandTestimonial]("BRAND_
   def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
   def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
 
-  def * = id.? ~ brandId ~ content ~ name ~
-    company <> (BrandTestimonial.apply _, BrandTestimonial.unapply _)
+  def * = (id.?, brandId, content, name,
+    company) <> (BrandTestimonial.tupled, BrandTestimonial.unapply)
 
-  def forInsert = * returning id
-  def forUpdate = content ~ name ~ company
+  def forUpdate = (content, name, company)
 }

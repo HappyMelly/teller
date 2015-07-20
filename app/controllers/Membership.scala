@@ -34,10 +34,14 @@ import play.api.Play.current
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.{ Logger, Play }
+import securesocial.core.RuntimeEnvironment
 
-trait Membership extends Enrollment with Activities {
+class Membership(environment: RuntimeEnvironment[ActiveUser])
+    extends Enrollment
+    with Security
+    with Activities {
 
-  class ValidationException(msg: String) extends RuntimeException(msg) {}
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders welcome screen for existing users with two options:
@@ -118,6 +122,14 @@ trait Membership extends Enrollment with Activities {
             } getOrElse {
               routes.People.details(user.person.id.get).url
             }
+            if (org.isEmpty) {
+              env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+                _.updateUser(ActiveUser(user.identity,
+                  user.account,
+                  user.person,
+                  Some(member)))
+              })
+            }
             notify(user.person, org, fee, member)
             subscribe(user.person, member)
 
@@ -137,7 +149,7 @@ trait Membership extends Enrollment with Activities {
             case e: RequestException ⇒
               e.log.foreach(Logger.error(_))
               BadRequest(Json.obj("message" -> Messages(e.getMessage)))
-            case e: ValidationException ⇒
+            case e: Membership.ValidationException ⇒
               BadRequest(Json.obj("message" -> Messages(e.getMessage)))
           }
         })
@@ -154,27 +166,30 @@ trait Membership extends Enrollment with Activities {
     organisation: Option[Organisation]) = {
     data.orgId foreach { orgId ⇒
       if (organisation.isEmpty) {
-        throw new ValidationException("error.organisation.notExist")
+        throw new Membership.ValidationException("error.organisation.notExist")
       }
       if (data.fee < Payment.countryBasedFees(organisation.get.countryCode)._1) {
-        throw new ValidationException("error.payment.minimum_fee")
+        throw new Membership.ValidationException("error.payment.minimum_fee")
       }
       if (organisation.get.member.nonEmpty) {
-        throw new ValidationException("error.organisation.member")
+        throw new Membership.ValidationException("error.organisation.member")
       }
       if (!person.organisations.exists(_.id == Some(orgId))) {
-        throw new ValidationException("error.person.notOrgMember")
+        throw new Membership.ValidationException("error.person.notOrgMember")
       }
     }
     if (organisation.isEmpty) {
       if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
-        throw new ValidationException("error.payment.minimum_fee")
+        throw new Membership.ValidationException("error.payment.minimum_fee")
       }
       if (person.member.nonEmpty) {
-        throw new ValidationException("error.person.member")
+        throw new Membership.ValidationException("error.person.member")
       }
     }
   }
 }
 
-object Membership extends Membership with Security with Services
+object Membership {
+
+  class ValidationException(msg: String) extends RuntimeException(msg) {}
+}

@@ -31,21 +31,21 @@ import play.api.db.slick.DB
 import play.api.Play.current
 
 case class EventInvoice(id: Option[Long],
-  eventId: Option[Long],
-  invoiceTo: Long,
-  invoiceBy: Option[Long],
-  number: Option[String]) {
+    eventId: Option[Long],
+    invoiceTo: Long,
+    invoiceBy: Option[Long],
+    number: Option[String]) {
 
   lazy val invoiceToOrg: Option[Organisation] = OrganisationService.get.find(invoiceTo)
-  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map{ OrganisationService.get.find(_) }.getOrElse(None)
+  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map { OrganisationService.get.find(_) }.getOrElse(None)
 }
 
 object EventInvoice {
 
   def empty: EventInvoice = EventInvoice(None, None, 0, None, None)
 
-  def findByEvent(id: Long): EventInvoice = DB.withSession { implicit session: Session ⇒
-    Query(EventInvoices).filter(_.eventId === id).first
+  def findByEvent(id: Long): EventInvoice = DB.withSession { implicit session ⇒
+    TableQuery[EventInvoices].filter(_.eventId === id).first
   }
 
   def update(invoice: EventInvoice): Unit = DB.withSession {
@@ -54,7 +54,7 @@ object EventInvoice {
   }
 
   def _update(invoice: EventInvoice)(implicit session: Session): Unit =
-    EventInvoices.filter(_.id === invoice.id)
+    TableQuery[EventInvoices].filter(_.id === invoice.id)
       .map(_.forUpdate)
       .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
 }

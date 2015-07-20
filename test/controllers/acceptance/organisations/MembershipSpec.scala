@@ -22,24 +22,22 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.acceptance
+package controllers.acceptance.organisations
 
-import controllers.Organisations
-import helpers.{ MemberHelper, PersonHelper, OrganisationHelper }
 import _root_.integration.PlayAppSpec
+import controllers.Organisations
+import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.payment.Record
-import models.{ Organisation, Person, SocialProfile, ProfileType, OrgView }
 import models.service._
+import models.{ OrgView, ProfileType, SocialProfile }
 import org.joda.money.Money
-import org.scalamock.specs2.{ MockContext, IsolatedMockFactory }
-import play.api.mvc.SimpleResult
+import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
+import play.api.mvc.Result
 import stubs._
 
 import scala.concurrent.Future
 
-class TestOrganisations() extends Organisations with FakeServices
-
-class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
+class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
@@ -59,7 +57,6 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
   When subscription exists, 'Stop automatic...' button should be visible,
   'No automatic renewal' badge should not be visible to
     an Editor                                                               $e8
-    a member of the org                                                     $e9
 
   When subscription does not exist, 'Stop automatic...' button should not be
   visible, 'No automatic renewal' badge should be visible to
@@ -78,6 +75,11 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     not be visible to Viewers                                               $e16
     be visible to Editors                                                   $e17
   """
+
+  class TestOrganisations()
+    extends Organisations(FakeRuntimeEnvironment)
+    with FakeServices
+    with FakeSecurity
 
   val personService = mock[PersonService]
   val orgService = mock[OrganisationService]
@@ -109,10 +111,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     // when @org.deletable is called
     OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List(PersonHelper.one()))
-
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(id).apply(req)
+    val result = controller.details(id).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Become a Member")
@@ -125,8 +125,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List())
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(id).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(id).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Become a Member"
@@ -138,8 +138,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     OrganisationService.get.insert(OrgView(org, profile))
     org.people_=(List())
     val controller = fakedController()
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(id).apply(req)
+    val result = controller.details(id).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Become a Member"
@@ -152,11 +151,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = false)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Supporter")
@@ -170,11 +166,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val request = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(request)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("funder.jpg")
@@ -188,16 +182,13 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val payments = List(
       Record("remote1", 1L, 1L, person = false, "One Year Membership Fee", Money.parse("EUR 100")),
       Record("remote2", 1L, 1L, person = false, "One Year Membership Fee 2", Money.parse("EUR 200")))
     (paymentService.findByOrganisation _) expects id returning payments
     val controller = fakedController()
-
-    val identity = FakeUserIdentity.admin
-    val req = prepareSecuredGetRequest(identity, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.admin)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("One Year Membership Fee")
@@ -225,8 +216,7 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val controller = fakedController()
 
     val identity = FakeUserIdentity.editor
-    val req = prepareSecuredGetRequest(identity, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("One Year Membership Fee")
@@ -246,33 +236,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Stop automatic renewal")
-    contentAsString(result) must contain("organization/1/cancel")
-    contentAsString(result) must not contain "Renew subscription"
-    contentAsString(result) must not contain "Automatic renewal is stopped"
-  }
-
-  def e9 = new ExtendedMemberMockContext {
-    // we insert an org object here to prevent crashing on account retrieval
-    // when @org.deletable is called
-    OrganisationService.get.insert(OrgView(org, profile))
-    val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
-    org.member_=(member)
-    val person = PersonHelper.one().insert
-    person.addRelation(id)
-    org.people_=(List(person))
-
-    val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Stop automatic renewal")
@@ -289,11 +255,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
       renewal = false)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Stop automatic renewal"
@@ -310,11 +274,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
       renewal = false)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Stop automatic renewal"
@@ -330,11 +291,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Stop automatic renewal"
@@ -347,9 +305,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     truncateTables()
     (orgService.find(_: Long)) expects id returning None
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
-    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(NOT_FOUND)
   }
@@ -359,9 +316,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val org = OrganisationHelper.one
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
-    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/organization/1"))
@@ -375,9 +331,8 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organization/1/cancel")
-    val result: Future[SimpleResult] = controller.cancel(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
     header("Location", result) must beSome.which(_.contains("/organization/1"))
@@ -390,11 +345,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
 
-    val req = prepareSecuredGetRequest(FakeUserIdentity.viewer, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must not contain "Edit Membership"
@@ -410,11 +363,9 @@ class OrganisationsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
     org.member_=(member)
     org.people_=(List())
-
     val controller = fakedController()
-
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/organisation/1")
-    val result: Future[SimpleResult] = controller.details(org.id.get).apply(req)
+    controller.identity_=(FakeUserIdentity.editor)
+    val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Edit Membership")

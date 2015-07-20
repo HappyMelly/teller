@@ -24,6 +24,7 @@
 
 package services.integrations
 
+import play.api.Play.current
 import play.api.libs.json._
 import play.api.libs.ws.WS
 import scala.util.Try

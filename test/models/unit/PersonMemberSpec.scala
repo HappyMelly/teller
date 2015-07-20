@@ -39,7 +39,7 @@ class PersonMemberSpec extends Specification {
     lastName: String) extends Person(id, firstName, lastName, None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
-    with FakeServices {
+      with FakeServices {
 
     def callMembership(funder: Boolean, fee: Money): Member =
       membership(funder, fee)
@@ -74,7 +74,7 @@ class PersonMemberSpec extends Specification {
     lastName: String) extends Person(id, firstName, lastName, None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
-    with FakeServices {
+      with FakeServices {
 
     /**
      * We need to override 'membership' function to remove ambiguity of

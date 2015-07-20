@@ -28,20 +28,20 @@ import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 
 case class Member(
-  id: Option[Long],
-  objectId: Long,
-  person: Boolean,
-  funder: Boolean,
-  fee: Money,
-  renewal: Boolean = true,
-  since: LocalDate,
-  until: LocalDate,
-  existingObject: Boolean,
-  reason: Option[String] = None,
-  created: DateTime,
-  createdBy: Long,
-  updated: DateTime,
-  updatedBy: Long) extends Services with ActivityRecorder {
+    id: Option[Long],
+    objectId: Long,
+    person: Boolean,
+    funder: Boolean,
+    fee: Money,
+    renewal: Boolean = true,
+    since: LocalDate,
+    until: LocalDate,
+    existingObject: Boolean,
+    reason: Option[String] = None,
+    created: DateTime,
+    createdBy: Long,
+    updated: DateTime,
+    updatedBy: Long) extends Services with ActivityRecorder {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
 

@@ -24,17 +24,14 @@
 
 package controllers
 
-import play.api.mvc.{ SimpleResult, Action, Controller }
-import play.api.libs.json._
-import services.CurrencyConverter
-import org.joda.money.{ Money, CurrencyUnit }
 import models.ExchangeRate
+import org.joda.money.{ CurrencyUnit, Money }
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import scala.concurrent.Future
-import play.api.Logger
-import scala.util.{ Failure, Success, Try }
+import play.api.mvc.{ Action, Controller }
+import services.CurrencyConverter
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object ExchangeRates extends Controller {
 
@@ -61,7 +58,7 @@ object ExchangeRates extends Controller {
 
     val currenciesToLookUp = required.toSet -- ratesFromDB.map(_.counter).toSet
 
-    val futureRates: Future[Seq[ExchangeRate]] = Future.sequence(currenciesToLookUp.map{ counter ⇒
+    val futureRates: Future[Seq[ExchangeRate]] = Future.sequence(currenciesToLookUp.map { counter ⇒
       CurrencyConverter.findRate(base, counter)
     }).map(_.flatten.toSeq)
     val bothRateLists: Future[List[ExchangeRate]] = futureRates.map(r ⇒ r.toList ::: ratesFromDB.toList ::: Nil)

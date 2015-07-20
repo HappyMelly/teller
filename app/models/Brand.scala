@@ -40,22 +40,22 @@ import scala.util.Random
  * A person, such as the owner or employee of an organisation.
  */
 case class Brand(id: Option[Long],
-  code: String,
-  uniqueName: String,
-  name: String,
-  ownerId: Long,
-  description: Option[String],
-  picture: Option[String],
-  generateCert: Boolean = false,
-  tagLine: Option[String],
-  webSite: Option[String],
-  blog: Option[String],
-  evaluationHookUrl: Option[String] = None,
-  active: Boolean = true,
-  created: DateTime,
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends ActivityRecorder with Services {
+    code: String,
+    uniqueName: String,
+    name: String,
+    ownerId: Long,
+    description: Option[String],
+    picture: Option[String],
+    generateCert: Boolean = false,
+    tagLine: Option[String],
+    webSite: Option[String],
+    blog: Option[String],
+    evaluationHookUrl: Option[String] = None,
+    active: Boolean = true,
+    created: DateTime,
+    createdBy: String,
+    updated: DateTime,
+    updatedBy: String) extends ActivityRecorder with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
 
@@ -77,9 +77,7 @@ case class Brand(id: Option[Long],
   def objectType: String = Activity.Type.Brand
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
-    DB.withSession { implicit session: Session ⇒
-      SocialProfileService.get.find(id.getOrElse(0), ProfileType.Brand)
-    }
+    SocialProfileService.get.find(id.getOrElse(0), ProfileType.Brand)
   } else {
     _socialProfile.get
   }
@@ -91,21 +89,19 @@ case class Brand(id: Option[Long],
   /**
    * Returns true if this brand may be deleted.
    */
-  lazy val deletable: Boolean = DB.withSession { implicit session: Session ⇒
+  lazy val deletable: Boolean = DB.withSession { implicit session ⇒
     val hasLicences = id.exists { brandId ⇒
-      val query = Query(Licenses).filter(l ⇒ l.brandId === brandId)
-      Query(query.exists).first
+      TableQuery[Licenses].filter(_.brandId === brandId).exists.run
     }
     val hasBookings = id.exists { brandId ⇒
-      val query = Query(BookingEntries).filter(e ⇒ e.brandId === brandId)
-      Query(query.exists).first
+      TableQuery[BookingEntries].filter(_.brandId === brandId).exists.run
     }
     !hasLicences && !hasBookings && ProductService.get.findByBrand(this.id.get).isEmpty
   }
 
-  lazy val products: List[Product] = DB.withSession { implicit session: Session ⇒
+  lazy val products: List[Product] = DB.withSession { implicit session ⇒
     val query = for {
-      relation ← ProductBrandAssociations if relation.brandId === this.id
+      relation ← TableQuery[ProductBrandAssociations] if relation.brandId === this.id
       product ← relation.product
     } yield product
     query.sortBy(_.title.toLowerCase).list
@@ -130,12 +126,14 @@ object Brand {
   /**
    * Returns true if and only if there is a brand with the given code.
    */
-  def exists(code: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
-    id.map { value ⇒
-      Query(Query(Brands).filter(_.code === code).filter(_.id =!= value).exists).first
-    }.getOrElse {
-      Query(Query(Brands).filter(_.code === code).exists).first
-    }
+  def exists(code: String, id: Option[Long] = None): Boolean = DB.withSession {
+    implicit session ⇒
+      val brands = TableQuery[Brands]
+      id map { value ⇒
+        brands.filter(_.code === code).filter(_.id =!= value).exists.run
+      } getOrElse {
+        brands.filter(_.code === code).exists.run
+      }
   }
 
   /**
@@ -145,12 +143,15 @@ object Brand {
    * @param id An unique number identifier of the brand
    * @return
    */
-  def nameExists(uniqueName: String, id: Option[Long] = None): Boolean = DB.withSession { implicit session: Session ⇒
-    id.map { value ⇒
-      Query(Query(Brands).filter(_.uniqueName === uniqueName).filter(_.id =!= value).exists).first
-    }.getOrElse {
-      Query(Query(Brands).filter(_.uniqueName === uniqueName).exists).first
-    }
+  def nameExists(uniqueName: String, id: Option[Long] = None): Boolean = DB.withSession {
+    implicit session ⇒
+      val brands = TableQuery[Brands]
+
+      id map { value ⇒
+        brands.filter(_.uniqueName === uniqueName).filter(_.id =!= value).exists.run
+      } getOrElse {
+        brands.filter(_.uniqueName === uniqueName).exists.run
+      }
   }
 
   /**
@@ -160,7 +161,7 @@ object Brand {
    *  license holders.
    */
   def canManage(brandId: Long, user: UserAccount): Boolean = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
       findByUser(user).exists(_.id == Some(brandId))
   }
 
@@ -170,18 +171,18 @@ object Brand {
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
    */
-  def findByUser(user: UserAccount): List[Brand] = DB.withSession { implicit session: Session ⇒
+  def findByUser(user: UserAccount): List[Brand] = DB.withSession { implicit session ⇒
     if (user.editor)
-      Query(Brands).list.sortBy(_.name)
+      TableQuery[Brands].list.sortBy(_.name)
     else {
       val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
       BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
     }
   }
 
-  def find(code: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
+  def find(code: String): Option[BrandView] = DB.withSession { implicit session ⇒
     val query = for {
-      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.code === code
+      (brand, license) ← TableQuery[Brands] leftJoin TableQuery[Licenses] on (_.id === _.brandId) if brand.code === code
       coordinator ← brand.coordinator
     } yield (brand, coordinator, license.id.?)
 
@@ -196,9 +197,9 @@ object Brand {
    * @param uniqueName Unique identifier of the brand
    * @return
    */
-  def findByName(uniqueName: String): Option[BrandView] = DB.withSession { implicit session: Session ⇒
+  def findByName(uniqueName: String): Option[BrandView] = DB.withSession { implicit session ⇒
     val query = for {
-      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId) if brand.uniqueName === uniqueName
+      (brand, license) ← TableQuery[Brands] leftJoin TableQuery[Licenses] on (_.id === _.brandId) if brand.uniqueName === uniqueName
       coordinator ← brand.coordinator
     } yield (brand, coordinator, license.id.?)
 
@@ -215,18 +216,17 @@ object Brand {
    *
    * @param brandId Brand id
    */
-  def findFacilitators(brandId: Long): List[Person] = DB.withSession {
-    implicit session: Session ⇒
-      val collator = Collator.getInstance(Locale.ENGLISH)
-      val ord = new Ordering[String] {
-        def compare(x: String, y: String) = collator.compare(x, y)
-      }
-      LicenseService.get.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
+  def findFacilitators(brandId: Long): List[Person] = {
+    val collator = Collator.getInstance(Locale.ENGLISH)
+    val ord = new Ordering[String] {
+      def compare(x: String, y: String) = collator.compare(x, y)
+    }
+    LicenseService.get.licensees(brandId, LocalDate.now()).sortBy(_.fullName.toLowerCase)(ord)
   }
 
-  def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session: Session ⇒
+  def findAllWithCoordinator: List[BrandView] = DB.withSession { implicit session ⇒
     val query = for {
-      (brand, license) ← Brands leftJoin Licenses on (_.id === _.brandId)
+      (brand, license) ← TableQuery[Brands] leftJoin TableQuery[Licenses] on (_.id === _.brandId)
       coordinator ← brand.coordinator
     } yield (brand, coordinator, license.id.?)
 

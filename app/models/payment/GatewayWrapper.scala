@@ -32,7 +32,7 @@ import models.Person
 import scala.collection.JavaConversions._
 
 class RequestException(msg: String, logMsg: Option[String] = None)
-  extends RuntimeException(msg) {
+    extends RuntimeException(msg) {
 
   def log: Option[String] = logMsg
 }

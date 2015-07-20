@@ -36,7 +36,8 @@ import stubs._
 
 class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
 
-  class TestProfileStrengths extends ProfileStrengths with FakeServices {
+  class TestProfileStrengths extends ProfileStrengths(FakeRuntimeEnvironment)
+      with FakeServices {
 
     def callInitializeProfileStrength(person: Person): ProfileStrength =
       initializeProfileStrength(person)

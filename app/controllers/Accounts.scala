@@ -32,10 +32,16 @@ import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
+import securesocial.core.RuntimeEnvironment
 import scala.concurrent.ExecutionContext.Implicits.global
 import services.CurrencyConverter.NoExchangeRateException
 
-object Accounts extends Controller with Security with Activities {
+class Accounts(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 
@@ -88,7 +94,7 @@ object Accounts extends Controller with Security with Activities {
   def details(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Account.find(id).map{ account ⇒
+        Account.find(id).map { account ⇒
           Ok(views.html.account.details(user, account, currencyForm))
         }.getOrElse(NotFound)
   }
@@ -96,14 +102,14 @@ object Accounts extends Controller with Security with Activities {
   def activate(id: Long) = SecuredRestrictedAction(Editor) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Account.find(id).map{ account ⇒
+        Account.find(id).map { account ⇒
           if (account.editableBy(user.account)) {
-            currencyForm.bindFromRequest().fold (
+            currencyForm.bindFromRequest().fold(
               form ⇒ BadRequest(views.html.account.details(user, account, form)),
               currency ⇒ {
                 account.activate(currency)
                 val log = activity(account, user.person).activated.insert()
-                account.accountHolder.updated(user.fullName)
+                account.accountHolder.updated(user.name)
                 Redirect(routes.Accounts.details(id)).flashing(
                   "success" -> log.toString)
               })
@@ -120,7 +126,7 @@ object Accounts extends Controller with Security with Activities {
         Account.find(id).map(account ⇒
           if (account.editableBy(user.account)) {
             account.deactivate()
-            account.accountHolder.updated(user.fullName)
+            account.accountHolder.updated(user.name)
             val log = activity(account, user.person).deactivated.insert()
             Redirect(routes.Accounts.details(id)).flashing(
               "success" -> log.toString)

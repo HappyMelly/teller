@@ -24,7 +24,7 @@
  */
 package models.service
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.database.{ Licenses, People }
 import models._
 import org.joda.time.LocalDate
@@ -34,13 +34,14 @@ import play.api.db.slick.DB
 
 class LicenseService extends Services {
 
+  private val licenses = TableQuery[Licenses]
   /**
    * Adds the given license to database and updates all related tables
    * @param license License
    * @return Returns the updated license with a valid id
    */
-  def add(license: License) = DB.withTransaction { implicit session: Session ⇒
-    val id = Licenses.forInsert.insert(license)
+  def add(license: License) = DB.withTransaction { implicit session ⇒
+    val id = (licenses returning licenses.map(_.id)) += license
     if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
       val facilitator = Facilitator(None, license.licenseeId, license.brandId)
       facilitatorService.insert(facilitator)
@@ -53,9 +54,9 @@ class LicenseService extends Services {
    * @param personId Person identifier
    */
   def activeLicenses(personId: Long): List[LicenseView] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
       val query = for {
-        license ← Licenses if license.licenseeId === personId && license.end >= LocalDate.now
+        license ← licenses if license.licenseeId === personId && license.end >= LocalDate.now
         brand ← license.brand
       } yield (license, brand)
 
@@ -72,8 +73,8 @@ class LicenseService extends Services {
    * @param personId Person identifier
    */
   def activeLicense(brandId: Long, personId: Long): Option[License] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Licenses)
+    implicit session ⇒
+      licenses
         .filter(_.licenseeId === personId)
         .filter(_.brandId === brandId)
         .filter(_.start <= LocalDate.now())
@@ -87,13 +88,13 @@ class LicenseService extends Services {
    * @param brands List of brands we want expiring license data from
    */
   def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
       val firstDay = LocalDate.now().withDayOfMonth(1)
       val lowerLimit = firstDay.minusMonths(1)
       val upperLimit = firstDay.plusMonths(1)
       val query = for {
-        license ← Licenses if license.end >= lowerLimit && license.end < upperLimit
-        person ← People if person.id === license.licenseeId
+        license ← licenses if license.end >= lowerLimit && license.end < upperLimit
+        person ← TableQuery[People] if person.id === license.licenseeId
       } yield (license, person)
       query.filter(_._1.brandId inSet brands).list
         .map(v ⇒ LicenseLicenseeView(v._1, v._2))
@@ -105,8 +106,8 @@ class LicenseService extends Services {
    * @param brandId Brand id
    */
   def findByBrand(brandId: Long): List[License] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Licenses).filter(_.brandId === brandId).list
+    implicit session ⇒
+      licenses.filter(_.brandId === brandId).list
   }
 
   /**
@@ -115,9 +116,9 @@ class LicenseService extends Services {
    * @param id License id
    */
   def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] =
-    DB.withSession { implicit session: Session ⇒
+    DB.withSession { implicit session ⇒
       val query = for {
-        license ← Licenses if license.id === id
+        license ← licenses if license.id === id
         brand ← license.brand
         licensee ← license.licensee
       } yield (license, brand, licensee)
@@ -133,9 +134,9 @@ class LicenseService extends Services {
    * @param personId Person identifier
    */
   def licenses(personId: Long): List[LicenseView] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
       val query = for {
-        license ← Licenses if license.licenseeId === personId
+        license ← licenses if license.licenseeId === personId
         brand ← license.brand
       } yield (license, brand)
 
@@ -156,7 +157,7 @@ class LicenseService extends Services {
     DB.withSession {
       implicit session: Session ⇒
         val query = for {
-          license ← Licenses if license.start <= date && license.end >= date && license.brandId === brandId
+          license ← licenses if license.start <= date && license.end >= date && license.brandId === brandId
           licensee ← license.licensee if licensee.active === true
         } yield licensee
         query.sortBy(_.lastName.toLowerCase).list
@@ -167,9 +168,9 @@ class LicenseService extends Services {
    *
    * @param license License object
    */
-  def update(license: License): Unit = DB.withTransaction { implicit session: Session ⇒
+  def update(license: License): Unit = DB.withTransaction { implicit session ⇒
     license.id.map { id ⇒
-      Query(Licenses).filter(_.id === id).update(license)
+      licenses.filter(_.id === id).update(license)
     }
     if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
       val facilitator = Facilitator(None, license.licenseeId, license.brandId)

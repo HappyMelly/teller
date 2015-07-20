@@ -27,7 +27,7 @@ package models
 import models.service.{ OrganisationService, PersonService }
 import org.joda.money.{ Money, CurrencyUnit }
 import org.joda.time.LocalDate
-import models.database.{ BookingEntries, Organisations, People, Accounts }
+import models.database._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.i18n.Messages
@@ -43,10 +43,10 @@ import scala.math.BigDecimal.RoundingMode
  * the `Levy`. Accounts have a currency set upon activation and may only be deactivated when their balance is zero.
  */
 case class Account(id: Option[Long] = None,
-  organisationId: Option[Long] = None,
-  personId: Option[Long] = None,
-  currency: CurrencyUnit = CurrencyUnit.EUR,
-  active: Boolean = false) extends ActivityRecorder {
+    organisationId: Option[Long] = None,
+    personId: Option[Long] = None,
+    currency: CurrencyUnit = CurrencyUnit.EUR,
+    active: Boolean = false) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -108,10 +108,10 @@ case class Account(id: Option[Long] = None,
   /**
    * Returns true if this account may be deleted.
    */
-  lazy val deletable: Boolean = DB.withSession { implicit session: Session ⇒
+  lazy val deletable: Boolean = DB.withSession { implicit session ⇒
     val hasBookingEntries = id.exists { accountId ⇒
-      val query = Query(BookingEntries).filter(e ⇒ e.ownerId === accountId || e.fromId === accountId || e.toId === accountId)
-      Query(query.exists).first
+      val query = TableQuery[BookingEntries].filter(e ⇒ e.ownerId === accountId || e.fromId === accountId || e.toId === accountId)
+      query.exists.run
     }
     !active && !hasBookingEntries
   }
@@ -130,17 +130,17 @@ case class Account(id: Option[Long] = None,
     updateStatus(active = false, currency)
   }
 
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
+  def delete(): Unit = DB.withSession { implicit session ⇒
     assert(deletable, "Attempt to delete account that is active or has booking entries")
-    Accounts.where(_.id === id).mutate(_.delete())
+    TableQuery[Accounts].filter(_.id === id).delete
   }
 
   def summary: AccountSummary = {
     AccountSummary(id.get, accountHolder.name, currency, active)
   }
 
-  private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = DB.withSession { implicit session: Session ⇒
-    val updateQuery = for { a ← Accounts if a.id === this.id } yield (a.id, a.active, a.currency)
+  private def updateStatus(active: Boolean, currency: CurrencyUnit): Unit = DB.withSession { implicit session ⇒
+    val updateQuery = for { a ← TableQuery[Accounts] if a.id === this.id } yield (a.id, a.active, a.currency)
     updateQuery.mutate(mutator ⇒ mutator.row = (mutator.row._1, active, currency))
   }
 }
@@ -225,31 +225,32 @@ object Account {
     totalBalance.dividedBy(accounts.size.toLong, java.math.RoundingMode.DOWN)
   }
 
-  def find(holder: AccountHolder): Account = DB.withSession { implicit session: Session ⇒
+  def find(holder: AccountHolder): Account = DB.withSession { implicit session ⇒
+    val accounts = TableQuery[Accounts]
     val query = holder match {
-      case o: Organisation ⇒ Query(Accounts).filter(_.organisationId === o.id)
-      case p: Person ⇒ Query(Accounts).filter(_.personId === p.id)
-      case Levy ⇒ Query(Accounts).filter(_.organisationId isNull).filter(_.personId isNull)
+      case o: Organisation ⇒ accounts.filter(_.organisationId === o.id)
+      case p: Person ⇒ accounts.filter(_.personId === p.id)
+      case Levy ⇒ accounts.filter(_.organisationId isEmpty).filter(_.personId isEmpty)
     }
-    query.first()
+    query.first
   }
 
-  def find(id: Long): Option[Account] = DB.withSession { implicit session: Session ⇒
-    Query(Accounts).filter(_.id === id).firstOption()
+  def find(id: Long): Option[Account] = DB.withSession { implicit session ⇒
+    TableQuery[Accounts].filter(_.id === id).firstOption
   }
 
   /**
    * Returns a summary list of active accounts.
    */
-  def findAllActive: List[AccountSummary] = DB.withSession { implicit session: Session ⇒
+  def findAllActive: List[AccountSummary] = DB.withSession { implicit session ⇒
     val query = for {
-      ((account, person), organisation) ← Accounts leftJoin
-        People on (_.personId === _.id) leftJoin
-        Organisations on (_._1.organisationId === _.id)
+      ((account, person), organisation) ← TableQuery[Accounts] leftJoin
+        TableQuery[People] on (_.personId === _.id) leftJoin
+        TableQuery[Organisations] on (_._1.organisationId === _.id)
       if account.active === true
     } yield (account.id, account.currency, person.firstName.?, person.lastName.?, organisation.name.?, account.active)
 
-    query.mapResult{
+    query.mapResult {
       case (id, currency, firstName, lastName, organisationName, active) ⇒
         AccountSummary(id, accountHolderName(firstName, lastName, organisationName), currency, active)
     }.list.sortBy(_.name.toLowerCase)
@@ -258,9 +259,9 @@ object Account {
   /**
    * Returns a summary list of active accounts with balances.
    */
-  def findAllActiveWithBalance: List[AccountSummaryWithBalance] = DB.withSession { implicit session: Session ⇒
+  def findAllActiveWithBalance: List[AccountSummaryWithBalance] = DB.withSession { implicit session ⇒
 
-    val bookingEntriesQuery = BookingEntries.filter(_.deleted === false)
+    val bookingEntriesQuery = TableQuery[BookingEntries].filter(_.deleted === false)
 
     // Sum booking entries’ credits and debits, grouped by account ID.
     val creditQuery = bookingEntriesQuery.filter(_.sourceAmount > BigDecimal(0)).groupBy(_.toId).map {
@@ -314,7 +315,7 @@ object Account {
   }
 
   def findByPerson(personId: Long): Option[Account] = DB.withSession { implicit session ⇒
-    Query(Accounts).filter(_.personId === personId).firstOption()
+    TableQuery[Accounts].filter(_.personId === personId).firstOption
   }
 
   /**
@@ -322,25 +323,26 @@ object Account {
    * @param accountId The ID of the account to find the balance for.
    * @return The current balance for the account.
    */
-  def findBalance(accountId: Long, currency: CurrencyUnit): Money = DB.withSession { implicit session: Session ⇒
+  def findBalance(accountId: Long, currency: CurrencyUnit): Money = DB.withSession { implicit session ⇒
+    val entries = TableQuery[BookingEntries]
     val creditBackwardQuery = for {
-      entry ← BookingEntries.filtered if entry.fromId === accountId && entry.sourceAmount < BigDecimal(0)
+      entry ← Entries.filtered if entry.fromId === accountId && entry.sourceAmount < BigDecimal(0)
     } yield entry.fromAmount
     val debitQuery = for {
-      entry ← BookingEntries.filtered if entry.fromId === accountId && entry.sourceAmount > BigDecimal(0)
+      entry ← Entries.filtered if entry.fromId === accountId && entry.sourceAmount > BigDecimal(0)
     } yield entry.fromAmount
 
     val debitBackwardQuery = for {
-      entry ← BookingEntries.filtered if entry.toId === accountId && entry.sourceAmount < BigDecimal(0)
+      entry ← Entries.filtered if entry.toId === accountId && entry.sourceAmount < BigDecimal(0)
     } yield entry.toAmount
     val creditQuery = for {
-      entry ← BookingEntries.filtered if entry.toId === accountId && entry.sourceAmount > BigDecimal(0)
+      entry ← Entries.filtered if entry.toId === accountId && entry.sourceAmount > BigDecimal(0)
     } yield entry.toAmount
 
-    val credit = Query(creditQuery.sum).first.getOrElse(BigDecimal(0))
-    val creditBackward = Query(creditBackwardQuery.sum).first.getOrElse(BigDecimal(0))
-    val debit = Query(debitQuery.sum).first.getOrElse(BigDecimal(0))
-    val debitBackward = Query(debitBackwardQuery.sum).first.getOrElse(BigDecimal(0))
+    val credit = creditQuery.sum.run.getOrElse(BigDecimal(0))
+    val creditBackward = creditBackwardQuery.sum.run.getOrElse(BigDecimal(0))
+    val debit = debitQuery.sum.run.getOrElse(BigDecimal(0))
+    val debitBackward = debitBackwardQuery.sum.run.getOrElse(BigDecimal(0))
 
     val balance = (debit - debitBackward - credit + creditBackward).setScale(currency.getDecimalPlaces, RoundingMode.DOWN)
     Money.of(currency, balance.bigDecimal)

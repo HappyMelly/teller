@@ -1,14 +1,14 @@
 @(title: String,
   menu: String,
-  user: UserIdentity,
+  user: ActiveUser,
   showJoinBanner: Boolean = true)(
-  content: Html)(implicit flash: Flash,
-    request: Request[Any],
+  content: Html)(implicit request: Request[Any],
+    flash: Flash,
     handler: AuthorisationHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.core.utils.TemplateUtils.as
 
 <!DOCTYPE html>
 <html>
@@ -62,7 +62,7 @@
                     </li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
-                    @if(showJoinBanner && user.person.member.isEmpty) {
+                    @if(showJoinBanner && user.member.isEmpty) {
                       <li class="btn-warning">
                           <a href="@routes.Membership.welcome()" style="color: white;">
                             Become a Supporter</a>

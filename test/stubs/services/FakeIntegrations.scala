@@ -31,7 +31,7 @@ import services.integrations.{ Email, Integrations, MailChimp, Slack }
  * Stub class for Slack service
  */
 class FakeSlack
-  extends Slack("testhook", "#test", "usertest") {
+    extends Slack("testhook", "#test", "usertest") {
   var message: String = ""
 
   override def send(message: String,
@@ -68,7 +68,7 @@ class FakeEmail extends Email {
 }
 
 class FakeMailChimp(apiUrl: String, apiToken: String)
-  extends MailChimp(apiUrl, apiToken) {
+    extends MailChimp(apiUrl, apiToken) {
   var listId: String = ""
   var personName: String = ""
   var funder: Boolean = false

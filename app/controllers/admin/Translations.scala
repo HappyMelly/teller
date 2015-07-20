@@ -33,9 +33,15 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import views.Languages
 
-object Translations extends Controller with Security with Services {
+class Translations(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * HTML form mapping for creating and editing translations
@@ -130,7 +136,8 @@ object Translations extends Controller with Security with Services {
           }.getOrElse {
             translation.create
 
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, "new translation")
+            val activity = Activity.insert(user.name,
+              Activity.Predicate.Created, "new translation")
             Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
           }
 
@@ -192,7 +199,8 @@ object Translations extends Controller with Security with Services {
             },
             translation ⇒ {
               translation.update
-              val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, "translation")
+              val activity = Activity.insert(user.name,
+                Activity.Predicate.Updated, "translation")
               Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
             })
         } else {
@@ -213,7 +221,8 @@ object Translations extends Controller with Security with Services {
       translationService.find(lang).map { translation ⇒
         if (translation.changeable) {
           translation.delete()
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, "translation")
+          val activity = Activity.insert(user.name,
+            Activity.Predicate.Deleted, "translation")
           Redirect(routes.Translations.index()).flashing("success" -> activity.toString)
         } else {
           Redirect(routes.Translations.index()).flashing("error" -> Messages("error.translation.notChangeable"))

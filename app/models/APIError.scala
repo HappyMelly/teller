@@ -38,9 +38,9 @@ import utils.EnumUtils
  * @param subErrors A set of errors for the children (example: a validation error and the errors for each form field)
  */
 class APIError(val code: ErrorCode.Value,
-  val message: String,
-  val field: Option[String] = None,
-  val subErrors: Option[Seq[APIError]] = None) {
+    val message: String,
+    val field: Option[String] = None,
+    val subErrors: Option[Seq[APIError]] = None) {
 }
 
 object ErrorCode extends Enumeration {

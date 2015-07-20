@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,22 +21,18 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package controllers
 
-package models.database
+import play.api.Play
+import play.api.Play.current
 
-import play.api.db.slick.Config.driver.simple._
+trait Utilities {
 
-/**
- * Database table mapping for the association between Product and Brand
- */
-private[models] object ProductBrandAssociations extends Table[(Option[Long], Long, Long)]("PRODUCT_BRAND_ASSOCIATION") {
-  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
-  def productId = column[Long]("PRODUCT_ID")
-  def brandId = column[Long]("BRAND_ID")
-
-  def product = foreignKey("PRODUCT_BRAND_FK", productId, Products)(_.id)
-  def brand = foreignKey("PRODUCT_BRAND_FK", brandId, Brands)(_.id)
-
-  def * = id.? ~ productId ~ brandId
-  def forInsert = productId ~ brandId returning id
+  /**
+   * Returns an url with domain
+   * @param url Domain-less part of url
+   */
+  protected def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
+  }
 }

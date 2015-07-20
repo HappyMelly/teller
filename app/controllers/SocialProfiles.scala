@@ -24,14 +24,21 @@
 package controllers
 
 import controllers.Forms._
-import models.{ SocialProfile, ProfileType }
+import models.{ ActiveUser, SocialProfile, ProfileType }
 import models.service.Services
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
+import securesocial.core.RuntimeEnvironment
 
-trait SocialProfiles extends JsonController with Security with Services
+class SocialProfiles(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services {
 
-object SocialProfiles extends SocialProfiles {
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+}
+
+object SocialProfiles {
 
   /**
    * Returns html form mapping for social profile
@@ -39,7 +46,9 @@ object SocialProfiles extends SocialProfiles {
    * @param profileType Sets of which profile type mapping is
    */
   def profileMapping(profileType: ProfileType.Value) = mapping(
-    "email" -> nonEmptyText,
+    "email" -> {
+      if (profileType == ProfileType.Organisation) text else nonEmptyText
+    },
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(facebookProfileUrl),
     "linkedInUrl" -> optional(linkedInProfileUrl),

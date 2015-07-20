@@ -32,12 +32,18 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
 import models.UserRole.Role._
+import securesocial.core.RuntimeEnvironment
 import views.Languages
 
 /**
  * Facilitators pages
  */
-object Facilitators extends Controller with Security with Services {
+class Facilitators(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {

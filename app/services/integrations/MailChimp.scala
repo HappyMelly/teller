@@ -25,10 +25,11 @@
 package services.integrations
 
 import models.Person
+import play.api.Play.current
 import play.api.libs.json.Json
 import play.api.libs.ws.WS
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
+
 /**
  * MailChimp integration
  */

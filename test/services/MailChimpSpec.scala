@@ -27,6 +27,7 @@ package services
 import helpers.PersonHelper
 import models.SocialProfile
 import org.specs2.mutable.Specification
+import play.api.Play.current
 import play.api.libs.json._
 import play.api.libs.ws._
 import services.integrations.MailChimp

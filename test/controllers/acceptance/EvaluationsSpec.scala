@@ -32,7 +32,7 @@ import models.{ EvaluationPair, EvaluationStatus }
 import org.joda.time.DateTime
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.test.FakeRequest
-import stubs.{ FakeServices, FakeUserIdentity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeUserIdentity, FakeSecurity }
 
 class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   override def is = s2"""
@@ -47,7 +47,10 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
     she should get an error if the requested evaluation does not exist      $e5
   """
 
-  class TestEvaluations() extends Evaluations with FakeServices
+  class TestEvaluations() extends Evaluations(FakeRuntimeEnvironment)
+    with FakeSecurity
+    with FakeServices
+
   val controller = new TestEvaluations
   val brandService = mock[BrandService]
   val brand = BrandHelper.one
@@ -63,11 +66,11 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.evaluationService_=(evalService)
 
   def e1 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
+    controller.identity_=(FakeUserIdentity.editor)
     val evalPair = EvaluationPair(evaluation, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
-    val res = controller.details(1L).apply(req)
+    val res = controller.details(1L).apply(fakeGetRequest())
 
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "evaluation/1/approve"
@@ -75,12 +78,12 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
+    controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Pending)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
-    val res = controller.details(1L).apply(req)
+    val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
     status(res) must equalTo(OK)
     contentAsString(res) must contain("evaluation/1/approve")
@@ -88,12 +91,12 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
+    controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Approved)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
-    val res = controller.details(1L).apply(req)
+    val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "evaluation/1/approve"
@@ -101,12 +104,12 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "/1")
+    controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Rejected)
     val evalPair = EvaluationPair(eval, EventHelper.one)
     (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
-    val res = controller.details(1L).apply(req)
+    val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
     status(res) must equalTo(OK)
     contentAsString(res) must contain("evaluation/1/approve")

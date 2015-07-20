@@ -41,13 +41,12 @@ class LicenseServiceSpec extends PlayAppSpec {
 
   "Method `expiring`" should {
     "return only licenses expiring this AND previous months" in {
-      val facilitators = Map(1L -> PersonHelper.one(),
-        2L -> PersonHelper.two(),
-        3L -> PersonHelper.make(Some(3L), "Third", "Tester"),
-        4L -> PersonHelper.make(Some(4L), "Fourth", "Tester"),
-        5L -> PersonHelper.make(Some(5L), "Fifth", "Tester"),
-        6L -> PersonHelper.make(Some(6L), "Sixth", "Tester"))
-      facilitators.foreach(v ⇒ v._2.insert)
+      PersonHelper.one().insert
+      PersonHelper.two().insert
+      PersonHelper.make(Some(3L), "Third", "Tester").insert
+      PersonHelper.make(Some(4L), "Fourth", "Tester").insert
+      PersonHelper.make(Some(5L), "Fifth", "Tester").insert
+      PersonHelper.make(Some(6L), "Sixth", "Tester").insert
 
       BrandHelper.one.insert()
       BrandHelper.make("two", Some(2L)).insert()

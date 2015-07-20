@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.JodaMoney._
 import models.BookingEntry
 import models.database.admin.TransactionTypes
@@ -34,9 +34,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `BookingEntry` database table mapping.
  */
-object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
-
-  def filtered = Query(BookingEntries).filter(_.deleted === false)
+class BookingEntries(tag: Tag) extends Table[BookingEntry](tag, "BOOKING_ENTRY") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def ownerId = column[Long]("OWNER_ID")
@@ -67,38 +65,42 @@ object BookingEntries extends Table[BookingEntry]("BOOKING_ENTRY") {
   def created = column[DateTime]("CREATED")
   // There is no createdBy because that’s the ownerId.
 
-  def owner = foreignKey("BOOKING_OWNER_FK", ownerId, People)(_.id)
-  def from = foreignKey("BOOKING_FROM_FK", fromId, Accounts)(_.id)
-  def to = foreignKey("BOOKING_TO_FK", toId, Accounts)(_.id)
-  def brand = foreignKey("BOOKING_BRAND_FK", brandId, Brands)(_.id)
-  def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TransactionTypes)(_.id)
+  def owner = foreignKey("BOOKING_OWNER_FK", ownerId, TableQuery[People])(_.id)
+  def from = foreignKey("BOOKING_FROM_FK", fromId, TableQuery[Accounts])(_.id)
+  def to = foreignKey("BOOKING_TO_FK", toId, TableQuery[Accounts])(_.id)
+  def brand = foreignKey("BOOKING_BRAND_FK", brandId, TableQuery[Brands])(_.id)
+  def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TableQuery[TransactionTypes])(_.id)
 
   def deleted = column[Boolean]("DELETED")
 
-  def * = id.? ~ ownerId ~ bookingDate ~ bookingNumber.? ~ summary ~
-    sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~ toId ~ toCurrency ~ toAmount ~
-    brandId ~ reference ~ referenceDate ~ description ~ url ~ transactionTypeId ~ attachmentKey ~ created <> (
-      { (e) ⇒
-        e match {
-          case (id, ownerId, bookingDate, bookingNumber, summary,
-            sourceCurrency, sourceAmount, sourcePercentage, fromId, fromCurrency, fromAmount, toId, toCurrency, toAmount,
-            brandId, reference, referenceDate, description, url, transactionTypeId, attachmentKey, created) ⇒
+  type BookingEntriesFields = (Option[Long], Long, LocalDate, Option[Int], String, String, BigDecimal, Int, Long, String, BigDecimal, Long, String, BigDecimal, Option[Long], Option[String], LocalDate, Option[String], Option[String], Option[Long], Option[String], DateTime)
 
-            BookingEntry(id, ownerId, bookingDate, bookingNumber, summary,
-              sourceCurrency -> sourceAmount, sourcePercentage, fromId, fromCurrency -> fromAmount, toId, toCurrency -> toAmount,
-              brandId, reference, referenceDate, description, url, transactionTypeId, attachmentKey, created)
-        }
-      },
-      { (e: BookingEntry) ⇒
+  def * = (id.?, ownerId, bookingDate, bookingNumber.?, summary,
+    sourceCurrency, sourceAmount, sourcePercentage,
+    fromId, fromCurrency, fromAmount, toId, toCurrency, toAmount,
+    brandId, reference, referenceDate, description, url, transactionTypeId,
+    attachmentKey, created) <> (
+      (f: BookingEntriesFields) ⇒
+        BookingEntry(f._1, f._2, f._3, f._4, f._5, f._6 -> f._7, f._8, f._9,
+          f._10 -> f._11, f._12, f._13 -> f._14, f._15, f._16, f._17, f._18,
+          f._19, f._20, f._21),
+      (e: BookingEntry) ⇒
         Some((e.id, e.ownerId, e.bookingDate, e.bookingNumber, e.summary,
-          e.source.getCurrencyUnit.getCode, e.source.getAmount, e.sourcePercentage,
-          e.fromId, e.fromAmount.getCurrencyUnit.getCode, e.fromAmount.getAmount,
-          e.toId, e.toAmount.getCurrencyUnit.getCode, e.toAmount.getAmount,
-          e.brandId, e.reference, e.referenceDate, e.description, e.url, e.transactionTypeId, e.attachmentKey, e.created))
-      })
+          e.source.getCurrencyUnit.getCode,
+          BigDecimal(e.source.getAmount), e.sourcePercentage,
+          e.fromId, e.fromAmount.getCurrencyUnit.getCode,
+          BigDecimal(e.fromAmount.getAmount),
+          e.toId, e.toAmount.getCurrencyUnit.getCode,
+          BigDecimal(e.toAmount.getAmount),
+          e.brandId, e.reference, e.referenceDate, e.description, e.url,
+          e.transactionTypeId, e.attachmentKey, e.created)))
 
-  def forInsert = * returning id
+  def forUpdate = (summary, sourceCurrency, sourceAmount, sourcePercentage,
+    fromId, fromCurrency, fromAmount, toId, toCurrency, toAmount, brandId,
+    reference, referenceDate, description, url, attachmentKey, transactionTypeId)
+}
 
-  def forUpdate = summary ~ sourceCurrency ~ sourceAmount ~ sourcePercentage ~ fromId ~ fromCurrency ~ fromAmount ~
-    toId ~ toCurrency ~ toAmount ~ brandId ~ reference ~ referenceDate ~ description ~ url ~ attachmentKey ~ transactionTypeId
+object Entries extends TableQuery(new BookingEntries(_)) {
+
+  val filtered = this.filter(_.deleted === false)
 }

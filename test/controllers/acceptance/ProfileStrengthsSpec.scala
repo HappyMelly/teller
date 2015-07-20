@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ ProfileStrengths, Security }
+import controllers.ProfileStrengths
 import helpers._
 import models.ProfileStrength
 import models.service.ProfileStrengthService
@@ -63,8 +63,8 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     and person id doesn't belong to current user, the error should be returned $e8
   """
 
-  class TestProfileStrengths() extends ProfileStrengths
-    with Security
+  class TestProfileStrengths() extends ProfileStrengths(FakeRuntimeEnvironment)
+    with FakeSecurity
     with FakeServices
 
   val controller = new TestProfileStrengths()
@@ -80,8 +80,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add photo")
   }
@@ -95,8 +94,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add description")
   }
@@ -110,8 +108,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add 2 social networks")
   }
@@ -125,8 +122,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Share why you joined the network")
   }
@@ -140,8 +136,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Become a member")
   }
@@ -155,8 +150,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Upload your signature")
   }
@@ -170,8 +164,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength(None, 1L, false, steps);
 
     (service.find _) expects (1L, false) returning Some(strength)
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(1L, true).apply(req)
+    val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Add at least 1 language")
   }
@@ -179,8 +172,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     //current user id = 1
     (service.find _) expects (2L, false) returning None
-    val req = prepareSecuredGetRequest(FakeUserIdentity.editor, "")
-    val result = controller.personWidget(2L, true).apply(req)
+    val result = controller.personWidget(2L, true).apply(fakeGetRequest())
     status(result) must equalTo(BAD_REQUEST)
   }
 }

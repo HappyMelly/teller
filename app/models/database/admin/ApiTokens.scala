@@ -30,7 +30,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Connects ApiToken object with its database representation
  */
-private[models] object ApiTokens extends Table[ApiToken]("API_TOKEN") {
+private[models] class ApiTokens(tag: Tag) extends Table[ApiToken](tag, "API_TOKEN") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def token = column[String]("TOKEN")
@@ -39,10 +39,8 @@ private[models] object ApiTokens extends Table[ApiToken]("API_TOKEN") {
   def appWebsite = column[Option[String]]("APP_WEBSITE")
   def readWrite = column[Boolean]("WRITE_CALLS")
 
-  def * = id.? ~ token ~ appName ~ appDescription ~ appWebsite ~
-    readWrite <> (ApiToken.apply _, ApiToken.unapply _)
+  def * = (id.?, token, appName, appDescription, appWebsite,
+    readWrite) <> ((ApiToken.apply _).tupled, ApiToken.unapply)
 
-  def forInsert = * returning id
-
-  def forUpdate = appName ~ appDescription ~ appWebsite ~ readWrite
+  def forUpdate = (appName, appDescription, appWebsite, readWrite)
 }

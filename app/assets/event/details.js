@@ -75,6 +75,22 @@ function toggleSentButton() {
     }
 }
 
+/**
+ * Loads organizer's name
+ *
+ * @param id Organizer id
+ */
+function updateOrganizer(id) {
+    if (id != 0) {
+        var url = jsRoutes.controllers.Organisations.name(id).url
+        $.get(url, function(data) {
+            $('#organizer').text(data.name);
+        }, "json");
+    } else {
+        $('#organizer').text("no organizer");
+    }
+}
+
 $(document).ready( function() {
 
     $('#details a').click(function (e) {
@@ -163,5 +179,6 @@ $(document).ready( function() {
             showSuccess("You successfully cancelled the event");
         });
     });
+    updateOrganizer($('#organizer').data('id'));
 });
 

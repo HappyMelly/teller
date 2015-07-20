@@ -1,4 +1,4 @@
-@(user: UserIdentity, booking: BookingEntry, currentUser: UserAccount,
+@(user: ActiveUser, booking: BookingEntry, currentUser: UserAccount,
   attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any], flash: Flash,
   handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
 @import scala.math.BigDecimal.RoundingMode

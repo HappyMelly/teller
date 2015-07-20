@@ -123,6 +123,17 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
       } getOrElse ko
     }
   }
+  "Method 'search'" should {
+    "return 6 orgs when 'org' is requested" in {
+      service.search("org").length must_== 6
+    }
+    "return 4 orgs when 'th' is requested" in {
+      service.search("th").length must_== 4
+    }
+    "return 1 org when 'first' is requested" in {
+      service.search("first").length must_== 1
+    }
+  }
 
   private def addOrgs() = {
     Seq(

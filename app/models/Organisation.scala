@@ -40,23 +40,23 @@ case class OrgView(org: Organisation, profile: SocialProfile)
  * An organisation, usually a company, such as a Happy Melly legal entity.
  */
 case class Organisation(
-  id: Option[Long],
-  name: String,
-  street1: Option[String],
-  street2: Option[String],
-  city: Option[String],
-  province: Option[String],
-  postCode: Option[String],
-  countryCode: String,
-  vatNumber: Option[String],
-  registrationNumber: Option[String],
-  webSite: Option[String],
-  blog: Option[String],
-  customerId: Option[String] = None,
-  about: Option[String] = None,
-  logo: Boolean = false,
-  active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
+    id: Option[Long],
+    name: String,
+    street1: Option[String],
+    street2: Option[String],
+    city: Option[String],
+    province: Option[String],
+    postCode: Option[String],
+    countryCode: String,
+    vatNumber: Option[String],
+    registrationNumber: Option[String],
+    webSite: Option[String],
+    blog: Option[String],
+    customerId: Option[String] = None,
+    about: Option[String] = None,
+    logo: Boolean = false,
+    active: Boolean = true,
+    dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
 
   /** Contains a list of people working in this organisation */
   private var _people: Option[List[Person]] = None

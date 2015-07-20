@@ -27,14 +27,14 @@ package models.database
 import models.UserIdentity
 import play.api.db.slick.Config.driver.simple._
 import scala.language.implicitConversions
-import securesocial.core.{ IdentityId, OAuth2Info, OAuth1Info, AuthenticationMethod }
+import securesocial.core.{ BasicProfile, OAuth2Info, OAuth1Info, AuthenticationMethod }
 
 /**
  * `LoginIdentity` database table mapping.
  */
-private[models] object UserIdentities extends Table[UserIdentity]("LOGIN_IDENTITY") {
+private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, "LOGIN_IDENTITY") {
 
-  implicit def string2AuthenticationMethod: TypeMapper[AuthenticationMethod] = MappedTypeMapper.base[AuthenticationMethod, String](
+  implicit def string2AuthenticationMethod = MappedColumnType.base[AuthenticationMethod, String](
     authenticationMethod ⇒ authenticationMethod.method,
     string ⇒ AuthenticationMethod(string))
 
@@ -48,17 +48,13 @@ private[models] object UserIdentities extends Table[UserIdentity]("LOGIN_IDENTIT
     case _ ⇒ None
   }
 
-  implicit def tuple2UserId(tuple: (String, String)) = tuple match {
-    case (userId, providerId) ⇒ IdentityId(userId, providerId)
-  }
-
   def uid = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def userId = column[String]("USER_ID")
   def providerId = column[String]("PROVIDER_ID")
   def email = column[Option[String]]("EMAIL")
-  def firstName = column[String]("FIRST_NAME")
-  def lastName = column[String]("LAST_NAME")
-  def fullName = column[String]("FULL_NAME")
+  def firstName = column[Option[String]]("FIRST_NAME")
+  def lastName = column[Option[String]]("LAST_NAME")
+  def fullName = column[Option[String]]("FULL_NAME")
   def authMethod = column[AuthenticationMethod]("AUTH_METHOD")
   def avatarUrl = column[Option[String]]("AVATAR_URL")
   def secret = column[Option[String]]("SECRET")
@@ -77,17 +73,33 @@ private[models] object UserIdentities extends Table[UserIdentity]("LOGIN_IDENTIT
   // oAuth 2
   def accessToken = column[Option[String]]("ACCESS_TOKEN")
 
-  def * = uid.? ~ userId ~ providerId ~ firstName ~ lastName ~ fullName ~ email ~ avatarUrl ~ authMethod ~ token ~
-    secret ~ accessToken ~ tokenType ~ expiresIn ~ refreshToken ~ apiToken ~ twitterHandle ~ facebookUrl ~
-    googlePlusUrl ~ linkedInUrl <> (
-      u ⇒ UserIdentity(u._1, (u._2, u._3), u._4, u._5, u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15), None, u._16, u._17, u._18, u._19, u._20),
-      (u: UserIdentity) ⇒ {
-        Some((u.uid, u.identityId.userId, u.identityId.providerId, u.firstName, u.lastName, u.fullName, u.email,
-          u.avatarUrl, u.authMethod, u.oAuth1Info.map(_.token), u.oAuth1Info.map(_.secret),
-          u.oAuth2Info.map(_.accessToken), u.oAuth2Info.flatMap(_.tokenType), u.oAuth2Info.flatMap(_.expiresIn),
-          u.oAuth2Info.flatMap(_.refreshToken), u.apiToken, u.twitterHandle, u.facebookUrl, u.googlePlusUrl, u.linkedInUrl))
-      })
+  type UserIdentityFields = (Option[Long], String, String, Option[String], Option[String], Option[String], Option[String], Option[String], AuthenticationMethod, Option[String], Option[String], Option[String], Option[String], Option[Int], Option[String], String, Option[String], Option[String], Option[String], Option[String])
 
-  def forInsert = * returning uid
+  def * = (uid.?,
+    userId, providerId,
+    firstName,
+    lastName,
+    fullName,
+    email,
+    avatarUrl,
+    authMethod,
+    token, secret,
+    accessToken, tokenType, expiresIn, refreshToken,
+    apiToken,
+    twitterHandle, facebookUrl, googlePlusUrl, linkedInUrl) <> (
+      (u: UserIdentityFields) ⇒ UserIdentity(u._1, BasicProfile(u._2, u._3, u._4, u._5,
+        u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15),
+        None), u._16, u._17, u._18, u._19, u._20),
+      (u: UserIdentity) ⇒ {
+        Some((u.uid, u.profile.userId, u.profile.providerId, u.profile.firstName,
+          u.profile.lastName, u.profile.fullName, u.profile.email,
+          u.profile.avatarUrl, u.profile.authMethod,
+          u.profile.oAuth1Info.map(_.token), u.profile.oAuth1Info.map(_.secret),
+          u.profile.oAuth2Info.map(_.accessToken), u.profile.oAuth2Info.flatMap(_.tokenType),
+          u.profile.oAuth2Info.flatMap(_.expiresIn),
+          u.profile.oAuth2Info.flatMap(_.refreshToken),
+          u.apiToken, u.twitterHandle, u.facebookUrl, u.googlePlusUrl,
+          u.linkedInUrl))
+      })
 
 }

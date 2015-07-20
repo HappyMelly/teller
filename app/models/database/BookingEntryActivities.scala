@@ -29,10 +29,10 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Link table to associate an activity stream entry with a booking entry.
  */
-object BookingEntryActivities extends Table[(Long, Long)]("BOOKING_ENTRY_ACTIVITY") {
+class BookingEntryActivities(tag: Tag) extends Table[(Long, Long)](tag, "BOOKING_ENTRY_ACTIVITY") {
 
   def bookingEntryId = column[Long]("BOOKING_ENTRY_ID", O.PrimaryKey)
   def activityId = column[Long]("ACTIVITY_ID", O.PrimaryKey)
 
-  def * = bookingEntryId ~ activityId
+  def * = (bookingEntryId, activityId)
 }

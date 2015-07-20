@@ -37,32 +37,32 @@ case class TransactionType(id: Option[Long], name: String)
 
 object TransactionType {
 
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    BookingEntries.filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
-    TransactionTypes.where(_.id === id).mutate(_.delete())
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    TableQuery[BookingEntries].filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
+    TableQuery[TransactionTypes].filter(_.id === id).delete
   }
 
   /**
    * Returns true if a transaction type with the given value already exists.
    */
-  def exists(value: String): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(TransactionTypes).filter(_.name === value).exists).first
+  def exists(value: String): Boolean = DB.withSession { implicit session ⇒
+    TableQuery[TransactionTypes].filter(_.name === value).exists.run
   }
 
-  def find(id: Long): Option[TransactionType] = DB.withSession { implicit session: Session ⇒
-    Query(TransactionTypes).filter(_.id === id).firstOption
+  def find(id: Long): Option[TransactionType] = DB.withSession { implicit session ⇒
+    TableQuery[TransactionTypes].filter(_.id === id).firstOption
   }
 
-  def findAll: List[TransactionType] = DB.withSession { implicit session: Session ⇒
-    Query(TransactionTypes).sortBy(_.name.toLowerCase).list
+  def findAll: List[TransactionType] = DB.withSession { implicit session ⇒
+    TableQuery[TransactionTypes].sortBy(_.name.toLowerCase).list
   }
 
   /**
    * Inserts a new transaction type with the given value.
    */
-  def insert(value: String): Unit = DB.withSession { implicit session: Session ⇒
+  def insert(value: String): Unit = DB.withSession { implicit session ⇒
     val transactionType = TransactionType(None, value)
-    TransactionTypes.forInsert.insert(transactionType)
+    TableQuery[TransactionTypes] += transactionType
   }
 
 }

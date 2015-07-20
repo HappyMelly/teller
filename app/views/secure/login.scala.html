@@ -1,10 +1,8 @@
 @(loginForm: Form[(String, String)],
-    errorMsg: Option[String] = None)(implicit request: Request[Any],
-    flash: Flash)
+    errorMsg: Option[String] = None)(implicit request: RequestHeader,
+    env: securesocial.core.RuntimeEnvironment[_])
 
-@import securesocial.core.AuthenticationMethod._
-@import securesocial.core.Registry
-@import securesocial.core.providers.utils.RoutesHelper
+@import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
 
 
 <!DOCTYPE html>
@@ -19,7 +17,7 @@
   <body class="signin">
     <div class="col-md-5 col-md-offset-7 text-center signin">
       @alert(alertType: String) = {
-        @flash.get(alertType).map { message =>
+        @request.flash.get(alertType).map { message =>
           <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             @message
@@ -33,20 +31,17 @@
           @Messages(msg)
         </div>
       }
-      <div class="col-md-8 col-md-offset-2">
-        <div class="form-block text-left">
-          @for(provider <- Registry.providers.all().values) {
-            @if(provider.authMethod == OAuth1 || provider.authMethod == OAuth2) {
-              @defining("images/securesocial/%s.png".format(provider.id)) { imageUrl: String =>
-                <a class="btn btn-default btn-login btn-lg btn-block"
-                href="@provider.authenticationUrl">
-                  <img src="@RoutesHelper.at(imageUrl)" width="40px"/> Sign in with @provider.id.capitalize
-                </a>
+      @defining( env.providers.values.filter( _.id != UsernamePassword) ) { externalProviders =>
+        @if( externalProviders.nonEmpty ) {
+          <div class="col-md-8 col-md-offset-2">
+            <div class="form-block text-left">
+              @for(p <- externalProviders) {
+                @views.html.secure.provider(p.id)
               }
-            }
-          }
-        </div>
-      </div>
+            </div>
+          </div>
+        }
+      }
       <div class="col-md-12">
         Not a member? <a href="@routes.Registration.welcome()">Join now!</a>
       </div>

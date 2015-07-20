@@ -53,7 +53,7 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
       then invoice number and recipient org should be updated                $e4
   """
 
-  class TestEvents extends Events
+  class TestEvents extends Events(FakeRuntimeEnvironment)
     with FakeActivities
     with FakeServices
     with FakeSecurity

@@ -25,18 +25,22 @@
 package controllers.admin
 
 import controllers.Security
-import models.Activity
+import models.{ ActiveUser, Activity }
 import models.UserRole.Role._
 import models.admin.TransactionType
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc.Controller
+import securesocial.core.RuntimeEnvironment
 
 /**
  * Pages for application configuration and administration.
  */
-object Administration extends Controller with Security {
+class Administration(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller with Security {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val transactionTypeForm = Form(single("name" -> nonEmptyText))
 
@@ -65,7 +69,8 @@ object Administration extends Controller with Security {
           } else {
             TransactionType.insert(transactionType)
             val activityObject = Messages("models.TransactionType.name", transactionType)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.name,
+              Activity.Predicate.Created, activityObject)
             Redirect(routes.Administration.settings()).
               flashing("success" -> activity.toString)
           }
@@ -80,7 +85,8 @@ object Administration extends Controller with Security {
       TransactionType.find(id).map { transactionType ⇒
         TransactionType.delete(id)
         val activityObject = Messages("models.TransactionType.name", transactionType.name)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.name,
+          Activity.Predicate.Deleted, activityObject)
         Redirect(routes.Administration.settings()).
           flashing("success" -> activity.toString)
       }.getOrElse(NotFound)

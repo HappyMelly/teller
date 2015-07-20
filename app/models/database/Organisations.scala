@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.{ DateStamp, Organisation }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -32,7 +32,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Organisation` database table mapping.
  */
-private[models] object Organisations extends Table[Organisation]("ORGANISATION") {
+private[models] class Organisations(tag: Tag) extends Table[Organisation](tag, "ORGANISATION") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def name = column[String]("NAME")
@@ -60,24 +60,24 @@ private[models] object Organisations extends Table[Organisation]("ORGANISATION")
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def * = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
-    countryCode ~ vatNumber ~ registrationNumber ~ webSite ~ blog ~
-    customerId ~ about ~ logo ~ active ~ created ~ createdBy ~ updated ~
-    updatedBy <> ({ o ⇒
-      Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
-        o._11, o._12, o._13, o._14, o._15, o._16,
-        DateStamp(o._17, o._18, o._19, o._20))
-    }, { (o: Organisation) ⇒
-      Some(o.id, o.name, o.street1, o.street2, o.city,
-        o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
-        o.webSite, o.blog, o.customerId, o.about, o.logo, o.active,
-        o.dateStamp.created, o.dateStamp.createdBy, o.dateStamp.updated,
-        o.dateStamp.updatedBy)
-    })
+  type OrganisationsFields = (Option[Long], String, Option[String], Option[String], Option[String], Option[String], Option[String], String, Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Boolean, Boolean, DateTime, String, DateTime, String)
 
-  def forInsert = * returning id
+  def * = (id.?, name, street1, street2, city, province, postCode,
+    countryCode, vatNumber, registrationNumber, webSite, blog,
+    customerId, about, logo, active, created, createdBy, updated,
+    updatedBy) <> (
+      (o: OrganisationsFields) ⇒
+        Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
+          o._11, o._12, o._13, o._14, o._15, o._16,
+          DateStamp(o._17, o._18, o._19, o._20)),
+      (o: Organisation) ⇒
+        Some(o.id, o.name, o.street1, o.street2, o.city,
+          o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
+          o.webSite, o.blog, o.customerId, o.about, o.logo, o.active,
+          o.dateStamp.created, o.dateStamp.createdBy, o.dateStamp.updated,
+          o.dateStamp.updatedBy))
 
-  def forUpdate = id.? ~ name ~ street1 ~ street2 ~ city ~ province ~ postCode ~
-    countryCode ~ vatNumber ~ registrationNumber ~ webSite ~ blog ~
-    customerId ~ about ~ active ~ updated ~ updatedBy
+  def forUpdate = (id.?, name, street1, street2, city, province, postCode,
+    countryCode, vatNumber, registrationNumber, webSite, blog,
+    customerId, about, active, updated, updatedBy)
 }

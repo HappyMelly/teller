@@ -25,20 +25,27 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.Member
+import models.{ ActiveUser, Member }
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
-import play.api.Play
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import templates.Formatters._
 
 /** Renders pages and contains actions related to members */
-trait Members extends Enrollment with JsonController with Activities {
+class Members(environment: RuntimeEnvironment[ActiveUser])
+    extends Enrollment
+    with JsonController
+    with Security
+    with Activities
+    with Utilities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -201,7 +208,7 @@ trait Members extends Enrollment with JsonController with Activities {
   /** Renders Add new person page */
   def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newPerson(user, None, People.personForm(user.fullName)))
+      Ok(views.html.member.newPerson(user, None, People.personForm(user.name)))
   }
 
   /** Renders Add new organisation page */
@@ -246,8 +253,8 @@ trait Members extends Enrollment with JsonController with Activities {
               slack.send(text)
               Redirect(profileUrl).flashing("success" -> log.toString)
             } getOrElse {
-              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.newOrg(user, None, orgForm))
+              val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
+              BadRequest(views.html.member.newOrg(user, None, formWithError))
             }
           })
   }
@@ -255,7 +262,7 @@ trait Members extends Enrollment with JsonController with Activities {
   /** Records a new member-person to database */
   def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(user.fullName).bindFromRequest
+      val personForm = People.personForm(user.name).bindFromRequest
       personForm.fold(
         hasErrors ⇒
           BadRequest(views.html.member.newPerson(user, None, hasErrors)),
@@ -273,8 +280,8 @@ trait Members extends Enrollment with JsonController with Activities {
             val profileUrl = routes.People.details(person.id.get).url
             Redirect(profileUrl).flashing("success" -> log.toString)
           } getOrElse {
-            implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-            BadRequest(views.html.member.newPerson(user, None, personForm))
+            val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
+            BadRequest(views.html.member.newPerson(user, None, formWithError))
           }
         })
   }
@@ -294,10 +301,9 @@ trait Members extends Enrollment with JsonController with Activities {
             cached map { m ⇒
               personService.find(id) map { person ⇒
                 if (person.member.nonEmpty) {
-                  implicit val flash = Flash(Map("error" -> Messages("error.person.member")))
+                  val formWithError = personForm.withGlobalError(Messages("error.person.member"))
                   BadRequest(views.html.member.existingPerson(user,
-                    peopleNonMembers,
-                    personForm))
+                    peopleNonMembers, formWithError))
                 } else {
                   val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
                   Cache.remove(Members.cacheId(user.person.id.get))
@@ -309,14 +315,14 @@ trait Members extends Enrollment with JsonController with Activities {
                   Redirect(profileUrl).flashing("success" -> log.toString)
                 }
               } getOrElse {
-                implicit val flash = Flash(Map("error" -> Messages("error.person.notExist")))
-                BadRequest(views.html.member.existingOrg(user,
-                  peopleNonMembers,
-                  personForm))
+                val formWithError = personForm.withGlobalError(Messages("error.person.notExist"))
+                BadRequest(views.html.member.existingPerson(user,
+                  peopleNonMembers, formWithError))
               }
             } getOrElse {
-              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingPerson(user, peopleNonMembers, personForm))
+              val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
+              BadRequest(views.html.member.existingPerson(user,
+                peopleNonMembers, formWithError))
             }
           })
   }
@@ -337,10 +343,9 @@ trait Members extends Enrollment with JsonController with Activities {
             cached map { m ⇒
               orgService.find(id) map { org ⇒
                 if (org.member.nonEmpty) {
-                  implicit val flash = Flash(Map("error" -> Messages("error.organisation.member")))
+                  val formWithError = orgForm.withGlobalError(Messages("error.organisation.member"))
                   BadRequest(views.html.member.existingOrg(user,
-                    orgsNonMembers,
-                    orgForm))
+                    orgsNonMembers, formWithError))
                 } else {
                   val member = memberService.insert(m.copy(objectId = org.id.get, person = false))
                   Cache.remove(Members.cacheId(user.person.id.get))
@@ -351,16 +356,13 @@ trait Members extends Enrollment with JsonController with Activities {
                   Redirect(profileUrl).flashing("success" -> log.toString)
                 }
               } getOrElse {
-                implicit val flash = Flash(Map("error" -> Messages("error.organisation.notExist")))
+                val formWithError = orgForm.withGlobalError(Messages("error.organisation.notExist"))
                 BadRequest(views.html.member.existingOrg(user,
-                  orgsNonMembers,
-                  orgForm))
+                  orgsNonMembers, formWithError))
               }
             } getOrElse {
-              implicit val flash = Flash(Map("error" -> Messages("error.membership.wrongStep")))
-              BadRequest(views.html.member.existingOrg(user,
-                orgsNonMembers,
-                orgForm))
+              val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
+              BadRequest(views.html.member.existingOrg(user, orgsNonMembers, formWithError))
             }
           })
   }
@@ -425,14 +427,6 @@ trait Members extends Enrollment with JsonController with Activities {
     else None
   }
 
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
-
   /** Returns ids and names of organisations which are not members */
   private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
     map(o ⇒ (o.id.get.toString, o.name))
@@ -442,7 +436,7 @@ trait Members extends Enrollment with JsonController with Activities {
     map(p ⇒ (p.id.get.toString, p.fullName))
 }
 
-object Members extends Members {
+object Members {
 
   /**
    * Returns cache identifier to store incomplete member object

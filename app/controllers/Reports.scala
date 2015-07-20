@@ -31,8 +31,14 @@ import models.service.{ Services, EventService }
 import org.joda.time._
 import play.api.Play.current
 import play.mvc.Controller
+import securesocial.core.RuntimeEnvironment
 
-trait Reports extends Controller with Security with Services {
+class Reports(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Generate a XLSX report with evaluations (if they're available)
@@ -117,5 +123,3 @@ trait Reports extends Controller with Security with Services {
   }
 
 }
-
-object Reports extends Reports with Security with Services

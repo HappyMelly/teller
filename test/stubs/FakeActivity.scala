@@ -26,15 +26,15 @@ package stubs
 import models.BaseActivity
 
 case class FakeActivity(id: Option[Long],
-  subjectId: Long,
-  subject: String,
-  predicate: String,
-  objectType: String,
-  objectId: Long,
-  activityObject: Option[String],
-  supportiveObjectType: Option[String] = None,
-  supportiveObjectId: Option[Long] = None,
-  supportiveObject: Option[String] = None) extends BaseActivity {
+    subjectId: Long,
+    subject: String,
+    predicate: String,
+    objectType: String,
+    objectId: Long,
+    activityObject: Option[String],
+    supportiveObjectType: Option[String] = None,
+    supportiveObjectId: Option[Long] = None,
+    supportiveObject: Option[String] = None) extends BaseActivity {
 
   override def description: String = ""
   override def signedUp: FakeActivity = this

@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.{ Evaluation, EvaluationStatus }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
@@ -32,9 +32,9 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Evaluation` database table mapping.
  */
-private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
+private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVALUATION") {
 
-  implicit val evaluationStatusTypeMapper = MappedTypeMapper.base[EvaluationStatus.Value, Int](
+  implicit val evaluationStatusTypeMapper = MappedColumnType.base[EvaluationStatus.Value, Int](
     { status ⇒ status.id },
     { id ⇒ EvaluationStatus(id) })
 
@@ -58,15 +58,19 @@ private[models] object Evaluations extends Table[Evaluation]("EVALUATION") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def * = id.? ~ eventId ~ personId ~ question1 ~ question2 ~ question3 ~
-    question4 ~ question5 ~ question6 ~ question7 ~ question8 ~ status ~
-    handled ~ confirmationId ~ created ~ createdBy ~ updated ~
-    updatedBy <> (Evaluation.apply _, Evaluation.unapply _)
+  def * = (id.?, eventId, personId, question1, question2, question3,
+    question4, question5, question6, question7, question8, status,
+    handled, confirmationId, created, createdBy, updated,
+    updatedBy) <> ((Evaluation.apply _).tupled, Evaluation.unapply)
 
-  def forInsert = * returning id
+  def forUpdate = (eventId, personId, question1, question2, question3,
+    question4, question5, question6, question7, question8, status,
+    handled, updated, updatedBy)
 
-  def forUpdate = eventId ~ personId ~ question1 ~ question2 ~ question3 ~
-    question4 ~ question5 ~ question6 ~ question7 ~ question8 ~ status ~
-    handled ~ updated ~ updatedBy
+}
 
+object Evaluations {
+
+  implicit val evaluationStatusTypeMapper = MappedColumnType.base[EvaluationStatus.Value, Int](
+    { status ⇒ status.id }, { id ⇒ EvaluationStatus(id) })
 }

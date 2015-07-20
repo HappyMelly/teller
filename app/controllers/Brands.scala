@@ -38,24 +38,26 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.i18n.Messages
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{ JsValue, Json, Writes }
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import services._
 
 import scala.concurrent.Future
 import scala.io.Source
 
-trait Brands extends JsonController
-  with Security
-  with Services
-  with Activities {
+class Brands(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Activities {
 
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 
   /** HTML form mapping for creating and editing. */
-  def brandsForm(implicit user: UserIdentity) = Form(mapping(
+  def brandsForm(userName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "code" -> nonEmptyText.verifying(
       pattern("[A-Z0-9]*".r,
@@ -78,9 +80,9 @@ trait Brands extends JsonController
     "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
     "evaluationHookUrl" -> optional(webUrl),
     "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(user.fullName),
+    "createdBy" -> ignored(userName),
     "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(user.fullName))({
+    "updatedBy" -> ignored(userName))({
       (id, code, uniqueName, name, ownerId, description, picture,
       generateCert, tagLine, webSite, blog, profile, evaluationHookUrl,
       created, createdBy, updated, updatedBy) ⇒
@@ -138,7 +140,7 @@ trait Brands extends JsonController
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = personService.findActive
-      Ok(views.html.brand.form(user, None, people, brandsForm))
+      Ok(views.html.brand.form(user, None, people, brandsForm(user.name)))
   }
 
   /**
@@ -147,7 +149,7 @@ trait Brands extends JsonController
   def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val form: Form[Brand] = brandsForm.bindFromRequest
+      val form: Form[Brand] = brandsForm(user.name).bindFromRequest
       val people = personService.findActive
       form.fold(
         formWithErrors ⇒ Future.successful(
@@ -257,7 +259,7 @@ trait Brands extends JsonController
             Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
           case _ ⇒
             val products = productService.findByBrand(id)
-            Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.api.templates.Html.empty })
+            Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
         }
   }
 
@@ -344,7 +346,7 @@ trait Brands extends JsonController
   def edit(id: Long) = SecuredDynamicAction("brand", "coordinator") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { brand ⇒
-        val filledForm = brandsForm.fill(brand)
+        val filledForm = brandsForm(user.name).fill(brand)
         val people = personService.findActive
         Ok(views.html.brand.form(user, Some(id), people, filledForm))
       } getOrElse NotFound(views.html.notFoundPage(request.path))
@@ -360,7 +362,7 @@ trait Brands extends JsonController
 
       brandService.find(id).map { x ⇒
         val people = personService.findActive
-        val form: Form[Brand] = brandsForm.bindFromRequest
+        val form: Form[Brand] = brandsForm(user.name).bindFromRequest
         form.fold(
           formWithErrors ⇒ Future.successful(BadRequest(views.html.brand.form(user, Some(id), people, form))),
           brand ⇒ {
@@ -468,5 +470,3 @@ trait Brands extends JsonController
   }
 
 }
-
-object Brands extends Brands

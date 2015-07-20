@@ -23,6 +23,7 @@
  */
 package controllers
 
+import models.ActiveUser
 import models.brand.BrandTestimonial
 import models.service.Services
 import models.UserRole.DynamicRole
@@ -30,12 +31,18 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
+import securesocial.core.RuntimeEnvironment
 
 case class TestimonialFormData(content: String,
   name: String,
   company: Option[String])
 
-trait BrandTestimonials extends JsonController with Services with Security {
+class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Services
+    with Security {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
     def writes(testimonial: BrandTestimonial): JsValue = {
@@ -51,7 +58,7 @@ trait BrandTestimonials extends JsonController with Services with Security {
   val form = Form(mapping(
     "content" -> nonEmptyText,
     "name" -> nonEmptyText,
-    "company" -> optional(nonEmptyText)) (TestimonialFormData.apply)(TestimonialFormData.unapply))
+    "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
   def add(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
     implicit request ⇒
@@ -132,5 +139,3 @@ trait BrandTestimonials extends JsonController with Services with Security {
           })
   }
 }
-
-object BrandTestimonials extends BrandTestimonials

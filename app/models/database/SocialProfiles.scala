@@ -30,9 +30,10 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `SocialProfile` table mapping
  */
-private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFILE") {
+private[models] class SocialProfiles(tag: Tag)
+    extends Table[SocialProfile](tag, "SOCIAL_PROFILE") {
 
-  implicit val profileTypeMapper = MappedTypeMapper.base[ProfileType.Value, Int](
+  implicit val profileTypeMapper = MappedColumnType.base[ProfileType.Value, Int](
     { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 
   def objectId = column[Long]("OBJECT_ID")
@@ -46,8 +47,15 @@ private[models] object SocialProfiles extends Table[SocialProfile]("SOCIAL_PROFI
   def phone = column[Option[String]]("PHONE")
   def contactForm = column[Option[String]]("CONTACT_FORM")
 
-  def * = objectId ~ objectType ~ email ~ twitterHandle ~ facebookUrl ~
-    linkedInUrl ~ googlePlusUrl ~ skype ~ phone ~
-    contactForm <> (SocialProfile.apply _, SocialProfile.unapply _)
+  def * = (objectId, objectType, email, twitterHandle, facebookUrl,
+    linkedInUrl, googlePlusUrl, skype, phone,
+    contactForm) <> (SocialProfile.tupled, SocialProfile.unapply)
+
+}
+
+object SocialProfilesStatic {
+
+  implicit val profileTypeMapper = MappedColumnType.base[ProfileType.Value, Int](
+    { objectType ⇒ objectType.id }, { id ⇒ ProfileType(id) })
 
 }

@@ -1,4 +1,4 @@
-@(user: UserIdentity)
+@(user: ActiveUser)
 
 <h3 id="person">Person details</h3>
 
@@ -91,7 +91,7 @@
     <tr>
         <th>Example</th>
         <td>
-            <a href="/api/v1/person/@user.person.id.get?api_token=@user.apiToken">
+            <a href="/api/v1/person/@user.person.id.get?api_token=@user.identity.apiToken">
                 GET /api/v1/person/@user.person.id.get</a>
         </td>
     </tr>

@@ -33,11 +33,11 @@ import models.service.brand.EventTypeService
 import org.joda.time.LocalDate
 import org.specs2.mutable._
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.FakeServices
+import stubs.{ FakeRuntimeEnvironment, FakeServices }
 
 class EventsSpec extends Specification with IsolatedMockFactory {
 
-  class TestEvents extends Events with FakeServices {
+  class TestEvents extends Events(FakeRuntimeEnvironment) with FakeServices {
     def callValidateEvent(event: Event, user: UserAccount): Option[List[(String, String)]] =
       validateEvent(event, user)
 

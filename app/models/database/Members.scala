@@ -23,13 +23,13 @@
  */
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.JodaMoney._
 import models.Member
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 
-private[models] object Members extends Table[Member]("MEMBER") {
+private[models] class Members(tag: Tag) extends Table[Member](tag, "MEMBER") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def objectId = column[Long]("OBJECT_ID")
@@ -46,17 +46,15 @@ private[models] object Members extends Table[Member]("MEMBER") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[Long]("UPDATED_BY")
 
-  def * = id.? ~ objectId ~ person ~ funder ~ feeCurrency ~ fee ~ renewal ~
-    since ~ until ~ reason ~ created ~ createdBy ~ updated ~ updatedBy <> ({
-      m ⇒
+  type MembersFields = (Option[Long], Long, Boolean, Boolean, String, BigDecimal, Boolean, LocalDate, LocalDate, Option[String], DateTime, Long, DateTime, Long)
+
+  def * = (id.?, objectId, person, funder, feeCurrency, fee, renewal,
+    since, until, reason, created, createdBy, updated, updatedBy) <> (
+      (m: MembersFields) ⇒
         Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, false,
-          m._10, m._11, m._12, m._13, m._14)
-    }, {
+          m._10, m._11, m._12, m._13, m._14),
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          m.fee.getAmount, m.renewal, m.since, m.until, m.reason, m.created,
-          m.createdBy, m.updated, m.updatedBy)
-    })
-
-  def forInsert = * returning id
+          BigDecimal(m.fee.getAmount), m.renewal, m.since,
+          m.until, m.reason, m.created, m.createdBy, m.updated, m.updatedBy))
 }

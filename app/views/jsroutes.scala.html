@@ -1,6 +1,7 @@
 @()(implicit request: Request[Any])
 
 @helper.javascriptRouter("jsRoutes")(
+  routes.javascript.Assets.at,
   routes.javascript.Brands.activation,
   routes.javascript.Brands.removeCoordinator,
   routes.javascript.Brands.turnNotificationOn,
@@ -13,6 +14,9 @@
   routes.javascript.EventTypes.update,
   routes.javascript.ExchangeRates.convert,
   routes.javascript.Members.updateReason,
+  routes.javascript.Organisations.createOrganizer,
+  routes.javascript.Organisations.name,
+  routes.javascript.Organisations.search,
   routes.javascript.ProfilePhotos.choose,
   routes.javascript.ProfilePhotos.update,
   routes.javascript.People.details,

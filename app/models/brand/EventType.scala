@@ -28,11 +28,11 @@ import models.service.BrandService
 import models.{ Activity, ActivityRecorder, Brand }
 
 case class EventType(id: Option[Long],
-  brandId: Long,
-  name: String,
-  defaultTitle: Option[String],
-  maxHours: Int,
-  free: Boolean) extends ActivityRecorder {
+    brandId: Long,
+    name: String,
+    defaultTitle: Option[String],
+    maxHours: Int,
+    free: Boolean) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object

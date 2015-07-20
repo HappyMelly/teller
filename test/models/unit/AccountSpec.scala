@@ -59,7 +59,7 @@ class AccountSpec extends Specification {
     class TestAccount(id: Option[Long],
       organisationId: Option[Long],
       personId: Option[Long] = None)
-      extends Account(id, organisationId, personId) {
+        extends Account(id, organisationId, personId) {
       override def accountHolder = {
         if (id == Some(2L))
           PersonHelper.one()

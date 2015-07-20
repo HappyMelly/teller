@@ -24,7 +24,9 @@
 
 package models
 
+import models.database.PortableJodaSupport._
 import models.database.{ Participants, People, Events, Evaluations }
+import models.database.Evaluations.evaluationStatusTypeMapper
 import models.service.{ PersonService, EventService }
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
@@ -43,14 +45,14 @@ import play.api.Play.current
  * @param comment Comment, used in email notification only. Not available in HM Teller UI
  */
 case class Participant(
-  id: Option[Long],
-  eventId: Long,
-  personId: Long,
-  evaluationId: Option[Long],
-  certificate: Option[String],
-  issued: Option[LocalDate],
-  organisation: Option[String],
-  comment: Option[String]) {
+    id: Option[Long],
+    eventId: Long,
+    personId: Long,
+    evaluationId: Option[Long],
+    certificate: Option[String],
+    issued: Option[LocalDate],
+    organisation: Option[String],
+    comment: Option[String]) {
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
   lazy val person: Option[Person] = PersonService.get.find(personId)
@@ -60,9 +62,9 @@ case class Participant(
    * A participant is a person that's why only an event and evaluation are updatable
    * @return
    */
-  def update: Participant = DB.withSession { implicit session: Session ⇒
+  def update: Participant = DB.withSession { implicit session ⇒
     val updateTuple = (eventId, evaluationId, certificate, issued)
-    val updateQuery = Participants.filter(_.id === this.id).map(_.forUpdate)
+    val updateQuery = TableQuery[Participants].filter(_.id === this.id).map(_.forUpdate)
     updateQuery.update(updateTuple)
     this
   }
@@ -70,11 +72,11 @@ case class Participant(
   /**
    * Delete a participant and related evaluation
    */
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    Evaluation.findByEventAndPerson(this.personId, this.eventId).map { value ⇒
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    Evaluation.findByEventAndPerson(this.personId, this.eventId).foreach { value ⇒
       value.delete()
     }
-    Participants.where(_.id === this.id).mutate(_.delete())
+    TableQuery[Participants].filter(_.id === this.id).delete
   }
 }
 
@@ -90,13 +92,13 @@ case class Participant(
  * @param certificate A certificate identifier
  */
 case class ParticipantView(person: Person,
-  event: Event,
-  evaluationId: Option[Long],
-  impression: Option[Int],
-  status: Option[EvaluationStatus.Value],
-  date: Option[DateTime],
-  handled: Option[Option[LocalDate]],
-  certificate: Option[String]) {
+    event: Event,
+    evaluationId: Option[Long],
+    impression: Option[Int],
+    status: Option[EvaluationStatus.Value],
+    date: Option[DateTime],
+    handled: Option[LocalDate],
+    certificate: Option[String]) {
 
   override def equals(other: Any): Boolean =
     other match {
@@ -108,8 +110,7 @@ case class ParticipantView(person: Person,
       case _ ⇒ false
     }
 
-  def canEqual(other: Any): Boolean =
-    other.isInstanceOf[ParticipantView]
+  def canEqual(other: Any): Boolean = other.isInstanceOf[ParticipantView]
 
   override def hashCode: Int =
     41 * (41 + person.id.get.toInt) + event.id.get.toInt
@@ -117,18 +118,18 @@ case class ParticipantView(person: Person,
 
 /** This object is used to get data from a form **/
 case class ParticipantData(id: Option[Long],
-  eventId: Long,
-  firstName: String,
-  lastName: String,
-  birthday: Option[LocalDate],
-  emailAddress: String,
-  address: Address,
-  organisation: Option[String],
-  comment: Option[String],
-  created: DateTime = DateTime.now(),
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) {
+    eventId: Long,
+    firstName: String,
+    lastName: String,
+    birthday: Option[LocalDate],
+    emailAddress: String,
+    address: Address,
+    organisation: Option[String],
+    comment: Option[String],
+    created: DateTime = DateTime.now(),
+    createdBy: String,
+    updated: DateTime,
+    updatedBy: String) {
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
 }
@@ -141,8 +142,11 @@ object Participant {
    * @param eventId Event identifier
    * @return
    */
-  def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession { implicit session: Session ⇒
-    Query(Participants).filter(_.personId === personId).filter(_.eventId === eventId).firstOption
+  def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Participants].
+        filter(_.personId === personId).
+        filter(_.eventId === eventId).firstOption
   }
 
   /**
@@ -151,14 +155,14 @@ object Participant {
    * @return
    */
   def findByBrand(brandId: Option[Long]): List[ParticipantView] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
 
       val baseQuery = for {
-        (((part, p), e), ev) ← Participants innerJoin
-          People on (_.personId === _.id) innerJoin
-          Events on (_._1.eventId === _.id) leftJoin
-          Evaluations on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
+        (((part, p), e), ev) ← TableQuery[Participants] innerJoin
+          TableQuery[People] on (_.personId === _.id) innerJoin
+          TableQuery[Events] on (_._1.eventId === _.id) leftJoin
+          TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
 
       val brandQuery = brandId.map { value ⇒
         baseQuery.filter(_._2.brandId === value)
@@ -176,13 +180,13 @@ object Participant {
    * @param events Event identifiers
    */
   def findEvaluationsByEvents(events: List[Long]): List[ParticipantView] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
       val baseQuery = for {
-        (((part, p), e), ev) ← Participants innerJoin
-          People on (_.personId === _.id) innerJoin
-          Events on (_._1.eventId === _.id) leftJoin
-          Evaluations on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
+        (((part, p), e), ev) ← TableQuery[Participants] innerJoin
+          TableQuery[People] on (_.personId === _.id) innerJoin
+          TableQuery[Events] on (_._1.eventId === _.id) leftJoin
+          TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
 
       val eventQuery = baseQuery.filter(_._2.id inSet events)
       val rawList = eventQuery.mapResult(ParticipantView.tupled).list
@@ -197,13 +201,13 @@ object Participant {
    * @param eventId Event identifier
    * @return
    */
-  def findByEvent(eventId: Long): List[ParticipantView] = DB.withSession { implicit session: Session ⇒
+  def findByEvent(eventId: Long): List[ParticipantView] = DB.withSession { implicit session ⇒
     val baseQuery = for {
-      (((part, p), e), ev) ← Participants innerJoin
-        People on (_.personId === _.id) innerJoin
-        Events on (_._1.eventId === _.id) leftJoin
-        Evaluations on (_._1._1.evaluationId === _.id)
-    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled.?, part.certificate)
+      (((part, p), e), ev) ← TableQuery[Participants] innerJoin
+        TableQuery[People] on (_.personId === _.id) innerJoin
+        TableQuery[Events] on (_._1.eventId === _.id) leftJoin
+        TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
+    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
 
     val eventQuery = baseQuery.filter(_._2.id === eventId)
     val rawList = eventQuery.mapResult(ParticipantView.tupled).list
@@ -218,11 +222,11 @@ object Participant {
    * @param eventIds a list of event ids
    * @return
    */
-  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session ⇒
     val baseQuery = for {
-      e ← Events if e.id inSet eventIds
-      part ← Participants if part.eventId === e.id
-      p ← People if p.id === part.personId
+      e ← TableQuery[Events] if e.id inSet eventIds
+      part ← TableQuery[Participants] if part.eventId === e.id
+      p ← TableQuery[People] if p.id === part.personId
     } yield (e, p)
     baseQuery.list
   }
@@ -261,9 +265,11 @@ object Participant {
    * @param participant Object to insert
    * @return
    */
-  def insert(participant: Participant): Participant = DB.withSession { implicit session: Session ⇒
-    val id = Participants.forInsert.insert(participant)
-    participant.copy(id = Some(id))
+  def insert(participant: Participant): Participant = DB.withSession {
+    implicit session ⇒
+      val participants = TableQuery[Participants]
+      val id = (participants returning participants.map(_.id)) += participant
+      participant.copy(id = Some(id))
   }
 
 }

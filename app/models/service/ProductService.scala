@@ -24,7 +24,7 @@
  */
 package models.service
 
-import models.{ Product, Brand }
+import models.{ ProductView, Product, Brand }
 import models.database.{ ProductBrandAssociations, Products }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -40,13 +40,23 @@ class ProductService {
   def activate(id: Long): Unit = switchState(id, true)
 
   /**
+   * Assign this product to a brand
+   * @TEST
+   */
+  def addBrand(productId: Long, brandId: Long): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[ProductBrandAssociations] += ((None, productId, brandId))
+  }
+
+  /**
    * Returns list of related brand for the given product, sorted by name
    *
    * @param id Product id
    */
   def brands(id: Long): List[Brand] = DB.withSession { implicit session ⇒
+    val associations = TableQuery[ProductBrandAssociations]
     val query = for {
-      relation ← ProductBrandAssociations if relation.productId === id
+      relation ← associations if relation.productId === id
       brand ← relation.brand
     } yield brand
     query.sortBy(_.name.toLowerCase).list
@@ -60,12 +70,23 @@ class ProductService {
   def deactivate(id: Long): Unit = switchState(id, false)
 
   /**
+   * @TEST
+   * @param productId
+   * @param brandId
+   */
+  def deleteBrand(productId: Long, brandId: Long): Unit = DB.withSession {
+    implicit session ⇒
+      val associations = TableQuery[ProductBrandAssociations]
+      associations.filter(x ⇒ x.productId === productId && x.brandId === brandId).delete
+  }
+  /**
    * Deletes a product with the given id
    *
    * @param id Product id
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    Products.where(_.id === id).mutate(_.delete())
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    products.filter(_.id === id).delete
   }
 
   /**
@@ -73,18 +94,21 @@ class ProductService {
    *
    * @param id Product id
    */
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Products).filter(_.id === id).firstOption
+  def find(id: Long) = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    products.filter(_.id === id).firstOption
   }
 
   /** Returns list with active products */
-  def findActive: List[Product] = DB.withSession { implicit session: Session ⇒
-    Query(Products).filter(_.active === true).sortBy(_.title.toLowerCase).list
+  def findActive: List[Product] = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    products.filter(_.active === true).sortBy(_.title.toLowerCase).list
   }
 
   /** Returns list with all products */
-  def findAll: List[Product] = DB.withSession { implicit session: Session ⇒
-    Query(Products).sortBy(_.title.toLowerCase).list
+  def findAll: List[Product] = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    products.sortBy(_.title.toLowerCase).list
   }
 
   /**
@@ -93,9 +117,10 @@ class ProductService {
    * @param brandId Brand identifier
    */
   def findByBrand(brandId: Long): List[Product] = DB.withSession {
-    implicit session: Session ⇒
+    implicit session ⇒
+      val associations = TableQuery[ProductBrandAssociations]
       val query = for {
-        relation ← ProductBrandAssociations if relation.brandId === brandId
+        relation ← associations if relation.brandId === brandId
         product ← relation.product
       } yield product
       query.sortBy(_.title.toLowerCase).list
@@ -107,29 +132,61 @@ class ProductService {
    * @param parentId Product id
    */
   def findDerivatives(parentId: Long): List[Product] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Products).filter(_.parentId === parentId).list
+    implicit session ⇒
+      val products = TableQuery[Products]
+      products.filter(_.parentId === parentId).list
+  }
+
+  /**
+   * Inserts the given product to database
+   *
+   * @param product Product to insert
+   * @return The given product with updated id
+   */
+  def insert(product: Product): Product = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    val id = (products returning products.map(_.id)) += product
+    product.copy(id = Some(id))
   }
 
   /**
    * Returns true if the given title is taken by other product except the given one
-   *
+   * @TEST
    * @param title The title of interest
    * @param id Product id
    */
   def isTitleTaken(title: String, id: Long): Boolean = DB.withSession {
-    implicit session: Session ⇒
-      Query(Query(Products).filter(_.title === title).filter(_.id =!= id).exists).first
+    implicit session ⇒
+      val products = TableQuery[Products]
+      products.filter(_.title === title).filter(_.id =!= id).exists.run
   }
 
   /**
    * Returns true if a product with the given title exists
-   *
+   * @TEST
    * @param title Product title
    */
   def titleExists(title: String): Boolean = DB.withSession {
-    implicit session: Session ⇒
-      Query(Query(Products).filter(_.title === title).exists).first
+    implicit session ⇒
+      val products = TableQuery[Products]
+      products.filter(_.title === title).exists.run
+  }
+
+  /**
+   * Updates the given product to database
+   *
+   * @TEST
+   * @param product Product to update
+   * @return The given product
+   */
+  def update(product: Product): Product = DB.withSession { implicit session ⇒
+    val products = TableQuery[Products]
+    val updateTuple = (product.title, product.subtitle, product.url,
+      product.description, product.callToActionUrl, product.callToActionText,
+      product.picture, product.category, product.parentId,
+      product.updated, product.updatedBy)
+    products.filter(_.id === product.id).map(_.forUpdate).update(updateTuple)
+    product
   }
 
   /**
@@ -140,8 +197,9 @@ class ProductService {
    */
   private def switchState(id: Long, active: Boolean): Unit = DB.withSession {
     implicit session: Session ⇒
+      val products = TableQuery[Products]
       val query = for {
-        product ← Products if product.id === id
+        product ← products if product.id === id
       } yield product.active
       query.update(active)
   }
@@ -151,4 +209,25 @@ object ProductService {
   private val instance = new ProductService
 
   def get: ProductService = instance
+}
+
+object ProductsCollection {
+
+  /**
+   * Fill products with brands (using only one query to database)
+   * @TEST
+   * @param products List of products
+   */
+  def brands(products: List[Product]): List[ProductView] = DB.withSession {
+    implicit session ⇒
+      val ids = products.map(_.id.get).distinct
+      val associations = TableQuery[ProductBrandAssociations]
+
+      val query = for {
+        relation ← associations if relation.productId inSet ids
+        brand ← relation.brand
+      } yield (relation.productId, brand)
+      val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+      products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List())))
+  }
 }

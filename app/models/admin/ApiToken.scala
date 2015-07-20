@@ -36,11 +36,11 @@ import models.{ Activity, ActivityRecorder }
  * @param readWrite If true, both read/write requests are allowed; otherwise, read only
  */
 case class ApiToken(id: Option[Long],
-  token: String,
-  appName: String,
-  appDescription: String,
-  appWebsite: Option[String] = None,
-  readWrite: Boolean = true) extends ActivityRecorder {
+    token: String,
+    appName: String,
+    appDescription: String,
+    appWebsite: Option[String] = None,
+    readWrite: Boolean = true) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object

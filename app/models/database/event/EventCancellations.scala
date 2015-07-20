@@ -24,7 +24,7 @@
 
 package models.database.event
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.database.Brands
 import models.event.EventCancellation
 import org.joda.time.LocalDate
@@ -33,7 +33,8 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EventCancellation` database table mapping.
  */
-private[models] object EventCancellations extends Table[EventCancellation]("EVENT_CANCELLATION") {
+private[models] class EventCancellations(tag: Tag)
+    extends Table[EventCancellation](tag, "EVENT_CANCELLATION") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
@@ -48,11 +49,10 @@ private[models] object EventCancellations extends Table[EventCancellation]("EVEN
   def participantsNumber = column[Option[Int]]("PARTICIPANTS_NUMBER")
   def participantsInfo = column[Option[String]]("PARTICIPANTS_INFO", O.DBType("TEXT"))
 
-  def brand = foreignKey("BRAND_FK", brandId, Brands)(_.id)
+  def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  def * = id.? ~ brandId ~ facilitatorId ~ event ~ eventType ~ city ~
-    countryCode ~ start ~ end ~ reason ~ participantsNumber ~
-    participantsInfo <> (EventCancellation.apply _, EventCancellation.unapply _)
+  def * = (id.?, brandId, facilitatorId, event, eventType, city,
+    countryCode, start, end, reason, participantsNumber,
+    participantsInfo) <> (EventCancellation.tupled, EventCancellation.unapply)
 
-  def forInsert = * returning id
 }

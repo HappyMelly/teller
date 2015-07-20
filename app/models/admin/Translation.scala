@@ -40,17 +40,17 @@ case class EvaluationQuestion(language: String,
   question8: String)
 
 case class EvaluationRecommendation(language: String,
-  score0: String,
-  score1: String,
-  score2: String,
-  score3: String,
-  score4: String,
-  score5: String,
-  score6: String,
-  score7: String,
-  score8: String,
-  score9: String,
-  score10: String) {
+    score0: String,
+    score1: String,
+    score2: String,
+    score3: String,
+    score4: String,
+    score5: String,
+    score6: String,
+    score7: String,
+    score8: String,
+    score9: String,
+    score10: String) {
 
   def value(index: Long): String = index match {
     case 0 ⇒ this.score0 + " (0%)"
@@ -69,17 +69,17 @@ case class EvaluationRecommendation(language: String,
 }
 
 case class EvaluationImpression(language: String,
-  score0: String,
-  score1: String,
-  score2: String,
-  score3: String,
-  score4: String,
-  score5: String,
-  score6: String,
-  score7: String,
-  score8: String,
-  score9: String,
-  score10: String) {
+    score0: String,
+    score1: String,
+    score2: String,
+    score3: String,
+    score4: String,
+    score5: String,
+    score6: String,
+    score7: String,
+    score8: String,
+    score9: String,
+    score10: String) {
 
   def value(index: Long): String = index match {
     case 0 ⇒ this.score0 + " (0)"
@@ -99,43 +99,43 @@ case class EvaluationImpression(language: String,
 }
 
 case class Translation(language: String,
-  questions: EvaluationQuestion,
-  recommendations: EvaluationRecommendation,
-  impressions: EvaluationImpression) {
+    questions: EvaluationQuestion,
+    recommendations: EvaluationRecommendation,
+    impressions: EvaluationImpression) {
 
   lazy val changeable: Boolean = language != "EN"
 
-  def create: Translation = DB.withSession { implicit session: Session ⇒
-    EvaluationQuestions.insert(this.questions)
-    EvaluationRecommendations.insert(this.recommendations)
-    EvaluationImpressions.insert(this.impressions)
+  def create: Translation = DB.withSession { implicit session ⇒
+    TableQuery[EvaluationQuestions] += this.questions
+    TableQuery[EvaluationRecommendations] += this.recommendations
+    TableQuery[EvaluationImpressions] += this.impressions
 
     this
   }
 
-  def update: Translation = DB.withSession { implicit session: Session ⇒
+  def update: Translation = DB.withSession { implicit session ⇒
     val q = this.questions
     val qTuple = (q.question1, q.question2, q.question3, q.question4, q.question5, q.question6, q.question7, q.question8)
-    val qQuery = EvaluationQuestions.filter(_.language === this.language).map(_.forUpdate)
+    val qQuery = TableQuery[EvaluationQuestions].filter(_.language === this.language).map(_.forUpdate)
     qQuery.update(qTuple)
 
     val r = this.recommendations
     val rTuple = (r.score0, r.score1, r.score2, r.score3, r.score4, r.score5, r.score6, r.score7, r.score8, r.score9, r.score10)
-    val rQuery = EvaluationRecommendations.filter(_.language === this.language).map(_.forUpdate)
+    val rQuery = TableQuery[EvaluationRecommendations].filter(_.language === this.language).map(_.forUpdate)
     rQuery.update(rTuple)
 
     val i = this.impressions
     val iTuple = (i.score0, i.score1, i.score2, i.score3, i.score4, i.score5, i.score6, i.score7, i.score8, i.score9, i.score10)
-    val iQuery = EvaluationRecommendations.filter(_.language === this.language).map(_.forUpdate)
+    val iQuery = TableQuery[EvaluationRecommendations].filter(_.language === this.language).map(_.forUpdate)
     iQuery.update(iTuple)
 
     this
   }
 
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    EvaluationQuestions.where(_.language === this.language).mutate(_.delete())
-    EvaluationRecommendations.where(_.language === this.language).mutate(_.delete())
-    EvaluationImpressions.where(_.language === this.language).mutate(_.delete())
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    TableQuery[EvaluationQuestions].filter(_.language === this.language).delete
+    TableQuery[EvaluationRecommendations].filter(_.language === this.language).delete
+    TableQuery[EvaluationImpressions].filter(_.language === this.language).delete
   }
 }
 
@@ -146,11 +146,11 @@ object Translation {
    *
    * @return
    */
-  def findAll: Map[String, Translation] = DB.withSession { implicit session: Session ⇒
+  def findAll: Map[String, Translation] = DB.withSession { implicit session ⇒
     val query = for {
-      question ← EvaluationQuestions
-      recommendation ← EvaluationRecommendations if recommendation.language === question.language
-      impression ← EvaluationImpressions if impression.language === question.language
+      question ← TableQuery[EvaluationQuestions]
+      recommendation ← TableQuery[EvaluationRecommendations] if recommendation.language === question.language
+      impression ← TableQuery[EvaluationImpressions] if impression.language === question.language
     } yield (question, recommendation, impression)
     query.list.map { v ⇒ (v._1.language, Translation(v._1.language, v._1, v._2, v._3)) }.toMap
   }

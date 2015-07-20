@@ -43,9 +43,9 @@ case class PaymentData(token: String,
  * Defines an interface for enrollment classes
  */
 trait Enrollment extends Controller
-  with Security
-  with Services
-  with Integrations {
+    with Services
+    with Integrations
+    with Utilities {
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -66,18 +66,17 @@ trait Enrollment extends Controller
     val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
     } getOrElse routes.People.details(person.id.get).url
     val name = org map (_.name) getOrElse person.fullName
-    val fullUrl = Play.configuration.getString("application.baseUrl").getOrElse("") + url
     val memberType = if (member.funder) "Funder" else "Supporter"
     val text = "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
       memberType,
       name,
       fee.toString,
-      fullUrl)
+      fullUrl(url))
     slack.send(text)
     val shortName = org map (_.name) getOrElse person.firstName
     email.send(Set(person),
       subject = "Welcome to Happy Melly network",
-      body = mail.html.welcome(fullUrl, member.profileUrl, shortName).toString(),
+      body = mail.html.welcome(fullUrl(url), member.profileUrl, shortName).toString(),
       richMessage = true)
   }
 

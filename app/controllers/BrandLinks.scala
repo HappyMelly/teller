@@ -23,15 +23,22 @@
  */
 package controllers
 
+import models.ActiveUser
+import models.UserRole.DynamicRole
 import models.brand.BrandLink
 import models.service.Services
-import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
+import securesocial.core.RuntimeEnvironment
 
-trait BrandLinks extends JsonController with Services with Security {
+class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Services
+    with Security {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
@@ -80,5 +87,3 @@ trait BrandLinks extends JsonController with Services with Security {
   }
 
 }
-
-object BrandLinks extends BrandLinks

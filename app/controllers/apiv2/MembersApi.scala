@@ -24,17 +24,19 @@
 
 package controllers.apiv2
 
+import controllers.Utilities
 import ContributionsApi.contributionWrites
 import PeopleApi.personDetailsWrites
 import PeopleApi.{ personWrites, addressWrites }
 import models.{ Address, Member, Experiment, OrgView, Organisation }
 import models.service.Services
-import play.api.Play
-import play.api.Play.current
 import play.api.libs.json._
 import play.mvc.Controller
 
-trait MembersApi extends Controller with ApiAuthentication with Services {
+trait MembersApi extends Controller
+  with ApiAuthentication
+  with Services
+  with Utilities {
 
   /**
    * Implicit conversion of Member used in lists
@@ -194,13 +196,6 @@ trait MembersApi extends Controller with ApiAuthentication with Services {
       "org"
   }
 
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
 }
 
 object MembersApi extends MembersApi with ApiAuthentication with Services

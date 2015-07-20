@@ -30,11 +30,10 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `FacilitatorLanguage` database table mapping.
  */
-private[models] object FacilitatorLanguages extends Table[FacilitatorLanguage]("FACILITATOR_LANGUAGE") {
+private[models] class FacilitatorLanguages(tag: Tag) extends Table[FacilitatorLanguage](tag, "FACILITATOR_LANGUAGE") {
   def personId = column[Long]("PERSON_ID")
   def language = column[String]("LANGUAGE")
 
-  def * = personId ~ language <> (FacilitatorLanguage.apply _, FacilitatorLanguage.unapply _)
+  def * = (personId, language) <> (FacilitatorLanguage.tupled, FacilitatorLanguage.unapply)
 
-  def forInsert = *
 }

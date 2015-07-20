@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import models.Brand
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -32,7 +32,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Brand` database table mapping.
  */
-private[models] object Brands extends Table[Brand]("BRAND") {
+private[models] class Brands(tag: Tag) extends Table[Brand](tag, "BRAND") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def code = column[String]("CODE")
@@ -53,16 +53,14 @@ private[models] object Brands extends Table[Brand]("BRAND") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, People)(_.id)
+  def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, TableQuery[People])(_.id)
 
-  def * = id.? ~ code ~ uniqueName ~ name ~ coordinatorId ~ description ~ picture ~
-    generateCert ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ active ~
-    created ~ createdBy ~ updated ~ updatedBy <> (Brand.apply _, Brand.unapply _)
+  def * = (id.?, code, uniqueName, name, coordinatorId, description, picture,
+    generateCert, tagLine, webSite, blog, evaluationHookUrl, active,
+    created, createdBy, updated, updatedBy) <> ((Brand.apply _).tupled, Brand.unapply)
 
-  def forInsert = * returning id
-
-  def forUpdate = code ~ uniqueName ~ name ~ coordinatorId ~ description ~
-    picture ~ tagLine ~ webSite ~ blog ~ evaluationHookUrl ~ updated ~ updatedBy
+  def forUpdate = (code, uniqueName, name, coordinatorId, description,
+    picture, tagLine, webSite, blog, evaluationHookUrl, updated, updatedBy)
 
   def uniqueCodeIndex = index("IDX_CODE", code, unique = true)
   def uniqueNameIndex = index("IDX_UNIQUE_NAME", uniqueName, unique = true)

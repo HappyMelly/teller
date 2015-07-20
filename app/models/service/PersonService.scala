@@ -30,47 +30,78 @@ import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
 
-import scala.slick.lifted.Query
-
 class PersonService extends Services {
+
+  /**
+   * Associates this person with given organisation.
+   * @TEST
+   */
+  def addRelation(personId: Long, organisationId: Long): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[OrganisationMemberships] += ((None, personId, organisationId))
+  }
 
   /**
    * Deletes the person with the given ID and their account.
    *
+   * @TEST
    * @param id Person Identifier
    */
-  def delete(id: Long): Unit = DB.withTransaction { implicit session: Session ⇒
+  def delete(id: Long): Unit = DB.withTransaction { implicit session ⇒
     find(id) map { person ⇒
-      Accounts.where(_.personId === id).mutate(_.delete())
-      MemberService.get.delete(id, person = true)
-      PaymentRecordService.get.delete(id, person = true)
-      UserAccount.delete(id)
+      TableQuery[Accounts].filter(_.personId === id).delete
+      memberService.delete(id, person = true)
+      paymentRecordService.delete(id, person = true)
+      userAccountService.delete(id)
       //TODO add evaluation removal
-      Participants.where(_.personId === id).mutate(_.delete())
-      SocialProfileService.get.delete(id, ProfileType.Person)
-      People.where(_.id === id).mutate(_.delete())
-      Addresses.where(_.id === person.address.id.get).mutate(_.delete())
-      Query(ProfileStrengths).
+      TableQuery[Participants].filter(_.personId === id).delete
+      socialProfileService.delete(id, ProfileType.Person)
+      TableQuery[People].filter(_.id === id).delete
+      TableQuery[Addresses].filter(_.id === person.address.id.get).delete
+      TableQuery[ProfileStrengths].
         filter(_.objectId === person.id.get).
-        filter(_.org === false).mutate(_.delete())
+        filter(_.org === false).delete
     }
   }
 
   /**
+   * Deletes a relationship between this person and the given organisation
+   *
+   * @TEST
+   * @param organisationId Organisation identifier
+   */
+  def deleteRelation(personId: Long, organisationId: Long): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[OrganisationMemberships].
+        filter(_.personId === personId).
+        filter(_.organisationId === organisationId).delete
+  }
+
+  /**
    * Inserts new person object into database
+   * @TEST
    * @param person Person object
    * @return Returns saved person
    */
   def insert(person: Person): Person = DB.withTransaction {
-    implicit session: Session ⇒
+    implicit session ⇒
+      val people = TableQuery[People]
+      val accounts = TableQuery[Accounts]
       val address = Address.insert(person.address)
-      val id = People.forInsert.insert(person.copy(addressId = address.id.get))
-      socialProfileService.insert(person.socialProfile.copy(objectId = id))
-      Accounts.insert(Account(personId = Some(id)))
-      profileStrengthService.insert(ProfileStrength.empty(id, false))
-      val saved = person.copy(id = Some(id))
-      saved.address_=(address)
-      saved
+
+      try {
+        val id = (people returning people.map(_.id)) += person.copy(addressId = address.id.get)
+        socialProfileService.insert(person.socialProfile.copy(objectId = id))
+        accounts += Account(personId = Some(id))
+        profileStrengthService.insert(ProfileStrength.empty(id, false))
+        val saved = person.copy(id = Some(id))
+        saved.address_=(address)
+        saved
+      } catch {
+        case e: Exception ⇒
+          println(e)
+          throw e
+      }
   }
 
   /**
@@ -78,12 +109,8 @@ class PersonService extends Services {
    * @param id Person Identifier
    * @return
    */
-  def find(id: Long): Option[Person] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      person ← People if person.id === id
-    } yield person
-
-    query.firstOption
+  def find(id: Long): Option[Person] = DB.withSession { implicit session ⇒
+    TableQuery[People].filter(_.id === id).firstOption
   }
 
   /**
@@ -91,10 +118,11 @@ class PersonService extends Services {
    *
    * @param name Person Identifier
    */
-  def find(name: String): Option[Person] = DB.withSession { implicit session: Session ⇒
+  def find(name: String): Option[Person] = DB.withSession { implicit session ⇒
+    val people = TableQuery[People]
     val transformed = name.replace(".", " ")
     val query = for {
-      person ← People if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
+      person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
     } yield person
 
     query.firstOption
@@ -103,17 +131,16 @@ class PersonService extends Services {
   /**
    * Returns a list of active people
    */
-  def findActive: List[Person] = DB.withSession { implicit session: Session ⇒
-    Query(People).filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+  def findActive: List[Person] = DB.withSession { implicit session ⇒
+    TableQuery[People].filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 
   /** Returns list of people which are not members (yet!) */
   def findNonMembers: List[Person] = DB.withSession { implicit session ⇒
     import scala.language.postfixOps
-
-    val members = for { m ← Members if m.person === true } yield m.objectId
+    val members = for { m ← TableQuery[Members] if m.person === true } yield m.objectId
     val ids = members.list
-    Query(People).filter(row ⇒ !(row.id inSet ids)).sortBy(_.firstName).list
+    TableQuery[People].filter(row ⇒ !(row.id inSet ids)).sortBy(_.firstName).list
   }
 
   /**
@@ -121,7 +148,7 @@ class PersonService extends Services {
    * @param id Person id
    */
   def member(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    Query(Members).
+    TableQuery[Members].
       filter(_.objectId === id).
       filter(_.person === true).firstOption
   }
@@ -130,38 +157,40 @@ class PersonService extends Services {
    * Returns list of organizations this person is a member of
    * @param personId Person identifier
    */
-  def memberships(personId: Long): List[Organisation] = DB.withSession { implicit session: Session ⇒
+  def memberships(personId: Long): List[Organisation] = DB.withSession { implicit session ⇒
+    val memberships = TableQuery[OrganisationMemberships]
     val query = for {
-      membership ← OrganisationMemberships if membership.personId === personId
+      membership ← memberships if membership.personId === personId
       organisation ← membership.organisation
     } yield organisation
     query.sortBy(_.name.toLowerCase).list
   }
 
-  def update(person: Person): Person = DB.withTransaction { implicit session: Session ⇒
-    import models.database.SocialProfiles._
+  def update(person: Person): Person = DB.withTransaction { implicit session ⇒
+    import models.database.SocialProfilesStatic._
 
     val addressQuery = for {
-      address ← Addresses if address.id === person.addressId
+      address ← TableQuery[Addresses] if address.id === person.addressId
     } yield address
     addressQuery.update(person.address.copy(id = Some(person.addressId)))
 
     val socialQuery = for {
-      p ← SocialProfiles if p.objectId === person.id.get &&
+      p ← TableQuery[SocialProfiles] if p.objectId === person.id.get &&
         p.objectType === person.socialProfile.objectType
     } yield p
 
     socialQuery.update(person.socialProfile.copy(objectId = person.id.get))
 
+    val people = TableQuery[People]
     // Skip the id, created, createdBy and active fields.
     val personUpdateTuple = (person.firstName, person.lastName, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,
       person.webSite, person.blog, person.customerId, person.virtual,
       person.active, person.dateStamp.updated, person.dateStamp.updatedBy)
-    val updateQuery = People.filter(_.id === person.id).map(_.forUpdate)
+    val updateQuery = people.filter(_.id === person.id).map(_.forUpdate)
     updateQuery.update(personUpdateTuple)
 
-    UserAccount.updateSocialNetworkProfiles(person)
+    userAccountService.updateSocialNetworkProfiles(person)
     updateProfileStrength(person)
 
     person

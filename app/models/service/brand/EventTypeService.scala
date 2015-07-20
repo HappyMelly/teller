@@ -32,13 +32,15 @@ import play.api.db.slick.DB
 
 class EventTypeService {
 
+  private val types = TableQuery[EventTypes]
+
   /**
    * Deletes event type object form database
    *
    * @param id Event type id
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    EventTypes.filter(_.id === id).mutate(_.delete())
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    types.filter(_.id === id).delete
   }
 
   /**
@@ -46,8 +48,8 @@ class EventTypeService {
    *
    * @param id Event type id
    */
-  def exists(id: Long): Boolean = DB.withSession { implicit session: Session ⇒
-    Query(Query(EventTypes).filter(_.id === id).exists).first
+  def exists(id: Long): Boolean = DB.withSession { implicit session ⇒
+    types.filter(_.id === id).exists.run
   }
 
   /**
@@ -55,9 +57,8 @@ class EventTypeService {
    * @param id Event type id
    * @return
    */
-  def find(id: Long): Option[EventType] = DB.withSession {
-    implicit session: Session ⇒
-      Query(EventTypes).filter(_.id === id).firstOption
+  def find(id: Long): Option[EventType] = DB.withSession { implicit session ⇒
+    types.filter(_.id === id).firstOption
   }
 
   /**
@@ -66,8 +67,8 @@ class EventTypeService {
    * @param brandId Brand identifier
    */
   def findByBrand(brandId: Long): List[EventType] = DB.withSession {
-    implicit session: Session ⇒
-      Query(EventTypes).filter(_.brandId === brandId).list
+    implicit session ⇒
+      types.filter(_.brandId === brandId).list
   }
 
   /**
@@ -76,10 +77,9 @@ class EventTypeService {
    * @param value Event type object
    * @return Updated object with id
    */
-  def insert(value: EventType): EventType = DB.withSession {
-    implicit session: Session ⇒
-      val id = EventTypes.forInsert.insert(value)
-      value.copy(id = Some(id))
+  def insert(value: EventType): EventType = DB.withSession { implicit session ⇒
+    val id = (types returning types.map(_.id)) += value
+    value.copy(id = Some(id))
   }
 
   /**
@@ -90,7 +90,7 @@ class EventTypeService {
   def update(value: EventType): EventType = DB.withSession {
     implicit session: Session ⇒
       val tuple = (value.name, value.defaultTitle, value.maxHours, value.free)
-      Query(EventTypes).filter(_.id === value.id).map(_.forUpdate).update(tuple)
+      types.filter(_.id === value.id).map(_.forUpdate).update(tuple)
       value
   }
 }

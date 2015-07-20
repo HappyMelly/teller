@@ -25,60 +25,174 @@
 package stubs
 
 import controllers.{ AuthorisationHandler, Security }
-import models.{ UserIdentity, UserRole, Person }
-import play.api.mvc.{ Action, SimpleResult, AnyContent, Request }
-import securesocial.core.SecuredRequest
+import helpers.PersonHelper
+import models._
+import org.joda.time.DateTime
+import play.api.mvc.{ Action, AnyContent, Request, Result }
+import securesocial.core.authenticator.Authenticator
+
 import scala.concurrent.Future
+
+case class FakeAuthenticator(user: ActiveUser) extends Authenticator[ActiveUser] {
+
+  /**
+   * An id for this authenticator
+   */
+  val id: String = "fake"
+
+  /**
+   * The creation time
+   */
+  val creationDate: DateTime = DateTime.now()
+
+  /**
+   * The last used time
+   */
+  val lastUsed: DateTime = DateTime.now()
+
+  /**
+   * The expiration date
+   */
+  val expirationDate: DateTime = DateTime.now().plusHours(1)
+
+  /**
+   * Checks if this authenticator is valid.
+   *
+   * @return true if the authenticator is valid, false otherwise
+   */
+  def isValid: Boolean = true
+
+  /**
+   * Touches the authenticator. This is invoked every time a protected action is
+   * executed.  Depending on the implementation this can be used to update the last time
+   * used timestamp
+   *
+   * @return an updated instance
+   */
+  def touch: Future[Authenticator[ActiveUser]] = Future.successful(this)
+
+  /**
+   * Updated the user associated with this authenticator. This method can be used
+   * by authenticators that store user information on the client side.
+   *
+   * @param user the user object
+   * @return an updated instance
+   */
+  def updateUser(user: ActiveUser): Future[Authenticator[ActiveUser]] =
+    Future.successful(this)
+
+  /**
+   * Starts an authenticator session. This is invoked when the user logs in.
+   *
+   * @param result the result that is about to be sent to the client
+   * @return the result modified to signal a new session has been created.
+   */
+  def starting(result: Result): Future[Result] = Future.successful(result)
+
+  /**
+   * Ends an authenticator session.  This is invoked when the user logs out or if the
+   * authenticator becomes invalid (maybe due to a timeout)
+   *
+   * @param result the result that is about to be sent to the client.
+   * @return the result modified to signal the authenticator is no longer valid
+   */
+  def discarding(result: Result): Future[Result] = Future.successful(result)
+
+  /**
+   * Invoked after a protected action is executed.  This can be used to
+   * alter the result in implementations that need to update the information sent to the client
+   * after the authenticator is used.
+   *
+   * @param result the result that is about to be sent to the client.
+   * @return the result modified with the updated authenticator
+   */
+  def touching(result: Result): Future[Result] = Future.successful(result)
+
+  // java results
+  /**
+   * Invoked after a protected Java action is executed.  This can be used to
+   * alter the result in implementations that need to update the information sent to the client
+   * after the authenticator is used.
+   *
+   * @param javaContext the current http context
+   * @return the http context modified with the updated authenticator
+   */
+  def touching(javaContext: play.mvc.Http.Context): Future[Unit] =
+    Future.successful(None)
+
+  /**
+   * Ends an authenticator session.  This is invoked when the authenticator becomes invalid (for Java actions)
+   *
+   * @param javaContext the current http context
+   * @return the current http context modified to signal the authenticator is no longer valid
+   */
+  def discarding(javaContext: play.mvc.Http.Context): Future[Unit] =
+    Future.successful(None)
+}
 
 trait FakeSecurity extends Security {
 
   /** Used to replace user object which is passed to action */
   private var _activeUser: Option[Person] = None
+  private var _identity: (String, String) = FakeUserIdentity.viewer
 
   def activeUser_=(user: Person) = _activeUser = Some(user)
+  def identity_=(identity: (String, String)) = _identity = identity
+
+  val authenticator = FakeAuthenticator(user)
 
   override def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     Action.async { implicit req ⇒
-      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
-      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(user)
-      Action.async(f(_)(handler)(user))(SecuredRequest(viewer, request))
+      Action.async(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
     }
   }
 
   override def AsyncSecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     Action.async { implicit req ⇒
-      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
-      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(user)
-      Action.async(f(_)(handler)(user))(SecuredRequest(viewer, request))
+      Action.async(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
     }
   }
 
   override def SecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     Action.async { implicit req ⇒
-      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
-      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(user)
-      Action(f(_)(handler)(user))(SecuredRequest(viewer, request))
+      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
     }
   }
 
   override def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     Action.async { implicit req ⇒
-      val request: SecuredRequest[AnyContent] = SecuredRequest(viewer, req)
-      val user: UserIdentity = request.user.asInstanceOf[UserIdentity]
       val handler = new AuthorisationHandler(user)
-      Action(f(_)(handler)(user))(SecuredRequest(viewer, request))
+      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
     }
   }
 
-  private def viewer: UserIdentity = new FakeUserIdentity(Some(123213L),
-    FakeUserIdentity.viewer, "Sergey", "Kotlov", "Sergey Kotlov", None, _activeUser)
+  private def user: ActiveUser = {
+    val identity = new FakeUserIdentity(Some(123213L),
+      _identity, "Sergey", "Kotlov", "Sergey Kotlov", None)
+    val account = UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
+    val admin = UserRole.forName("admin")
+    val editor = UserRole.forName("editor")
+    val viewer = UserRole.forName("viewer")
+    _identity match {
+      case FakeUserIdentity.unregistered ⇒
+        account.roles_=(List(UserRole.forName("unregistered")))
+      case FakeUserIdentity.admin ⇒
+        account.roles_=(List(viewer, editor, admin))
+      case FakeUserIdentity.editor ⇒
+        account.roles_=(List(viewer, editor))
+      case _ ⇒
+        account.roles_=(List(viewer))
+    }
+    val person = _activeUser getOrElse PersonHelper.one()
+    ActiveUser(identity, account, person)
+  }
 }
 
 /**
@@ -91,7 +205,7 @@ trait AccessCheckSecurity extends Security {
   var checkedDynamicLevel: Option[String] = None
 
   override def AsyncSecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     cleanTrace()
     checkedDynamicObject = Some(name)
     checkedDynamicLevel = Some(level)
@@ -99,14 +213,14 @@ trait AccessCheckSecurity extends Security {
   }
 
   override def AsyncSecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ Future[SimpleResult]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     cleanTrace()
     checkedRole = Some(role)
     Action({ Ok("") })
   }
 
   override def SecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     cleanTrace()
     checkedDynamicObject = Some(name)
     checkedDynamicLevel = Some(level)
@@ -114,7 +228,7 @@ trait AccessCheckSecurity extends Security {
   }
 
   override def SecuredRestrictedAction(role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ UserIdentity ⇒ SimpleResult): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     cleanTrace()
     checkedRole = Some(role)
     Action({ Ok("") })

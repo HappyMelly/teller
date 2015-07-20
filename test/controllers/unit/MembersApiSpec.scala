@@ -40,7 +40,10 @@ class MembersApiSpec extends Specification {
 
   class TestMembersApi() extends MembersApi
     with FakeApiAuthentication
-    with FakeServices
+    with FakeServices {
+
+      override def fullUrl(url: String): String = url
+    }
 
   val memberOne = MemberHelper.make(Some(1L), 1L, person = true, funder = false)
   val memberTwo = MemberHelper.make(Some(2L), 2L, person = false, funder = true)

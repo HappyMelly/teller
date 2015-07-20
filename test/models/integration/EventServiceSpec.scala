@@ -40,8 +40,8 @@ class EventServiceSpec extends PlayAppSpec {
   override def setupDb() {
     PersonHelper.one().insert
     PersonHelper.two().insert
+    PersonHelper.make(Some(3L), "Three", "Tester").insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
-    PersonHelper.make(Some(5L), "Four", "Tester").insert
     BrandHelper.one.insert
     val service = new EventTypeService
     service.insert(new EventType(None, 1L, "Type 1", None, 16, false))
@@ -127,8 +127,8 @@ class EventServiceSpec extends PlayAppSpec {
       val events = service.findByFacilitator(2, None)
       events.length mustEqual 4
     }
-    "return 0 events facilitated by facilitator = 3" in {
-      service.findByFacilitator(3, None).length mustEqual 0
+    "return 0 events facilitated by facilitator = 5" in {
+      service.findByFacilitator(5, None).length mustEqual 0
     }
   }
 

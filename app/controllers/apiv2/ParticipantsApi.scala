@@ -54,13 +54,13 @@ trait ParticipantsApi extends ApiAuthentication with Services {
       "postcode" -> optional(nonEmptyText),
       "province" -> optional(nonEmptyText),
       "organisation" -> optional(nonEmptyText),
-      "comment" -> optional(nonEmptyText)) ({
+      "comment" -> optional(nonEmptyText))({
         (id, event_id, first_name, last_name, birthday, email, city, country, street_1, street_2, postcode, province,
         organisation, comment) ⇒
           ParticipantData(id, event_id, first_name, last_name, birthday, email,
             Address(None, street_1, street_2, Some(city), province, postcode, country), organisation, comment,
             DateTime.now(), appName, DateTime.now(), appName)
-      }) ({
+      })({
         (p: ParticipantData) ⇒
           Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode, p.address.street1, p.address.street2,

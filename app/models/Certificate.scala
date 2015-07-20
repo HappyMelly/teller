@@ -48,10 +48,10 @@ import scala.language.postfixOps
  * An certificate which a participant gets after an event
  */
 case class Certificate(
-  issued: Option[LocalDate],
-  event: Event,
-  participant: Person,
-  renew: Boolean = false) extends Integrations {
+    issued: Option[LocalDate],
+    event: Event,
+    participant: Person,
+    renew: Boolean = false) extends Integrations {
 
   val id =
     issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"

@@ -36,14 +36,14 @@ class EventTypeServiceSpec extends PlayAppSpec {
     PersonHelper.one().insert
     BrandHelper.one.insert
     BrandHelper.make("two", Some(2L)).insert
-    BrandHelper.make("four", Some(4L)).insert
+    BrandHelper.make("three", Some(3L)).insert
     Seq(
       (1L, "One"),
       (1L, "Two"),
       (1L, "Three"),
       (2L, "Four"),
       (1L, "Five"),
-      (4L, "Six")).foreach {
+      (3L, "Six")).foreach {
         case (brandId, name) ⇒
           val eventType = EventType(None, brandId, name, None, 8, false)
           service.insert(eventType)
@@ -64,8 +64,8 @@ class EventTypeServiceSpec extends PlayAppSpec {
       eventTypes.length must_== 1
       eventTypes.exists(_.name == "Four") must_== true
     }
-    "return 0 eventTypes belonged to brand 3" in {
-      val eventTypes = service.findByBrand(3L)
+    "return 0 eventTypes belonged to brand 4" in {
+      val eventTypes = service.findByBrand(4L)
       eventTypes.length must_== 0
     }
   }

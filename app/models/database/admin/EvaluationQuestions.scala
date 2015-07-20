@@ -30,7 +30,8 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EvaluationQuestions` database table mapping.
  */
-private[models] object EvaluationQuestions extends Table[EvaluationQuestion]("EVALUATION_QUESTION") {
+private[models] class EvaluationQuestions(tag: Tag)
+    extends Table[EvaluationQuestion](tag, "EVALUATION_QUESTION") {
 
   def language = column[String]("LANGUAGE", O.PrimaryKey)
   def question1 = column[String]("QUESTION_1")
@@ -42,10 +43,10 @@ private[models] object EvaluationQuestions extends Table[EvaluationQuestion]("EV
   def question7 = column[String]("QUESTION_7")
   def question8 = column[String]("QUESTION_8")
 
-  def * = language ~ question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8 <> (EvaluationQuestion.apply _, EvaluationQuestion.unapply _)
+  def * = (language, question1, question2, question3, question4, question5,
+    question6, question7, question8) <> (EvaluationQuestion.tupled, EvaluationQuestion.unapply)
 
-  def forUpdate = question1 ~ question2 ~ question3 ~ question4 ~ question5 ~
-    question6 ~ question7 ~ question8
+  def forUpdate = (question1, question2, question3, question4, question5,
+    question6, question7, question8)
 
 }

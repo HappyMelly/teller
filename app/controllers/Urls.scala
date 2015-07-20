@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -23,16 +23,22 @@
  */
 package controllers
 
-import concurrent.ExecutionContext.Implicits.global
+import models.ActiveUser
 import models.UserRole.Role._
+import play.api.Play.current
 import play.api.libs.ws.WS
 import play.api.libs.json.Json
+import securesocial.core.RuntimeEnvironment
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-object Urls extends JsonController with Security {
+class Urls(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Validates the given url points to an existing page

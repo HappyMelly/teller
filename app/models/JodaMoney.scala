@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -30,7 +30,7 @@ import play.api.data.Mapping
 import play.api.data.Forms._
 import scala.Predef._
 import scala.language.implicitConversions
-import scala.slick.lifted.MappedTypeMapper
+import scala.slick.driver.JdbcDriver.simple._
 
 /**
  * Joda Money conversions
@@ -50,9 +50,10 @@ object JodaMoney {
    */
   def apply(currency: String, amount: BigDecimal): Money = currency -> amount
 
-  def unapply(money: Money): Option[(String, BigDecimal)] = Some(money.getCurrencyUnit.getCode, money.getAmount)
+  def unapply(money: Money): Option[(String, BigDecimal)] =
+    Some((money.getCurrencyUnit.getCode, BigDecimal(money.getAmount)))
 
-  implicit val CurrencyMapper = MappedTypeMapper.base[CurrencyUnit, String](_.toString, CurrencyUnit.of)
+  implicit val CurrencyMapper = MappedColumnType.base[CurrencyUnit, String](_.toString, CurrencyUnit.of)
 
   /**
    * Returns a CurrencyUnit for a currency code

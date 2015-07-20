@@ -34,54 +34,20 @@ import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.Json
+import play.api.libs.json._
 import play.api.{ Logger, Play }
+import securesocial.core.RuntimeEnvironment
 
-trait Organisations extends JsonController
-  with Security
-  with Services
-  with Files
-  with Activities {
+import scala.concurrent.Future
 
-  /**
-   * HTML form mapping for creating and editing.
-   */
-  def organisationForm(implicit user: UserIdentity) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "name" -> nonEmptyText,
-    "address" -> People.addressMapping,
-    "vatNumber" -> optional(text),
-    "registrationNumber" -> optional(text),
-    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
-    "webSite" -> optional(webUrl),
-    "blog" -> optional(webUrl),
-    "customerId" -> optional(text),
-    "about" -> optional(text),
-    "logo" -> ignored(false),
-    "active" -> ignored(true),
-    "dateStamp" -> mapping(
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(user.fullName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(user.fullName))(DateStamp.apply)(DateStamp.unapply))({
-      (id, name, address, vatNumber,
-      registrationNumber, profile, webSite, blog, customerId, about,
-      logo, active, dateStamp) ⇒
-        val org = Organisation(id, name, address.street1, address.street2,
-          address.city, address.province, address.postCode, address.countryCode,
-          vatNumber, registrationNumber, webSite,
-          blog, customerId, about, logo, active, dateStamp)
-        OrgView(org, profile)
-    })({
-      (v: OrgView) ⇒
-        val address = Address(None, v.org.street1, v.org.street2,
-          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
-        Some((v.org.id, v.org.name, address, v.org.vatNumber,
-          v.org.registrationNumber, v.profile, v.org.webSite,
-          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
-          v.org.dateStamp))
-    }))
+class Organisations(environment: RuntimeEnvironment[ActiveUser])
+    extends JsonController
+    with Security
+    with Services
+    with Files
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Form target for toggling whether an organisation is active.
@@ -96,7 +62,7 @@ trait Organisations extends JsonController
           },
           active ⇒ {
             orgService.activate(id, active)
-            val activity = Activity.insert(user.fullName,
+            val activity = Activity.insert(user.name,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
             Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
           })
@@ -111,106 +77,7 @@ trait Organisations extends JsonController
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Ok(views.html.organisation.form(user, None, organisationForm))
-  }
-
-  /**
-   * Create form submits to this action.
-   */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      organisationForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.organisation.form(user, None, formWithErrors)),
-        view ⇒ {
-          val org = orgService.insert(view)
-          val activity = Activity.insert(user.fullName, Activity.Predicate.Created, view.org.name)
-          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
-        })
-  }
-
-  /**
-   * Delete an organisation
-   * @param id Organisation ID
-   */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      orgService.find(id).map { organisation ⇒
-        orgService.delete(id)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, organisation.name)
-        Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
-  }
-
-  /**
-   * Renders Details page
-   * @param id Organisation ID
-   */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      orgService.findWithProfile(id).map { view ⇒
-        val members = view.org.people
-        val otherPeople = personService.findActive.filterNot(person ⇒ members.contains(person))
-        val contributions = contributionService.contributions(id, isPerson = false)
-        val products = productService.findAll
-        val payments = view.org.member map { v ⇒
-          paymentRecordService.findByOrganisation(id)
-        } getOrElse List()
-        Ok(views.html.organisation.details(user, view, members, otherPeople,
-          contributions, products, payments))
-      }.getOrElse(NotFound)
-  }
-
-  /**
-   * Render an Edit page
-   * @param id Organisation ID
-   */
-  def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      orgService.findWithProfile(id).map { view ⇒
-        Ok(views.html.organisation.form(user, Some(id),
-          organisationForm.fill(OrgView(view.org, view.profile))))
-      }.getOrElse(NotFound)
-  }
-
-  /**
-   * List page.
-   */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val organisations = orgService.findAll
-      Ok(views.html.organisation.index(user, organisations))
-  }
-
-  /**
-   * Updates an organisation
-   * @param id Organisation ID
-   */
-  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        orgService.findWithProfile(id).map { view ⇒
-          organisationForm.bindFromRequest.fold(
-            formWithErrors ⇒
-              BadRequest(views.html.organisation.form(
-                user,
-                Some(id),
-                formWithErrors)),
-            view ⇒ {
-              val updatedOrg = view.org.
-                copy(id = Some(id), active = view.org.active).
-                copy(customerId = view.org.customerId)
-              val updatedProfile = view.profile.forOrg.copy(objectId = id)
-              orgService.update(OrgView(updatedOrg, updatedProfile))
-              val log = activity(updatedOrg, user.person).updated.insert()
-              Redirect(routes.Organisations.details(id)).
-                flashing("success" -> log.toString)
-            })
-        }.getOrElse(NotFound)
+      Ok(views.html.organisation.form(user, None, Organisations.organisationForm))
   }
 
   /**
@@ -250,20 +117,47 @@ trait Organisations extends JsonController
   }
 
   /**
-   * Upload a new logo to Amazon
-   *
-   * @param id Organisation identifier
+   * Create form submits to this action.
    */
-  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        uploadFile(Organisation.logo(id), "logo") map { _ ⇒
-          orgService.updateLogo(id, true)
-          val route = routes.Organisations.details(id).url
-          jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
-        } recover {
-          case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
-        }
+  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      Organisations.organisationForm.bindFromRequest.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.organisation.form(user, None, formWithErrors)),
+        view ⇒ {
+          val org = orgService.insert(view)
+          val activity = Activity.insert(user.name, Activity.Predicate.Created, view.org.name)
+          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+        })
+  }
+
+  /**
+   * Adds new organization to the system
+   */
+  def createOrganizer = AsyncSecuredDynamicAction("event", "add") {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      Organisations.organisationForm.bindFromRequest.fold(
+        formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),
+        view ⇒ {
+          val org = orgService.insert(view).org
+          activity(org, user.person).created.insert()
+          Future.successful(jsonOk(Json.obj("id" -> org.id, "name" -> org.name)))
+        })
+  }
+
+  /**
+   * Delete an organisation
+   * @param id Organisation ID
+   */
+  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      orgService.find(id).map { organisation ⇒
+        orgService.delete(id)
+        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)
+        Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
+      }.getOrElse(NotFound)
   }
 
   /**
@@ -281,11 +175,175 @@ trait Organisations extends JsonController
   }
 
   /**
+   * Renders Details page
+   * @param id Organisation ID
+   */
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      orgService.findWithProfile(id).map { view ⇒
+        val members = view.org.people
+        val otherPeople = personService.findActive.filterNot(person ⇒ members.contains(person))
+        val contributions = contributionService.contributions(id, isPerson = false)
+        val products = productService.findAll
+        val payments = view.org.member map { v ⇒
+          paymentRecordService.findByOrganisation(id)
+        } getOrElse List()
+        Ok(views.html.organisation.details(user, view, members, otherPeople,
+          contributions, products, payments))
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * Render an Edit page
+   * @param id Organisation ID
+   */
+  def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      orgService.findWithProfile(id).map { view ⇒
+        Ok(views.html.organisation.form(user, Some(id),
+          Organisations.organisationForm.fill(OrgView(view.org, view.profile))))
+      }.getOrElse(NotFound)
+  }
+
+  /**
+   * List page.
+   */
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      val organisations = orgService.findAll
+      Ok(views.html.organisation.index(user, organisations))
+  }
+
+  /**
    * Retrieve and cache a logo of the given organisation
    *
    * @param id Organisation identifier
    */
   def logo(id: Long) = file(Organisation.logo(id))
+
+  /**
+   * Returns name of the given organisation
+   * @param id Organisation id
+   */
+  def name(id: Long) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request => implicit handler => implicit user =>
+      val name = if (id != 0)
+        orgService.find(id) map { _.name } getOrElse ""
+       else
+        ""
+      Future.successful(jsonOk(Json.obj("name" -> name)))
+  }
+
+  /**
+   * Returns list of organisations for the given query
+   *
+   * @param query Search query
+   */
+  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        implicit val orgWrites = new Writes[Organisation] {
+          def writes(data: Organisation): JsValue = {
+            Json.obj(
+              "id" -> data.id,
+              "name" -> data.name,
+              "countryCode" -> data.countryCode)
+          }
+        }
+        val orgs: List[Organisation] = query map { q ⇒
+          if (q.length < 3)
+            List()
+          else
+            orgService.search(q)
+        } getOrElse List()
+        Future.successful(jsonOk(Json.toJson(orgs)))
+  }
+
+  /**
+   * Updates an organisation
+   * @param id Organisation ID
+   */
+  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        orgService.findWithProfile(id).map { view ⇒
+          Organisations.organisationForm.bindFromRequest.fold(
+            formWithErrors ⇒
+              BadRequest(views.html.organisation.form(
+                user,
+                Some(id),
+                formWithErrors)),
+            view ⇒ {
+              val updatedOrg = view.org.
+                copy(id = Some(id), active = view.org.active).
+                copy(customerId = view.org.customerId)
+              val updatedProfile = view.profile.forOrg.copy(objectId = id)
+              orgService.update(OrgView(updatedOrg, updatedProfile))
+              val log = activity(updatedOrg, user.person).updated.insert()
+              Redirect(routes.Organisations.details(id)).
+                flashing("success" -> log.toString)
+            })
+        }.getOrElse(NotFound)
+  }
+
+  /**
+   * Upload a new logo to Amazon
+   *
+   * @param id Organisation identifier
+   */
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        uploadFile(Organisation.logo(id), "logo") map { _ ⇒
+          orgService.updateLogo(id, true)
+          val route = routes.Organisations.details(id).url
+          jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
+        } recover {
+          case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
+        }
+  }
 }
 
-object Organisations extends Organisations with Security with Services
+object Organisations {
+
+  /**
+   * HTML form mapping for creating and editing.
+   */
+  def organisationForm(implicit user: ActiveUser) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "name" -> nonEmptyText,
+    "address" -> People.addressMapping,
+    "vatNumber" -> optional(text),
+    "registrationNumber" -> optional(text),
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
+    "webSite" -> optional(webUrl),
+    "blog" -> optional(webUrl),
+    "customerId" -> optional(text),
+    "about" -> optional(text),
+    "logo" -> ignored(false),
+    "active" -> ignored(true),
+    "dateStamp" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(user.name),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(user.name))(DateStamp.apply)(DateStamp.unapply))({
+      (id, name, address, vatNumber,
+      registrationNumber, profile, webSite, blog, customerId, about,
+      logo, active, dateStamp) ⇒
+        val org = Organisation(id, name, address.street1, address.street2,
+          address.city, address.province, address.postCode, address.countryCode,
+          vatNumber, registrationNumber, webSite,
+          blog, customerId, about, logo, active, dateStamp)
+        OrgView(org, profile)
+    })({
+      (v: OrgView) ⇒
+        val address = Address(None, v.org.street1, v.org.street2,
+          v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
+        Some((v.org.id, v.org.name, address, v.org.vatNumber,
+          v.org.registrationNumber, v.profile, v.org.webSite,
+          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+          v.org.dateStamp))
+    }))
+}

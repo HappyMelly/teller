@@ -41,9 +41,9 @@ class TranslationService {
   def find(language: String): Option[Translation] = DB.withSession {
     implicit session ⇒
       val query = for {
-        q ← EvaluationQuestions if q.language === language
-        r ← EvaluationRecommendations if r.language === language
-        i ← EvaluationImpressions if i.language === language
+        q ← TableQuery[EvaluationQuestions] if q.language === language
+        r ← TableQuery[EvaluationRecommendations] if r.language === language
+        i ← TableQuery[EvaluationImpressions] if i.language === language
       } yield (q, r, i)
       query.firstOption.map { v ⇒
         Translation(language, v._1, v._2, v._3)

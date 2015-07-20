@@ -25,7 +25,6 @@
 package models.service
 
 import models.database.SocialProfiles
-import models.database.SocialProfiles._
 import models.{ ProfileType, SocialProfile }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -33,9 +32,19 @@ import play.api.db.slick.DB
 
 class SocialProfileService {
 
+  private val profiles = TableQuery[SocialProfiles]
+
+  /**
+   * @TEST
+   * @param objectId
+   * @param objectType
+   * @return
+   */
   def find(objectId: Long, objectType: ProfileType.Value): SocialProfile =
-    DB.withSession { implicit session: Session ⇒
-      Query(SocialProfiles).
+    DB.withSession { implicit session ⇒
+      import models.database.SocialProfilesStatic._
+
+      profiles.
         filter(_.objectId === objectId).
         filter(_.objectType === objectType).first
     }
@@ -46,8 +55,8 @@ class SocialProfileService {
    * @return
    */
   def findByTwitter(twitterHandle: String): Option[SocialProfile] =
-    DB.withSession { implicit session: Session ⇒
-      Query(SocialProfiles).filter(_.twitterHandle === twitterHandle).firstOption
+    DB.withSession { implicit session ⇒
+      profiles.filter(_.twitterHandle === twitterHandle).firstOption
     }
 
   /**
@@ -56,8 +65,8 @@ class SocialProfileService {
    * @return
    */
   def findByFacebook(facebookUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session: Session ⇒
-      Query(SocialProfiles).filter(_.facebookUrl === facebookUrl).firstOption
+    DB.withSession { implicit session ⇒
+      profiles.filter(_.facebookUrl === facebookUrl).firstOption
     }
 
   /**
@@ -66,8 +75,8 @@ class SocialProfileService {
    * @return
    */
   def findByLinkedin(linkedInUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session: Session ⇒
-      Query(SocialProfiles).filter(_.linkedInUrl === linkedInUrl).firstOption
+    DB.withSession { implicit session ⇒
+      profiles.filter(_.linkedInUrl === linkedInUrl).firstOption
     }
 
   /**
@@ -76,8 +85,8 @@ class SocialProfileService {
    * @return
    */
   def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session: Session ⇒
-      Query(SocialProfiles).filter(_.googlePlusUrl === googlePlusUrl).firstOption
+    DB.withSession { implicit session ⇒
+      profiles.filter(_.googlePlusUrl === googlePlusUrl).firstOption
     }
 
   /**
@@ -87,8 +96,10 @@ class SocialProfileService {
    * @param profile Social profile object
    */
   def findDuplicate(profile: SocialProfile): Option[SocialProfile] = DB.withSession {
-    implicit session: Session ⇒
-      val query = Query(SocialProfiles).
+    implicit session ⇒
+      import models.database.SocialProfilesStatic._
+
+      val query = profiles.
         filter(_.objectId =!= profile.objectId).
         filter(_.objectType === profile.objectType).
         filter { p ⇒
@@ -106,11 +117,12 @@ class SocialProfileService {
   }
 
   def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit =
-    DB.withSession {
-      implicit session: Session ⇒
-        SocialProfiles
-          .filter(_.objectId === socialProfile.objectId)
-          .filter(_.objectType === objectType).update(socialProfile)
+    DB.withSession { implicit session ⇒
+      import models.database.SocialProfilesStatic._
+
+      profiles
+        .filter(_.objectId === socialProfile.objectId)
+        .filter(_.objectType === objectType).update(socialProfile)
     }
 
   /**
@@ -119,8 +131,13 @@ class SocialProfileService {
    * @param objectId Id of the object the social profile associated with
    * @param objectType Type of the object the social profile associated with
    */
-  def delete(objectId: Long, objectType: ProfileType.Value): Unit = DB.withSession { implicit session: Session ⇒
-    Query(SocialProfiles).filter(_.objectId === objectId).filter(_.objectType === objectType).delete
+  def delete(objectId: Long, objectType: ProfileType.Value): Unit = DB.withSession {
+    implicit session ⇒
+      import models.database.SocialProfilesStatic._
+
+      profiles.
+        filter(_.objectId === objectId).
+        filter(_.objectType === objectType).delete
   }
 
   /**
@@ -131,7 +148,7 @@ class SocialProfileService {
    * @param session Session
    */
   def _insert(profile: SocialProfile)(implicit session: Session): SocialProfile = {
-    SocialProfiles.insert(profile)
+    profiles += profile
     profile
   }
 }

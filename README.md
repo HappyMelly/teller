@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/HappyMelly/teller.svg?branch=master)](https://travis-ci.org/HappyMelly/teller)
 [![Coverage Status](https://coveralls.io/repos/HappyMelly/teller/badge.svg?branch=master)](https://coveralls.io/r/HappyMelly/teller?branch=master)
 
 # Happy Melly Teller
@@ -16,9 +15,9 @@ from third-party apps and websites.
 ### Pre-requisites
 
 1. Install Java JDK 1.7
-2. Download and install Play framework 2.2.2
+2. Download and install Play framework 2.3.9
     * [http://www.playframework.com/download](http://www.playframework.com/download)
-    * [http://www.playframework.com/documentation/2.2.2/Installing](http://www.playframework.com/documentation/2.2.2/Installing)
+    * [http://www.playframework.com/documentation/2.3.9/Installing](http://www.playframework.com/documentation/2.3.9/Installing)
 3. Download/install and start MySQL 5.6
 4. Create the database and user:
 

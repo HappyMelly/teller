@@ -30,14 +30,13 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `TransactionType` database table mapping.
  */
-private[models] object TransactionTypes extends Table[TransactionType]("TRANSACTION_TYPE") {
+private[models] class TransactionTypes(tag: Tag)
+    extends Table[TransactionType](tag, "TRANSACTION_TYPE") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def name = column[String]("NAME")
 
-  def * = id.? ~ name <> (TransactionType.apply _, TransactionType.unapply _)
-
-  def forInsert = * returning id
+  def * = (id.?, name) <> ((TransactionType.apply _).tupled, TransactionType.unapply)
 
   def uniqueName = index("IDX_NAME", name, unique = true)
 }

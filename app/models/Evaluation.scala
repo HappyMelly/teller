@@ -62,24 +62,24 @@ case class EvaluationPair(eval: Evaluation, event: Event)
  * An evaluation which a participant gives to an event
  */
 case class Evaluation(
-  id: Option[Long],
-  eventId: Long,
-  personId: Long,
-  question1: String,
-  question2: String,
-  question3: String,
-  question4: String,
-  question5: String,
-  question6: Int,
-  question7: Int,
-  question8: String,
-  status: EvaluationStatus.Value,
-  handled: Option[LocalDate],
-  confirmationId: Option[String],
-  created: DateTime,
-  createdBy: String,
-  updated: DateTime,
-  updatedBy: String) extends ActivityRecorder with Integrations with Services {
+    id: Option[Long],
+    eventId: Long,
+    personId: Long,
+    question1: String,
+    question2: String,
+    question3: String,
+    question4: String,
+    question5: String,
+    question6: Int,
+    question7: Int,
+    question8: String,
+    status: EvaluationStatus.Value,
+    handled: Option[LocalDate],
+    confirmationId: Option[String],
+    created: DateTime,
+    createdBy: String,
+    updated: DateTime,
+    updatedBy: String) extends ActivityRecorder with Integrations with Services {
 
   lazy val event: Event = EventService.get.find(eventId).get
 
@@ -132,8 +132,11 @@ case class Evaluation(
         sendNewEvaluationNotification()
     }
 
-  def delete(): Unit = DB.withSession { implicit session: Session ⇒
-    Evaluations.where(_.id === id).mutate(_.delete())
+  /**
+   * @TEST
+   */
+  def delete(): Unit = DB.withSession { implicit session ⇒
+    TableQuery[Evaluations].filter(_.id === id).delete
     val participant = Participant.find(personId, eventId).get
     participant.copy(evaluationId = None).update
   }
@@ -217,19 +220,25 @@ object Evaluation {
   def rejectable(status: EvaluationStatus.Value): Boolean =
     status == EvaluationStatus.Pending || status == EvaluationStatus.Approved
 
+  /**
+   * @TEST
+   * @param personId
+   * @param eventId
+   * @return
+   */
   def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
-    implicit session: Session ⇒
-      Query(Evaluations).
+    implicit session ⇒
+      TableQuery[Evaluations].
         filter(_.personId === personId).
         filter(_.eventId === eventId).firstOption
   }
 
-  def find(id: Long) = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).filter(_.id === id).firstOption
+  def find(id: Long) = DB.withSession { implicit session ⇒
+    TableQuery[Evaluations].filter(_.id === id).firstOption
   }
 
-  def findAll: List[Evaluation] = DB.withSession { implicit session: Session ⇒
-    Query(Evaluations).sortBy(_.created).list
+  def findAll: List[Evaluation] = DB.withSession { implicit session ⇒
+    TableQuery[Evaluations].sortBy(_.created).list
   }
 
 }

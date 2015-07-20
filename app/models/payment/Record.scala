@@ -32,13 +32,13 @@ import org.joda.time.DateTime
  * Contains data of a successful payment
  */
 case class Record(id: Option[Long],
-  remoteId: String,
-  payerId: Long,
-  objectId: Long,
-  person: Boolean,
-  description: String,
-  fee: Money,
-  created: DateTime) extends Services {
+    remoteId: String,
+    payerId: Long,
+    objectId: Long,
+    person: Boolean,
+    description: String,
+    fee: Money,
+    created: DateTime) extends Services {
 
   /**
    * Adds this payment record to database

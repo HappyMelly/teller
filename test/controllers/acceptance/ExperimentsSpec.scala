@@ -92,8 +92,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
       then a user should be redirected to the organisation's profile        $e12
   """
 
-  class TestExperiments extends Experiments
-    with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles {
+  class TestExperiments extends Experiments(FakeRuntimeEnvironment)
+      with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles {
 
     override def notifyMembers(member: Member,
       experiment: Experiment,

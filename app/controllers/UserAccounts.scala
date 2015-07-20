@@ -33,11 +33,17 @@ import models.UserRole.Role.Admin
 import play.api.Logger
 import play.api.i18n.Messages
 import org.joda.time.DateTime
+import securesocial.core.RuntimeEnvironment
 
 /**
  * User administration controller.
  */
-trait UserAccounts extends Controller with Security with Services {
+class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val userForm = Form(tuple(
     "personId" -> longNumber,
@@ -57,20 +63,20 @@ trait UserAccounts extends Controller with Security with Services {
             Logger.debug(s"update role for person (${person.fullName}}) to $role")
             val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
             if (role.isDefined) {
-              if (UserAccountService.get.findRole(personId).isDefined) {
-                UserAccount.updateRole(personId, role.get)
+              if (userAccountService.findRole(personId).isDefined) {
+                userAccountService.updateRole(personId, role.get)
               } else {
                 val account = UserAccount(None, personId, role.get, person.socialProfile.twitterHandle,
                   person.socialProfile.facebookUrl,
                   person.socialProfile.googlePlusUrl,
                   person.socialProfile.linkedInUrl)
-                UserAccount.insert(account)
+                userAccountService.insert(account)
               }
             } else { // Remove the account
-              UserAccount.delete(personId)
+              userAccountService.delete(personId)
             }
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
-            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = user.fullName)
+            val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
+            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = user.name)
             person.copy(dateStamp = dateStamp).update
             Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
           }.getOrElse(BadRequest("invalid form data - person not found"))
@@ -78,5 +84,3 @@ trait UserAccounts extends Controller with Security with Services {
   }
 
 }
-
-object UserAccounts extends UserAccounts with Security with Services

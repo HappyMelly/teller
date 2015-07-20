@@ -32,13 +32,15 @@ import play.api.Play.current
 
 class EvaluationService {
 
+  private val evaluations = TableQuery[Evaluations]
+
   /**
    * Inserts evaluation to database and updates all related records
    * @param eval Evaluation
    * @return Return the updated evaluation with id
    */
   def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
-    val id = Evaluations.forInsert.insert(eval)
+    val id = (evaluations returning evaluations.map(_.id)) += eval
     val participant = Participant.find(eval.personId, eval.eventId).get
     participant.copy(evaluationId = Some(id)).update
     eval.copy(id = Some(id))
@@ -52,8 +54,8 @@ class EvaluationService {
   def find(id: Long): Option[EvaluationPair] = DB.withSession {
     implicit session ⇒
       val query = for {
-        x ← Evaluations if x.id === id
-        y ← Events if y.id === x.eventId
+        x ← evaluations if x.id === id
+        y ← TableQuery[Events] if y.id === x.eventId
       } yield (x, y)
       query.firstOption.map(EvaluationPair.tupled)
   }
@@ -64,20 +66,20 @@ class EvaluationService {
    */
   def find(confirmationId: String): Option[Evaluation] = DB.withSession {
     implicit session ⇒
-      Query(Evaluations).filter(_.confirmationId === confirmationId).firstOption
+      evaluations.filter(_.confirmationId === confirmationId).firstOption
   }
 
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session: Session ⇒
-    if (eventIds.length > 0) {
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session ⇒
+    if (eventIds.nonEmpty) {
       val baseQuery = for {
-        e ← Events if e.id inSet eventIds
-        part ← Participants if part.eventId === e.id
-        p ← People if p.id === part.personId
-        ev ← Evaluations if ev.id === part.evaluationId
+        e ← TableQuery[Events] if e.id inSet eventIds
+        part ← TableQuery[Participants] if part.eventId === e.id
+        p ← TableQuery[People] if p.id === part.personId
+        ev ← evaluations if ev.id === part.evaluationId
       } yield (e, p, ev)
       baseQuery.list
     } else {
@@ -90,8 +92,8 @@ class EvaluationService {
    * @param eventId Event id
    */
   def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
-    implicit session: Session ⇒
-      Query(Evaluations).filter(_.eventId === eventId).list
+    implicit session ⇒
+      evaluations.filter(_.eventId === eventId).list
   }
 
   /**
@@ -105,8 +107,7 @@ class EvaluationService {
         eval.question2, eval.question3, eval.question4, eval.question5,
         eval.question6, eval.question7, eval.question8, eval.status,
         eval.handled, eval.updated, eval.updatedBy)
-      val updateQuery = Evaluations.filter(_.id === eval.id).map(_.forUpdate)
-      updateQuery.update(updateTuple)
+      evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
       eval
   }
 

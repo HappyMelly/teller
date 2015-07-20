@@ -25,42 +25,49 @@
 package controllers.unit
 
 import controllers.Registration
-import models.UserIdentity
+import models.{ ActiveUser, UserIdentity }
 import org.specs2.mutable._
-import securesocial.core.{ AuthenticationMethod, IdentityId }
+import securesocial.core.{ BasicProfile, AuthenticationMethod }
+import stubs.FakeRuntimeEnvironment
 import stubs.services.FakeIntegrations
 
 class RegistrationSpec extends Specification {
 
-  class TestRegistration extends Registration with FakeIntegrations {
+  class TestRegistration extends Registration(FakeRuntimeEnvironment)
+      with FakeIntegrations {
 
-    def callUserNames(user: UserIdentity) = userNames(user)
+    def callUserNames(identity: UserIdentity) = userNames(identity)
   }
 
   val controller = new TestRegistration
 
   "Method 'userNames'" should {
     "return first and last names if they are set in identity object" in {
-      val identity = new IdentityId("123", "twitter")
-      val user = new UserIdentity(None, identity, "First", "Tester", "",
+      val identity = ("123", "twitter")
+      val user = new UserIdentity(None, BasicProfile(identity._1, identity._2,
+        Some("First"), Some("Tester"), Some(""),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
-        oAuth1Info = None, oAuth2Info = None, passwordInfo = None,
+        oAuth1Info = None, oAuth2Info = None, passwordInfo = None),
         apiToken = "test", twitterHandle = None, facebookUrl = None,
         googlePlusUrl = None, linkedInUrl = None)
+
       val names = controller.callUserNames(user)
       names._1 must_== "First"
       names._2 must_== "Tester"
     }
     "return first and last names if full name set in identity object" in {
-      val identity = new IdentityId("123", "twitter")
-      val user = new UserIdentity(None, identity, "", "", "First Tester Andre",
+      val identity = ("123", "twitter")
+      val user = new UserIdentity(None, BasicProfile(identity._1, identity._2,
+        Some(""), Some(""), Some("First Tester Andre"),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
-        oAuth1Info = None, oAuth2Info = None, passwordInfo = None,
+        oAuth1Info = None, oAuth2Info = None, passwordInfo = None),
         apiToken = "test", twitterHandle = None, facebookUrl = None,
         googlePlusUrl = None, linkedInUrl = None)
       controller.callUserNames(user) must_== ("First", "Tester Andre")
-      controller.callUserNames(user.copy(fullName = "FirstTester")) must_== ("FirstTester", "")
-      controller.callUserNames(user.copy(fullName = "")) must_== ("", "")
+      controller.callUserNames(
+        user.copy(profile = user.profile.copy(fullName = Some("FirstTester")))) must_== ("FirstTester", "")
+      controller.callUserNames(
+        user.copy(profile = user.profile.copy(fullName = Some("")))) must_== ("", "")
     }
   }
 }

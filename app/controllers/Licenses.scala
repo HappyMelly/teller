@@ -33,11 +33,15 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
+import securesocial.core.RuntimeEnvironment
 
 /**
  * Content license pages and API.
  */
-trait Licenses extends Controller with Security with Services {
+class Licenses(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller with Security with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * HTML form mapping for creating and editing.
@@ -100,7 +104,7 @@ trait Licenses extends Controller with Security with Services {
               profileStrengthService.update(ProfileStrength.forFacilitator(x))
             }
             val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Created, activityObject)
+            val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
             val route = routes.People.details(personId).url + "#facilitation"
             Redirect(route).flashing("success" -> activity.toString)
           })
@@ -120,7 +124,7 @@ trait Licenses extends Controller with Security with Services {
       licenseService.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-        val activity = Activity.insert(user.fullName, Activity.Predicate.Deleted, activityObject)
+        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
         val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#facilitation"
         Redirect(route).flashing("success" -> activity.toString)
       }.getOrElse(NotFound)
@@ -143,7 +147,7 @@ trait Licenses extends Controller with Security with Services {
 
             //TODO: replace activity section
             val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-            val activity = Activity.insert(user.fullName, Activity.Predicate.Updated, activityObject)
+            val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
             val route = routes.People.details(view.license.licenseeId).url + "#facilitation"
             Redirect(route).flashing("success" -> "License was updated")
           })
@@ -169,5 +173,3 @@ trait Licenses extends Controller with Security with Services {
       }.getOrElse(NotFound)
   }
 }
-
-object Licenses extends Licenses

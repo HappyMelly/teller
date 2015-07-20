@@ -30,9 +30,14 @@ import play.api.i18n.Messages
 import play.api.mvc._
 import models.UserRole.Role._
 import models._
+import securesocial.core.RuntimeEnvironment
 
-trait Dashboard extends Controller with Security with Services {
+class Dashboard(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
 
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   /**
    * About page - credits.
    */
@@ -108,6 +113,4 @@ trait Dashboard extends Controller with Security with Services {
   }
 
 }
-
-object Dashboard extends Dashboard with Security with Services
 

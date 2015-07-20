@@ -30,7 +30,8 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `EvaluationQuestions` database table mapping.
  */
-private[models] object EvaluationRecommendations extends Table[EvaluationRecommendation]("EVALUATION_RECOMMENDATION") {
+private[models] class EvaluationRecommendations(tag: Tag)
+    extends Table[EvaluationRecommendation](tag, "EVALUATION_RECOMMENDATION") {
 
   def language = column[String]("LANGUAGE", O.PrimaryKey)
   def score0 = column[String]("SCORE_0")
@@ -45,10 +46,10 @@ private[models] object EvaluationRecommendations extends Table[EvaluationRecomme
   def score9 = column[String]("SCORE_9")
   def score10 = column[String]("SCORE_10")
 
-  def * = language ~ score0 ~ score1 ~ score2 ~ score3 ~ score4 ~ score5 ~
-    score6 ~ score7 ~ score8 ~ score9 ~ score10 <> (EvaluationRecommendation.apply _, EvaluationRecommendation.unapply _)
+  def * = (language, score0, score1, score2, score3, score4, score5,
+    score6, score7, score8, score9, score10) <> (EvaluationRecommendation.tupled, EvaluationRecommendation.unapply)
 
-  def forUpdate = score0 ~ score1 ~ score2 ~ score3 ~ score4 ~ score5 ~
-    score6 ~ score7 ~ score8 ~ score9 ~ score10
+  def forUpdate = (score0, score1, score2, score3, score4, score5,
+    score6, score7, score8, score9, score10)
 
 }

@@ -35,9 +35,15 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
+import securesocial.core.RuntimeEnvironment
 import views.Countries
 
-object Participants extends Controller with Security with Services {
+class Participants(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   def newPersonForm(account: UserAccount, userName: String) = {
     Form(mapping(
@@ -57,14 +63,14 @@ object Participants extends Controller with Security with Services {
           ParticipantData(id, eventId, firstName, lastName, birthday, email,
             Address(None, None, None, Some(city), None, None, country), organisation = None, comment = None,
             DateTime.now(), userName, DateTime.now(), userName)
-      }) ({
+      })({
         (p: ParticipantData) ⇒
           Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode))
       }))
   }
 
-  def existingPersonForm(implicit user: UserIdentity) = {
+  def existingPersonForm(implicit user: ActiveUser) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "brandId" -> longNumber(min = 1),
@@ -257,7 +263,7 @@ object Participants extends Controller with Security with Services {
           request.session.get("brandId").map(_.toLong).getOrElse(0L)
         }
         Ok(views.html.participant.form(user, id = None, brands, people,
-          newPersonForm(account, user.fullName), existingPersonForm(user),
+          newPersonForm(account, user.name), existingPersonForm(user),
           showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
   }
 
@@ -278,7 +284,7 @@ object Participants extends Controller with Security with Services {
           val people = personService.findActive
           val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
           BadRequest(views.html.participant.form(user, None, brands, people,
-            newPersonForm(account, user.fullName), formWithErrors,
+            newPersonForm(account, user.name), formWithErrors,
             showExistingPersonForm = true, formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
             Some(chosenEventId),
             ref))
@@ -291,7 +297,7 @@ object Participants extends Controller with Security with Services {
               val people = personService.findActive
               val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
               BadRequest(views.html.participant.form(user, None, brands, people,
-                newPersonForm(account, user.fullName), form.withError("participantId", "error.participant.exist"),
+                newPersonForm(account, user.name), form.withError("participantId", "error.participant.exist"),
                 showExistingPersonForm = true, form("brandId").value.flatMap(x ⇒ Some(x.toLong)),
                 Some(chosenEventId), ref))
             }
@@ -300,7 +306,7 @@ object Participants extends Controller with Security with Services {
               val activityObject = Messages("activity.participant.create",
                 participant.person.get.fullName,
                 participant.event.get.title)
-              val activity = Activity.create(user.fullName,
+              val activity = Activity.create(user.name,
                 Activity.Predicate.Created,
                 activityObject)
               val route = ref match {
@@ -322,7 +328,7 @@ object Participants extends Controller with Security with Services {
   def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account
-      val form: Form[ParticipantData] = newPersonForm(account, user.fullName).bindFromRequest
+      val form: Form[ParticipantData] = newPersonForm(account, user.name).bindFromRequest
 
       form.fold(
         formWithErrors ⇒ {
@@ -340,7 +346,7 @@ object Participants extends Controller with Security with Services {
           val activityObject = Messages("activity.participant.create",
             data.firstName + " " + data.lastName,
             data.event.get.title)
-          val activity = Activity.create(user.fullName,
+          val activity = Activity.create(user.name,
             Activity.Predicate.Created,
             activityObject)
           val route = ref match {
@@ -365,7 +371,7 @@ object Participants extends Controller with Security with Services {
 
           val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
           value.delete()
-          val activity = Activity.create(user.fullName,
+          val activity = Activity.create(user.name,
             Activity.Predicate.Deleted,
             activityObject)
           val route = ref match {
@@ -394,7 +400,7 @@ object Participants extends Controller with Security with Services {
           "label" -> Messages("models.EvaluationStatus." + status),
           "value" -> status.id)),
       "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.handled.map(_.get.toString),
+      "handled" -> data.handled.map(_.toString),
       "certificate" -> data.certificate.map { id: String ⇒
         Json.obj(
           "id" -> id,
@@ -413,7 +419,10 @@ object Participants extends Controller with Security with Services {
   }
 
   /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long, coordinator: Boolean, data: ParticipantView, page: String): JsValue = {
+  private def evaluationActions(id: Long,
+    coordinator: Boolean,
+    data: ParticipantView,
+    page: String): JsValue = {
     Json.obj(
       "approve" -> {
         if (Evaluation.approvable(data.status.get))

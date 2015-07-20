@@ -1,4 +1,4 @@
-@(user: UserIdentity)(implicit flash: Flash,
+@(user: ActiveUser)(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler)
 
@@ -10,7 +10,7 @@
 
   <p>Happy Melly logo by Happy Melly.</p>
 
-  <p>Your API authentication token is <code>@user.apiToken</code></p>
+  <p>Your API authentication token is <code>@user.identity.apiToken</code></p>
 
 
   <h2>Colofon</h2>

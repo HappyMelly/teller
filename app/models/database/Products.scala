@@ -24,7 +24,7 @@
 
 package models.database
 
-import com.github.tototoshi.slick.JodaSupport._
+import PortableJodaSupport._
 import models.{ ProductCategory, Product }
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
@@ -32,9 +32,9 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * `Product` database table mapping.
  */
-private[models] object Products extends Table[Product]("PRODUCT") {
+private[models] class Products(tag: Tag) extends Table[Product](tag, "PRODUCT") {
 
-  implicit val productCategoryTypeMapper = MappedTypeMapper.base[ProductCategory.Value, String](
+  implicit val productCategoryTypeMapper = MappedColumnType.base[ProductCategory.Value, String](
     { category ⇒ category.toString },
     { category ⇒ ProductCategory.withName(category) })
 
@@ -56,15 +56,10 @@ private[models] object Products extends Table[Product]("PRODUCT") {
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def parent = Products.where(_.id === parentId)
+  def * = (id.?, title, subtitle, url, description, callToActionUrl,
+    callToActionText, picture, category, parentId, active, created,
+    createdBy, updated, updatedBy) <> ((Product.apply _).tupled, Product.unapply)
 
-  def * = id.? ~ title ~ subtitle ~ url ~ description ~ callToActionUrl ~
-    callToActionText ~ picture ~ category ~ parentId ~ active ~ created ~
-    createdBy ~ updated ~ updatedBy <> (Product.apply _, Product.unapply _)
-
-  def forInsert = * returning id
-
-  def forUpdate = title ~ subtitle ~ url ~ description ~ callToActionUrl ~
-    callToActionText ~ picture ~ category ~ parentId ~ updated ~ updatedBy
-
+  def forUpdate = (title, subtitle, url, description, callToActionUrl,
+    callToActionText, picture, category, parentId, updated, updatedBy)
 }

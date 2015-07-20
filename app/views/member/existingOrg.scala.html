@@ -1,7 +1,7 @@
-@(user: UserIdentity,
+@(user: ActiveUser,
     orgs: List[(String, String)],
-    form: Form[Long])(implicit flash: Flash,
-    request: Request[Any],
+    form: Form[Long])(implicit request: Request[Any],
+    flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
@@ -10,7 +10,7 @@
 
 @main("Organizations", "members", user) {
   @if(form.hasErrors) {
-    @html.error()
+    @html.error(form.globalErrors)
   }
 
   <div class="col-md-6">

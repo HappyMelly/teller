@@ -24,15 +24,15 @@
 
 package controllers
 
-import models._
+import models.ActiveUser
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
 import models.service.Services
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
+import securesocial.core.RuntimeEnvironment
 import scala.io.Source
-import securesocial.core.SecuredRequest
 import views.Languages
 
 /**
@@ -42,10 +42,13 @@ case class FakeCertificateTemplate(language: String,
   template: Option[String],
   templateNoFacilitator: Option[String])
 
-object CertificateTemplates extends Controller
-  with Security
-  with Services
-  with Activities {
+class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
+    extends Controller
+    with Security
+    with Services
+    with Activities {
+
+  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val encoding = "ISO-8859-1"
 

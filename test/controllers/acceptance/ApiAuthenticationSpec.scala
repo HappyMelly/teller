@@ -30,7 +30,7 @@ import models.admin.ApiToken
 import models.service.admin.ApiTokenService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.mvc.Results._
-import play.api.mvc.{ AnyContent, Request, Result, SimpleResult }
+import play.api.mvc.{ AnyContent, Request, Result }
 import play.api.test.FakeRequest
 import stubs.FakeServices
 
@@ -45,7 +45,8 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
     get OK if token is found in db and is authorized to run the action $e5
   """
 
-  class TestApiAuthentication extends ApiAuthentication with FakeServices {
+  class TestApiAuthentication extends ApiAuthentication
+      with FakeServices {
 
     def readOnly = TokenSecuredAction(readWrite = false) { implicit request ⇒
       implicit token ⇒
@@ -82,16 +83,16 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
     val req = FakeRequest("GET", "readwrite?api_token=test")
     val token = ApiToken(None, "test", "test", "", None, readWrite = false)
     val res: Result = controller.callAuthorize(readWrite = true, token)(_ ⇒ token ⇒ Ok("ok"))(req)
-    res must beAnInstanceOf[SimpleResult]
-    res.asInstanceOf[SimpleResult].header.status must_== UNAUTHORIZED
+    res must beAnInstanceOf[Result]
+    res.asInstanceOf[Result].header.status must_== UNAUTHORIZED
   }
 
   def e4 = {
     val req = FakeRequest("GET", "readwrite?api_token=test")
     val token = ApiToken(None, "test", "test", "", None, readWrite = true)
     val res: Result = controller.callAuthorize(readWrite = false, token)(_ ⇒ token ⇒ Ok("ok"))(req)
-    res must beAnInstanceOf[SimpleResult]
-    res.asInstanceOf[SimpleResult].header.status must_== OK
+    res must beAnInstanceOf[Result]
+    res.asInstanceOf[Result].header.status must_== OK
   }
 
   def e5 = {

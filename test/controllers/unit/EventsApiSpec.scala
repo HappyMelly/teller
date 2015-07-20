@@ -62,7 +62,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
   "Event details API call" should {
     "return event details in JSON format" in {
       (eventService.find _) expects 1L returning Some(EventHelper.one)
-      val result: Future[SimpleResult] = controller.event(1).apply(FakeRequest())
+      val result: Future[Result] = controller.event(1).apply(FakeRequest())
       status(result) must equalTo(OK)
       contentType(result) must beSome("text/plain")
       charset(result) must beSome("utf-8")
@@ -95,7 +95,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
     "return 404 error with error message when an event doesn't exist" in {
       (eventService.find _) expects 101L returning None
 
-      val result: Future[SimpleResult] = controller.event(101).apply(FakeRequest())
+      val result: Future[Result] = controller.event(101).apply(FakeRequest())
       status(result) must equalTo(NOT_FOUND)
       contentType(result) must beSome("application/json")
       contentAsString(result) must contain("Unknown event")
@@ -154,7 +154,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
           .returning(List[Event](EventHelper.one, EventHelper.two))
         (eventService.applyFacilitators _) expects *
       }
-      val result: Future[SimpleResult] = controller.events(
+      val result: Future[Result] = controller.events(
         "TEST",
         future = None,
         public = Some(true),

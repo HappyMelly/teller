@@ -1,5 +1,4 @@
-@(title: String)(content: Html)(implicit flash: Flash,
-    request: Request[Any])
+@(title: String)(content: Html)(implicit request: RequestHeader)
 
 <!DOCTYPE html>
 <html>
@@ -13,7 +12,7 @@
     <body class='@title.split(" ").last.toLowerCase'>
         <div class="container">
             @alert(alertType: String) = {
-            @flash.get(alertType).map { message =>
+            @request.flash.get(alertType).map { message =>
                 <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                     @message

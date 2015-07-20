@@ -24,7 +24,7 @@
 
 package models
 
-import com.github.tototoshi.slick.JodaSupport._
+import models.database.PortableJodaSupport._
 import java.math.RoundingMode
 import java.net.URLEncoder
 import models.JodaMoney._
@@ -47,28 +47,28 @@ import scala.Some
  * A financial (accounting) bookkeeping entry, which represents money owed from one account to another.
  */
 case class BookingEntry(
-  id: Option[Long],
-  ownerId: Long,
-  bookingDate: LocalDate,
-  bookingNumber: Option[Int],
-  summary: String,
+    id: Option[Long],
+    ownerId: Long,
+    bookingDate: LocalDate,
+    bookingNumber: Option[Int],
+    summary: String,
 
-  source: Money,
-  sourcePercentage: Int,
-  fromId: Long,
-  fromAmount: Money,
-  toId: Long,
-  toAmount: Money,
+    source: Money,
+    sourcePercentage: Int,
+    fromId: Long,
+    fromAmount: Money,
+    toId: Long,
+    toAmount: Money,
 
-  brandId: Option[Long],
-  reference: Option[String],
-  referenceDate: LocalDate,
-  description: Option[String] = None,
-  url: Option[String] = None,
-  transactionTypeId: Option[Long] = None,
-  attachmentKey: Option[String] = None,
+    brandId: Option[Long],
+    reference: Option[String],
+    referenceDate: LocalDate,
+    description: Option[String] = None,
+    url: Option[String] = None,
+    transactionTypeId: Option[Long] = None,
+    attachmentKey: Option[String] = None,
 
-  created: DateTime = DateTime.now()) extends ActivityRecorder {
+    created: DateTime = DateTime.now()) extends ActivityRecorder {
 
   lazy val from = Account.find(fromId).get
 
@@ -112,7 +112,8 @@ case class BookingEntry(
 
   def insert: BookingEntry = DB.withSession { implicit session: Session ⇒
     val nextBookingNumber = Some(BookingEntry.nextBookingNumber)
-    val id = BookingEntries.forInsert.insert(this.copy(bookingNumber = nextBookingNumber))
+    val entries = TableQuery[BookingEntries]
+    val id = (entries returning entries.map(_.id)) += this.copy(bookingNumber = nextBookingNumber)
     this.copy(id = Some(id), bookingNumber = nextBookingNumber)
   }
 
@@ -218,21 +219,22 @@ object BookingEntry {
   def blank = BookingEntry(None, 0L, LocalDate.now, None, "", Money.of(CurrencyUnit.EUR, 0f), DefaultSourcePercentage,
     0, Money.zero(CurrencyUnit.EUR), 0, Money.zero(CurrencyUnit.EUR), None, None, LocalDate.now)
 
-  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession { implicit session ⇒
-    BookingEntries.filtered.filter(_.bookingNumber === bookingNumber).firstOption
+  def findByBookingNumber(bookingNumber: Int): Option[BookingEntry] = DB.withSession {
+    implicit session ⇒
+      Entries.filtered.filter(_.bookingNumber === bookingNumber).firstOption
   }
 
   // Define a query that does left outer joins on the to/from accounts’ optional person/organisation records.
   // For now, only the names are retrieved; if the web page requires hyperlinks, then a richer structure is needed.
   lazy val bookingEntriesQuery = for {
-    (entry, brand) ← BookingEntries.filtered leftJoin Brands on (_.brandId === _.id)
-    ((fromAccount, fromPerson), fromOrganisation) ← Accounts leftJoin
-      People on (_.personId === _.id) leftJoin
-      Organisations on (_._1.organisationId === _.id)
+    (entry, brand) ← Entries.filtered leftJoin TableQuery[Brands] on (_.brandId === _.id)
+    ((fromAccount, fromPerson), fromOrganisation) ← TableQuery[Accounts] leftJoin
+      TableQuery[People] on (_.personId === _.id) leftJoin
+      TableQuery[Organisations] on (_._1.organisationId === _.id)
     if fromAccount.id === entry.fromId
-    ((toAccount, toPerson), toOrganisation) ← Accounts leftJoin
-      People on (_.personId === _.id) leftJoin
-      Organisations on (_._1.organisationId === _.id)
+    ((toAccount, toPerson), toOrganisation) ← TableQuery[Accounts] leftJoin
+      TableQuery[People] on (_.personId === _.id) leftJoin
+      TableQuery[Organisations] on (_._1.organisationId === _.id)
     if toAccount.id === entry.toId
   } yield (fromAccount.id, toAccount.id, entry.created, entry.bookingNumber, entry.bookingDate,
     entry.sourceCurrency -> entry.sourceAmount, entry.sourcePercentage,
@@ -256,8 +258,8 @@ object BookingEntry {
   /**
    * Soft-deletes a booking entry by marking it as deleted.
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session: Session ⇒
-    BookingEntries.filter(_.id === id).map(_.deleted).update(true)
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    TableQuery[BookingEntries].filter(_.id === id).map(_.deleted).update(true)
   }
 
   /**
@@ -284,14 +286,14 @@ object BookingEntry {
     toQuery.sortBy(_._4.desc).mapResult(mapBookingEntryResult).list
   }
 
-  private def nextBookingNumber: Int = DB.withSession { implicit session: Session ⇒
-    Query(BookingEntries.map(_.bookingNumber).max).first().map(_ + 1).getOrElse(1001)
+  private def nextBookingNumber: Int = DB.withSession { implicit session ⇒
+    TableQuery[BookingEntries].map(_.bookingNumber).max.run.map(_ + 1).getOrElse(1001)
   }
 
   /**
    * Updates a booking entry without changing its ID, owner, booking number, booking date or date created.
    */
-  def update(e: BookingEntry): Unit = DB.withSession { implicit session: Session ⇒
+  def update(e: BookingEntry): Unit = DB.withSession { implicit session ⇒
     e.id.map { id ⇒
       val sourceAmount: BigDecimal = e.source.getAmount
       val toAmount: BigDecimal = e.toAmount.getAmount
@@ -299,7 +301,7 @@ object BookingEntry {
       val updateTuple = (e.summary, e.source.getCurrencyUnit.getCode, sourceAmount, e.sourcePercentage, e.fromId,
         e.fromAmount.getCurrencyUnit.getCode, fromAmount, e.toId, e.toAmount.getCurrencyUnit.getCode, toAmount,
         e.brandId, e.reference, e.referenceDate, e.description, e.url, e.attachmentKey, e.transactionTypeId)
-      val updateQuery = Query(BookingEntries).filter(_.id === id).map(_.forUpdate)
+      val updateQuery = TableQuery[BookingEntries].filter(_.id === id).map(_.forUpdate)
       updateQuery.update(updateTuple)
     }
   }

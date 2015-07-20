@@ -25,7 +25,7 @@
 package models.service
 
 import models.{ Facilitator, FacilitatorLanguage }
-import models.database.{ Facilitators, FacilitatorLanguages }
+import models.database.{ FacilitatorLanguages, Facilitators }
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -35,6 +35,8 @@ import play.api.db.slick.DB
  */
 class FacilitatorService {
 
+  private val facilitators = TableQuery[Facilitators]
+
   /**
    * Inserts the given facilitator to database
    * @param facilitator Facilitator
@@ -42,7 +44,7 @@ class FacilitatorService {
    */
   def insert(facilitator: Facilitator): Facilitator = DB.withSession {
     implicit session ⇒
-      val id = Facilitators.forInsert.insert(facilitator)
+      val id = (facilitators returning facilitators.map(_.id)) += facilitator
       facilitator.copy(id = Some(id))
   }
 
@@ -53,9 +55,7 @@ class FacilitatorService {
    */
   def find(brandId: Long, personId: Long): Option[Facilitator] = DB.withSession {
     implicit session ⇒
-      Query(Facilitators).
-        filter(_.personId === personId).
-        filter(_.brandId === brandId).firstOption
+      facilitators.filter(_.personId === personId).filter(_.brandId === brandId).firstOption
   }
 
   /**
@@ -64,7 +64,7 @@ class FacilitatorService {
    */
   def findByPerson(personId: Long): List[Facilitator] = DB.withSession {
     implicit session ⇒
-      Query(Facilitators).filter(_.personId === personId).list
+      facilitators.filter(_.personId === personId).list
   }
 
   /**
@@ -74,7 +74,7 @@ class FacilitatorService {
    */
   def findByBrand(brandId: Long): List[Facilitator] = DB.withSession {
     implicit session ⇒
-      Query(Facilitators).filter(_.brandId === brandId).list
+      facilitators.filter(_.brandId === brandId).list
   }
 
   /**
@@ -84,7 +84,7 @@ class FacilitatorService {
    */
   def update(facilitator: Facilitator): Facilitator = DB.withSession {
     implicit session ⇒
-      Query(Facilitators).
+      facilitators.
         filter(_.personId === facilitator.personId).
         filter(_.brandId === facilitator.brandId).
         map(_.forUpdate).update(facilitator.rating)
@@ -98,7 +98,7 @@ class FacilitatorService {
    */
   def languages(personId: Long): List[FacilitatorLanguage] = DB.withSession {
     implicit session ⇒
-      Query(FacilitatorLanguages).filter(_.personId === personId).list
+      TableQuery[FacilitatorLanguages].filter(_.personId === personId).list
   }
 }
 

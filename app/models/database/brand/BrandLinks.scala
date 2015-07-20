@@ -30,14 +30,13 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Connects BrandLink object with its database representation
  */
-private[models] object BrandLinks extends Table[BrandLink]("BRAND_LINK") {
+private[models] class BrandLinks(tag: Tag) extends Table[BrandLink](tag, "BRAND_LINK") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def brandId = column[Long]("BRAND_ID")
   def linkType = column[String]("LINK_TYPE", O.DBType("VARCHAR(10)"))
   def link = column[String]("LINK", O.DBType("VARCHAR(254)"))
 
-  def * = id.? ~ brandId ~ linkType ~ link <> (BrandLink.apply _, BrandLink.unapply _)
-
-  def forInsert = * returning id
+  def * = (id.?, brandId, linkType, link) <> (
+    (BrandLink.apply _).tupled, BrandLink.unapply)
 
 }
