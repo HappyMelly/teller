@@ -36,7 +36,8 @@ import scala.util.Random
 
 case class ActiveUser(identity: UserIdentity,
     account: UserAccount,
-    person: Person) {
+    person: Person,
+    member: Option[Member] = None) {
 
   val name: String = person.fullName
 }

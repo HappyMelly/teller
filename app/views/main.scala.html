@@ -62,7 +62,7 @@
                     </li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
-                    @if(showJoinBanner && user.person.member.isEmpty) {
+                    @if(showJoinBanner && user.member.isEmpty) {
                       <li class="btn-warning">
                           <a href="@routes.Membership.welcome()" style="color: white;">
                             Become a Supporter</a>

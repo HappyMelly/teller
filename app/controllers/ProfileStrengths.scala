@@ -28,6 +28,7 @@ import models.service.{ ProfileStrengthService, Services }
 import models.UserRole.Role._
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
+import scala.concurrent.Future
 
 class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
@@ -42,18 +43,18 @@ class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
    * @param id Person identifier
    * @param steps If true completion steps are shown
    */
-  def personWidget(id: Long, steps: Boolean) = SecuredRestrictedAction(Viewer) {
+  def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         profileStrengthService.find(id) map { x ⇒
-          Ok(views.html.profile.widget(id, x, steps))
+          Future.successful(Ok(views.html.profile.widget(id, x, steps)))
         } getOrElse {
           if (id == user.person.id.get) {
             val profileStrength = initializeProfileStrength(user.person)
             profileStrengthService.insert(profileStrength)
-            Ok(views.html.profile.widget(id, profileStrength, steps))
+            Future.successful(Ok(views.html.profile.widget(id, profileStrength, steps)))
           } else {
-            BadRequest
+            Future.successful(BadRequest)
           }
         }
   }

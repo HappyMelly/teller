@@ -122,6 +122,14 @@ class Membership(environment: RuntimeEnvironment[ActiveUser])
             } getOrElse {
               routes.People.details(user.person.id.get).url
             }
+            if (org.isEmpty) {
+              env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+                _.updateUser(ActiveUser(user.identity,
+                  user.account,
+                  user.person,
+                  Some(member)))
+              })
+            }
             notify(user.person, org, fee, member)
             subscribe(user.person, member)
 

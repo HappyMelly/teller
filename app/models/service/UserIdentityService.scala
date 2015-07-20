@@ -97,21 +97,20 @@ class UserIdentityService {
           (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
       }
-      val data = q.firstOption
-      data map { d ⇒
+      q.firstOption map { d ⇒
         val account = d._2
         val roles = UserRole.forName(account.role)
         account.roles_=(roles.list)
 
         val person: Person = d._3
-        if (d._4.nonEmpty) {
-          val member = new Member(d._4, person.id.get, person = true,
+        val member = if (d._4.nonEmpty)
+          Some(Member(d._4, person.id.get, person = true,
             funder = d._5.get, "EUR" -> d._6.get, d._7.get,
             d._8.get, d._9.get, existingObject = true, reason = None,
-            DateTime.now(), 0L, DateTime.now(), 0L)
-          person.member_=(member)
-        }
-        Some(ActiveUser(d._1, account, person))
+            DateTime.now(), 0L, DateTime.now(), 0L))
+        else
+          None
+        Some(ActiveUser(d._1, account, person, member))
       } getOrElse None
   }
 
@@ -121,46 +120,46 @@ class UserIdentityService {
    * @todo cover with tests
    * @param identity Identity
    */
-  def findActiveUserData(identity: UserIdentity): Option[(UserAccount, Person)] = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val people = TableQuery[People]
-      val members = TableQuery[Members]
-      val q = identity.profile.providerId match {
-        case TwitterProvider.Twitter ⇒ for {
-          a ← accounts if a.twitterHandle === identity.twitterHandle
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+  def findActiveUserData(identity: UserIdentity): Option[(UserAccount, Person, Option[Member])] =
+    DB.withSession {
+      implicit session ⇒
+        val accounts = TableQuery[UserAccounts]
+        val people = TableQuery[People]
+        val members = TableQuery[Members]
+        val q = identity.profile.providerId match {
+          case TwitterProvider.Twitter ⇒ for {
+            a ← accounts if a.twitterHandle === identity.twitterHandle
+            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
 
-        case FacebookProvider.Facebook ⇒ for {
-          a ← accounts if a.facebookUrl === identity.facebookUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          case FacebookProvider.Facebook ⇒ for {
+            a ← accounts if a.facebookUrl === identity.facebookUrl
+            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
 
-        case GoogleProvider.Google ⇒ for {
-          a ← accounts if a.googlePlusUrl === identity.googlePlusUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          case GoogleProvider.Google ⇒ for {
+            a ← accounts if a.googlePlusUrl === identity.googlePlusUrl
+            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
 
-        case LinkedInProvider.LinkedIn ⇒ for {
-          a ← accounts if a.linkedInUrl === identity.linkedInUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
-      }
-      val data = q.firstOption
-      data map { d ⇒
-        d._1.roles_=(UserRole.forName(d._1.role).list)
-        val person: Person = d._2
-        if (d._3.nonEmpty) {
-          val member = new Member(d._3, person.id.get, person = true,
-            funder = d._4.get, "EUR" -> d._5.get, d._6.get,
-            d._7, d._8, existingObject = true, reason = None,
-            DateTime.now(), 0L, DateTime.now(), 0L)
-          person.member_=(member)
+          case LinkedInProvider.LinkedIn ⇒ for {
+            a ← accounts if a.linkedInUrl === identity.linkedInUrl
+            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
         }
-        Some((d._1, person))
-      } getOrElse None
-  }
+        q.firstOption map { d ⇒
+          d._1.roles_=(UserRole.forName(d._1.role).list)
+          val person: Person = d._2
+          val member = if (d._3.nonEmpty)
+            Some(Member(d._3, person.id.get, person = true,
+              funder = d._4.get, "EUR" -> d._5.get, d._6.get,
+              d._7, d._8, existingObject = true, reason = None,
+              DateTime.now(), 0L, DateTime.now(), 0L))
+          else
+            None
+          Some((d._1, person, member))
+        } getOrElse None
+    }
 
   /**
    * Inserts the given identity to database

@@ -247,14 +247,13 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                 } getOrElse {
                   person.copy(customerId = Some(customerId), active = true).update
                 }
-                updateRole(user.identity, person)
-
                 val fee = Money.of(EUR, data.fee)
                 val member = org map { x ⇒
                   x.becomeMember(funder = false, fee, person.id.get)
                 } getOrElse {
                   person.becomeMember(funder = false, fee)
                 }
+                updateActiveUser(user.identity, person, member)
                 notify(person, org, fee, member)
                 subscribe(person, member)
 
@@ -310,7 +309,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * @param identity Identity object
    * @param person Person
    */
-  protected def updateRole(identity: UserIdentity, person: Person)(implicit request: RequestHeader) = {
+  protected def updateActiveUser(identity: UserIdentity,
+    person: Person,
+    member: Member)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get, "viewer",
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
@@ -318,7 +319,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       person.socialProfile.googlePlusUrl)
     val inserted = userAccountService.insert(account)
     env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-      _.updateUser(ActiveUser(identity, inserted, person))
+      _.updateUser(ActiveUser(identity, inserted, person, Some(member)))
     })
   }
 

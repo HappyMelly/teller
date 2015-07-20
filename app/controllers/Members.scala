@@ -28,7 +28,6 @@ import models.UserRole.Role._
 import models.{ ActiveUser, Member }
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
-import play.api.Play
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
@@ -43,7 +42,8 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
     extends Enrollment
     with JsonController
     with Security
-    with Activities {
+    with Activities
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -425,14 +425,6 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
     if (before != after)
       Some("Field *%s* has changed from '%s' to '%s'".format(field, before, after))
     else None
-  }
-
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 
   /** Returns ids and names of organisations which are not members */

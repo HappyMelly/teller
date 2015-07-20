@@ -23,34 +23,16 @@
  */
 package controllers
 
-import models.ActiveUser
-import models.UserRole.Role._
+import play.api.Play
 import play.api.Play.current
-import play.api.libs.ws.WS
-import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import scala.util.Try
 
-class Urls(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+trait Utilities {
 
   /**
-   * Validates the given url points to an existing page
-   *
-   * @param url Url to check
+   * Returns an url with domain
+   * @param url Domain-less part of url
    */
-  def validate(url: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val result = Try(Await.result(WS.url(url).head(), 1 second)).isSuccess
-      if (result)
-        jsonOk(Json.obj("result" -> "valid"))
-      else
-        jsonOk(Json.obj("result" -> "invalid"))
+  protected def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }

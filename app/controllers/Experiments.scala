@@ -40,7 +40,8 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
     with Services
     with Security
     with Integrations
-    with Files {
+    with Files
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -212,13 +213,5 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
     Play.configuration.getString("slack.additional_channel") map { name ⇒
       slack.send(msg, Some(name))
     }
-  }
-
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }

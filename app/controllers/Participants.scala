@@ -419,7 +419,10 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long, coordinator: Boolean, data: ParticipantView, page: String): JsValue = {
+  private def evaluationActions(id: Long,
+    coordinator: Boolean,
+    data: ParticipantView,
+    page: String): JsValue = {
     Json.obj(
       "approve" -> {
         if (Evaluation.approvable(data.status.get))

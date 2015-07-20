@@ -26,8 +26,6 @@ package controllers
 
 import models.{ ActiveUser, Photo, Person }
 import models.service.Services
-import play.api.Play
-import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
@@ -37,7 +35,8 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
     with Security
     with Services
-    with Files {
+    with Files
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -66,7 +65,6 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Person.photo(id).remove()
-        // orgService.updateLogo(id, false)
         val route = routes.People.details(id).url
         jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
   }
@@ -120,13 +118,4 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
           case e ⇒ jsonBadRequest(e.getMessage)
         }
   }
-
-  /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  private def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
-
 }
