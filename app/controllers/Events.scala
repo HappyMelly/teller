@@ -104,9 +104,11 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       "country" -> nonEmptyText)(Location.apply)(Location.unapply),
     "details" -> mapping(
       "description" -> optional(text),
-      "specialAttention" -> optional(text),
+      "specialAttention" -> optional(text))(Details.apply)(Details.unapply),
+    "organizer" -> mapping(
+      "id" -> longNumber(min = 1),
       "webSite" -> optional(webUrl),
-      "registrationPage" -> optional(text))(Details.apply)(Details.unapply),
+      "registrationPage" -> optional(text))(Organizer.apply)(Organizer.unapply),
     "schedule" -> mapping(
       "start" -> jodaLocalDate,
       "end" -> of(dateRangeFormatter),
@@ -119,11 +121,12 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     "invoice" -> longNumber(min = 1),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
-      { (id, eventTypeId, brandId, title, language, location, details, schedule,
-        notPublic, archived, confirmed, free, invoiceTo, facilitatorIds) ⇒
+      { (id, eventTypeId, brandId, title, language, location, details, organizer,
+        schedule, notPublic, archived, confirmed, free, invoiceTo,
+        facilitatorIds) ⇒
         {
-          val event = Event(id, eventTypeId, brandId, title, language,
-            location, details, schedule, notPublic, archived, confirmed, free,
+          val event = Event(id, eventTypeId, brandId, title, language, location,
+            details, organizer, schedule, notPublic, archived, confirmed, free,
             0.0f, None)
           val invoice = EventInvoice.empty.copy(eventId = id, invoiceTo = invoiceTo)
           event.facilitatorIds_=(facilitatorIds)
@@ -132,9 +135,9 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       })({ (view: EventView) ⇒
         Some((view.event.id, view.event.eventTypeId, view.event.brandId,
           view.event.title, view.event.language, view.event.location,
-          view.event.details, view.event.schedule, view.event.notPublic,
-          view.event.archived, view.event.confirmed, view.event.free,
-          view.invoice.invoiceTo, view.event.facilitatorIds))
+          view.event.details, view.event.organizer, view.event.schedule,
+          view.event.notPublic, view.event.archived, view.event.confirmed,
+          view.event.free, view.invoice.invoiceTo, view.event.facilitatorIds))
 
       }))
 
@@ -144,17 +147,17 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   def add = SecuredDynamicAction("event", "add") { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val defaultDetails = Details(Some(""), Some(""), Some(""), Some(""))
+      val defaultDetails = Details(Some(""), Some(""))
+      val organizer = Organizer(0, Some(""), Some(""))
       val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
       val defaultInvoice = EventInvoice(Some(0), Some(0), 0, Some(0), Some(""))
       val default = Event(None, 0, 0, "", Language("", None, Some("English")),
-        Location("", ""), defaultDetails, defaultSchedule,
+        Location("", ""), defaultDetails, organizer, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, free = false,
         0.0f, None)
       val view = EventView(default, defaultInvoice)
-      val account = user.account
-      val brands = Brand.findByUser(account)
-      Ok(views.html.event.form(user, None, brands, account.personId, true, eventForm.fill(view)))
+      val brands = Brand.findByUser(user.account)
+      Ok(views.html.event.form(user, None, brands, true, eventForm.fill(view)))
   }
 
   /**
@@ -166,9 +169,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
 
       eventService.findWithInvoice(id) map { view ⇒
-        val account = user.account
-        val brands = Brand.findByUser(account)
-        Ok(views.html.event.form(user, None, brands, account.personId, false, eventForm.fill(view)))
+        val brands = Brand.findByUser(user.account)
+        Ok(views.html.event.form(user, None, brands, false, eventForm.fill(view)))
       } getOrElse NotFound
   }
 
@@ -306,14 +308,19 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Edit page.
    * @param id Event ID
    */
-  def edit(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
 
-      eventService.findWithInvoice(id) map { view ⇒
-        val account = user.account
-        val brands = Brand.findByUser(account)
-        Ok(views.html.event.form(user, Some(id), brands, account.personId, emptyForm = false, eventForm.fill(view)))
-      } getOrElse NotFound
+        eventService.findWithInvoice(id) map { view ⇒
+          val account = user.account
+          val brands = Brand.findByUser(account)
+          Ok(views.html.event.form(user,
+            Some(id),
+            brands,
+            emptyForm = false,
+            eventForm.fill(view)))
+        } getOrElse NotFound
   }
 
   /**
@@ -580,9 +587,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     eventId: Option[Long])(implicit request: Request[Any],
       handler: AuthorisationHandler,
       token: play.filters.csrf.CSRF.Token) = {
-    val account = user.account
-    val brands = Brand.findByUser(account)
-    BadRequest(views.html.event.form(user, eventId, brands, account.personId, false, form))
+    val brands = Brand.findByUser(user.account)
+    BadRequest(views.html.event.form(user, eventId, brands, false, form))
   }
 
   /**

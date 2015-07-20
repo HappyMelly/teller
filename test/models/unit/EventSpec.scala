@@ -156,16 +156,18 @@ class EventSpec extends PlayAppSpec {
         language: Language,
         location: Location,
         details: models.Details,
+        organizer: Organizer,
         schedule: Schedule) extends Event(id, eventTypeId, brandId, title,
-        language, location, details, schedule) with FakeServices {}
+        language, location, details, organizer, schedule) with FakeServices {}
 
       val now = LocalDate.now()
       val schedule = Schedule(now, now.plusDays(1), 8, 8)
       val lang = Language("EN", None, None)
-      val details = Details(None, None, None, None)
+      val details = Details(None, None)
+      val organizer = Organizer(0, None, None)
       val location = Location("Berlin", "DE")
       val one = new EventTest(Some(1L), 1L, 1L, "Cancel", lang, location,
-        details, schedule)
+        details, organizer, schedule)
       val eventService = mock[EventService]
       (eventService.delete _) expects 1L
       val eventCancellationService = mock[EventCancellationService]

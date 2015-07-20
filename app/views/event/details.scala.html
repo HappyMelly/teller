@@ -122,11 +122,11 @@
         <dd>@view.event.materialsLanguage</dd>
         <dt>Hours</dt>
         <dd>@view.event.schedule.totalHours (per day: @view.event.schedule.hoursPerDay)</dd>
-        @view.event.details.webSite.map { url =>
+        @view.event.organizer.webSite.map { url =>
           <dt>Website</dt>
           <dd><a href="@url" target="_blank">@url</a></dd>
         }
-        @view.event.details.registrationPage.map { url =>
+        @view.event.organizer.registrationPage.map { url =>
           <dt>Registration</dt>
           <dd><a href="@url" target="_blank">@url</a></dd>
         }
@@ -136,6 +136,8 @@
         <dd class="text-muted"><a href="@routes.Brands.details(view.event.brandId)">@brandName</a></dd>
         <dt class="text-muted">Event type</dt>
         <dd class="text-muted">@typeName</dd>
+        <dt class="text-muted">Organizer</dt>
+        <dd class="text-muted" id="organizer" data-id="@view.event.organizer.id"></dd>
       </dl>
       <dl class="dl-horizontal">
         <dt></dt>

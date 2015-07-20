@@ -199,6 +199,39 @@ function updateCity(obj) {
     }
 }
 
+/**
+ * Loads organizer's name
+ *
+ * @param id Organizer id
+ */
+function updateOrganizer(id) {
+    if (id != 0) {
+        var url = jsRoutes.controllers.Organisations.name(id).url
+        $.get(url, function(data) {
+            $('#organizerSearch').val(data.name);
+        }, "json");
+    }
+}
+
+/**
+ * Adds organizer
+ */
+function addOrganizer(e) {
+    e.preventDefault();
+    $.ajax({
+        type: "POST",
+        url: jsRoutes.controllers.Organisations.createOrganizer().url,
+        data: $("#addOrgForm").serialize(),
+        dataType: "json"
+    }).done(function(data){
+        $('#searchBlock').show();
+        $('#addOrgFormContainer').append($('#addOrgForm'));
+        $('#organizerSearch').val(data.name);
+        $('#organizer_id').val(data.id);
+    }).fail(function(jqXHR, status, error) {
+    });
+}
+
 function initializeEmptyForm() {
     $("#schedule_start").on("dp.change", function (e) {
         $('#schedule_end').data("DateTimePicker").setDate(e.date.add(1, 'days'))
@@ -275,18 +308,9 @@ $(document).ready( function() {
         updateCity($(this));
     });
     updateCity($('#location_country'));
+    updateOrganizer($('#organizer_id').val());
 
-    var orgs = [
-        { id: 1, name: 'Happy Melly', countryCode: 'DE' },
-        { id: 2, name: 'Futurice', countryCode: 'FI'},
-        { id: 3, name: 'Happy Melly Ru', countryCode: 'RU' }
-    ];
-    var countries = [
-        { value: "Zimbabve", data: "ZZ"},
-        { value: "Argentina", data: "AG"}
-    ];
-
-    $("#organizer").autocomplete({
+    $("#organizerSearch").autocomplete({
         serviceUrl: jsRoutes.controllers.Organisations.search().url,
         paramName: 'query',
         minChars: 3,
@@ -299,6 +323,7 @@ $(document).ready( function() {
         },
         onSelect: function (suggestion) {
             $(this).val(suggestion.name);
+            $('#organizer_id').val(suggestion.data);
             return true;
         },
         transformResult: function(response) {
@@ -313,9 +338,24 @@ $(document).ready( function() {
         },
         beforeRender: function(container) {
             var action = $('<div class="new-organizer">').append(
-                $('<a>').attr('href', '#').text("Add new organizer"));
+                $('<a id="addOrg">').attr('href', '#').text("Add new organizer"));
             $(container).append(action);
+            $('#addOrg').on('click', function() {
+                $('#searchBlock').hide();
+                $('#addOrgBlock').append($('#addOrgForm'));
+                $('.autocomplete-suggestions').hide();
+                $('#addOrgFormBack').on('click', function() {
+                    $('#searchBlock').show();
+                    $('#addOrgFormContainer').append($('#addOrgForm'));
+                    return false;
+                });
+                return false;
+            });
         }
+    });
+    $('#addOrgForm').on('submit', function(e) {
+        addOrganizer(e);
+        return false;
     });
 });
 

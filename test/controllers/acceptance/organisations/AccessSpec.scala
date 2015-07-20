@@ -64,6 +64,14 @@ class AccessSpec extends PlayAppSpec {
     }
   }
 
+  "Method 'createOrganizer'" should {
+    "have Editor access rights" in {
+      controller.createOrganizer.apply(fakePostRequest())
+      controller.checkedDynamicObject must_== Some("event")
+      controller.checkedDynamicLevel must_== Some("add")
+    }
+  }
+
   "Method 'delete'" should {
     "have Editor access rights" in {
       controller.delete(1L).apply(fakePostRequest())
@@ -97,6 +105,13 @@ class AccessSpec extends PlayAppSpec {
   "Method 'index'" should {
     "have Viewer access rights" in {
       controller.index.apply(fakePostRequest())
+      controller.checkedRole must_== Some(Role.Viewer)
+    }
+  }
+
+  "Method 'name'" should {
+    "have Viewer access rights" in {
+      controller.name(1L).apply(fakePostRequest())
       controller.checkedRole must_== Some(Role.Viewer)
     }
   }

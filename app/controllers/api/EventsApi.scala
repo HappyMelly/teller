@@ -52,8 +52,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "facilitators" -> event.facilitators,
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage)
+        "website" -> event.organizer.webSite,
+        "registrationPage" -> event.organizer.registrationPage)
     }
   }
 
@@ -74,8 +74,8 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
         "facilitators" -> event.facilitators,
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage,
+        "website" -> event.organizer.webSite,
+        "registrationPage" -> event.organizer.registrationPage,
         "public" -> !event.notPublic,
         "archived" -> event.archived)
     }

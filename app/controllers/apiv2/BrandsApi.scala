@@ -85,8 +85,8 @@ trait BrandsApi extends Controller with ApiAuthentication {
         "totalHours" -> event.schedule.totalHours,
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
-        "website" -> event.details.webSite,
-        "registrationPage" -> event.details.registrationPage,
+        "website" -> event.organizer.webSite,
+        "registrationPage" -> event.organizer.registrationPage,
         "free" -> event.free)
     }
   }

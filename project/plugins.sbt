@@ -14,8 +14,6 @@ addSbtPlugin("com.heroku" % "sbt-heroku" % "0.3.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.9")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.2.1")
-
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.1")
 
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0.BETA1")

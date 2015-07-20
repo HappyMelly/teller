@@ -28,6 +28,8 @@ import models.database.PortableJodaSupport._
 import models._
 import org.joda.time.LocalDate
 import play.api.db.slick.Config.driver.simple._
+import scala.slick.collection.heterogenous._
+import scala.slick.collection.heterogenous.syntax._
 
 /**
  * `Event` database table mapping.
@@ -47,6 +49,8 @@ private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
 
   def description = column[Option[String]]("DESCRIPTION", O.DBType("TEXT"))
   def specialAttention = column[Option[String]]("SPECIAL_ATTENTION", O.DBType("TEXT"))
+
+  def organizerId = column[Long]("ORGANIZER_ID")
   def webSite = column[Option[String]]("WEB_SITE")
   def registrationPage = column[Option[String]]("REGISTRATION_PAGE")
 
@@ -64,31 +68,72 @@ private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
 
   def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  type EventsFields = (Option[Long], Long, Long, String, String, Option[String], Option[String], String, String, Option[String], Option[String], Option[String], Option[String], LocalDate, LocalDate, Int, Int, Boolean, Boolean, Boolean, Boolean, Float)
+  // type EventsFields = (Option[Long], Long, Long, String, String, Option[String], Option[String], String, String, Option[String], Option[String], Option[String], Option[String], LocalDate, LocalDate, Int, Int, Boolean, Boolean, Boolean, Boolean, Float)
 
-  def * = (id.?, eventTypeId, brandId, title, spokenLanguage,
-    secondSpokenLanguage, materialsLanguage, city, countryCode, description,
-    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
-    totalHours, notPublic, archived, confirmed, free, rating) <> (
-      (e: EventsFields) ⇒ Event(e._1, e._2, e._3, e._4, Language(e._5, e._6, e._7),
-        Location(e._8, e._9), Details(e._10, e._11, e._12, e._13),
-        Schedule(e._14, e._15, e._16, e._17), e._18, e._19, e._20, e._21, e._22),
+  def * = (id.? :: eventTypeId :: brandId :: title :: spokenLanguage ::
+    secondSpokenLanguage :: materialsLanguage :: city :: countryCode ::
+    description :: specialAttention :: organizerId :: webSite ::
+    registrationPage :: start :: end :: hoursPerDay ::
+    totalHours :: notPublic :: archived :: confirmed :: free :: rating ::
+    HNil) <> (createEvent, extractEvent)
 
-      (e: Event) ⇒ Some((e.id, e.eventTypeId, e.brandId, e.title,
-        e.language.spoken, e.language.secondSpoken, e.language.materials,
-        e.location.city, e.location.countryCode, e.details.description,
-        e.details.specialAttention, e.details.webSite, e.details.registrationPage,
-        e.schedule.start, e.schedule.end, e.schedule.hoursPerDay,
-        e.schedule.totalHours, e.notPublic, e.archived, e.confirmed, e.free,
-        e.rating)))
+  type EventHList = Option[Long] :: Long :: Long :: String :: String ::
+    Option[String] :: Option[String] :: String :: String :: Option[String] ::
+    Option[String] :: Long :: Option[String] :: Option[String] :: LocalDate ::
+    LocalDate :: Int :: Int :: Boolean :: Boolean :: Boolean :: Boolean ::
+    Float :: HNil
+
+  def createEvent(e: EventHList): Event =  e match {
+    case id ::
+      eventTypeId ::
+      brandId ::
+      title ::
+      spokenLanguage ::
+      secondSpokenLanguage ::
+      materialsLanguage ::
+      city ::
+      countryCode ::
+      description ::
+      specialAttention ::
+      organizerId ::
+      webSite ::
+      registrationPage ::
+      start ::
+      end ::
+      hoursPerDay ::
+      totalHours ::
+      notPublic ::
+      archived ::
+      confirmed ::
+      free ::
+      rating ::
+      HNil =>
+    Event(id, eventTypeId, brandId, title,
+      Language(spokenLanguage, secondSpokenLanguage, materialsLanguage),
+      Location(city, countryCode),
+      Details(description, specialAttention),
+      Organizer(organizerId, webSite, registrationPage),
+      Schedule(start, end, hoursPerDay, totalHours),
+      notPublic, archived, confirmed, free, rating)
+  }
+
+  def extractEvent(e: Event): Option[EventHList] =
+    Some((e.id :: e.eventTypeId :: e.brandId :: e.title ::
+      e.language.spoken :: e.language.secondSpoken :: e.language.materials ::
+      e.location.city :: e.location.countryCode :: e.details.description ::
+      e.details.specialAttention :: e.organizer.id ::
+      e.organizer.webSite :: e.organizer.registrationPage ::
+      e.schedule.start :: e.schedule.end :: e.schedule.hoursPerDay ::
+      e.schedule.totalHours :: e.notPublic :: e.archived :: e.confirmed :: e.free ::
+      e.rating :: HNil))
 
   def forInsert = (eventTypeId, brandId, title, spokenLanguage,
     secondSpokenLanguage, materialsLanguage, city, countryCode, description,
-    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
-    totalHours, notPublic, archived, confirmed, free)
+    specialAttention, organizerId, webSite, registrationPage, start, end,
+    hoursPerDay, totalHours, notPublic, archived, confirmed, free)
 
   def forUpdate = (eventTypeId, brandId, title, spokenLanguage,
     secondSpokenLanguage, materialsLanguage, city, countryCode, description,
-    specialAttention, webSite, registrationPage, start, end, hoursPerDay,
-    totalHours, notPublic, archived, confirmed, free)
+    specialAttention, organizerId, webSite, registrationPage, start, end,
+    hoursPerDay, totalHours, notPublic, archived, confirmed, free)
 }

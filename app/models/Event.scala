@@ -65,14 +65,17 @@ case class Schedule(start: LocalDate,
   }
 }
 
+case class Organizer(
+  id: Long,
+  webSite: Option[String],
+  registrationPage: Option[String])
+
 /**
  * Contains optional descriptive data
  */
 case class Details(
   description: Option[String],
-  specialAttention: Option[String],
-  webSite: Option[String],
-  registrationPage: Option[String])
+  specialAttention: Option[String])
 
 /**
  * Contains location-related data
@@ -98,6 +101,7 @@ case class Event(
     language: Language,
     location: Location,
     details: Details,
+    organizer: Organizer,
     schedule: Schedule,
     notPublic: Boolean = false,
     archived: Boolean = false,

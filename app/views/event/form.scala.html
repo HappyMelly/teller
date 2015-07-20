@@ -1,7 +1,6 @@
 @(user: ActiveUser,
   id: Option[Long],
   brands: List[Brand],
-  currentUserId: Long,
   emptyForm: Boolean,
   form: Form[EventView])(implicit request: Request[Any],
     flash: Flash,
@@ -35,7 +34,7 @@
       <div id="emptyForm" value="@emptyForm"></div>
 
       @html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-        <div id="currentUserId" value="@currentUserId"></div>
+        <div id="currentUserId" value="@user.person.id.get"></div>
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
         <div id="currentInvoiceToId" value="@form("invoice").value"></div>
         @html.select(form("brandId"), brands.map(v => v.id.get.toString -> v.name),
@@ -103,11 +102,21 @@
         </div>
 
         <legend>Organizer</legend>
-        @html.text(form("organizer"), '_label -> "Organizer",
-          'placeholder -> "Start typing organizer's name")
-        @html.text(form("details.webSite"), '_label -> "Organizer website",
+        <input type="hidden" value="@form("organizer.id").value"
+          id="@form("organizer.id").id" name="@form("organizer.id").name"/>
+        <div class="form-group @if(form.error("organizer.id").isDefined) {has-error} ">
+          <label for="organizerSearch" class="control-label col-sm-3">Organizer</label>
+          <div class="col-sm-9" id="searchBlock">
+            <input id="organizerSearch" name="organizerSearch"
+              class="form-control" placeholder="Start typing organizer's name">
+          </div>
+          <div class="col-md-9" id="addOrgBlock">
+
+          </div>
+        </div>
+        @html.text(form("organizer.webSite"), '_label -> "Organizer website",
           'placeholder -> "http://", '_help -> "Web site URL")
-        @html.text(form("details.registrationPage"), '_label -> "Registration page",
+        @html.text(form("organizer.registrationPage"), '_label -> "Registration page",
           'placeholder -> "http:// or mailto:", '_help -> "Web site URL or email address")
 
         <legend>Misc</legend>
@@ -139,6 +148,19 @@
           </div>
         </div>
       }
+      <div id="addOrgFormContainer" class="hidden">
+        <form class="form-inline" id="addOrgForm">
+          <input name="name" type="text" class="form-control"/>
+          <select name="address.country" class="form-control">
+          @Countries.all.map { v =>
+            <option value="@v._1">@v._2</option>
+          }
+          </select>
+          <input type="hidden" name="profile.email" value=""/>
+          <button type="submit" class="btn btn-success">Add</button>
+          <button id="addOrgFormBack" class="btn btn-default">Back</button>
+        </form>
+      </div>
     </div>
     <script src='@routes.Assets.at("javascripts/ImageSelect.jquery.js")' type="text/javascript"></script>
     <script src='@routes.Assets.at("javascripts/jquery.autocomplete.min.js")' type="text/javascript"></script>

@@ -1,5 +1,4 @@
 import play.PlayImport.PlayKeys._
-import scalariform.formatter.preferences._
 
 name := "happymelly-teller"
 
@@ -64,13 +63,6 @@ publishArtifact in (Compile, packageDoc) := false
 
 // disable publishing the main sources jar
 publishArtifact in (Compile, packageSrc) := false
-
-scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(PreserveSpaceBeforeArguments, true)
-  .setPreference(RewriteArrowSymbols, true)
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := false
 

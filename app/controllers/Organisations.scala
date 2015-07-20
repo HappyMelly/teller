@@ -133,6 +133,20 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Adds new organization to the system
+   */
+  def createOrganizer = AsyncSecuredDynamicAction("event", "add") {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      Organisations.organisationForm.bindFromRequest.fold(
+        formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),
+        view ⇒ {
+          val org = orgService.insert(view).org
+          activity(org, user.person).created.insert()
+          Future.successful(jsonOk(Json.obj("id" -> org.id, "name" -> org.name)))
+        })
+  }
+
+  /**
    * Delete an organisation
    * @param id Organisation ID
    */
@@ -208,6 +222,19 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Organisation identifier
    */
   def logo(id: Long) = file(Organisation.logo(id))
+
+  /**
+   * Returns name of the given organisation
+   * @param id Organisation id
+   */
+  def name(id: Long) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request => implicit handler => implicit user =>
+      val name = if (id != 0)
+        orgService.find(id) map { _.name } getOrElse ""
+       else
+        ""
+      Future.successful(jsonOk(Json.obj("name" -> name)))
+  }
 
   /**
    * Returns list of organisations for the given query

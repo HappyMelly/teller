@@ -150,12 +150,14 @@ POST          /organization/:id/activation                                   @co
 GET           /organization/new                                              @controllers.Organisations.add
 POST          /organization/:id/cancel                                       @controllers.Organisations.cancel(id: Long)
 POST          /organizations                                                 @controllers.Organisations.create
+POST          /organizer                                                     @controllers.Organisations.createOrganizer
 POST          /organization/:id/delete                                       @controllers.Organisations.delete(id: Long)
 DELETE        /organization/:id/logo/delete                                  @controllers.Organisations.deleteLogo(id: Long)
 GET           /organization/:id                                              @controllers.Organisations.details(id: Long)
 GET           /organization/:id/edit                                         @controllers.Organisations.edit(id: Long)
 GET           /organizations                                                 @controllers.Organisations.index
 GET           /organization/:id/logo                                         @controllers.Organisations.logo(id: Long)
+GET           /organization/:id/name                                         @controllers.Organisations.name(id: Long)
 POST          /organization/:id                                              @controllers.Organisations.update(id: Long)
 GET           /organizations/search                                          @controllers.Organisations.search(query: Option[String])
 POST          /organization/:id/logo                                         @controllers.Organisations.uploadLogo(id: Long)

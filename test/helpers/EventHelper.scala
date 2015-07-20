@@ -55,7 +55,7 @@ object EventHelper {
       materialsLanguage)
     var event = new Event(id, eventTypeId.getOrElse(1), brandId.getOrElse(1L), title.getOrElse("Test event"),
       language, new Location(city.getOrElse("spb"), country.getOrElse("RU")),
-      new Details(None, None, None, None),
+      Details(None, None), Organizer(0, None, None),
       new Schedule(startDate.getOrElse(new LocalDate(DateTime.now())),
         endDate.getOrElse(new LocalDate(DateTime.now())), 1, 1),
       notPublic.getOrElse(false), archived.getOrElse(false), confirmed.getOrElse(false),
