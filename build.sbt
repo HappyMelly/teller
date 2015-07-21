@@ -33,11 +33,11 @@ libraryDependencies ++=
     "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
-    "ws.securesocial" %% "securesocial" % "master-SNAPSHOT",
+    "ws.securesocial" %% "securesocial" % "3.0-M3",
     "nl.rhinofly" %% "play-s3" % "6.0.0"
   )
 
-resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += Resolver.sonatypeRepo("releases")
 
 resolvers += "Rhinofly Internal Repository" at "http://maven-repository.rhinofly.net:8081/artifactory/libs-release-local"
 

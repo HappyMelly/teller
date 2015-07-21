@@ -25,7 +25,7 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
-import _root_.services.LoginIdentityService
+import services.{TellerRoutesService, LoginIdentityService}
 import models.ActiveUser
 import models.service.EventService
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
@@ -39,6 +39,7 @@ import play.libs.Akka
 import securesocial.controllers.ViewTemplates
 import securesocial.core._
 import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
+import securesocial.core.services.RoutesService
 import templates.SecureSocialTemplates
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -47,6 +48,7 @@ import scala.concurrent.duration.Duration
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   object TellerRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
+    override lazy val routes: RoutesService = new TellerRoutesService()
     override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this)
     override lazy val userService: LoginIdentityService = new LoginIdentityService
     override lazy val providers = ListMap(

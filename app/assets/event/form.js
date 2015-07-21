@@ -329,7 +329,7 @@ $(document).ready( function() {
         transformResult: function(response) {
             return {
                 suggestions: $.map($.parseJSON(response), function(dataItem) {
-                    var filename = dataItem.countryCode + '.png';
+                    var filename = dataItem.countryCode.toLowerCase() + '.png';
                     var url = jsRoutes.controllers.Assets.at('images/flags/16/' + filename).url;
                     var text = '<img src="' + url + '"/>&nbsp;' + dataItem.name;
                     return { data: dataItem.id, value: text, name: dataItem.name };

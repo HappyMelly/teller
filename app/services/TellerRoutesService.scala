@@ -22,26 +22,29 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package stubs
+package services
 
-import _root_.services.TellerRoutesService
-import models.ActiveUser
-import securesocial.core.RuntimeEnvironment
-import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
+import play.api.mvc.RequestHeader
 import securesocial.core.services.RoutesService
 
-import scala.collection.immutable.ListMap
+/**
+ * I had to implement a custom routes service as the default one
+ *  causes runtime error during tests and on a production environment.
+ *  The problem is in securesocial.controllers.routes.Assets which it cannot
+ *  find
+ */
+class TellerRoutesService extends RoutesService.Default {
 
-object FakeRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
+  override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
+    absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider))
+  }
 
-  override lazy val routes: RoutesService = new TellerRoutesService()
+  override def loginPageUrl(implicit req: RequestHeader): String = {
+    absoluteUrl(_root_.controllers.routes.LoginPage.login())
+  }
 
-  val userService: StubLoginIdentityService = new StubLoginIdentityService
-
-  override lazy val providers = ListMap(
-    include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),
-    include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
-    include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
-    include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn)))
-  )
+  override protected def valueFor(key: String, default: String) = {
+    val value = conf.getString(key).getOrElse(default)
+    _root_.controllers.routes.Assets.at(value)
+  }
 }
