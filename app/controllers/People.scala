@@ -198,7 +198,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         val duplicated = if (user.account.editor)
           userAccountService.findDuplicateIdentity(person)
         else None
-        Ok(views.html.person.details(user, person,
+        Ok(views.html.v2.person.details(user, person,
           memberships, otherOrganisations,
           facilitator, accountRole, duplicated))
       } getOrElse {

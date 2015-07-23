@@ -1,0 +1,12 @@
+@(m: Member)(implicit request: Request[Any],
+    handler: AuthorisationHandler)
+
+<div class="memberPanel">
+  @if(m.funder) {
+    <img id="photo" width="250" class="img-rounded"
+      src="@routes.Assets.at("images/funder.jpg")"/>
+  }else{
+    <img id="photo" width="250" class="img-rounded"
+      src="@routes.Assets.at("images/supporter.png")"/>
+  }
+</div>

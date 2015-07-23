@@ -1,0 +1,60 @@
+@(person: Person,
+    organisations: List[Organisation],
+    otherOrganisations: List[Organisation])(implicit request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import templates.Formatters._
+
+<div>
+  <h3>On The Web</h3>
+  <p><strong>E-mail address</strong>
+    <a href="mailto:@person.socialProfile.email">
+      <i class="glyphicon glyphicon-google_plus"></i>
+      @person.socialProfile.email</a>
+  </p>
+  @person.webSite.map { url =>
+    <p><strong>Web site</strong> <a href="@url" target="_blank">@url</a></p>
+  }
+  @person.blog.map { url =>
+    <p><strong>Blog</strong> <a href="@url" target="_blank">@url</a></p>
+  }
+
+  <address>
+    <strong>Address</strong><br/>
+    @person.address.street1.map { addressLine =>
+      @addressLine,
+    }
+    @person.address.street2.map { addressLine =>
+      @addressLine
+    }
+    @if(person.address.street1.nonEmpty || person.address.street2.nonEmpty) {
+      <br>
+    }
+    @person.address.city.map { addressLine =>
+      @addressLine,
+    }
+    @person.address.province.map { addressLine =>
+      @addressLine
+    }
+    @person.address.postCode.map { addressLine =>
+      @addressLine
+    }
+    <br>
+    @Messages("country." + person.address.countryCode)
+  </address>
+
+  @person.bio.map { text =>
+    <h3>Bio</h3>
+    <p>@text.markdown</p>
+  }
+  @person.interests.map { text =>
+    <h3>Interests</h3>
+    <p>@text.markdown</p>
+  }
+</div>
+
+<div>
+  <h3>Organisations</h3>
+  @views.html.person.blocks.organisations(person, organisations, otherOrganisations)
+</div>

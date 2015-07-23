@@ -2,21 +2,23 @@
   strength: ProfileStrength,
   steps: Boolean)
 
-<div class="panel-body">
-  <h4>Your Profile Strength</h4>
+<div class="panel-body profile-strength">
+  <h5>Profile Strength</h5>
+  <div class="text-center strength-value">@(strength.progress)%</div>
   <div class="progress">
-    <div class="progress-bar" role="progressbar" aria-valuenow="@strength.progress"
+    <div class="progress-bar" role="progressbar"
       aria-valuemin="0" aria-valuemax="100" style="width: @(strength.progress)%;">
-      @(strength.progress)%
     </div>
   </div>
-  <div class="text-center">
+  <div class="steps">
+    <p><strong>Here is how you can make it stonger:</strong></p>
     @if(steps) {
-      @views.html.profile.steps(personId, strength.incompleteSteps)
+      @views.html.v2.profile.steps(personId, strength.incompleteSteps)
     } else {
       <a href="@routes.People.details(personId)" class="btn btn-sm btn-default"
       onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
       >Improve your profile</a>
     }
   </div>
+  <div class="inspiration"><a href="/person/25">Get inspired by Sergey's profile</a></div>
 </div>

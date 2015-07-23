@@ -1,0 +1,35 @@
+@(person: Person,
+    organisations: List[Organisation],
+    otherOrganisations: List[Organisation]
+    )(implicit request: Request[Any], handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.Role._
+
+@if(organisations.isEmpty) {
+    <p>@person.fullName has no organizations.</p>
+} else {
+    @views.html.organisation.table(organisations) { organisation =>
+        @restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.People.deleteRelationship("person", person.id.get, organisation.id.get)">
+                <i class="glyphicon glyphicon-pencil"></i> Remove relation</a>
+        }
+    }
+}
+@restrict(handler, List(as(Editor.toString))) {
+    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addRelationship())">
+        <p>
+            <input type="hidden" name="page" value="person">
+            <input type="hidden" name="personId" value="@person.id.get">
+            <select name="organisationId" class="form-control input-sm">
+            @for(organisation <- otherOrganisations) {
+                <option value="@organisation.id">@organisation.name</option>
+            }
+            </select>
+            <button class="btn btn-success btn-sm">
+                <i class="glyphicon glyphicon-plus"></i>Add Relation</button>
+        </p>
+    </form>
+}

@@ -47,12 +47,12 @@ class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         profileStrengthService.find(id) map { x ⇒
-          Future.successful(Ok(views.html.profile.widget(id, x, steps)))
+          Future.successful(Ok(views.html.v2.profile.widget(id, x, steps)))
         } getOrElse {
           if (id == user.person.id.get) {
             val profileStrength = initializeProfileStrength(user.person)
             profileStrengthService.insert(profileStrength)
-            Future.successful(Ok(views.html.profile.widget(id, profileStrength, steps)))
+            Future.successful(Ok(views.html.v2.profile.widget(id, profileStrength, steps)))
           } else {
             Future.successful(BadRequest)
           }
