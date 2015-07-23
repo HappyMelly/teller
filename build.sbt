@@ -8,7 +8,7 @@ scalaVersion := "2.10.4"
 
 scalacOptions += "-feature"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 libraryDependencies ++=
   Seq(
@@ -55,6 +55,8 @@ herokuIncludePaths in Compile := Seq(
 herokuProcessTypes in Compile := Map(
   "web" -> "target/universal/stage/bin/happymelly-teller -Dconfig.file=conf/$CONF_FILENAME -Dhttp.port=$PORT"
 )
+
+includeFilter in (Assets, LessKeys.less) := "*.less"
 
 // disable publishing the main API jar
 publishArtifact in (Compile, packageDoc) := false
