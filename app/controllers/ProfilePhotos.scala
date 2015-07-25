@@ -50,7 +50,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
           val active = person.photo.id getOrElse "nophoto"
-          Ok(views.html.person.photoSelection(id,
+          Ok(views.html.v2.person.photoSelection(id,
             Photo.gravatarUrl(person.socialProfile.email),
             routes.ProfilePhotos.photo(id).url, active))
         } getOrElse NotFound

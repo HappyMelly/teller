@@ -17,23 +17,39 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-$(document).ready(function() {
-   $("#badge-selector").find('a').on('click', function(e) {
-       e.preventDefault();
-       var value = $(this).data('value');
-       var pictureId = '#badge-picture';
-       var src = $(pictureId).data('src') + value + '.png';
-       $(pictureId).attr('src', src);
-       var codeId = '#badge-code';
-       var text = $(codeId).text();
-       src = "src=\"" + $(codeId).data('src') + value + "\"";
-       var code = text.replace(/src=".*"/, src);
-       $(codeId).text(code);
-       $('.item').removeClass('selected');
-       $(this).parent().addClass('selected');
-   });
-});
+
+@import "settings";
+
+.sidemenu {
+  margin-top: 42px;
+  ul.nav ul.nav {
+    margin-top: 11px;
+  }
+  li {
+    a {
+      color: @grey3;
+    }
+    &.active a {
+      color: @dark-sky-blue;
+    }
+  }
+  li.subgroup {
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #888888;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e7e7e7;
+    &:last-child {
+      border-bottom: 0;
+    }
+    & li {
+      font-size: 14px;
+      text-transform: none;
+    }
+  }
+}

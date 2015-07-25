@@ -1,11 +1,2 @@
 @(value: Float)
-
-@if(value < 5.0f) {
-  <span class="badge alert-danger">@value</span>
-} else {
-  @if(value < 8.0f) {
-    <span class="badge alert-warning">@value</span>
-  } else {
-    <span class="badge alert-success">@value</span>
-  }
-}
+<span class="rating" title="Rating"><i class="fa fa-star"></i> @value</span>

@@ -11,25 +11,46 @@
 @if(organisations.isEmpty) {
     <p>@person.fullName has no organizations.</p>
 } else {
-    @views.html.organisation.table(organisations) { organisation =>
-        @restrict(handler, List(as(Editor.toString))) {
-            <a href="@routes.People.deleteRelationship("person", person.id.get, organisation.id.get)">
-                <i class="glyphicon glyphicon-pencil"></i> Remove relation</a>
-        }
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Organisation</th>
+        <th>City</th>
+        <th>Country</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    @for(org <- organisations) {
+      <tr @if(!org.active) {
+        class="inactive" title="deactivated" } >
+        <td>
+          <a href="@routes.Organisations.details(org.id.getOrElse(0))">@org.name</a>
+        </td>
+        <td>@org.city</td>
+        <td>
+          <img width="16" src="/assets/images/flags/16/@(org.countryCode.toLowerCase).png" align="absmiddle">
+          @Messages("country." + org.countryCode)
+        </td>
+        <td>@restrict(handler, List(as(Editor.toString))) {
+            <a href="@routes.People.deleteRelationship("person", person.id.get, org.id.get)" class="font-sm">Remove Relation</a>
+        }</td>
+      </tr>
     }
+    </tbody>
+</table>
 }
 @restrict(handler, List(as(Editor.toString))) {
-    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.People.addRelationship())">
-        <p>
-            <input type="hidden" name="page" value="person">
-            <input type="hidden" name="personId" value="@person.id.get">
-            <select name="organisationId" class="form-control input-sm">
+    <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship())">
+        <input type="hidden" name="page" value="person">
+        <input type="hidden" name="personId" value="@person.id.get">
+        <div class="form-group">
+            <select name="organisationId" class="form-control">
             @for(organisation <- otherOrganisations) {
                 <option value="@organisation.id">@organisation.name</option>
             }
             </select>
-            <button class="btn btn-success btn-sm">
-                <i class="glyphicon glyphicon-plus"></i>Add Relation</button>
-        </p>
+        </div>
+        <button class="btn btn-primary">Add Relation</button>
     </form>
 }

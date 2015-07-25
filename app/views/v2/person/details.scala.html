@@ -19,7 +19,7 @@
     @if(user.member.nonEmpty) { @if(user.member.get.funder) { funder } else { supporter }}">
     <div class="container">
       <div class="content-block">
-        <h1>@person.fullName</h1>
+        <h2>@person.fullName</h2>
         @views.html.v2.element.profiles(person.socialProfile, person.member)
         <div class="actions pull-right">
           @dynamic(handler, "person", "delete") {
@@ -70,27 +70,42 @@
     <div class="container">
       <div class="left">
         @views.html.v2.person.blocks.photo(person, "199")
-        <div class="panel">
+        <div class="sidemenu">
           <ul class="nav nav-stacked" role="tablist" id="sidemenu">
-            <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">
-              Personal Details</a></li>
-            <li><a data-href="@routes.People.renderTabs(person.id.get, "contributions")"
+            <li class="subgroup">Personal
+              <ul class="nav">
+                <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">
+              Details</a></li>
+                <li><a data-href="@routes.People.renderTabs(person.id.get, "contributions")"
               href="#contributions" role="tab" data-toggle="tab">
               Contributions</a></li>
+              </ul>
+            </li>
             @if(showFacilitationTab) {
-              <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
-                href="#facilitation" role="tab" data-toggle="tab">
-                Facilitation</a></li>
+              <li class="subgroup">Facilitation
+                <ul class="nav">
+                  <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
+                    href="#facilitation" role="tab" data-toggle="tab">
+                    Settings</a></li>
+                  <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
+                    href="#facilitation" role="tab" data-toggle="tab">
+                    Experiments</a></li>
+                </ul>
+              </li>
             }
             @person.member.map { member =>
-              @if(!member.funder) {
-                <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-                  href="#experiments" role="tab" data-toggle="tab">
-                  Experiments</a></li>
-              }
-              <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"
-                href="#membership" role="tab" data-toggle="tab">
-                Membership</a></li>
+              <li class="subgroup">Membership
+                <ul class="nav">
+                  <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"
+                    href="#membership" role="tab" data-toggle="tab">
+                    Membership</a></li>
+                  @if(!member.funder) {
+                    <li><a data-href="@routes.Experiments.experiments(member.id.get)"
+                      href="#experiments" role="tab" data-toggle="tab">
+                      Experiments</a></li>
+                  }
+                </ul>
+              </li>
             }
           </ul>
         </div>
@@ -116,7 +131,7 @@
           <div class="tab-pane" id="membership"></div>
         }
       </div>
-      <div class="col-md-3">
+      <div class="right pull-right">
         <div class="panel panel-success" id="completionWidget"></div>
       </div>
     </div>

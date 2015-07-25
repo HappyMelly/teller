@@ -22,20 +22,30 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
- @font-face {
-    font-family: "Days";
-    src: url("../fonts/Days.ttf") format("truetype");
-    font-style: normal;
-    font-weight: normal;
+package views
+
+import org.joda.time.LocalDate
+import views.html.helper.FieldConstructor
+
+object ViewHelpersV2 {
+
+  implicit val fields = FieldConstructor(views.html.v2.html.fieldConstructor.f)
+  val asIs = FieldConstructor(views.html.v2.html.asIsConstructor.f)
+
+  /**
+   * Returns well-formatted date interval
+   * @param start Start date
+   * @param end End date
+   */
+  def dateInterval(start: LocalDate, end: LocalDate): String = {
+    if (start == end)
+      start.toString("d MMM yyyy")
+    else if (start.year() == end.year())
+      if (start.monthOfYear() == end.monthOfYear())
+        start.toString("d - ") + end.toString("d MMM yyyy")
+      else
+        start.toString("d MMM - ") + end.toString("d MMM yyyy")
+    else
+      start.toString("d MMM yyyy - ") + end.toString("d MMM yyyy")
+  }
 }
-/* colors */
-@pig-pink: #ee929f;
-@light-pink: #f1a7a9;
-@butterscotch: #ffc550;
-@dark-sky-blue: #4a90e2;
-@warm-grey: #777777;
-@grey: #9b9b9b;
-@light-grey: #e7e7e7;
-@text-grey: #888888;
-@icon-grey: #d4d4d4;
-@grey3: #333333;

@@ -6,11 +6,18 @@
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 <div class="photo-block">
-  @dynamic(handler, "person", "edit") {
-    <a href="#" id="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
-      <i class="glyphicon glyphicon-pencil"></i></a>
+  @person.photo.url.map { photo =>
+    <img id="photo" width="@width" class="img-rounded photo" src="@photo"/>
+  }.getOrElse {
+    @dynamicOr(handler, "person", "edit") {
+      <a href="#" id="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
+        <img id="photo" width="@width"
+          src="@routes.Assets.at("images/add-photo.png")"/></a>
+    }{
+      <img id="photo" width="@width"
+        src="@routes.Assets.at("images/add-photo.png")"/>
+    }
   }
-  @element.photo(person, width)
 </div>
 <div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog" id="choosePhotoContent">

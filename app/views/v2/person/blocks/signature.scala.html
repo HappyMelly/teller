@@ -8,15 +8,12 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
-  <p>Your signature is used during certificate generation. It's important to upload
-    one to send participants the certificates signed by you.
-  </p>
+<p>Your signature is used during certificate generation. It's important to upload
+  one to send participants the certificates signed by you.
+</p>
+@if(person.signature) {
   <div class="col-md-4">
-    @if(person.signature) {
-      <img width="200" class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
-    } else {
-      <img width="200" class="img-thumbnail" src="@routes.Assets.at("images/no-signature.png")"/>
-    }
+    <img width="200" class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
   </div>
   <div class="col-md-4">
     @dynamic(handler, "person", "edit") {
@@ -38,3 +35,14 @@
       }
     }
   </div>
+} else {
+  @dynamic(handler, "person", "edit") {
+    <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
+      method="post" enctype="multipart/form-data" class="form-inline">
+      <div class="form-group">
+        <input type="file" id="signature" class="form-control input-sm" name="signature"/>
+      </div>
+      <button class="btn btn-primary" type="submit">Upload signature</button>
+    </form>
+  }
+}

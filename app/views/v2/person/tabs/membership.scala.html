@@ -12,117 +12,88 @@
 
 @person.member.map { m =>
   <div id="reasonDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" id="updateReason">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-          <h4>Share why you joined the network</h4>
-        </div>
-        <div class="modal-body">
-          <textarea class="form-control" rows="15" id="reason">@m.reason.getOrElse("")</textarea>
-          <span class="help-block">
-            Markdown (<a target="_blank" href="http://daringfireball.net/projects/markdown/syntax">formatting help</a>)
-          </span>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-          <a id="saveReason" class="btn btn-danger" href="#">Save</a>
-        </div>
-      </div>
+    @v2.html.dialog("updateReason",
+      "The reason I joined the network...",
+      action = None,
+      actionId = Some("saveReason")) {
+      <textarea class="form-control" rows="15" id="reason">@m.reason.getOrElse("")</textarea>
+      <span class="help-block font-sm">
+        @views.html.v2.element.markdownHelp(horizontal = true)
+      </span>
+    }
+  </div>
+
+  <div class="block">
+    <h3>The reason I joined the network...
+      @dynamic(handler, "person", "edit") {
+        <a href="#" data-toggle="modal" data-target="#reasonDialog"
+          class="font-sm pull-right">Edit</a>
+      }
+    </h3>
+    <div id="reasonToJoin">
+      @m.reason.map { text => @text.markdown }
     </div>
   </div>
 
-  <div class="col-md-12">
-    <div class="col-md-12">
-      <b>The reason I joined the network:</b>
-      @dynamic(handler, "person", "edit") {
-        <a href="#" data-toggle="modal" data-target="#reasonDialog">
-          <i class="glyphicon glyphicon-pencil"></i></a>
-      }
-      <br/>
-      <div id="reasonToJoin">
-        @m.reason.map { text => @text.markdown }
-      </div>
-      <br/>
-      <br/>
-    </div>
-
-    @views.html.element.badge(m)
-    <div class="col-md-12 block">
-      <legend>Payments</legend>
-      <table class="payments table table-bordered">
-        <thead>
+  @views.html.v2.element.badge(m)
+  <div class="block">
+    <h3>Payments</h3>
+    <table class="payments table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount, €</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(payment <- payments) {
           <tr>
-            <th>Description</th>
-            <th>Amount</th>
-            <th>Date</th>
-            @restrict(handler, List(as("admin"))) {
-              <th>Remote link</th>
-            }
+            <td>@payment.description</td>
+            <td>@payment.fee.getAmount</td>
+            <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
           </tr>
-        </thead>
-        <tbody>
-          @for(payment <- payments) {
-            <tr>
-              <td>@payment.description</td>
-              <td>@payment.fee</td>
-              <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
-              @restrict(handler, List(as("admin"))) {
-                <td><a href="https://dashboard.stripe.com/live/payments/@(payment.remoteId)"
-                  target="_blank">@payment.remoteId</a> </td>
-              }
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <div class="col-md-12 block">
-      <legend>Membership Renewal</legend>
-      @if(m.renewal) {
-        <p>
-          Your membership will be automatically renewed at the end of a renewal
-          period. The date of the next renewal is <b>@m.until</b>.
-        </p>
-        <p>
-          You can stop automatic renewal any time. In this case your membership
-          will be valid till <b>@m.until</b>.</p>
-        @dynamic(handler, "person", "edit") {
-          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
-            data-target=".cancelModal">Cancel subscription</button>
-          <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
-            <div class="modal-dialog modal-sm">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  <h4 class="modal-title" id="myModalLabel">Stop automatic renewal</h4>
-                </div>
-                <div class="modal-body">
-                  <p>If you stop automatic renewal you won't be able to start it again.
-                    However this functionality will be available in the future.</p>
-                  <p>Your membership will be valid till <b>@m.until</b></p>
-                </div>
-                <div class="modal-footer">
-                  <form method="post" action="@CSRF(routes.People.cancel(person.id.getOrElse(0)))">
-                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
-                    <button class="btn btn-danger btn-sm" type="submit">
-                      Stop automatic renewal</button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
         }
+      </tbody>
+    </table>
+  </div>
+  <div class="block">
+    <h3>Membership Renewal</h3>
+    @if(m.renewal) {
+      <p>
+        Your membership will be automatically renewed at the end of a renewal
+        period. The date of the next renewal is <b>@m.until</b>.
+      </p>
+      <p>
+        @dynamicOr(handler, "person", "edit") {
+          You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
+          will be valid till <b>@m.until</b>.
+        }{
+          You can stop automatic renewal any time. In this case your membership
+          will be valid till <b>@m.until</b>.
 
-      } else {
-        <div class="alert alert-warning">
-          <p><i class="glyphicon glyphicon-warning-sign"></i> Automatic renewal is stopped.</p>
-          <p>It's not possible to turn automatic renewals on right now. We're working on it ;).</p>
-        </div>
-        <p>Your membership ends <b>@m.until</b>.</p>
-      }
-    </div>
-    @restrict(handler, List(as(Editor.toString))) {
-      @views.html.element.administration(m)
+        }
+      </p>
+      <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
+        @v2.html.postDialog("cancelDialog",
+          "Stop automatic renewal",
+          CSRF(routes.People.cancel(person.id.getOrElse(0))),
+          "Stop") {
+          <p>If you stop automatic renewal you won't be able to start it again.</p>
+          <p>Your membership will be valid till <b>@m.until</b></p>
+        }
+      </div>
+
+    } else {
+      <div class="alert alert-warning">
+        <p><i class="glyphicon glyphicon-warning-sign"></i> Automatic renewal is stopped.</p>
+        <p>It's not possible to turn automatic renewals on right now. We're working on it ;).</p>
+      </div>
+      <p>Your membership ends <b>@m.until</b>.</p>
     }
+  </div>
+  @restrict(handler, List(as(Editor.toString))) {
+    @views.html.v2.element.administration(m)
+  }
   </div>
 }

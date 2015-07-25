@@ -84,7 +84,7 @@
   @if(members.isEmpty) {
     @organisation.name has no members.
   } else {
-    @views.html.person.table(members.map(_.summary)) { person =>
+    @views.html.v2.person.table(members.map(_.summary)) { person =>
       @restrict(handler, List(as(Editor.toString))) {
         <a href="@routes.People.deleteRelationship("organisation", person.id, organisation.id.get)">
           <i class="glyphicon glyphicon-trash"></i> Delete relation</a>

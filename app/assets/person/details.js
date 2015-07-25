@@ -153,6 +153,7 @@ function initializeActions() {
         });
         return false;
     });
+    $('#saveReason').on('click', updateReason);
 }
 
 var loadedTabs = [];

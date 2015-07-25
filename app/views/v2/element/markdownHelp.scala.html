@@ -1,1 +1,10 @@
-Markdown (<a target="_blank" href="http://daringfireball.net/projects/markdown/syntax">formatting help</a>)
+@(horizontal: Boolean = false)
+
+@defining(if(horizontal){ "  " }else{ "<br/>" }) { delimiter =>
+  <p class="text-muted">
+    <a target="_blank" href="http://daringfireball.net/projects/markdown/syntax">Formating tips:</a>@delimiter
+    <strong>*bold*</strong>@delimiter
+    <em>_italic_</em>@delimiter
+    >quote
+  </p>
+}

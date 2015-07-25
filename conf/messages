@@ -173,6 +173,7 @@ error.url.profile = Invalid profile URL
 error.url.web = Invalid web site URL
 
 # Form constraint descriptions and errors
+constraint.required = <span>required</span>
 constraint.brand.code = Capital letters and numbers
 constraint.brand.code.error = Capital letters and numbers only
 constraint.brand.code.exists = A brand with code {0} already exists
