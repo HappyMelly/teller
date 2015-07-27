@@ -1,0 +1,11 @@
+@(globalErrors: Seq[FormError] = Seq())
+
+<div class="alert alert-danger">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  Please fix the validation errors.
+  <ul>
+    @for(error <- globalErrors) {
+      <li>@error.message</li>
+    }
+  </ul>
+</div>

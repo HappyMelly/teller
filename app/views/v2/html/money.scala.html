@@ -1,0 +1,35 @@
+@(id: String, codeField: play.api.data.Field, amountField: play.api.data.Field, args: (Symbol,Any)*)(implicit lang: play.api.i18n.Lang)
+
+@import scala.collection.JavaConverters._
+@import org.joda.money.CurrencyUnit
+
+<div class="form-group @args.toMap.get('_class) @if(codeField.hasErrors || amountField.hasErrors) {error}" id="@id">
+  @args.toMap.get('_label).map { label =>
+    <label class="control-label col-sm-2" for="@id">@label</label>
+  }
+  <div class="col-sm-7">
+    @if(args.toMap.contains('_currency)) {
+      <div class="input-group">
+        <span class="input-group-addon">@CurrencyUnit.of(args.toMap.get('_currency).getOrElse("").toString).getCode</span>
+        <input type="hidden" name="@codeField.name" value="@args.toMap.get('_currency)">
+        <input class="form-control" name="@amountField.name"
+          type="number" min="0.00" step="@args.toMap.get('_step).getOrElse("0.01")" value="@amountField.value">
+      </div>
+    } else {
+      <div class="input">
+        <select name="@codeField.name" class="form-control"
+          style="width: 70%;display: inline;">
+          @for(currency <- CurrencyUnit.registeredCurrencies.asScala.filterNot(_.isPseudoCurrency)) {
+          <option value="@currency.getCurrencyCode" @if(codeField.value == Some(currency.getCurrencyCode)) { selected }>
+            @currency.getCode - @currency.toCurrency.getDisplayName</option>
+          }
+        </select>
+        <input class="form-control" name="@amountField.name"
+          style="width: 29%;display: inline;"
+          type="number" min="0.00" step="@args.toMap.getOrElse('_step, "0.01")"
+          value="@amountField.value">
+      </div>
+    }
+    </span>
+  </div>
+</div>

@@ -83,7 +83,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    */
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.person.form(user, None, People.personForm(user.name)))
+      Ok(views.html.v2.person.form(user, None, People.personForm(user.name)))
   }
 
   /**
@@ -125,7 +125,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
 
       People.personForm(user.name).bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.person.form(user, None, formWithErrors)),
+          BadRequest(views.html.v2.person.form(user, None, formWithErrors)),
         person ⇒ {
           val updatedPerson = person.insert
           val log = activity(updatedPerson, user.person).created.insert()
@@ -198,7 +198,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         val duplicated = if (user.account.editor)
           userAccountService.findDuplicateIdentity(person)
         else None
-        Ok(views.html.person.details(user, person,
+        Ok(views.html.v2.person.details(user, person,
           memberships, otherOrganisations,
           facilitator, accountRole, duplicated))
       } getOrElse {
@@ -216,7 +216,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.person.form(user, Some(id),
+        Ok(views.html.v2.person.form(user, Some(id),
           People.personForm(user.name).fill(person)))
       }.getOrElse(NotFound)
   }
@@ -232,10 +232,10 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         personService.find(id) map { oldPerson ⇒
           People.personForm(user.name).bindFromRequest.fold(
             formWithErrors ⇒
-              BadRequest(views.html.person.form(user, Some(id), formWithErrors)),
+              BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors)),
             person ⇒ {
               checkDuplication(person, id, user.name) map { form ⇒
-                BadRequest(views.html.person.form(user, Some(id), form))
+                BadRequest(views.html.v2.person.form(user, Some(id), form))
               } getOrElse {
                 val updatedPerson = person
                   .copy(id = Some(id), active = oldPerson.active)
@@ -265,20 +265,20 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         tab match {
           case "contributions" ⇒
             val contributions = contributionService.contributions(id, isPerson = true)
-            Ok(views.html.person.tabs.contributions(contributions))
+            Ok(views.html.v2.element.contributions("person", contributions))
           case "facilitation" ⇒
             personService.find(id) map { person ⇒
               val licenses = licenseService.licenses(id)
               val facilitation = facilitatorService.findByPerson(id)
               val facilitatorData = licenses
                 .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.rating))
-              Ok(views.html.person.tabs.facilitation(person, facilitatorData))
+              Ok(views.html.v2.person.tabs.facilitation(person, facilitatorData))
             } getOrElse NotFound("Person not found")
           case "membership" ⇒
             personService.find(id) map { person ⇒
               person.member map { v ⇒
                 val payments = paymentRecordService.findByPerson(id)
-                Ok(views.html.person.tabs.membership(user, person, payments))
+                Ok(views.html.v2.person.tabs.membership(user, person, payments))
               } getOrElse Ok("Person is not a member")
             } getOrElse NotFound("Person not found")
           case _ ⇒ Ok("")
@@ -293,7 +293,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
-      Ok(views.html.person.index(user, people))
+      Ok(views.html.v2.person.index(user, people))
   }
 
   /**

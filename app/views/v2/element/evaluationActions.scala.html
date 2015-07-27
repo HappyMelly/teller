@@ -1,0 +1,67 @@
+<!-- Approve Modal -->
+<div id="approve" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="approveLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>Approve Certificate</h3>
+      </div>
+      <div class="modal-body">
+        <h4>Are you sure you want to approve this certificate?</h4>
+        <p>
+          After approving this certificate the system will send a PDF copy of the certificate to yourself, the brand
+          coordinator, and the participant
+        </p>
+      </div>
+      <div class="modal-footer">
+        <a id="approveLink" class="btn btn-primary" href="#">Yes, approve this certificate</a>
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Reject Modal -->
+<div id="reject" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="rejectLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>Reject Certificate</h3>
+      </div>
+      <div class="modal-body">
+        <h4>Are you sure you want to reject this certificate?</h4>
+        <p>
+          After rejecting this certificate the system will a notification to the brand
+          coordinator and the participant
+        </p>
+      </div>
+      <div class="modal-footer">
+        <a id="rejectLink" class="btn btn-primary" href="#">Yes, reject this certificate</a>
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Move Modal -->
+<div id="move" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="moveLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h3>Move Evaluation</h3>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="moveForm" action="#" method="post">
+                    <h4>Choose an event</h4>
+                    <select name="eventId" id="eventIdMoveForm"></select>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="moveButton" class="btn btn-primary" form="moveForm">Move</button>
+                <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="@routes.Assets.at("event.js")" type="text/javascript"></script>
+<!-- End of modals -->

@@ -16,6 +16,8 @@ dist
 .DS_Store
 *.iml
 run-server.sh
+run-staged-server.sh
+keystore.jks
 .tags*
 .ensime
 .ensime_lucene/

@@ -1,0 +1,39 @@
+@(user: ActiveUser,
+  id: Option[Long],
+  form: Form[OrgView])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+
+@defining(form.value.map(view => view.org.name).getOrElse("Add organization")) { name =>
+  @v2.main("Organizations", "orgs", user, withMelly = true) {
+    <div class="form">
+      @v2.html.block("") { <h1>@name</h1> }
+      @html.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()))) {
+        @v2.organisation.blocks.form(form)
+
+        @if(form.hasErrors) {
+          @v2.html.block("") {
+            <div class="errors">
+              @for(error <- form.errors) {
+                @play.api.i18n.Messages(error.message)<br/>
+              }
+            </div>
+          }
+        }
+        @v2.html.block("") {
+          <div class="row">
+            <div class="col-md-5">
+              <button class="btn btn-primary btn-block btn-lg" type="submit">
+                Save</button>
+            </div>
+            <div class="col-md-3 cancel">
+              <a href="javascript:history.back()">Cancel changes</a></div>
+          </div>
+        }
+      }
+    </div>
+  }
+}

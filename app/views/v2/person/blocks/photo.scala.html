@@ -1,0 +1,42 @@
+@(person: Person,
+    width: String)(implicit request: Request[Any],
+    handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+<div class="photo-block @if(person.photo.url.nonEmpty) { real }">
+  @dynamicOr(handler, "person", "edit") {
+    @person.photo.url.map { photo =>
+      <div id="real">
+        <img width="@width" class="img-rounded" src="@photo"/>
+      </div>
+    }.getOrElse {
+      <div id="real" style="display:none;">
+        <img width="@width" class="img-rounded" src=""/>
+      </div>
+    }
+    <div id="stub" @if(person.photo.url.nonEmpty) { style="display:none;" }>
+      <a href="#" class="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
+        <img width="@width"
+          src="@routes.Assets.at("images/add-photo.png")"/></a>
+    </div>
+    <div class="photo-action">
+      <a href="#" class="choosePhotoLink" data-toggle="modal"
+        data-target="#photoDialog">Edit</a>
+      <a href="#" id="btnPhotoDelete"
+        data-href="@routes.ProfilePhotos.delete(person.id.get)">Delete</a>
+    </div>
+  }{
+    @person.photo.url.map { photo =>
+      <img width="@width" class="img-rounded photo" src="@photo"/>
+    }.getOrElse {
+      <img width="@width"
+        src="@routes.Assets.at("images/add-photo.png")"/>
+    }
+  }
+</div>
+<div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" id="choosePhotoContent">
+  </div>
+</div>

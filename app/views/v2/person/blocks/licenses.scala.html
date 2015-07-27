@@ -1,0 +1,34 @@
+@(person: Person,
+  facilitationData: List[(LicenseView, Float)]
+  )(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+<h3>Content Licenses</h3>
+@restrict(handler, List(as(Editor.toString))) {
+  <p><a href="@routes.Licenses.add(person.id.getOrElse(0))">
+    + Add Content License</a></p>
+}
+<div class="list-group licenses">
+  @for(record <- facilitationData) {
+    @defining(record._1.license) { license: License =>
+      <div class="list-group-item">
+        <div class="list-group-item-heading">@record._1.brand.name
+          &nbsp;&nbsp;&nbsp;@views.html.v2.element.rating(record._2)
+          @restrict(handler, List(as(Editor.toString))) {
+            <a class="pull-right"
+            href="@routes.Licenses.edit(license.id.getOrElse(0))">Edit</a>
+          }
+        </div>
+        <div class="list-group-item-text">
+          <p>Expires on @license.end</p>
+          <p class="text-muted">Version: @license.version,
+            Signed: @license.signed, Start: @license.start,
+            Fee: @license.fee</p>
+        </div>
+      </div>
+    }
+  }
+</div>

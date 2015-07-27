@@ -1,0 +1,27 @@
+@**
+ * Generates a modal form with 'Close' and POST-actionable buttons
+ *@
+@(modalId: String,
+  title: String,
+  action: Call,
+  actionName: String)(body: => Html)
+
+@modal(modalId, title, small=true) {
+  <div class="modal-body">
+    @body
+  </div>
+  <div class="modal-footer">
+    <div class="row">
+      <div class="col-md-7">
+        <form action="@action" method="post">
+          <button class="btn btn-primary btn-block btn-lg" type="submit">
+            @actionName</button>
+        </form>
+      </div>
+      <div class="col-md-5">
+        <button class="btn btn-cancel btn-block btn-lg" data-dismiss="modal"
+          aria-hidden="true">Cancel</button>
+      </div>
+    </div>
+  </div>
+}

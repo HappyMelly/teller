@@ -77,7 +77,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   def add = SecuredRestrictedAction(Editor) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Ok(views.html.organisation.form(user, None, Organisations.organisationForm))
+      Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
   }
 
   /**
@@ -124,7 +124,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
 
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒
-          BadRequest(views.html.organisation.form(user, None, formWithErrors)),
+          BadRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
         view ⇒ {
           val org = orgService.insert(view)
           val activity = Activity.insert(user.name, Activity.Predicate.Created, view.org.name)
@@ -188,7 +188,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
         val payments = view.org.member map { v ⇒
           paymentRecordService.findByOrganisation(id)
         } getOrElse List()
-        Ok(views.html.organisation.details(user, view, members, otherPeople,
+        Ok(views.html.v2.organisation.details(user, view, members, otherPeople,
           contributions, products, payments))
       }.getOrElse(NotFound)
   }
@@ -201,7 +201,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
 
       orgService.findWithProfile(id).map { view ⇒
-        Ok(views.html.organisation.form(user, Some(id),
+        Ok(views.html.v2.organisation.form(user, Some(id),
           Organisations.organisationForm.fill(OrgView(view.org, view.profile))))
       }.getOrElse(NotFound)
   }
@@ -213,7 +213,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
 
       val organisations = orgService.findAll
-      Ok(views.html.organisation.index(user, organisations))
+      Ok(views.html.v2.organisation.index(user, organisations))
   }
 
   /**
@@ -271,7 +271,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
         orgService.findWithProfile(id).map { view ⇒
           Organisations.organisationForm.bindFromRequest.fold(
             formWithErrors ⇒
-              BadRequest(views.html.organisation.form(
+              BadRequest(views.html.v2.organisation.form(
                 user,
                 Some(id),
                 formWithErrors)),

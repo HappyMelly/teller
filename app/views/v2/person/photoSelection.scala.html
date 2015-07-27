@@ -1,0 +1,42 @@
+@(personId: Long,
+  gravatarUrl: String,
+  customUrl: String,
+  active: String)(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+@v2.html.dialog("photoSelection",
+  "Use photo from gravatar or upload your own",
+  action = None,
+  actionId = Some("saveLink")) {
+    <div class="photo-selector">
+      <div class="option @if(active=="gravatar"){active}" id="gravatar">
+        <img src="@gravatarUrl">
+        <div class="description">
+          <h4>Gravatar</h4>
+          <p><a href="http://gravatar.com" target="_blank">Gravatar</a> is a service
+          to store your identity assigned to your email address. It's used by
+          many websites.</p>
+        </div>
+      </div>
+      <div class="option @if(active=="custom"){active}" id="custom">
+        @if(active == "custom") {
+          <img class="photo" id="customPhoto"
+            src="@customUrl"/>
+        } else {
+          <img id="customPhoto"
+            src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+        }
+        <div class="description">
+          <h4>Custom</h4>
+          <div class="file-upload">
+            <button type="button" class="btn btn-primary">Choose File</button>
+            <div>No file chosen</div>
+            <input type="file" id="photoUpload"  class="form-control"
+              name="photo" data-url="@routes.ProfilePhotos.upload(personId)"/>
+          </div>
+          <button class="btn btn-upload" id="btnPhotoUpload">Upload photo</button>
+        </div>
+      </div>
+    </div>
+  }
+

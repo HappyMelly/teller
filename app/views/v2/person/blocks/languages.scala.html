@@ -1,0 +1,37 @@
+@(person: Person)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import views.Languages
+
+<div class="col-md-6">
+  <table class="table">
+    <thead><th>Languages</th></thead>
+    <tbody>
+      @for(language <- person.languages) {
+        <tr><td>
+          @Languages.all.get(language.language)&nbsp;
+          @dynamic(handler, "person", "edit") {
+            <a class="pull-right" href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">Delete</a>
+          }
+        </td></tr>
+      }
+    </tbody>
+  </table>
+  @dynamic(handler, "person", "edit") {
+    <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
+      <div class="form-group">
+        <select name="language" class="form-control input-sm">
+          @for(language <- Languages.all.toList.filterNot(
+            l => person.languages.exists(_.language == l._1)).sortBy(_._2)) {
+              <option value="@language._1">@language._2</option>
+          }
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block">Add Language</button>
+    </form>
+  }
+</div>

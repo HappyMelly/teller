@@ -80,7 +80,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
 
       PersonService.get.find(personId).map { person ⇒
         val form = licenseForm.fill(License.blank(personId))
-        Ok(views.html.license.form(user, None, form, person))
+        Ok(views.html.v2.license.form(user, None, form, person))
       } getOrElse {
         Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
       }
@@ -96,7 +96,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
 
       personService.find(personId).map { person ⇒
         licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.license.form(user, None, form, person)),
+          form ⇒ BadRequest(views.html.v2.license.form(user, None, form, person)),
           license ⇒ {
             val newLicense = licenseService.add(license.copy(licenseeId = personId))
             val brand = brandService.find(newLicense.brandId).get
@@ -140,7 +140,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
 
       licenseService.findWithBrandAndLicensee(id) map { view ⇒
         licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.license.form(user, None, form, view.licensee)),
+          form ⇒ BadRequest(views.html.v2.license.form(user, None, form, view.licensee)),
           license ⇒ {
             val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
             licenseService.update(editedLicense)
@@ -166,7 +166,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
 
       License.find(id).map { license ⇒
         PersonService.get.find(license.licenseeId).map { licensee ⇒
-          Ok(views.html.license.form(user, license.id, licenseForm.fill(license), licensee))
+          Ok(views.html.v2.license.form(user, license.id, licenseForm.fill(license), licensee))
         }.getOrElse {
           throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
         }

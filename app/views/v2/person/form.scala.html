@@ -1,0 +1,38 @@
+@(user: ActiveUser,
+    id: Option[Long],
+    form: Form[Person])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+
+@defining(form.value.map(person => "Edit Profile").getOrElse("Add person")) { title =>
+  @v2.main("Person", "people", user, withMelly = true) {
+    <div class="form">
+      @v2.html.block("") { <h1>@title</h1> }
+      @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
+        @v2.person.blocks.form(form)
+        @if(form.hasErrors) {
+          @v2.html.block("") {
+            <div class="errors">
+              @for(error <- form.errors) {
+                @play.api.i18n.Messages(error.message)<br/>
+              }
+            </div>
+          }
+        }
+        @v2.html.block("") {
+          <div class="row">
+            <div class="col-md-5">
+              <button class="btn btn-primary btn-block btn-lg" type="submit">
+                Save</button>
+            </div>
+            <div class="col-md-3 cancel">
+              <a href="javascript:history.back()">Cancel changes</a></div>
+          </div>
+        }
+      }
+    </div>
+  }
+}

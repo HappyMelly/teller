@@ -24,6 +24,7 @@
 
 package stubs
 
+import _root_.services.TellerRoutesService
 import models.ActiveUser
 import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
@@ -33,7 +34,7 @@ import scala.collection.immutable.ListMap
 
 object FakeRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
 
-  override lazy val routes: RoutesService = new FakeRoutesService()
+  override lazy val routes: RoutesService = new TellerRoutesService()
 
   val userService: StubLoginIdentityService = new StubLoginIdentityService
 
@@ -43,13 +44,4 @@ object FakeRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
     include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
     include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn)))
   )
-}
-
-class FakeRoutesService extends RoutesService.Default {
-
-  override protected def valueFor(key: String, default: String) = {
-    val value = conf.getString(key).getOrElse(default)
-    _root_.controllers.routes.Assets.at(value)
-  }
-
 }

@@ -43,9 +43,43 @@ function reloadCompletionWidget() {
     }
 }
 
-$(document).ready( function() {
+function initializeFileUploadField() {
+    var wrapper = $(".file-upload"),
+        input = wrapper.find("input"),
+        button = wrapper.find("button"),
+        label = wrapper.find("div");
+    button.focus(function(){
+        input.focus()
+    });
+    // Crutches for the :focus style:
+    input.focus(function(){
+        wrapper.addClass("focus");
+    }).blur(function(){
+        wrapper.removeClass("focus");
+    });
+    var fileAPI = (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
+    input.change(function(){
+        var filename;
+        if(fileAPI && input[ 0 ].files[ 0 ])
+            filename = input[ 0 ].files[ 0 ].name;
+        else
+            filename = input.val();
+        if (!filename.length)
+            return;
+
+        if (label.is(":visible")) {
+            label.text(filename);
+            button.text("Choose File");
+        } else {
+            button.text(filename);
+        }
+    }).change();
+}
+
+$(document).ready(function() {
     $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
     if ($('#completionWidget').length > 0) {
-      reloadCompletionWidget();
+        reloadCompletionWidget();
     }
+    initializeFileUploadField();
 });

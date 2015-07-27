@@ -33,5 +33,7 @@ $(document).ready(function() {
        src = "src=\"" + $(codeId).data('src') + value + "\"";
        var code = text.replace(/src=".*"/, src);
        $(codeId).text(code);
+       $('.item').removeClass('selected');
+       $(this).parent().addClass('selected');
    });
 });

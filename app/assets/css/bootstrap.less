@@ -1,0 +1,152 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+@import "settings";
+
+a {
+  color: @dark-sky-blue;
+}
+.navbar {
+  margin-bottom: 0;
+}
+.panel {
+  margin-top: 20px;
+}
+h1 {
+  font-size: 36px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 6px 18px;
+  line-height: 1.9;
+  border: 0px;
+
+  &.btn-lg {
+    border-radius: 4px;
+  }
+  &.btn-primary {
+    background-color: @dark-sky-blue;
+    border-color: @dark-sky-blue;
+  }
+  &.btn-default {
+    color: #fff;
+    background-color: #9b9b9b;
+    border-color: #9b9b9b;
+  }
+}
+
+dl.dl-horizontal {
+  dt {
+    color: @warm-grey;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 400;
+    width: initial;
+    margin-top: 3px;
+  }
+  dd {
+    margin-left: 100px;
+  }
+}
+.has-error .form-control {
+  border-color: @pig-pink;
+}
+.form-control {
+  height: 45px;
+  border: 1px solid @light-grey;
+  background-color: transparent;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  &.input-sm {
+    height: 38px;
+  }
+}
+.input-group-addon {
+  background-color: @light-grey;
+  border: 0;
+  padding: 8px 16px;
+}
+@media (min-width: 768px) {
+  .form-horizontal {
+    .control-label {
+      color: @grey3;
+      padding-top: 13px;
+      text-align: left;
+      font-weight: inherit;
+    }
+  }
+}
+.modal {
+  .modal-content {
+    border-radius: 0;
+    border: 0;
+    .modal-header {
+      padding: 15px 25px 0px;
+      border-bottom: 0;
+      .close {
+        margin-top: -17px;
+        margin-right: -58px;
+        opacity: 1;
+      }
+    }
+    .modal-body {
+      padding: 0px 25px;
+    }
+    .modal-footer {
+      padding: 15px 25px 50px;
+      border-top: 0;
+    }
+    .help-block {
+      text-align: right;
+    }
+  }
+}
+.navbar-inverse .navbar-brand {
+  color: @pig-pink;
+}
+.tab-pane {
+    padding: 10px 10px 10px 10px;
+}
+.table {
+  thead > tr > th {
+    border-bottom: 0;
+    padding: 12px 0px;
+  }
+  tbody > tr {
+    td {
+      padding: 12px 0px;
+    }
+    &:last-child td {
+      border-bottom: 1px solid #ddd;
+    }
+  }
+
+}

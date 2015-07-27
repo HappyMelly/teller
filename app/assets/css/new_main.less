@@ -1,0 +1,331 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+
+@import "settings";
+@import "bootstrap";
+@import "sidemenu";
+@import "profile-strength";
+
+html, body {
+  height: 100%;
+}
+body {
+  min-width: 850px;
+}
+body.with-melly {
+  background-image: url(../images/melly_right.png);
+  background-repeat: no-repeat;
+  background-position: right 51px;
+}
+
+.form {
+  .block {
+    &.yellow { background-color: fadeout(@butterscotch, 90%); }
+    &.grey { background-color: fadeout(@grey3, 95%); }
+    .row {
+      position: relative;
+    }
+    margin-bottom: 0;
+    padding: 25px 0;
+    .name {
+      position: absolute;
+      text-align: right;
+      font-size: 24px;
+      color: @grey;
+      font-weight: 700;
+      top: 40%;
+      right: 0;
+    }
+  }
+  .help {
+    .font-sm;
+    padding-top: 15px;
+    span {
+      color: @pig-pink;
+    }
+  }
+  .errors {
+    color: @pig-pink;
+  }
+  .cancel {
+    padding-top: 13px;
+    padding-left: 50px;
+  }
+}
+.btn {
+  &.btn-cancel {
+    background-color: #fff;
+    color: @dark-sky-blue;
+  }
+  &.btn-upload {
+    background-color: @butterscotch;
+    color: #fff;
+  }
+}
+#wrapper {
+  min-height: 100%;
+  position: relative;
+}
+#content {
+  padding-bottom: 100px;   /* Height of the footer element */
+}
+#footer {
+  width: 100%;
+  height: 80px;
+  position: absolute;
+  padding: 15px;
+  bottom: 0;
+  left: 0;
+  text-align: right;
+  border-top: 1px solid #e5e5e5;
+  color: #cccccc;
+}
+#footer a {
+  color: rgba(0, 0, 0, 0.53);
+}
+.block {
+  margin-bottom: 48px;
+  .fa {
+    color: @icon-grey;
+  }
+  img {
+    max-width: 100%;
+    max-height: auto;
+  }
+}
+h3 a.font-sm {
+  font-weight: initial;
+  padding-top: 5px;
+}
+.font-sm {
+  font-size: 12px;
+}
+
+.profile-header {
+  height: 162px;
+  background-color: @light-grey;
+  &.funder {
+    background-color: @light-pink;
+  }
+  &.supporter {
+    background-color: @butterscotch;
+  }
+  .content-block {
+    margin-left: 240px;
+    .membership-type {
+      font-family: "kg_skinny_latteregular";
+      text-transform: uppercase;
+      font-size: 20px;
+      padding-right: 10px;
+      margin-top: 10px;
+      float: right;
+    }
+  }
+}
+.left {
+  float: left;
+  width: 199px;
+  margin-right: 30px;
+  position: relative;
+}
+@media (min-width: 850px) {
+  .center {
+    float: left;
+    width: 68%;
+  }
+  .right {
+    float: left;
+    width: 68%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+@media (min-width: 990px) {
+  .center {
+    float: left;
+    width: 50%;
+  }
+  .right {
+    float: left;
+    width: 23%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+.file-upload {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid @light-grey;
+  border-radius: 3px;
+  &.focus{
+    box-shadow: 0 0 5px rgba(0,30,255,0.4);
+  }
+  button {
+    float: right;
+    width: 8em;            /* example */
+    height: 100%;
+  }
+  div {
+    padding-left: 1em;
+    padding-top: 8px;
+  }
+  input[type=file]{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    transform: scale(20);
+    letter-spacing: 10em;     /* IE 9 fix */
+    -ms-transform: scale(20); /* IE 9 fix */
+    opacity: 0;
+    cursor: pointer
+  }
+}
+.licenses {
+  .list-group-item {
+    padding: 20px 0;
+    border-left: 0;
+    border-right: 0;
+    &:first-child, &:last-child {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    .list-group-item-heading {
+      font-size: 18px;
+      margin-top: 15px;
+      margin-bottom: 12px;
+      a {
+        font-size: 12px;
+      }
+    }
+    .rating, .fa {
+      color: @butterscotch;
+    }
+  }
+}
+.countries-languages {
+  div.pull-right, div.pull-left {
+    width: 40%;
+  }
+  a {
+    font-size: 12px;
+  }
+}
+.badge-selector {
+  .item {
+    margin-bottom: 20px;
+    img {
+      margin-right: 10px;
+    }
+    &.selected {
+      font-weight: 700;
+    }
+    a {
+      color: #000;
+      text-decoration: none;
+    }
+  }
+}
+#badge-picture {
+  margin-bottom: 15px;
+}
+.experiments {
+  border-top: 1px solid @light-grey;
+  .fa {
+    color: @warm-grey;
+  }
+  h3 {
+    font-weight: normal;
+  }
+  .actions {
+    padding-top: 15px;
+    a {
+      padding-right: 15px;
+    }
+  }
+}
+
+.photo-block {
+  margin-top: -145px;
+  &.real:hover {
+    .photo-action {
+      display: block;
+    }
+  }
+
+  .photo-action {
+    background-color: #4a90e2;
+    display: none;
+    opacity: 0.9;
+    text-align: center;
+    width: 199px;
+    height: 54px;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    padding-top: 15px;
+    margin-top: -54px;
+    a {
+      color: #fff;
+      margin: 0 27px;
+      &:hover {
+        color: #fff;
+      }
+    }
+  }
+}
+
+.photo-selector {
+  .option {
+    display: table;
+    cursor: pointer;
+    border: 2px solid @light-grey;
+    margin-bottom: 10px;
+    width: 100%;
+    &:hover {
+      border: 2px solid @dark-sky-blue;
+    }
+    &.active {
+      border: 2px solid @dark-sky-blue;
+    }
+    img {
+      float: left;
+      width: 156px;
+    }
+    .description {
+      padding: 0px 15px 0px 171px;
+      .btn-upload {
+        margin-top: 12px;
+      }
+    }
+  }
+}
+
+.button {
+  float: left!important;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+

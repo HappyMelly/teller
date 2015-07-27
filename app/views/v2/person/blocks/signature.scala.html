@@ -1,0 +1,48 @@
+@(person: Person)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+<p>Your signature is used during certificate generation. It's important to upload
+  one to send participants the certificates signed by you.
+</p>
+<div class="row signature" @if(!person.signature) { style="display: none;" }>
+  <div class="col-md-7">
+    <img class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
+  </div>
+  <div class="col-md-5">
+    @dynamic(handler, "person", "edit") {
+      <button class="btn btn-primary btn-block" id="formSwither">Upload new signature</button>
+      <br/>
+      <form method="post" action="@CSRF(routes.Signatures.delete(person.id.getOrElse(0)))">
+        <button class="btn" type="submit">Delete</button>
+      </form>
+    }
+  </div>
+</div>
+@dynamic(handler, "person", "edit") {
+  <div class="row no-signature" @if(person.signature) { style="display: none;" }>
+    <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
+      method="post" enctype="multipart/form-data">
+      <div class="col-md-7">
+        <div class="form-group">
+          <div class="file-upload">
+            <button type="button" class="btn btn-primary">Choose File</button>
+            <div>No file chosen</div>
+            <input type="file" id="signature"  class="form-control input-sm"
+              name="signature"/>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <button class="btn btn-upload btn-block" id="signatureUploader"
+          type="submit">Upload signature</button>
+      </div>
+    </form>
+  </div>
+}

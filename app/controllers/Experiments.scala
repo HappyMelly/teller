@@ -61,7 +61,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
   def add(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Future.successful(Ok(views.html.experiment.form(user, memberId, form)))
+        Future.successful(Ok(views.html.v2.experiment.form(user, memberId, form)))
   }
 
   /**
@@ -74,7 +74,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
           error ⇒ Future.successful(
-            BadRequest(views.html.experiment.form(user, memberId, error))),
+            BadRequest(views.html.v2.experiment.form(user, memberId, error))),
           experiment ⇒ {
             memberService.find(memberId) map { member ⇒
               val inserted = experimentService.insert(experiment.copy(memberId = memberId))
@@ -142,7 +142,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
           Future.successful(
-            Ok(views.html.experiment.form(user, memberId, form.fill(experiment), Some(id))))
+            Ok(views.html.v2.experiment.form(user, memberId, form.fill(experiment), Some(id))))
         } getOrElse Future.successful(NotFound("Experiment not found"))
   }
 
@@ -155,7 +155,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val experiments = experimentService.findByMember(memberId)
-        Future.successful(Ok(views.html.experiment.list(memberId, experiments)))
+        Future.successful(Ok(views.html.v2.experiment.list(memberId, experiments)))
   }
 
   /**
@@ -176,7 +176,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
           error ⇒ Future.successful(
-            BadRequest(views.html.experiment.form(user, memberId, error))),
+            BadRequest(views.html.v2.experiment.form(user, memberId, error))),
           experiment ⇒ {
             experimentService.find(id) map { existing ⇒
               memberService.find(memberId) map { member ⇒

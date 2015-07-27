@@ -1,0 +1,49 @@
+@(user: ActiveUser,
+  memberId: Long,
+  form: Form[Experiment],
+  testimonialId: Option[Long] = None)(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Experiment", "brand", user, withMelly = true) {
+  <div class="form">
+    @v2.html.block("") { <h1>Add Experiment</h1> }
+    @v2.html.form(action = testimonialId.map { id =>
+      CSRF(routes.Experiments.update(memberId, id))
+    }.getOrElse {
+      CSRF(routes.Experiments.create(memberId))
+    }, 'enctype -> "multipart/form-data") {
+      @v2.html.block("") {
+        @v2.html.text(form("name"), '_label -> "Name")
+        @v2.html.textarea(form("description"), '_label -> "Description",
+          'rows -> "5", '_help -> views.html.v2.element.markdownHelp())
+        @v2.html.file(form("file"), '_label -> "Picture")
+        @v2.html.text(form("url"), '_label -> "URL",
+          'placeholder -> "http://experiment.com", '_showConstraints -> false)
+      }
+      @if(form.hasErrors) {
+        @v2.html.block("") {
+          <div class="errors">
+            @for(error <- form.errors) {
+              @play.api.i18n.Messages(error.message)<br/>
+            }
+          </div>
+        }
+      }
+      @v2.html.block("") {
+        <div class="row">
+          <div class="col-md-5">
+            <button class="btn btn-primary btn-block btn-lg" type="submit">
+              Save</button>
+          </div>
+          <div class="col-md-3 cancel">
+            <a href="javascript:history.back()">Cancel changes</a></div>
+        </div>
+      }
+    }
+  </div>
+}

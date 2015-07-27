@@ -8,7 +8,7 @@ scalaVersion := "2.10.4"
 
 scalacOptions += "-feature"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 libraryDependencies ++=
   Seq(
@@ -33,13 +33,11 @@ libraryDependencies ++=
     "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
-    "ws.securesocial" %% "securesocial" % "master-SNAPSHOT",
+    "ws.securesocial" %% "securesocial" % "3.0-M3",
     "nl.rhinofly" %% "play-s3" % "6.0.0"
   )
 
-resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
-
-resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+resolvers += Resolver.sonatypeRepo("releases")
 
 resolvers += "Rhinofly Internal Repository" at "http://maven-repository.rhinofly.net:8081/artifactory/libs-release-local"
 
@@ -57,6 +55,8 @@ herokuIncludePaths in Compile := Seq(
 herokuProcessTypes in Compile := Map(
   "web" -> "target/universal/stage/bin/happymelly-teller -Dconfig.file=conf/$CONF_FILENAME -Dhttp.port=$PORT"
 )
+
+includeFilter in (Assets, LessKeys.less) := "*.less"
 
 // disable publishing the main API jar
 publishArtifact in (Compile, packageDoc) := false
