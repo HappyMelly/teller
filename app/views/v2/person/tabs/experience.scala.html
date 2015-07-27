@@ -58,7 +58,7 @@
   </div>
   <div class="block">
     <h3>Endorsements</h3>
-    <p>If you collected endorsements about your work, add a few, so other people will know how good you are. <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a>
+    <p>If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, "person", "edit") { <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a> }
     </p>
     <div class="endorsement">
       @for(endorsement <- endorsements) {
