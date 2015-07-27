@@ -11,38 +11,38 @@
 <p>Your signature is used during certificate generation. It's important to upload
   one to send participants the certificates signed by you.
 </p>
-@if(person.signature) {
-  <div class="col-md-4">
-    <img width="200" class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
+<div class="row signature" @if(!person.signature) { style="display: none;" }>
+  <div class="col-md-7">
+    <img class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-5">
     @dynamic(handler, "person", "edit") {
-      <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
-      method="post" enctype="multipart/form-data">
-        <div class="form-group">
-          <input type="file" id="signature" class="form-control input-sm" name="signature"/>
-        </div>
-        <button class="btn btn-primary btn-sm" type="submit">
-        @if(person.signature) { Replace File } else { Upload File } </button>
-        @if(person.signature) {
-          <button class="btn btn-danger btn-sm" type="submit" form="deleteSig">
-            <i class="glyphicon glyphicon-trash glyphicon-white"></i> Delete File</button>
-        }
+      <button class="btn btn-primary btn-block" id="formSwither">Upload new signature</button>
+      <br/>
+      <form method="post" action="@CSRF(routes.Signatures.delete(person.id.getOrElse(0)))">
+        <button class="btn" type="submit">Delete</button>
       </form>
-      @if(person.signature) {
-        <form method="post" action="@CSRF(routes.Signatures.delete(person.id.getOrElse(0)))" id="deleteSig">
-        </form>
-      }
     }
   </div>
-} else {
-  @dynamic(handler, "person", "edit") {
+</div>
+@dynamic(handler, "person", "edit") {
+  <div class="row no-signature" @if(person.signature) { style="display: none;" }>
     <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
-      method="post" enctype="multipart/form-data" class="form-inline">
-      <div class="form-group">
-        <input type="file" id="signature" class="form-control input-sm" name="signature"/>
+      method="post" enctype="multipart/form-data">
+      <div class="col-md-7">
+        <div class="form-group">
+          <div class="file-upload">
+            <button type="button" class="btn btn-primary">Choose File</button>
+            <div>No file chosen</div>
+            <input type="file" id="signature"  class="form-control input-sm"
+              name="signature"/>
+          </div>
+        </div>
       </div>
-      <button class="btn btn-primary" type="submit">Upload signature</button>
+      <div class="col-md-5">
+        <button class="btn btn-upload btn-block" id="signatureUploader"
+          type="submit">Upload signature</button>
+      </div>
     </form>
-  }
+  </div>
 }

@@ -64,9 +64,12 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
   def delete(id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Person.photo(id).remove()
+        personService.find(id) map { person ⇒
+          Person.photo(id).remove()
+          personService.update(person.copy(photo = Photo.empty))
+        }
         val route = routes.People.details(id).url
-        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
+        jsonOk(Json.obj("link" -> routes.Assets.at("images/add-photo.png").url))
   }
 
   /**

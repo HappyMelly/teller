@@ -24,7 +24,7 @@
   @dynamic(handler, "person", "edit") {
     <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
       <div class="form-group">
-        <select name="language" class="form-control">
+        <select name="language" class="form-control input-sm">
           @for(language <- Languages.all.toList.filterNot(
             l => person.languages.exists(_.language == l._1)).sortBy(_._2)) {
               <option value="@language._1">@language._2</option>

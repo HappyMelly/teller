@@ -101,10 +101,11 @@
         <div class="alert-block">
           @alert(alertType: String) = {
             @flash.get(alertType).map { message =>
-              <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
-                  <button type="button" class="close" data-dismiss="alert">&times;</button>
-                  @message
-              </div>
+              <script type="text/javascript">
+                noty({text: '@message', layout: 'bottom', theme: 'relax',
+                  timeout: @if(alertType == "error") { false } else { 2000 },
+                  type: @if(alertType == "error") {'alert'} else {'@alertType'}});
+              </script>
             }
           }
           @alert("error")

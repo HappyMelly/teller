@@ -1,0 +1,50 @@
+@(memberId: Long,
+  experiments: List[Experiment])(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role._
+@import templates.Formatters._
+
+<div class="block">
+<h3>Experiments</h3>
+<p class="text-muted"><i>You can add an unlimited number of experiments you run. These
+experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
+website.</i></p>
+@dynamic(handler, "member", "editor") {
+  <p><a href="@routes.Experiments.add(memberId)">
+    + Add Experiment</a></p>
+}
+</div>
+
+<div class="experiments" id="experimentList">
+  @for(experiment <- experiments) {
+    <div class="block" data-id="@experiment.id.get">
+      <h3>@experiment.name</h3>
+      @experiment.url.map { url =>
+        <p class="font-sm">
+          <i class="fa fa-external-link"></i> <a href="@url" target="_blank">@url</a>
+        </p>
+      }
+      <p>@experiment.description.markdown</p>
+      @if(experiment.picture) {
+        <img class="picture" src="@routes.Experiments.picture(experiment.id.get)"/>
+      }
+      @dynamic(handler, "member", "editor") {
+        <div class="actions font-sm">
+          <a href="@routes.Experiments.update(memberId, experiment.id.get)">
+            Edit</a>
+          <a href="#" data-id="@experiment.id.get" class="remove"
+            data-href="@routes.Experiments.delete(memberId, experiment.id.get)">
+            Delete</a>
+          @if(experiment.picture) {
+            <a href="#" data-id="@experiment.id.get" class="deletePicture"
+              data-href="@routes.Experiments.deletePicture(memberId, experiment.id.get)">
+            Delete Picture</a>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

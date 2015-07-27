@@ -23,12 +23,14 @@
  */
 
 @import "settings";
-@import "profile-strength";
 @import "bootstrap";
 @import "sidemenu";
+@import "profile-strength";
 
 html, body {
   height: 100%;
+}
+body {
   min-width: 850px;
 }
 body.with-melly {
@@ -71,9 +73,15 @@ body.with-melly {
     padding-left: 50px;
   }
 }
-.btn.btn-cancel {
-  background-color: #fff;
-  color: @dark-sky-blue;
+.btn {
+  &.btn-cancel {
+    background-color: #fff;
+    color: @dark-sky-blue;
+  }
+  &.btn-upload {
+    background-color: @butterscotch;
+    color: #fff;
+  }
 }
 #wrapper {
   min-height: 100%;
@@ -101,6 +109,10 @@ body.with-melly {
   .fa {
     color: @icon-grey;
   }
+  img {
+    max-width: 100%;
+    max-height: auto;
+  }
 }
 h3 a.font-sm {
   font-weight: initial;
@@ -114,14 +126,22 @@ h3 a.font-sm {
   height: 162px;
   background-color: @light-grey;
   &.funder {
-    background-color: @pig-pink;
+    background-color: @light-pink;
   }
   &.supporter {
     background-color: @butterscotch;
   }
-}
-.content-block {
-  margin-left: 240px;
+  .content-block {
+    margin-left: 240px;
+    .membership-type {
+      font-family: "kg_skinny_latteregular";
+      text-transform: uppercase;
+      font-size: 20px;
+      padding-right: 10px;
+      margin-top: 10px;
+      float: right;
+    }
+  }
 }
 .left {
   float: left;
@@ -132,6 +152,18 @@ h3 a.font-sm {
 @media (min-width: 850px) {
   .center {
     float: left;
+    width: 68%;
+  }
+  .right {
+    float: left;
+    width: 68%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+@media (min-width: 990px) {
+  .center {
+    float: left;
     width: 50%;
   }
   .right {
@@ -139,6 +171,36 @@ h3 a.font-sm {
     width: 23%;
     padding-right: 15px;
     padding-left: 15px;
+  }
+}
+.file-upload {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid @light-grey;
+  border-radius: 3px;
+  &.focus{
+    box-shadow: 0 0 5px rgba(0,30,255,0.4);
+  }
+  button {
+    float: right;
+    width: 8em;            /* example */
+    height: 100%;
+  }
+  div {
+    padding-left: 1em;
+    padding-top: 8px;
+  }
+  input[type=file]{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    transform: scale(20);
+    letter-spacing: 10em;     /* IE 9 fix */
+    -ms-transform: scale(20); /* IE 9 fix */
+    opacity: 0;
+    cursor: pointer
   }
 }
 .licenses {
@@ -189,25 +251,74 @@ h3 a.font-sm {
 #badge-picture {
   margin-bottom: 15px;
 }
+.experiments {
+  border-top: 1px solid @light-grey;
+  .fa {
+    color: @warm-grey;
+  }
+  h3 {
+    font-weight: normal;
+  }
+  .actions {
+    padding-top: 15px;
+    a {
+      padding-right: 15px;
+    }
+  }
+}
 
 .photo-block {
   margin-top: -145px;
-}
-.photo {
-  border: 1px solid #bbbbbb;
-}
-.photo-selector {
-  .photo {
-    cursor: pointer;
-    &:hover {
-      border: 10px solid #5cb85c;
-    }
-    &.active {
-      border: 10px solid #5cb85c;
+  &.real:hover {
+    .photo-action {
+      display: block;
     }
   }
-  .photo-description {
-    margin: 20px 0px 10px 0px;
+
+  .photo-action {
+    background-color: #4a90e2;
+    display: none;
+    opacity: 0.9;
+    text-align: center;
+    width: 199px;
+    height: 54px;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    padding-top: 15px;
+    margin-top: -54px;
+    a {
+      color: #fff;
+      margin: 0 27px;
+      &:hover {
+        color: #fff;
+      }
+    }
+  }
+}
+
+.photo-selector {
+  .option {
+    display: table;
+    cursor: pointer;
+    border: 2px solid @light-grey;
+    margin-bottom: 10px;
+    width: 100%;
+    &:hover {
+      border: 2px solid @dark-sky-blue;
+    }
+    &.active {
+      border: 2px solid @dark-sky-blue;
+    }
+    img {
+      float: left;
+      width: 156px;
+    }
+    .description {
+      padding: 0px 15px 0px 171px;
+      .btn-upload {
+        margin-top: 12px;
+      }
+    }
   }
 }
 

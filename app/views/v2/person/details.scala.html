@@ -19,7 +19,13 @@
     @if(user.member.nonEmpty) { @if(user.member.get.funder) { funder } else { supporter }}">
     <div class="container">
       <div class="content-block">
-        <h2>@person.fullName</h2>
+        <h2>@person.fullName
+        @user.member.map { member =>
+          <div class="membership-type">
+            @if(member.funder) { Funder } else { Supporter }
+          </div>
+        }
+        </h2>
         @views.html.v2.element.profiles(person.socialProfile, person.member)
         <div class="actions pull-right">
           @dynamic(handler, "person", "delete") {
@@ -74,10 +80,10 @@
           <ul class="nav nav-stacked" role="tablist" id="sidemenu">
             <li class="subgroup">Personal
               <ul class="nav">
-                <li class="active"><a href="#personal-details" role="tab" data-toggle="tab">
+                <li class="active"><a href="#personal-details" role="tab">
               Details</a></li>
                 <li><a data-href="@routes.People.renderTabs(person.id.get, "contributions")"
-              href="#contributions" role="tab" data-toggle="tab">
+              href="#contributions" role="tab">
               Contributions</a></li>
               </ul>
             </li>
@@ -85,11 +91,12 @@
               <li class="subgroup">Facilitation
                 <ul class="nav">
                   <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
-                    href="#facilitation" role="tab" data-toggle="tab">
+                    href="#facilitation" role="tab">
                     Settings</a></li>
-                  <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
-                    href="#facilitation" role="tab" data-toggle="tab">
+<!--                   <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
+                    href="#facilitation" role="tab">
                     Experiments</a></li>
+ -->
                 </ul>
               </li>
             }
@@ -97,27 +104,39 @@
               <li class="subgroup">Membership
                 <ul class="nav">
                   <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"
-                    href="#membership" role="tab" data-toggle="tab">
+                    href="#membership" role="tab">
                     Membership</a></li>
                   @if(!member.funder) {
                     <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-                      href="#experiments" role="tab" data-toggle="tab">
+                      href="#experiments" role="tab">
                       Experiments</a></li>
                   }
                 </ul>
               </li>
             }
           </ul>
+          @if(!showFacilitationTab) {
+            @restrict(handler, List(as(Editor.toString))) {
+              <a href="@routes.Licenses.add(person.id.getOrElse(0))"
+                class="btn btn-upload btn-block">
+                Make a Facilitator</a>
+            }
+          }
+          <br/>
+          <br/>
+          <div>
+            @views.html.v2.person.blocks.administration(user, person, showFacilitationTab,
+             accountRole, otherUser)
+          </div>
         </div>
-        @views.html.v2.person.blocks.administration(user, person, showFacilitationTab,
-           accountRole, otherUser)
       </div>
 
       <div class="center tab-content">
         @if(!person.active) {
+          <br/>
+          <br/>
           <div class="alert alert-warning">
-            <i class="glyphicon glyphicon-warning-sign"></i> This person is <strong>
-            deactivated</strong></div>
+            This person is <strong>deactivated</strong></div>
         }
         <div class="tab-pane active" id="personal-details">
           @views.html.v2.person.tabs.details(person, organisations, otherOrganisations)

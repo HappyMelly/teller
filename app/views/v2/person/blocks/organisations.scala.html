@@ -45,7 +45,7 @@
         <input type="hidden" name="page" value="person">
         <input type="hidden" name="personId" value="@person.id.get">
         <div class="form-group">
-            <select name="organisationId" class="form-control">
+            <select name="organisationId" class="form-control input-sm">
             @for(organisation <- otherOrganisations) {
                 <option value="@organisation.id">@organisation.name</option>
             }

@@ -30,8 +30,15 @@
     margin-top: 11px;
   }
   li {
+    &:hover {
+      background-color: #fff;
+    }
     a {
       color: @grey3;
+      &:hover, &:focus {
+        background-color: #fff;
+        color: @dark-sky-blue;
+      }
     }
     &.active a {
       color: @dark-sky-blue;

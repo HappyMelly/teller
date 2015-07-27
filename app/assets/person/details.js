@@ -23,7 +23,7 @@
  */
 
 function switchActivePhoto(object) {
-    $('#choosePhotoContent').find('img').removeClass('active');
+    $('#choosePhotoContent').find('.option').removeClass('active');
     $(object).addClass('active');
 }
 
@@ -40,13 +40,16 @@ function updateReason() {
 function updatePhoto() {
     var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url
     var object = $('#choosePhotoContent').find('.active');
-    var type = $(object).parent('div').attr('id');
+    var type = $(object).attr('id');
     var name = "";
 
-    var src = $(object).attr('src');
+    var src = $(object).find('img').attr('src');
     $.post(url, { type: type }, null, "json").done(function(data) {
         $('#photoDialog').modal('hide');
-        $('#photo').attr('src', src);
+        $('#stub').hide();
+        $('#real').find('img').attr('src', src);
+        $('#real').show();
+        $('.photo-block').addClass('real');
         reloadCompletionWidget();
     }).fail(function(jqXHR, status, error) {
     });
@@ -55,17 +58,17 @@ function updatePhoto() {
 function showSelectPhotoForm() {
     $.get(jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url, function(data) {
         $('#choosePhotoContent').html(data);
-        $('#choosePhotoContent img').on('click', function(e) {
+        $('#choosePhotoContent .option').on('click', function(e) {
             switchActivePhoto($(this));
         });
         $('#saveLink').on('click', updatePhoto);
         setupCustomPhotoActions();
+        initializeFileUploadField();
     });
 }
 
 function setupCustomPhotoActions() {
     var btnPhotoUpload = '#btnPhotoUpload';
-    var btnPhotoDelete = '#btnPhotoDelete';
     $('#photoUpload').fileupload({
         dataType: 'json',
         disableImageResize: false,
@@ -76,11 +79,11 @@ function setupCustomPhotoActions() {
         replaceFileInput: false,
         done: function (e, data) {
             $('#customPhoto').attr('src', data.result.link);
-            $(btnPhotoUpload).text('Upload').hide();
-            switchActivePhoto($('#customPhoto'));
+            $(btnPhotoUpload).text('Upload photo').prop('disabled', true);
+            switchActivePhoto($('#customPhoto').parent());
         }
     }).bind('fileuploadadd', function (e, data) {
-        $(btnPhotoUpload).show();
+        $(btnPhotoUpload).prop('disabled', false);
         $('#customPhoto').attr('src', URL.createObjectURL(data.files[0]));
         $('#customPhoto').addClass('photo')
         $(btnPhotoUpload).off('click');
@@ -89,20 +92,7 @@ function setupCustomPhotoActions() {
             data.submit();
         });
     });
-    $(btnPhotoDelete).on('click', function(e) {
-        $.ajax({
-            type: "DELETE",
-            url: $(this).data('href'),
-            dataType: "json"
-        }).done(function(data) {
-            $('#customPhoto').
-                attr('src', data.link).
-                removeClass('photo').
-                removeClass('active');
-        });
-        return false;
-    });
-    $(btnPhotoUpload).hide();
+    $(btnPhotoUpload).prop('disabled', true);
 }
 
 /**
@@ -120,25 +110,34 @@ function showTab(elem) {
         });
         loadedTabs[loadedTabs.length] = target;
     }
+    $('.sidemenu').find('li').removeClass('active');
     $(elem).tab('show');
     return false;
 }
 
-function initializeActions() {
-    $('#experimentList').on('click', 'button.remove', function(e) {
-        var experimentId = $(this).data('id');
-        $.ajax({
-            type: "DELETE",
-            url: $(this).data('href'),
-            dataType: "json"
-        }).done(function(data) {
-            $('div[data-id="' + experimentId + '"]').remove();
-        }).fail(function(jqXHR, status, error) {
-            //empty
-        });
-        return false;
+/**
+ * Deletes experiment
+ * @param {int} experimentId
+ * @param {string} url
+ */
+function deleteExperiment(experimentId, url) {
+    $.ajax({
+        type: "DELETE",
+        url:url,
+        dataType: "json"
+    }).done(function(data) {
+        $('div[data-id="' + experimentId + '"]').remove();
+    }).fail(function(jqXHR, status, error) {
+        //empty
     });
-    $('#experimentList').on('click', 'button.deletePicture', function(e) {
+    return false;
+}
+
+function initializeActions() {
+    $('#experimentList').on('click', 'a.remove', function(e) {
+        return deleteExperiment($(this).data('id'), $(this).data('href'));
+    });
+    $('#experimentList').on('click', 'a.deletePicture', function(e) {
         var experimentId = $(this).data('id');
         var that = this;
         $.ajax({
@@ -154,6 +153,17 @@ function initializeActions() {
         return false;
     });
     $('#saveReason').on('click', updateReason);
+    $('#formSwither').on('click', function(e) {
+        $('.signature').hide();
+        $('.no-signature').show();
+    });
+    $('#signature').on('change', function(e) {
+        if ($(this).val().length > 0) {
+            $('#signatureUploader').prop('disabled', false);
+        }
+    });
+    $('#signatureUploader').prop('disabled', true);
+    initializeFileUploadField();
 }
 
 var loadedTabs = [];
@@ -165,17 +175,6 @@ $(document).ready( function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
 
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "sPaginationType": "bootstrap",
-            "sDom": "<'row'<'span4'l><'span4'f>r>t<'row'<'span4'i><'span4'p>>",
-            "order": [[ 0, "asc" ]],
-            "bFilter": false,
-            "bInfo": false,
-            "bLengthChange": false,
-            "bPaginate": false
-        });
-    });
     $('.payments').dataTable( {
         "sPaginationType": "bootstrap",
         "order": [[ 2, "desc" ]],
@@ -190,6 +189,7 @@ $(document).ready( function() {
     });
 
     $('#sidemenu a').click(function (e) {
+        e.preventDefault();
         showTab($(this));
     });
     var hash = window.location.hash.substring(1);
@@ -201,9 +201,22 @@ $(document).ready( function() {
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 
-    $('#choosePhotoLink').on('click', function(e) {
+    $('.choosePhotoLink').on('click', function(e) {
         showSelectPhotoForm();
     });
 
+    $('#btnPhotoDelete').on('click', function(e) {
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('.photo-block').removeClass('real');
+            $('#real').hide();
+            $('#stub').show();
+            reloadCompletionWidget();
+        });
+        return false;
+    });
 });
 

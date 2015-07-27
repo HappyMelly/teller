@@ -10,15 +10,22 @@
       aria-valuemin="0" aria-valuemax="100" style="width: @(strength.progress)%;">
     </div>
   </div>
-  <div class="steps">
-    <p><strong>Here is how you can make it stonger:</strong></p>
+  @if(strength.progress == 100) {
+    <div class="steps">
+      <p><strong>You are awesome ;)</strong></p>
+    </div>
+  } else {
     @if(steps) {
-      @views.html.v2.profile.steps(personId, strength.incompleteSteps)
+      <div class="steps">
+        @views.html.v2.profile.steps(personId, strength.incompleteSteps)
+      </div>
+      <div class="inspiration"><a href="/person/25">Get inspired by Sergey's profile</a></div>
     } else {
-      <a href="@routes.People.details(personId)" class="btn btn-sm btn-default"
-      onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
-      >Improve your profile</a>
+      <div class="steps">
+        <a href="@routes.People.details(personId)" class="btn btn-primary btn-block"
+          onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
+          >Improve your profile</a>
+      </div>
     }
-  </div>
-  <div class="inspiration"><a href="/person/25">Get inspired by Sergey's profile</a></div>
+  }
 </div>

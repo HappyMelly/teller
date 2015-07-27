@@ -25,12 +25,7 @@
       @dashboard.blocks.cancellation(cancellations)
     }
   </div>
-  <div class="col-md-3">
-    @user.member.map { m =>
-      @if(m.active) {
-        @element.membershipPanel(m)
-      }
-    }
+  <div class="col-md-3" style="padding-left: 50px; padding-top: 30px;">
     <div class="panel panel-success" id="completionWidget">
     </div>
   </div>
