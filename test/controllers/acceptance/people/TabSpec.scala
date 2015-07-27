@@ -107,10 +107,8 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects 1L returning Some(person)
     controller.identity_=(FakeUserIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
-    val strings = Seq("One Year Membership Fee", "EUR 100", ">remote1<",
-      "https://dashboard.stripe.com/live/payments/remote1",
-      "One Year Membership Fee 2", "EUR 200", ">remote2<",
-      "https://dashboard.stripe.com/live/payments/remote2")
+    val strings = Seq("One Year Membership Fee", "<td>100.00</td>",
+      "One Year Membership Fee 2", "<td>200.00</td>")
 
     strings.foreach(contentAsString(res) must contain(_))
     ok
@@ -121,11 +119,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     (personService.find(_: Long)) expects 1L returning Some(person)
     controller.identity_=(FakeUserIdentity.editor)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
-    val strings = Seq(">remote1<", ">remote2<",
-      "https://dashboard.stripe.com/live/payments/remote1",
-      "https://dashboard.stripe.com/live/payments/remote2")
 
-    strings.foreach(contentAsString(res) must not contain _)
     contentAsString(res) must contain("One Year Membership Fee")
     contentAsString(res) must contain("One Year Membership Fee 2")
   }
@@ -136,7 +130,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     controller.identity_=(FakeUserIdentity.editor)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest("/1"))
 
-    contentAsString(res) must contain("Stop automatic renewal")
+    contentAsString(res) must contain("stop automatic renewal")
     contentAsString(res) must contain("person/1/cancel")
     contentAsString(res) must not contain "Renew subscription"
     contentAsString(res) must not contain "Automatic renewal is stopped"
@@ -151,7 +145,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     controller.identity_=(FakeUserIdentity.editor)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
-    contentAsString(res) must not contain "Stop automatic renewal"
+    contentAsString(res) must not contain "stop automatic renewal"
     contentAsString(res) must not contain "person/1/renew"
     contentAsString(res) must not contain "Renew subscription"
     contentAsString(res) must contain("Automatic renewal is stopped")
@@ -166,7 +160,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     controller.identity_=(FakeUserIdentity.viewer)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
-    contentAsString(res) must not contain "Stop automatic renewal"
+    contentAsString(res) must not contain "stop automatic renewal"
     contentAsString(res) must not contain "person/1/renew"
     contentAsString(res) must not contain "Renew subscription"
     contentAsString(res) must contain("Automatic renewal is stopped")
@@ -180,7 +174,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByPerson _) expects 2L returning List()
     val res = controller.renderTabs(2L, "membership").apply(fakeGetRequest())
 
-    contentAsString(res) must not contain "Stop automatic renewal"
+    contentAsString(res) must not contain "stop automatic renewal"
     contentAsString(res) must not contain "person/2/renew"
     contentAsString(res) must not contain "Renew subscription"
     contentAsString(res) must not contain "Automatic renewal is stopped"

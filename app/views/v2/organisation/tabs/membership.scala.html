@@ -41,25 +41,21 @@
         Your membership will be automatically renewed at the end of a renewal
         period. The date of the next renewal is <b>@m.until</b>.
       </p>
-      <p>
-        @dynamicOr(handler, "organisation", "edit") {
+      @dynamic(handler, "organisation", "edit") {
+        <p>
           You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
           will be valid till <b>@m.until</b>.
-        }{
-          You can stop automatic renewal any time. In this case your membership
-          will be valid till <b>@m.until</b>.
-
-        }
-      </p>
-      <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
-        @v2.html.postDialog("cancelDialog",
-          "Stop automatic renewal",
-          CSRF(routes.Organisations.cancel(org.id.getOrElse(0))),
-          "Stop") {
-          <p>If you stop automatic renewal you won't be able to start it again.</p>
-          <p>Your membership will be valid till <b>@m.until</b></p>
-        }
-      </div>
+        </p>
+        <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
+          @v2.html.postDialog("cancelDialog",
+            "Stop automatic renewal",
+            CSRF(routes.Organisations.cancel(org.id.getOrElse(0))),
+            "Stop") {
+            <p>If you stop automatic renewal you won't be able to start it again.</p>
+            <p>Your membership will be valid till <b>@m.until</b></p>
+          }
+        </div>
+      }
     } else {
       <div class="alert alert-warning">
         <p>Automatic renewal is stopped.</p>

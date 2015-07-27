@@ -51,9 +51,6 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     contain a funder badge if the org is a funder                           $e5
     contain a list of payments if the org is a member                       $e6
 
-  Editor should
-    not see links to remote payments                                        $e7
-
   When subscription exists, 'Stop automatic...' button should be visible,
   'No automatic renewal' badge should not be visible to
     an Editor                                                               $e8
@@ -171,7 +168,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("funder.jpg")
+    contentAsString(result) must contain("Funder")
     contentAsString(result) must contain("/member/1/edit")
   }
 
@@ -192,41 +189,9 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
     status(result) must equalTo(OK)
     contentAsString(result) must contain("One Year Membership Fee")
-    contentAsString(result) must contain("EUR 100")
-    contentAsString(result) must contain(">remote1<")
-    contentAsString(result) must contain("https://dashboard.stripe.com/live/payments/remote1")
+    contentAsString(result) must contain("<td>100.00</td>")
     contentAsString(result) must contain("One Year Membership Fee 2")
-    contentAsString(result) must contain("EUR 200")
-    contentAsString(result) must contain(">remote2<")
-    contentAsString(result) must contain("https://dashboard.stripe.com/live/payments/remote2")
-  }
-
-  def e7 = new DefaultMockContext {
-    // we insert a person object here to prevent crashing on account retrieval
-    // when @person.deletable is called
-    OrganisationService.get.insert(OrgView(org, profile))
-    val member = MemberHelper.make(Some(1L), id, person = false, funder = true)
-    org.member_=(member)
-    org.people_=(List())
-
-    val payments = List(
-      Record("remote1", 1L, 1L, person = false, "One Year Membership Fee", Money.parse("EUR 100")),
-      Record("remote2", 1L, 1L, person = false, "One Year Membership Fee 2", Money.parse("EUR 200")))
-    (paymentService.findByOrganisation _) expects id returning payments
-    val controller = fakedController()
-
-    val identity = FakeUserIdentity.editor
-    val result = controller.details(org.id.get).apply(fakeGetRequest())
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("One Year Membership Fee")
-    contentAsString(result) must contain("EUR 100")
-    contentAsString(result) must not contain ">remote1<"
-    contentAsString(result) must not contain "https://dashboard.stripe.com/live/payments/remote1"
-    contentAsString(result) must contain("One Year Membership Fee 2")
-    contentAsString(result) must contain("EUR 200")
-    contentAsString(result) must not contain ">remote2<"
-    contentAsString(result) must not contain "https://dashboard.stripe.com/live/payments/remote2"
+    contentAsString(result) must contain("<td>200.00</td>")
   }
 
   def e8 = new ExtendedMemberMockContext {
