@@ -22,29 +22,25 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package services
+package models.database
 
-import play.api.mvc.RequestHeader
-import securesocial.core.services.RoutesService
+import models.Endorsement
+import play.api.db.slick.Config.driver.simple._
 
 /**
- * I had to implement a custom routes service as the default one
- *  causes runtime error during tests and on a production environment.
- *  The problem is in securesocial.controllers.routes.Assets which it cannot
- *  find
+ * Connects Endorsement object with its database representation
  */
-class TellerRoutesService extends RoutesService.Default {
+private[models] class Endorsements(tag: Tag)
+    extends Table[Endorsement](tag, "ENDORSEMENT") {
 
-  // override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
-  //   absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider))
-  // }
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def personId = column[Long]("PERSON_ID")
+  def content = column[String]("CONTENT")
+  def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
+  def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
 
-  // override def loginPageUrl(implicit req: RequestHeader): String = {
-  //   absoluteUrl(_root_.controllers.routes.LoginPage.login())
-  // }
+  def * = (id.?, personId, content, name,
+    company) <> (Endorsement.tupled, Endorsement.unapply)
 
-  override protected def valueFor(key: String, default: String) = {
-    val value = conf.getString(key).getOrElse(default)
-    _root_.controllers.routes.Assets.at(value)
-  }
+  def forUpdate = (content, name, company)
 }

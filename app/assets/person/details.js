@@ -133,6 +133,105 @@ function deleteExperiment(experimentId, url) {
     return false;
 }
 
+/**
+ * Updates the view after the experience was added
+ * @param experienceId {int} Experience id
+ * @param personId {int} Person id
+ * @param experienceType {string} experience type
+ * @param experience {string} experience
+ */
+function addExperience(experienceId, personId, experienceType, experience) {
+    $('#experiences').append(
+        $('<tr>')
+            .attr('data-id', experienceId)
+            .attr('data-personid', personId)
+            .append($('<td>').append(experienceType))
+            .append($('<td>')
+                .append($('<a>')
+                    .attr('href', experience)
+                    .append(experience)))
+            .append($('<td>')
+                .append($('<a>')
+                    .append('Delete')
+                    .addClass('remove font-sm')
+                    .attr('href', '#')
+                    .attr('data-id', experienceId)
+                    .attr('data-href', jsRoutes.controllers.Experiences.remove(personId, experienceId).url)))
+    );
+}
+
+/**
+ * Updates the view after the experiece was deleted
+ * @param experienceId {int} Experience id
+ */
+function deleteExperience(experienceId) {
+    $('tr[data-id="' + experienceId + '"]').remove();
+}
+
+/**
+ * Updates the view after the endorsement was deleted
+ * @param experienceId {int} Experience id
+ */
+function deleteEndorsement(endorsementId) {
+    $('.endorsement').find('div[data-id="' + endorsementId + '"]').remove();
+}
+
+function initializeExperienceTabActions() {
+    $('#addExperienceFrom').submit(function(e) {
+        $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
+            addExperience(data.id, data.personId, data.linkType, data.link);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                noty({text: error.message, layout: 'bottom', theme: 'relax', type: 'error'});
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                noty({text: msg, layout: 'bottom', theme: 'relax', type: 'error'});
+            }
+        });
+        // Prevent the form from submitting with the default action
+        return false;
+    });
+    $('#experiences').on('click', 'a.remove', function(e) {
+        var experienceId = $(this).data('id');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            deleteExperience(experienceId, name);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                noty({text: error.message, layout: 'bottom', theme: 'relax', type: 'error'});
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                noty({text: msg, layout: 'bottom', theme: 'relax', type: 'error'});
+            }
+        });
+        return false;
+    });
+    $('.endorsement').on('click', 'a.remove', function(e) {
+        var endorsementId = $(this).data('id');
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            deleteEndorsement(endorsementId);
+        }).fail(function(jqXHR, status, error) {
+            if (status == "error") {
+                var error = JSON.parse(jqXHR.responseText);
+                noty({text: error.message, layout: 'bottom', theme: 'relax', type: 'error'});
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                noty({text: msg, layout: 'bottom', theme: 'relax', type: 'error'});
+            }
+        });
+        return false;
+    });
+}
+
 function initializeActions() {
     $('#experimentList').on('click', 'a.remove', function(e) {
         return deleteExperiment($(this).data('id'), $(this).data('href'));
@@ -164,6 +263,7 @@ function initializeActions() {
     });
     $('#signatureUploader').prop('disabled', true);
     initializeFileUploadField();
+    initializeExperienceTabActions();
 }
 
 var loadedTabs = [];
@@ -197,6 +297,7 @@ $(document).ready( function() {
         hash = 'personal-details';
     }
     showTab($('#sidemenu a[href="#' + hash + '"]'));
+    initializeActions();
 
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);

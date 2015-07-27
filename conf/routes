@@ -72,6 +72,12 @@ GET           /certificate/new/:eventId/:personId                            @co
 POST          /contribution/new                                              @controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       @controllers.Contributions.delete(id: Long, page: String)
 
+GET          /person/:personId/endorsement                                   @controllers.Endorsements.add(personId: Long)
+GET          /person/:personId/endorsement/:id                               @controllers.Endorsements.edit(personId: Long, id: Long)
+POST         /person/:personId/endorsement                                   @controllers.Endorsements.create(personId: Long)
+POST         /person/:personId/endorsement/:id                               @controllers.Endorsements.update(personId: Long, id: Long)
+DELETE       /person/:personId/endorsement/:id                               @controllers.Endorsements.remove(personId: Long, id: Long)
+
 POST          /evaluation/                                                   @controllers.Evaluations.create
 GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 GET           /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long, ref: Option[String])
@@ -83,6 +89,9 @@ POST          /evaluation/:id                                                @co
 GET           /evaluation/:id/delete                                         @controllers.Evaluations.delete(id: Long, ref: Option[String])
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                            @controllers.Evaluations.confirm(confirmationId: String)
+
+POST         /person/:personId/experience                                    @controllers.Experiences.create(personId: Long)
+DELETE       /person/:personId/experience/:id                                @controllers.Experiences.remove(personId: Long, id: Long)
 
 GET           /report/create/:brandId/event/:eventId/status/:status          @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 
@@ -284,6 +293,8 @@ GET           /api/v2/brands                                                 con
 GET           /api/v2/brand/:code                                            controllers.apiv2.BrandsApi.brand(code: String)
 GET           /api/v2/brand/:code/events                                     controllers.apiv2.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
 GET           /api/v2/brand/:code/facilitators                               controllers.apiv2.FacilitatorsApi.facilitators(code: String)
+GET           /api/v2/facilitator/:identifier                                     controllers.apiv2.FacilitatorsApi.facilitator(identifier: String)
+
 GET           /api/v2/brand/:code/types                                      controllers.apiv2.EventTypesApi.types(code: String)
 
 POST          /api/v2/evaluation                                             controllers.apiv2.EvaluationsApi.create

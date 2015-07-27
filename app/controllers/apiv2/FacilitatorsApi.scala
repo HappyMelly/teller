@@ -23,7 +23,8 @@
  */
 package controllers.apiv2
 
-import models.{ Brand, PeopleCollection, Person }
+import java.net.URLDecoder
+import models.{ Brand, PeopleCollection, Person, Endorsement, Experience }
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Languages
@@ -65,6 +66,77 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
             map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.rating))
           jsonOk(Json.toJson(data))
         } getOrElse jsonNotFound("Unknown brand")
+  }
+
+  import PeopleApi.addressWrites
+  import OrganisationsApi.organisationWrites
+  import PeopleApi.licenseSummaryWrites
+
+  implicit val endorsementWrites = new Writes[Endorsement] {
+    def writes(endorsement: Endorsement) = {
+      Json.obj(
+        "content" -> endorsement.content,
+        "name" -> endorsement.name,
+        "company" -> endorsement.company)
+    }
+  }
+
+  implicit val experienceWrites = new Writes[Experience] {
+    def writes(experience: Experience) = {
+      Json.obj(
+        "type" -> experience.linkType,
+        "link" -> experience.link)
+    }
+  }
+
+  case class FacilitatorView(person: Person,
+    endorsements: List[Endorsement],
+    experiences: List[Experience])
+
+  implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
+    def writes(view: FacilitatorView) = {
+      Json.obj(
+        "id" -> view.person.id.get,
+        "unique_name" -> view.person.uniqueName,
+        "first_name" -> view.person.firstName,
+        "last_name" -> view.person.lastName,
+        "email_address" -> view.person.socialProfile.email,
+        "image" -> view.person.photo.url,
+        "address" -> view.person.address,
+        "bio" -> view.person.bio,
+        "interests" -> view.person.interests,
+        "twitter_handle" -> view.person.socialProfile.twitterHandle,
+        "facebook_url" -> view.person.socialProfile.facebookUrl,
+        "linkedin_url" -> view.person.socialProfile.linkedInUrl,
+        "google_plus_url" -> view.person.socialProfile.googlePlusUrl,
+        "website" -> view.person.webSite,
+        "blog" -> view.person.blog,
+        "active" -> view.person.active,
+        "organizations" -> view.person.organisations,
+        "licenses" -> view.person.licenses,
+        "endorsements" -> view.endorsements,
+        "experiences" -> view.experiences)
+    }
+  }
+
+  /**
+   * Returns the facilitator's data
+   * @param identifier Person identifier
+   */
+  def facilitator(identifier: String) = TokenSecuredAction(readWrite = false) {
+    implicit request ⇒
+      implicit token ⇒
+        val person = try {
+          val id = identifier.toLong
+          personService.find(id)
+        } catch {
+          case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
+        }
+        person map { person =>
+          val endorsements = personService.endorsements(person.id.get)
+          val experiences = personService.experiences(person.id.get)
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, experiences)))
+        } getOrElse NotFound
   }
 }
 

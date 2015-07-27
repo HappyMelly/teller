@@ -65,6 +65,41 @@ class PersonService extends Services {
   }
 
   /**
+   * Deletes experience from database
+   *
+   * Person identifier is for security reasons. If a user passes security
+   * check for the person, the user cannot delete experiences which aren't belonged to
+   * another person.
+   *
+   * @param personId Person identifier
+   * @param id Experience identifier
+   */
+  def deleteExperience(personId: Long, id: Long): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[Experiences].
+        filter(_.id === id).
+        filter(_.personId === personId).delete
+  }
+
+
+  /**
+   * Deletes endorsement from database
+   *
+   * Person identifier is for security reasons. If a user passes security
+   * check for the person, the user cannot delete endorsements which aren't
+   * belonged to another person.
+   *
+   * @param personId Person identifier
+   * @param id Endorsement identifier
+   */
+  def deleteEndorsement(personId: Long, id: Long): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[Endorsements].
+        filter(_.id === id).
+        filter(_.personId === personId).delete
+  }
+
+  /**
    * Deletes a relationship between this person and the given organisation
    *
    * @TEST
@@ -75,6 +110,37 @@ class PersonService extends Services {
       TableQuery[OrganisationMemberships].
         filter(_.personId === personId).
         filter(_.organisationId === organisationId).delete
+  }
+
+  /**
+   * Return list of endorsements for the given person
+   *
+   * @param personId Person identifier
+   */
+  def endorsements(personId: Long): List[Endorsement] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Endorsements].filter(_.personId === personId).list
+  }
+
+  /**
+   * Return list of experiences for the given person
+   *
+   * @param personId Person identifier
+   */
+  def experiences(personId: Long): List[Experience] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Experiences].filter(_.personId === personId).list
+  }
+
+
+  /**
+   * Returns endorsement if it exists
+   *
+   * @param endorsementId Endorsement identification
+   */
+  def findEndorsement(endorsementId: Long): Option[Endorsement] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Endorsements].filter(_.id === endorsementId).firstOption
   }
 
   /**
@@ -102,6 +168,31 @@ class PersonService extends Services {
           println(e)
           throw e
       }
+  }
+
+  /**
+   * Inserts the given endorsement to database
+   *
+   * @param endorsement Brand endorsement
+   */
+  def insertEndorsement(endorsement: Endorsement): Endorsement =
+    DB.withSession {
+      implicit session ⇒
+        val endorsements = TableQuery[Endorsements]
+        val id = (endorsements returning endorsements.map(_.id)) += endorsement
+        endorsement.copy(id = Some(id))
+    }
+
+  /**
+   * Inserts the given experience to database
+   *
+   * @param experience Brand experience
+   */
+  def insertExperience(experience: Experience): Experience = DB.withSession {
+    implicit session ⇒
+      val experiences = TableQuery[Experiences]
+      val id = (experiences returning experiences.map(_.id)) += experience
+      experience.copy(id = Some(id))
   }
 
   /**
@@ -194,6 +285,19 @@ class PersonService extends Services {
     updateProfileStrength(person)
 
     person
+  }
+
+  /**
+   * Updates endorsement in database
+   *
+   * @param endorsement Endorsement to update
+   */
+  def updateEndorsement(endorsement: Endorsement): Unit = DB.withSession {
+    implicit session ⇒
+      TableQuery[Endorsements].
+        filter(_.id === endorsement.id.get).
+        filter(_.personId === endorsement.personId).
+        update(endorsement)
   }
 
   /**
