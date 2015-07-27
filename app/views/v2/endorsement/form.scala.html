@@ -1,0 +1,47 @@
+@(user: ActiveUser,
+  brandId: Long,
+  form: Form[EndorsementFormData],
+  endorsementId: Option[Long] = None)(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Endorsement", "person", user, withMelly = true) {
+  <div class="form">
+    @v2.html.block("") { <h1>Add Endorsement</h1> }
+     @html.form(action = endorsementId.map { id =>
+      CSRF(routes.Endorsements.update(brandId, id))
+    }.getOrElse {
+      CSRF(routes.Endorsements.create(brandId))
+    }) {
+      @v2.html.block("") {
+        @v2.html.textarea(form("content"), '_label -> "Endorsement")
+        @v2.html.text(form("name"), '_label -> "Name")
+        @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
+      }
+      @if(form.hasErrors) {
+        @v2.html.block("") {
+          <div class="errors">
+            @for(error <- form.errors) {
+              @play.api.i18n.Messages(error.message)<br/>
+            }
+          </div>
+        }
+      }
+      @v2.html.block("") {
+        <div class="row">
+          <div class="col-md-5">
+            <button class="btn btn-primary btn-block btn-lg" type="submit">
+              Save</button>
+          </div>
+          <div class="col-md-3 cancel">
+            <a href="javascript:history.back()">Cancel changes</a></div>
+        </div>
+      }
+    }
+
+  </div>
+}

@@ -152,6 +152,7 @@ error.participant.notExist = The person is not a participant of the event
 error.participant.exist = This person already participates in this event
 error.socialProfile.exist = This social profile is already in use
 
+error.person.notFound = Person is not found
 error.person.member = This person is already a member
 error.person.nonDeletable = You cannot delete this person because there are organization memberships, content licenses, booking entries, or an active account
 error.person.notExist = This person does not exist

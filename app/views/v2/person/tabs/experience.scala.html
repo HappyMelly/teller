@@ -1,0 +1,82 @@
+@(person: Person,
+  endorsements: List[Endorsement],
+  experiences: List[Experience])(implicit request: Request[Any],
+  handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import templates.Formatters._
+
+
+<div class="experience">
+  <div class="block">
+    <span class="statistics"><span class="number">7</span> years of experience</span>
+    <span class="statistics"><span class="number">87</span> events</span>
+  </div>
+  <div class="block">
+    <h3>Studies, Posts and Video Materials</h3>
+    <p>Promote yourself on <a href="http://management30.com/facilitator"
+      target="_blank">management30.com</a> by adding links to your case studies, articles or video materials.</p>
+    @if(experiences.length > 0) {
+      <table id="experiences" class="table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>URL</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(experience <- experiences) {
+            <tr data-id="@experience.id.get" data-personid="@experience.personId">
+              <td>@experience.linkType.capitalize</td>
+              <td><a href="@experience.link" target="_blank">@experience.link</td>
+              <td>
+                @dynamic(handler, "person", "edit") {
+                  <a data-id="@experience.id.get" href="#" class="remove font-sm"
+                    data-href="@routes.Experiences.remove(person.id.get, experience.id.get)">Delete</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @dynamic(handler, "person", "edit") {
+      <form id="addExperienceFrom" class="form-inline" method="POST"
+        action="@CSRF(routes.Experiences.create(person.id.get))">
+        <select name="type" id="linkType" class="form-control input-sm">
+          <option value="article">Article</option>
+          <option value="casestudy">Case Study</option>
+          <option value="video">Video</option>
+        </select>
+        <input name="url" class="form-control input-sm" style="width: 300px">
+        <button class="btn btn-primary">Add Link</button>
+      </form>
+    }
+  </div>
+  <div class="block">
+    <h3>Endorsements</h3>
+    <p>If you collected endorsements about your work, add a few, so other people will know how good you are. <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a>
+    </p>
+    <div class="endorsement">
+      @for(endorsement <- endorsements) {
+        <div class="block" data-id="@endorsement.id.get">
+          <span class="text-muted">&mdash; @(endorsement.name)@endorsement.company.map { company =>, @company }
+          </span>
+          <p><i>@endorsement.content</i></p>
+          @dynamic(handler, "person", "edit") {
+            <div class="actions font-sm">
+              <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
+                Edit</a>
+              <a href="#" data-id="@endorsement.id.get" class="remove"
+                data-href="@routes.Endorsements.remove(person.id.get, endorsement.id.get)">
+                Delete</a>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

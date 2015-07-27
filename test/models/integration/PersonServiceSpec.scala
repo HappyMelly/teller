@@ -26,7 +26,7 @@ package models.integration
 
 import helpers.{ MemberHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.{ UserAccount, ProfileType, Member }
+import models.{ UserAccount, ProfileType, Member, Experience, Endorsement }
 import models.payment.Record
 import models.service.{ SocialProfileService, PaymentRecordService, PersonService, UserAccountService }
 import org.joda.money.CurrencyUnit._
@@ -41,6 +41,13 @@ class PersonServiceSpec extends PlayAppSpec {
   override def setupDb(): Unit = {
     addPeople()
     add()
+
+    val links = List(Experience(None, 1L, "video", "http://test.com"),
+      Experience(None, 1L, "blog", "http://test1.com"))
+    links.foreach(PersonService.get.insertExperience(_))
+    val endorsements = List(Endorsement(None, 1L, "", "nikolai"),
+      Endorsement(None, 1L, "", "viktor"))
+    endorsements.foreach(PersonService.get.insertEndorsement(_))
   }
 
   val service = PersonService.get
@@ -64,6 +71,47 @@ class PersonServiceSpec extends PlayAppSpec {
       people.exists(_.id == Some(4L)) must_== true
       people.exists(_.id == Some(5L)) must_== true
       people.exists(_.id == Some(6L)) must_== true
+    }
+  }
+  "Method endorsements" should {
+    "return 2 endorsements for person with id = 1" in {
+      val endorsements = service.endorsements(1L)
+      endorsements.length must_== 2
+      endorsements.exists(_.name == "nikolai") must_== true
+      endorsements.exists(_.name == "viktor") must_== true
+    }
+    "return 0 endorsements for person with id = 2" in {
+      val endorsements = service.endorsements(2L)
+      endorsements.length must_== 0
+    }
+  }
+  "Method deleteTestimonial" should {
+    "delete testimonial with id = 1 from database" in {
+      service.deleteEndorsement(1L, 1L)
+      val endorsements = service.endorsements(1L)
+      endorsements.length must_== 1
+      endorsements.exists(_.name == "viktor") must_== true
+    }
+  }
+
+  "Method experiences" should {
+    "return 2 experiences for person with id = 1" in {
+      val experiences = service.experiences(1L)
+      experiences.length must_== 2
+      experiences.exists(_.link == "http://test.com") must_== true
+      experiences.exists(_.link == "http://test1.com") must_== true
+    }
+    "return 0 experiences for person with id = 2" in {
+      val experiences = service.experiences(2L)
+      experiences.length must_== 0
+    }
+  }
+  "Method deleteExperience" should {
+    "delete link with id = 1 from database" in {
+      service.deleteExperience(1L, 1L)
+      val experiences = service.experiences(1L)
+      experiences.length must_== 1
+      experiences.exists(_.link == "http://test1.com") must_== true
     }
   }
 

@@ -266,6 +266,13 @@ class People(environment: RuntimeEnvironment[ActiveUser])
           case "contributions" ⇒
             val contributions = contributionService.contributions(id, isPerson = true)
             Ok(views.html.v2.element.contributions("person", contributions))
+          case "experience" ⇒
+            personService.find(id) map { person ⇒
+              val endorsements = personService.endorsements(id)
+              val experiences = personService.experiences(id).sortBy(_.linkType)
+              Ok(views.html.v2.person.tabs.experience(person,
+                endorsements, experiences))
+            } getOrElse NotFound("Person not found")
           case "facilitation" ⇒
             personService.find(id) map { person ⇒
               val licenses = licenseService.licenses(id)

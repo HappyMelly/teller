@@ -93,10 +93,9 @@
                   <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
                     href="#facilitation" role="tab">
                     Settings</a></li>
-<!--                   <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
-                    href="#facilitation" role="tab">
-                    Experiments</a></li>
- -->
+                  <li><a data-href="@routes.People.renderTabs(person.id.get, "experience")"
+                    href="#experience" role="tab">
+                    Experience</a></li>
                 </ul>
               </li>
             }
@@ -144,6 +143,7 @@
         <div class="tab-pane" id="contributions"></div>
         @if(showFacilitationTab) {
           <div class="tab-pane" id="facilitation"></div>
+          <div class="tab-pane" id="experience"></div>
         }
         @person.member.map { member =>
           <div class="tab-pane" id="experiments"></div>

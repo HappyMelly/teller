@@ -22,29 +22,24 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package services
+package models
 
-import play.api.mvc.RequestHeader
-import securesocial.core.services.RoutesService
+case class Experience(id: Option[Long],
+  personId: Long,
+  linkType: String,
+  link: String)
 
-/**
- * I had to implement a custom routes service as the default one
- *  causes runtime error during tests and on a production environment.
- *  The problem is in securesocial.controllers.routes.Assets which it cannot
- *  find
- */
-class TellerRoutesService extends RoutesService.Default {
+object Experience {
 
-  // override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
-  //   absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider))
-  // }
-
-  // override def loginPageUrl(implicit req: RequestHeader): String = {
-  //   absoluteUrl(_root_.controllers.routes.LoginPage.login())
-  // }
-
-  override protected def valueFor(key: String, default: String) = {
-    val value = conf.getString(key).getOrElse(default)
-    _root_.controllers.routes.Assets.at(value)
+  /**
+   * Returns the given link with updated type
+   *
+   * @param link Experience object
+   */
+  def updateType(link: Experience): Experience = {
+    link.linkType match {
+      case "video" | "article" | "casestudy" ⇒ link
+      case _ ⇒ link.copy(linkType = "article")
+    }
   }
 }
