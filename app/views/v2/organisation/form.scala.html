@@ -1,18 +1,19 @@
 @(user: ActiveUser,
-    id: Option[Long],
-    form: Form[Person])(implicit flash: Flash,
-    request: Request[Any],
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+  id: Option[Long],
+  form: Form[OrgView])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 
-@defining(form.value.map(person => "Edit Profile").getOrElse("Add person")) { title =>
-  @v2.main("Person", "people", user, withMelly = true) {
+@defining(form.value.map(view => view.org.name).getOrElse("Add organization")) { name =>
+  @v2.main("Organizations", "orgs", user, withMelly = true) {
     <div class="form">
-      @v2.html.block("") { <h1>@title</h1> }
-      @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
-        @v2.person.blocks.form(form)
+      @v2.html.block("") { <h1>@name</h1> }
+      @html.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()))) {
+        @v2.organisation.blocks.form(form)
+
         @if(form.hasErrors) {
           @v2.html.block("") {
             <div class="errors">

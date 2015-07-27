@@ -1,9 +1,9 @@
 @**
  * Generates a modal form with 'Close' button
  *@
-@(id: String, title: String)(body: => Html)
+@(id: String, title: String, small: Boolean = true)(body: => Html)
 
-@modal(id, title, true) {
+@modal(id, title, small) {
   <div class="modal-body">
     @body
   </div>

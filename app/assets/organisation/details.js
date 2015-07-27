@@ -34,11 +34,15 @@ function setupLogoActions() {
         autoUpload: false,
         replaceFileInput: false,
         done: function (e, data) {
-            $('#photo').attr('src', data.result.link);
-            $(btnLogoUpload).text('Upload').hide();
+            $('#photoDialog').modal('hide');
+            $('#stub').hide();
+            $('#real').find('img').attr('src', data.result.link);
+            $('#real').show();
+            $('.photo-block').addClass('real');
+            $(btnLogoUpload).prop('disabled', true);
         }
     }).bind('fileuploadadd', function (e, data) {
-        $(btnLogoUpload).show();
+        $(btnLogoUpload).prop('disabled', false);
         $('#logo').attr('src', URL.createObjectURL(data.files[0]));
         $(btnLogoUpload).off('click');
         $(btnLogoUpload).on('click', function(e) {
@@ -46,18 +50,20 @@ function setupLogoActions() {
             data.submit();
         });
     });
+    $(btnLogoUpload).prop('disabled', true);
+
     $(btnLogoDelete).on('click', function(e) {
         $.ajax({
             type: "DELETE",
             url: $(this).data('href'),
             dataType: "json"
         }).done(function(data) {
-            $('#photo').attr('src', data.link);
-            $('#logo').attr('src', data.link);
+            $('.photo-block').removeClass('real');
+            $('#real').hide();
+            $('#stub').show();
         });
         return false;
     });
-    $(btnLogoUpload).hide();
 }
 
 /**
@@ -75,6 +81,7 @@ function showTab(elem) {
         });
         loadedTabs[loadedTabs.length] = target;
     }
+    $('.sidemenu').find('li').removeClass('active');
     $(elem).tab('show');
     return false;
 }
@@ -144,13 +151,15 @@ $(document).ready( function() {
     });
 
     $('#sidemenu a').click(function (e) {
+        e.preventDefault();
         showTab($(this));
     });
     var hash = window.location.hash.substring(1);
     if (!hash) {
-        hash = 'personal-details';
+        hash = 'details';
     }
     showTab($('#sidemenu a[href="#' + hash + '"]'));
+
     $('[data-toggle="tooltip"]').tooltip();
     setupLogoActions();
 });

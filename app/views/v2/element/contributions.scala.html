@@ -1,4 +1,4 @@
-@(organisation: Organisation,
+@(objectType: String,
   contributions: List[ContributionView])(implicit request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -7,15 +7,13 @@
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import models.UserRole.Role._
 
-<legend>Products Contribution</legend>
-@if(contributions.isEmpty) {
-  <p>@organisation.name has no contributions.</p>
-} else {
-  <table  class="datatables table table-bordered">
+<h3>Contributions</h3>
+@if(contributions.nonEmpty) {
+  <table  class="table">
     <thead>
       <th>Product</th>
       <th>Role</th>
-      <th></th>
+      @restrict(handler, List(as(Editor.toString))) {<th></th>}
     </thead>
     <tbody>
     @for(contribution <- contributions) {
@@ -24,8 +22,8 @@
         <td>@contribution.contribution.role</td>
         <td>
         @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.Contributions.delete(contribution.contribution.id.get, "organisation")">
-            <i class="glyphicon glyphicon-trash"></i> Delete contribution</a>
+          <a href="@routes.Contributions.delete(contribution.contribution.id.get, objectType)" class="font-sm">
+            Remove contribution</a>
         }
         </td>
       </tr>
@@ -33,3 +31,7 @@
     </tbody>
   </table>
 }
+<div>
+  Visit <a href="@routes.Products.index()">Products</a> page to find a list of
+    products you can contribute to.
+</div>

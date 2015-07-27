@@ -265,7 +265,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         tab match {
           case "contributions" ⇒
             val contributions = contributionService.contributions(id, isPerson = true)
-            Ok(views.html.v2.person.tabs.contributions(contributions))
+            Ok(views.html.v2.element.contributions("person", contributions))
           case "facilitation" ⇒
             personService.find(id) map { person ⇒
               val licenses = licenseService.licenses(id)

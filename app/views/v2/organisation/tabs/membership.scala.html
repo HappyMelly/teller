@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-    person: Person,
+    org: Organisation,
     payments: List[payment.Record])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
@@ -7,55 +7,33 @@
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
 @import models.UserRole.Role._
-@import templates.Formatters._
 
-@person.member.map { m =>
-  <div id="reasonDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    @v2.html.dialog("updateReason",
-      "The reason I joined the network...",
-      action = None,
-      actionId = Some("saveReason")) {
-      <textarea class="form-control" rows="15" id="reason">@m.reason.getOrElse("")</textarea>
-      <span class="help-block font-sm">
-        @views.html.v2.element.markdownHelp(horizontal = true)
-      </span>
-    }
-  </div>
-
-  <div class="block">
-    <h3>The reason I joined the network...
-      @dynamic(handler, "person", "edit") {
-        <a href="#" data-toggle="modal" data-target="#reasonDialog"
-          class="font-sm pull-right">Edit</a>
-      }
-    </h3>
-    <div id="reasonToJoin">
-      @m.reason.map { text => @text.markdown }
-    </div>
-  </div>
+@org.member.map { m =>
 
   @views.html.v2.element.badge(m)
-  <div class="block">
-    <h3>Payments</h3>
-    <table class="payments table">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Amount, €</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for(payment <- payments) {
+  @if(payments.nonEmpty) {
+    <div class="block">
+      <h3>Payments</h3>
+      <table class="payments table">
+        <thead>
           <tr>
-            <td>@payment.description</td>
-            <td>@payment.fee.getAmount</td>
-            <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+            <th>Description</th>
+            <th>Amount, €</th>
+            <th>Date</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for(payment <- payments) {
+            <tr>
+              <td>@payment.description</td>
+              <td>@payment.fee.getAmount</td>
+              <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
   <div class="block">
     <h3>Membership Renewal</h3>
     @if(m.renewal) {
@@ -64,7 +42,7 @@
         period. The date of the next renewal is <b>@m.until</b>.
       </p>
       <p>
-        @dynamicOr(handler, "person", "edit") {
+        @dynamicOr(handler, "organisation", "edit") {
           You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
           will be valid till <b>@m.until</b>.
         }{
@@ -76,13 +54,12 @@
       <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
         @v2.html.postDialog("cancelDialog",
           "Stop automatic renewal",
-          CSRF(routes.People.cancel(person.id.getOrElse(0))),
+          CSRF(routes.Organisations.cancel(org.id.getOrElse(0))),
           "Stop") {
           <p>If you stop automatic renewal you won't be able to start it again.</p>
           <p>Your membership will be valid till <b>@m.until</b></p>
         }
       </div>
-
     } else {
       <div class="alert alert-warning">
         <p>Automatic renewal is stopped.</p>
@@ -94,5 +71,4 @@
   @restrict(handler, List(as(Editor.toString))) {
     @views.html.v2.element.administration(m)
   }
-  </div>
 }
