@@ -1,0 +1,148 @@
+@()
+
+<h3 id="facilitator">Facilitator details</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Description</th>
+        <td>Details for a single facilitator</td>
+    </tr>
+    <tr>
+        <th>Request</th>
+        <td><code>GET /api/v2/facilitator/{id}</code></td>
+    </tr>
+    <tr>
+        <th>Request path parameters</th>
+        <td><code>identifier</code> unique identifier for the person, e.g. <code>42</code> or <code>
+            sergey.kotlov</code></td>
+    </tr>
+    <tr>
+        <th>Query string parameters</th>
+        <td>none</td>
+    </tr>
+    <tr>
+        <th>Response content type</th>
+        <td><code>application/json; charset=utf-8</code></td>
+    </tr>
+    <tr>
+        <th>Response body</th>
+        <td>
+            <p>A JSON facilitator object, with properties:</p>
+            <ul>
+                <li><code>id</code> - a numeric unique identifier of a person, e.g. 42</li>
+                <li><code>unique_name</code> - an unique identifier of a person, e.g. sergey.kotlov </li>
+                <li><code>first_name</code></li>
+                <li><code>last_name</code></li>
+                <li><code>email_address</code></li>
+                <li><code>image</code></li>
+                <li><code>address</code> address object:
+                    <ul>
+                        <li><code>street1</code></li>
+                        <li><code>street2</code></li>
+                        <li><code>city</code></li>
+                        <li><code>post_code</code></li>
+                        <li><code>province</code></li>
+                        <li><code>country</code> - ISO 8166-2 country code</li>
+                    </ul>
+                </li>
+                <li><code>bio</code> Markdown format</li>
+                <li><code>interests</code> Markdown format</li>
+                <li><code>twitter_handle</code> - Twitter user name, without the leading <code>@@</code></li>
+                <li><code>facebook_url</code></li>
+                <li><code>linkedin_url</code></li>
+                <li><code>google_plus_url</code></li>
+                <li><code>website</code></li>
+                <li><code>blog</code></li>
+                <li><code>active</code></li>
+                <li><code>organizations</code>
+                    - JSON array of organization objects, with the same structure as the <a href="#organizations">
+                        organizations resource</a></li>
+                <li><code>licenses</code> - JSON array of license objects, with properties:
+                    <ul>
+                        <li><code>brand</code> - a brand code</li>
+                        <li><code>start</code> - date in `YYYY-MM-DD` format</li>
+                        <li><code>end</code> - date in `YYYY-MM-DD` format</li>
+                    </ul>
+                </li>
+                <li><code>endorsements</code> - array of objects with properties:
+                    <ul>
+                        <li><code>content</code></li>
+                        <li><code>name</code></li>
+                        <li><code>company</code> - contains either company or role</li>
+                    </ul>
+                </li>
+                <li><code>experiences</code> - array of objects with properties:
+                    <ul>
+                        <li><code>type</code> - possible values: article, casestudy, video</li>
+                        <li><code>link</code></li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Errors (HTTP status)</th>
+        <td>
+            <p><code>404 Not Found</code> if the specified person is not found</p>
+        </td>
+    </tr>
+    <tr>
+        <th>Example Request</th>
+        <td>GET /api/v2/facilitator/sergey.kotlov
+        </td>
+    </tr>
+    <tr>
+        <th>Example Response</th>
+        <td><pre>
+{
+    "id" : 25,
+    "unique_name" : "sergey.kotlov",
+    "first_name" : "Sergey",
+    "last_name" : "Kotlov",
+    "email_address" : "skotlov@@gmail.com",
+    "image" : "https://secure.gravatar.com/avatar/996e4a0e5366080a444e43a4b446fcf6?s=300",
+    "address" : {
+        "street1" : "3 Kotelnikova alley 75",
+        "street2" : null,
+        "city" : "Saint-Petersburg",
+        "post_code" : "197341",
+        "province" : "----",
+        "country" : "RU"
+    },
+    "bio" : "blabla",
+    "interests" : null,
+    "twitter_handle" : "skotlov",
+    "facebook_url" : null,
+    "linkedin_url" : null,
+    "google_plus_url" : null,
+    "website" : "http://changegeek.ru",
+    "blog" : "http://changegeek.ru",
+    "active" : true,
+    "organizations" : [ {
+        "id" : "24",
+        "name" : "Happy Melly One BV",
+        "city" : "Rotterdam",
+        "country" : "NL",
+        "website" : null
+    } ],
+    "licenses" : [ ],
+    "endorsements" : [ {
+        "content" : "I was impressed by his passion",
+        "name" : "Sergey Kotlov",
+        "company" : "Happy Melly"
+    } ],
+    "experiences" : [ {
+        "type" : "article",
+        "link" : "http://mail.ru"
+    }, {
+        "type" : "video",
+        "link" : "http://hithat.com"
+    }, {
+        "type" : "casestudy",
+        "link" : "http://hithat.com"
+    } ]
+}
+        </pre>
+        </td>
+    </tr>
+</table>
