@@ -85,8 +85,8 @@ class PersonServiceSpec extends PlayAppSpec {
       endorsements.length must_== 0
     }
   }
-  "Method deleteTestimonial" should {
-    "delete testimonial with id = 1 from database" in {
+  "Method deleteEndorsement" should {
+    "delete endorsement with id = 1 from database" in {
       service.deleteEndorsement(1L, 1L)
       val endorsements = service.endorsements(1L)
       endorsements.length must_== 1
