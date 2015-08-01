@@ -35,13 +35,13 @@ import securesocial.core.services.RoutesService
  */
 class TellerRoutesService extends RoutesService.Default {
 
-  override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
-    absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider))
-  }
+  // override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
+  //   absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider))
+  // }
 
-  override def loginPageUrl(implicit req: RequestHeader): String = {
-    absoluteUrl(_root_.controllers.routes.LoginPage.login())
-  }
+  // override def loginPageUrl(implicit req: RequestHeader): String = {
+  //   absoluteUrl(_root_.controllers.routes.LoginPage.login())
+  // }
 
   override protected def valueFor(key: String, default: String) = {
     val value = conf.getString(key).getOrElse(default)

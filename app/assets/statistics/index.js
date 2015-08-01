@@ -36,6 +36,8 @@ function showTab(elem, type) {
         new Chart(ctx).Line(data, {});
         var stats = data.datasets[0].data;
         $("#facilitatorTotal").text(stats[stats.length - 1]);
+        $('#facilitatorJoined').text(data.joined);
+        $('#facilitatorLeft').text(data.left);
     });
     url = jsRoutes.controllers.Statistics.byEvents(brandId).url;
     $.get(url, function(data) {
@@ -43,6 +45,13 @@ function showTab(elem, type) {
         new Chart(ctx).Line(data, {});
         var stats = data.datasets[0].data;
         $("#eventTotal").text(stats[stats.length - 1]);
+        $('#futurePaid').text(data.future.paid);
+        $('#futureFree').text(data.future.free);
+        $('#confirmedPaid').text(data.confirmed.paid);
+        $('#confirmedFree').text(data.confirmed.free);
+        $('#canceledPaid').text(data.canceled.paid);
+        $('#canceledFree').text(data.canceled.free);
+        $('#rating').text(data.rating.toFixed(2));
     });
     url = jsRoutes.controllers.Statistics.byCountries(brandId).url;
     $.get(url, function(data) {

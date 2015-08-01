@@ -1,0 +1,63 @@
+@(user: ActiveUser)(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler)
+
+
+@v2.main("Statistics", "statistics", user) {
+  <div class="container">
+    <div class="page-header">
+      <h1 class="col-md-offset-3">Management 3.0</h1>
+    </div>
+    <div class="row statistics-block">
+      <div class="col-md-12"><h2>Facilitators</h2></div>
+      <div class="col-md-3 info numbers">
+        <div><span class="number" id="facilitatorTotal"></span> facilitators</div>
+        <div><span class="number" id="facilitatorJoined"></span> joined last month</div>
+        <div><span class="number" id="facilitatorLeft"></span> quit last month</div>
+      </div>
+      <div class="col-md-9">
+        <canvas id="facilitatorChart" width="700" height="400"></canvas>
+      </div>
+    </div>
+    <div class="row statistics-block">
+      <div class="col-md-12"><h2>Events</h2></div>
+      <div class="col-md-3 info numbers">
+        <div><span class="number" id="eventTotal"></span> events</div>
+        <div><span class="number" id="futurePaid"></span> future paid events</div>
+        <div><span class="number" id="futureFree"></span> future free events</div>
+        <h3>Last month</h3>
+        <div><span class="number" id="confirmedPaid"></span> confirmed paid events</div>
+        <div><span class="number" id="confirmedFree"></span> confirmed free events</div>
+        <div><span class="number" id="canceledPaid"></span> canceled paid events</div>
+        <div><span class="number" id="canceledFree"></span> canceled free events</div>
+        <div><span class="number" id="rating"></span> average rating</div>
+      </div>
+      <div class="col-md-9">
+        <canvas id="eventChart" width="700" height="400"></canvas>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3 info text-center">
+        <h3>Countries</h3>
+        <h1 id="countryTotal"></h1>
+      </div>
+      <div class="col-md-9">
+        <canvas id="countryChart" width="550" height="400"></canvas>
+        <div class="col-md-9">
+          <table class="table table-bordered" id="countryList">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Country</th>
+                <th>Number of events</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="@routes.Assets.at("javascripts/Chart.min.js")"></script>
+  <script src="@routes.Assets.at("statistics/index.js")" type="text/javascript"></script>
+}

@@ -34,6 +34,7 @@ case class EventCancellation(id: Option[Long],
   countryCode: String,
   start: LocalDate,
   end: LocalDate,
+  free: Boolean,
   reason: Option[String],
   participants: Option[Int],
   details: Option[String])

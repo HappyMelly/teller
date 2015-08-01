@@ -31,7 +31,7 @@ import scala.util.Random
 import models.{ ActiveUser, License, Event }
 import models.UserRole.Role._
 import models.service.Services
-import org.joda.time.{ LocalDate, Months }
+import org.joda.time.{ LocalDate, Months, Interval }
 import play.api.libs.json.{ Json, JsValue, Writes }
 import views.Countries
 
@@ -52,7 +52,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.statistics.index(user))
+      Ok(views.html.v2.statistics.index(user))
   }
 
   /**
@@ -65,12 +65,15 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
 
+      val joinedLeftFacilitators = joinedLeft(licenses)
       val stats = if (licenses.isEmpty)
         List[(LocalDate, Int)]()
       else
         quarterStatsByFacilitators(licenses)
 
-      Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
+      Ok(Json.obj("joined" -> joinedLeftFacilitators._1,
+        "left" -> joinedLeftFacilitators._2,
+        "labels" -> stats.map(_._1.toString("MMM yyyy")),
         "datasets" -> List(
           Json.obj("label" -> "Number of facilitators",
             "fillColor" -> "rgba(220,220,220,0.2)",
@@ -82,6 +85,17 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
             "data" -> stats.map(_._2)))))
   }
 
+  protected def joinedLeft(licenses: List[License]): (Int, Int) = {
+    val lastMonth = new Interval(
+      LocalDate.now().minusMonths(1).withDayOfMonth(1).toDate.getTime,
+      LocalDate.now().withDayOfMonth(1).minusDays(1).toDate.getTime)
+    if (licenses.isEmpty)
+      (0, 0)
+    else
+      (licenses.filter(x => lastMonth.contains(x.start.toDate.getTime)).length,
+        licenses.filter(x => lastMonth.contains(x.end.toDate.getTime)).length)
+  }
+
   /**
    * Returns accumulated number of events per quarter for the given brand in
    * a format suitable for diagrams
@@ -90,16 +104,24 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def byEvents(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val events = eventService.findByParameters(Some(brandId),
-        confirmed = Some(true),
-        future = Some(false))
+      val now = LocalDate.now()
+      val events = eventService.findByParameters(Some(brandId))
 
+      val inFuture = futureEvents(events)
+      val (paid, free, rating) = lastMonthNumbers(events)
+      val (canceledPaid, canceledFree) = canceledEvents(brandId)
       val stats = if (events.isEmpty)
         List[(LocalDate, Int)]()
       else
-        quarterStatsByEvents(events)
+        quarterStatsByEvents(
+          events.filter(_.schedule.end.isBefore(now)).filter(_.confirmed))
 
-      Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
+      Ok(Json.obj(
+        "future" -> Json.obj("paid" -> inFuture._1, "free" -> inFuture._2),
+        "confirmed" -> Json.obj("paid" -> paid, "free" -> free),
+        "canceled" -> Json.obj("paid" -> canceledPaid, "free" -> canceledFree),
+        "rating" -> rating,
+        "labels" -> stats.map(_._1.toString("MMM yyyy")),
         "datasets" -> List(
           Json.obj("label" -> "Number of facilitators",
             "fillColor" -> "rgba(238,146,159,0.2)",
@@ -110,6 +132,39 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
             "pointHighlightStroke" -> "rgba(220,220,220,1)",
             "data" -> stats.map(_._2)))))
   }
+
+  protected def canceledEvents(brandId: Long): (Int, Int) = {
+    val cancellations = eventCancellationService.
+      findByBrands(List(brandId)).
+      filter(x => lastMonth.contains(x.start.toDate.getTime) ||
+        lastMonth.contains(x.end.toDate.getTime))
+
+    (cancellations.filter(!_.free).length, cancellations.filter(_.free).length)
+  }
+
+  protected def futureEvents(events: List[Event]): (Int, Int) = {
+    val future = events.filter(_.schedule.start.isAfter(LocalDate.now()))
+    if (future.isEmpty)
+      (0, 0)
+    else
+      (future.filter(!_.free).length, future.filter(_.free).length)
+  }
+
+  protected def lastMonthNumbers(events: List[Event]): (Int, Int, Float) = {
+    val filtered = events.filter(_.confirmed).
+      filter(x => lastMonth.contains(x.schedule.start.toDate.getTime) ||
+        lastMonth.contains(x.schedule.end.toDate.getTime))
+    if (filtered.isEmpty)
+      (0, 0, 0.0f)
+    else
+      (filtered.filter(!_.free).length,
+        filtered.filter(_.free).length,
+        filtered.foldRight(0.0f)(_.rating + _) / filtered.length)
+  }
+
+  protected def lastMonth: Interval = new Interval(
+    LocalDate.now().minusMonths(1).withDayOfMonth(1).toDate.getTime,
+    LocalDate.now().withDayOfMonth(1).minusDays(1).toDate.getTime)
 
   /**
    * Returns number of events per country for the given brand in a format

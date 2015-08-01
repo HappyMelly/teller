@@ -215,7 +215,7 @@ case class Event(
     val eventType = eventTypeService.find(this.eventTypeId).map(_.name).getOrElse("")
     val cancellation = EventCancellation(None, this.brandId, facilitatorId,
       this.title, eventType, this.location.city, this.location.countryCode,
-      this.schedule.start, this.schedule.end, reason, participants, details)
+      this.schedule.start, this.schedule.end, this.free, reason, participants, details)
     eventCancellationService.insert(cancellation)
     eventService.delete(this.id.get)
   }
