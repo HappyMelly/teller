@@ -12,11 +12,33 @@
       <div class="col-md-12"><h2>Facilitators</h2></div>
       <div class="col-md-3 info numbers">
         <div><span class="number" id="facilitatorTotal"></span> facilitators</div>
+        <div><span class="number" id="facilitatorActive"></span> active facilitators</div>
+        <div><span class="number" id="facilitatorWithGoodProfile"></span> facilitators with good profiles</div>
         <div><span class="number" id="facilitatorJoined"></span> joined last month</div>
         <div><span class="number" id="facilitatorLeft"></span> quit last month</div>
       </div>
       <div class="col-md-9">
         <canvas id="facilitatorChart" width="700" height="400"></canvas>
+      </div>
+    </div>
+    <div class="row statistics-block">
+      <div class="col-md-12">
+        <h3>Top 10 facilitators with most events in last six months</h3>
+      </div>
+      <div class="col-md-6">
+        <canvas id="topFacilitatorsChart" width="550" height="400"></canvas>
+      </div>
+      <div class="col-md-4 info">
+        <table class="table table-bordered" id="facilitatorList">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Facilitator</th>
+              <th>Number of events</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
     <div class="row statistics-block">
@@ -31,30 +53,38 @@
         <div><span class="number" id="canceledPaid"></span> canceled paid events</div>
         <div><span class="number" id="canceledFree"></span> canceled free events</div>
         <div><span class="number" id="rating"></span> average rating</div>
+        <div><span class="number" id="nps"></span> NPS</div>
       </div>
       <div class="col-md-9">
         <canvas id="eventChart" width="700" height="400"></canvas>
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-3 info text-center">
-        <h3>Countries</h3>
-        <h1 id="countryTotal"></h1>
+    <div class="row statistics-block">
+      <div class="col-md-12">
+        <h3>Top 10 countries with most events in last six months</h3>
+      </div>
+      <div class="col-md-6">
+        <canvas id="countryChart" width="550" height="400"></canvas>
+      </div>
+      <div class="col-md-4 info">
+        <table class="table table-bordered" id="countryList">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Country</th>
+              <th>Number of events</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row statistics-block">
+      <div class="col-md-12"><h2>Organizers</h2></div>
+      <div class="col-md-3 info numbers">
+        <div><span class="number" id="organizers"></span> active organizers</div>
       </div>
       <div class="col-md-9">
-        <canvas id="countryChart" width="550" height="400"></canvas>
-        <div class="col-md-9">
-          <table class="table table-bordered" id="countryList">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Country</th>
-                <th>Number of events</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
       </div>
     </div>
   </div>

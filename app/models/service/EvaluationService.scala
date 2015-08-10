@@ -73,18 +73,37 @@ class EvaluationService {
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session ⇒
-    if (eventIds.nonEmpty) {
-      val baseQuery = for {
-        e ← TableQuery[Events] if e.id inSet eventIds
-        part ← TableQuery[Participants] if part.eventId === e.id
-        p ← TableQuery[People] if p.id === part.personId
-        ev ← evaluations if ev.id === part.evaluationId
-      } yield (e, p, ev)
-      baseQuery.list
-    } else {
-      List()
-    }
+  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession {
+    implicit session ⇒
+      if (eventIds.nonEmpty) {
+        val baseQuery = for {
+          e ← TableQuery[Events] if e.id inSet eventIds
+          part ← TableQuery[Participants] if part.eventId === e.id
+          ev ← evaluations if ev.id === part.evaluationId
+        } yield ev
+        baseQuery.list
+      } else {
+        List()
+      }
+  }
+
+  /**
+   * Returns a list of evaluations for the given events
+   * @param eventIds a list of event ids
+   */
+  def findByEventsWithParticipants(eventIds: List[Long]) = DB.withSession {
+    implicit session ⇒
+      if (eventIds.nonEmpty) {
+        val baseQuery = for {
+          e ← TableQuery[Events] if e.id inSet eventIds
+          part ← TableQuery[Participants] if part.eventId === e.id
+          p ← TableQuery[People] if p.id === part.personId
+          ev ← evaluations if ev.id === part.evaluationId
+        } yield (e, p, ev)
+        baseQuery.list
+      } else {
+        List()
+      }
   }
 
   /**

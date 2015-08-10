@@ -67,7 +67,7 @@ class Reports(environment: RuntimeEnvironment[ActiveUser])
           else
             events
           val eventIds = filteredEvents.map(e ⇒ e.id.get)
-          val evaluations = evaluationService.findByEvents(eventIds)
+          val evaluations = evaluationService.findByEventsWithParticipants(eventIds)
           val participants = if (status >= 0) {
             // no participant without an evaluation
             evaluations.filter(e ⇒ e._3.status.id == status).map(e ⇒ (e._1, e._2, Option(e._3)))

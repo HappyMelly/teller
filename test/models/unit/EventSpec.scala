@@ -172,7 +172,8 @@ class EventSpec extends PlayAppSpec {
       (eventService.delete _) expects 1L
       val eventCancellationService = mock[EventCancellationService]
       val cancellation = EventCancellation(None, 1L, 3L, "Cancel", "Regular event",
-        "Berlin", "DE", now, now.plusDays(1), Some("Small number of participants"),
+        "Berlin", "DE", now, now.plusDays(1), false,
+        Some("Small number of participants"),
         Some(2), Some("some data"))
       (eventCancellationService.insert _) expects cancellation returning cancellation
       val eventTypeService = mock[EventTypeService]

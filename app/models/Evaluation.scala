@@ -81,6 +81,8 @@ case class Evaluation(
     updated: DateTime,
     updatedBy: String) extends ActivityRecorder with Integrations with Services {
 
+  val impression: Int = question6
+
   lazy val event: Event = EventService.get.find(eventId).get
 
   lazy val participant: Person = PersonService.get.find(personId).get

@@ -23,6 +23,35 @@
  */
 
 /**
+ * Renders doughnut chart
+ * @param id {string} DOM element's id to insert the rendered chart into
+ * @param data {array} Array with data
+ */
+function drawDoughnutChart(id, data) {
+    var ctx = $(id).get(0).getContext("2d");
+    new Chart(ctx).Doughnut(data, {
+        segmentShowStroke : false,
+        animateScale: true
+    });
+}
+
+/**
+ * Renders table with data
+ * @param id {string} DOM element's id to insert the rendered chart into
+ * @param data {array} Array with data
+ * @param renderer {function} Function to render the middle column's content
+ */
+function drawTable(id, data, renderer) {
+    for (var i = 0; i < data.length; i++) {
+        $(id).append(
+            $("<tr>")
+                .append($("<td>").append(i + 1))
+                .append($("<td>").append(renderer(data[i])))
+                .append($("<td>").append(" " + data[i].value)))
+    }
+}
+
+/**
  * Loads tab content (if needed) and shows it to a user
  * @param elem Tab button
  * @param type Tab type
@@ -36,38 +65,39 @@ function showTab(elem, type) {
         new Chart(ctx).Line(data, {});
         var stats = data.datasets[0].data;
         $("#facilitatorTotal").text(stats[stats.length - 1]);
+        $('#facilitatorWithGoodProfile').text(data.withGoodProfiles);
         $('#facilitatorJoined').text(data.joined);
         $('#facilitatorLeft').text(data.left);
     });
     url = jsRoutes.controllers.Statistics.byEvents(brandId).url;
     $.get(url, function(data) {
         var ctx = $("#eventChart").get(0).getContext("2d");
-        new Chart(ctx).Line(data, {});
-        var stats = data.datasets[0].data;
+        new Chart(ctx).Line(data.events, {});
+        var stats = data.events.datasets[0].data;
         $("#eventTotal").text(stats[stats.length - 1]);
-        $('#futurePaid').text(data.future.paid);
-        $('#futureFree').text(data.future.free);
-        $('#confirmedPaid').text(data.confirmed.paid);
-        $('#confirmedFree').text(data.confirmed.free);
-        $('#canceledPaid').text(data.canceled.paid);
-        $('#canceledFree').text(data.canceled.free);
-        $('#rating').text(data.rating.toFixed(2));
+        $('#futurePaid').text(data.events.future.paid);
+        $('#futureFree').text(data.events.future.free);
+        $('#confirmedPaid').text(data.events.confirmed.paid);
+        $('#confirmedFree').text(data.events.confirmed.free);
+        $('#canceledPaid').text(data.events.canceled.paid);
+        $('#canceledFree').text(data.events.canceled.free);
+        $('#rating').text(data.events.rating.toFixed(2));
+        $('#nps').text(data.events.nps.toFixed(2) + "%");
+        $('#facilitatorActive').text(data.activeFacilitators);
+        $('#organizers').text(data.organizers);
+        drawDoughnutChart("#topFacilitatorsChart", data.topFacilitators);
+        drawTable("#facilitatorList", data.topFacilitators, function(facilitator) {
+            return $("<a>").
+                attr("href", jsRoutes.controllers.People.details(facilitator.id).url).
+                append(facilitator.label);
+        });
     });
     url = jsRoutes.controllers.Statistics.byCountries(brandId).url;
     $.get(url, function(data) {
-        var ctx = $("#countryChart").get(0).getContext("2d");
-        new Chart(ctx).Doughnut(data, {
-            segmentShowStroke : false,
-            animateScale: true
+        drawDoughnutChart("#countryChart", data);
+        drawTable("#countryList", data, function(country) {
+            return " " + country.label
         });
-        $("#countryTotal").text(data.length);
-        for (var i = 0; i < data.length; i++) {
-            $("#countryList").append(
-                $("<tr>")
-                    .append($("<td>").append(i + 1))
-                    .append($("<td>").append(data[i].label))
-                    .append($("<td>").append(data[i].value)))
-        }
     });
     return false;
 }

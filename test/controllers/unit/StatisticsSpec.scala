@@ -41,6 +41,14 @@ class StatisticsSpec extends Specification {
 
     def callQuarterStatsByEvents(events: List[Event]): List[(LocalDate, Int)] =
       quarterStatsByEvents(events)
+
+    def callFilterFuture(events: List[Event]): List[Event] = filterFuture(events)
+
+    def callFilterLastSixMonths(events: List[Event]): List[Event] =
+      filterLastSixMonths(events)
+
+    def callFilterLastMonth(events: List[Event]): List[Event] =
+      filterLastMonth(events)
   }
   val controller = new TestStatistics
 
@@ -105,4 +113,43 @@ class StatisticsSpec extends Specification {
       res(6)._2 must_== 4 // sixth quarter
     }
   }
+
+  "Method filterFuture " should {
+    "return only future events" in {
+      val now = LocalDate.now
+      val events = List(
+        EventHelper.make(id = Some(1L), startDate = Some(now.plusDays(1))),
+        EventHelper.make(id = Some(2L), startDate = Some(now.plusDays(10))),
+        EventHelper.make(id = Some(3L), startDate = Some(now)),
+        EventHelper.make(id = Some(4L), startDate = Some(now.minusDays(1))),
+        EventHelper.make(id = Some(5L), startDate = Some(now.plusDays(5))),
+        EventHelper.make(id = Some(6L), startDate = Some(now.minusDays(10))))
+      val filtered = controller.callFilterFuture(events)
+      filtered.length must_== 3
+      filtered.exists(_.id == Some(1L)) must_== true
+      filtered.exists(_.id == Some(2L)) must_== true
+      filtered.exists(_.id == Some(5L)) must_== true
+    }
+  }
+
+  "Method filterLastSixMonths " should {
+    "return only confirmed events happened in the last six months" in {
+      val now = LocalDate.now
+      val events = List(
+        EventHelper.make(id = Some(1L), endDate = Some(now.minusDays(1)), confirmed = Some(true)),
+        EventHelper.make(id = Some(2L), endDate = Some(now.minusMonths(10))),
+        EventHelper.make(id = Some(3L), endDate = Some(now)),
+        EventHelper.make(id = Some(4L), endDate = Some(now.plusDays(1)), confirmed = Some(true)),
+        EventHelper.make(id = Some(5L), endDate = Some(now.minusMonths(5)), confirmed = Some(true)),
+        EventHelper.make(id = Some(6L), endDate = Some(now.minusDays(10))))
+      val filtered = controller.callFilterLastSixMonths(events)
+      filtered.exists(_.id == Some(1L)) must_== true
+      filtered.exists(_.id == Some(2L)) must_== false
+      filtered.exists(_.id == Some(3L)) must_== false
+      filtered.exists(_.id == Some(4L)) must_== false
+      filtered.exists(_.id == Some(5L)) must_== true
+      filtered.exists(_.id == Some(6L)) must_== false
+    }
+  }
+
 }
