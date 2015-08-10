@@ -67,7 +67,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     (personService.member _) expects 1L returning Some(member)
     (memberService.update _) expects member.copy(reason = Some(reason))
-    (profileStrengthService.find _) expects (1L, false) returning None
+    (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
     val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)
     status(res) must equalTo(OK)
@@ -79,7 +79,7 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
     val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
     (personService.member _) expects 1L returning Some(member)
     (memberService.update _) expects member.copy(reason = Some(reason))
-    (profileStrengthService.find _) expects (1L, false) returning Some(strength)
+    (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     (profileStrengthService.update _) expects strength.markComplete("reason")
     val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)

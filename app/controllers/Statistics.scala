@@ -78,7 +78,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
 
-      val (joined, left) = joinedLeft(licenses)
+      val (joined, left) = calculatedJoinedLeftNumbers(licenses)
       val goodProfiles = profileStrengthService.
         find(licenses.map(_.licenseeId), false).
         filter(_.progress >= 80)
@@ -114,9 +114,9 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       val now = LocalDate.now()
       val events = eventService.findByParameters(Some(brandId))
 
-      val (futurePaid, futureFree) = futureEvents(events)
-      val (paid, free, rating, nps) = lastMonthNumbers(events)
-      val (canceledPaid, canceledFree) = canceledEvents(brandId)
+      val (futurePaid, futureFree) = calculateFutureEventsNumbers(events)
+      val (paid, free, rating, nps) = calculateLastMonthNumbers(events)
+      val (canceledPaid, canceledFree) = calculatedCanceledEventsNumbers(brandId)
       val (facilitators, topFacilitators, organizers) = activityRangeNumbers(events)
       val stats = if (events.isEmpty)
         List[(LocalDate, Int)]()
@@ -159,12 +159,49 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
         "organizers" -> organizers))
   }
 
-  protected def joinedLeft(licenses: List[License]): (Int, Int) = {
+  /**
+   * Returns number of events per country for the given brand in a format
+   * suitable for diagrams
+   *
+   * @param brandId Brand id
+   */
+  def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val events = eventService.
+        findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
+
+      val perCountry = filterLastSixMonths(events).
+        groupBy(_.location.countryCode).
+        map(x ⇒ (Countries.name(x._1), x._2.length)).
+        toList.sortBy(_._2).reverse.take(TOP_LIMIT)
+
+      implicit val countryStat = new Writes[(String, Int)] {
+        def writes(value: (String, Int)): JsValue = {
+          val color = COLORS(Random.nextInt(COLORS.length))
+          Json.obj(
+            "value" -> value._2,
+            "label" -> value._1,
+            "color" -> color._2,
+            "highlight" -> color._1)
+        }
+      }
+      Ok(Json.toJson(perCountry))
+  }
+
+  /**
+   * Returns number of facilitators who joined and left last month
+   * @param licenses List of licenses
+   */
+  protected def calculatedJoinedLeftNumbers(licenses: List[License]): (Int, Int) = {
     (licenses.filter(x => lastMonth.contains(x.start.toDate.getTime)).length,
       licenses.filter(x => lastMonth.contains(x.end.toDate.getTime)).length)
   }
 
-  protected def canceledEvents(brandId: Long): (Int, Int) = {
+  /**
+   * Returns number of paid and free cancelled events from last month
+   * @param brandId Brand identifier
+   */
+  protected def calculatedCanceledEventsNumbers(brandId: Long): (Int, Int) = {
     val cancellations = eventCancellationService.
       findByBrands(List(brandId)).
       filter(x => lastMonth.contains(x.start.toDate.getTime) ||
@@ -173,7 +210,11 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     (cancellations.filter(!_.free).length, cancellations.filter(_.free).length)
   }
 
-  protected def futureEvents(events: List[Event]): (Int, Int) = {
+  /**
+   * Returns number of paid and free future events
+   * @param event List of events
+   */
+  protected def calculateFutureEventsNumbers(events: List[Event]): (Int, Int) = {
     val futureEvents = filterFuture(events)
     (futureEvents.filter(!_.free).length, futureEvents.filter(_.free).length)
   }
@@ -196,7 +237,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * and nps of events from last month
    * @param events List of events
    */
-  protected def lastMonthNumbers(events: List[Event]): (Int, Int, Float, Float) = {
+  protected def calculateLastMonthNumbers(events: List[Event]): (Int, Int, Float, Float) = {
     val filtered = filterLastMonth(events)
     if (filtered.isEmpty)
       (0, 0, 0.0f, 0.0f)
@@ -272,39 +313,9 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
   protected def filterFuture(events: List[Event]): List[Event] =
     events.filter(_.schedule.start.isAfter(LocalDate.now()))
 
-
   protected def lastMonth: Interval = new Interval(
     LocalDate.now().minusMonths(1).withDayOfMonth(1).toDate.getTime,
     LocalDate.now().withDayOfMonth(1).minusDays(1).toDate.getTime)
-
-  /**
-   * Returns number of events per country for the given brand in a format
-   * suitable for diagrams
-   *
-   * @param brandId Brand id
-   */
-  def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val events = eventService.
-        findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
-
-      val perCountry = filterLastSixMonths(events).
-        groupBy(_.location.countryCode).
-        map(x ⇒ (Countries.name(x._1), x._2.length)).
-        toList.sortBy(_._2).reverse.take(TOP_LIMIT)
-
-      implicit val countryStat = new Writes[(String, Int)] {
-        def writes(value: (String, Int)): JsValue = {
-          val color = COLORS(Random.nextInt(COLORS.length))
-          Json.obj(
-            "value" -> value._2,
-            "label" -> value._1,
-            "color" -> color._2,
-            "highlight" -> color._1)
-        }
-      }
-      Ok(Json.toJson(perCountry))
-  }
 
   /**
    * Returns accumulated number of events per quarter starting from the first event

@@ -44,11 +44,8 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
     not crash when there are no facilitators                                $e2
 
   After calculating number of events per quarter the system should
-    request only confirmed and past events                                  $e3
-    not crash when there are no events                                      $e4
+    not crash when there are no events                                      $e3
 
-  After calculating number of events per country the system should
-    request only confirmed and past events                                  $e5
   """
   class TestStatistics extends Statistics(FakeRuntimeEnvironment)
     with FakeServices
@@ -93,24 +90,9 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     (eventService.findByParameters _)
-      .expects(Some(1L), Some(false), None, None, Some(true), None, None)
-      .returning(List(EventHelper.one))
-    val res = controller.byEvents(1L).apply(fakeGetRequest())
-    status(res) must equalTo(OK)
-  }
-
-  def e4 = {
-    (eventService.findByParameters _)
-      .expects(Some(1L), Some(false), None, None, Some(true), None, None)
+      .expects(Some(1L), None, None, None, None, None, None)
       .returning(List())
-    val res = controller.byEvents(1L).apply(fakeGetRequest())
-    status(res) must equalTo(OK)
-  }
-
-  def e5 = {
-    (eventService.findByParameters _)
-      .expects(Some(1L), Some(false), None, None, Some(true), None, None)
-      .returning(List(EventHelper.one))
+    (eventService.applyFacilitators _) expects List()
     val res = controller.byEvents(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
   }

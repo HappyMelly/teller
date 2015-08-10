@@ -51,7 +51,7 @@ class PersonServiceSpec extends Specification with IsolatedMockFactory {
 
   def e1 = {
     val person = PersonHelper.one().copy(bio = None)
-    (profileStrengthService.find _) expects (1L, false) returning Some(strength(signature = true))
+    (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength(signature = true))
     (profileStrengthService.update _) expects strength(signature = false)
     service.callUpdateProfileStrength(person)
     ok

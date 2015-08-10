@@ -79,7 +79,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain(">photo</a>")
@@ -93,7 +93,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain(">description</a>")
@@ -107,7 +107,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("2 social networks")
@@ -121,7 +121,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("sharing why you joined the network")
@@ -135,7 +135,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("becoming a member")
@@ -149,7 +149,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain(">signature</a>")
@@ -163,7 +163,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
         "done" -> false))
     val strength = ProfileStrength(None, 1L, false, steps);
 
-    (service.find _) expects (1L, false) returning Some(strength)
+    (service.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
     val result = controller.personWidget(1L, true).apply(fakeGetRequest())
     status(result) must equalTo(OK)
     contentAsString(result) must contain("at least 1 language")
@@ -171,7 +171,7 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e8 = {
     //current user id = 1
-    (service.find _) expects (2L, false) returning None
+    (service.find(_: Long, _: Boolean)) expects (2L, false) returning None
     val result = controller.personWidget(2L, true).apply(fakeGetRequest())
     status(result) must equalTo(BAD_REQUEST)
   }
