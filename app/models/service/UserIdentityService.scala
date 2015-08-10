@@ -130,22 +130,22 @@ class UserIdentityService {
           case TwitterProvider.Twitter ⇒ for {
             a ← accounts if a.twitterHandle === identity.twitterHandle
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case FacebookProvider.Facebook ⇒ for {
             a ← accounts if a.facebookUrl === identity.facebookUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case GoogleProvider.Google ⇒ for {
             a ← accounts if a.googlePlusUrl === identity.googlePlusUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case LinkedInProvider.LinkedIn ⇒ for {
             a ← accounts if a.linkedInUrl === identity.linkedInUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since, m.until)
+          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
         }
         q.firstOption map { d ⇒
           d._1.roles_=(UserRole.forName(d._1.role).list)
@@ -153,7 +153,7 @@ class UserIdentityService {
           val member = if (d._3.nonEmpty)
             Some(Member(d._3, person.id.get, person = true,
               funder = d._4.get, "EUR" -> d._5.get, d._6.get,
-              d._7, d._8, existingObject = true, reason = None,
+              d._7.get, d._8.get, existingObject = true, reason = None,
               DateTime.now(), 0L, DateTime.now(), 0L))
           else
             None

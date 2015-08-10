@@ -72,7 +72,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
       EventHelper.past(5, 3), EventHelper.past(6, 2))
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
-    (evaluationService.findByEvents _) expects List(6L, 5L) returning List()
+    (evaluationService.findByEventsWithParticipants _) expects List(6L, 5L) returning List()
 
     val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
@@ -109,7 +109,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
       (EventHelper.one, PersonHelper.fast(11, "Eleven", "Lad"),
         EvaluationHelper.make(Some(11L), 1L, 11L, evalStatus, 8, DateTime.now().minusHours(3))))
     (brandService.findByCoordinator _) expects 1L returning List()
-    (evaluationService.findByEvents _) expects List() returning evaluations
+    (evaluationService.findByEventsWithParticipants _) expects List() returning evaluations
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning List()
 
     val result = controller.index().apply(fakeGetRequest())
@@ -145,7 +145,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
       }
     (brandService.findByCoordinator _) expects 1L returning List(BrandHelper.one)
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning List()
-    (evaluationService.findByEvents _) expects List() returning List()
+    (evaluationService.findByEventsWithParticipants _) expects List() returning List()
     (licenseService.expiring _) expects (List(1L)) returning licenses.toList
 
     val result = controller.index().apply(fakeGetRequest())
@@ -166,7 +166,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
   def e10 = {
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning List()
-    (evaluationService.findByEvents _) expects List() returning List()
+    (evaluationService.findByEventsWithParticipants _) expects List() returning List()
 
     val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)
@@ -180,7 +180,7 @@ class DashboardSpec extends PlayAppSpec with IsolatedMockFactory {
       EventHelper.past(5, 3), EventHelper.past(6, 1))
     (brandService.findByCoordinator _) expects 1L returning List()
     (eventService.findByFacilitator _) expects (1L, None, *, *, *) returning events
-    (evaluationService.findByEvents _) expects List(6L, 4L, 3L, 5L) returning List()
+    (evaluationService.findByEventsWithParticipants _) expects List(6L, 4L, 3L, 5L) returning List()
 
     val result = controller.index().apply(fakeGetRequest())
     status(result) must equalTo(OK)

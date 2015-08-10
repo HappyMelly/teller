@@ -45,6 +45,7 @@ private[models] class EventCancellations(tag: Tag)
   def countryCode = column[String]("COUNTRY_CODE")
   def start = column[LocalDate]("START_DATE")
   def end = column[LocalDate]("END_DATE")
+  def free = column[Boolean]("FREE")
   def reason = column[Option[String]]("REASON", O.DBType("TEXT"))
   def participantsNumber = column[Option[Int]]("PARTICIPANTS_NUMBER")
   def participantsInfo = column[Option[String]]("PARTICIPANTS_INFO", O.DBType("TEXT"))
@@ -52,7 +53,7 @@ private[models] class EventCancellations(tag: Tag)
   def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
   def * = (id.?, brandId, facilitatorId, event, eventType, city,
-    countryCode, start, end, reason, participantsNumber,
+    countryCode, start, end, free, reason, participantsNumber,
     participantsInfo) <> (EventCancellation.tupled, EventCancellation.unapply)
 
 }

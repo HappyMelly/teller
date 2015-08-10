@@ -24,18 +24,17 @@
 
 package controllers
 
-import securesocial.core.RuntimeEnvironment
 
-import scala.util.Random
 
 import models.{ ActiveUser, License, Event }
 import models.UserRole.Role._
 import models.service.Services
-import org.joda.time.{ LocalDate, Months }
+import org.joda.time.{ LocalDate, Months, Interval }
 import play.api.libs.json.{ Json, JsValue, Writes }
-import views.Countries
-
 import scala.language.postfixOps
+import scala.util.Random
+import securesocial.core.RuntimeEnvironment
+import views.Countries
 
 /**
  * Contains a set of functions for handling brand statistics
@@ -46,13 +45,27 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     with Services {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+  val TOP_LIMIT = 10
+  val COLORS = Array(
+    ("rgba(166,206,227,0.2)", "rgba(166,206,227,1)"),
+    ("rgba(31,120,180,0.2)", "rgba(31,120,180,1)"),
+    ("rgba(178,223,138,0.2)", "rgba(178,223,138,1)"),
+    ("rgba(51,160,44,0.2)", "rgba(51,160,44,1)"),
+    ("rgba(251,154,153,0.2)", "rgba(251,154,153,1)"),
+    ("rgba(227,26,28,0.2)", "rgba(227,26,28,1)"),
+    ("rgba(253,191,111,0.2)", "rgba(253,191,111,1)"),
+    ("rgba(255,127,0,0.2)", "rgba(255,127,0,1)"),
+    ("rgba(202,178,214,0.2)", "rgba(202,178,214,1)"),
+    ("rgba(106,61,154,0.2)", "rgba(106,61,154,1)"),
+    ("rgba(255,255,153,0.2)", "rgba(255,255,153,1)"),
+    ("rgba(177,89,40,0.2)", "rgba(177,89,40,1)"))
 
   /**
    * Renders index page with statistics for brands
    */
   def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.statistics.index(user))
+      Ok(views.html.v2.statistics.index(user))
   }
 
   /**
@@ -65,12 +78,20 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
 
+      val (joined, left) = calculatedJoinedLeftNumbers(licenses)
+      val goodProfiles = profileStrengthService.
+        find(licenses.map(_.licenseeId), false).
+        filter(_.progress >= 80)
+
       val stats = if (licenses.isEmpty)
         List[(LocalDate, Int)]()
       else
         quarterStatsByFacilitators(licenses)
 
-      Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
+      Ok(Json.obj("joined" -> joined,
+        "left" -> left,
+        "withGoodProfiles" -> goodProfiles.length,
+        "labels" -> stats.map(_._1.toString("MMM yyyy")),
         "datasets" -> List(
           Json.obj("label" -> "Number of facilitators",
             "fillColor" -> "rgba(220,220,220,0.2)",
@@ -90,25 +111,52 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def byEvents(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val events = eventService.findByParameters(Some(brandId),
-        confirmed = Some(true),
-        future = Some(false))
+      val now = LocalDate.now()
+      val events = eventService.findByParameters(Some(brandId))
 
+      val (futurePaid, futureFree) = calculateFutureEventsNumbers(events)
+      val (paid, free, rating, nps) = calculateLastMonthNumbers(events)
+      val (canceledPaid, canceledFree) = calculatedCanceledEventsNumbers(brandId)
+      val (facilitators, topFacilitators, organizers) = activityRangeNumbers(events)
       val stats = if (events.isEmpty)
         List[(LocalDate, Int)]()
       else
-        quarterStatsByEvents(events)
+        quarterStatsByEvents(
+          events.filter(_.schedule.end.isBefore(now)).filter(_.confirmed))
 
-      Ok(Json.obj("labels" -> stats.map(_._1.toString("MMM yyyy")),
-        "datasets" -> List(
-          Json.obj("label" -> "Number of facilitators",
-            "fillColor" -> "rgba(238,146,159,0.2)",
-            "strokeColor" -> "rgba(238,146,159,1)",
-            "pointColor" -> "rgba(238,146,159,1)",
-            "pointStrokeColor" -> "#fff",
-            "pointHighlightFill" -> "#fff",
-            "pointHighlightStroke" -> "rgba(220,220,220,1)",
-            "data" -> stats.map(_._2)))))
+      implicit val topFacilitatorWrites = new Writes[(Long, String, Int)] {
+        def writes(value: (Long, String, Int)): JsValue = {
+          val color = COLORS(Random.nextInt(COLORS.length))
+          Json.obj(
+            "id" -> value._1,
+            "label" -> value._2,
+            "value" -> value._3,
+            "color" -> color._2,
+            "highlight" -> color._1)
+        }
+      }
+
+      Ok(Json.obj(
+        "events" -> Json.obj(
+          "future" -> Json.obj("paid" -> futurePaid, "free" -> futureFree),
+          "confirmed" -> Json.obj("paid" -> paid, "free" -> free),
+          "canceled" -> Json.obj("paid" -> canceledPaid, "free" -> canceledFree),
+          "rating" -> rating,
+          "nps" -> nps,
+          "labels" -> stats.map(_._1.toString("MMM yyyy")),
+          "datasets" -> List(
+              Json.obj("label" -> "Number of facilitators",
+                "fillColor" -> "rgba(238,146,159,0.2)",
+                "strokeColor" -> "rgba(238,146,159,1)",
+                "pointColor" -> "rgba(238,146,159,1)",
+                "pointStrokeColor" -> "#fff",
+                "pointHighlightFill" -> "#fff",
+                "pointHighlightStroke" -> "rgba(220,220,220,1)",
+                "data" -> stats.map(_._2)))
+          ),
+        "activeFacilitators" -> facilitators,
+        "topFacilitators" -> topFacilitators,
+        "organizers" -> organizers))
   }
 
   /**
@@ -119,29 +167,17 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val perCountry = eventService
-        .findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
-        .groupBy(_.location.countryCode)
-        .map(x ⇒ (Countries.name(x._1), x._2.length))
-        .toList.sortBy(_._2).reverse
+      val events = eventService.
+        findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
 
-      val colors = Array(
-        ("rgba(166,206,227,0.2)", "rgba(166,206,227,1)"),
-        ("rgba(31,120,180,0.2)", "rgba(31,120,180,1)"),
-        ("rgba(178,223,138,0.2)", "rgba(178,223,138,1)"),
-        ("rgba(51,160,44,0.2)", "rgba(51,160,44,1)"),
-        ("rgba(251,154,153,0.2)", "rgba(251,154,153,1)"),
-        ("rgba(227,26,28,0.2)", "rgba(227,26,28,1)"),
-        ("rgba(253,191,111,0.2)", "rgba(253,191,111,1)"),
-        ("rgba(255,127,0,0.2)", "rgba(255,127,0,1)"),
-        ("rgba(202,178,214,0.2)", "rgba(202,178,214,1)"),
-        ("rgba(106,61,154,0.2)", "rgba(106,61,154,1)"),
-        ("rgba(255,255,153,0.2)", "rgba(255,255,153,1)"),
-        ("rgba(177,89,40,0.2)", "rgba(177,89,40,1)"))
+      val perCountry = filterLastSixMonths(events).
+        groupBy(_.location.countryCode).
+        map(x ⇒ (Countries.name(x._1), x._2.length)).
+        toList.sortBy(_._2).reverse.take(TOP_LIMIT)
 
       implicit val countryStat = new Writes[(String, Int)] {
         def writes(value: (String, Int)): JsValue = {
-          val color = colors(Random.nextInt(colors.length))
+          val color = COLORS(Random.nextInt(COLORS.length))
           Json.obj(
             "value" -> value._2,
             "label" -> value._1,
@@ -151,6 +187,135 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       }
       Ok(Json.toJson(perCountry))
   }
+
+  /**
+   * Returns number of facilitators who joined and left last month
+   * @param licenses List of licenses
+   */
+  protected def calculatedJoinedLeftNumbers(licenses: List[License]): (Int, Int) = {
+    (licenses.filter(x => lastMonth.contains(x.start.toDate.getTime)).length,
+      licenses.filter(x => lastMonth.contains(x.end.toDate.getTime)).length)
+  }
+
+  /**
+   * Returns number of paid and free cancelled events from last month
+   * @param brandId Brand identifier
+   */
+  protected def calculatedCanceledEventsNumbers(brandId: Long): (Int, Int) = {
+    val cancellations = eventCancellationService.
+      findByBrands(List(brandId)).
+      filter(x => lastMonth.contains(x.start.toDate.getTime) ||
+        lastMonth.contains(x.end.toDate.getTime))
+
+    (cancellations.filter(!_.free).length, cancellations.filter(_.free).length)
+  }
+
+  /**
+   * Returns number of paid and free future events
+   * @param event List of events
+   */
+  protected def calculateFutureEventsNumbers(events: List[Event]): (Int, Int) = {
+    val futureEvents = filterFuture(events)
+    (futureEvents.filter(!_.free).length, futureEvents.filter(_.free).length)
+  }
+
+  /**
+   * Returns number of active organizers, active facilitators and a list
+   * of top 10 most active facilitators
+   * @param event List of events
+   */
+  protected def activityRangeNumbers(events: List[Event]): (Int, List[(Long, String, Int)], Int) = {
+    val filtered = filterByActivityRange(events)
+    val organizers = filtered.map(_.organizer.id).distinct.length
+    eventService.applyFacilitators(filtered)
+    val activeFacilitators = filtered.map(_.facilitators.map(_.id.get)).distinct.length
+    (activeFacilitators, findTopFacilitators(filtered), organizers)
+  }
+
+  /**
+   * Returns number of paid and free events from last month, average rating
+   * and nps of events from last month
+   * @param events List of events
+   */
+  protected def calculateLastMonthNumbers(events: List[Event]): (Int, Int, Float, Float) = {
+    val filtered = filterLastMonth(events)
+    if (filtered.isEmpty)
+      (0, 0, 0.0f, 0.0f)
+    else
+      (filtered.filter(!_.free).length,
+        filtered.filter(_.free).length,
+        calculateAverageRating(filtered),
+        calculateNPS(filtered))
+  }
+
+  /**
+   * Returns a list of facilitators with most number of events in last six months
+   * @param events List of events
+   */
+  protected def findTopFacilitators(events: List[Event]): List[(Long, String, Int)] = {
+    events.filter(_.schedule.end.isBefore(LocalDate.now)).
+      map(_.facilitators).flatten.
+      groupBy(_.id.get).map(y => (y._1, y._2.head.fullName, y._2.length)).toList.
+      sortBy(_._3).takeRight(TOP_LIMIT).reverse
+  }
+
+  /**
+   * Returns average rating for the given events
+   * @param events List of events
+   */
+  protected def calculateAverageRating(events: List[Event]): Float =
+    events.foldRight(0.0f)(_.rating + _) / events.length
+
+  /**
+   * Returns NPS for evaluations of the given events
+   * @param events List of events
+   */
+  protected def calculateNPS(events: List[Event]): Float = {
+    val evaluations = evaluationService.findByEvents(events.map(_.id.get))
+    if (evaluations.nonEmpty) {
+      val promoters = evaluations.filter(_.impression >= 9).length
+      val detractors = evaluations.filter(_.impression <= 6).length
+      (promoters - detractors) / evaluations.length.toFloat * 100
+    } else {
+      0.0f
+    }
+  }
+
+  /**
+   * Return confirmed events happened in the last six months or scheduled events
+   * @param events List of events
+   */
+  protected def filterByActivityRange(events: List[Event]): List[Event] =
+    filterLastSixMonths(events) ::: filterFuture(events)
+
+  /**
+   * Returns list of confirmed events happened in the last month
+   * @param events List of events
+   */
+  protected def filterLastMonth(events: List[Event]): List[Event] = events.
+    filter(_.confirmed).
+    filter(x => lastMonth.contains(x.schedule.start.toDate.getTime) ||
+      lastMonth.contains(x.schedule.end.toDate.getTime))
+
+  /**
+   * Returns list of confirmed events happened in last six months
+   * @param events List of events
+   */
+  protected def filterLastSixMonths(events: List[Event]): List[Event] = events.
+    filter(_.schedule.end.isAfter(LocalDate.now.minusMonths(6))).
+    filter(_.schedule.end.isBefore(LocalDate.now)).
+    filter(_.confirmed)
+
+  /**
+   * Returns list of future events
+   * @param events List of events
+   */
+  protected def filterFuture(events: List[Event]): List[Event] =
+    events.filter(_.schedule.start.isAfter(LocalDate.now()))
+
+  protected def lastMonth: Interval = new Interval(
+    LocalDate.now().minusMonths(1).withDayOfMonth(1).toDate.getTime,
+    LocalDate.now().withDayOfMonth(1).minusDays(1).toDate.getTime)
 
   /**
    * Returns accumulated number of events per quarter starting from the first event

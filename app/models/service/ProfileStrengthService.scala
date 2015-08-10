@@ -44,6 +44,19 @@ class ProfileStrengthService {
         filter(_.org === org).firstOption
     }
 
+  /**
+   * Returns list of profile strength objects for the given persons/orgs
+   *
+   * @param objectIds List of person or organisation identifiers
+   * @param org If true, objectIds are organisation identifiers
+   */
+  def find(objectIds: List[Long], org: Boolean): List[ProfileStrength] =
+    DB.withSession { implicit session ⇒
+      TableQuery[ProfileStrengths].
+        filter(_.org === org).
+        filter(_.objectId inSet objectIds).list
+    }
+
   def update(strength: ProfileStrength): ProfileStrength = {
     DB.withSession { implicit session ⇒
       TableQuery[ProfileStrengths].

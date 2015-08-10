@@ -88,7 +88,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           .filter(_.schedule.end.toString < LocalDate.now().toString)
           .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
         val evaluations = evaluationService
-          .findByEvents(pastEvents.map(_.id.get))
+          .findByEventsWithParticipants(pastEvents.map(_.id.get))
           .sortBy(_._3.created.toString())(Ordering[String].reverse)
           .slice(0, 10)
         Ok(views.html.dashboard.index(user,
