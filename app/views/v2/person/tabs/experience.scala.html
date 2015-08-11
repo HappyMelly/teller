@@ -18,7 +18,6 @@
     <h3>Studies, Posts and Video Materials</h3>
     <p>Promote yourself on <a href="http://management30.com/facilitator"
       target="_blank">management30.com</a> by adding links to your case studies, articles or video materials.</p>
-    @if(experiences.length > 0) {
       <table id="experiences" class="table">
         <thead>
           <tr>
@@ -42,9 +41,8 @@
           }
         </tbody>
       </table>
-    }
     @dynamic(handler, "person", "edit") {
-      <form id="addExperienceFrom" class="form-inline" method="POST"
+      <form id="addExperienceForm" class="form-inline" method="POST"
         action="@CSRF(routes.Experiences.create(person.id.get))">
         <select name="type" id="linkType" class="form-control input-sm">
           <option value="article">Article</option>

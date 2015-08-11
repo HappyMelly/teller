@@ -177,9 +177,11 @@ function deleteEndorsement(endorsementId) {
 }
 
 function initializeExperienceTabActions() {
-    $('#addExperienceFrom').submit(function(e) {
+    $('#addExperienceForm').submit(function(e) {
+        var that = $(this);
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
             addExperience(data.id, data.personId, data.linkType, data.link);
+            $(that).trigger('reset');
         }).fail(function(jqXHR, status, error) {
             if (status == "error") {
                 var error = JSON.parse(jqXHR.responseText);

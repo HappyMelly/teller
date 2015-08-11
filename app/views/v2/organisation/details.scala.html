@@ -90,11 +90,9 @@
               <li class="subgroup">Membership
                 <ul class="nav">
                   <li><a href="#membership" role="tab">Membership</a></li>
-                  @if(!member.funder) {
-                    <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-                      href="#experiments" role="tab">
-                      Experiments</a></li>
-                  }
+                  <li><a data-href="@routes.Experiments.experiments(member.id.get)"
+                    href="#experiments" role="tab">
+                    Experiments</a></li>
                 </ul>
               </li>
             }
