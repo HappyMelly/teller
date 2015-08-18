@@ -158,7 +158,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
     recipients: Set[Person])(implicit request: RequestHeader): Unit = {
     val subject = s"${activity.description} - ${entry.summary}"
     email.send(recipients.filter(_.active), None, None, subject,
-      mail.html.booking(entry, changes).toString,
+      mail.templates.html.booking(entry, changes).toString,
       richMessage = true)
   }
 

@@ -25,38 +25,38 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.Experiences
+import controllers.Materials
 import helpers._
 import models.Person
-import models.Experience
+import models.Material
 import models.service.PersonService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import stubs._
 
-class ExperiencesSpec extends PlayAppSpec with IsolatedMockFactory {
+class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
 
   When the given person is not found
-    during experience creation an error should be returned               $e1
+    during material creation an error should be returned               $e1
 
-  Given a experience has an empty link when the experience is being added
+  Given a material has an empty link when the material is being added
     then an error should be returned                                     $e2
 
-  Given a experience has unknown type when the experience is being added
+  Given a material has unknown type when the material is being added
     then it should get 'Article' type                                      $e3
 
-  When the experience is being deleted
+  When the material is being deleted
     successful response should be always returned                        $e4
   """
 
-  class TestExperiences extends Experiences(FakeRuntimeEnvironment)
+  class TestMaterials extends Materials(FakeRuntimeEnvironment)
     with FakeServices
     with FakeSecurity
 
-  val controller = new TestExperiences
+  val controller = new TestMaterials
   val personService = mock[PersonService]
   controller.personService_=(personService)
 
@@ -82,8 +82,8 @@ class ExperiencesSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     val person = PersonHelper.one
     (personService.find(_: Long)) expects 1L returning Some(person)
-    val experience = Experience(None, 1L, "article", "http://test.com")
-    (personService.insertExperience _) expects experience returning experience.copy(id = Some(1L))
+    val material = Material(None, 1L, 0, "article", "http://test.com")
+    (personService.insertMaterial _) expects material returning material.copy(id = Some(1L))
     val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "blabla", "url" -> "http://test.com")
     val res = controller.create(1L).apply(req)
@@ -91,7 +91,7 @@ class ExperiencesSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (personService.deleteExperience _) expects (2L, 1L)
+    (personService.deleteMaterial _) expects (2L, 1L)
     val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }

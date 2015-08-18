@@ -25,7 +25,7 @@ package controllers
 
 import models.ActiveUser
 import models.UserRole.DynamicRole
-import models.Experience
+import models.Material
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
@@ -33,15 +33,15 @@ import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 import securesocial.core.RuntimeEnvironment
 
-class Experiences(environment: RuntimeEnvironment[ActiveUser])
+class Materials(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
     with Services
     with Security {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
-  implicit val ExperienceWrites = new Writes[Experience] {
-    def writes(link: Experience): JsValue = {
+  implicit val MaterialWrites = new Writes[Material] {
+    def writes(link: Material): JsValue = {
       Json.obj(
         "personId" -> link.personId,
         "linkType" -> link.linkType.capitalize,
@@ -51,42 +51,43 @@ class Experiences(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Adds new experience if the link is valid
+   * Adds new material if the link is valid
    *
    * @param personId Person identifier
    */
   def create(personId: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { brand ⇒
+        personService.find(personId) map { person ⇒
           val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
           form.bindFromRequest.fold(
             error ⇒ jsonBadRequest("Link cannot be empty"),
-            experienceData ⇒ {
-              val experience = Experience(None,
+            materialData ⇒ {
+              val material = Material(None,
                 personId,
-                experienceData._1,
-                experienceData._2)
-              val insertedLink = personService.insertExperience(
-                Experience.updateType(experience))
+                0,
+                materialData._1,
+                materialData._2)
+              val insertedLink = personService.insertMaterial(
+                Material.updateType(material))
               jsonOk(Json.toJson(insertedLink))
             })
         } getOrElse jsonNotFound(Messages("error.person.notFound"))
   }
 
   /**
-   * Deletes the given experience if the experience exists and is belonged to
+   * Deletes the given material if the material exists and is belonged to
    * the given person
    *
    * Person identifier is used to check access rights
    *
    * @param personId Person identifier
-   * @param id Experience identifier
+   * @param id Material identifier
    */
   def remove(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        personService.deleteExperience(personId, id)
+        personService.deleteMaterial(personId, id)
         jsonSuccess("ok")
   }
 

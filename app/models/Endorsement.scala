@@ -24,22 +24,9 @@
 
 package models
 
-case class Experience(id: Option[Long],
+case class Endorsement(id: Option[Long],
   personId: Long,
-  linkType: String,
-  link: String)
-
-object Experience {
-
-  /**
-   * Returns the given link with updated type
-   *
-   * @param link Experience object
-   */
-  def updateType(link: Experience): Experience = {
-    link.linkType match {
-      case "video" | "article" | "casestudy" ⇒ link
-      case _ ⇒ link.copy(linkType = "article")
-    }
-  }
-}
+  brandId: Long,
+  content: String,
+  name: String,
+  company: Option[String] = None)

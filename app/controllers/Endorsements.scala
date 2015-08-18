@@ -92,10 +92,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           form.bindFromRequest.fold(
             error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, error)),
             endorsementData ⇒ {
-              val endorsement = Endorsement(None, personId,
+              val endorsement = Endorsement(None, personId, 0,
                 endorsementData.content, endorsementData.name,
                 endorsementData.company)
-              val endorsementWithId = personService.insertEndorsement(endorsement)
+              personService.insertEndorsement(endorsement)
               val url = routes.People.details(personId).url + "#experience"
               Redirect(url)
             })
@@ -130,7 +130,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         form.bindFromRequest.fold(
           error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, error)),
           endorsementData ⇒ {
-            val endorsement = Endorsement(Some(id), personId,
+            val endorsement = Endorsement(Some(id), personId, 0,
               endorsementData.content, endorsementData.name,
               endorsementData.company)
             personService.updateEndorsement(endorsement)

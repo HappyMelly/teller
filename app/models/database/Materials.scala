@@ -21,25 +21,23 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.unit
 
-import models._
-import org.specs2.mutable._
+package models.database
 
-class ExperienceSpec extends Specification {
+import models.Material
+import play.api.db.slick.Config.driver.simple._
 
-  "When link type is valid" >> {
-    "it's not changed" in {
-      val experience = Experience(None, 1L, "video", "http://test.com")
-      Experience.updateType(experience).linkType must_== "video"
-      Experience.updateType(experience.copy(linkType = "article")).linkType must_== "article"
-      Experience.updateType(experience.copy(linkType = "casestudy")).linkType must_== "casestudy"
-    }
-  }
-  "When link type is invalid" >> {
-    "it should be converted to 'article'" in {
-      val experience = Experience(None, 1L, "invalid", "http://test.com")
-      Experience.updateType(experience).linkType must_== "article"
-    }
-  }
+/**
+ * Connects Material object with its database representation
+ */
+private[models] class Materials(tag: Tag) extends Table[Material](tag, "MATERIAL") {
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def personId = column[Long]("PERSON_ID")
+  def brandId = column[Long]("BRAND_ID")
+  def linkType = column[String]("LINK_TYPE", O.DBType("VARCHAR(10)"))
+  def link = column[String]("LINK", O.DBType("VARCHAR(254)"))
+
+  def * = (id.?, personId, brandId, linkType, link) <> (
+    (Material.apply _).tupled, Material.unapply)
+
 }

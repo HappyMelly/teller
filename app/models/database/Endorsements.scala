@@ -35,11 +35,12 @@ private[models] class Endorsements(tag: Tag)
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Long]("PERSON_ID")
+  def brandId = column[Long]("BRAND_ID")
   def content = column[String]("CONTENT")
   def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
   def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
 
-  def * = (id.?, personId, content, name,
+  def * = (id.?, personId, brandId, content, name,
     company) <> (Endorsement.tupled, Endorsement.unapply)
 
   def forUpdate = (content, name, company)

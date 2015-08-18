@@ -76,7 +76,7 @@ trait Enrollment extends Controller
     val shortName = org map (_.name) getOrElse person.firstName
     email.send(Set(person),
       subject = "Welcome to Happy Melly network",
-      body = mail.html.welcome(fullUrl(url), member.profileUrl, shortName).toString(),
+      body = mail.templates.html.welcome(fullUrl(url), member.profileUrl, shortName).toString(),
       richMessage = true)
   }
 

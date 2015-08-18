@@ -26,7 +26,7 @@ package models.integration
 
 import helpers.{ MemberHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.{ UserAccount, ProfileType, Member, Experience, Endorsement }
+import models.{ UserAccount, ProfileType, Member, Material, Endorsement }
 import models.payment.Record
 import models.service.{ SocialProfileService, PaymentRecordService, PersonService, UserAccountService }
 import org.joda.money.CurrencyUnit._
@@ -42,9 +42,9 @@ class PersonServiceSpec extends PlayAppSpec {
     addPeople()
     add()
 
-    val links = List(Experience(None, 1L, "video", "http://test.com"),
-      Experience(None, 1L, "blog", "http://test1.com"))
-    links.foreach(PersonService.get.insertExperience(_))
+    val links = List(Material(None, 1L, 0, "video", "http://test.com"),
+      Material(None, 1L, 0, "blog", "http://test1.com"))
+    links.foreach(PersonService.get.insertMaterial(_))
     val endorsements = List(Endorsement(None, 1L, "", "nikolai"),
       Endorsement(None, 1L, "", "viktor"))
     endorsements.foreach(PersonService.get.insertEndorsement(_))
@@ -94,24 +94,24 @@ class PersonServiceSpec extends PlayAppSpec {
     }
   }
 
-  "Method experiences" should {
-    "return 2 experiences for person with id = 1" in {
-      val experiences = service.experiences(1L)
-      experiences.length must_== 2
-      experiences.exists(_.link == "http://test.com") must_== true
-      experiences.exists(_.link == "http://test1.com") must_== true
+  "Method materials" should {
+    "return 2 materials for person with id = 1" in {
+      val materials = service.materials(1L)
+      materials.length must_== 2
+      materials.exists(_.link == "http://test.com") must_== true
+      materials.exists(_.link == "http://test1.com") must_== true
     }
-    "return 0 experiences for person with id = 2" in {
-      val experiences = service.experiences(2L)
-      experiences.length must_== 0
+    "return 0 materials for person with id = 2" in {
+      val materials = service.materials(2L)
+      materials.length must_== 0
     }
   }
-  "Method deleteExperience" should {
+  "Method deleteMaterial" should {
     "delete link with id = 1 from database" in {
-      service.deleteExperience(1L, 1L)
-      val experiences = service.experiences(1L)
-      experiences.length must_== 1
-      experiences.exists(_.link == "http://test1.com") must_== true
+      service.deleteMaterial(1L, 1L)
+      val materials = service.materials(1L)
+      materials.length must_== 1
+      materials.exists(_.link == "http://test1.com") must_== true
     }
   }
 

@@ -189,7 +189,8 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
-        val facilitator = (licenseService.licenses(id).length > 0)
+        val licenses = licenseService.licenses(id)
+        val facilitator = (licenses.length > 0)
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
@@ -269,9 +270,9 @@ class People(environment: RuntimeEnvironment[ActiveUser])
           case "experience" ⇒
             personService.find(id) map { person ⇒
               val endorsements = personService.endorsements(id)
-              val experiences = personService.experiences(id).sortBy(_.linkType)
-              Ok(views.html.v2.person.tabs.experience(person,
-                endorsements, experiences))
+              val materials = personService.materials(id).sortBy(_.linkType)
+              Ok(views.html.v2.person.tabs.experience(person, 0,
+                endorsements, materials))
             } getOrElse NotFound("Person not found")
           case "facilitation" ⇒
             personService.find(id) map { person ⇒

@@ -340,7 +340,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           cert.generateAndSend(x, approver)
           data.copy(certificate = Some(cert.id), issued = cert.issued).update
         } else if (data.certificate.isEmpty) {
-          val body = mail.evaluation.html.approvedNoCert(x.brand, ev.participant, approver).toString()
+          val body = mail.templates.evaluation.html.approvedNoCert(x.brand, ev.participant, approver).toString()
           val subject = s"Your ${x.brand.name} event's evaluation approval"
           email.send(Set(ev.participant),
             Some(event.facilitators.toSet),
@@ -369,7 +369,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       email.send(Set(participant),
         Some(event.facilitators.toSet),
         Some(bcc.toSet), subject,
-        mail.evaluation.html.rejected(x.brand, participant, rejector).toString(),
+        mail.templates.evaluation.html.rejected(x.brand, participant, rejector).toString(),
         richMessage = true)
     }
   }

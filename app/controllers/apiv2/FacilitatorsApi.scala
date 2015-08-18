@@ -24,7 +24,7 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
-import models.{ Brand, PeopleCollection, Person, Endorsement, Experience }
+import models.{ Brand, PeopleCollection, Person, Endorsement, Material }
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Languages
@@ -81,17 +81,17 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
     }
   }
 
-  implicit val experienceWrites = new Writes[Experience] {
-    def writes(experience: Experience) = {
+  implicit val materialWrites = new Writes[Material] {
+    def writes(material: Material) = {
       Json.obj(
-        "type" -> experience.linkType,
-        "link" -> experience.link)
+        "type" -> material.linkType,
+        "link" -> material.link)
     }
   }
 
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
-    experiences: List[Experience])
+    materials: List[Material])
 
   implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
     def writes(view: FacilitatorView) = {
@@ -115,7 +115,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "organizations" -> view.person.organisations,
         "licenses" -> view.person.licenses,
         "endorsements" -> view.endorsements,
-        "experiences" -> view.experiences)
+        "materials" -> view.materials)
     }
   }
 
@@ -134,8 +134,8 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         }
         person map { person =>
           val endorsements = personService.endorsements(person.id.get)
-          val experiences = personService.experiences(person.id.get)
-          jsonOk(Json.toJson(FacilitatorView(person, endorsements, experiences)))
+          val materials = personService.materials(person.id.get)
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials)))
         } getOrElse NotFound
   }
 }

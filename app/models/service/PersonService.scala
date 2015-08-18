@@ -65,18 +65,18 @@ class PersonService extends Services {
   }
 
   /**
-   * Deletes experience from database
+   * Deletes material from database
    *
    * Person identifier is for security reasons. If a user passes security
-   * check for the person, the user cannot delete experiences which aren't belonged to
+   * check for the person, the user cannot delete materials which aren't belonged to
    * another person.
    *
    * @param personId Person identifier
-   * @param id Experience identifier
+   * @param id Material identifier
    */
-  def deleteExperience(personId: Long, id: Long): Unit = DB.withSession {
+  def deleteMaterial(personId: Long, id: Long): Unit = DB.withSession {
     implicit session ⇒
-      TableQuery[Experiences].
+      TableQuery[Materials].
         filter(_.id === id).
         filter(_.personId === personId).delete
   }
@@ -120,16 +120,6 @@ class PersonService extends Services {
   def endorsements(personId: Long): List[Endorsement] = DB.withSession {
     implicit session ⇒
       TableQuery[Endorsements].filter(_.personId === personId).list
-  }
-
-  /**
-   * Return list of experiences for the given person
-   *
-   * @param personId Person identifier
-   */
-  def experiences(personId: Long): List[Experience] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Experiences].filter(_.personId === personId).list
   }
 
 
@@ -184,15 +174,15 @@ class PersonService extends Services {
     }
 
   /**
-   * Inserts the given experience to database
+   * Inserts the given material to database
    *
-   * @param experience Brand experience
+   * @param material Brand material
    */
-  def insertExperience(experience: Experience): Experience = DB.withSession {
+  def insertMaterial(material: Material): Material = DB.withSession {
     implicit session ⇒
-      val experiences = TableQuery[Experiences]
-      val id = (experiences returning experiences.map(_.id)) += experience
-      experience.copy(id = Some(id))
+      val materials = TableQuery[Materials]
+      val id = (materials returning materials.map(_.id)) += material
+      material.copy(id = Some(id))
   }
 
   /**
@@ -242,6 +232,16 @@ class PersonService extends Services {
     TableQuery[Members].
       filter(_.objectId === id).
       filter(_.person === true).firstOption
+  }
+
+  /**
+   * Return list of materials for the given person
+   *
+   * @param personId Person identifier
+   */
+  def materials(personId: Long): List[Material] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Materials].filter(_.personId === personId).list
   }
 
   /**

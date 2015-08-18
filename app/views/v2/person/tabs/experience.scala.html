@@ -1,6 +1,7 @@
 @(person: Person,
+  brandId: Long,
   endorsements: List[Endorsement],
-  experiences: List[Experience])(implicit request: Request[Any],
+  materials: List[Material])(implicit request: Request[Any],
   handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
@@ -18,7 +19,7 @@
     <h3>Studies, Posts and Video Materials</h3>
     <p>Promote yourself on <a href="http://management30.com/facilitator"
       target="_blank">management30.com</a> by adding links to your case studies, articles or video materials.</p>
-      <table id="experiences" class="table">
+      <table id="materials" class="table">
         <thead>
           <tr>
             <th>Type</th>
@@ -27,14 +28,14 @@
           </tr>
         </thead>
         <tbody>
-          @for(experience <- experiences) {
-            <tr data-id="@experience.id.get" data-personid="@experience.personId">
-              <td>@experience.linkType.capitalize</td>
-              <td><a href="@experience.link" target="_blank">@experience.link</td>
+          @for(material <- materials) {
+            <tr data-id="@material.id.get" data-personid="@material.personId">
+              <td>@material.linkType.capitalize</td>
+              <td><a href="@material.link" target="_blank">@material.link</td>
               <td>
                 @dynamic(handler, "person", "edit") {
-                  <a data-id="@experience.id.get" href="#" class="remove font-sm"
-                    data-href="@routes.Experiences.remove(person.id.get, experience.id.get)">Delete</a>
+                  <a data-id="@material.id.get" href="#" class="remove font-sm"
+                    data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
                 }
               </td>
             </tr>
@@ -42,8 +43,9 @@
         </tbody>
       </table>
     @dynamic(handler, "person", "edit") {
-      <form id="addExperienceForm" class="form-inline" method="POST"
-        action="@CSRF(routes.Experiences.create(person.id.get))">
+      <form id="addMaterialForm" class="form-inline" method="POST"
+        action="@CSRF(routes.Materials.create(person.id.get))">
+        <input type="hidden" name="brandId" value="@brandId"/>
         <select name="type" id="linkType" class="form-control input-sm">
           <option value="article">Article</option>
           <option value="casestudy">Case Study</option>

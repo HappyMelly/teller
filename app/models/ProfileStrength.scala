@@ -188,4 +188,16 @@ object ProfileStrength {
       strengthWithPhoto.markIncomplete("signature")
   }
 
+  /**
+   * Calculates ranks for the given profiles
+   * Rank is a percent of profiles which the current profile is better of.
+   *
+   * @param profiles Profiles of interest
+   * @return returns list of the given profiles with their ranks
+   */
+  def calculateRanks(strengths: List[ProfileStrength]): List[(ProfileStrength, Float)] = {
+    strengths.
+      map(x => (x, strengths.filter(_.progress <= x.progress).length)).
+      map(x => (x._1, x._2.toFloat / strengths.length * 100))
+  }
 }

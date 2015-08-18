@@ -264,7 +264,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * @param events List of events
    */
   protected def calculateAverageRating(events: List[Event]): Float =
-    events.foldRight(0.0f)(_.rating + _) / events.length
+    events.foldRight(0.0f)(_.rating + _) / events.filter(_.rating > 0.01).length
 
   /**
    * Returns NPS for evaluations of the given events

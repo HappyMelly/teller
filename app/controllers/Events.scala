@@ -507,7 +507,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
                 val subject = s"Evaluation Request"
                 email.send(Set(participant), None, None, subject,
-                  mail.evaluation.html.request(brand, participant, body).toString(), richMessage = true)
+                  mail.templates.evaluation.html.request(brand, participant, body).toString(), richMessage = true)
               }
 
               val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
@@ -607,7 +607,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
       val subject = s"${activity.description} event"
       email.send(recipients.toSet, None, None, subject,
-        mail.html.event(event, x.brand, changes).toString, richMessage = true)
+        mail.templates.html.event(event, x.brand, changes).toString, richMessage = true)
     }
   }
 

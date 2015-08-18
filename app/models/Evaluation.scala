@@ -181,7 +181,7 @@ case class Evaluation(
     val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
       Some(cc.toSet), None, subject,
-      mail.html.evaluation(this, participant, en).toString(), richMessage = true)
+      mail.templates.html.evaluation(this, participant, en).toString(), richMessage = true)
 
     this
   }
@@ -200,7 +200,7 @@ case class Evaluation(
       getOrElse("https://" + defaultHook).
       concat(this.confirmationId getOrElse "")
     email.send(Set(participant), None, None, subject,
-      mail.evaluation.html.confirm(brand, participant.fullName, url).toString(),
+      mail.templates.evaluation.html.confirm(brand, participant.fullName, url).toString(),
       richMessage = true)
     this
   }

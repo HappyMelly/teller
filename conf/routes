@@ -90,8 +90,8 @@ GET           /evaluation/:id/delete                                         @co
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                            @controllers.Evaluations.confirm(confirmationId: String)
 
-POST         /person/:personId/experience                                    @controllers.Experiences.create(personId: Long)
-DELETE       /person/:personId/experience/:id                                @controllers.Experiences.remove(personId: Long, id: Long)
+POST         /person/:personId/material                                      @controllers.Materials.create(personId: Long)
+DELETE       /person/:personId/material/:id                                  @controllers.Materials.remove(personId: Long, id: Long)
 
 GET           /report/create/:brandId/event/:eventId/status/:status          @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 

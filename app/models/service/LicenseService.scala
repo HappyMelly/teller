@@ -35,6 +35,7 @@ import play.api.db.slick.DB
 class LicenseService extends Services {
 
   private val licenses = TableQuery[Licenses]
+
   /**
    * Adds the given license to database and updates all related tables
    * @param license License
@@ -99,6 +100,17 @@ class LicenseService extends Services {
       query.filter(_._1.brandId inSet brands).list
         .map(v ⇒ LicenseLicenseeView(v._1, v._2))
         .sortBy(_.licensee.fullName)
+  }
+
+  /**
+   * Returns list of active licenses
+   */
+  def findActive: List[License] = DB.withSession {
+    implicit session ⇒
+      licenses
+        .filter(_.start <= LocalDate.now())
+        .filter(_.end >= LocalDate.now())
+        .list
   }
 
   /**

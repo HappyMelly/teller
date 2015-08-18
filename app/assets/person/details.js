@@ -134,53 +134,53 @@ function deleteExperiment(experimentId, url) {
 }
 
 /**
- * Updates the view after the experience was added
- * @param experienceId {int} Experience id
+ * Updates the view after the material was added
+ * @param materialId {int} Experience id
  * @param personId {int} Person id
- * @param experienceType {string} experience type
- * @param experience {string} experience
+ * @param materialType {string} material type
+ * @param material {string} material
  */
-function addExperience(experienceId, personId, experienceType, experience) {
-    $('#experiences').append(
+function addMaterial(materialId, personId, materialType, material) {
+    $('#materials').append(
         $('<tr>')
-            .attr('data-id', experienceId)
+            .attr('data-id', materialId)
             .attr('data-personid', personId)
-            .append($('<td>').append(experienceType))
+            .append($('<td>').append(materialType))
             .append($('<td>')
                 .append($('<a>')
-                    .attr('href', experience)
-                    .append(experience)))
+                    .attr('href', material)
+                    .append(material)))
             .append($('<td>')
                 .append($('<a>')
                     .append('Delete')
                     .addClass('remove font-sm')
                     .attr('href', '#')
-                    .attr('data-id', experienceId)
-                    .attr('data-href', jsRoutes.controllers.Experiences.remove(personId, experienceId).url)))
+                    .attr('data-id', materialId)
+                    .attr('data-href', jsRoutes.controllers.Materials.remove(personId, materialId).url)))
     );
 }
 
 /**
- * Updates the view after the experiece was deleted
- * @param experienceId {int} Experience id
+ * Updates the view after the material was deleted
+ * @param materialId {int} Material id
  */
-function deleteExperience(experienceId) {
-    $('tr[data-id="' + experienceId + '"]').remove();
+function deleteMaterial(materialId) {
+    $('tr[data-id="' + materialId + '"]').remove();
 }
 
 /**
  * Updates the view after the endorsement was deleted
- * @param experienceId {int} Experience id
+ * @param endorsementId {int} Endorsement id
  */
 function deleteEndorsement(endorsementId) {
     $('.endorsement').find('div[data-id="' + endorsementId + '"]').remove();
 }
 
 function initializeExperienceTabActions() {
-    $('#addExperienceForm').submit(function(e) {
+    $('#addMaterialForm').submit(function(e) {
         var that = $(this);
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
-            addExperience(data.id, data.personId, data.linkType, data.link);
+            addMaterial(data.id, data.personId, data.linkType, data.link);
             $(that).trigger('reset');
         }).fail(function(jqXHR, status, error) {
             if (status == "error") {
@@ -194,14 +194,14 @@ function initializeExperienceTabActions() {
         // Prevent the form from submitting with the default action
         return false;
     });
-    $('#experiences').on('click', 'a.remove', function(e) {
-        var experienceId = $(this).data('id');
+    $('#materials').on('click', 'a.remove', function(e) {
+        var materialId = $(this).data('id');
         $.ajax({
             type: "DELETE",
             url: $(this).data('href'),
             dataType: "json"
         }).done(function(data) {
-            deleteExperience(experienceId, name);
+            deleteMaterial(materialId, name);
         }).fail(function(jqXHR, status, error) {
             if (status == "error") {
                 var error = JSON.parse(jqXHR.responseText);

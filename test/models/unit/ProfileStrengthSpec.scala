@@ -225,6 +225,47 @@ class ProfileStrengthSpec extends Specification {
       incompleteStep("signature", profileStrength(), person) must_== false
     }
   }
+  "The distribution of ranks" should {
+    val strengths = List(
+      profileStrength(about = true, photo = true, signature = true, social = true), //25
+      profileStrength(about = true, photo = true, signature = true, social = true), //25
+      profileStrength(about = false, photo = true, signature = true, social = true), //20
+      profileStrength(about = false, photo = true, signature = true, social = true), //20
+      profileStrength(about = false, photo = true, signature = true, social = true), //20
+      profileStrength(about = true, photo = false, signature = true, social = true), //15
+      profileStrength(about = true, photo = false, signature = true, social = true), //15
+      profileStrength(about = true, photo = false, signature = true, social = true), //15
+      profileStrength(about = false, photo = false, signature = true, social = true), //10
+      profileStrength(about = false, photo = false, signature = true, social = true), //10
+      profileStrength(about = false, photo = false, signature = true, social = true), //10
+      profileStrength(about = false, photo = false, signature = true, social = true), //10
+      profileStrength(about = false, photo = false, signature = true, social = true), //10
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(about = false, photo = false, signature = false, social = true), //5
+      profileStrength(), //0
+      profileStrength(), //0
+      profileStrength(), //0
+      profileStrength(), //0
+      profileStrength() //0
+      )
+    "contain 0 profiles with a rank lower 15" in {
+      ProfileStrength.calculateRanks(strengths).filter(_._2 < 15).length must_== 0
+    }
+    "contain 12 profiles with a rank lower 50" in {
+      ProfileStrength.calculateRanks(strengths).filter(_._2 < 50).length must_== 12
+    }
+    "contain 17 profiles with a rank lower 80" in {
+      ProfileStrength.calculateRanks(strengths).filter(_._2 < 80).length must_== 17
+    }
+    "contain 23 profiles with a rank lower 100" in {
+      ProfileStrength.calculateRanks(strengths).filter(_._2 < 100).length must_== 23
+    }
+  }
 
   protected def incompleteStep(name: String,
     strength: ProfileStrength,

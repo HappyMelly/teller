@@ -24,8 +24,23 @@
 
 package models
 
-case class Endorsement(id: Option[Long],
+case class Material(id: Option[Long],
   personId: Long,
-  content: String,
-  name: String,
-  company: Option[String] = None)
+  brandId: Long,
+  linkType: String,
+  link: String)
+
+object Material {
+
+  /**
+   * Returns the given link with updated type
+   *
+   * @param link Material object
+   */
+  def updateType(link: Material): Material = {
+    link.linkType match {
+      case "video" | "article" | "casestudy" ⇒ link
+      case _ ⇒ link.copy(linkType = "article")
+    }
+  }
+}
