@@ -25,9 +25,9 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
+import mail.reminder.{ ProfileStrengthReminder, EventReminder }
 import services.{TellerRoutesService, LoginIdentityService}
-import models.{ProfileStrength, ActiveUser}
-import models.service.{ EventService, LicenseService, ProfileStrengthService }
+import models.ActiveUser
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
@@ -137,7 +137,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     Akka.system.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
-        EventService.get.sendConfirmationAlert()
+        EventReminder.sendConfirmation()
       }
   }
 
@@ -152,11 +152,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     Akka.system.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(30, TimeUnit.DAYS)) {
-        val licenses = LicenseService.get.findActive
-        val profiles = ProfileStrengthService.get.
-          find(licenses.map(_.licenseeId).distinct, false)
-        val withRanks = ProfileStrength.calculateRanks(profiles).filter(_._1.progress < 100)
-
+        ProfileStrengthReminder.sendToFacilitators()
       }
   }
 }

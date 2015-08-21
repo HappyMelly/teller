@@ -66,14 +66,14 @@ class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
    */
   protected def initializeProfileStrength(person: Person): ProfileStrength = {
     val id = person.id.get
-    val strength = ProfileStrength.empty(id, false)
+    val strength = ProfileStrength.empty(id, org = false)
     val strengthWithMember = if (person.isMember)
       ProfileStrength.forMember(strength)
     else
       strength
-    val strengthWithFacilitator = if (licenseService.activeLicenses(id).length > 0) {
+    val strengthWithFacilitator = if (licenseService.activeLicenses(id).nonEmpty) {
       val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
-      if (facilitatorService.languages(person.id.get).length > 0)
+      if (facilitatorService.languages(person.id.get).nonEmpty)
         strengthWithLanguages.markComplete("language")
       else
         strengthWithLanguages

@@ -122,17 +122,6 @@ class PersonService extends Services {
       TableQuery[Endorsements].filter(_.personId === personId).list
   }
 
-
-  /**
-   * Returns endorsement if it exists
-   *
-   * @param endorsementId Endorsement identification
-   */
-  def findEndorsement(endorsementId: Long): Option[Endorsement] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Endorsements].filter(_.id === endorsementId).firstOption
-  }
-
   /**
    * Inserts new person object into database
    * @TEST
@@ -210,10 +199,38 @@ class PersonService extends Services {
   }
 
   /**
+   * Returns list of people for the given ids
+   *
+   * @param ids List of people identifiers
+   */
+  def find(ids: List[Long]): List[(Person, SocialProfile)] = DB.withSession {
+    implicit session =>
+      import models.database.SocialProfilesStatic._
+
+      val people = TableQuery[People]
+      val query = for {
+        person <- people if person.id inSet ids
+        profile <- TableQuery[SocialProfiles] if profile.objectType === ProfileType.Person &&
+          profile.objectId === person.id
+      } yield (person, profile)
+      query.list
+  }
+
+  /**
    * Returns a list of active people
    */
   def findActive: List[Person] = DB.withSession { implicit session ⇒
     TableQuery[People].filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+  }
+
+  /**
+   * Returns endorsement if it exists
+   *
+   * @param endorsementId Endorsement identification
+   */
+  def findEndorsement(endorsementId: Long): Option[Endorsement] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Endorsements].filter(_.id === endorsementId).firstOption
   }
 
   /** Returns list of people which are not members (yet!) */

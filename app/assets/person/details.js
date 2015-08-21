@@ -28,7 +28,7 @@ function switchActivePhoto(object) {
 }
 
 function updateReason() {
-    var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url
+    var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url;
     $.post(url, {reason: $('#reason').val()}, null, "json").done(function(data) {
         $('#reasonDialog').modal('hide');
         $('#reasonToJoin').html(data.message);
@@ -38,7 +38,7 @@ function updateReason() {
 }
 
 function updatePhoto() {
-    var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url
+    var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url;
     var object = $('#choosePhotoContent').find('.active');
     var type = $(object).attr('id');
     var name = "";
