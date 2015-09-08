@@ -42,7 +42,9 @@
         @person.address.postCode.map { addressLine =>
           @addressLine
         }
-        <br/>
+        @if(person.address.city.nonEmpty || person.address.province.nonEmpty || person.address.postCode.nonEmpty) {
+          <br/>
+        }
         @Messages("country." + person.address.countryCode)
       </address>
     </dd>
