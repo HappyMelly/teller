@@ -24,7 +24,7 @@
 package controllers
 
 import fly.play.s3.BucketFile
-import models.File
+import models.{ File, Image }
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
@@ -54,7 +54,7 @@ trait Files extends Controller {
   }
 
   /**
-   * Uploads file from form Amazon cloud
+   * Uploads file to Amazon cloud
    *
    * @param file File object
    * @param fieldName Name of a file field on the form
@@ -69,6 +69,39 @@ trait Files extends Controller {
         source.close()
         S3Bucket.add(BucketFile(file.name, file.fileType, byteArray)).map { unit ⇒
           Cache.remove(file.cacheKey)
+          true
+        }.recover {
+          case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))
+        }
+      } getOrElse Future.failed(new FileNotExist("File field does not exist"))
+    } getOrElse Future.failed(new RuntimeException("Please choose a file"))
+  }
+
+
+  /**
+   * Uploads picture to Amazon cloud
+   *
+   * @param image File object
+   * @param fieldName Name of a file field on the form
+   */
+  protected def uploadImage(image: Image, fieldName: String)(
+    implicit request: Request[AnyContent]): Future[Any] = {
+    request.body.asMultipartFormData.map { data ⇒
+      data.file(fieldName).map { picture ⇒
+        val source = com.sksamuel.scrimage.Image.fromFile(picture.ref.file)
+        val buckets = image.files.map { f =>
+          val height = if (source.ratio == 0.0)
+            0
+          else
+            (1 / source.ratio * f.width).toInt
+          val bytes = if (f.width > 0)
+            source.fit(f.width, height).bytes
+          else
+            source.bytes
+          S3Bucket.add(BucketFile(f.file.name, f.file.fileType, bytes))
+        }
+        Future.sequence(buckets).map { unit =>
+          image.files.foreach(f => Cache.remove(f.file.cacheKey))
           true
         }.recover {
           case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))

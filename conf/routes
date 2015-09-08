@@ -123,7 +123,7 @@ GET           /member/:id/experiment/:experimentId                           @co
 GET           /member/:id/experiments                                        @controllers.Experiments.experiments(id: Long)
 POST          /member/:id/experiment/:experimentId                           @controllers.Experiments.update(id: Long, experimentId: Long)
 
-GET           /experiment/:id/picture                                        @controllers.Experiments.picture(id: Long)
+GET           /experiment/:id/picture                                        @controllers.Experiments.picture(id: Long, size: String ?= "")
 
 POST          /facilitator/:id/country                                       @controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                      @controllers.Facilitators.addLanguage(id: Long)

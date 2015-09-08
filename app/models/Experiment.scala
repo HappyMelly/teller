@@ -32,7 +32,7 @@ case class Experiment(id: Option[Long],
 
 object Experiment {
 
-  def picture(id: Long): File =
-    File.image(s"experiments/$id", s"experiments.$id")
+  def picture(id: Long): Image =
+    Image(s"experiments/$id", s"experiments.$id")
 
 }

@@ -16,7 +16,8 @@ libraryDependencies ++=
     cache,
     ws,
     filters,
-    "com.andersen-gott" %% "scravatar" % "1.0.3",
+    "com.andersen-gott" %% "scravatar" % "1.0.3", //gravatar support
+    "com.sksamuel.scrimage" %% "scrimage-core" % "2.1.0", //image resizing
     "org.scalamock" %% "scalamock-specs2-support" % "3.2.1" % "test",
     "be.objectify" %% "deadbolt-scala" % "2.3.3",
     "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
@@ -34,7 +35,7 @@ libraryDependencies ++=
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
     "ws.securesocial" %% "securesocial" % "3.0-M3",
-    "nl.rhinofly" %% "play-s3" % "6.0.0"
+    "nl.rhinofly" %% "play-s3" % "6.0.0"  //s3 amazon support
   )
 
 resolvers += Resolver.sonatypeRepo("releases")

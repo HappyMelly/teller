@@ -78,7 +78,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
           experiment ⇒ {
             memberService.find(memberId) map { member ⇒
               val inserted = experimentService.insert(experiment.copy(memberId = memberId))
-              uploadFile(Experiment.picture(inserted.id.get), "file") map { _ ⇒
+              uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
                 experimentService.update(inserted.copy(picture = true))
               } recover {
                 case e: RuntimeException ⇒ Unit
@@ -163,7 +163,9 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Experiment identifier
    */
-  def picture(id: Long) = file(Experiment.picture(id))
+  def picture(id: Long, size: String = "") = {
+    file(Experiment.picture(id).file(size))
+  }
 
   /**
    * Updates the given member experiment if it's valid
@@ -180,7 +182,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
           experiment ⇒ {
             experimentService.find(id) map { existing ⇒
               memberService.find(memberId) map { member ⇒
-                uploadFile(Experiment.picture(existing.id.get), "file") map { _ ⇒
+                uploadImage(Experiment.picture(existing.id.get), "file") map { _ ⇒
                   experimentService.update(experiment.copy(id = Some(id),
                     memberId = memberId, picture = true))
                 } recover {
