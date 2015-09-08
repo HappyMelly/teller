@@ -114,7 +114,7 @@ $(document).ready( function() {
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "/participants/event/" + $("#currentEventId").attr('value'),
+            "url" : "/participants/event/" + $("#eventId").val(),
             "dataSrc": ""
         },
         "order": [[ 1, "asc" ]],

@@ -104,7 +104,8 @@
     }
   }
 
-    <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
+  <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
+  <input type="hidden" disabled id="eventId" value="@view.event.id"/>
   <div class="col-md-8">
     <div class="col-md-9">
       <dl class="dl-horizontal">
@@ -210,7 +211,7 @@
         <form method="POST" action="@CSRF(routes.Events.invoice(view.event.id.get))">
           <input type="hidden" name="id" value="@view.invoice.id">
           <input type="hidden" name="invoiceTo" id="invoiceTo" value="@view.invoice.invoiceTo">
-          <input type="hidden" name="eventId" id="eventId" value="@view.event.id">
+          <input type="hidden" name="eventId" value="@view.event.id">
           <div class="form-group" id="invoiceBy_field">
             <label for="invoiceBy" class="control-label">Invoiced By</label>
             <select name="invoiceBy" class="form-control" id="invoiceBy">
@@ -231,7 +232,6 @@
       }
     }
   </div>
-  <div id="currentEventId" value="@view.event.id"></div>
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="details">
       <li><a href="#description">Description</a></li>
