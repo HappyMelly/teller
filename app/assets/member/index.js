@@ -22,6 +22,32 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+/**
+ * Filter members by their type
+ */
+function filterByType(oSettings, aData, iDataIndex) {
+    var index = 2;
+    var filter = $('#type').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    return aData[index] == filter;
+}
+
+/**
+ * Filter members by their object type
+ */
+function filterByObjectType(oSettings, aData, iDataIndex) {
+    var index = 0;
+    var filter = $('#objectType').find(':selected').val();
+    if (filter == 'all') {
+        return true;
+    }
+    return aData[index].indexOf(filter) != -1;
+}
+$.fn.dataTableExt.afnFiltering.push(filterByType);
+$.fn.dataTableExt.afnFiltering.push(filterByObjectType);
+
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "url-text-pre": function ( a ) {
         var x = String(a).replace( /<[\s\S]*?>/g, "" );
@@ -41,16 +67,23 @@ $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "iDisplayLength": 25,
-            "asStripeClasses":[],
-            //"aaSorting": [],
-            "bLengthChange": false,
-            "order": [[ 1, "asc" ]],
-            "columnDefs": [
-                { "type": "url-text", targets: 1 }
-            ]
-        });
+    var memberTable = $('#people').dataTable({
+        "dom": '<"toolbar pull-left">frtip',
+        "iDisplayLength": 25,
+        "asStripeClasses":[],
+        //"aaSorting": [],
+        "bLengthChange": false,
+        "order": [[ 1, "asc" ]],
+        "columnDefs": [
+            { "type": "url-text", targets: 1 }
+        ]
+    });
+    $('div.toolbar').html($('#filter-containter').html());
+    $('#filter-containter').empty();
+    $('#type').on('change', function() {
+        memberTable.fnDraw();
+    });
+    $('#objectType').on('change', function() {
+        memberTable.fnDraw();
     });
 });

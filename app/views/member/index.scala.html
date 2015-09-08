@@ -12,7 +12,7 @@
 @main("Members", "members", user) {
 
   <div class="page-header">
-    <h2>Total Fee <span class="label label-success">@totalFee.toString</span>
+    <h2>Total Fee <i>@totalFee.toString</i>
       @restrict(handler, List(as(Editor.toString))) {
         <a class="btn btn-success pull-right" href="@routes.Members.add()">
           <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Member</a>
@@ -20,9 +20,6 @@
     </h2>
   </div>
   <div class="col-md-12">
-    @fee.map { f =>
-      Your Fee <span class="label label-info">@f.toString</span>
-    }
     @if(members.isEmpty) {
       <p>There are no members</p>
     } else {

@@ -1,6 +1,24 @@
 @(members: List[Member])(actions: (Member) => Html)
 
-<table id="people" class="datatables table table-bordered">
+<div id="filter-containter">
+  <div>
+    <div class="btn-group">
+      <select id="type" class="input-sm form-control">
+        <option value="all" selected>All</option>
+        <option value="funder">Funders</option>
+        <option value="supporter">Supporters</option>
+      </select>
+    </div>
+    <div class="btn-group">
+      <select id="objectType" class="input-sm form-control">
+        <option value="all">All</option>
+        <option value="home">Organisations</option>
+        <option value="user">People</option>
+      </select>
+    </div>
+  </div>
+</div>
+<table id="people" class="datatables table">
   <thead>
     <tr>
       <th></th>

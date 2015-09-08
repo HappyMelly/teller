@@ -193,8 +193,8 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * @param licenses List of licenses
    */
   protected def calculatedJoinedLeftNumbers(licenses: List[License]): (Int, Int) = {
-    (licenses.filter(x => lastMonth.contains(x.start.toDate.getTime)).length,
-      licenses.filter(x => lastMonth.contains(x.end.toDate.getTime)).length)
+    (licenses.count(x => lastMonth.contains(x.start.toDate.getTime)),
+      licenses.count(x => lastMonth.contains(x.end.toDate.getTime)))
   }
 
   /**
@@ -207,22 +207,22 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       filter(x => lastMonth.contains(x.start.toDate.getTime) ||
         lastMonth.contains(x.end.toDate.getTime))
 
-    (cancellations.filter(!_.free).length, cancellations.filter(_.free).length)
+    (cancellations.count(!_.free), cancellations.count(_.free))
   }
 
   /**
    * Returns number of paid and free future events
-   * @param event List of events
+   * @param events List of events
    */
   protected def calculateFutureEventsNumbers(events: List[Event]): (Int, Int) = {
     val futureEvents = filterFuture(events)
-    (futureEvents.filter(!_.free).length, futureEvents.filter(_.free).length)
+    (futureEvents.count(!_.free), futureEvents.count(_.free))
   }
 
   /**
    * Returns number of active organizers, active facilitators and a list
    * of top 10 most active facilitators
-   * @param event List of events
+   * @param events List of events
    */
   protected def activityRangeNumbers(events: List[Event]): (Int, List[(Long, String, Int)], Int) = {
     val filtered = filterByActivityRange(events)
@@ -242,8 +242,8 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     if (filtered.isEmpty)
       (0, 0, 0.0f, 0.0f)
     else
-      (filtered.filter(!_.free).length,
-        filtered.filter(_.free).length,
+      (filtered.count(!_.free),
+        filtered.count(_.free),
         calculateAverageRating(filtered),
         calculateNPS(filtered))
   }
@@ -254,7 +254,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   protected def findTopFacilitators(events: List[Event]): List[(Long, String, Int)] = {
     events.filter(_.schedule.end.isBefore(LocalDate.now)).
-      map(_.facilitators).flatten.
+      flatMap(_.facilitators).
       groupBy(_.id.get).map(y => (y._1, y._2.head.fullName, y._2.length)).toList.
       sortBy(_._3).takeRight(TOP_LIMIT).reverse
   }
@@ -263,8 +263,13 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * Returns average rating for the given events
    * @param events List of events
    */
-  protected def calculateAverageRating(events: List[Event]): Float =
-    events.foldRight(0.0f)(_.rating + _) / events.filter(_.rating > 0.01).length
+  protected def calculateAverageRating(events: List[Event]): Float = {
+    val numberOfEvents = events.count(_.rating > 0.01)
+    if (numberOfEvents == 0)
+      0.0f
+    else
+      events.foldRight(0.0f)(_.rating + _) / numberOfEvents
+  }
 
   /**
    * Returns NPS for evaluations of the given events
@@ -273,8 +278,8 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
   protected def calculateNPS(events: List[Event]): Float = {
     val evaluations = evaluationService.findByEvents(events.map(_.id.get))
     if (evaluations.nonEmpty) {
-      val promoters = evaluations.filter(_.impression >= 9).length
-      val detractors = evaluations.filter(_.impression <= 6).length
+      val promoters = evaluations.count(_.impression >= 9)
+      val detractors = evaluations.count(_.impression <= 6)
       (promoters - detractors) / evaluations.length.toFloat * 100
     } else {
       0.0f
@@ -315,7 +320,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
 
   protected def lastMonth: Interval = new Interval(
     LocalDate.now().minusMonths(1).withDayOfMonth(1).toDate.getTime,
-    LocalDate.now().withDayOfMonth(1).minusDays(1).toDate.getTime)
+    LocalDate.now().withDayOfMonth(1).toDate.getTime - 1)
 
   /**
    * Returns accumulated number of events per quarter starting from the first event
