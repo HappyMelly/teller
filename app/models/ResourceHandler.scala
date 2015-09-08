@@ -125,7 +125,7 @@ class ResourceHandler(user: ActiveUser)
    */
   protected def checkMemberPermission(user: ActiveUser, url: String): Boolean = {
     id(url) exists { memberId ⇒
-      if (user.person.member.exists(_.id == Some(memberId)))
+      if (user.account.editor || user.person.member.exists(_.id == Some(memberId)))
         true
       else
         memberService.find(memberId) exists { member ⇒
