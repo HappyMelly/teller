@@ -230,7 +230,7 @@ function initializeExperienceTabActions() {
         });
         return false;
     });
-    $('.endorsement').on('click', 'a.remove', function(e) {
+    $('.endorsements').on('click', 'a.remove', function(e) {
         var endorsementId = $(this).data('id');
         $.ajax({
             type: "DELETE",
@@ -247,6 +247,32 @@ function initializeExperienceTabActions() {
                 noty({text: msg, layout: 'bottom', theme: 'relax', type: 'error'});
             }
         });
+        return false;
+    });
+    var mouseState = 'up';
+    var timerId = 0;
+    $('.endorsement').on('mousedown', function(e) {
+        mouseState = 'down';
+        var className = 'selected';
+        $('.endorsement').removeClass(className);
+        $(this).addClass(className);
+        $('#toolTip').html($(this).find('.tooltip-content').html());
+        timerId = window.setTimeout(function() {
+            if (mouseState == 'down') {
+                $("#toolTip").css({top: e.clientY, left: e.clientX}).show();
+                console.log("down");
+            }
+        }, 1000);
+    });
+    $('.endorsements').on('mouseup', function(e) {
+        mouseState = 'up';
+        window.clearTimeout(timerId);
+        $('#toolTip').hide();
+    });
+    $('.endorsements').on('mousemove', function(e) {
+        if (mouseState == 'down') {
+            $("#toolTip").css({top: e.clientY, left: e.clientX}).show();
+        }
         return false;
     });
     showHideMaterialTables();

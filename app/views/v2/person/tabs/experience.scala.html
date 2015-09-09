@@ -106,22 +106,25 @@
     <h3>Endorsements</h3>
     <p>If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, "person", "edit") { <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a> }
     </p>
-    <div class="endorsement">
+    <div class="endorsements">
+      <div id="toolTip" style="position: fixed;display:none;">test</div>
       @for((endorsement, brandName) <- endorsements) {
-        <div class="block" data-id="@endorsement.id.get">
-          <div class="text-muted">&mdash; @(endorsement.name)@endorsement.company.map { company =>, @company }
-            <span class="pull-right">@brandName</span>
-          </div>
-          <p><i>@endorsement.content</i></p>
-          @dynamic(handler, "person", "edit") {
-            <div class="actions font-sm">
-              <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
-                Edit</a>
-              <a href="#" data-id="@endorsement.id.get" class="remove"
-                data-href="@routes.Endorsements.remove(person.id.get, endorsement.id.get)">
-                Delete</a>
+        <div class="endorsement" data-id="@endorsement.id.get">
+          <div class="content">
+            <div class="text-muted">&mdash; <span class="tooltip-content">@(endorsement.name)@endorsement.company.map { company =>, @company }</span>
+              <span class="brand-name">@brandName</span>
             </div>
-          }
+            <p><i>@endorsement.content</i></p>
+            @dynamic(handler, "person", "edit") {
+              <div class="actions font-sm">
+                <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
+                  Edit</a>
+                <a href="#" data-id="@endorsement.id.get" class="remove"
+                  data-href="@routes.Endorsements.remove(person.id.get, endorsement.id.get)">
+                  Delete</a>
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
