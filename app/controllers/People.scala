@@ -190,7 +190,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
         val licenses = licenseService.licenses(id)
-        val facilitator = (licenses.length > 0)
+        val facilitator = licenses.nonEmpty
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
@@ -269,9 +269,10 @@ class People(environment: RuntimeEnvironment[ActiveUser])
             Ok(views.html.v2.element.contributions("person", contributions))
           case "experience" ⇒
             personService.find(id) map { person ⇒
+              val experience = retrieveByBrandStatistics(id)
               val endorsements = personService.endorsements(id)
               val materials = personService.materials(id).sortBy(_.linkType)
-              Ok(views.html.v2.person.tabs.experience(person, 0,
+              Ok(views.html.v2.person.tabs.experience(person, experience,
                 endorsements, materials))
             } getOrElse NotFound("Person not found")
           case "facilitation" ⇒
@@ -292,6 +293,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
           case _ ⇒ Ok("")
         }
   }
+
 
   /**
    * Render a list of people in the network
@@ -406,6 +408,26 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Retrieve facilitator statistics by brand, including years of experience,
+   *  number of events and rating
+   * @param id Facilitator id
+   */
+  protected def retrieveByBrandStatistics(id: Long) = {
+    val licenses = licenseService.licenses(id).sortBy(_.brand.name)
+    val events = eventService.
+      findByFacilitator(id, brandId = None, future = Some(false)).
+      filter(_.confirmed).groupBy(_.brandId).map(x => (x._1, x._2.length))
+    val facilitation = facilitatorService.findByPerson(id)
+    licenses.map { x ⇒
+      (x.brand.id.get,
+        x.brand.name,
+        facilitation.find(_.brandId == x.license.brandId).get.rating,
+        x.license.length.getStandardDays / 365,
+        events.find(_._1 == x.brand.id.get).map(_._2).getOrElse(0))
+    }
+  }
+
+  /**
    * Composes notification if the given value was updated
    *
    * @param msgType Notification type
@@ -420,6 +442,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     else
       None
   }
+
   protected def notificatonMsg(msgType: String, value: String): String =
     msgType match {
       case "twitter" ⇒ "follow her/him on <http://twitter.com/%s|Twitter>".format(value)

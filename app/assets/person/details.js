@@ -96,6 +96,20 @@ function setupCustomPhotoActions() {
 }
 
 /**
+ * Shows a table with links if the table has at least one record and hides
+ * tables with no records
+ */
+function showHideMaterialTables() {
+    $('.materials').each(function() {
+        if ($(this).find('td').length == 0) {
+            $(this).hide();
+        } else {
+            $(this).show();
+        }
+    })
+}
+
+/**
  * Loads tab content (if needed) and shows it to a user
  * @param elem Tab button
  * @returns {boolean}
@@ -135,13 +149,14 @@ function deleteExperiment(experimentId, url) {
 
 /**
  * Updates the view after the material was added
- * @param materialId {int} Experience id
+ * @param materialId {int} Material id
+ * @param brandId {int} Brand id
  * @param personId {int} Person id
  * @param materialType {string} material type
  * @param material {string} material
  */
-function addMaterial(materialId, personId, materialType, material) {
-    $('#materials').append(
+function addMaterial(materialId, brandId, personId, materialType, material) {
+    $('#materials_' + brandId).append(
         $('<tr>')
             .attr('data-id', materialId)
             .attr('data-personid', personId)
@@ -158,6 +173,7 @@ function addMaterial(materialId, personId, materialType, material) {
                     .attr('data-id', materialId)
                     .attr('data-href', jsRoutes.controllers.Materials.remove(personId, materialId).url)))
     );
+    showHideMaterialTables();
 }
 
 /**
@@ -166,6 +182,7 @@ function addMaterial(materialId, personId, materialType, material) {
  */
 function deleteMaterial(materialId) {
     $('tr[data-id="' + materialId + '"]').remove();
+    showHideMaterialTables();
 }
 
 /**
@@ -177,10 +194,10 @@ function deleteEndorsement(endorsementId) {
 }
 
 function initializeExperienceTabActions() {
-    $('#addMaterialForm').submit(function(e) {
+    $('.material-form').submit(function(e) {
         var that = $(this);
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
-            addMaterial(data.id, data.personId, data.linkType, data.link);
+            addMaterial(data.id, data.brandId, data.personId, data.linkType, data.link);
             $(that).trigger('reset');
         }).fail(function(jqXHR, status, error) {
             if (status == "error") {
@@ -194,7 +211,7 @@ function initializeExperienceTabActions() {
         // Prevent the form from submitting with the default action
         return false;
     });
-    $('#materials').on('click', 'a.remove', function(e) {
+    $('.materials').on('click', 'a.remove', function(e) {
         var materialId = $(this).data('id');
         $.ajax({
             type: "DELETE",
@@ -232,6 +249,7 @@ function initializeExperienceTabActions() {
         });
         return false;
     });
+    showHideMaterialTables();
 }
 
 function initializeActions() {

@@ -27,7 +27,7 @@ package models
 import models.database.PortableJodaSupport._
 import models.database.Licenses
 import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.{ Interval, LocalDate }
+import org.joda.time.{Duration, Interval, LocalDate}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -49,6 +49,10 @@ case class License(
 
   def active: Boolean = new Interval(start.toDateTimeAtStartOfDay,
     end.toDateTimeAtStartOfDay).containsNow
+
+  /** Returns current length of the license */
+  def length: Duration = new Interval(start.toDateTimeAtStartOfDay,
+    end.toDateTimeAtStartOfDay).toDuration
 }
 
 case class LicenseView(brand: Brand, license: License)
