@@ -9,7 +9,7 @@
     </tr>
     <tr>
         <th>Request</th>
-        <td><code>GET /api/v2/facilitator/{id}</code></td>
+        <td><code>GET /api/v2/facilitator/{id}[?code={brandCode}]</code></td>
     </tr>
     <tr>
         <th>Request path parameters</th>
@@ -18,7 +18,8 @@
     </tr>
     <tr>
         <th>Query string parameters</th>
-        <td>none</td>
+        <td><code>code</code> &mdash; optional brand code, e.g. <code>mgt30</code>. If brand code is not used then the system returns only non-brand-related endorsements and materials, and year of
+        experience and number of events always equal 0. If brand code is used then the system mixes non-brand-related materials with materials related to the given brand. </td>
     </tr>
     <tr>
         <th>Response content type</th>
@@ -77,6 +78,9 @@
                         <li><code>link</code></li>
                     </ul>
                 </li>
+                <li><code>years_of_experience</code></li>
+                <li><code>number_of_events</code></li>
+                <li><code>rating</code></li>
             </ul>
         </td>
     </tr>
@@ -140,7 +144,10 @@
     }, {
         "type" : "casestudy",
         "link" : "http://hithat.com"
-    } ]
+    } ],
+    "years_of_experience" -> 3,
+    "number_of_events" -> 65,
+    "rating": 0.0,
 }
         </pre>
         </td>

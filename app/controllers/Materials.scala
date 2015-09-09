@@ -46,6 +46,7 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
         "personId" -> link.personId,
         "linkType" -> link.linkType.capitalize,
         "link" -> link.link,
+        "brandId" -> link.brandId,
         "id" -> link.id.get)
     }
   }
@@ -59,15 +60,15 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
-          val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
+          val form = Form(tuple("brandId" -> longNumber, "type" -> nonEmptyText, "url" -> nonEmptyText))
           form.bindFromRequest.fold(
             error ⇒ jsonBadRequest("Link cannot be empty"),
             materialData ⇒ {
               val material = Material(None,
                 personId,
-                0,
                 materialData._1,
-                materialData._2)
+                materialData._2,
+                materialData._3)
               val insertedLink = personService.insertMaterial(
                 Material.updateType(material))
               jsonOk(Json.toJson(insertedLink))

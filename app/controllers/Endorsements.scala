@@ -23,8 +23,7 @@
  */
 package controllers
 
-import models.ActiveUser
-import models.Endorsement
+import models.{Brand, ActiveUser, Endorsement}
 import models.service.Services
 import models.UserRole.DynamicRole
 import play.api.data.Form
@@ -35,6 +34,7 @@ import securesocial.core.RuntimeEnvironment
 
 case class EndorsementFormData(content: String,
   name: String,
+  brandId: Long,
   company: Option[String])
 
 class Endorsements(environment: RuntimeEnvironment[ActiveUser])
@@ -47,6 +47,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
   implicit val EndorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement): JsValue = {
       Json.obj(
+        "brandId" -> endorsement.brandId,
         "personId" -> endorsement.personId,
         "content" -> endorsement.content,
         "name" -> endorsement.name,
@@ -58,24 +59,34 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
   val form = Form(mapping(
     "content" -> nonEmptyText,
     "name" -> nonEmptyText,
+    "brandId" -> longNumber,
     "company" -> optional(nonEmptyText))(EndorsementFormData.apply)(EndorsementFormData.unapply))
 
+  /**
+   * Renders endorsement add form
+   * @param personId Person identifier
+   */
   def add(personId: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
-          Ok(views.html.v2.endorsement.form(user, personId, form))
+          Ok(views.html.v2.endorsement.form(user, personId, brands(personId), form))
         } getOrElse NotFound(Messages("error.person.notFound"))
   }
 
+  /**
+   * Renders endorsement edit form
+   * @param personId Person identifier
+   * @param id Endorsement identifier
+   */
   def edit(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
           personService.findEndorsement(id) map { endorsement ⇒
             val formData = EndorsementFormData(endorsement.content,
-              endorsement.name, endorsement.company)
-            Ok(views.html.v2.endorsement.form(user, personId, form.fill(formData), Some(id)))
+              endorsement.name, endorsement.brandId, endorsement.company)
+            Ok(views.html.v2.endorsement.form(user, personId, brands(personId), form.fill(formData), Some(id)))
           } getOrElse NotFound("Endorsement is not found")
         } getOrElse NotFound(Messages("error.person.notFound"))
   }
@@ -90,9 +101,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
           form.bindFromRequest.fold(
-            error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, error)),
+            error ⇒
+              BadRequest(views.html.v2.endorsement.form(user, personId, brands(personId), error)),
             endorsementData ⇒ {
-              val endorsement = Endorsement(None, personId, 0,
+              val endorsement = Endorsement(None, personId, endorsementData.brandId,
                 endorsementData.content, endorsementData.name,
                 endorsementData.company)
               personService.insertEndorsement(endorsement)
@@ -128,9 +140,9 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, error)),
+          error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, brands(personId), error)),
           endorsementData ⇒ {
-            val endorsement = Endorsement(Some(id), personId, 0,
+            val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
               endorsementData.content, endorsementData.name,
               endorsementData.company)
             personService.updateEndorsement(endorsement)
@@ -138,4 +150,11 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
             Redirect(url)
           })
   }
+
+  /**
+   * Returns list of brands for which the given person has licenses
+   * @param personId Person identifier
+   */
+  protected def brands(personId: Long): List[Brand] =
+    licenseService.licenses(personId).map(_.brand)
 }

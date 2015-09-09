@@ -293,7 +293,7 @@ GET           /api/v2/brands                                                 con
 GET           /api/v2/brand/:code                                            controllers.apiv2.BrandsApi.brand(code: String)
 GET           /api/v2/brand/:code/events                                     controllers.apiv2.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
 GET           /api/v2/brand/:code/facilitators                               controllers.apiv2.FacilitatorsApi.facilitators(code: String)
-GET           /api/v2/facilitator/:identifier                                     controllers.apiv2.FacilitatorsApi.facilitator(identifier: String)
+GET           /api/v2/facilitator/:identifier                                controllers.apiv2.FacilitatorsApi.facilitator(identifier: String, code: Option[String] ?= None)
 
 GET           /api/v2/brand/:code/types                                      controllers.apiv2.EventTypesApi.types(code: String)
 

@@ -1,6 +1,6 @@
 @(person: Person,
-  brandId: Long,
-  endorsements: List[Endorsement],
+  experiencePerBrand: List[(Long, String, Float, Long, Int)],
+  endorsements: List[(Endorsement, String)],
   materials: List[Material])(implicit request: Request[Any],
   handler: AuthorisationHandler)
 
@@ -11,41 +11,46 @@
 
 
 <div class="experience">
-<!--   <div class="block">
-    <span class="statistics"><span class="number">7</span> years of experience</span>
-    <span class="statistics"><span class="number">87</span> events</span>
+   <div class="block statistics">
+   @for(brandData <- experiencePerBrand) {
+     <div class="record"><span class="name">@{brandData._2}:</span> @brandData._3 rating, @brandData._4 years of experience, @brandData._5 events</div>
+   }
   </div>
- -->  <div class="block">
+  <div class="block">
     <h3>Studies, Posts and Video Materials</h3>
     <p>Promote yourself on <a href="http://management30.com/facilitator"
-      target="_blank">management30.com</a> by adding links to your case studies, articles or video materials.</p>
-      <table id="materials" class="table">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>URL</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for(material <- materials) {
-            <tr data-id="@material.id.get" data-personid="@material.personId">
-              <td>@material.linkType.capitalize</td>
-              <td><a href="@material.link" target="_blank">@material.link</td>
-              <td>
-                @dynamic(handler, "person", "edit") {
-                  <a data-id="@material.id.get" href="#" class="remove font-sm"
-                    data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
-                }
-              </td>
-            </tr>
+      target="_blank">management30.com</a> and other brand websites by adding links to your case studies, articles or video materials.</p>
+  </div>
+  <div class="block">
+    <h4>Personal Materials</h4>
+    <p>Links from this section are shown on any website and not related to a particular brand</p>
+    <table id="materials_0" class="materials table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>URL</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      @for(material <- materials.filter(_.brandId == 0)) {
+        <tr data-id="@material.id.get" data-personid="@material.personId">
+          <td>@material.linkType.capitalize</td>
+          <td><a href="@material.link" target="_blank">@material.link</td>
+          <td>
+          @dynamic(handler, "person", "edit") {
+            <a data-id="@material.id.get" href="#" class="remove font-sm"
+            data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
           }
-        </tbody>
-      </table>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
     @dynamic(handler, "person", "edit") {
-      <form id="addMaterialForm" class="form-inline" method="POST"
-        action="@CSRF(routes.Materials.create(person.id.get))">
-        <input type="hidden" name="brandId" value="@brandId"/>
+      <form class="form-inline material-form" method="POST"
+      action="@CSRF(routes.Materials.create(person.id.get))">
+        <input type="hidden" name="brandId" value="0"/>
         <select name="type" id="linkType" class="form-control input-sm">
           <option value="article">Article</option>
           <option value="casestudy">Case Study</option>
@@ -56,15 +61,57 @@
       </form>
     }
   </div>
+  @for(brandData <- experiencePerBrand) {
+    <div class="block">
+      <h4>Materials related to @brandData._2</h4>
+      <table id="materials_@brandData._1" class="materials table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>URL</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        @for(material <- materials.filter(_.brandId == brandData._1)) {
+          <tr data-id="@material.id.get" data-personid="@material.personId">
+            <td>@material.linkType.capitalize</td>
+            <td><a href="@material.link" target="_blank">@material.link</td>
+            <td>
+            @dynamic(handler, "person", "edit") {
+              <a data-id="@material.id.get" href="#" class="remove font-sm"
+              data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
+            }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+      @dynamic(handler, "person", "edit") {
+        <form class="form-inline material-form" method="POST"
+        action="@CSRF(routes.Materials.create(person.id.get))">
+          <input type="hidden" name="brandId" value="@brandData._1"/>
+          <select name="type" id="linkType" class="form-control input-sm">
+            <option value="article">Article</option>
+            <option value="casestudy">Case Study</option>
+            <option value="video">Video</option>
+          </select>
+          <input name="url" class="form-control input-sm" style="width: 300px">
+          <button class="btn btn-primary">Add Link</button>
+        </form>
+      }
+    </div>
+  }
   <div class="block">
     <h3>Endorsements</h3>
     <p>If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, "person", "edit") { <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a> }
     </p>
     <div class="endorsement">
-      @for(endorsement <- endorsements) {
+      @for((endorsement, brandName) <- endorsements) {
         <div class="block" data-id="@endorsement.id.get">
-          <span class="text-muted">&mdash; @(endorsement.name)@endorsement.company.map { company =>, @company }
-          </span>
+          <div class="text-muted">&mdash; @(endorsement.name)@endorsement.company.map { company =>, @company }
+            <span class="pull-right">@brandName</span>
+          </div>
           <p><i>@endorsement.content</i></p>
           @dynamic(handler, "person", "edit") {
             <div class="actions font-sm">
