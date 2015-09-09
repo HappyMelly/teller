@@ -60,7 +60,8 @@ class GatewayWrapper(apiKey: String) {
     try {
       Stripe.apiKey = apiKey
       val amount = fee * 100
-      val plans = Plan.all(Map[String, AnyRef]()).getData
+      val params = Map[String, AnyRef]("limit" -> 100.asInstanceOf[AnyRef])
+      val plans = Plan.all(params).getData
       val plan = plans.
         find(p ⇒ p.getCurrency == "eur" && p.getAmount == amount).
         getOrElse {
