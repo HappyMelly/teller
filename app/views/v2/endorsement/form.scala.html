@@ -1,5 +1,6 @@
 @(user: ActiveUser,
-  brandId: Long,
+  personId: Long,
+  brands: List[Brand],
   form: Form[EndorsementFormData],
   endorsementId: Option[Long] = None)(implicit flash: Flash,
         request: Request[Any],
@@ -13,13 +14,16 @@
   <div class="form">
     @v2.html.block("") { <h1>Add Endorsement</h1> }
      @html.form(action = endorsementId.map { id =>
-      CSRF(routes.Endorsements.update(brandId, id))
+      CSRF(routes.Endorsements.update(personId, id))
     }.getOrElse {
-      CSRF(routes.Endorsements.create(brandId))
+      CSRF(routes.Endorsements.create(personId))
     }) {
       @v2.html.block("") {
         @v2.html.textarea(form("content"), '_label -> "Endorsement")
         @v2.html.text(form("name"), '_label -> "Name")
+        @v2.html.select(form("brandId"),
+          ("0", "Not brand-related endorsement") :: brands.map(x => (x.id.get.toString, x.name)),
+          '_label -> "Brand", '_help -> "")
         @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
       }
       @if(form.hasErrors) {

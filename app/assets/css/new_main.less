@@ -238,12 +238,29 @@ h3 a.font-sm {
   }
 }
 .endorsement {
+  padding-left: 1em;
+  border-top: solid 1px @light-grey;
+  border-bottom: solid 1px @light-grey;
+  margin-top: 2em;
   .block {
-    margin: 30px 0;
+    margin: 1em 0;
+    .text-muted > span {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    p {
+      margin: 1em 0;
+    }
     .actions {
       a {
         padding-right: 15px;
       }
+    }
+    padding-bottom: 1em;
+    border-bottom: solid 1px @light-grey;
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
     }
   }
 }

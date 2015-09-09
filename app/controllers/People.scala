@@ -270,7 +270,9 @@ class People(environment: RuntimeEnvironment[ActiveUser])
           case "experience" ⇒
             personService.find(id) map { person ⇒
               val experience = retrieveByBrandStatistics(id)
-              val endorsements = personService.endorsements(id)
+              val endorsements = personService.endorsements(id).map {x =>
+                (x, experience.find(_._1 == x.brandId).map(_._2).getOrElse(""))
+              }
               val materials = personService.materials(id).sortBy(_.linkType)
               Ok(views.html.v2.person.tabs.experience(person, experience,
                 endorsements, materials))
