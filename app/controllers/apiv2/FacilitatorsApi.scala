@@ -89,9 +89,12 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
     }
   }
 
+  case class BrandStatistics(eventsNumber: Int, yearsOfExperience: Int, rating: Float)
+
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
-    materials: List[Material])
+    materials: List[Material],
+                              stats: BrandStatistics)
 
   implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
     def writes(view: FacilitatorView) = {
@@ -115,7 +118,10 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "organizations" -> view.person.organisations,
         "licenses" -> view.person.licenses,
         "endorsements" -> view.endorsements,
-        "materials" -> view.materials)
+        "materials" -> view.materials,
+        "years_of_experience" -> view.stats.yearsOfExperience,
+        "number_of_events" -> view.stats.eventsNumber,
+        "rating" -> view.stats.rating)
     }
   }
 
@@ -123,7 +129,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
    * Returns the facilitator's data
    * @param identifier Person identifier
    */
-  def facilitator(identifier: String) = TokenSecuredAction(readWrite = false) {
+  def facilitator(identifier: String, code: Option[String] = None) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       implicit token ⇒
         val person = try {
@@ -133,10 +139,36 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
           case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
         }
         person map { person =>
-          val endorsements = personService.endorsements(person.id.get)
-          val materials = personService.materials(person.id.get)
-          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials)))
+          val brand = code map (x => brandService.find(x)) getOrElse None
+          val filterList = brand map (x => List(0, x.id.get)) getOrElse List(0)
+          val endorsements = personService.
+            endorsements(person.id.get).
+            filter(x => filterList.contains(x.brandId))
+          val materials = personService.
+            materials(person.id.get).
+            filter(x => filterList.contains(x.brandId))
+          val statistics = brand map {
+            retrieveBrandStatistics(_, person.id.get)
+          } getOrElse BrandStatistics(0, 0, 0.0f)
+
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, statistics)))
         } getOrElse NotFound
+  }
+
+  /**
+   * Returns brand statistics for the given person including number of events
+   *  and years of experience
+   * @param brand Brand of interest
+   * @param personId Person identifier
+   */
+  protected def retrieveBrandStatistics(brand: Brand, personId: Long): BrandStatistics = {
+    val eventsNumber = eventService.
+      findByFacilitator(personId, brandId = brand.id, future = Some(false)).
+      count(_.confirmed)
+    val yearsOfExperience = licenseService.activeLicense(brand.id.get, personId) map { x =>
+      (x.length.getStandardDays / 365).toInt
+    } getOrElse 0
+    BrandStatistics(eventsNumber, yearsOfExperience, 0.0f)
   }
 }
 
