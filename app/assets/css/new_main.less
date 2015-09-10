@@ -246,7 +246,13 @@ h3 a.font-sm {
     &.selected {
       background-color: @light-blue;
     }
-    .content {
+    &.highlighted-top {
+      border-top: solid 2px @dark-sky-blue;
+    }
+    &.highlighted-bottom {
+      border-bottom: solid 2px @dark-sky-blue;
+    }
+    .body {
       padding: 1em;
       border-bottom: solid 1px @light-grey;
       .text-muted > .brand-name {
@@ -254,7 +260,7 @@ h3 a.font-sm {
         font-size: 12px;
         font-weight: bold;
       }
-      p {
+      .content {
         margin: 1em 0;
       }
       .actions {

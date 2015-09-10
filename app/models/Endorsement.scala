@@ -29,4 +29,5 @@ case class Endorsement(id: Option[Long],
   brandId: Long,
   content: String,
   name: String,
-  company: Option[String] = None)
+  company: Option[String] = None,
+                        position: Int = 0)

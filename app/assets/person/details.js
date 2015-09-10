@@ -251,23 +251,50 @@ function initializeExperienceTabActions() {
     });
     var mouseState = 'up';
     var timerId = 0;
+    var activePosition = 0;
+    var moveToPosition = 0;
     $('.endorsement').on('mousedown', function(e) {
         mouseState = 'down';
         var className = 'selected';
         $('.endorsement').removeClass(className);
         $(this).addClass(className);
         $('#toolTip').html($(this).find('.tooltip-content').html());
+        var that = $(this);
         timerId = window.setTimeout(function() {
             if (mouseState == 'down') {
                 $("#toolTip").css({top: e.clientY, left: e.clientX}).show();
-                console.log("down");
+                activePosition = $(that).attr('data-position');
             }
-        }, 1000);
+        }, 500);
+        return false;
     });
+    $('.endorsement').on('mouseover', function(e) {
+        var position = $(this).attr('data-position');
+        if (position != moveToPosition) {
+            $('.highlighted-top').removeClass('highlighted-top');
+            $('.highlighted-bottom').removeClass('highlighted-bottom');
+            moveToPosition = position;
+            if (mouseState == 'down' && activePosition != 0 && moveToPosition != activePosition) {
+                if (moveToPosition < activePosition) {
+                    $(this).addClass('highlighted-top');
+                } else {
+                    $(this).addClass('highlighted-bottom');
+                }
+            }
+        }
+    });
+
     $('.endorsements').on('mouseup', function(e) {
-        mouseState = 'up';
-        window.clearTimeout(timerId);
-        $('#toolTip').hide();
+        if (activePosition != 0 && moveToPosition != activePosition) {
+            if (moveToPosition < activePosition) {
+                $('[data-position=' + activePosition + ']').insertBefore($('[data-position=' + moveToPosition + ']'));
+            } else {
+                $('[data-position=' + activePosition + ']').insertAfter($('[data-position=' + moveToPosition + ']'));
+            }
+            recalculatePositions();
+        }
+        endorsementCleanUp();
+        return false;
     });
     $('.endorsements').on('mousemove', function(e) {
         if (mouseState == 'down') {
@@ -275,6 +302,38 @@ function initializeExperienceTabActions() {
         }
         return false;
     });
+    $('.endorsements').on('mouseleave', function(e) {
+        $('.endorsement').removeClass('selected');
+        endorsementCleanUp();
+    });
+
+    function recalculatePositions() {
+        var position = 1;
+        var changedRecords = [];
+        $('.endorsements').find('.endorsement').each(function(e) {
+            if ($(this).attr('data-position') != position) {
+                changedRecords[changedRecords.length] = {
+                    id: parseInt($(this).attr('data-id')),
+                    position: position
+                };
+            }
+            $(this).attr('data-position', position);
+            position += 1;
+        });
+        if (changedRecords.length > 0) {
+            var url = jsRoutes.controllers.Endorsements.updatePositions(25).url;
+            $.post(url, { positions: JSON.stringify(changedRecords) }, function(e) {
+            });
+        }
+    }
+
+    function endorsementCleanUp() {
+        mouseState = 'up';
+        window.clearTimeout(timerId);
+        $('#toolTip').hide();
+        activePosition = 0;
+        moveToPosition = 0;
+    }
     showHideMaterialTables();
 }
 

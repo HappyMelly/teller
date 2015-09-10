@@ -77,6 +77,7 @@ GET          /person/:personId/endorsement/:id                               @co
 POST         /person/:personId/endorsement                                   @controllers.Endorsements.create(personId: Long)
 POST         /person/:personId/endorsement/:id                               @controllers.Endorsements.update(personId: Long, id: Long)
 DELETE       /person/:personId/endorsement/:id                               @controllers.Endorsements.remove(personId: Long, id: Long)
+POST         /person/:personId/endorsements/positions                        @controllers.Endorsements.updatePositions(personId: Long)
 
 POST          /evaluation/                                                   @controllers.Evaluations.create
 GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])

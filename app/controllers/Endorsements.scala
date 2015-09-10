@@ -29,7 +29,7 @@ import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
+import play.api.libs.json.{JsArray, JsValue, Writes, Json}
 import securesocial.core.RuntimeEnvironment
 
 case class EndorsementFormData(content: String,
@@ -104,14 +104,38 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
             error ⇒
               BadRequest(views.html.v2.endorsement.form(user, personId, brands(personId), error)),
             endorsementData ⇒ {
+              val maxPosition = personService.endorsements(personId).last.position
               val endorsement = Endorsement(None, personId, endorsementData.brandId,
                 endorsementData.content, endorsementData.name,
-                endorsementData.company)
+                endorsementData.company, maxPosition + 1)
               personService.insertEndorsement(endorsement)
               val url = routes.People.details(personId).url + "#experience"
               Redirect(url)
             })
         } getOrElse NotFound(Messages("error.person.notFound"))
+  }
+
+  /**
+   * Updates positions of endorsements in bulk
+   *
+   * @param personId Person identifier
+   */
+  def updatePositions(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request =>
+      implicit handler => implicit user =>
+        val form = Form(single("positions" -> nonEmptyText))
+        form.bindFromRequest.fold(
+          error => jsonBadRequest("Positions param is empty"),
+          formData => {
+            val positions = Json.parse(formData).as[JsArray]
+            positions.value.foreach { x =>
+              val id = (x \ "id").as[Long]
+              val position = (x \ "position").as[Int]
+              personService.updateEndorsementPosition(personId, id, position)
+            }
+            jsonSuccess("ok")
+          }
+        )
   }
 
   /**

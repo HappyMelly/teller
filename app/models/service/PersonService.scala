@@ -119,7 +119,7 @@ class PersonService extends Services {
    */
   def endorsements(personId: Long): List[Endorsement] = DB.withSession {
     implicit session ⇒
-      TableQuery[Endorsements].filter(_.personId === personId).list
+      TableQuery[Endorsements].filter(_.personId === personId).list.sortBy(_.position)
   }
 
   /**
@@ -313,8 +313,23 @@ class PersonService extends Services {
     implicit session ⇒
       TableQuery[Endorsements].
         filter(_.id === endorsement.id.get).
-        filter(_.personId === endorsement.personId).
-        update(endorsement)
+        filter(_.personId === endorsement.personId).map(_.forUpdate).
+        update((endorsement.brandId, endorsement.content, endorsement.name, endorsement.company))
+  }
+
+  /**
+   * Updates position of the given endorsement
+   * @param personId Person id
+   * @param id Endorsement id
+   * @param position Position
+   */
+  def updateEndorsementPosition(personId: Long, id: Long, position: Int) =
+    DB.withSession {
+      implicit session =>
+        TableQuery[Endorsements].
+          filter(_.id === id).
+          filter(_.personId === personId).
+          map(_.position).update(position)
   }
 
   /**

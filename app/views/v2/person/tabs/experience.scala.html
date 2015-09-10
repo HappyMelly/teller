@@ -107,14 +107,14 @@
     <p>If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, "person", "edit") { <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a> }
     </p>
     <div class="endorsements">
-      <div id="toolTip" style="position: fixed;display:none;">test</div>
+      <div id="toolTip" style="position: fixed;display:none;"></div>
       @for((endorsement, brandName) <- endorsements) {
-        <div class="endorsement" data-id="@endorsement.id.get">
-          <div class="content">
+        <div class="endorsement" data-id="@endorsement.id.get" data-position="@endorsement.position">
+          <div class="body">
             <div class="text-muted">&mdash; <span class="tooltip-content">@(endorsement.name)@endorsement.company.map { company =>, @company }</span>
               <span class="brand-name">@brandName</span>
             </div>
-            <p><i>@endorsement.content</i></p>
+            <div class="content"><i>@endorsement.content</i></div>
             @dynamic(handler, "person", "edit") {
               <div class="actions font-sm">
                 <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
