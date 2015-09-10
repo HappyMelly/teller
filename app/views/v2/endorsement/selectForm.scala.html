@@ -1,0 +1,32 @@
+@(user: ActiveUser,
+  personId: Long,
+  records: List[(Evaluation, String, String)])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+<div class="container">
+  <div class="col-md-8">
+    <ul class="">
+      <li>Sort by rating:</li>
+      <li><a href="#">from 10 to 0</a></li>
+      <li><a href="#">from 0 to 10</a></li>
+    </ul>
+    <div class="list-group">
+      @for((evaluation, person, brand) <- records) {
+        <div class="list-group-item">
+          <input type="checkbox" value="@evaluation.id"/>
+          <div class="content">@evaluation.question4</div>
+          <div class="text-muted">
+            <div class="pull-left">@person</div>
+            <div class="pull-right">
+              <span>@evaluation.created</span>
+              <span title="Rating"><i class="fa fa-star"></i> @evaluation.impression</span>
+              <span>@brand</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

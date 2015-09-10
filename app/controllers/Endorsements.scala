@@ -70,8 +70,30 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
-          Ok(views.html.v2.endorsement.form(user, personId, brands(personId), form))
+          Ok(views.html.v2.endorsement.addForm(user, personId, brands(personId), form))
         } getOrElse NotFound(Messages("error.person.notFound"))
+  }
+
+  /**
+   * Renders the form where a facilitator could select an endorsement from
+   *  existing evaluations
+   * @param personId Person id
+   */
+  def renderSelectForm(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request =>
+      implicit handler => implicit user =>
+        val brands = brandService.findAll
+        val events = eventService.findByFacilitator(personId).map { x =>
+          (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
+        }
+        val evaluations = evaluationService.findByEvents(events.map(_._1.id.get))
+        val people = personService.find(evaluations.map(_.personId).distinct)
+        val content = evaluations.sortBy(_.impression).reverse.map { x =>
+          (x,
+            people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse(""),
+            events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
+        }
+        Ok(views.html.v2.endorsement.selectForm(user, personId, content))
   }
 
   /**
@@ -86,7 +108,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           personService.findEndorsement(id) map { endorsement ⇒
             val formData = EndorsementFormData(endorsement.content,
               endorsement.name, endorsement.brandId, endorsement.company)
-            Ok(views.html.v2.endorsement.form(user, personId, brands(personId), form.fill(formData), Some(id)))
+            Ok(views.html.v2.endorsement.editForm(user, personId, brands(personId), form.fill(formData), id))
           } getOrElse NotFound("Endorsement is not found")
         } getOrElse NotFound(Messages("error.person.notFound"))
   }
@@ -102,7 +124,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         personService.find(personId) map { person ⇒
           form.bindFromRequest.fold(
             error ⇒
-              BadRequest(views.html.v2.endorsement.form(user, personId, brands(personId), error)),
+              BadRequest(views.html.v2.endorsement.addForm(user, personId, brands(personId), error)),
             endorsementData ⇒ {
               val maxPosition = personService.endorsements(personId).last.position
               val endorsement = Endorsement(None, personId, endorsementData.brandId,
@@ -164,7 +186,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.v2.endorsement.form(user, personId, brands(personId), error)),
+          error ⇒ BadRequest(views.html.v2.endorsement.editForm(user, personId, brands(personId), error, id)),
           endorsementData ⇒ {
             val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
               endorsementData.content, endorsementData.name,

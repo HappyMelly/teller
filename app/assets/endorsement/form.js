@@ -17,21 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models
-
-case class Endorsement(id: Option[Long],
-  personId: Long,
-  brandId: Long,
-  content: String,
-  name: String,
-  company: Option[String] = None,
-  position: Int = 0,
-  evaluationId: Long = 0) {
-
-  def editable: Boolean = evaluationId == 0
-}
+$(document).ready(function() {
+    $.get($('#selectForm').data('url'), {}, function(data) {
+        $('#selectForm').html(data);
+        //console.log(data);
+    }, "html");
+});

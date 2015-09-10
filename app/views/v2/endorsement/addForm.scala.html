@@ -1,0 +1,56 @@
+@(user: ActiveUser,
+    personId: Long,
+    brands: List[Brand],
+    form: Form[EndorsementFormData])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Endorsement", "person", user, withMelly = true) {
+  <div class="form">
+    @v2.html.block("") {
+      <h1>Add Endorsement</h1>
+      <ul class="">
+        <li><a href="#">Create new</a></li>
+        <li><a href="#">Select from your evaluations</a></li>
+      </ul>
+    }
+      @html.form(action = CSRF(routes.Endorsements.create(personId))) {
+        <div id="addForm">
+          @v2.html.block("") {
+            @v2.html.textarea(form("content"), '_label -> "Endorsement")
+            @v2.html.text(form("name"), '_label -> "Name")
+            @v2.html.select(form("brandId"),
+              ("0", "Not brand-related endorsement") :: brands.map(x => (x.id.get.toString, x.name)),
+              '_label -> "Brand", '_help -> "")
+            @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
+          }
+          @if(form.hasErrors) {
+            @v2.html.block("") {
+              <div class="errors">
+              @for(error <- form.errors) {
+                @play.api.i18n.Messages(error.message)<br/>
+              }
+              </div>
+            }
+          }
+        </div>
+        <div id="selectForm" data-url="@routes.Endorsements.renderSelectForm(personId).url">
+        </div>
+        @v2.html.block("") {
+          <div class="row">
+            <div class="col-md-5">
+              <button class="btn btn-primary btn-block btn-lg" type="submit">
+                Save</button>
+            </div>
+            <div class="col-md-3 cancel">
+              <a href="javascript:history.back()">Cancel changes</a></div>
+          </div>
+        }
+      }
+  </div>
+  <script type="text/javascript" src="@routes.Assets.at("endorsement/form.js")"></script>
+}

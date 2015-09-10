@@ -1,11 +1,11 @@
 @(user: ActiveUser,
-  personId: Long,
-  brands: List[Brand],
-  form: Form[EndorsementFormData],
-  endorsementId: Option[Long] = None)(implicit flash: Flash,
-        request: Request[Any],
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+    personId: Long,
+    brands: List[Brand],
+    form: Form[EndorsementFormData],
+    endorsementId: Long)(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 @import views.ViewHelpersV2._
@@ -13,11 +13,7 @@
 @v2.main("Endorsement", "person", user, withMelly = true) {
   <div class="form">
     @v2.html.block("") { <h1>Add Endorsement</h1> }
-     @html.form(action = endorsementId.map { id =>
-      CSRF(routes.Endorsements.update(personId, id))
-    }.getOrElse {
-      CSRF(routes.Endorsements.create(personId))
-    }) {
+    @html.form(action = CSRF(routes.Endorsements.update(personId, endorsementId))) {
       @v2.html.block("") {
         @v2.html.textarea(form("content"), '_label -> "Endorsement")
         @v2.html.text(form("name"), '_label -> "Name")
@@ -29,9 +25,9 @@
       @if(form.hasErrors) {
         @v2.html.block("") {
           <div class="errors">
-            @for(error <- form.errors) {
-              @play.api.i18n.Messages(error.message)<br/>
-            }
+          @for(error <- form.errors) {
+            @play.api.i18n.Messages(error.message)<br/>
+          }
           </div>
         }
       }
