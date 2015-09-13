@@ -26,21 +26,18 @@ package models
 
 import java.io.ByteArrayOutputStream
 
-import com.itextpdf.text.pdf.{ BaseFont, ColumnText, PdfWriter }
 import com.itextpdf.text._
-import fly.play.s3.{ BucketFile, S3Exception }
-import models.brand.CertificateTemplate
+import com.itextpdf.text.pdf.{BaseFont, ColumnText, PdfWriter}
+import fly.play.s3.{BucketFile, S3Exception}
 import models.service.BrandWithCoordinators
 import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
-import play.api.Play.current
-import play.api.cache.Cache
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
 import services.integrations.Integrations
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -48,10 +45,10 @@ import scala.language.postfixOps
  * An certificate which a participant gets after an event
  */
 case class Certificate(
-    issued: Option[LocalDate],
-    event: Event,
-    participant: Person,
-    renew: Boolean = false) extends Integrations {
+                        issued: Option[LocalDate],
+                        event: Event,
+                        participant: Person,
+                        renew: Boolean = false) extends Integrations {
 
   val id =
     issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"
@@ -113,8 +110,8 @@ case class Certificate(
    * @param participant Participant
    */
   private def lcmCertificate(brandId: Long,
-    event: Event,
-    participant: Person): Array[Byte] = {
+                             event: Event,
+                             participant: Person): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
@@ -168,18 +165,26 @@ case class Certificate(
       if (firstFacilitator.signature) {
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(350, 175)
-        signature.scaleToFit(90, 80)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.setAbsolutePosition(350, 175)
+          signature.scaleToFit(90, 80)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
+        }
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(590, 175)
-        signature.scaleToFit(90, 80)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.setAbsolutePosition(590, 175)
+          signature.scaleToFit(90, 80)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
+        }
       }
     } else {
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 90, 0)
@@ -189,10 +194,14 @@ case class Certificate(
       if (facilitator.signature) {
         val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.scaleToFit(115, 100)
-        signature.setAbsolutePosition(410, 170)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.scaleToFit(115, 100)
+          signature.setAbsolutePosition(410, 170)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
+        }
       }
     }
     canvas.restoreState
@@ -210,9 +219,9 @@ case class Certificate(
    * @param participant Participant
    */
   private def m30Certificate(handledDate: Option[LocalDate],
-    brandId: Long,
-    event: Event,
-    participant: Person): Array[Byte] = {
+                             brandId: Long,
+                             event: Event,
+                             participant: Person): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/DejaVuSerif.ttf",
@@ -266,18 +275,26 @@ case class Certificate(
       if (firstFacilitator.signature) {
         val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(595, 300)
-        signature.scaleToFit(100, 95)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.setAbsolutePosition(595, 300)
+          signature.scaleToFit(100, 95)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.setAbsolutePosition(595, 180)
-        signature.scaleToFit(100, 95)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.setAbsolutePosition(595, 180)
+          signature.scaleToFit(100, 95)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
+        }
+      }
       }
     } else {
       val facilitator = facilitators.head
@@ -286,10 +303,14 @@ case class Certificate(
       if (facilitator.signature) {
         val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
           5 seconds)
-        val signature = Image.getInstance(imageData, true)
-        signature.scaleToFit(155, 100)
-        signature.setAbsolutePosition(570, 205)
-        document.add(signature)
+        try {
+          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+          signature.scaleToFit(155, 100)
+          signature.setAbsolutePosition(570, 205)
+          document.add(signature)
+        } catch {
+          case _: Throwable => Unit
+        }
       }
     }
     canvas.restoreState
@@ -306,7 +327,7 @@ case class Certificate(
    * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
    * @return
    */
-  private def template(brandId: Long, event: Event, twoFacilitators: Boolean): Image = {
+  private def template(brandId: Long, event: Event, twoFacilitators: Boolean): com.itextpdf.text.Image = {
     val templates = CertificateTemplateService.get.findByBrand(brandId)
     val data = templates.find(_.language == event.language.spoken) map { tpl ⇒
       if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
@@ -315,14 +336,16 @@ case class Certificate(
         if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
       } getOrElse Array[Byte]()
     }
-    Image.getInstance(data)
+    com.itextpdf.text.Image.getInstance(data)
   }
 }
 
 object Certificate {
 
   def cacheId(id: String): String = "certificate." + id
+
   def fileName(id: String): String = id + ".pdf"
+
   def fullFileName(id: String): String = "certificates/" + fileName(id)
 
   def file(id: String): File =
