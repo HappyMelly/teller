@@ -77,6 +77,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Renders the form where a facilitator could select an endorsement from
    *  existing evaluations
+   *
    * @param personId Person id
    */
   def renderSelectForm(personId: Long) = SecuredDynamicAction("person", "edit") {
@@ -86,7 +87,12 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         val events = eventService.findByFacilitator(personId).map { x =>
           (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
         }
-        val evaluations = evaluationService.findByEvents(events.map(_._1.id.get))
+        val evaluationIds = personService.endorsements(personId).
+          filter(_.evaluationId != 0).map(_.evaluationId)
+        val evaluations = evaluationService.
+          findByEvents(events.map(_._1.id.get)).
+          filterNot(x => evaluationIds.contains(x.id.get))
+
         val people = personService.find(evaluations.map(_.personId).distinct)
         val content = evaluations.sortBy(_.impression).reverse.map { x =>
           (x,
@@ -126,7 +132,11 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
             error ⇒
               BadRequest(views.html.v2.endorsement.addForm(user, personId, brands(personId), error)),
             endorsementData ⇒ {
-              val maxPosition = personService.endorsements(personId).last.position
+              val endorsements = personService.endorsements(personId)
+              val maxPosition = if (endorsements.nonEmpty)
+                endorsements.last.position
+              else
+                0
               val endorsement = Endorsement(None, personId, endorsementData.brandId,
                 endorsementData.content, endorsementData.name,
                 endorsementData.company, maxPosition + 1)
@@ -135,6 +145,47 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
               Redirect(url)
             })
         } getOrElse NotFound(Messages("error.person.notFound"))
+  }
+
+  /**
+   * Adds new endorsements from a set of selected evaluations
+   *
+   * @param personId Person identifier
+   */
+  def createFromSelected(personId: Long) = SecuredDynamicAction("person", "edit") {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        val form = Form(single("evaluations" -> nonEmptyText))
+        form.bindFromRequest.fold(
+          error => jsonBadRequest("'evaluations' param is empty"),
+          formData => {
+            val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
+            val brands = brandService.findAll
+            val events = eventService.findByFacilitator(personId).map { x =>
+              (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
+            }
+            val endorsements = personService.endorsements(personId)
+            val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+            val evaluations = evaluationService.
+              findByEvents(events.map(_._1.id.get)).
+              filter(x => receivedIds.contains(x.id.get)).
+              filterNot(x => evaluationIds.contains(x.id.get))
+            val people = personService.find(evaluations.map(_.personId).distinct)
+            val maxPosition = if (endorsements.nonEmpty)
+              endorsements.last.position
+            else
+              0
+            val newEndorsements = evaluations.map { x =>
+              val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
+              val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
+              Endorsement(None, personId, brandId, x.question4, name,
+                evaluationId = x.id.get, rating = Some(x.impression))
+            }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
+            newEndorsements.foreach { x => personService.insertEndorsement(x) }
+            val url = routes.People.details(personId).url + "#experience"
+            jsonOk(Json.obj("url" -> url))
+          }
+        )
   }
 
   /**

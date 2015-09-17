@@ -139,8 +139,25 @@ dl.dl-horizontal {
 .navbar-inverse .navbar-brand {
   color: @pig-pink;
 }
+
+.nav-tabs {
+  li {
+    a {
+      border: 0;
+    }
+  }
+  li.active {
+    a, a:hover, a:focus {
+      color: @grey3;
+      cursor: default;
+      background-color: #fff;
+      border: 0;
+      font-weight: bold;
+    }
+  }
+}
 .tab-pane {
-    padding: 10px 10px 10px 10px;
+  padding: 10px 10px 10px 10px;
 }
 .table {
   thead > tr > th {

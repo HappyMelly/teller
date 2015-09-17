@@ -22,8 +22,8 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-@import "settings";
 @import "bootstrap";
+@import "settings";
 @import "sidemenu";
 @import "profile-strength";
 
@@ -280,6 +280,74 @@ h3 a.font-sm {
     color: white;
     cursor: pointer;
     padding: 1em;
+  }
+}
+.endorsement-form {
+  .nav > li {
+    margin-bottom: 0;
+    a {
+      padding: 2em 4em 0.7em 0;
+      &:focus, &:hover {
+        background: none;
+        border: 0;
+      }
+    }
+  }
+  .selected {
+    background-color: #e9f2fc;
+  }
+  .strip {
+    width: 50%;
+    ul.sorting {
+      padding: 0;
+      list-style: none;
+      li {
+        padding: 2em 4em 0.7em 0;
+        display: initial;
+        &.active {
+          a, a:hover, a:focus {
+            color: @grey3;
+            cursor: default;
+            background-color: #fff;
+            border: 0;
+            font-weight: bold;
+            text-decoration: none;
+          }
+        }
+      }
+    }
+    .list-group {
+      border-top: solid 1px @light-grey;
+    }
+    .list-group-item {
+      border: none;
+      padding: 1.3em 0.5em 1px;
+    }
+    .evaluation-block {
+      &:before, &:after {
+        display: table;
+        content: " ";
+      }
+      &:after {
+        clear: both;
+      }
+      .evaluation-selector {
+        width: 8%;
+        float: left;
+      }
+      .evaluation {
+        width: 91%;
+        float: left;
+        padding-bottom: 1.5em;
+        .content {
+          padding-bottom: 1em;
+        }
+        span {
+          padding-right: 2em;
+        }
+        border-bottom: solid 1px @light-grey;
+      }
+    }
   }
 }
 .countries-languages {

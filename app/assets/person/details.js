@@ -190,7 +190,7 @@ function deleteMaterial(materialId) {
  * @param endorsementId {int} Endorsement id
  */
 function deleteEndorsement(endorsementId) {
-    $('.endorsement').find('div[data-id="' + endorsementId + '"]').remove();
+    $('.endorsements').find('div[data-id="' + endorsementId + '"]').remove();
 }
 
 function initializeExperienceTabActions() {
@@ -321,7 +321,7 @@ function initializeExperienceTabActions() {
             position += 1;
         });
         if (changedRecords.length > 0) {
-            var url = jsRoutes.controllers.Endorsements.updatePositions(25).url;
+            var url = jsRoutes.controllers.Endorsements.updatePositions($('#personId').val()).url;
             $.post(url, { positions: JSON.stringify(changedRecords) }, function(e) {
             });
         }

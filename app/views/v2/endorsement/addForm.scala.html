@@ -10,40 +10,43 @@
 @import views.ViewHelpersV2._
 
 @v2.main("Endorsement", "person", user, withMelly = true) {
-  <div class="form">
+  <input type="hidden" disabled id="personId" value="@personId"/>
+  <div class="form endorsement-form">
     @v2.html.block("") {
       <h1>Add Endorsement</h1>
-      <ul class="">
-        <li><a href="#">Create new</a></li>
-        <li><a href="#">Select from your evaluations</a></li>
+      <ul class="nav nav-tabs" role="tablist" id="switcher">
+        <li role="presentation" ><a href="#addForm" aria-controls="addForm" role="tab">Create new</a></li>
+        <li class="active" role="presentation"><a href="#selectForm" aria-controls="selectForm" role="tab">Select from your evaluations</a></li>
       </ul>
     }
       @html.form(action = CSRF(routes.Endorsements.create(personId))) {
-        <div id="addForm">
-          @v2.html.block("") {
-            @v2.html.textarea(form("content"), '_label -> "Endorsement")
-            @v2.html.text(form("name"), '_label -> "Name")
-            @v2.html.select(form("brandId"),
-              ("0", "Not brand-related endorsement") :: brands.map(x => (x.id.get.toString, x.name)),
-              '_label -> "Brand", '_help -> "")
-            @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
-          }
-          @if(form.hasErrors) {
+        <div class="tab-content">
+          <div id="addForm" role="tabpanel" class="tab-pane">
             @v2.html.block("") {
-              <div class="errors">
-              @for(error <- form.errors) {
-                @play.api.i18n.Messages(error.message)<br/>
-              }
-              </div>
+              @v2.html.textarea(form("content"), '_label -> "Endorsement")
+              @v2.html.text(form("name"), '_label -> "Name")
+              @v2.html.select(form("brandId"),
+                ("0", "Not brand-related endorsement") :: brands.map(x => (x.id.get.toString, x.name)),
+                '_label -> "Brand", '_help -> "")
+              @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
             }
-          }
-        </div>
-        <div id="selectForm" data-url="@routes.Endorsements.renderSelectForm(personId).url">
+            @if(form.hasErrors) {
+              @v2.html.block("") {
+                <div class="errors">
+                @for(error <- form.errors) {
+                  @play.api.i18n.Messages(error.message)<br/>
+                }
+                </div>
+              }
+            }
+          </div>
+          <div id="selectForm" role="tabpanel" class="tab-pane active" data-url="@routes.Endorsements.renderSelectForm(personId).url">
+          </div>
         </div>
         @v2.html.block("") {
           <div class="row">
             <div class="col-md-5">
-              <button class="btn btn-primary btn-block btn-lg" type="submit">
+              <button class="btn btn-primary btn-block btn-lg" id="submit" type="submit">
                 Save</button>
             </div>
             <div class="col-md-3 cancel">
