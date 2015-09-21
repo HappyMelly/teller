@@ -282,6 +282,7 @@ case class Certificate(
           document.add(signature)
         } catch {
           case _: Throwable => Unit
+        }
       }
       if (secondFacilitator.signature) {
         val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
@@ -294,7 +295,6 @@ case class Certificate(
         } catch {
           case _: Throwable => Unit
         }
-      }
       }
     } else {
       val facilitator = facilitators.head

@@ -77,7 +77,8 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
       Json.obj(
         "content" -> endorsement.content,
         "name" -> endorsement.name,
-        "company" -> endorsement.company)
+        "company" -> endorsement.company,
+        "rating" -> endorsement.rating)
     }
   }
 

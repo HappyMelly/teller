@@ -70,7 +70,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val facilitators = Brand.findFacilitators(brandId)
-      if (facilitators.length > 0) {
+      if (facilitators.nonEmpty) {
         PeopleCollection.organisations(facilitators)
       }
       Ok(Json.toJson(facilitators))

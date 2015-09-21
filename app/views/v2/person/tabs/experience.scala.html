@@ -117,8 +117,10 @@
             <div class="content"><i>@endorsement.content</i></div>
             @dynamic(handler, "person", "edit") {
               <div class="actions font-sm">
-                <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
-                  Edit</a>
+                @if(endorsement.editable) {
+                  <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">
+                    Edit</a>
+                }
                 <a href="#" data-id="@endorsement.id.get" class="remove"
                   data-href="@routes.Endorsements.remove(person.id.get, endorsement.id.get)">
                   Delete</a>

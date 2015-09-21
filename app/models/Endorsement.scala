@@ -30,4 +30,9 @@ case class Endorsement(id: Option[Long],
   content: String,
   name: String,
   company: Option[String] = None,
-                        position: Int = 0)
+  position: Int = 0,
+  evaluationId: Long = 0,
+  rating: Option[Int] = None) {
+
+  def editable: Boolean = evaluationId == 0
+}
