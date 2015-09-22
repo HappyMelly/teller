@@ -137,7 +137,8 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     Akka.system.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
-        EventReminder.sendConfirmation()
+        EventReminder.sendPostFactumConfirmation()
+        EventReminder.sendUpcomingConfirmation()
       }
   }
 
