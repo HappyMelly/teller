@@ -245,6 +245,7 @@ GET           /statistics/                                                   @co
 GET           /statistics/type/facilitators/brand/:id                        @controllers.Statistics.byFacilitators(id: Long)
 GET           /statistics/type/events/brand/:id                              @controllers.Statistics.byEvents(id: Long)
 GET           /statistics/type/countries/brand/:id                           @controllers.Statistics.byCountries(id: Long)
+GET           /statistics/type/participants/brand/:id                        @controllers.Statistics.byParticipants(id: Long)
 
 GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)

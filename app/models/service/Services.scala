@@ -65,6 +65,8 @@ trait Services {
 
   def orgService: OrganisationService = OrganisationService.get
 
+  def participantService: ParticipantService = ParticipantService.get
+
   def paymentRecordService: PaymentRecordService = PaymentRecordService.get
 
   def personService: PersonService = PersonService.get

@@ -99,6 +99,20 @@ function showTab(elem, type) {
             return " " + country.label
         });
     });
+    url = jsRoutes.controllers.Statistics.byParticipants(brandId).url;
+    $.get(url, function(data) {
+        var ctx = $("#participantChart").get(0).getContext("2d");
+        new Chart(ctx).Line(data, {});
+        var stats = data.datasets[0].data;
+        $("#participantsTotal").text(stats[stats.length - 1]);
+        drawDoughnutChart("#rolesChart", data.roles);
+        for (var i = 0; i < data.roles.length; i++) {
+            $("#rolesList").append(
+                $("<tr>")
+                    .append($("<td>").append(data.roles[i].label))
+                    .append($("<td>").append(" " + data.roles[i].value)))
+        }
+    });
     return false;
 }
 

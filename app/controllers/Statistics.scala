@@ -26,7 +26,7 @@ package controllers
 
 
 
-import models.{ ActiveUser, License, Event }
+import models.{Participant, ActiveUser, License, Event}
 import models.UserRole.Role._
 import models.service.Services
 import org.joda.time.{ LocalDate, Months, Interval }
@@ -189,6 +189,50 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Returns number of participants per quarter for the given brand in a format
+   * suitable for diagrams
+   *
+   * @param brandId Brand id
+   */
+  def byParticipants(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val participants = participantService.findByBrand(brandId)
+
+      val statsByRoles = participants.
+        filter(_._1.role.exists(_.nonEmpty)).
+        groupBy(_._1.role).map(x => (x._1.get, x._2.length)).toList
+
+      val stats = if (participants.isEmpty)
+        List[(LocalDate, Int)]()
+      else
+        quarterStatsByParticipants(participants)
+
+      implicit val roleStats = new Writes[(String, Int)] {
+        def writes(value: (String, Int)): JsValue = {
+          val color = COLORS(Random.nextInt(COLORS.length))
+          Json.obj(
+            "value" -> value._2,
+            "label" -> value._1,
+            "color" -> color._2,
+            "highlight" -> color._1)
+        }
+      }
+
+      Ok(Json.obj(
+        "roles" -> statsByRoles,
+        "labels" -> stats.map(_._1.toString("MMM yyyy")),
+        "datasets" -> List(
+          Json.obj("label" -> "Number of participants",
+            "fillColor" -> "rgba(220,220,220,0.2)",
+            "strokeColor" -> "rgba(220,220,220,1)",
+            "pointColor" -> "rgba(220,220,220,1)",
+            "pointStrokeColor" -> "#fff",
+            "pointHighlightFill" -> "#fff",
+            "pointHighlightStroke" -> "rgba(220,220,220,1)",
+            "data" -> stats.map(_._2)))))
+  }
+
+  /**
    * Returns number of facilitators who joined and left last month
    * @param licenses List of licenses
    */
@@ -323,6 +367,19 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
     LocalDate.now().withDayOfMonth(1).toDate.getTime - 1)
 
   /**
+   * Returns accumulated number of participants per quarter starting from the first event
+   * @param participants Participants
+   */
+  protected def quarterStatsByParticipants(participants: List[(Participant, LocalDate)]): List[(LocalDate, Int)] = {
+    val perMonth = participants
+      .map(x ⇒ (x._2.withDayOfMonth(1), 1))
+      .groupBy(_._1)
+      .map(x ⇒ (x._1, x._2.length))
+
+    convertMonthStatsToQuarterStats(perMonth)
+  }
+  
+  /**
    * Returns accumulated number of events per quarter starting from the first event
    * @param rawEvents Events
    */
@@ -332,17 +389,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       .groupBy(_._1)
       .map(x ⇒ (x._1, x._2.length))
 
-    val start = perMonth.keys.toList.sortBy(_.toString).head
-
-    lazy val data: Stream[(LocalDate, Int)] = {
-      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
-        (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(_ + num).getOrElse(num))
-      loop(start, perMonth.getOrElse(start, 0))
-    }
-    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
-    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
-
-    rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
+    convertMonthStatsToQuarterStats(perMonth)
   }
 
   /**
@@ -371,6 +418,24 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
         (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(x ⇒ num + x._1 - x._2).getOrElse(num))
       loop(start, perMonth.get(start).map(_._1).getOrElse(0))
+    }
+    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
+    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
+
+    rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
+  }
+
+  /**
+   * Converts monthly statistics to statistics by quarters
+   * @param monthStats Monthly statistics
+   */
+  protected def convertMonthStatsToQuarterStats(monthStats: Map[LocalDate, Int]): List[(LocalDate, Int)] = {
+    val start = monthStats.keys.toList.sortBy(_.toString).head
+
+    lazy val data: Stream[(LocalDate, Int)] = {
+      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
+        (d, num) #:: loop(d.plusMonths(1), monthStats.get(d.plusMonths(1)).map(_ + num).getOrElse(num))
+      loop(start, monthStats.getOrElse(start, 0))
     }
     val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
     val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
