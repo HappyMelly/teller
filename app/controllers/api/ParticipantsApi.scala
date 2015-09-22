@@ -57,17 +57,21 @@ trait ParticipantsApi extends ApiAuthentication with Services {
       "postcode" -> optional(nonEmptyText),
       "province" -> optional(nonEmptyText),
       "organisation" -> optional(nonEmptyText),
-      "comment" -> optional(nonEmptyText))({
-        (id, event_id, first_name, last_name, birthday, email, city, country, street_1, street_2, postcode, province,
-        organisation, comment) ⇒
+      "comment" -> optional(nonEmptyText),
+      "role" -> optional(nonEmptyText))({
+        (id, event_id, first_name, last_name, birthday, email, city, country,
+         street_1, street_2, postcode, province, organisation, comment,
+          role) ⇒
           ParticipantData(id, event_id, first_name, last_name, birthday, email,
-            Address(None, street_1, street_2, Some(city), province, postcode, country), organisation, comment,
+            Address(None, street_1, street_2, Some(city), province, postcode, country),
+            organisation, comment, role,
             DateTime.now(), userName, DateTime.now(), userName)
       })({
         (p: ParticipantData) ⇒
           Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
-            p.address.city.getOrElse(""), p.address.countryCode, p.address.street1, p.address.street2,
-            p.address.postCode, p.address.province, p.organisation, p.comment))
+            p.address.city.getOrElse(""), p.address.countryCode,
+            p.address.street1, p.address.street2, p.address.postCode,
+            p.address.province, p.organisation, p.comment, p.role))
       }))
   }
 
@@ -79,12 +83,14 @@ trait ParticipantsApi extends ApiAuthentication with Services {
         (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "person_id" -> longNumber.verifying(
         "error.person.notExist",
-        (personId: Long) ⇒ personService.find(personId).nonEmpty))({
-        (id, event_id, person_id) ⇒
+        (personId: Long) ⇒ personService.find(personId).nonEmpty),
+      "role" -> optional(nonEmptyText))({
+        (id, event_id, person_id, role) ⇒
           Participant(id = None, event_id, person_id, certificate = None,
-            issued = None, evaluationId = None, organisation = None, comment = None)
+            issued = None, evaluationId = None, organisation = None,
+            comment = None, role = role)
       })({
-        (p: Participant) ⇒ Some(p.id, p.eventId, p.personId)
+        (p: Participant) ⇒ Some(p.id, p.eventId, p.personId, p.role)
       }))
   }
 

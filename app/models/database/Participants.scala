@@ -42,12 +42,13 @@ private[models] class Participants(tag: Tag) extends Table[Participant](tag, "EV
   def issued = column[Option[LocalDate]]("ISSUED")
   def organisation = column[Option[String]]("ORGANISATION")
   def comment = column[Option[String]]("COMMENT")
+  def role = column[Option[String]]("ROLE")
 
   def event = foreignKey("EVENT_FK", eventId, TableQuery[Events])(_.id)
   def participant = foreignKey("PARTICIPANT_FK", personId, TableQuery[People])(_.id)
 
   def * = (id.?, eventId, personId, evaluationId, certificate, issued,
-    organisation, comment) <> (
+    organisation, comment, role) <> (
       (Participant.apply _).tupled, Participant.unapply)
 
   def forUpdate = (eventId, evaluationId, certificate, issued)

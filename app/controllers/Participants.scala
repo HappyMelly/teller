@@ -58,15 +58,17 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       "city" -> nonEmptyText,
       "country" -> nonEmptyText.verifying(
         "Unknown country",
-        (country: String) ⇒ Countries.all.exists(_._1 == country)))({
-        (id, eventId, firstName, lastName, birthday, email, city, country) ⇒
+        (country: String) ⇒ Countries.all.exists(_._1 == country)),
+      "role" -> optional(text))({
+        (id, eventId, firstName, lastName, birthday, email, city, country, role) ⇒
           ParticipantData(id, eventId, firstName, lastName, birthday, email,
-            Address(None, None, None, Some(city), None, None, country), organisation = None, comment = None,
+            Address(None, None, None, Some(city), None, None, country),
+            organisation = None, comment = None, role,
             DateTime.now(), userName, DateTime.now(), userName)
       })({
         (p: ParticipantData) ⇒
           Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
-            p.address.city.getOrElse(""), p.address.countryCode))
+            p.address.city.getOrElse(""), p.address.countryCode, p.role))
       }))
   }
 
@@ -80,14 +82,16 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       "participantId" -> longNumber.verifying(
         "error.person.notExist",
         (participantId: Long) ⇒ PersonService.get.find(participantId).nonEmpty),
-      "evaluationId" -> optional(longNumber))({
-        (id, brandId, eventId, participantId, evaluationId) ⇒
+      "evaluationId" -> optional(longNumber),
+      "role" -> optional(text))({
+        (id, brandId, eventId, participantId, evaluationId, role) ⇒
           Participant(id, eventId, participantId, evaluationId,
-            certificate = None, issued = None, organisation = None, comment = None)
+            certificate = None, issued = None, organisation = None,
+            comment = None, role = role)
       })({
         (p: Participant) ⇒
           Some(p.id, p.event.get.brandId, p.eventId,
-            p.personId, p.evaluationId)
+            p.personId, p.evaluationId, p.role)
       }))
   }
 

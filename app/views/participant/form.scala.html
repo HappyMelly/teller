@@ -13,7 +13,7 @@
     token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import views.Countries
+@import views.{ Countries, Participants }
 @import views.ViewHelpers._
 
 @main("Participants", "participants", user) {
@@ -59,6 +59,8 @@
             ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
           @html.select(existingPersonForm("participantId"),
             ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person", '_help ->"")
+          @html.select(existingPersonForm("role"),
+            ("", "I don't know") :: Participants.roles.map(x => (x, x)), '_label -> "Role", '_help ->"")
           <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-9">
@@ -79,6 +81,8 @@
           @html.text(newPersonForm("emailAddress"), '_label -> "E-mail address")
           @html.select(newPersonForm("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
           @html.text(newPersonForm("city"), '_label -> "City")
+          @html.select(existingPersonForm("role"),
+            ("", "I don't know") :: Participants.roles.map(x => (x, x)), '_label -> "Role", '_help ->"")
           <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-9">

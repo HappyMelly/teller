@@ -52,7 +52,8 @@ case class Participant(
     certificate: Option[String],
     issued: Option[LocalDate],
     organisation: Option[String],
-    comment: Option[String]) {
+    comment: Option[String],
+    role: Option[String]) {
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
   lazy val person: Option[Person] = PersonService.get.find(personId)
@@ -126,6 +127,7 @@ case class ParticipantData(id: Option[Long],
     address: Address,
     organisation: Option[String],
     comment: Option[String],
+    role: Option[String],
     created: DateTime = DateTime.now(),
     createdBy: String,
     updated: DateTime,
@@ -256,7 +258,8 @@ object Participant {
       certificate = None,
       issued = None,
       data.organisation,
-      data.comment)
+      data.comment,
+      data.role)
     Participant.insert(eventParticipant)
   }
 
