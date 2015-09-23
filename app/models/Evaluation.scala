@@ -24,6 +24,7 @@
 
 package models
 
+import mail.reminder.EvaluationReminder
 import models.database.Evaluations
 import models.service._
 import org.joda.time.{ DateTime, LocalDate }
@@ -194,14 +195,8 @@ case class Evaluation(
   protected def sendConfirmationRequest(defaultHook: String) = {
     val brand = brandService.find(event.brandId).get
     val participant = personService.find(this.personId).get
-    val subject = "Confirm your %s evaluation" format brand.name
-    val url = brand.evaluationHookUrl.
-      map(x ⇒ if (x.endsWith("/")) x else x + "/").
-      getOrElse("https://" + defaultHook).
-      concat(this.confirmationId getOrElse "")
-    email.send(Set(participant), None, None, subject,
-      mail.templates.evaluation.html.confirm(brand, participant.fullName, url).toString(),
-      richMessage = true)
+    val token = this.confirmationId getOrElse ""
+    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
     this
   }
 }

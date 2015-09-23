@@ -63,25 +63,24 @@ private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
   def archived = column[Boolean]("ARCHIVED")
   def confirmed = column[Boolean]("CONFIRMED")
   def free = column[Boolean]("FREE")
+  def followUp = column[Boolean]("FOLLOW_UP")
 
   def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
 
   def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  // type EventsFields = (Option[Long], Long, Long, String, String, Option[String], Option[String], String, String, Option[String], Option[String], Option[String], Option[String], LocalDate, LocalDate, Int, Int, Boolean, Boolean, Boolean, Boolean, Float)
-
   def * = (id.? :: eventTypeId :: brandId :: title :: spokenLanguage ::
     secondSpokenLanguage :: materialsLanguage :: city :: countryCode ::
     description :: specialAttention :: organizerId :: webSite ::
     registrationPage :: start :: end :: hoursPerDay ::
-    totalHours :: notPublic :: archived :: confirmed :: free :: rating ::
-    HNil) <> (createEvent, extractEvent)
+    totalHours :: notPublic :: archived :: confirmed :: free :: followUp ::
+    rating :: HNil) <> (createEvent, extractEvent)
 
   type EventHList = Option[Long] :: Long :: Long :: String :: String ::
     Option[String] :: Option[String] :: String :: String :: Option[String] ::
     Option[String] :: Long :: Option[String] :: Option[String] :: LocalDate ::
     LocalDate :: Int :: Int :: Boolean :: Boolean :: Boolean :: Boolean ::
-    Float :: HNil
+    Boolean :: Float :: HNil
 
   def createEvent(e: EventHList): Event =  e match {
     case id ::
@@ -106,6 +105,7 @@ private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
       archived ::
       confirmed ::
       free ::
+      followUp ::
       rating ::
       HNil =>
     Event(id, eventTypeId, brandId, title,
@@ -114,26 +114,26 @@ private[models] class Events(tag: Tag) extends Table[Event](tag, "EVENT") {
       Details(description, specialAttention),
       Organizer(organizerId, webSite, registrationPage),
       Schedule(start, end, hoursPerDay, totalHours),
-      notPublic, archived, confirmed, free, rating)
+      notPublic, archived, confirmed, free, followUp, rating)
   }
 
   def extractEvent(e: Event): Option[EventHList] =
-    Some((e.id :: e.eventTypeId :: e.brandId :: e.title ::
+    Some(e.id :: e.eventTypeId :: e.brandId :: e.title ::
       e.language.spoken :: e.language.secondSpoken :: e.language.materials ::
       e.location.city :: e.location.countryCode :: e.details.description ::
       e.details.specialAttention :: e.organizer.id ::
       e.organizer.webSite :: e.organizer.registrationPage ::
       e.schedule.start :: e.schedule.end :: e.schedule.hoursPerDay ::
       e.schedule.totalHours :: e.notPublic :: e.archived :: e.confirmed :: e.free ::
-      e.rating :: HNil))
+      e.followUp :: e.rating :: HNil)
 
   def forInsert = (eventTypeId, brandId, title, spokenLanguage,
     secondSpokenLanguage, materialsLanguage, city, countryCode, description,
     specialAttention, organizerId, webSite, registrationPage, start, end,
-    hoursPerDay, totalHours, notPublic, archived, confirmed, free)
+    hoursPerDay, totalHours, notPublic, archived, confirmed, free, followUp)
 
   def forUpdate = (eventTypeId, brandId, title, spokenLanguage,
     secondSpokenLanguage, materialsLanguage, city, countryCode, description,
     specialAttention, organizerId, webSite, registrationPage, start, end,
-    hoursPerDay, totalHours, notPublic, archived, confirmed, free)
+    hoursPerDay, totalHours, notPublic, archived, confirmed, free, followUp)
 }

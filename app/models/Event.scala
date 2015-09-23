@@ -107,6 +107,7 @@ case class Event(
     archived: Boolean = false,
     confirmed: Boolean = false,
     free: Boolean = false,
+    followUp: Boolean = true,
     rating: Float = 0.0f,
     fee: Option[Money] = None) extends ActivityRecorder with Services {
 

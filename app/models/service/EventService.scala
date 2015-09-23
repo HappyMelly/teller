@@ -226,7 +226,7 @@ class EventService extends Integrations with Services {
       view.event.organizer.registrationPage, view.event.schedule.start,
       view.event.schedule.end, view.event.schedule.hoursPerDay,
       view.event.schedule.totalHours, view.event.notPublic,
-      view.event.archived, view.event.confirmed, view.event.free)
+      view.event.archived, view.event.confirmed, view.event.free, view.event.followUp)
     val id = (events.map(_.forInsert) returning events.map(_.id)) += insertTuple
     view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
       TableQuery[EventFacilitators] += (id, facilitatorId))
@@ -289,7 +289,7 @@ class EventService extends Integrations with Services {
       view.event.schedule.start, view.event.schedule.end,
       view.event.schedule.hoursPerDay, view.event.schedule.totalHours,
       view.event.notPublic, view.event.archived, view.event.confirmed,
-      view.event.free)
+      view.event.free, view.event.followUp)
 
     events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
 

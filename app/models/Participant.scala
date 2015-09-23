@@ -91,6 +91,7 @@ case class Participant(
  * @param date Date of the evaluation creation
  * @param handled Date when the evaluation was approved/rejected
  * @param certificate A certificate identifier
+ * @param confirmationToken Token used in a confirmation url to identify an evaluation
  */
 case class ParticipantView(person: Person,
     event: Event,
@@ -99,7 +100,8 @@ case class ParticipantView(person: Person,
     status: Option[EvaluationStatus.Value],
     date: Option[DateTime],
     handled: Option[LocalDate],
-    certificate: Option[String]) {
+    certificate: Option[String],
+    confirmationToken: Option[String]) {
 
   override def equals(other: Any): Boolean =
     other match {
@@ -164,7 +166,7 @@ object Participant {
           TableQuery[People] on (_.personId === _.id) innerJoin
           TableQuery[Events] on (_._1.eventId === _.id) leftJoin
           TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
       val brandQuery = brandId.map { value ⇒
         baseQuery.filter(_._2.brandId === value)
@@ -172,7 +174,7 @@ object Participant {
       val rawList = brandQuery.mapResult(ParticipantView.tupled).list
       val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
       val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
+        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate, None))
       withEvaluation.union(withoutEvaluation.distinct)
   }
 
@@ -188,13 +190,13 @@ object Participant {
           TableQuery[People] on (_.personId === _.id) innerJoin
           TableQuery[Events] on (_._1.eventId === _.id) leftJoin
           TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
+      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
       val eventQuery = baseQuery.filter(_._2.id inSet events)
       val rawList = eventQuery.mapResult(ParticipantView.tupled).list
       val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
       val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
+        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate, None))
       withEvaluation.union(withoutEvaluation.distinct)
   }
 
@@ -209,13 +211,13 @@ object Participant {
         TableQuery[People] on (_.personId === _.id) innerJoin
         TableQuery[Events] on (_._1.eventId === _.id) leftJoin
         TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate)
+    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
     val eventQuery = baseQuery.filter(_._2.id === eventId)
     val rawList = eventQuery.mapResult(ParticipantView.tupled).list
     val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate))
+      map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate, None))
     withEvaluation.union(withoutEvaluation.distinct)
   }
 

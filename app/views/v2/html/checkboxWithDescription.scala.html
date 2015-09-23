@@ -1,35 +1,37 @@
 @**
- * Generate an HTML input checkbox.
- *
- * Example:
- * {{{
- * @html.checkbox(field = myForm("done"))
- * }}}
- *
- * @param field The form field.
- * @param args Set of extra HTML attributes ('''id''' and '''label''' are 2 special arguments).
- * @param handler The field constructor.
- *@
+* Generate an HTML input checkbox.
+*
+* Example:
+* {{{
+* @html.checkbox(field = myForm("done"))
+* }}}
+*
+* @param field The form field.
+* @param args Set of extra HTML attributes ('''id''', '''label''', '''desc''' are 3 special arguments).
+* @param handler The field constructor.
+*@
 @(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, lang: Lang)
 
 @boxValue = @{ args.toMap.get('value).getOrElse("true") }
 
 <div class="form-group @if(field.hasErrors) {has-error}"
-  id="@(field.id + "_field")">
-  <div class="col-sm-2"></div>
-  <div class="col-sm-7 checkbox">
+id="@(field.id + "_field")">
+  <div class="col-md-2">@args.toMap.get('_label)</div>
+  <div class="col-md-7 checkbox with-description">
     <label for="@field.id" class="control-label">
       <input type="checkbox" id="@field.id" name="@field.name" value="@boxValue"
         @if(field.value == Some(boxValue)){checked="checked"} @toHtmlArgs(args.toMap.filterKeys(_ != 'value))/>
-      @args.toMap.get('_label)
-    </label>
-    <span class="help-block">
+      @args.toMap.get('_desc)
+      </label>
+  </div>
+  <div class="col-md-3">
+      <span class="help-block">
       @if(field.hasErrors) {
         @field.errors.mkString(", ")
       } else {
         @args.toMap.get('_help)
       }
-    </span>
+      </span>
   </div>
 </div>
 

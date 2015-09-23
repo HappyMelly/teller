@@ -1,4 +1,4 @@
-@(event: Event)(implicit token: play.filters.csrf.CSRF.Token)
+@(event: Event, facilitatorId: Long)(implicit token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 
@@ -27,12 +27,8 @@
                         Your letter should contain a link to an evaluation form.
                     </div>
 
-                    <textarea name="body" class="form-control" rows="5">###Hi PARTICIPANT_NAME_TOKEN,###
-
-Thanks for attending a **@event.title** event in @event.location.city. Please follow [this link](http://www.management30.com/evaluation) and evaluate your experience during the event.
-
-Thanks for attending!
-                    </textarea>
+                    <textarea name="body" class="form-control" rows="5">@mail.templates.evaluation.html.requestBody("###Hi PARTICIPANT_NAME_TOKEN,###", event, facilitatorId)
+</textarea>
                     <span class="help-block">The letter will have "The [brand] team" in its footer</span>
                 </form>
             </div>

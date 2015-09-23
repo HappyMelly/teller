@@ -25,7 +25,7 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
-import mail.reminder.{ ProfileStrengthReminder, EventReminder }
+import mail.reminder.{EvaluationReminder, ProfileStrengthReminder, EventReminder}
 import services.{TellerRoutesService, LoginIdentityService}
 import models.ActiveUser
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
@@ -121,7 +121,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     // this is a dirty hack as I don't want to pay Heroku additional $30 for only
     // sending notifications through  a separate process
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.1")) {
-      scheduleEventConfirmationAlert
+      scheduleDailyAlerts
       scheduleProfileImprovementAlert
     }
   }
@@ -129,7 +129,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   /**
    * Sends event confirmation alert in the beginning of each day
    */
-  private def scheduleEventConfirmationAlert = {
+  private def scheduleDailyAlerts = {
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
@@ -138,7 +138,8 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
         EventReminder.sendPostFactumConfirmation()
-        EventReminder.sendUpcomingConfirmation()
+//        EventReminder.sendUpcomingConfirmation()
+        EvaluationReminder.sendToParticipants()
       }
   }
 

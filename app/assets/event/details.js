@@ -180,5 +180,6 @@ $(document).ready( function() {
         });
     });
     updateOrganizer($('#organizer').data('id'));
+    $('[data-toggle="popover"]').popover();
 });
 

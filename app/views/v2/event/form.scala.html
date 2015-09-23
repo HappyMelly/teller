@@ -38,7 +38,7 @@
                 <select id="facilitatorIds" class="form-control"></select>
               </div>
               <div id="chosenFacilitators" class="col-xs-7 padding-fix last"
-              value="@helper.repeat(form("facilitatorIds"), min = 0) { f => @f.value, }">
+              value="@helper.repeat(form("facilitatorIds"), min = 0) { f =>@f.value,}">
               </div>
             </div>
             <div class="col-md-3 field-type"><span>required</span></div>
@@ -106,16 +106,23 @@
             'placeholder -> "http:// or mailto:", '_type -> "Web site URL or email address")
         }
         @v2.html.block("Misc", Some("yellow")) {
-          @v2.html.checkbox(form("notPublic"),
-            '_label -> "Private Event : Private events are not shown on the calendar, but evaluation is still possible",
+          @v2.html.checkboxWithDescription(form("followUp"),
+            '_label -> "Follow Up",
+            '_desc -> "Participants will receive requests to evaluate this event or to confirm their evaluations on the first, third and seventh days after this event",
             '_help -> "")
-          @v2.html.checkbox(form("archived"),
-            '_label -> "Archived Event : Evaluation is not possible anymore for archived events",
+          @v2.html.checkboxWithDescription(form("notPublic"),
+            '_label -> "Private",
+            '_desc -> "This event is not shown on the calendar, but evaluation is still possible",
             '_help -> "")
-          @v2.html.checkbox(form("confirmed"),
-            '_label -> "Confirmed Event : Invoicing for licenses only happens for confirmed events",
+          @v2.html.checkboxWithDescription(form("archived"),
+            '_label -> "Archived",
+            '_desc -> "Participants won't be able to evaluate this event",
             '_help -> "")
-          <div class="col-md-offset-2 alert alert-warning" id="confirmed-alert">
+          @v2.html.checkboxWithDescription(form("confirmed"),
+            '_label -> "Confirmed",
+            '_desc -> "You will get an invoice after this event takes place",
+            '_help -> "")
+          <div class="col-md-offset-2 alert alert-info" id="confirmed-alert">
             <i class="glyphicon glyphicon-info-sign"></i>
             You confirmed the event took or will
             take place. You will get an invoice for this event. If you are not sure that

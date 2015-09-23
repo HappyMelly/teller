@@ -133,6 +133,7 @@ object Comparator extends Services {
       new SimpleFieldChange("Registration Page", was.event.organizer.registrationPage.getOrElse(""), now.event.organizer.registrationPage.getOrElse("")),
       new SimpleFieldChange("Private Event", was.event.notPublic.toString, now.event.notPublic.toString),
       new SimpleFieldChange("Achived Event", was.event.archived.toString, now.event.archived.toString),
+      new SimpleFieldChange("Follow Up Emails", was.event.followUp.toString, now.event.followUp.toString),
       new FacilitatorChange("Facilitators", was.event.facilitatorIds, now.event.facilitatorIds),
       new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
 

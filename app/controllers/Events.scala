@@ -25,6 +25,7 @@
 package controllers
 
 import controllers.Forms._
+import mail.reminder.EvaluationReminder
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
@@ -118,16 +119,17 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     "archived" -> default(boolean, false),
     "confirmed" -> default(boolean, false),
     "free" -> default(boolean, false),
+    "followUp" -> boolean,
     "invoice" -> longNumber.verifying("No organization to invoice", _ > 0),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandId, title, language, location, details, organizer,
-        schedule, notPublic, archived, confirmed, free, invoiceTo,
+        schedule, notPublic, archived, confirmed, free, followUp, invoiceTo,
         facilitatorIds) ⇒
         {
           val event = Event(id, eventTypeId, brandId, title, language, location,
             details, organizer, schedule, notPublic, archived, confirmed, free,
-            0.0f, None)
+            followUp, 0.0f, None)
           val invoice = EventInvoice.empty.copy(eventId = id, invoiceTo = invoiceTo)
           event.facilitatorIds_=(facilitatorIds)
           EventView(event, invoice)
@@ -137,7 +139,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           view.event.title, view.event.language, view.event.location,
           view.event.details, view.event.organizer, view.event.schedule,
           view.event.notPublic, view.event.archived, view.event.confirmed,
-          view.event.free, view.invoice.invoiceTo, view.event.facilitatorIds))
+          view.event.free, view.event.followUp, view.invoice.invoiceTo,
+          view.event.facilitatorIds))
 
       }))
 
@@ -154,7 +157,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       val default = Event(None, 0, 0, "", Language("", None, Some("English")),
         Location("", ""), defaultDetails, organizer, defaultSchedule,
         notPublic = false, archived = false, confirmed = false, free = false,
-        0.0f, None)
+        followUp = true, 0.0f, None)
       val view = EventView(default, defaultInvoice)
       val brands = Brand.findByUser(user.account).filter(_.active)
       Ok(views.html.v2.event.form(user, None, brands, true, eventForm.fill(view)))
@@ -505,9 +508,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
               requestData.participantIds.foreach { id ⇒
                 val participant = personService.find(id).get
                 val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
-                val subject = s"Evaluation Request"
-                email.send(Set(participant), None, None, subject,
-                  mail.templates.evaluation.html.request(brand, participant, body).toString(), richMessage = true)
+                EvaluationReminder.sendEvaluationRequest(participant, brand, body)
               }
 
               val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)

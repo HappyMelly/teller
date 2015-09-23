@@ -50,7 +50,7 @@
 
   @element.evaluationActions()
   @views.html.event.reason()
-  @views.html.event.requestEvaluation(view.event)
+  @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head)
   <div class="page-header">
     <h1>
       @view.event.title
@@ -88,13 +88,6 @@
       </div>
     </h1>
   </div>
-  @if(view.event.confirmed && !view.event.free) {
-    <div class="alert alert-warning">
-      <i class="glyphicon glyphicon-info-sign"></i> You will be
-      invoiced for @view.event.fee.map { fee => @fee}. If the event didn't take place,
-      <b>delete it</b>.
-    </div>
-  }
   @dynamic(handler, "event", DynamicRole.Coordinator) {
     @if(!view.event.schedule.validateTotalHours) {
       <div class="alert alert-warning">
@@ -230,6 +223,26 @@
           </p>
         </form>
       }
+    }
+  </div>
+  <div class="col-md-12">
+    @if(view.event.confirmed && !view.event.free) {
+      <div class="alert alert-warning">
+        <i class="glyphicon glyphicon-info-sign"></i> You will be
+        invoiced for @view.event.fee.map { fee => @fee}. If the event didn't take place,
+        <b>delete it</b>.
+      </div>
+    }
+    @if(view.event.followUp) {
+      <div class="alert alert-success" role="alert">
+        Automatic <a href="#" class="alert-link" data-toggle="popover" data-content="Participants will receive requests to evaluate this event or to confirm their evaluations on the first, third and seventh days after this event" data-trigger="focus">follow-up emails</a> to participants are on!
+        <a href="@routes.Events.edit(view.event.id.get).url" class="alert-link pull-right">Turn off</a>
+      </div>
+    } else {
+      <div class="alert alert-warning" role="alert">
+        Automatic <a href="#" class="alert-link" data-toggle="popover" data-content="Participants will receive requests to evaluate this event or to confirm their evaluations on the first, third and seventh days after this event" data-trigger="focus">follow-up emails</a> to participants are off!
+        <a href="@routes.Events.edit(view.event.id.get).url" class="alert-link pull-right">Turn on</a>
+      </div>
     }
   </div>
   <div class="col-md-12">

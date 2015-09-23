@@ -14,13 +14,13 @@ object ProfileStrengthReminder extends Services with Integrations {
 
   /**
    * Sends profile strength reminders to all facilitators with profile strength
-   *  less than 100
+   *  less than 80
    */
   def sendToFacilitators() = {
     val licenses = licenseService.findActive
     val profiles = profileStrengthService.find(licenses.map(_.licenseeId).distinct, org = false)
     val withRanks = ProfileStrength.calculateRanks(profiles).
-      filter(_._1.progress < 100).
+      filter(_._1.progress < 80).
       filterNot(x => x._1.incompleteSteps.length == 1 && x._1.incompleteSteps.exists(_.name == "member")).
       sortBy(_._1.objectId)
     val people = personService.find(withRanks.map(_._1.objectId)).sortBy(_._1.id)
