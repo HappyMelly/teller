@@ -176,8 +176,8 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
-              val b = brand.insert
-              val log = activity(b, user.person).insert()
+              val b = brand.insert()
+              val log = activity(b, user.person).created.insert()
               Future.successful(Redirect(routes.Brands.index()).flashing("success" -> log.toString))
             }
           }

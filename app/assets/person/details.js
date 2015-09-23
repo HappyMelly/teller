@@ -22,6 +22,8 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+var uploadedPhoto = null;
+
 function switchActivePhoto(object) {
     $('#choosePhotoContent').find('.option').removeClass('active');
     $(object).addClass('active');
@@ -37,13 +39,18 @@ function updateReason() {
     });
 }
 
+/**
+ * Uploads custom photo and updates photo
+ */
 function updatePhoto() {
     var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url;
     var object = $('#choosePhotoContent').find('.active');
     var type = $(object).attr('id');
-    var name = "";
-
     var src = $(object).find('img').attr('src');
+    if (type == "custom" && uploadedPhoto != null) {
+        $('#saveLink').text('Uploading...');
+        uploadedPhoto.submit();
+    }
     $.post(url, { type: type }, null, "json").done(function(data) {
         $('#photoDialog').modal('hide');
         $('#stub').hide();
@@ -68,7 +75,6 @@ function showSelectPhotoForm() {
 }
 
 function setupCustomPhotoActions() {
-    var btnPhotoUpload = '#btnPhotoUpload';
     $('#photoUpload').fileupload({
         dataType: 'json',
         disableImageResize: false,
@@ -79,20 +85,13 @@ function setupCustomPhotoActions() {
         replaceFileInput: false,
         done: function (e, data) {
             $('#customPhoto').attr('src', data.result.link);
-            $(btnPhotoUpload).text('Upload photo').prop('disabled', true);
             switchActivePhoto($('#customPhoto').parent());
         }
     }).bind('fileuploadadd', function (e, data) {
-        $(btnPhotoUpload).prop('disabled', false);
+        uploadedPhoto = data;
         $('#customPhoto').attr('src', URL.createObjectURL(data.files[0]));
-        $('#customPhoto').addClass('photo')
-        $(btnPhotoUpload).off('click');
-        $(btnPhotoUpload).on('click', function(e) {
-            $(btnPhotoUpload).text('Uploading...');
-            data.submit();
-        });
+        $('#customPhoto').addClass('photo');
     });
-    $(btnPhotoUpload).prop('disabled', true);
 }
 
 /**
