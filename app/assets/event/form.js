@@ -85,8 +85,8 @@ function updateInvoicingOrganisations(organisations, selectedId) {
         .empty()
         .append($("<option></option>").attr("value", 0).text("Choose an organisation"));
     if (organisations.length == 0) {
-        var message = "Warning: You are not able to save any event information because there is no organization ";
-        message += "connected to the accounts of the chosen facilitators. Please ask the person who added ";
+        var message = "This event cannot be saved. You chose no facilitators with active organisations. ";
+        message += "Please ask the person who added ";
         message += "your account also connect it to an organization that will be used for invoicing.";
         $('#no_org_warning').empty().append(
             $('<div class="alert alert-danger">')

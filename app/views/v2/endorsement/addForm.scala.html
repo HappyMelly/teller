@@ -23,8 +23,8 @@
         <div class="tab-content">
           <div id="addForm" role="tabpanel" class="tab-pane">
             @v2.html.block("") {
-              @v2.html.textarea(form("content"), '_label -> "Endorsement")
-              @v2.html.text(form("name"), '_label -> "Name")
+              @v2.html.textarea(form("content"), '_label -> "Endorsement", '_help -> "", '_required -> true)
+              @v2.html.text(form("name"), '_label -> "Name", '_help -> "", '_required -> true)
               @v2.html.select(form("brandId"),
                 ("0", "Not brand-related endorsement") :: brands.map(x => (x.id.get.toString, x.name)),
                 '_label -> "Brand", '_help -> "")

@@ -16,8 +16,8 @@
 
 <div class="form-group @if(field.hasErrors) {has-error}"
   id="@(field.id + "_field")">
-  <div class="col-sm-3"></div>
-  <div class="col-sm-9 checkbox">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-7 checkbox">
     <label for="@field.id" class="control-label">
       <input type="checkbox" id="@field.id" name="@field.name" value="@boxValue"
         @if(field.value == Some(boxValue)){checked="checked"} @toHtmlArgs(args.toMap.filterKeys(_ != 'value))/>

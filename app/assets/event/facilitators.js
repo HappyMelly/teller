@@ -85,14 +85,15 @@ var facilitators = {
         getFacilitators(brandId, null);
     },
     updateState: function() {
+        var emptyOption = "<option></option>";
         // update a list of available facilitators
         $('#facilitatorIds')
             .empty()
-            .append($("<option></option>").attr("value", 0).text(""));
+            .append($(emptyOption).attr('value', 0).text('Choose facilitator'));
         this.retrieved.sort(this.sortByName);
         for(var i = 0; i < this.retrieved.length; i++) {
             var name = this.retrieved[i].name;
-            $('#facilitatorIds').append($("<option></option>").attr("value", this.retrieved[i].id).text(name));
+            $('#facilitatorIds').append($(emptyOption).attr("value", this.retrieved[i].id).text(name));
         }
         // update a list of chosen facilitators
         $('#chosenFacilitators').empty();
@@ -108,7 +109,7 @@ var facilitators = {
                     organisations[company.id] = company.name;
                 }
             }
-            var parentDiv = $("<div>").append(
+            var parentDiv = $("<div class='subform-element'>").append(
                 $("<input readonly type='hidden'>")
                     .attr("value", user.id)
                     .attr("id", "facilitatorIds_" + i)

@@ -4,8 +4,17 @@
   id="@elements.args.getOrElse('_id, elements.id + "_field")">
   <label for="@elements.id" class="control-label col-md-2">
     @elements.label(elements.lang)</label>
-  <div class="col-md-7">@elements.input</div>
-  <div class="col-md-2 help">
-    @Html(elements.infos(elements.lang).mkString(", "))
+  <div class="col-md-7">
+    @elements.input
+    <div class="col-md-12 help">
+      @Html(elements.infos(elements.lang).mkString(", "))
+    </div>
+  </div>
+  <div class="col-md-2 field-type">
+    @if(elements.args.contains('_required)) {
+      <span>required</span>
+      @if(elements.args.contains('_type)){,}
+    }
+    @elements.args.get('_type)
   </div>
 </div>

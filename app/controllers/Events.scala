@@ -92,21 +92,21 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def eventForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "eventTypeId" -> longNumber(min = 1),
-    "brandId" -> longNumber(min = 1),
-    "title" -> nonEmptyText(1, 254),
+    "eventTypeId" -> longNumber.verifying("Wrong event type", _ > 0),
+    "brandId" -> longNumber.verifying("Wrong brand", _ > 0),
+    "title" -> text.verifying("Empty title", _.nonEmpty),
     "language" -> mapping(
       "spoken" -> language,
       "secondSpoken" -> optional(language),
       "materials" -> optional(language))(Language.apply)(Language.unapply),
     "location" -> mapping(
-      "city" -> nonEmptyText,
-      "country" -> nonEmptyText)(Location.apply)(Location.unapply),
+      "city" -> text.verifying("Empty city name", _.nonEmpty),
+      "country" -> text.verifying("Unknown country", _.nonEmpty))(Location.apply)(Location.unapply),
     "details" -> mapping(
       "description" -> optional(text),
       "specialAttention" -> optional(text))(Details.apply)(Details.unapply),
     "organizer" -> mapping(
-      "id" -> longNumber(min = 1),
+      "id" -> longNumber.verifying("Unknown organizer", _ > 0),
       "webSite" -> optional(webUrl),
       "registrationPage" -> optional(text))(Organizer.apply)(Organizer.unapply),
     "schedule" -> mapping(
@@ -118,7 +118,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     "archived" -> default(boolean, false),
     "confirmed" -> default(boolean, false),
     "free" -> default(boolean, false),
-    "invoice" -> longNumber(min = 1),
+    "invoice" -> longNumber.verifying("No organization to invoice", _ > 0),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
       { (id, eventTypeId, brandId, title, language, location, details, organizer,
@@ -156,8 +156,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         notPublic = false, archived = false, confirmed = false, free = false,
         0.0f, None)
       val view = EventView(default, defaultInvoice)
-      val brands = Brand.findByUser(user.account)
-      Ok(views.html.event.form(user, None, brands, true, eventForm.fill(view)))
+      val brands = Brand.findByUser(user.account).filter(_.active)
+      Ok(views.html.v2.event.form(user, None, brands, true, eventForm.fill(view)))
   }
 
   /**
@@ -170,7 +170,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
 
       eventService.findWithInvoice(id) map { view ⇒
         val brands = Brand.findByUser(user.account)
-        Ok(views.html.event.form(user, None, brands, false, eventForm.fill(view)))
+        Ok(views.html.v2.event.form(user, None, brands, false, eventForm.fill(view)))
       } getOrElse NotFound
   }
 
@@ -315,7 +315,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         eventService.findWithInvoice(id) map { view ⇒
           val account = user.account
           val brands = Brand.findByUser(account)
-          Ok(views.html.event.form(user,
+          Ok(views.html.v2.event.form(user,
             Some(id),
             brands,
             emptyForm = false,
@@ -588,7 +588,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       handler: AuthorisationHandler,
       token: play.filters.csrf.CSRF.Token) = {
     val brands = Brand.findByUser(user.account)
-    BadRequest(views.html.event.form(user, eventId, brands, false, form))
+    BadRequest(views.html.v2.event.form(user, eventId, brands, false, form))
   }
 
   /**
