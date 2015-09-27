@@ -23,7 +23,7 @@
  */
 package controllers
 
-import models.{Brand, ActiveUser, Endorsement}
+import models.{Evaluation, Brand, ActiveUser, Endorsement}
 import models.service.Services
 import models.UserRole.DynamicRole
 import play.api.data.Form
@@ -171,10 +171,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
               filter(x => receivedIds.contains(x.id.get)).
               filterNot(x => evaluationIds.contains(x.id.get))
             val people = personService.find(evaluations.map(_.personId).distinct)
-            val maxPosition = if (endorsements.nonEmpty)
-              endorsements.last.position
-            else
-              0
+            val maxPosition = maxEndorsementPosition(endorsements)
             val newEndorsements = evaluations.map { x =>
               val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
               val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
@@ -189,6 +186,34 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Creates an endorsement from the given evaluation
+   * @param eventId Event identifier
+   * @param evaluationId Evaluation identifier
+   */
+  def createFromEvaluation(eventId: Long, evaluationId: Long) =
+    SecuredDynamicAction("event", DynamicRole.Facilitator) {
+      implicit request ⇒
+        implicit handler ⇒ implicit user ⇒
+          eventService.find(eventId) map { event =>
+            val personId = user.person.identifier
+            if (event.facilitatorIds.contains(personId)) {
+              Evaluation.find(evaluationId) map { evaluation =>
+                val endorsements = personService.endorsements(personId)
+                val maxPosition = maxEndorsementPosition(endorsements)
+                val endorsement = Endorsement(None, personId,
+                  event.brandId, evaluation.question4, user.person.fullName,
+                  position = maxPosition + 1, evaluationId = evaluation.id.get,
+                  rating = Some(evaluation.impression))
+                val id = personService.insertEndorsement(endorsement).id.get
+                jsonOk(Json.obj("endorsementId" -> id))
+              } getOrElse jsonNotFound("Evaluation doesn't exist")
+            } else {
+              jsonBadRequest("Internal error. You shouldn't be able to make this request")
+            }
+          } getOrElse jsonNotFound("Event doesn't exist")
+  }
+
+        /**
    * Updates positions of endorsements in bulk
    *
    * @param personId Person identifier
@@ -254,4 +279,15 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    */
   protected def brands(personId: Long): List[Brand] =
     licenseService.licenses(personId).map(_.brand)
+
+  /**
+   * Returns maximum position of endorsements from the given list
+   * @param endorsements Endorsements
+   */
+  protected def maxEndorsementPosition(endorsements: List[Endorsement]): Int = {
+    if (endorsements.nonEmpty)
+      endorsements.last.position
+    else
+      0
+  }
 }

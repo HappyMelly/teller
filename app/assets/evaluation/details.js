@@ -22,6 +22,21 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+/**
+ * Updates link text and source for adding/removing endorsements
+ * @param url Action link
+ * @param type if true, add action; if false, remove action;
+ */
+function updateEndorsementAction(url, type) {
+    if (type) {
+        $('#endorsement').addClass('add').removeClass('remove').
+            attr('href', url).text('Add as Endorsement');
+    } else {
+        $('#endorsement').addClass('remove').removeClass('add').
+            attr('href', url).text('Remove Endorsement');
+    }
+}
+
 $(document).ready( function() {
 
     // Delete links.
@@ -46,6 +61,25 @@ $(document).ready( function() {
             });
         });
     });
-
+    $("#endorsement").on('click', function(e) {
+        e.preventDefault();
+        if ($(this).hasClass("add")) {
+            $.post($(this).attr('href'), {}, function(data) {
+                _serverData.endorsementId = data.endorsementId;
+                var url = jsRoutes.controllers.Endorsements.remove(_serverData.personId, _serverData.endorsementId).url;
+                updateEndorsementAction(url, false);
+            }, "json");
+        } else {
+            $.ajax({
+                type: "DELETE",
+                url: $(this).attr('href'),
+                dataType: "json"
+            }).done(function(data) {
+                var url = jsRoutes.controllers.Endorsements.createFromEvaluation(_serverData.eventId, _serverData.evaluationId).url;
+                updateEndorsementAction(url, true);
+            });
+        }
+        return false;
+    });
 });
 

@@ -226,11 +226,23 @@ class PersonService extends Services {
   /**
    * Returns endorsement if it exists
    *
-   * @param endorsementId Endorsement identification
+   * @param endorsementId Endorsement identifier
    */
   def findEndorsement(endorsementId: Long): Option[Endorsement] = DB.withSession {
     implicit session ⇒
       TableQuery[Endorsements].filter(_.id === endorsementId).firstOption
+  }
+
+  /**
+   * Returns endorsement if it exists
+   * @param evaluationId Evaluation identifier
+   * @param personId Person identifier
+   */
+  def findEndorsementByEvaluation(evaluationId: Long, personId: Long): Option[Endorsement] =
+    DB.withSession { implicit session =>
+      TableQuery[Endorsements].
+        filter(_.evaluationId === evaluationId).
+        filter(_.personId === personId).firstOption
   }
 
   /** Returns list of people which are not members (yet!) */

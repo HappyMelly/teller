@@ -53,14 +53,14 @@ GET           /brand/:id/facilitators                                        @co
 POST          /brand/:id/coordinator/:personId/type/:notification/off        @controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 
-POST         /brand/:brandId/link                                            @controllers.BrandLinks.create(brandId: Long)
-DELETE       /brand/:brandId/link/:id                                        @controllers.BrandLinks.remove(brandId: Long, id: Long)
+POST          /brand/:brandId/link                                           @controllers.BrandLinks.create(brandId: Long)
+DELETE        /brand/:brandId/link/:id                                       @controllers.BrandLinks.remove(brandId: Long, id: Long)
 
-GET          /brand/:brandId/testimonial                                     @controllers.BrandTestimonials.add(brandId: Long)
-GET          /brand/:brandId/testimonial/:id                                 @controllers.BrandTestimonials.edit(brandId: Long, id: Long)
-POST         /brand/:brandId/testimonial                                     @controllers.BrandTestimonials.create(brandId: Long)
-POST         /brand/:brandId/testimonial/:id                                 @controllers.BrandTestimonials.update(brandId: Long, id: Long)
-DELETE       /brand/:brandId/testimonial/:id                                 @controllers.BrandTestimonials.remove(brandId: Long, id: Long)
+GET           /brand/:brandId/testimonial                                    @controllers.BrandTestimonials.add(brandId: Long)
+GET           /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.edit(brandId: Long, id: Long)
+POST          /brand/:brandId/testimonial                                    @controllers.BrandTestimonials.create(brandId: Long)
+POST          /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.update(brandId: Long, id: Long)
+DELETE        /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.remove(brandId: Long, id: Long)
 
 
 GET           /brand/:id/template                                            @controllers.CertificateTemplates.add(id: Long)
@@ -72,14 +72,15 @@ GET           /certificate/new/:eventId/:personId                            @co
 POST          /contribution/new                                              @controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       @controllers.Contributions.delete(id: Long, page: String)
 
-GET          /person/:personId/endorsement                                   @controllers.Endorsements.add(personId: Long)
-GET          /person/:personId/endorsement/select                            @controllers.Endorsements.renderSelectForm(personId: Long)
-GET          /person/:personId/endorsement/:id                               @controllers.Endorsements.edit(personId: Long, id: Long)
-POST         /person/:personId/endorsement                                   @controllers.Endorsements.create(personId: Long)
-POST         /person/:personId/endorsement/:id                               @controllers.Endorsements.update(personId: Long, id: Long)
-DELETE       /person/:personId/endorsement/:id                               @controllers.Endorsements.remove(personId: Long, id: Long)
-POST         /person/:personId/endorsements/positions                        @controllers.Endorsements.updatePositions(personId: Long)
-POST         /person/:personId/endorsements/add                              @controllers.Endorsements.createFromSelected(personId: Long)
+GET           /person/:personId/endorsement                                  @controllers.Endorsements.add(personId: Long)
+GET           /person/:personId/endorsement/select                           @controllers.Endorsements.renderSelectForm(personId: Long)
+GET           /person/:personId/endorsement/:id                              @controllers.Endorsements.edit(personId: Long, id: Long)
+POST          /person/:personId/endorsement                                  @controllers.Endorsements.create(personId: Long)
+POST          /person/:personId/endorsement/:id                              @controllers.Endorsements.update(personId: Long, id: Long)
+DELETE        /person/:personId/endorsement/:id                              @controllers.Endorsements.remove(personId: Long, id: Long)
+POST          /person/:personId/endorsements/positions                       @controllers.Endorsements.updatePositions(personId: Long)
+POST          /person/:personId/endorsements/add                             @controllers.Endorsements.createFromSelected(personId: Long)
+POST          /event/:eventId/endorsement/evaluation/:evaluationId           @controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
 POST          /evaluation/                                                   @controllers.Evaluations.create
 GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
@@ -93,8 +94,8 @@ GET           /evaluation/:id/delete                                         @co
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                            @controllers.Evaluations.confirm(confirmationId: String)
 
-POST         /person/:personId/material                                      @controllers.Materials.create(personId: Long)
-DELETE       /person/:personId/material/:id                                  @controllers.Materials.remove(personId: Long, id: Long)
+POST          /person/:personId/material                                     @controllers.Materials.create(personId: Long)
+DELETE        /person/:personId/material/:id                                 @controllers.Materials.remove(personId: Long, id: Long)
 
 GET           /report/create/:brandId/event/:eventId/status/:status          @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 

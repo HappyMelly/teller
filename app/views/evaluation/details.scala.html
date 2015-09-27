@@ -2,7 +2,9 @@
     pair: EvaluationPair,
     participantName: String,
     en: models.admin.Translation,
-    withCertificate: Boolean)(implicit request: Request[Any],
+    withCertificate: Boolean,
+    facilitator: Boolean,
+    endorsement: Option[Endorsement])(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -114,35 +116,58 @@
         <tr>
           <th>Question</th>
           <th>Answer</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>@en.questions.question1</td>
           <td>@pair.eval.question1</td>
+          <td></td>
         </tr>
         <tr>
           <td>@en.questions.question2</td>
           <td>@pair.eval.question2</td>
+          <td></td>
         </tr>
         <tr>
           <td>@en.questions.question3</td>
           <td>@pair.eval.question3</td>
+          <td></td>
         </tr>
         <tr>
           <td>@en.questions.question4</td>
           <td>@pair.eval.question4</td>
+          <td>
+            @if(facilitator) {
+              @endorsement.map { x =>
+                <a id="endorsement" class="remove" href="@routes.Endorsements.remove(user.person.identifier, x.id.get)">Remove Endorsement</a>
+              }.getOrElse {
+                <a id="endorsement" class="add" href="@routes.Endorsements.createFromEvaluation(pair.event.identifier, pair.eval.identifier)">Add as Endorsement</a>
+              }
+            }
+          </td>
         </tr>
         <tr>
           <td>@en.questions.question5</td>
           <td>@pair.eval.question5</td>
+          <td></td>
         </tr>
         <tr>
           <td>@en.questions.question8</td>
           <td>@pair.eval.question8</td>
+          <td></td>
         </tr>
       </tbody>
     </table>
   </div>
+  <script type="text/javascript">
+    var _serverData = {
+      personId: @user.person.identifier,
+      eventId: @pair.event.identifier,
+      evaluationId: @pair.eval.identifier,
+      endorsementId: @endorsement.map(_.id.get).getOrElse(0)
+    };
+  </script>
   <script src="@routes.Assets.at("evaluation/details.js")" type="text/javascript"></script>
 }

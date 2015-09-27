@@ -188,10 +188,17 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
         val brand = brandService.find(x.event.brandId).get
         val en = translationService.find("EN").get
         val participant = personService.find(x.eval.personId).get
+        val personId = user.person.identifier
+        val (facilitator, endorsement) = if (x.event.facilitatorIds.contains(personId))
+          (true, personService.findEndorsementByEvaluation(id, personId))
+        else
+          (false, None)
         Ok(views.html.evaluation.details(user, x,
           participant.fullName,
           en,
-          brand.generateCert))
+          brand.generateCert,
+          facilitator,
+          endorsement))
       } getOrElse NotFound
 
   }
