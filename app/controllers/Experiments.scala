@@ -211,7 +211,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
     val who = "%s started a new experiment,".format(member.name)
     val what = "%s *%s* and it's awesome!".format(who, experiment.name)
     val msg = "%s Check it here %s. You may find it useful :wink:".format(what,
-      fullUrl(url))
+      s"http://happymelly.com/members/#/${member.identifier}")
     Play.configuration.getString("slack.additional_channel") map { name ⇒
       slack.send(msg, Some(name))
     }

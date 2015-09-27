@@ -59,6 +59,14 @@ class ExperimentService extends Services {
   }
 
   /**
+   * Returns all experiments
+   */
+  def findAll(): List[Experiment] = DB.withSession { implicit session ⇒
+    experiments.list
+  }
+
+
+  /**
    * Returns list of experiments for the given member
    *
    * @param memberId Member identifier
