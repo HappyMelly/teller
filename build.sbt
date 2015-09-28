@@ -59,6 +59,8 @@ herokuProcessTypes in Compile := Map(
 
 includeFilter in (Assets, LessKeys.less) := "*.less"
 
+LessKeys.compress in Assets := true
+
 // disable publishing the main API jar
 publishArtifact in (Compile, packageDoc) := false
 

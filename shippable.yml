@@ -1,0 +1,15 @@
+language: scala
+env:
+ - secure: sf4eY4WtLgBArGvWwDI8PdlHZT9vvnV4TwwbCvFPGeSPleKDK2D4UlMjDqNVYAT9xgaaq+AaraBSXxk9rqYFAXXo8MrmCs4ef6nNXQkral+LUENV/niIkVv6cUzrmjAkalt9vzWs8WgHn1Kqvlcjnyr88Y0wLoxuTcy+QHabfKkcc8bLg7kZyTlJHgsaEQ8MLRDzKT2VRXcEdjtDImSt6hDbX8dQLkr9S7tBDe1gOIaHYgo3qbrcXW4QQKOxUGOo4OqKFhofN2mcSycYimCeT4sAM6njnS5ABCn3TVeKjIb7yAkJ1AAkaAAtjpYe36u5Wp13JKStfdT85akIE3xRug==
+
+scala:
+    - 2.10.4
+
+script:
+  - export SBT_OPTS="-XX:+CMSClassUnloadingEnabled -XX:PermSize=256M -XX:MaxPermSize=512M"
+  - sbt clean stage deployHeroku -DappEnv=test
+
+#after_script:
+#  - mkdir -p shippable/codecoverage
+#  - mv target/scala-2.10/coverage-report/cobertura.xml $PWD/shippable/codecoverage/
+
