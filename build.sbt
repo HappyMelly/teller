@@ -16,10 +16,9 @@ libraryDependencies ++=
     cache,
     ws,
     filters,
+    "be.objectify" %% "deadbolt-scala" % "2.3.3",
     "com.andersen-gott" %% "scravatar" % "1.0.3", //gravatar support
     "com.sksamuel.scrimage" %% "scrimage-core" % "2.1.0", //image resizing
-    "org.scalamock" %% "scalamock-specs2-support" % "3.2.1" % "test",
-    "be.objectify" %% "deadbolt-scala" % "2.3.3",
     "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
     "com.github.tototoshi" %% "slick-joda-mapper" % "1.2.0",
     "com.typesafe.play" %% "play-slick" % "0.8.0",
@@ -28,12 +27,13 @@ libraryDependencies ++=
     "mysql" % "mysql-connector-java" % "5.1.34",
     "org.apache.poi" % "poi" % "3.9",
     "org.apache.poi" % "poi-ooxml" % "3.9",
+    "org.scalamock" %% "scalamock-specs2-support" % "3.2.1" % Test,
     "org.joda" % "joda-money" % "0.9",
     "org.pegdown" % "pegdown" % "1.4.2",
     "org.planet42" %% "laika-core" % "0.5.0",
     "org.jsoup" % "jsoup" % "1.7.3",
     // update selenium to avoid browser test to hang
-    "org.seleniumhq.selenium" % "selenium-java" % "2.39.0",
+    "org.seleniumhq.selenium" % "selenium-java" % "2.39.0" % Test,
     "ws.securesocial" %% "securesocial" % "3.0-M3",
     "nl.rhinofly" %% "play-s3" % "6.0.0"  //s3 amazon support
   )
@@ -65,9 +65,9 @@ publishArtifact in (Compile, packageDoc) := false
 // disable publishing the main sources jar
 publishArtifact in (Compile, packageSrc) := false
 
-ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := false
+ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting in Test := false
 
-ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*;.*routes_.*"
+ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages in Test := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*;.*routes_.*"
 
 sources in (Compile, doc) := Seq.empty
 
