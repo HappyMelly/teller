@@ -51,6 +51,8 @@ trait Services {
 
   def eventCancellationService: EventCancellationService = EventCancellationService.get
 
+  def eventRequestService: EventRequestService = EventRequestService.get
+
   def eventTypeService: EventTypeService = EventTypeService.get
 
   def experimentService: ExperimentService = ExperimentService.get

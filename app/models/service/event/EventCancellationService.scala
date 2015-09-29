@@ -24,18 +24,14 @@
  */
 package models.service.event
 
-import models.database.PortableJodaSupport._
-import models.event.EventCancellation
 import models.database.event.EventCancellations
+import models.event.EventCancellation
 import models.service.Services
-import org.joda.time.LocalDate
-import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
 import scala.language.postfixOps
-import scala.slick.lifted.Query
 
 class EventCancellationService extends Services {
 

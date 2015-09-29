@@ -308,6 +308,8 @@ POST          /api/v2/evaluation/:id/confirm                                 con
 GET           /api/v2/event/:id                                              controllers.apiv2.EventsApi.event(id: Long)
 GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.participants(id: Long)
 
+POST          /api/v2/eventrequest/brand/:code                               controllers.apiv2.EventRequestsApi.create(code: String)
+
 GET           /api/v2/experiments                                            controllers.apiv2.ExperimentsApi.experiments()
 GET           /api/v2/fees/:brand                                            controllers.apiv2.BrandFeesApi.fees(brand: String)
 
