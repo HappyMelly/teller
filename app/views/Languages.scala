@@ -46,6 +46,7 @@ object Languages {
       "RU" -> "Russian",
       "ES" -> "Spanish",
       "SV" -> "Swedish",
-      "TR" -> "Turkish")
+      "TR" -> "Turkish",
+      "VI" -> "Vietnamese")
 
 }
