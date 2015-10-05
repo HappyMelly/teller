@@ -95,7 +95,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
     materials: List[Material],
-                              stats: BrandStatistics)
+    stats: BrandStatistics)
 
   implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
     def writes(view: FacilitatorView) = {
@@ -169,7 +169,8 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
     val yearsOfExperience = licenseService.activeLicense(brand.id.get, personId) map { x =>
       (x.length.getStandardDays / 365).toInt
     } getOrElse 0
-    BrandStatistics(eventsNumber, yearsOfExperience, 0.0f)
+    val rating = facilitatorService.find(brand.identifier, personId).map(_.rating).getOrElse(0.0f)
+    BrandStatistics(eventsNumber, yearsOfExperience, rating)
   }
 }
 
