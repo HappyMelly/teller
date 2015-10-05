@@ -28,27 +28,35 @@ import controllers.Utilities
 import ContributionsApi.contributionWrites
 import PeopleApi.personDetailsWrites
 import PeopleApi.{ personWrites, addressWrites }
-import models.{ Address, Member, Experiment, OrgView, Organisation }
+import models._
 import models.service.Services
 import play.api.libs.json._
 import play.mvc.Controller
+import views.Countries
 
 trait MembersApi extends Controller
   with ApiAuthentication
   with Services
   with Utilities {
 
+  case class MemberView(member: Member, country: String)
+  case class MemberPersonView(member: Member, experiments: List[Experiment])
+  case class MemberOrgView(member: Member,
+                           experiments: List[Experiment],
+                           orgView: OrgView)
+  
   /**
-   * Implicit conversion of Member used in lists
+   * Implicit conversion of MemberView used in lists
    */
-  implicit val memberSummaryWrites = new Writes[Member] {
-    def writes(member: Member): JsValue = {
+  implicit val memberSummaryWrites = new Writes[MemberView] {
+    def writes(view: MemberView): JsValue = {
       Json.obj(
-        "id" -> member.id,
-        "name" -> member.name,
-        "type" -> readableMemberType(member),
-        "funder" -> member.funder,
-        "image" -> memberImageUrl(member))
+        "id" -> view.member.id,
+        "name" -> view.member.name,
+        "type" -> readableMemberType(view.member),
+        "funder" -> view.member.funder,
+        "country" -> view.country,
+        "image" -> memberImageUrl(view.member))
     }
   }
 
@@ -62,7 +70,6 @@ trait MembersApi extends Controller
     }
   }
 
-  case class MemberPersonView(member: Member, experiments: List[Experiment])
 
   val personMemberWrites = new Writes[MemberPersonView] {
     def writes(view: MemberPersonView): JsValue = {
@@ -98,9 +105,6 @@ trait MembersApi extends Controller
     }
   }
 
-  case class MemberOrgView(member: Member,
-    experiments: List[Experiment],
-    orgView: OrgView)
 
   val orgMemberWrites = new Writes[MemberOrgView] {
     def writes(view: MemberOrgView): JsValue = {
@@ -125,7 +129,16 @@ trait MembersApi extends Controller
         val members = memberService.findAll.filter(_.active)
         val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
         } getOrElse members
-        jsonOk(Json.toJson(filteredMembers.sortBy(_.name)))
+        val people = filteredMembers.filter(_.person).map(_.memberObj._1.get)
+        PeopleCollection.addresses(people)
+        val views = filteredMembers.map { member =>
+          val countryCode = if (member.person)
+            people.find(_.id == member.memberObj._1.get.id).map(_.address.countryCode).getOrElse("")
+          else
+            member.memberObj._2.get.countryCode
+          MemberView(member, Countries.name(countryCode))
+        }
+        jsonOk(Json.toJson(views.sortBy(_.member.name)))
   }
 
   /**
