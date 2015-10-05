@@ -18,8 +18,6 @@ POST          /account/:id/deactivate                                        @co
 GET           /admin/settings                                                @controllers.admin.Administration.settings
 POST          /admin/transactiontype/new                                     @controllers.admin.Administration.createTransactionType
 POST          /admin/transactiontype/:id/delete                              @controllers.admin.Administration.deleteTransactionType(id: Long)
-GET           /admin/translations                                            @controllers.admin.Translations.index
-
 GET           /bookings                                                      @controllers.BookingEntries.index
 GET           /booking/new                                                   @controllers.BookingEntries.add
 POST          /booking/new                                                   @controllers.BookingEntries.create
@@ -250,13 +248,6 @@ GET           /statistics/type/participants/brand/:id                        @co
 
 GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)
-
-GET           /translation/new                                               @controllers.admin.Translations.add(lang: String)
-POST          /translation/new                                               @controllers.admin.Translations.create(lang: String)
-GET           /translation/:lang                                             @controllers.admin.Translations.details(lang: String)
-GET           /translation/:lang/edit                                        @controllers.admin.Translations.edit(lang: String)
-POST          /translation/:lang                                             @controllers.admin.Translations.update(lang: String)
-POST          /translation/:lang/delete                                      @controllers.admin.Translations.delete(lang: String)
 
 POST          /url/:url/validate                                             @controllers.Urls.validate(url)
 POST          /user                                                          @controllers.UserAccounts.update

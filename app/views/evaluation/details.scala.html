@@ -1,7 +1,6 @@
 @(user: ActiveUser,
     pair: EvaluationPair,
     participantName: String,
-    en: models.admin.Translation,
     withCertificate: Boolean,
     facilitator: Boolean,
     endorsement: Option[Endorsement])(implicit request: Request[Any],
@@ -12,6 +11,7 @@
 @import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
 @import UserRole.DynamicRole
+@import views.Evaluations
 
 @main("Evaluation for %s".format(participantName), "participants", user) {
 
@@ -92,12 +92,12 @@
     </div>
     <div class="col-xs-2">
       <p>
-        <strong>@en.questions.question6</strong><br/>
-        @en.impressions.value(pair.eval.question6)
+        <strong>@Evaluations.Questions.facilitatorImpression</strong><br/>
+        @Evaluations.impression(pair.eval.facilitatorImpression)
       </p>
       <p>
         <strong>Recommendation</strong><br/>
-        @en.recommendations.value(pair.eval.question7)
+        @Evaluations.recommendation(pair.eval.recommendationScore)
       </p>
     </div>
     <div class="col-xs-2">
@@ -121,23 +121,23 @@
       </thead>
       <tbody>
         <tr>
-          <td>@en.questions.question1</td>
-          <td>@pair.eval.question1</td>
+          <td>@Evaluations.Questions.reasonToRegister</td>
+          <td>@pair.eval.reasonToRegister</td>
           <td></td>
         </tr>
         <tr>
-          <td>@en.questions.question2</td>
-          <td>@pair.eval.question2</td>
+          <td>@Evaluations.Questions.actionItems</td>
+          <td>@pair.eval.actionItems</td>
           <td></td>
         </tr>
         <tr>
-          <td>@en.questions.question3</td>
-          <td>@pair.eval.question3</td>
+          <td>@Evaluations.Questions.changesToContent</td>
+          <td>@pair.eval.changesToContent</td>
           <td></td>
         </tr>
         <tr>
-          <td>@en.questions.question4</td>
-          <td>@pair.eval.question4</td>
+          <td>@Evaluations.Questions.facilitatorReview</td>
+          <td>@pair.eval.facilitatorReview</td>
           <td>
             @if(facilitator) {
               @endorsement.map { x =>
@@ -149,13 +149,13 @@
           </td>
         </tr>
         <tr>
-          <td>@en.questions.question5</td>
-          <td>@pair.eval.question5</td>
+          <td>@Evaluations.Questions.changesToHost</td>
+          <td>@pair.eval.changesToHost</td>
           <td></td>
         </tr>
         <tr>
-          <td>@en.questions.question8</td>
-          <td>@pair.eval.question8</td>
+          <td>@Evaluations.Questions.changesToEvent</td>
+          <td>@pair.eval.changesToEvent</td>
           <td></td>
         </tr>
       </tbody>

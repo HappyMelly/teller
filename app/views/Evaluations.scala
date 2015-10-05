@@ -26,7 +26,26 @@ package views
 
 object Evaluations {
 
-  val impression =
+  object Questions {
+    val reasonToRegister = "What is the reason you registered for this event?"
+    val facilitatorImpression = "General impression of the trainer/facilitator?"
+    val facilitatorReview = "What were specific qualities of the facilitator(s)?"
+    val changesToEvent = "How can the facilitator(s) make the next event better?"
+    val contentImpression = "General impression of the content/courseware?"
+    val changesToContent = "What can we add, change or delete in the content/courseware?"
+    val hostImpression = "General impression of the host/organizer?"
+    val changesToHost = "What can the host/organizer improve for the next event?"
+    val actionItems = "Which action items did you take away from the course/event?"
+    val recommendationScore = "How likely are you to recommend this event to others?"
+  }
+
+  /**
+   * Returns impression label by its score
+   * @param score Impression score
+   */
+  def impression(score: Int): String = impressions.find(_._1 == score.toString) map { _._2 } getOrElse ""
+
+  val impressions =
     List(
       ("0", "Terrible (0)"),
       ("1", "Very bad (1)"),
@@ -40,7 +59,13 @@ object Evaluations {
       ("9", "Very good (9)"),
       ("10", "Excellent (10)"))
 
-  val recommendation =
+  /**
+   * Returns recommendation label by its score
+   * @param score Recommendation score
+   */
+  def recommendation(score: Int): String = recommendations.find(_._1 == score.toString) map { _._2 } getOrElse ""
+
+  val recommendations =
     List(
       ("0", "Certainly not (0%)"),
       ("1", "Highly unlikely (10%)"),

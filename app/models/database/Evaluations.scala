@@ -41,14 +41,14 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
   def personId = column[Long]("PERSON_ID")
-  def question1 = column[String]("QUESTION_1")
-  def question2 = column[String]("QUESTION_2")
-  def question3 = column[String]("QUESTION_3")
-  def question4 = column[String]("QUESTION_4")
-  def question5 = column[String]("QUESTION_5")
-  def question6 = column[Int]("QUESTION_6")
-  def question7 = column[Int]("QUESTION_7")
-  def question8 = column[String]("QUESTION_8")
+  def reasonToRegister = column[String]("QUESTION_1")
+  def actionItems = column[String]("QUESTION_2")
+  def changesToContent = column[String]("QUESTION_3")
+  def facilitatorReview = column[String]("QUESTION_4")
+  def changesToHost = column[String]("QUESTION_5")
+  def facilitatorImpression = column[Int]("QUESTION_6")
+  def recommendationScore = column[Int]("QUESTION_7")
+  def changesToEvent = column[String]("QUESTION_8")
   def status = column[EvaluationStatus.Value]("STATUS")
   def handled = column[Option[LocalDate]]("HANDLED")
   def confirmationId = column[Option[String]]("CONFIRMATION_ID", O.DBType("CHAR(64)"))
@@ -58,13 +58,15 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
-  def * = (id.?, eventId, personId, question1, question2, question3,
-    question4, question5, question6, question7, question8, status,
+  def * = (id.?, eventId, personId, reasonToRegister, actionItems, changesToContent,
+    facilitatorReview, changesToHost, facilitatorImpression,
+    recommendationScore, changesToEvent, status,
     handled, confirmationId, created, createdBy, updated,
     updatedBy) <> ((Evaluation.apply _).tupled, Evaluation.unapply)
 
-  def forUpdate = (eventId, personId, question1, question2, question3,
-    question4, question5, question6, question7, question8, status,
+  def forUpdate = (eventId, personId, reasonToRegister, actionItems, changesToContent,
+    facilitatorReview, changesToHost, facilitatorImpression,
+    recommendationScore, changesToEvent, status,
     handled, updated, updatedBy)
 
 }

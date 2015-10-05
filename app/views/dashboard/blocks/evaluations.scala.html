@@ -43,10 +43,10 @@
           @evaluation._1.location.city
         </td>
         <td>
-          <span class="badge @if(evaluation._3.question6 < 5){alert-danger} else {
-            @if(evaluation._3.question6 < 8) {alert-warning} else {alert-success}
+          <span class="badge @if(evaluation._3.facilitatorImpression < 5){alert-danger} else {
+            @if(evaluation._3.facilitatorImpression < 8) {alert-warning} else {alert-success}
           }">
-          @evaluation._3.question6</span>
+          @evaluation._3.facilitatorImpression</span>
         </td>
         <td><a href="@routes.Evaluations.details(evaluation._3.id.get).url">view</a></td>
       </tr>

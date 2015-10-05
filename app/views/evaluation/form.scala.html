@@ -3,9 +3,7 @@
     form: Form[Evaluation],
     events: List[Event],
     eventId: Option[Long],
-    participantId: Option[Long],
-    en: models.admin.Translation
-    )(implicit flash: Flash,
+    participantId: Option[Long])(implicit flash: Flash,
     request: Request[Any],
     token: play.filters.csrf.CSRF.Token,
     handler: AuthorisationHandler)
@@ -51,14 +49,14 @@
           '_label -> "Event", 'disabled -> "true")
         <input type="hidden" id="participantId" name="participantId" value="@form("participantId").value"/>
       }
-      @html.textarea(form("question1"), '_label -> en.questions.question1)
-      @html.textarea(form("question2"), '_label -> en.questions.question2)
-      @html.textarea(form("question3"), '_label -> en.questions.question3)
-      @html.textarea(form("question4"), '_label -> en.questions.question4)
-      @html.textarea(form("question5"), '_label -> en.questions.question5)
-      @html.select(form("question6"), Evaluations.impression, '_label -> en.questions.question6)
-      @html.select(form("question7"), Evaluations.recommendation, '_label -> en.questions.question7)
-      @html.textarea(form("question8"), '_label -> en.questions.question8)
+      @html.textarea(form("question1"), '_label -> Evaluations.Questions.reasonToRegister)
+      @html.textarea(form("question2"), '_label -> Evaluations.Questions.actionItems)
+      @html.textarea(form("question3"), '_label -> Evaluations.Questions.changesToContent)
+      @html.textarea(form("question4"), '_label -> Evaluations.Questions.facilitatorReview)
+      @html.textarea(form("question5"), '_label -> Evaluations.Questions.changesToHost)
+      @html.select(form("question6"), Evaluations.impressions, '_label -> Evaluations.Questions.facilitatorImpression)
+      @html.select(form("question7"), Evaluations.recommendations, '_label -> Evaluations.Questions.recommendationScore)
+      @html.textarea(form("question8"), '_label -> Evaluations.Questions.changesToEvent)
       <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
       @html.select(form("status"),
         models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq,

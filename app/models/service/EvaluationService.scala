@@ -122,9 +122,9 @@ class EvaluationService {
    */
   def update(eval: Evaluation): Evaluation = DB.withSession {
     implicit session ⇒
-      val updateTuple = (eval.eventId, eval.personId, eval.question1,
-        eval.question2, eval.question3, eval.question4, eval.question5,
-        eval.question6, eval.question7, eval.question8, eval.status,
+      val updateTuple = (eval.eventId, eval.personId, eval.reasonToRegister,
+        eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
+        eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent, eval.status,
         eval.handled, eval.updated, eval.updatedBy)
       evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
       eval

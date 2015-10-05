@@ -1,12 +1,13 @@
-@(evaluation: Evaluation, participant: Participant, en: models.admin.Translation)
+@(evaluation: Evaluation, participant: Participant)
 
-  @import play.api.Play
-  @import play.api.Play.current
+@import play.api.Play
+@import play.api.Play.current
+@import views.Evaluations
 
 @mail.templates.html.tmpl {
   <tr>
     <td valign="top" style="background-color:rgb(72, 177, 112); color: #ffffff;">
-      <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @en.impressions.value(evaluation.question6))</h3>
+      <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @Evaluations.impression(evaluation.facilitatorImpression))</h3>
       <p>Please accept or reject the certificate</p>
     </td>
   </tr>
@@ -73,44 +74,44 @@
         <tbody>
           <tr>
             <td>
-              <h4>@en.questions.question1</h4>
-              <p>@evaluation.question1</p>
+              <h4>@Evaluations.Questions.reasonToRegister</h4>
+              <p>@evaluation.reasonToRegister</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question2</h4>
-              <p>@evaluation.question2</p>
+              <h4>@Evaluations.Questions.actionItems</h4>
+              <p>@evaluation.actionItems</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question3</h4>
-              <p>@evaluation.question3 </p>
+              <h4>@Evaluations.Questions.changesToContent</h4>
+              <p>@evaluation.changesToContent</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question4</h4>
-              <p>@evaluation.question4</p>
+              <h4>@Evaluations.Questions.facilitatorReview</h4>
+              <p>@evaluation.facilitatorReview</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question5</h4>
-              <p>@evaluation.question5</p>
+              <h4>@Evaluations.Questions.changesToHost</h4>
+              <p>@evaluation.changesToHost</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question7</h4>
-              <p>@en.recommendations.value(evaluation.question7)</p>
+              <h4>@Evaluations.Questions.recommendationScore</h4>
+              <p>@Evaluations.recommendation(evaluation.recommendationScore)</p>
             </td>
           </tr>
           <tr>
             <td>
-              <h4>@en.questions.question8</h4>
-              <p>@evaluation.question8</p>
+              <h4>@Evaluations.Questions.changesToEvent</h4>
+              <p>@evaluation.changesToEvent</p>
             </td>
           </tr>
         </tbody>

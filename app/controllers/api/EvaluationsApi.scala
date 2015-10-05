@@ -59,8 +59,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
           question6, question7, question8, EvaluationStatus.Pending, None, None, DateTime.now, userName, DateTime.now, userName)
     })({
       (e: Evaluation) ⇒
-        Some(e.id, e.eventId, e.personId, e.question1, e.question2, e.question3, e.question4,
-          e.question5, e.question6, e.question7, e.question8)
+        Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent, e.facilitatorReview,
+          e.changesToHost, e.facilitatorImpression, e.recommendationScore, e.changesToEvent)
     }))
 
   /**

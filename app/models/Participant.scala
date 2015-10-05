@@ -166,7 +166,7 @@ object Participant {
           TableQuery[People] on (_.personId === _.id) innerJoin
           TableQuery[Events] on (_._1.eventId === _.id) leftJoin
           TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
+      } yield (p, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
       val brandQuery = brandId.map { value ⇒
         baseQuery.filter(_._2.brandId === value)
@@ -190,7 +190,7 @@ object Participant {
           TableQuery[People] on (_.personId === _.id) innerJoin
           TableQuery[Events] on (_._1.eventId === _.id) leftJoin
           TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
+      } yield (p, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
       val eventQuery = baseQuery.filter(_._2.id inSet events)
       val rawList = eventQuery.mapResult(ParticipantView.tupled).list
@@ -211,7 +211,7 @@ object Participant {
         TableQuery[People] on (_.personId === _.id) innerJoin
         TableQuery[Events] on (_._1.eventId === _.id) leftJoin
         TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-    } yield (p, e, ev.id.?, ev.question6.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
+    } yield (p, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
 
     val eventQuery = baseQuery.filter(_._2.id === eventId)
     val rawList = eventQuery.mapResult(ParticipantView.tupled).list

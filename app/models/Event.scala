@@ -274,7 +274,7 @@ object Event {
     def receive = {
       case eventId: Long ⇒
         val evaluations = evaluationService.findByEvent(eventId).filter(_.approved)
-        val rating = evaluations.foldLeft(0.0f)(_ + _.question6.toFloat / evaluations.length)
+        val rating = evaluations.foldLeft(0.0f)(_ + _.facilitatorImpression.toFloat / evaluations.length)
         eventService.updateRating(eventId, rating)
     }
   }

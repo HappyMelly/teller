@@ -66,14 +66,14 @@ case class Evaluation(
     id: Option[Long],
     eventId: Long,
     personId: Long,
-    question1: String,
-    question2: String,
-    question3: String,
-    question4: String,
-    question5: String,
-    question6: Int,
-    question7: Int,
-    question8: String,
+    reasonToRegister: String,
+    actionItems: String,
+    changesToContent: String,
+    facilitatorReview: String,
+    changesToHost: String,
+    facilitatorImpression: Int,
+    recommendationScore: Int,
+    changesToEvent: String,
     status: EvaluationStatus.Value,
     handled: Option[LocalDate],
     confirmationId: Option[String],
@@ -82,7 +82,7 @@ case class Evaluation(
     updated: DateTime,
     updatedBy: String) extends ActivityRecorder with Integrations with Services {
 
-  val impression: Int = question6
+  val impression: Int = facilitatorImpression
 
   lazy val event: Event = EventService.get.find(eventId).get
 
@@ -175,14 +175,13 @@ case class Evaluation(
 
   protected def sendNewEvaluationNotification() = {
     val brand = brandService.findWithCoordinators(event.brandId).get
-    val en = translationService.find("EN").get
-    val impression = en.impressions.value(question6)
+    val impression = views.Evaluations.impression(facilitatorImpression)
     val participant = Participant.find(this.personId, this.eventId).get
     val subject = s"New evaluation (General impression: $impression)"
     val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
       Some(cc.toSet), None, subject,
-      mail.templates.html.evaluation(this, participant, en).toString(), richMessage = true)
+      mail.templates.html.evaluation(this, participant).toString(), richMessage = true)
 
     this
   }

@@ -175,7 +175,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
             val newEndorsements = evaluations.map { x =>
               val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
               val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
-              Endorsement(None, personId, brandId, x.question4, name,
+              Endorsement(None, personId, brandId, x.facilitatorReview, name,
                 evaluationId = x.id.get, rating = Some(x.impression))
             }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
             newEndorsements.foreach { x => personService.insertEndorsement(x) }
@@ -201,7 +201,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
                 val endorsements = personService.endorsements(personId)
                 val maxPosition = maxEndorsementPosition(endorsements)
                 val endorsement = Endorsement(None, personId,
-                  event.brandId, evaluation.question4, user.person.fullName,
+                  event.brandId, evaluation.facilitatorReview, user.person.fullName,
                   position = maxPosition + 1, evaluationId = evaluation.id.get,
                   rating = Some(evaluation.impression))
                 val id = personService.insertEndorsement(endorsement).id.get

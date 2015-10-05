@@ -27,7 +27,6 @@ package controllers
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
-import models.admin.Translation
 import models.service.{ EventService, PersonService, Services }
 import org.joda.time.DateTime
 import play.api.data.Forms._
@@ -36,7 +35,7 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import securesocial.core.RuntimeEnvironment
-import views.Countries
+import views.{Evaluations, Countries}
 
 class Participants(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
@@ -118,7 +117,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val brand = x.brand
         val account = user.account
         val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
-        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -136,7 +134,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
               "schedule" -> Json.obj(
                 "start" -> data.event.schedule.start.toString,
                 "end" -> data.event.schedule.end.toString),
-              "evaluation" -> evaluation(data, en),
+              "evaluation" -> evaluation(data),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -185,7 +183,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val x = brandService.findWithCoordinators(event.brandId).get
         val brand = x.brand
         val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
-        val en = translationService.find("EN").get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -193,7 +190,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "url" -> routes.People.details(data.person.id.get).url,
                 "name" -> data.person.fullName,
                 "id" -> data.person.id.get),
-              "evaluation" -> evaluation(data, en),
+              "evaluation" -> evaluation(data),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -392,12 +389,12 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param en English translation of Evaluation module
    * @return
    */
-  private def evaluation(data: ParticipantView, en: Translation): JsValue = {
+  private def evaluation(data: ParticipantView): JsValue = {
     Json.obj(
       "impression" -> data.impression.map { value ⇒
         Json.obj(
           "value" -> value,
-          "caption" -> en.impressions.value(value))
+          "caption" -> Evaluations.impression(value))
       },
       "status" -> data.status.map(status ⇒
         Json.obj(

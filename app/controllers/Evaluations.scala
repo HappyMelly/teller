@@ -82,8 +82,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = translationService.find("EN").get
-        Ok(views.html.evaluation.form(user, None, evaluationForm(user.name), events, eventId, participantId, en))
+        Ok(views.html.evaluation.form(user, None, evaluationForm(user.name), events, eventId, participantId))
   }
 
   /**
@@ -98,8 +97,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
         formWithErrors ⇒ {
           val account = user.account
           val events = findEvents(account)
-          val en = translationService.find("EN").get
-          BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None, en))
+          BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None))
         },
         evaluation ⇒ {
           val defaultHook = request.host + routes.Evaluations.confirm("").url
@@ -186,7 +184,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
 
       evaluationService.find(id) map { x ⇒
         val brand = brandService.find(x.event.brandId).get
-        val en = translationService.find("EN").get
         val participant = personService.find(x.eval.personId).get
         val personId = user.person.identifier
         val (facilitator, endorsement) = if (x.event.facilitatorIds.contains(personId))
@@ -195,7 +192,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           (false, None)
         Ok(views.html.evaluation.details(user, x,
           participant.fullName,
-          en,
           brand.generateCert,
           facilitator,
           endorsement))
@@ -214,10 +210,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       Evaluation.find(id).map { evaluation ⇒
         val account = user.account
         val events = findEvents(account)
-        val en = translationService.find("EN").get
 
         Ok(views.html.evaluation.form(user, Some(evaluation),
-          evaluationForm(user.name).fill(evaluation), events, None, None, en))
+          evaluationForm(user.name).fill(evaluation), events, None, None))
       }.getOrElse(NotFound)
 
   }
@@ -237,9 +232,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           formWithErrors ⇒ {
             val account = user.account
             val events = findEvents(account)
-            val en = translationService.find("EN").get
 
-            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None, en))
+            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None))
           },
           evaluation ⇒ {
             val eval = evaluation.copy(id = Some(id)).update()

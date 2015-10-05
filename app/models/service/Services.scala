@@ -79,8 +79,6 @@ trait Services {
 
   def socialProfileService: SocialProfileService = SocialProfileService.get
 
-  def translationService: TranslationService = TranslationService.get
-
   def userAccountService: UserAccountService = UserAccountService.get
 
   def userIdentityService: UserIdentityService = UserIdentityService.get

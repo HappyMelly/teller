@@ -55,9 +55,6 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   val brandService = mock[BrandService]
   val brand = BrandHelper.one
   controller.brandService_=(brandService)
-  val translationService = mock[TranslationService]
-  val translation = TranslationHelper.en
-  controller.translationService_=(translationService)
   val personService = mock[PersonService]
   controller.personService_=(personService)
   val evaluation = EvaluationHelper.make(Some(1L), 1L, 1L,
@@ -127,7 +124,6 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   private def expectations(): Unit = {
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
-    (translationService.find(_: String)).expects("EN").returning(Some(translation))
     (personService.find(_: Long)).expects(1L).returning(Some(PersonHelper.one()))
   }
 }
