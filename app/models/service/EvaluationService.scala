@@ -124,8 +124,9 @@ class EvaluationService {
     implicit session ⇒
       val updateTuple = (eval.eventId, eval.personId, eval.reasonToRegister,
         eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
-        eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent, eval.status,
-        eval.handled, eval.updated, eval.updatedBy)
+        eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
+        eval.contentImpression, eval.hostImpression, eval.status,
+        eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
       evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
       eval
   }

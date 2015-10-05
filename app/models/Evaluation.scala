@@ -27,7 +27,7 @@ package models
 import mail.reminder.EvaluationReminder
 import models.database.Evaluations
 import models.service._
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -74,13 +74,12 @@ case class Evaluation(
     facilitatorImpression: Int,
     recommendationScore: Int,
     changesToEvent: String,
+    contentImpression: Option[Int],
+    hostImpression: Option[Int],
     status: EvaluationStatus.Value,
     handled: Option[LocalDate],
     confirmationId: Option[String],
-    created: DateTime,
-    createdBy: String,
-    updated: DateTime,
-    updatedBy: String) extends ActivityRecorder with Integrations with Services {
+    recordInfo: DateStamp) extends ActivityRecorder with Integrations with Services {
 
   val impression: Int = facilitatorImpression
 

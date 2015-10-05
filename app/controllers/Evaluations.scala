@@ -54,21 +54,25 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     "participantId" -> {
       if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter)
     },
-    "question1" -> nonEmptyText,
-    "question2" -> nonEmptyText,
-    "question3" -> nonEmptyText,
-    "question4" -> nonEmptyText,
-    "question5" -> nonEmptyText,
-    "question6" -> number(min = 0, max = 10),
-    "question7" -> number(min = 0, max = 10),
-    "question8" -> nonEmptyText,
+    "reasonToRegister" -> nonEmptyText,
+    "actionItems" -> nonEmptyText,
+    "changesToContent" -> nonEmptyText,
+    "facilitatorReview" -> nonEmptyText,
+    "changesToHost" -> nonEmptyText,
+    "facilitatorImpression" -> number(min = 0, max = 10),
+    "recommendationScore" -> number(min = 0, max = 10),
+    "changesToEvent" -> nonEmptyText,
+    "contentImpression" -> optional(number),
+    "hostImpression" -> optional(number),
     "status" -> statusMapping,
     "handled" -> optional(jodaLocalDate),
     "validationId" -> optional(ignored("")),
-    "created" -> ignored(DateTime.now),
-    "createdBy" -> ignored(userName),
-    "updated" -> ignored(DateTime.now),
-    "updatedBy" -> ignored(userName))(Evaluation.apply)(Evaluation.unapply))
+    "recordInfo" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(userName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))(
+      Evaluation.apply)(Evaluation.unapply))
 
   /**
    * Show add page

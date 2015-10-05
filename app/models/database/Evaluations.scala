@@ -25,7 +25,7 @@
 package models.database
 
 import models.database.PortableJodaSupport._
-import models.{ Evaluation, EvaluationStatus }
+import models.{DateStamp, Evaluation, EvaluationStatus}
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 
@@ -41,32 +41,48 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
   def personId = column[Long]("PERSON_ID")
-  def reasonToRegister = column[String]("QUESTION_1")
-  def actionItems = column[String]("QUESTION_2")
-  def changesToContent = column[String]("QUESTION_3")
-  def facilitatorReview = column[String]("QUESTION_4")
-  def changesToHost = column[String]("QUESTION_5")
-  def facilitatorImpression = column[Int]("QUESTION_6")
-  def recommendationScore = column[Int]("QUESTION_7")
-  def changesToEvent = column[String]("QUESTION_8")
+  def reasonToRegister = column[String]("REASON_TO_REGISTER")
+  def actionItems = column[String]("ACTION_ITEMS")
+  def changesToContent = column[String]("CHANGES_TO_CONTENT")
+  def facilitatorReview = column[String]("FACILITATOR_REVIEW")
+  def changesToHost = column[String]("CHANGES_TO_HOST")
+  def facilitatorImpression = column[Int]("FACILITATOR_IMPRESSION")
+  def recommendationScore = column[Int]("RECOMMENDATION_SCORE")
+  def changesToEvent = column[String]("CHANGES_TO_EVENT")
+  def contentImpression = column[Option[Int]]("CONTENT_IMPRESSION")
+  def hostImpression = column[Option[Int]]("HOST_IMPRESSION")
   def status = column[EvaluationStatus.Value]("STATUS")
   def handled = column[Option[LocalDate]]("HANDLED")
   def confirmationId = column[Option[String]]("CONFIRMATION_ID", O.DBType("CHAR(64)"))
+
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
-
   def updated = column[DateTime]("UPDATED")
   def updatedBy = column[String]("UPDATED_BY")
 
+  type EvaluationFields = (Option[Long], Long, Long, String, String, String,
+    String, String, Int, Int, String, Option[Int], Option[Int],
+    EvaluationStatus.Value, Option[LocalDate], Option[String], DateTime,
+    String, DateTime, String)
+
+
   def * = (id.?, eventId, personId, reasonToRegister, actionItems, changesToContent,
     facilitatorReview, changesToHost, facilitatorImpression,
-    recommendationScore, changesToEvent, status,
-    handled, confirmationId, created, createdBy, updated,
-    updatedBy) <> ((Evaluation.apply _).tupled, Evaluation.unapply)
+    recommendationScore, changesToEvent, contentImpression, hostImpression,
+    status, handled, confirmationId, created, createdBy, updated,
+    updatedBy) <> ((e: EvaluationFields) => Evaluation(e._1, e._2, e._3, e._4,
+      e._5, e._6, e._7, e._8, e._9, e._10, e._11, e._12, e._13, e._14, e._15,
+      e._16, DateStamp(e._17, e._18, e._19, e._20)),
+    (e: Evaluation) => Some((e.id, e.eventId, e.personId, e.reasonToRegister,
+      e.actionItems, e.changesToContent, e.facilitatorReview, e.changesToHost,
+      e.facilitatorImpression, e.recommendationScore, e.changesToEvent,
+      e.contentImpression, e.hostImpression, e.status, e.handled, e.confirmationId,
+      e.recordInfo.created, e.recordInfo.createdBy,
+      e.recordInfo.updated, e.recordInfo.updatedBy)))
 
   def forUpdate = (eventId, personId, reasonToRegister, actionItems, changesToContent,
-    facilitatorReview, changesToHost, facilitatorImpression,
-    recommendationScore, changesToEvent, status,
+    facilitatorReview, changesToHost, facilitatorImpression, recommendationScore,
+    changesToEvent, contentImpression, hostImpression, status,
     handled, updated, updatedBy)
 
 }

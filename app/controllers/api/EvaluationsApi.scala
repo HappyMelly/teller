@@ -53,10 +53,11 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
     "question6" -> number(min = 0, max = 10),
     "question7" -> number(min = 0, max = 10),
     "question8" -> nonEmptyText)({
-      (id, event_id, participant_id, question1, question2, question3, question4, question5, question6, question7,
-      question8) ⇒
+      (id, event_id, participant_id, question1, question2, question3, question4,
+       question5, question6, question7, question8) ⇒
         Evaluation(id, event_id, participant_id, question1, question2, question3, question4, question5,
-          question6, question7, question8, EvaluationStatus.Pending, None, None, DateTime.now, userName, DateTime.now, userName)
+          question6, question7, question8, None, None, EvaluationStatus.Pending,
+          None, None, DateStamp(DateTime.now, userName, DateTime.now, userName))
     })({
       (e: Evaluation) ⇒
         Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent, e.facilitatorReview,

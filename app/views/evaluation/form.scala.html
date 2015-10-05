@@ -49,14 +49,16 @@
           '_label -> "Event", 'disabled -> "true")
         <input type="hidden" id="participantId" name="participantId" value="@form("participantId").value"/>
       }
-      @html.textarea(form("question1"), '_label -> Evaluations.Questions.reasonToRegister)
-      @html.textarea(form("question2"), '_label -> Evaluations.Questions.actionItems)
-      @html.textarea(form("question3"), '_label -> Evaluations.Questions.changesToContent)
-      @html.textarea(form("question4"), '_label -> Evaluations.Questions.facilitatorReview)
-      @html.textarea(form("question5"), '_label -> Evaluations.Questions.changesToHost)
-      @html.select(form("question6"), Evaluations.impressions, '_label -> Evaluations.Questions.facilitatorImpression)
-      @html.select(form("question7"), Evaluations.recommendations, '_label -> Evaluations.Questions.recommendationScore)
-      @html.textarea(form("question8"), '_label -> Evaluations.Questions.changesToEvent)
+      @html.textarea(form("reasonToRegister"), '_label -> Evaluations.Questions.reasonToRegister)
+      @html.select(form("facilitatorImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.facilitatorImpression)
+      @html.textarea(form("facilitatorReview"), '_label -> Evaluations.Questions.facilitatorReview)
+      @html.textarea(form("changesToEvent"), '_label -> Evaluations.Questions.changesToEvent)
+      @html.select(form("contentImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.contentImpression)
+      @html.textarea(form("changesToContent"), '_label -> Evaluations.Questions.changesToContent)
+      @html.select(form("hostImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.hostImpression)
+      @html.textarea(form("changesToHost"), '_label -> Evaluations.Questions.changesToHost)
+      @html.textarea(form("actionItems"), '_label -> Evaluations.Questions.actionItems)
+      @html.select(form("recommendationScore"), Evaluations.recommendations, '_label -> Evaluations.Questions.recommendationScore)
       <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
       @html.select(form("status"),
         models.EvaluationStatus.values.map(value => value.toString -> Messages(s"models.EvaluationStatus.${value.toString}")).toSeq,

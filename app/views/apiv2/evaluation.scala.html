@@ -12,19 +12,38 @@
     <td><code>POST /api/v2/evaluation</code></td>
   </tr>
   <tr>
-    <th>Request POST parameters</th>
+    <th>Request POST parameters (deprecated)</th>
     <td>
       <ul>
         <li><code>event_id</code> - unique identifier for the event, <i>numeric</i></li>
         <li><code>participant_id</code> - unique identifier for the person who participated in the event, <i>numeric</i></li>
-        <li><code>question1</code> - What triggered you to register for this event?, <i>string</i></li>
-        <li><code>question2</code> - Which action items did you take away from the event?, <i>string</i></li>
-        <li><code>question3</code> - What do you suggest to add or change to the program?, <i>string</i></li>
-        <li><code>question4</code> - What were specific qualities of the trainer/facilitator?, <i>string</i></li>
-        <li><code>question5</code> - What can be improved about the event location?, <i>string</i></li>
-        <li><code>question6</code> - General Impression, <i>numeric, [0,10]</i></li>
+        <li><code>question1</code> - What is the reason you registered for this event?, <i>string</i></li>
+        <li><code>question2</code> - Which action items did you take away from the course/event?, <i>string</i></li>
+        <li><code>question3</code> - What can we add, change or delete in the content/courseware?, <i>string</i></li>
+        <li><code>question4</code> - What were specific qualities of the facilitator(s)?, <i>string</i></li>
+        <li><code>question5</code> - What can the host/organizer improve for the next event?, <i>string</i></li>
+        <li><code>question6</code> - General impression of the trainer/facilitator?, <i>numeric, [0,10]</i></li>
         <li><code>question7</code> - How likely are you to recommend this event to others?, <i>numeric, [0,10]</i></li>
-        <li><code>question8</code> - How could the trainer/facilitator have made the event better?, <i>string</i></li>
+        <li><code>question8</code> - How can the facilitator(s) make the next event better?, <i>string</i></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Request POST parameters (new!)</th>
+    <td>
+      <ul>
+        <li><code>event_id</code> - unique identifier for the event, <i>numeric</i></li>
+        <li><code>participant_id</code> - unique identifier for the person who participated in the event, <i>numeric</i></li>
+        <li><code>reason_to_register</code> - What is the reason you registered for this event?, <i>string</i></li>
+        <li><code>action_items</code> - Which action items did you take away from the course/event?, <i>string</i></li>
+        <li><code>changes_to_content</code> - What can we add, change or delete in the content/courseware?, <i>string</i></li>
+        <li><code>facilitator_review</code> - What were specific qualities of the facilitator(s)?, <i>string</i></li>
+        <li><code>changes_to_host</code> - What can the host/organizer improve for the next event?, <i>string</i></li>
+        <li><code>facilitator_impression</code> - General impression of the trainer/facilitator?, <i>numeric, [0,10]</i></li>
+        <li><code>recommendation_score</code> - How likely are you to recommend this event to others?, <i>numeric, [0,10]</i></li>
+        <li><code>changes_to_event</code> - How can the facilitator(s) make the next event better?, <i>string</i></li>
+        <li><code>content_impression</code> - General impression of the content/courseware?, <i>numeric, [0,10]</i></li>
+        <li><code>host_impression</code> - General impression of the host/organizer?, <i>numeric, [0,10]</i></li>
       </ul>
     </td>
   </tr>

@@ -56,14 +56,48 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
       (id, event_id, participant_id, question1, question2, question3, question4,
       question5, question6, question7, question8) ⇒
         Evaluation(id, event_id, participant_id, question1, question2, question3,
-          question4, question5, question6, question7, question8,
+          question4, question5, question6, question7, question8, None, None,
           EvaluationStatus.Pending, None, None,
-          DateTime.now, appName, DateTime.now, appName)
+          DateStamp(DateTime.now, appName, DateTime.now, appName))
     })({
       (e: Evaluation) ⇒
         Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent,
           e.facilitatorReview, e.changesToHost, e.facilitatorImpression, e.recommendationScore, e.changesToEvent)
     }))
+
+  /** HTML form mapping for creating and editing. */
+  def updatedEvaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "event_id" -> longNumber.verifying(
+      "error.event.notExist", (eventId: Long) ⇒ eventService.find(eventId).isDefined),
+    "participant_id" -> longNumber.verifying(
+      "error.person.notExist",
+      (participantId: Long) ⇒ personService.find(participantId).isDefined),
+    "reason_to_register" -> nonEmptyText,
+    "action_items" -> nonEmptyText,
+    "changes_to_content" -> nonEmptyText,
+    "facilitator_review" -> nonEmptyText,
+    "changes_to_host" -> nonEmptyText,
+    "facilitator_impression" -> number(min = 0, max = 10),
+    "recommendation_score" -> number(min = 0, max = 10),
+    "changes_to_event" -> nonEmptyText,
+    "content_impression" -> optional(number(min = 0, max = 10)),
+    "host_impression" -> optional(number(min = 0, max = 10)))({
+    (id, event_id, participant_id, reasonToRegister, actionItems, changesToContent,
+     facilitatorReview, changesToHost, facilitatorImpression, recommendationScore,
+     changesToEvent, contentImpression, hostImpression) ⇒
+      Evaluation(id, event_id, participant_id, reasonToRegister, actionItems,
+        changesToContent, facilitatorReview, changesToHost, facilitatorImpression,
+        recommendationScore, changesToEvent, contentImpression, hostImpression,
+        EvaluationStatus.Pending, None, None,
+        DateStamp(DateTime.now, appName, DateTime.now, appName))
+  })({
+    (e: Evaluation) ⇒
+      Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent,
+        e.facilitatorReview, e.changesToHost, e.facilitatorImpression,
+        e.recommendationScore, e.changesToEvent, e.contentImpression,
+        e.hostImpression)
+  }))
 
   /**
    * Create an evaluation through API call
@@ -72,7 +106,11 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
     implicit token ⇒
 
       val name = token.appName
-      val form: Form[Evaluation] = evaluationForm(name).bindFromRequest()(request)
+      val updatedForm = request.body.toString.contains("reason_to_register")
+      val form: Form[Evaluation] = if (updatedForm)
+        updatedEvaluationForm(name).bindFromRequest()
+      else
+        evaluationForm(name).bindFromRequest()
       form.fold(
         formWithErrors ⇒ {
           val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))

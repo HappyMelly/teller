@@ -35,7 +35,7 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.mvc.Controller
 import securesocial.core.RuntimeEnvironment
-import views.{Evaluations, Countries}
+import views.Countries
 
 class Participants(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
@@ -394,7 +394,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       "impression" -> data.impression.map { value ⇒
         Json.obj(
           "value" -> value,
-          "caption" -> Evaluations.impression(value))
+          "caption" -> views.Evaluations.impression(value))
       },
       "status" -> data.status.map(status ⇒
         Json.obj(
