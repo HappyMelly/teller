@@ -59,6 +59,13 @@ class FacilitatorService {
   }
 
   /**
+   * Returns list of all facilitators
+   */
+  def findAll: List[Facilitator] = DB.withSession { implicit session =>
+    facilitators.list
+  }
+
+  /**
    * Returns list of facilitator records for the given person
    * @param personId Person id
    */
@@ -89,6 +96,19 @@ class FacilitatorService {
         filter(_.brandId === facilitator.brandId).
         map(_.forUpdate).update(facilitator.rating)
       facilitator
+  }
+
+  /**
+   * Updates the experience of the given facilitator in database
+   * @param facilitator Facilitator
+   */
+  def updateExperience(facilitator: Facilitator): Int = DB.withSession {
+    implicit session =>
+      facilitators.
+        filter(_.personId === facilitator.personId).
+        filter(_.brandId === facilitator.brandId).
+        map(record => (record.numberOfEvents, record.yearsOfExperience)).
+        update((facilitator.numberOfEvents, facilitator.yearsOfExperience))
   }
 
   /**

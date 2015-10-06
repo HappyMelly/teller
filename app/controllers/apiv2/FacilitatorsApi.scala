@@ -163,14 +163,10 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
    * @param personId Person identifier
    */
   protected def retrieveBrandStatistics(brand: Brand, personId: Long): BrandStatistics = {
-    val eventsNumber = eventService.
-      findByFacilitator(personId, brandId = brand.id, future = Some(false)).
-      count(_.confirmed)
-    val yearsOfExperience = licenseService.activeLicense(brand.id.get, personId) map { x =>
-      (x.length.getStandardDays / 365).toInt
-    } getOrElse 0
-    val rating = facilitatorService.find(brand.identifier, personId).map(_.rating).getOrElse(0.0f)
-    BrandStatistics(eventsNumber, yearsOfExperience, rating)
+    facilitatorService.
+      find(brand.identifier, personId).
+      map(x => BrandStatistics(x.numberOfEvents, x.yearsOfExperience, x.rating)).
+      getOrElse(BrandStatistics(0, 0, 0.0f))
   }
 }
 

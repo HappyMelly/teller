@@ -35,13 +35,15 @@ private[models] class Facilitators(tag: Tag) extends Table[Facilitator](tag, "FA
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Long]("PERSON_ID")
   def brandId = column[Long]("BRAND_ID")
+  def yearsOfExperience = column[Int]("YEARS_OF_EXPERIENCE")
+  def numberOfEvents = column[Int]("NUMBER_OF_EVENTS")
   def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
 
   def person = foreignKey("FACILITATOR_PERSON_FK", personId, TableQuery[People])(_.id)
   def brand = foreignKey("FACILITATOR_BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
-  def * = (id.?, personId, brandId, rating) <> (
-    (Facilitator.apply _).tupled, Facilitator.unapply)
+  def * = (id.?, personId, brandId, yearsOfExperience, numberOfEvents,
+    rating) <> ((Facilitator.apply _).tupled, Facilitator.unapply)
 
   def forUpdate = rating
 }

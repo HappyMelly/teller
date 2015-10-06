@@ -27,19 +27,20 @@ package controllers
 import controllers.Forms._
 import models.UserRole.Role._
 import models._
-import models.payment.{ GatewayWrapper, PaymentException, RequestException }
+import models.payment.{GatewayWrapper, PaymentException, RequestException}
 import models.service.Services
 import org.joda.time.DateTime
-import play.api.{ Logger, Play }
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
-import play.api.data.{ Form, FormError }
+import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
+import play.api.{Logger, Play}
 import securesocial.core.RuntimeEnvironment
-import scala.language.postfixOps
-import scala.collection.mutable
 import services.integrations.Integrations
+
+import scala.collection.mutable
+import scala.language.postfixOps
 
 class People(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
@@ -421,11 +422,12 @@ class People(environment: RuntimeEnvironment[ActiveUser])
       filter(_.confirmed).groupBy(_.brandId).map(x => (x._1, x._2.length))
     val facilitation = facilitatorService.findByPerson(id)
     licenses.map { x ⇒
+      val facilitator = facilitation.find(_.brandId == x.license.brandId).get
       (x.brand.id.get,
         x.brand.name,
-        facilitation.find(_.brandId == x.license.brandId).get.rating,
-        x.license.length.getStandardDays / 365,
-        events.find(_._1 == x.brand.id.get).map(_._2).getOrElse(0))
+        facilitator.rating,
+        facilitator.yearsOfExperience,
+        facilitator.numberOfEvents)
     }
   }
 

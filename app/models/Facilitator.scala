@@ -35,26 +35,73 @@ import play.api.libs.concurrent.Akka
 case class Facilitator(id: Option[Long] = None,
   personId: Long,
   brandId: Long,
+  yearsOfExperience: Int = 0,
+  numberOfEvents: Int = 0,
   rating: Float = 0.0f)
 
-object Facilitator {
+object Facilitator extends Services {
   val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
 
   /**
    * Updates facilitator rating
    */
   class RatingCalculatorActor extends Actor with Services {
+
+    private val MGT30_IDENTIFIER = 1
+
     def receive = {
       case eventId: Long ⇒
         eventService.find(eventId) foreach { x ⇒
           x.facilitatorIds.foreach { id ⇒
             val events = eventService.findByFacilitator(id, Some(x.brandId)).map(_.id.get)
             val evaluations = evaluationService.findByEventsWithParticipants(events).filter(_._3.approved)
-            val rating = evaluations.foldLeft(0.0f)(_ + _._3.facilitatorImpression.toFloat / evaluations.length)
+            val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
+              OldEvaluation.findByFacilitator(id)
+            else 
+              List()
+            val rating = calculateRating(evaluations.map(_._3), oldEvaluations)
             val brand = brandService.find(x.brandId).get
-            facilitatorService.update(Facilitator(None, id, brand.id.get, rating))
+            facilitatorService.update(Facilitator(None, id, brand.id.get, rating = rating))
           }
         }
     }
+
+    /**
+     * Calculates average rating from the given evaluations
+     * @param evaluations Evaluations added to Teller
+     * @param oldEvaluations Evaluations added to old Management 3.0 system
+     */
+    protected def calculateRating(evaluations: List[Evaluation], oldEvaluations: List[OldEvaluation]): Float = {
+      val impressions = evaluations.map(_.impression) ::: oldEvaluations.map(_.impression)
+      impressions.foldLeft(0.0f)(_ + _.toFloat / impressions.length)
+    }
+  }
+
+  /**
+   * Update number of events and years of experience for all facilitators
+   */
+  def updateFacilitatorExperience(): Unit = {
+    licenseService.findActive.foreach { license =>
+      val yearsOfExperience = license.length.getStandardDays / 365
+      val facilitator = Facilitator(None, license.licenseeId, license.brandId,
+        yearsOfExperience.toInt, calculateNumberOfEvents(license))
+      facilitatorService.updateExperience(facilitator)
+    }
+  }
+
+  /**
+   * Returns number of events for the given license holder
+   * @param license License
+   */
+  protected def calculateNumberOfEvents(license: License): Int = {
+    val MGT30_IDENTIFIER = 1
+    val numberOfOldEvents = if (license.brandId == MGT30_IDENTIFIER)
+      OldEvaluation.findByFacilitator(license.licenseeId).map(_.eventId).distinct.length
+    else
+      0
+    val numberOfEvents = eventService.
+      findByFacilitator(license.licenseeId, Some(license.brandId)).
+      count(_.confirmed)
+    numberOfEvents + numberOfOldEvents
   }
 }
