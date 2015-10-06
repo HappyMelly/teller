@@ -94,7 +94,12 @@ class FacilitatorService {
       facilitators.
         filter(_.personId === facilitator.personId).
         filter(_.brandId === facilitator.brandId).
-        map(_.forUpdate).update(facilitator.rating)
+        map(_.forUpdate).
+        update((facilitator.publicRating, facilitator.privateRating,
+          facilitator.publicMedian, facilitator.privateMedian,
+          facilitator.publicNps, facilitator.privateNps,
+          facilitator.numberOfPublicEvaluations,
+          facilitator.numberOfPrivateEvaluations))
       facilitator
   }
 

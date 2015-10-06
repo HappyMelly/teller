@@ -37,13 +37,23 @@ private[models] class Facilitators(tag: Tag) extends Table[Facilitator](tag, "FA
   def brandId = column[Long]("BRAND_ID")
   def yearsOfExperience = column[Int]("YEARS_OF_EXPERIENCE")
   def numberOfEvents = column[Int]("NUMBER_OF_EVENTS")
-  def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
+  def publicRating = column[Float]("PUBLIC_RATING", O.DBType("FLOAT(6,2)"))
+  def privateRating = column[Float]("PRIVATE_RATING", O.DBType("FLOAT(6,2)"))
+  def publicMedian = column[Float]("PUBLIC_MEDIAN", O.DBType("FLOAT(6,2)"))
+  def privateMedian = column[Float]("PRIVATE_MEDIAN", O.DBType("FLOAT(6,2)"))
+  def publicNps = column[Float]("PUBLIC_NPS", O.DBType("FLOAT(6,2)"))
+  def privateNps = column[Float]("PRIVATE_NPS", O.DBType("FLOAT(6,2)"))
+  def numberOfPublicEvaluations = column[Int]("NUMBER_OF_PUBLIC_EVALUATIONS")
+  def numberOfPrivateEvaluations = column[Int]("NUMBER_OF_PRIVATE_EVALUATIONS")
 
   def person = foreignKey("FACILITATOR_PERSON_FK", personId, TableQuery[People])(_.id)
   def brand = foreignKey("FACILITATOR_BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
   def * = (id.?, personId, brandId, yearsOfExperience, numberOfEvents,
-    rating) <> ((Facilitator.apply _).tupled, Facilitator.unapply)
+    publicRating, privateRating, publicMedian, privateMedian, publicNps,
+    privateNps, numberOfPublicEvaluations,
+    numberOfPrivateEvaluations) <> ((Facilitator.apply _).tupled, Facilitator.unapply)
 
-  def forUpdate = rating
+  def forUpdate = (publicRating, privateRating, publicMedian, privateMedian,
+    publicNps, privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations)
 }

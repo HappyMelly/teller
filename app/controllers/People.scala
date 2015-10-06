@@ -283,7 +283,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
               val licenses = licenseService.licenses(id)
               val facilitation = facilitatorService.findByPerson(id)
               val facilitatorData = licenses
-                .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.rating))
+                .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.publicRating))
               Ok(views.html.v2.person.tabs.facilitation(person, facilitatorData))
             } getOrElse NotFound("Person not found")
           case "membership" ⇒
@@ -417,17 +417,11 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    */
   protected def retrieveByBrandStatistics(id: Long) = {
     val licenses = licenseService.licenses(id).sortBy(_.brand.name)
-    val events = eventService.
-      findByFacilitator(id, brandId = None, future = Some(false)).
-      filter(_.confirmed).groupBy(_.brandId).map(x => (x._1, x._2.length))
     val facilitation = facilitatorService.findByPerson(id)
     licenses.map { x ⇒
       val facilitator = facilitation.find(_.brandId == x.license.brandId).get
-      (x.brand.id.get,
-        x.brand.name,
-        facilitator.rating,
-        facilitator.yearsOfExperience,
-        facilitator.numberOfEvents)
+      (facilitator,
+        x.brand.name)
     }
   }
 

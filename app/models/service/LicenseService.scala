@@ -103,6 +103,13 @@ class LicenseService extends Services {
   }
 
   /**
+   * Returns list of all licenses
+   */
+  def findAll: List[License] = DB.withSession { implicit session ⇒
+    licenses.list
+  }
+
+  /**
    * Returns list of active licenses
    */
   def findActive: List[License] = DB.withSession {

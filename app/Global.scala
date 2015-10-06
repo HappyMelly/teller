@@ -26,6 +26,7 @@ import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
 import mail.reminder.{EvaluationReminder, ProfileStrengthReminder, EventReminder}
+import models.Facilitator.RatingCalculatorActor
 import services.{TellerRoutesService, LoginIdentityService}
 import models.{Facilitator, ActiveUser}
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
@@ -120,7 +121,6 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   override def onStart(app: Application) {
     // this is a dirty hack as I don't want to pay Heroku additional $30 for only
     // sending notifications through  a separate process
-    Facilitator.updateFacilitatorExperience()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleProfileImprovementAlert

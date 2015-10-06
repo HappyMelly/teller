@@ -37,7 +37,14 @@ case class Facilitator(id: Option[Long] = None,
   brandId: Long,
   yearsOfExperience: Int = 0,
   numberOfEvents: Int = 0,
-  rating: Float = 0.0f)
+  publicRating: Float = 0.0f,
+  privateRating: Float = 0.0f,
+  publicMedian: Float = 0.0f,
+  privateMedian: Float = 0.0f,
+  publicNps: Float = 0.0f,
+  privateNps: Float = 0.0f,
+  numberOfPublicEvaluations: Int = 0,
+  numberOfPrivateEvaluations: Int = 0)
 
 object Facilitator extends Services {
   val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
@@ -50,6 +57,8 @@ object Facilitator extends Services {
     private val MGT30_IDENTIFIER = 1
 
     def receive = {
+      case "init" =>
+        initialCalculation()
       case eventId: Long ⇒
         eventService.find(eventId) foreach { x ⇒
           x.facilitatorIds.foreach { id ⇒
@@ -59,21 +68,86 @@ object Facilitator extends Services {
               OldEvaluation.findByFacilitator(id)
             else 
               List()
-            val rating = calculateRating(evaluations.map(_._3), oldEvaluations)
-            val brand = brandService.find(x.brandId).get
-            facilitatorService.update(Facilitator(None, id, brand.id.get, rating = rating))
+            val facilitator = calculateRatings(evaluations, oldEvaluations)
+            facilitatorService.update(facilitator.copy(personId = id, brandId = x.brandId))
           }
         }
+    }
+
+    def initialCalculation() = {
+      println("test")
+      facilitatorService.findAll.foreach { x =>
+        val events = eventService.findByFacilitator(x.personId, Some(x.brandId)).map(_.id.get)
+        val evaluations = evaluationService.findByEventsWithParticipants(events).filter(_._3.approved)
+        val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
+          OldEvaluation.findByFacilitator(x.personId)
+        else
+          List()
+        val facilitator = calculateRatings(evaluations, oldEvaluations)
+        facilitatorService.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
+      }
     }
 
     /**
      * Calculates average rating from the given evaluations
      * @param evaluations Evaluations added to Teller
      * @param oldEvaluations Evaluations added to old Management 3.0 system
+     * @return Returns facilitator object with calculated ratings
      */
-    protected def calculateRating(evaluations: List[Evaluation], oldEvaluations: List[OldEvaluation]): Float = {
-      val impressions = evaluations.map(_.impression) ::: oldEvaluations.map(_.impression)
-      impressions.foldLeft(0.0f)(_ + _.toFloat / impressions.length)
+    protected def calculateRatings(evaluations: List[(Event, Person, Evaluation)],
+                                   oldEvaluations: List[OldEvaluation]): Facilitator = {
+      val publicImpressions = evaluations.filterNot(_._1.notPublic).map(_._3.impression) :::
+        oldEvaluations.filterNot(_.notPublic).map(_.impression)
+      val privateImpressions = evaluations.filter(_._1.notPublic).map(_._3.impression) :::
+        oldEvaluations.filter(_.notPublic).map(_.impression)
+      Facilitator(None, 0, 0,
+        publicRating = calculateAverage(publicImpressions),
+        privateRating = calculateAverage(privateImpressions),
+        publicMedian = calculateMedian(publicImpressions),
+        privateMedian = calculateMedian(privateImpressions),
+        publicNps = calculateNps(evaluations.filterNot(_._1.notPublic).map(_._3.recommendationScore)),
+        privateNps = calculateNps(evaluations.filter(_._1.notPublic).map(_._3.recommendationScore)),
+        numberOfPublicEvaluations = publicImpressions.length,
+        numberOfPrivateEvaluations = privateImpressions.length)
+    }
+
+    /**
+     * Returns median for the given list of impressions
+     * @param impressions List of impressions
+     */
+    protected def calculateMedian(impressions: List[Int]): Float = {
+      if (impressions.isEmpty) {
+        0.0f
+      } else {
+        val sorted = impressions.sorted.toArray
+        if (sorted.length % 2 == 0)
+          (sorted(sorted.length / 2 - 1) + sorted(sorted.length / 2)) / 2
+        else
+          sorted((sorted.length - 1) / 2)
+      }
+    }
+
+    /**
+     * Returns NPS value for the given list of recommendations
+     * @param recommendations Recommendations
+     */
+    protected def calculateNps(recommendations: List[Int]): Float = {
+      if (recommendations.isEmpty) {
+        0.0f
+      } else {
+        (recommendations.count(_ >= 9) - recommendations.count(_ <= 6)).toFloat / recommendations.length * 100
+      }
+    }
+
+    /**
+     * Returns average for the given sequence
+     * @param impressions Impressions
+     */
+    protected def calculateAverage(impressions: List[Int]): Float = {
+      if (impressions.isEmpty)
+        0.0f
+      else
+        impressions.foldLeft(0.0f)(_ + _.toFloat / impressions.length)
     }
   }
 
@@ -81,7 +155,7 @@ object Facilitator extends Services {
    * Update number of events and years of experience for all facilitators
    */
   def updateFacilitatorExperience(): Unit = {
-    licenseService.findActive.foreach { license =>
+    licenseService.findAll.foreach { license =>
       val yearsOfExperience = license.length.getStandardDays / 365
       val facilitator = Facilitator(None, license.licenseeId, license.brandId,
         yearsOfExperience.toInt, calculateNumberOfEvents(license))
@@ -94,14 +168,8 @@ object Facilitator extends Services {
    * @param license License
    */
   protected def calculateNumberOfEvents(license: License): Int = {
-    val MGT30_IDENTIFIER = 1
-    val numberOfOldEvents = if (license.brandId == MGT30_IDENTIFIER)
-      OldEvaluation.findByFacilitator(license.licenseeId).map(_.eventId).distinct.length
-    else
-      0
-    val numberOfEvents = eventService.
+    eventService.
       findByFacilitator(license.licenseeId, Some(license.brandId)).
       count(_.confirmed)
-    numberOfEvents + numberOfOldEvents
   }
 }

@@ -1,5 +1,5 @@
 @(person: Person,
-  experiencePerBrand: List[(Long, String, Float, Int, Int)],
+  experiencePerBrand: List[(Facilitator, String)],
   endorsements: List[(Endorsement, String)],
   materials: List[Material])(implicit request: Request[Any],
   handler: AuthorisationHandler)
@@ -12,8 +12,18 @@
 
 <div class="experience">
    <div class="block statistics">
-   @for(brandData <- experiencePerBrand) {
-     <div class="record"><span class="name">@{brandData._2}:</span> @brandData._3 rating, @brandData._4 years of experience, @brandData._5 events</div>
+   @for((stat, brandName) <- experiencePerBrand) {
+     <div class="record"><span class="name">@brandName:</span> @stat.yearsOfExperience years of experience, @stat.numberOfEvents events
+       <div class="ratings">
+       @if(stat.numberOfPublicEvaluations != 0) {
+         public events: @stat.publicRating rating, NPS @{stat.publicNps}%, @stat.publicMedian median, @stat.numberOfPublicEvaluations evaluations
+       }
+       @if(stat.numberOfPrivateEvaluations != 0) {
+         <br/>
+         private events: @stat.privateRating rating, NPS @{stat.privateNps}%, @stat.privateMedian median, @stat.numberOfPrivateEvaluations evaluations
+       }
+       </div>
+     </div>
    }
   </div>
   <div class="block">
@@ -64,7 +74,7 @@
   @for(brandData <- experiencePerBrand) {
     <div class="block">
       <h4>Materials related to @brandData._2</h4>
-      <table id="materials_@brandData._1" class="materials table">
+      <table id="materials_@brandData._1.brandId" class="materials table">
         <thead>
           <tr>
             <th>Type</th>
@@ -73,7 +83,7 @@
           </tr>
         </thead>
         <tbody>
-        @for(material <- materials.filter(_.brandId == brandData._1)) {
+        @for(material <- materials.filter(_.brandId == brandData._1.brandId)) {
           <tr data-id="@material.id.get" data-personid="@material.personId">
             <td>@material.linkType.capitalize</td>
             <td><a href="@material.link" target="_blank">@material.link</td>

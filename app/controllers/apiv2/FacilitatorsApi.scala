@@ -24,7 +24,7 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
-import models.{ Brand, PeopleCollection, Person, Endorsement, Material }
+import models._
 import play.api.libs.json._
 import play.mvc.Controller
 import views.Languages
@@ -63,7 +63,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
           PeopleCollection.languages(facilitators)
           val facilitationData = facilitatorService.findByBrand(brand.id.get)
           val data = facilitators.
-            map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.rating))
+            map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.publicRating))
           jsonOk(Json.toJson(data))
         } getOrElse jsonNotFound("Unknown brand")
   }
@@ -95,7 +95,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
     materials: List[Material],
-    stats: BrandStatistics)
+    facilitator: Facilitator)
 
   implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
     def writes(view: FacilitatorView) = {
@@ -120,9 +120,19 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "licenses" -> view.person.licenses,
         "endorsements" -> view.endorsements,
         "materials" -> view.materials,
-        "years_of_experience" -> view.stats.yearsOfExperience,
-        "number_of_events" -> view.stats.eventsNumber,
-        "rating" -> view.stats.rating)
+        "years_of_experience" -> view.facilitator.yearsOfExperience,
+        "number_of_events" -> view.facilitator.numberOfEvents,
+        "rating" -> view.facilitator.publicRating,
+        "statistics" -> Json.obj(
+          "public_rating" -> view.facilitator.publicRating,
+          "private_rating" -> view.facilitator.privateRating,
+          "public_median" -> view.facilitator.publicMedian,
+          "private_median" -> view.facilitator.privateMedian,
+          "public_nps" -> view.facilitator.publicNps,
+          "private_nps" -> view.facilitator.privateNps,
+          "number_of_public_evaluations" -> view.facilitator.numberOfPublicEvaluations,
+          "number_of_private_evaluations" -> view.facilitator.numberOfPrivateEvaluations
+        ))
     }
   }
 
@@ -148,25 +158,23 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
           val materials = personService.
             materials(person.id.get).
             filter(x => filterList.contains(x.brandId))
-          val statistics = brand map {
-            retrieveBrandStatistics(_, person.id.get)
-          } getOrElse BrandStatistics(0, 0, 0.0f)
+          val facilitator = brand map {
+            retrieveFacilitatorStat(_, person.id.get)
+          } getOrElse Facilitator(None, 0, 0)
 
-          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, statistics)))
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, facilitator)))
         } getOrElse NotFound
   }
 
   /**
-   * Returns brand statistics for the given person including number of events
-   *  and years of experience
+   * Returns brand statistics for the given person
    * @param brand Brand of interest
    * @param personId Person identifier
    */
-  protected def retrieveBrandStatistics(brand: Brand, personId: Long): BrandStatistics = {
+  protected def retrieveFacilitatorStat(brand: Brand, personId: Long): Facilitator = {
     facilitatorService.
       find(brand.identifier, personId).
-      map(x => BrandStatistics(x.numberOfEvents, x.yearsOfExperience, x.rating)).
-      getOrElse(BrandStatistics(0, 0, 0.0f))
+      getOrElse(Facilitator(None, personId, brand.identifier))
   }
 }
 
