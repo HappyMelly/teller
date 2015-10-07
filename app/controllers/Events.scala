@@ -331,13 +331,6 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      val person = user.person
-      val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-      val brands = brandService.findAll
-      val facilitators = brands.map(b ⇒
-        (b.id.get, License.allLicensees(b.id.get).map(l ⇒ (l.id.get, l.fullName))))
-
       implicit val facilitatorWrites = new Writes[(Long, String)] {
         def writes(data: (Long, String)): JsValue = {
           Json.obj(
@@ -352,7 +345,22 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             "facilitators" -> data._2)
         }
       }
-      Ok(views.html.event.index(user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
+      val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
+      if (brands.nonEmpty) {
+        val activeBrand = brands.head
+        val facilitators = List((activeBrand.identifier,
+          License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
+        Ok(views.html.v2.event.index(user, activeBrand, Json.toJson(facilitators), user.account.personId))
+      } else {
+        val person = user.person
+        val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
+        val brands = brandService.findAll
+        val facilitators = brands.map(b ⇒
+          (b.id.get, License.allLicensees(b.id.get).map(l ⇒ (l.id.get, l.fullName))))
+
+
+        Ok(views.html.event.index(user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
+      }
   }
 
   /**
@@ -415,7 +423,6 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
               "start" -> data.event.schedule.start.toString,
               "end" -> data.event.schedule.end.toString),
             "totalHours" -> data.event.schedule.totalHours,
-            "materialsLanguage" -> data.event.materialsLanguage,
             "confirmed" -> data.event.confirmed,
             "invoice" -> Json.obj(
               "free" -> data.event.free,

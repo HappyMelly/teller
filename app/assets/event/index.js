@@ -113,7 +113,13 @@ function makeRequestUrl() {
         counter += 1;
     }
     filter = $('#brands').find(':selected').val();
-    if (filter != 'all') {
+    if (filter !== undefined) {
+        if (filter != 'all') {
+            request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
+            counter += 1;
+        }
+    } else {
+        filter = $('#activeBrandId').val();
         request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
         counter += 1;
     }
@@ -182,7 +188,6 @@ $(document).ready( function() {
             { "data": "location" },
             { "data": "schedule" },
             { "data": "totalHours" },
-            { "data": "materialsLanguage" },
             { "data": "invoice" },
             { "data": "confirmed" },
             { "data": "actions" }
@@ -224,7 +229,7 @@ $(document).ready( function() {
                     return data.invoice;
                 }
             },
-            "targets": 6
+            "targets": 5
         }, {
             "render": function(data) {
                 if(data) {
@@ -233,12 +238,13 @@ $(document).ready( function() {
                     return '<span class="label label-danger">no</span>';
                 }
             },
-            "targets": 7
+            "targets": 6
         },{
             "render": function(data) {
                 return renderDropdown(data);
             },
-            "targets": 8
+            "targets": 7,
+            "orderable": false
         }]
     });
     $("body").css("cursor", "progress");

@@ -1,0 +1,26 @@
+@(brand: Brand, tab: String = "")(content: Html)
+
+<div class="row brand-header">
+  <div class="container">
+    <div class="brand-image">
+      <img class="img-rounded" width="120" src="@routes.Brands.picture(brand.code).url"/>
+    </div>
+    <div class="brand-name">
+      <h2>@brand.name</h2>
+      <div class="buttons">
+        @content
+      </div>
+    </div>
+    <div class="brand-links text-right">
+      @if(tab == "event") { Events } else {
+        <a href="@routes.Events.index().url">Events</a>
+      }
+      @if(tab == "participants") { Events } else {
+        <a href="@routes.Participants.index().url">Participants</a>
+      }
+      @if(tab == "statistics") { Events } else {
+        <a href="@routes.Statistics.index().url">Statistics</a>
+      }
+    </div>
+  </div>
+</div>

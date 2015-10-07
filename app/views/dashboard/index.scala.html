@@ -1,9 +1,7 @@
 @(user: ActiveUser,
   future: List[Event],
   past: List[Event],
-  evaluations: List[(Event, Person, Evaluation)],
-  licenses: List[LicenseLicenseeView],
-  cancellations: List[models.event.EventCancellation])(implicit flash: Flash,
+  evaluations: List[(Event, Person, Evaluation)])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
 
@@ -17,12 +15,6 @@
     }
     @if(evaluations.length > 0) {
       @dashboard.blocks.evaluations(evaluations)
-    }
-    @if(licenses.length > 0) {
-      @dashboard.blocks.expiring(licenses)
-    }
-    @if(cancellations.length > 0) {
-      @dashboard.blocks.cancellation(cancellations)
     }
   </div>
   <div class="col-md-3" style="padding-left: 50px; padding-top: 30px;">

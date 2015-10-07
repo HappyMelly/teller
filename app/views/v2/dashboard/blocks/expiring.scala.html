@@ -1,0 +1,37 @@
+@(licenses: List[LicenseLicenseeView])
+
+@import org.joda.time.LocalDate
+
+<div class="block">
+  <h3>Expiring licenses (@licenses.length)</h3>
+  <table id="events" class="table">
+    <thead>
+      <tr>
+        <th>Facilitator</th>
+        <th>Expiration Date</th>
+        <th>Fee, &euro;</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for(view <- licenses) {
+        <tr>
+          <td>
+            <a href="@(routes.People.details(view.licensee.id.get).url)#licenses">
+            @view.licensee.fullName
+            </a>
+          </td>
+          <td>
+            @view.license.end.toString
+          </td>
+          <td>
+            @view.license.fee.getAmount.toString
+          </td>
+          <td class="text-right">
+            <a href="@(routes.Licenses.edit(view.license.id.getOrElse(0)))">Prolong license</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
