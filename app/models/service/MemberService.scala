@@ -77,6 +77,16 @@ class MemberService {
   }
 
   /**
+   * Returns member by related object, otherwise - None
+   * @param objectId Object identifier
+   * @param person Person if true, otherwise - organisation
+   * @return
+   */
+  def findByObject(objectId: Long, person: Boolean): Option[Member] = DB.withSession { implicit session =>
+    members.filter(_.objectId === objectId).filter(_.person === person).firstOption
+  }
+
+  /**
    * Inserts the given member to database
    *
    * @param m Object to insert

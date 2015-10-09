@@ -24,10 +24,11 @@
 
 package controllers.apiv2
 
+import java.net.URLDecoder
+
 import controllers.Utilities
 import ContributionsApi.contributionWrites
-import PeopleApi.personDetailsWrites
-import PeopleApi.{ personWrites, addressWrites }
+import controllers.apiv2.PeopleApi._
 import models._
 import models.service.Services
 import play.api.libs.json._
@@ -143,13 +144,14 @@ trait MembersApi extends Controller
 
   /**
    * Returns member's data in JSON format if it exists
-   * @param id Member identifier
+   * @param identifier Member identifier
+   * @param person Member is a person if true, otherwise - organisation
    */
-  def member(id: Long) = TokenSecuredAction(readWrite = false) {
+  def member(identifier: String, person: Boolean = true) = TokenSecuredAction(readWrite = false) {
     implicit request ⇒
       implicit token ⇒
-        memberService.find(id) map { member ⇒
-          val experiments = experimentService.findByMember(id)
+        findMemberByIdentifier(identifier, person) map { member =>
+          val experiments = experimentService.findByMember(member.identifier)
           if (member.person) {
             jsonOk(Json.toJson(MemberPersonView(member, experiments))(personMemberWrites))
           } else {
@@ -160,6 +162,36 @@ trait MembersApi extends Controller
         } getOrElse jsonNotFound("Member does not exist")
   }
 
+  /**
+   * Returns member by the name of
+   * @param identifier Object identifier
+   * @param person Member is a person if true, otherwise - organisation
+   * @return
+   */
+  protected def findMemberByIdentifier(identifier: String, person: Boolean): Option[Member] = {
+    try {
+      val id = identifier.toLong
+      memberService.find(id)
+    } catch {
+      case e: NumberFormatException ⇒ {
+        if (person)
+          personService.find(URLDecoder.decode(identifier, "ASCII")) map { person =>
+            memberService.findByObject(person.identifier, person = true) map { member =>
+              member.memberObj_=(person)
+              Some(member)
+            } getOrElse None
+          } getOrElse None
+        else
+          orgService.find(URLDecoder.decode(identifier, "ASCII")) map { org =>
+            memberService.findByObject(org.identifier, person = false) map { member =>
+              member.memberObj_=(org)
+              Some(member)
+            } getOrElse None
+          } getOrElse None
+      }
+    }    
+  }
+  
   /**
    * Returns image url for the given experiment
    *

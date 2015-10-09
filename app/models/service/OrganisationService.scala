@@ -87,6 +87,20 @@ class OrganisationService extends Services {
   }
 
   /**
+   * Returns organisation if it exists, otherwise - None
+   *
+   * @param identifier Organisation identifier
+   */
+  def find(identifier: String): Option[Organisation] = DB.withSession { implicit session ⇒
+    val transformed = identifier.replace(".", " ")
+    val query = for {
+      org ← orgs if org.name.toLowerCase like "%" + transformed + "%"
+    } yield org
+
+    query.firstOption
+  }
+  
+  /**
    * Return the requested organisation with its social profile if exists
    *
    * @param id Organisation id

@@ -305,7 +305,7 @@ GET           /api/v2/experiments                                            con
 GET           /api/v2/fees/:brand                                            controllers.apiv2.BrandFeesApi.fees(brand: String)
 
 GET           /api/v2/members                                                controllers.apiv2.MembersApi.members(funder: Option[Boolean] ?= None)
-GET           /api/v2/member/:id                                             controllers.apiv2.MembersApi.member(id: Long)
+GET           /api/v2/member/:identifier                                     controllers.apiv2.MembersApi.member(identifier: String, person: Boolean ?= true)
 
 POST          /api/v2/participant                                            controllers.apiv2.ParticipantsApi.create
 
