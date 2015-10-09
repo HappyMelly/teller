@@ -77,7 +77,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
 //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
 //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
           val cancellations = eventCancellationService.findByBrands(brands.map(_.id.get))
-          Ok(views.html.v2.dashboard.index(user, activeBrand, licenses, cancellations))
+          Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
         } else {
           val events = eventService.findByFacilitator(
             account.personId,
@@ -100,6 +100,24 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
       }
+  }
+
+  /**
+   * Dashboard page for the specific brand
+   * @param id Brand identifier
+   */
+  def overview(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val account = user.account
+      val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
+      brands.find(_.identifier == id) map { activeBrand =>
+        val licenses = licenseService.expiring(List(activeBrand.identifier))
+        //          val events = eventService.
+        //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
+        //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
+        val cancellations = eventCancellationService.findByBrands(brands.map(_.id.get))
+        Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
+      } getOrElse Redirect(routes.Dashboard.index())
   }
 
   /**

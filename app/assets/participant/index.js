@@ -61,6 +61,11 @@ function loadEventList(events) {
 
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
+    var brandInSession = $('#participants').attr('brandId');
+    if (brandInSession && brandInSession != 0) {
+        currentBrand = brandInSession;
+        $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
+    }
     var events = [];
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
@@ -149,8 +154,16 @@ $(document).ready( function() {
     $("#events").on('change', function() {
         participantTable.fnDraw();
     });
-    $("#facilitatedByMe").on('change', function() {
-        participantTable.fnDraw();
+    $("#brands").on('change', function() {
+        var brandId = $(this).find(':selected').val();
+        events = [];
+        participantTable
+            .api()
+            .ajax
+            .url("participants/brand/" + brandId)
+            .load(function(){
+                loadEventList(events);
+            });
     });
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);

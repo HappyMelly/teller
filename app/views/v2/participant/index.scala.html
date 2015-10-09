@@ -1,11 +1,12 @@
 @(user: ActiveUser,
     brand: Brand,
+    brands: List[Brand],
     brandId: Long)(implicit request: Request[Any], request2flash: Flash, handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 
 @v2.main("Participants", "participants", user) {
-    @v2.element.brandHeader(brand, "participants") {
+    @v2.element.brandHeader(brand, brands, "participants") {
         @dynamic(handler, "event", "add") {
             <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
                 Add Participant</a>

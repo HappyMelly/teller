@@ -1,14 +1,14 @@
-@(user: ActiveUser)(implicit request: Request[Any],
+@(user: ActiveUser,
+    brand: Brand,
+    brands: List[Brand])(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler)
 
 
 @v2.main("Statistics", "statistics", user) {
-  <input type="hidden" id="activeBrandId" value="1"/>
+  @v2.element.brandHeader(brand, brands, "statistics") { }
+  <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
   <div class="container">
-    <div class="page-header">
-      <h1 class="col-md-offset-3">Management 3.0</h1>
-    </div>
     <div class="row statistics-block">
       <div class="col-md-12"><h2>Facilitators</h2></div>
       <div class="col-md-3 info numbers">

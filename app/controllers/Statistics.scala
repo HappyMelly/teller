@@ -62,10 +62,21 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Renders index page with statistics for brands
+   * @param brandId Brand identifier
    */
-  def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Option[Long] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.v2.statistics.index(user))
+      val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
+      brands.find(_.id == brandId) map { activeBrand =>
+        Ok(views.html.v2.statistics.newIndex(user, activeBrand, brands))
+      } getOrElse {
+        if (brands.nonEmpty) {
+          val activeBrand = brands.head
+          Ok(views.html.v2.statistics.newIndex(user, activeBrand, brands))
+        } else {
+          Ok(views.html.v2.statistics.index(user))
+        }
+      }
   }
 
   /**

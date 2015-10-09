@@ -1,5 +1,6 @@
 @(user: ActiveUser,
   brand: Brand,
+  brands: List[Brand],
   licenses: List[LicenseLicenseeView],
   cancellations: List[models.event.EventCancellation])(implicit flash: Flash,
     request: Request[Any],
@@ -8,7 +9,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 
 @v2.main("Home", "", user) {
-  @v2.element.brandHeader(brand){
+  @v2.element.brandHeader(brand, brands){
   }
   <div class="row">
     <div class="container">
