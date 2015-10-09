@@ -140,6 +140,9 @@ function buildExportLink(detailsPage) {
         eventId = $('#eventId').val();
     } else {
         brandId = $('#brands').find(':selected').val();
+        if (brandId == undefined) {
+            brandId = $('#activeBrandId').val();
+        }
         eventId = $('#events').find(':selected').val();
         if (!eventId) {
             eventId = 0;
@@ -177,7 +180,7 @@ function calculateAverageImpression(table) {
     } else {
         badge = '<span class="badge alert-success">' + impression + '</span>';
     }
-    $("#impression").html("General impr " + badge);
+    $("#impression").html("Impression " + badge);
 }
 
 function drawStatus(data) {

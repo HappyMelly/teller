@@ -60,7 +60,7 @@ function loadEventList(events) {
 
 
 $(document).ready( function() {
-    var currentBrand = $('#brands').val();
+    var currentBrand = $('#activeBrandId').val();
     var brandInSession = $('#participants').attr('brandId');
     if (brandInSession && brandInSession != 0) {
         currentBrand = brandInSession;
@@ -93,7 +93,8 @@ $(document).ready( function() {
         ],
         "columnDefs": [{
                 "render": function(data) { return drawStatus(data); },
-                "targets": 0
+                "targets": 0,
+                "orderable": false
             }, {
                 "render": function(data) {
                     return '<a href="' + data.url + '">' + data.name + '</a>';
@@ -107,13 +108,15 @@ $(document).ready( function() {
                     }
                     return '<a href="' + data.url + '">' + data.title + '</a>';
                 },
-                "targets": 2
+                "targets": 2,
+                "orderable": false
             }, {
                 "render": function(data) {
                     return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
                         data.country + '.png"/> ' + data.city;
                 },
-                "targets": 3
+                "targets": 3,
+                "orderable": false
             }, {
                 "render": function(data) {
                     return data.start + ' / ' + data.end;
@@ -124,7 +127,8 @@ $(document).ready( function() {
                 "targets": 5
             }, {
                 "render": function(data) { return drawCertificate(data); },
-                "targets": 8
+                "targets": 8,
+                "orderable": false
             }, {
                 "render": function(data) { return data.id; },
                 "visible": false,
@@ -150,11 +154,7 @@ $(document).ready( function() {
     $("#events").on('change', function() {
         participantTable.fnDraw();
     });
-    $("#facilitatedByMe").on('change', function() {
-        participantTable.fnDraw();
-    });
-
-    $("#brands").change(function() {
+    $("#brands").on('change', function() {
         var brandId = $(this).find(':selected').val();
         events = [];
         participantTable

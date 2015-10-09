@@ -69,37 +69,55 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       if (account.viewer) {
-        val brands = brandService.findByCoordinator(account.personId)
-        val licenses = if (brands.length > 0)
-          licenseService.expiring(brands.map(_.id.get))
-        else
-          List()
-        val cancellations = if (brands.length > 0)
-          eventCancellationService.findByBrands(brands.map(_.id.get))
-        else
-          List()
-        val events = eventService.findByFacilitator(
-          account.personId,
-          brandId = None)
-        val upcomingEvents = events
-          .filter(_.schedule.end.toString >= LocalDate.now().toString)
-          .slice(0, 3)
-        val pastEvents = events
-          .filter(_.schedule.end.toString < LocalDate.now().toString)
-          .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
-        val evaluations = evaluationService
-          .findByEventsWithParticipants(pastEvents.map(_.id.get))
-          .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-          .slice(0, 10)
-        Ok(views.html.dashboard.index(user,
-          upcomingEvents,
-          pastEvents.slice(0, 2),
-          evaluations,
-          licenses,
-          cancellations))
+        val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
+        if (brands.nonEmpty) {
+          val activeBrand = brands.head
+          val licenses = licenseService.expiring(List(activeBrand.identifier))
+//          val events = eventService.
+//            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
+//          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
+          val cancellations = eventCancellationService.findByBrands(brands.map(_.id.get))
+          Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
+        } else {
+          val events = eventService.findByFacilitator(
+            account.personId,
+            brandId = None)
+          val upcomingEvents = events
+            .filter(_.schedule.end.toString >= LocalDate.now().toString)
+            .slice(0, 3)
+          val pastEvents = events
+            .filter(_.schedule.end.toString < LocalDate.now().toString)
+            .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
+          val evaluations = evaluationService
+            .findByEventsWithParticipants(pastEvents.map(_.id.get))
+            .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
+            .slice(0, 10)
+          Ok(views.html.dashboard.index(user,
+            upcomingEvents,
+            pastEvents.slice(0, 2),
+            evaluations))
+        }
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
       }
+  }
+
+  /**
+   * Dashboard page for the specific brand
+   * @param id Brand identifier
+   */
+  def overview(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val account = user.account
+      val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
+      brands.find(_.identifier == id) map { activeBrand =>
+        val licenses = licenseService.expiring(List(activeBrand.identifier))
+        //          val events = eventService.
+        //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
+        //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
+        val cancellations = eventCancellationService.findByBrands(brands.map(_.id.get))
+        Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
+      } getOrElse Redirect(routes.Dashboard.index())
   }
 
   /**

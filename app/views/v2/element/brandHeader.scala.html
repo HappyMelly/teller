@@ -1,0 +1,44 @@
+@(activeBrand: Brand, brands: List[Brand], tab: String = "")(content: Html)
+
+<div class="row brand-header">
+  @if(brands.length > 1) {
+    <div class="brand-menu">
+      <div class="container">
+        @for(brand <- brands) {
+          @if(brand.identifier == activeBrand.identifier) {
+            <span>@brand.name</span>
+          } else {
+            <span><a href="@routes.Dashboard.overview(brand.identifier)">@brand.name</a></span>
+          }
+        }
+      </div>
+    </div>
+  }
+  <div class="brand-header-content">
+    <div class="container">
+      <div class="brand-image">
+        <a href="@routes.Dashboard.overview(activeBrand.identifier)">
+          <img class="img-rounded" width="120" src="@routes.Brands.picture(activeBrand.code).url"/>
+        </a>
+      </div>
+      <div class="brand-name">
+        <h2>@activeBrand.name</h2>
+        <div class="buttons">
+          @content
+        </div>
+      </div>
+      <div class="brand-links text-right">
+        @if(tab == "events") { <span>Events</span> } else {
+          <span><a href="@routes.Events.index(activeBrand.id).url">Events</a></span>
+        }
+        @if(tab == "participants") { <span>Participants</span> } else {
+          <span><a href="@routes.Participants.index(activeBrand.id).url">Participants</a></span>
+        }
+        @if(tab == "statistics") { <span>Statistics</span> } else {
+          <span><a href="@routes.Statistics.index(activeBrand.id).url">Statistics</a></span>
+        }
+        <span><a href="@routes.Brands.details(activeBrand.identifier).url">Settings</a></span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -95,14 +95,25 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Returns a list of participants
+   * Renders list of participants
+   * @param brandId Brand identifier
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Option[Long] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.account
-      val brands = Brand.findByUser(account)
-      val brandId = request.session.get("brandId").map(_.toLong).getOrElse(0L)
-      Ok(views.html.participant.index(user, brands, brandId))
+      val coordinatedBrands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
+      coordinatedBrands.find(_.id == brandId) map { activeBrand =>
+        Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
+      } getOrElse {
+        if (coordinatedBrands.nonEmpty) {
+          val activeBrand = coordinatedBrands.head
+          Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
+        } else {
+          val account = user.account
+          val brands = Brand.findByUser(account)
+          val brandId = request.session.get("brandId").map(_.toLong).getOrElse(0L)
+          Ok(views.html.participant.index(user, brands, brandId))
+        }
+      }
   }
 
   /**

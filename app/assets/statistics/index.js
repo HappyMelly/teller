@@ -58,7 +58,7 @@ function drawTable(id, data, renderer) {
  * @returns {boolean}
  */
 function showTab(elem, type) {
-    var brandId = 1;
+    var brandId = $('#activeBrandId').val();
     var url = jsRoutes.controllers.Statistics.byFacilitators(brandId).url;
     $.get(url, function(data) {
         var ctx = $("#facilitatorChart").get(0).getContext("2d");
