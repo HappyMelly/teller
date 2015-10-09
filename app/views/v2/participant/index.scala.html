@@ -1,0 +1,70 @@
+@(user: ActiveUser,
+    brand: Brand,
+    brandId: Long)(implicit request: Request[Any], request2flash: Flash, handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+
+@v2.main("Participants", "participants", user) {
+    @v2.element.brandHeader(brand, "participants") {
+        @dynamic(handler, "event", "add") {
+            <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
+                Add Participant</a>
+        }
+        @dynamic(handler, "evaluation", "add") {
+            <a class="btn btn-default" href="@routes.Evaluations.add(None, None)">
+                Add Evaluation</a>
+        }
+    }
+    @element.evaluationActions()
+    <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
+    <div class="row">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 content-block">
+            <div id="filter-containter">
+              <div class="table-filters pull-left">
+                <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+                      <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
+              </div>
+              <div class="table-filters pull-right">
+                <div class="btn-group">
+                  <select id="events" class="input-sm form-control">
+                      <option value="">Select an event</option>
+                  </select>
+                </div>
+                <div class="btn-group">
+                  <select id="status" class="input-sm form-control">
+                      <option value="all"></option>
+                      <option value="0">Unconfirmed</option>
+                      <option value="1">Pending</option>
+                      <option value="2">Approved</option>
+                      <option value="3">Rejected</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <table id="participants" class="datatables table table-rowed" brandId="@brandId">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th width="10%">Participant</th>
+                  <th width="20%">Event</th>
+                  <th>Location</th>
+                  <th>Dates</th>
+                  <th width="5%" align="center" id="impression"></th>
+                  <th>Evaluation Date</th>
+                  <th>Handled Date</th>
+                  <th>Certificate</th>
+                  <th>Event id </th>
+                  <th width=""></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
+}

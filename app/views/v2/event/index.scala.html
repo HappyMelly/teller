@@ -6,7 +6,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 
 @v2.main("Events", "events", user) {
-  @v2.element.brandHeader(brand, "event") {
+  @v2.element.brandHeader(brand, "events") {
     @dynamic(handler, "event", "add") {
       <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
     }

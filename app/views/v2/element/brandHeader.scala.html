@@ -12,14 +12,14 @@
       </div>
     </div>
     <div class="brand-links text-right">
-      @if(tab == "event") { Events } else {
-        <a href="@routes.Events.index().url">Events</a>
+      @if(tab == "events") { <span>Events</span> } else {
+        <span><a href="@routes.Events.index().url">Events</a></span>
       }
-      @if(tab == "participants") { Events } else {
-        <a href="@routes.Participants.index().url">Participants</a>
+      @if(tab == "participants") { <span>Participants</span> } else {
+        <span><a href="@routes.Participants.index().url">Participants</a></span>
       }
-      @if(tab == "statistics") { Events } else {
-        <a href="@routes.Statistics.index().url">Statistics</a>
+      @if(tab == "statistics") { <span>Statistics</span> } else {
+        <span><a href="@routes.Statistics.index().url">Statistics</a></span>
       }
     </div>
   </div>
