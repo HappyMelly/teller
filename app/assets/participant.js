@@ -35,6 +35,7 @@ function showParticipantDetails(object) {
             $("<td colspan='10'>").append(data));
         $(row).addClass('active').after(tableContainer);
         $(object).addClass('active');
+        initializeParticipantActionsInDetails();
     });
 }
 
@@ -50,6 +51,63 @@ function toggleParticipantDetails(object) {
     } else {
         showParticipantDetails(object);
     }
+}
+
+/**
+ * Sends a request to the server to generate certificate and notifies user
+ *  about it
+ * @param object {object} Target Link
+ */
+function generateCertificate(object) {
+    var eventId = $(object).data('event');
+    var personId = $(object).data('person');
+    var url = jsRoutes.controllers.Certificates.create(eventId, personId).url;
+    $.get(url, {}, function(data) {
+        var certificate = JSON.parse(data).certificate;
+        var url = jsRoutes.controllers.Certificates.certificate(certificate).url;
+        $(object).removeClass('generate-certificate').off('click').
+            attr('href', url).attr('target', '_blank').text(certificate);
+        var caption = 'Certificate was generated and sent to the participant';
+        noty({text: caption, layout: 'bottom',
+            theme: 'relax', timeout: 2000 , type: 'success'});
+    });
+}
+
+/**
+ * Removes participant's rows from the table
+ */
+function removeParticipant() {
+    $('#participants').find('tr.active').remove();
+}
+
+function initializeParticipantActions() {
+    $('.circle-show-more').on('click', function() {
+        toggleParticipantDetails($(this));
+    });
+    $('.generate-certificate').on('click', function(e) {
+        e.preventDefault();
+        generateCertificate($(this));
+        return true;
+    });
+}
+
+function initializeParticipantActionsInDetails() {
+    $('.remove-participation').on('click', function(e) {
+        e.preventDefault();
+        var object = $(this);
+        var result = confirm("Remove this participant? You cannot undo this action.");
+        if (result == true) {
+            var eventId = $(this).data('event');
+            var personId = $(this).data('person');
+            var url = jsRoutes.controllers.Participants.delete(eventId, personId).url;
+            $.get(url, {}, function() {
+                removeParticipant();
+                noty({text: 'Participant was successfully removed', layout: 'bottom',
+                    theme: 'relax', timeout: 2000 , type: 'success'});
+            });
+        }
+        return false;
+    });
 }
 
 /**
@@ -192,26 +250,18 @@ function calculateAverageImpression(table) {
     for (var i = 0; i < rows.length; i++) {
         if (rows[i].evaluation.impression) {
             counter++;
-            impression += rows[i].evaluation.impression.value;
+            impression += rows[i].evaluation.impression;
         }
     }
     if (counter) {
         impression = Math.round((impression/counter) * 100)/100;
     }
-    var badge = '';
-    if (impression < 5) {
-        badge = '<span class="badge alert-danger">' + impression + '</span>';
-    } else if (impression < 8) {
-        badge = '<span class="badge alert-warning">' + impression + '</span>';
-    } else {
-        badge = '<span class="badge alert-success">' + impression + '</span>';
-    }
+    var badge = '<span class="yellow-rating" title="Rating"><i class="fa fa-star"></i> ' + impression + '</span>';
     $("#impression").html("Impression " + badge);
 }
 
 function drawStatus(data) {
     var style = ['fa-thumbs-tack', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-hourglass'];
-    //<i class="fa fa-thumbs-up"></i>
     if (data.status) {
         var html = '<i class="fa fa-fw ' + style[data.status.value] + '"';
         html += ' value="' + data.status.value + '"></i> ';
@@ -226,10 +276,19 @@ function drawStatus(data) {
 }
 
 function drawCertificate(data) {
-    if (data && data.url) {
-        return '<a href="' + data.url + '" target="_blank">' + data.id + '</a>';
+    if (data.certificate.generate) {
+        if (data.certificate.number == null) {
+            var html = '<a class="generate-certificate" href="#"';
+            html += 'data-event="' + data.event +'"';
+            html += ' data-person="' + data.person + '">Generate</a>';
+            return html;
+        } else {
+            var url = jsRoutes.controllers.Certificates.certificate(data.certificate.number).url;
+            return '<a href="' + url + '" target="_blank">' + data.certificate.number + '</a>';
+        }
+    } else {
+        return '';
     }
-    return '<a href="#">Generate</a>';
 }
 
 function drawImpression(data) {

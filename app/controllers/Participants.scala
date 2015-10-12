@@ -27,13 +27,12 @@ package controllers
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
-import models.service.{ EventService, PersonService, Services }
+import models.service.{EventService, PersonService, Services}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.mvc.Controller
 import securesocial.core.RuntimeEnvironment
 import views.Countries
 import views.ViewHelpers.dateInterval
@@ -142,14 +141,17 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
               "evaluation" -> evaluation(data),
               "participant" -> Json.obj(
                 "person" -> data.person.identifier,
-                "event" -> data.event.identifier
+                "event" -> data.event.identifier,
+                "certificate" -> Json.obj(
+                  "generate" -> {if(brand.generateCert && !data.event.free) { true } else { false }},
+                  "number" -> data.certificate
+                )
               ),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(brand, data, "index"),
-                    "evaluation" -> evaluationActions(id, coordinator, data, "index"),
-                    "participant" -> participantActions(data, account, "index"))
+                    "evaluation" -> evaluationActions(id, coordinator, data, "index"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "certificate" -> certificateActions(brand, data, "event"),
@@ -158,12 +160,8 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                           if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
-                        }),
-                      "participant" -> participantActions(data, account, "index"))
-                  } else {
-                    Json.obj(
-                      "participant" -> participantActions(data, account, "index"))
-                  }
+                        }))
+                  } else Json.obj()
                 }
               })
           }
@@ -204,8 +202,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
                     "certificate" -> certificateActions(brand, data, "event"),
-                    "evaluation" -> evaluationActions(id, coordinator, data, "event"),
-                    "participant" -> participantActions(data, account, "event"))
+                    "evaluation" -> evaluationActions(id, coordinator, data, "event"))
                   case None ⇒ if (!data.event.archived) {
                     Json.obj(
                       "certificate" -> certificateActions(brand, data, "event"),
@@ -214,12 +211,8 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                           if (coordinator) {
                             routes.Evaluations.add(data.event.id, data.person.id).url
                           } else ""
-                        }),
-                      "participant" -> participantActions(data, account, "event"))
-                  } else {
-                    Json.obj(
-                      "participant" -> participantActions(data, account, "event"))
-                  }
+                        }))
+                  } else Json.obj()
                 }
               })
           }
@@ -229,13 +222,20 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       }.getOrElse(NotFound("Unknown brand"))
   }
 
+  /**
+   * Returns the details of the given participant
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   * @return
+   */
   def details(eventId: Long, personId: Long) = SecuredDynamicAction("event", "add") {
     implicit request => implicit handler => implicit user =>
-      Participant.find(personId, eventId) map { participant =>
+      participantService.find(personId, eventId) map { participant =>
         val evaluation = participant.evaluationId map { evaluationId =>
           evaluationService.find(evaluationId).flatMap(x => Some(x.eval))
         } getOrElse None
-        Ok(views.html.v2.participant.details(participant, evaluation))
+        val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
+        Ok(views.html.v2.participant.details(participant, evaluation, virtual))
       } getOrElse BadRequest("Participant does not exist")
   }
 
@@ -310,7 +310,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
             ref))
         },
         participant ⇒ {
-          Participant.find(participant.personId, participant.eventId) match {
+          participantService.find(participant.personId, participant.eventId) match {
             case Some(p) ⇒ {
               val account = user.account
               val brands = Brand.findByUser(account)
@@ -387,7 +387,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Participant.find(personId, eventId).map { value ⇒
+        participantService.find(personId, eventId).map { value ⇒
 
           val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
           value.delete()
@@ -457,21 +457,5 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       },
       "view" -> routes.Evaluations.details(id).url,
       "remove" -> routes.Evaluations.delete(id, Some(page)).url)
-  }
-
-  /** Return a list of possible actions for a participant */
-  private def participantActions(data: ParticipantView, account: UserAccount, page: String): JsValue = {
-    Json.obj("view" -> routes.People.details(data.person.id.get).url,
-      "edit" -> {
-        if (account.editor || data.person.virtual)
-          routes.People.edit(data.person.id.get).url
-        else ""
-      },
-      "remove" -> {
-        if (account.editor || data.person.virtual)
-          routes.People.details(data.person.id.get).url
-        else ""
-      },
-      "removeParticipation" -> routes.Participants.delete(data.event.id.get, data.person.id.get, Some(page)).url)
   }
 }

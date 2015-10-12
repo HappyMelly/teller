@@ -24,13 +24,13 @@
  */
 package models.service
 
-import models.{ Participant, Evaluation, EvaluationPair }
-import models.database.{ Evaluations, People, Participants, Events }
+import models.database.{Evaluations, Events, Participants, People}
+import models.{Evaluation, EvaluationPair}
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
-class EvaluationService {
+class EvaluationService extends Services{
 
   private val evaluations = TableQuery[Evaluations]
 
@@ -41,7 +41,7 @@ class EvaluationService {
    */
   def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
     val id = (evaluations returning evaluations.map(_.id)) += eval
-    val participant = Participant.find(eval.personId, eval.eventId).get
+    val participant = participantService.find(eval.personId, eval.eventId).get
     participant.copy(evaluationId = Some(id)).update
     eval.copy(id = Some(id))
   }

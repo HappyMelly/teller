@@ -81,7 +81,7 @@ $(document).ready( function() {
             { "data": "evaluation.impression" },
             { "data": "evaluation.creation" },
             { "data": "evaluation" },
-            { "data": "evaluation.certificate" },
+            { "data": "participant" },
             { "data": "event" },
             { "data": "participant" }
         ],
@@ -105,8 +105,7 @@ $(document).ready( function() {
                 "orderable": false
             }, {
                 "render": function(data) { return drawStatus(data); },
-                "targets": 6,
-                "orderable": false
+                "targets": 6
             }, {
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 7,
@@ -131,10 +130,7 @@ $(document).ready( function() {
         .api()
         .on('init.dt', function (e, settings, data) {
             loadEventList(events);
-            $('.circle-show-more').on('click', function() {
-                toggleParticipantDetails($(this));
-            });
-
+            initializeParticipantActions();
         });
 
     $("div.toolbar").html($('#filter-containter').html());

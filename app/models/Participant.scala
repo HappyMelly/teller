@@ -140,18 +140,6 @@ case class ParticipantData(id: Option[Long],
 
 object Participant {
 
-  /**
-   * Find if a person took part in an event
-   * @param personId Person identifier
-   * @param eventId Event identifier
-   * @return
-   */
-  def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Participants].
-        filter(_.personId === personId).
-        filter(_.eventId === eventId).firstOption
-  }
 
   /**
    * Find all participants for all events of the specified brand

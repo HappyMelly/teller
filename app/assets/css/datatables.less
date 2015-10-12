@@ -21,30 +21,34 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+@import "settings";
 
-@font-face {
-  font-family: "Days";
-  src: url("../fonts/Days.ttf") format("truetype");
-  font-style: normal;
-  font-weight: normal;
+table.dataTable > thead > tr > th {
+  position: relative;
+  background-image: none !important;
+  padding-left: 0.7em;
+
+  &.sorting:after, &.sorting_asc:after, &.sorting_desc:after {
+    position: absolute;
+    top: 1.5em;
+    right: 8px;
+    color: @pinkish-grey;
+    display: block;
+    font-size: 0.7em;
+    font-weight: 100;
+    font-family: FontAwesome;
+  }
+
+  &.sorting:after {
+    content: "\f0dc";
+    padding-top: 0.12em;
+  }
+
+  &.sorting_asc:after {
+    content: "\f160";
+  }
+
+  &.sorting_desc:after {
+    content: "\f161";
+  }
 }
-@font-face {
-  font-family: "kg_skinny_latteregular";
-  src: url("../fonts/KGSkinnyLatte.ttf") format("truetype");
-  font-style: normal;
-  font-weight: normal;
-}
-/* colors */
-@pig-pink: #ee929f;
-@light-pink: #f1a7a9;
-@butterscotch: #ffc550;
-@dark-sky-blue: #4a90e2;
-@light-blue: #E8F2FD;
-@warm-grey: #777777;
-@grey: #9b9b9b;
-@light-grey: #e7e7e7;
-@text-grey: #888888;
-@icon-grey: #d4d4d4;
-@grey3: #333333;
-@duck-egg-blue: #e9f2fc;
-@pinkish-grey: #cccccc;

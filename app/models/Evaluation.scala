@@ -139,7 +139,7 @@ case class Evaluation(
    */
   def delete(): Unit = DB.withSession { implicit session ⇒
     TableQuery[Evaluations].filter(_.id === id).delete
-    val participant = Participant.find(personId, eventId).get
+    val participant = participantService.find(personId, eventId).get
     participant.copy(evaluationId = None).update
   }
 
@@ -175,7 +175,7 @@ case class Evaluation(
   protected def sendNewEvaluationNotification() = {
     val brand = brandService.findWithCoordinators(event.brandId).get
     val impression = views.Evaluations.impression(facilitatorImpression)
-    val participant = Participant.find(this.personId, this.eventId).get
+    val participant = participantService.find(this.personId, this.eventId).get
     val subject = s"New evaluation (General impression: $impression)"
     val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,

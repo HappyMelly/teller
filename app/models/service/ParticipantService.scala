@@ -13,6 +13,20 @@ import play.api.Play.current
  */
 class ParticipantService {
 
+
+  /**
+   * Find if a person took part in an event
+   * @param personId Person identifier
+   * @param eventId Event identifier
+   * @return
+   */
+  def find(personId: Long, eventId: Long): Option[Participant] = DB.withSession {
+    implicit session ⇒
+      TableQuery[Participants].
+        filter(_.personId === personId).
+        filter(_.eventId === eventId).firstOption
+  }
+
   /**
    * Returns list of participants for the given brand
    * @param id Brand identifier

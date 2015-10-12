@@ -160,9 +160,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
                 Ok(Json.obj("success" -> log.toString))
               } else {
                 EventService.get.find(eventId).map { event ⇒
-                  Participant.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
+                  participantService.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
                     // first we need to check if this event has already the participant
-                    Participant.find(evaluation.personId, eventId).map { participant ⇒
+                    participantService.find(evaluation.personId, eventId).map { participant ⇒
                       // if yes, we reassign an evaluation
                       participant.copy(evaluationId = Some(id)).update
                       oldParticipant.copy(evaluationId = None).update
@@ -343,7 +343,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     ev: Evaluation,
     event: Event) = {
     brandService.findWithCoordinators(event.brandId) foreach { x ⇒
-      Participant.find(ev.personId, ev.eventId) foreach { data ⇒
+      participantService.find(ev.personId, ev.eventId) foreach { data ⇒
         val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
         if (data.certificate.isEmpty && x.brand.generateCert && !event.free) {
           val cert = new Certificate(ev.handled, event, ev.participant)

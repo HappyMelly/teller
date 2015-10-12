@@ -24,15 +24,15 @@
 
 package controllers
 
-import models.{ Participant, ActiveUser, Certificate }
 import models.UserRole.DynamicRole
 import models.service.Services
+import models.{ActiveUser, Certificate}
 import org.joda.time.LocalDate
-import play.api.mvc._
+import play.api.libs.json.Json
 import securesocial.core.RuntimeEnvironment
 
 class Certificates(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
+    extends JsonController
     with Security
     with Services
     with Files {
@@ -51,7 +51,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
     ref: Option[String] = None) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        Participant.find(personId, eventId) map { participant ⇒
+        participantService.find(personId, eventId) map { participant ⇒
           val approver = user.person
           val evaluation = if (participant.evaluationId.nonEmpty)
             participant.evaluation
@@ -69,12 +69,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
             participant.copy(
               certificate = Some(certificate.id),
               issued = Some(issued)).update
-            val route: String = ref match {
-              case Some("index") ⇒ routes.Participants.index(event.brandId).url
-              case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
-              case _ ⇒ routes.Events.details(eventId).url + "#participant"
-            }
-            Redirect(route).flashing("success" -> "Certificate was generated")
+            jsonOk(Json.obj("certificate" -> certificate.id))
           }
         } getOrElse NotFound
   }
