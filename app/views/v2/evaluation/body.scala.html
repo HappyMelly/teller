@@ -1,0 +1,36 @@
+@(evaluation: Evaluation)
+
+@import views.Evaluations
+
+<br/><br/>
+<strong>Facilitator</strong><br/>
+<span class="text-muted">Impression</span><br/>
+@Evaluations.impression(evaluation.facilitatorImpression)<br/>
+<span class="text-muted">@Evaluations.Questions.facilitatorReview</span><br/>
+@evaluation.facilitatorReview<br/><br/>
+
+<strong>Event & Participant</strong><br/>
+<span class="text-muted">Recommendation</span><br/>
+@Evaluations.recommendation(evaluation.recommendationScore)<br/>
+<span class="text-muted">Reason to register</span><br/>
+@evaluation.reasonToRegister<br/>
+<span class="text-muted">Action items</span><br/>
+@evaluation.actionItems<br/>
+<span class="text-muted">@Evaluations.Questions.changesToEvent</span><br/>
+@evaluation.changesToEvent<br/><br/>
+
+<strong>Organizer</strong><br/>
+@evaluation.hostImpression.map { impression =>
+  <span class="text-muted">Impression</span><br/>
+  @Evaluations.impression(impression)<br/>
+}
+<span class="text-muted">@Evaluations.Questions.changesToHost</span><br/>
+@evaluation.changesToHost<br/><br/>
+
+<strong>Content</strong><br/>
+@evaluation.contentImpression.map { impression =>
+  <span class="text-muted">Impression</span><br/>
+  @Evaluations.impression(impression)<br/>
+}
+<span class="text-muted">@Evaluations.Questions.changesToContent</span><br/>
+@evaluation.changesToHost<br/><br/>

@@ -38,7 +38,7 @@ function filterByEvent(oSettings, aData, iDataIndex) {
  * Filter evaluations checking if they are pending, approved or rejected
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
-    var index = 0;
+    var index = 6;
     var filter = $('#status').find(':selected').val();
     if (filter == 'all') {
         return true;
@@ -61,11 +61,6 @@ function loadEventList(events) {
 
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
-    var brandInSession = $('#participants').attr('brandId');
-    if (brandInSession && brandInSession != 0) {
-        currentBrand = brandInSession;
-        $("#brands option[value='" + currentBrand + "']").attr('selected', 'selected');
-    }
     var events = [];
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
@@ -79,27 +74,22 @@ $(document).ready( function() {
         },
         "order": [[ 6, "desc" ]],
         "columns": [
-            { "data": "evaluation.status" },
             { "data": "person" },
             { "data": "event" },
             { "data": "location" },
             { "data": "schedule" },
             { "data": "evaluation.impression" },
             { "data": "evaluation.creation" },
-            { "data": "evaluation.handled" },
+            { "data": "evaluation" },
             { "data": "evaluation.certificate" },
             { "data": "event" },
-            { "data": "actions" }
+            { "data": "participant" }
         ],
         "columnDefs": [{
-                "render": function(data) { return drawStatus(data); },
-                "targets": 0,
-                "orderable": false
-            }, {
                 "render": function(data) {
                     return '<a href="' + data.url + '">' + data.name + '</a>';
                 },
-                "targets": 1
+                "targets": 0
             }, {
                 "render": function(data) {
                     var result = $.grep(events, function(e){ return e.url == data.url; });
@@ -108,34 +98,31 @@ $(document).ready( function() {
                     }
                     return '<a href="' + data.url + '">' + data.title + '</a>';
                 },
+                "targets": 1,
+                "orderable": false
+            }, {
                 "targets": 2,
                 "orderable": false
             }, {
-                "render": function(data) {
-                    return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
-                        data.country + '.png"/> ' + data.city;
-                },
-                "targets": 3,
+                "render": function(data) { return drawStatus(data); },
+                "targets": 6,
                 "orderable": false
             }, {
-                "render": function(data) {
-                    return data.start + ' / ' + data.end;
-                },
-                "targets": 4
-            }, {
-                "render": function(data) { return drawImpression(data); },
-                "targets": 5
-            }, {
                 "render": function(data) { return drawCertificate(data); },
-                "targets": 8,
+                "targets": 7,
                 "orderable": false
             }, {
                 "render": function(data) { return data.id; },
                 "visible": false,
-                "targets": 9
+                "targets": 8
             }, {
-               "render": function(data) { return renderDropdown(data, $("#brands").find(':selected').val()); },
-               "targets": 10,
+               "render": function(data) {
+                   var html = '<div class="circle-show-more" data-event="' + data.event + '"';
+                   html += ' data-person="' + data.person + '">';
+                   html += '<span class="glyphicon glyphicon-chevron-down"></span></div>';
+                   return html;
+               },
+               "targets": 9,
                "bSortable": false
             }
         ]
@@ -144,6 +131,10 @@ $(document).ready( function() {
         .api()
         .on('init.dt', function (e, settings, data) {
             loadEventList(events);
+            $('.circle-show-more').on('click', function() {
+                toggleParticipantDetails($(this));
+            });
+
         });
 
     $("div.toolbar").html($('#filter-containter').html());
@@ -154,17 +145,7 @@ $(document).ready( function() {
     $("#events").on('change', function() {
         participantTable.fnDraw();
     });
-    $("#brands").on('change', function() {
-        var brandId = $(this).find(':selected').val();
-        events = [];
-        participantTable
-            .api()
-            .ajax
-            .url("participants/brand/" + brandId)
-            .load(function(){
-                loadEventList(events);
-            });
-    });
+
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
     });

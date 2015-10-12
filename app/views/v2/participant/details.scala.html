@@ -1,0 +1,20 @@
+@(participant: Participant,
+    evaluation: Option[Evaluation])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+<table class="table table-rowed">
+  <tr><td class="person-actions">
+    <strong class="text-muted">Manage Person:</strong>&nbsp;
+      <a href="@routes.People.edit(participant.personId)">Edit</a>
+      <a href="@routes.People.delete(participant.personId)">Delete</a>
+      <a href="@routes.Participants.delete(participant.eventId, participant.personId, None)">Remove Participation</a>
+  </td></tr>
+  @evaluation.map { eval =>
+    <tr><td>
+      <strong class="text-muted">Manage Evaluation:</strong>
+      @views.html.v2.evaluation.body(eval)
+    </td></tr>
+  }
+</table>

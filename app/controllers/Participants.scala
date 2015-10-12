@@ -36,9 +36,10 @@ import play.api.libs.json._
 import play.mvc.Controller
 import securesocial.core.RuntimeEnvironment
 import views.Countries
+import views.ViewHelpers.dateInterval
 
 class Participants(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
+    extends JsonController
     with Security
     with Services {
 
@@ -136,13 +137,13 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "url" -> routes.Events.details(data.event.id.get).url,
                 "title" -> data.event.title,
                 "longTitle" -> data.event.longTitle),
-              "location" -> Json.obj(
-                "country" -> data.event.location.countryCode.toLowerCase,
-                "city" -> data.event.location.city),
-              "schedule" -> Json.obj(
-                "start" -> data.event.schedule.start.toString,
-                "end" -> data.event.schedule.end.toString),
+              "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
+              "schedule" -> dateInterval(data.event.schedule.start, data.event.schedule.end),
               "evaluation" -> evaluation(data),
+              "participant" -> Json.obj(
+                "person" -> data.person.identifier,
+                "event" -> data.event.identifier
+              ),
               "actions" -> {
                 data.evaluationId match {
                   case Some(id) ⇒ Json.obj(
@@ -226,6 +227,16 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val participants = Participant.findByEvent(eventId)
         Ok(Json.toJson(participants))
       }.getOrElse(NotFound("Unknown brand"))
+  }
+
+  def details(eventId: Long, personId: Long) = SecuredDynamicAction("event", "add") {
+    implicit request => implicit handler => implicit user =>
+      Participant.find(personId, eventId) map { participant =>
+        val evaluation = participant.evaluationId map { evaluationId =>
+          evaluationService.find(evaluationId).flatMap(x => Some(x.eval))
+        } getOrElse None
+        Ok(views.html.v2.participant.details(participant, evaluation))
+      } getOrElse BadRequest("Participant does not exist")
   }
 
   /**
@@ -398,11 +409,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   private def evaluation(data: ParticipantView): JsValue = {
     Json.obj(
-      "impression" -> data.impression.map { value ⇒
-        Json.obj(
-          "value" -> value,
-          "caption" -> views.Evaluations.impression(value))
-      },
+      "impression" -> data.impression,
       "status" -> data.status.map(status ⇒
         Json.obj(
           "label" -> Messages("models.EvaluationStatus." + status),

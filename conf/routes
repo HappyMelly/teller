@@ -183,6 +183,7 @@ GET           /participant/new/                                              @co
 POST          /participant                                                   @controllers.Participants.create(ref: Option[String])
 POST          /participant/person                                            @controllers.Participants.createParticipantAndPerson(ref: Option[String])
 GET           /participant/:eventId/:personId/delete/                        @controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
+GET           /participant/event/:eventId/person/:personId                   @controllers.Participants.details(eventId: Long, personId: Long)
 
 GET           /people                                                        @controllers.People.index
 

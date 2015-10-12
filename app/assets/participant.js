@@ -27,6 +27,31 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
+function showParticipantDetails(object) {
+    var row = $(object).parents('tr').first();
+    var url = jsRoutes.controllers.Participants.details($(object).data('event'), $(object).data('person')).url;
+    $.get(url, {}, function(data) {
+        var tableContainer = $("<tr class='participant-details active'>").append(
+            $("<td colspan='10'>").append(data));
+        $(row).addClass('active').after(tableContainer);
+        $(object).addClass('active');
+    });
+}
+
+function hideParticipantDetails(object) {
+    $(object).parents('tr').first().removeClass('active');
+    $(object).removeClass('active');
+    $('.participant-details').remove();
+}
+
+function toggleParticipantDetails(object) {
+    if ($(object).hasClass('active')) {
+        hideParticipantDetails(object);
+    } else {
+        showParticipantDetails(object);
+    }
+}
+
 /**
  * Render a dropdown with actions for a participant/event/evaluation
  *
@@ -124,6 +149,7 @@ function renderDropdown(data, brand) {
     if (emptyDropdown) {
         return '';
     }
+    html = '<div class="circle-show-more"><span class="glyphicon glyphicon-chevron-down"></span></div>';
     return html;
 }
 
@@ -184,17 +210,16 @@ function calculateAverageImpression(table) {
 }
 
 function drawStatus(data) {
-    var style = [
-        { badge: '', icon: 'glyphicon-hand-right' },
-        { badge: 'alert-success', icon: 'glyphicon-thumbs-up' },
-        { badge: 'alert-warning', icon: 'glyphicon-thumbs-down'},
-        { badge: 'alert-danger', icon: 'glyphicon-hourglass' }
-    ];
-    if (data) {
-        var html = '<span class="badge ' + style[data.value].badge + '"';
-        html += ' value="' + data.value + '" ';
-        html += 'title="Status: ' + data.label + '">';
-        html += '<i class="glyphicon-white glyphicon ' + style[data.value].icon + '"></i></span>';
+    var style = ['fa-thumbs-tack', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-hourglass'];
+    //<i class="fa fa-thumbs-up"></i>
+    if (data.status) {
+        var html = '<i class="fa fa-fw ' + style[data.status.value] + '"';
+        html += ' value="' + data.status.value + '"></i> ';
+        if (data.status.value == 0 || data.status.value == 3) {
+            html += data.status.label;
+        } else {
+            html += data.handled;
+        }
         return html;
     }
     return '';
@@ -204,7 +229,7 @@ function drawCertificate(data) {
     if (data && data.url) {
         return '<a href="' + data.url + '" target="_blank">' + data.id + '</a>';
     }
-    return '';
+    return '<a href="#">Generate</a>';
 }
 
 function drawImpression(data) {

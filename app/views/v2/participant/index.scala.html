@@ -7,14 +7,14 @@
 
 @v2.main("Participants", "participants", user) {
     @v2.element.brandHeader(brand, brands, "participants") {
-        @dynamic(handler, "event", "add") {
-            <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
-                Add Participant</a>
-        }
+        <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
+            Add Participant</a>
         @dynamic(handler, "evaluation", "add") {
             <a class="btn btn-default" href="@routes.Evaluations.add(None, None)">
                 Add Evaluation</a>
         }
+        <a id="exportLink" class="btn btn-default" href="" title="Only evaluations, currently visible in the table, will be exported">
+          Export to XLSX</a>
     }
     @element.evaluationActions()
     <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
@@ -23,10 +23,6 @@
         <div class="row">
           <div class="col-md-12 content-block">
             <div id="filter-containter">
-              <div class="table-filters pull-left">
-                <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
-                      <i class="glyphicon glyphicon-cloud-download"></i> Export to XLSX</a>
-              </div>
               <div class="table-filters pull-right">
                 <div class="btn-group">
                   <select id="events" class="input-sm form-control">
@@ -47,10 +43,9 @@
             <table id="participants" class="datatables table table-rowed" brandId="@brandId">
               <thead>
                 <tr>
-                  <th></th>
                   <th width="10%">Participant</th>
-                  <th width="20%">Event</th>
-                  <th>Location</th>
+                  <th width="15%">Event</th>
+                  <th width="5%">Location</th>
                   <th>Dates</th>
                   <th width="5%" align="center" id="impression"></th>
                   <th>Evaluation Date</th>

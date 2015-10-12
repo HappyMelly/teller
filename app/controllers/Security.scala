@@ -24,12 +24,11 @@
 
 package controllers
 
-import models.{ DynamicResourceChecker, ResourceHandler, UserAccount, ActiveUser, UserRole }
-import models.UserRole.DynamicRole
-import models.service.Services
-import securesocial.core._
+import be.objectify.deadbolt.scala.DeadboltActions
+import models.{ActiveUser, UserRole}
 import play.api.mvc._
-import be.objectify.deadbolt.scala.{ DynamicResourceHandler, DeadboltActions, DeadboltHandler }
+import securesocial.core._
+
 import scala.concurrent.Future
 
 /**

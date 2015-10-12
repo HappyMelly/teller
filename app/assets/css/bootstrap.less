@@ -199,12 +199,23 @@ dl.dl-horizontal {
     padding: 12px 0;
     vertical-align: top;
   }
-  tbody > tr {
-    td {
-      padding: 12px 0;
-    }
-    &:last-child td {
-      border-bottom: 1px solid #ddd;
+  tbody {
+    tr {
+      td {
+        padding: 12px 0;
+      }
+      &.active, &.active:hover {
+        td {
+          background-color: @light-blue !important;
+          color: black;
+          a {
+            color: @dark-sky-blue;
+          }
+        }
+      }
+      &:last-child td {
+        border-bottom: 1px solid #ddd;
+      }
     }
   }
   &.table-rowed {
