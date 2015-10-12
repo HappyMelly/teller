@@ -70,7 +70,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
               certificate = Some(certificate.id),
               issued = Some(issued)).update
             val route: String = ref match {
-              case Some("index") ⇒ routes.Participants.index().url
+              case Some("index") ⇒ routes.Participants.index(event.brandId).url
               case Some("evaluation") ⇒ routes.Evaluations.details(evaluation.get.id.get).url
               case _ ⇒ routes.Events.details(eventId).url + "#participant"
             }

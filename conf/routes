@@ -98,7 +98,7 @@ DELETE        /person/:personId/material/:id                                 @co
 
 GET           /report/create/:brandId/event/:eventId/status/:status          @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 
-GET           /events                                                        @controllers.Events.index(brandId: Option[Long] ?= None)
+GET           /events                                                        @controllers.Events.index(brandId: Long)
 GET           /events/filtered                                               @controllers.Events.events(brandId: Option[Long], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
 POST          /event                                                         @controllers.Events.create
 GET           /events/new/                                                   @controllers.Events.add
@@ -176,7 +176,7 @@ GET           /organizations/search                                          @co
 POST          /organization/:id/logo                                         @controllers.Organisations.uploadLogo(id: Long)
 
 
-GET           /participants                                                  @controllers.Participants.index(brandId: Option[Long] ?= None)
+GET           /participants                                                  @controllers.Participants.index(brandId: Long)
 GET           /participants/brand/:brandId                                   @controllers.Participants.participantsByBrand(brandId: Long)
 GET           /participants/event/:eventId                                   @controllers.Participants.participantsByEvent(eventId: Long)
 GET           /participant/new/                                              @controllers.Participants.add(brandId: Option[Long], eventId: Option[Long], ref: Option[String])
@@ -241,11 +241,11 @@ POST          /person/:personId/signature                                    @co
 GET           /person/:personId/signature                                    @controllers.Signatures.signature(personId: Long)
 POST          /person/:personId/signature/delete                             @controllers.Signatures.delete(personId: Long)
 
-GET           /statistics                                                    @controllers.Statistics.index(brandId: Option[Long] ?= None)
-GET           /statistics/type/facilitators/brand/:id                        @controllers.Statistics.byFacilitators(id: Long)
-GET           /statistics/type/events/brand/:id                              @controllers.Statistics.byEvents(id: Long)
-GET           /statistics/type/countries/brand/:id                           @controllers.Statistics.byCountries(id: Long)
-GET           /statistics/type/participants/brand/:id                        @controllers.Statistics.byParticipants(id: Long)
+GET           /brand/:brandId/statistics                                     @controllers.Statistics.index(brandId: Long)
+GET           /brand/:brandId/statistics/type/facilitators/                  @controllers.Statistics.byFacilitators(brandId: Long)
+GET           /brand/:brandId/statistics/type/events/                        @controllers.Statistics.byEvents(brandId: Long)
+GET           /brand/:brandId/statistics/type/countries/                     @controllers.Statistics.byCountries(brandId: Long)
+GET           /brand/:brandId/statistics/type/participants/                  @controllers.Statistics.byParticipants(brandId: Long)
 
 GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)

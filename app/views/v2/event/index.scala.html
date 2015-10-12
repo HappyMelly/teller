@@ -2,22 +2,22 @@
   brand: Brand,
   brands: List[Brand],
   facilitators: play.api.libs.json.JsValue,
-  userId: Long)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+  facilitator: Boolean = true)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 
 @v2.main("Events", "events", user) {
   @v2.element.brandHeader(brand, brands, "events") {
-    @dynamic(handler, "event", "add") {
-      <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
-    }
+    <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
   }
   <div class="row">
     <div class="container">
       <div class="row">
         <div class="col-md-12 content-block">
           @views.html.event.reason()
-          @*<input type="hidden" id="userId" value="@userId"/>*@
+          @if(facilitator) {
+            <input type="hidden" id="userId" value="@user.account.personId"/>
+          }
           <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
           <div id="filter-containter">
             <div class="table-filters pull-right">

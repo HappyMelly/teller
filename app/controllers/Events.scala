@@ -195,7 +195,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             val inserted = eventService.insert(view)
             val log = activity(inserted.event, user.person).created.insert()
             sendEmailNotification(view.event, List.empty, log)
-            Redirect(routes.Events.index()).flashing("success" -> log.toString)
+            Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
 
           }
         })
@@ -222,13 +222,13 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           if (event.deletable) {
             cancelForm.bindFromRequest.fold(
               failure ⇒
-                Redirect(routes.Events.index()).flashing("error" -> "Something goes wrong :("),
+                Redirect(routes.Dashboard.index()).flashing("error" -> "Something goes wrong :("),
               data ⇒ {
                 event.cancel(user.person.id.get, data.reason,
                   data.participants, data.details)
                 val log = activity(event, user.person).deleted.insert()
                 sendEmailNotification(event, List.empty, log)
-                Redirect(routes.Events.index()).flashing("success" -> log.toString)
+                Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
               })
           } else {
             Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
@@ -330,7 +330,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Renders list of events
    * @param brandId Brand identifier
    */
-  def index(brandId: Option[Long] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       implicit val facilitatorWrites = new Writes[(Long, String)] {
         def writes(data: (Long, String)): JsValue = {
@@ -347,26 +347,19 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         }
       }
       val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-      brands.find(_.id == brandId) map { activeBrand =>
-        val facilitators = List((activeBrand.identifier,
-          License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-        Ok(views.html.v2.event.index(user, activeBrand, brands, Json.toJson(facilitators), user.account.personId))
-      } getOrElse {
-        if (brands.nonEmpty) {
-          val activeBrand = brands.head
+      if (brands.nonEmpty) {
+        brands.find(_.id == Some(brandId)) map { activeBrand =>
           val facilitators = List((activeBrand.identifier,
             License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-          Ok(views.html.v2.event.index(user, activeBrand, brands, Json.toJson(facilitators), user.account.personId))
-        } else {
-          val person = user.person
-          val personalLicense = person.licenses.find(_.license.active).map(_.brand.code).getOrElse("")
-          val brands = brandService.findAll
-          val facilitators = brands.map(b ⇒
-            (b.id.get, License.allLicensees(b.id.get).map(l ⇒ (l.id.get, l.fullName))))
-
-
-          Ok(views.html.event.index(user, brands, Json.toJson(facilitators), person.id.get, personalLicense))
-        }
+          Ok(views.html.v2.event.index(user, activeBrand, brands, Json.toJson(facilitators), facilitator = false))
+        } getOrElse Redirect(routes.Dashboard.index())
+      } else {
+        val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
+        facilitatorBrands.find(_.id == Some(brandId)) map { activeBrand =>
+          val facilitators = List((activeBrand.identifier,
+            License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
+          Ok(views.html.v2.event.index(user, activeBrand, facilitatorBrands, Json.toJson(facilitators)))
+        } getOrElse Redirect(routes.Dashboard.index())
       }
   }
 

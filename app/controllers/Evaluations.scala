@@ -107,7 +107,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           val defaultHook = request.host + routes.Evaluations.confirm("").url
           val eval = evaluation.add(defaultHook, withConfirmation = true)
           val log = activity(eval, user.person).created.insert()
-          Redirect(routes.Participants.index()).flashing("success" -> log.toString)
+//          Redirect(routes.Participants.index()).flashing("success" -> log.toString)
+          Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
         })
   }
 
@@ -130,7 +131,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           val log = activity(x, user.person).deleted.insert()
 
           val route = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
+            case Some("index") ⇒ routes.Dashboard.index().url
+//            case Some("index") ⇒ routes.Participants.index().url
             case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
           }
           Redirect(route).flashing("success" -> log.toString)
@@ -242,7 +244,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           evaluation ⇒ {
             val eval = evaluation.copy(id = Some(id)).update()
             val log = activity(eval, user.person).updated.insert()
-            Redirect(routes.Participants.index()).flashing("success" -> log.toString)
+//            Redirect(routes.Participants.index()).flashing("success" -> log.toString)
+            Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
           })
       }.getOrElse(NotFound)
   }
@@ -258,7 +261,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         evaluationService.find(id).map { x ⇒
           val route: String = ref match {
-            case Some("index") ⇒ routes.Participants.index().url
+//            case Some("index") ⇒ routes.Participants.index().url
+            case Some("index") ⇒ routes.Dashboard.index().url
             case Some("evaluation") ⇒ routes.Evaluations.details(id).url
             case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
           }
@@ -292,7 +296,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       evaluationService.find(id).map { x ⇒
         val route: String = ref match {
-          case Some("index") ⇒ routes.Participants.index().url
+//          case Some("index") ⇒ routes.Participants.index().url
+          case Some("index") ⇒ routes.Dashboard.index().url
           case Some("evaluation") ⇒ routes.Evaluations.details(id).url
           case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
         }

@@ -98,21 +98,18 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * Renders list of participants
    * @param brandId Brand identifier
    */
-  def index(brandId: Option[Long] = None) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val coordinatedBrands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-      coordinatedBrands.find(_.id == brandId) map { activeBrand =>
-        Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
-      } getOrElse {
-        if (coordinatedBrands.nonEmpty) {
-          val activeBrand = coordinatedBrands.head
+      if (coordinatedBrands.nonEmpty) {
+        coordinatedBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
           Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
-        } else {
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          val brandId = request.session.get("brandId").map(_.toLong).getOrElse(0L)
-          Ok(views.html.participant.index(user, brands, brandId))
-        }
+        } getOrElse Redirect(routes.Dashboard.index())
+      } else {
+        val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
+        facilitatorBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
+          Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
+        } getOrElse Redirect(routes.Dashboard.index())
       }
   }
 
@@ -323,7 +320,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 activityObject)
               val route = ref match {
                 case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
-                case _ ⇒ routes.Participants.index().url
+                case _ ⇒ routes.Dashboard.index().url
               }
               Redirect(route).flashing("success" -> activity.toString)
             }
@@ -363,7 +360,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
             activityObject)
           val route = ref match {
             case Some("event") ⇒ routes.Events.details(data.eventId).url + "#participant"
-            case _ ⇒ routes.Participants.index().url
+            case _ ⇒ routes.Dashboard.index().url
           }
           Redirect(route).flashing("success" -> activity.toString)
         })
@@ -388,7 +385,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
             activityObject)
           val route = ref match {
             case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
-            case _ ⇒ routes.Participants.index().url
+            case _ ⇒ routes.Dashboard.index().url
           }
           Redirect(route).flashing("success" -> activity.toString)
         }.getOrElse(NotFound)
@@ -397,7 +394,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Get JSON with evaluation data
    * @param data Data to convert to JSON
-   * @param en English translation of Evaluation module
    * @return
    */
   private def evaluation(data: ParticipantView): JsValue = {
