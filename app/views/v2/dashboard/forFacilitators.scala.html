@@ -1,0 +1,42 @@
+@(user: ActiveUser,
+  brand: Brand,
+  brands: List[Brand],
+  future: List[Event],
+  past: List[Event],
+  evaluations: List[(Event, Person, Evaluation)])(implicit flash: Flash,
+  request: Request[Any],
+  handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.scala.views.html._
+
+@v2.main("Home", "", user) {
+  @v2.element.brandHeader(brand, brands){
+    <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
+  }
+  <div class="row page-content">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9 content-block">
+          @if(future.nonEmpty) {
+            @v2.dashboard.blocks.upcoming(future)
+          }
+          @if(past.nonEmpty) {
+            @v2.dashboard.blocks.past(past)
+          }
+          @if(evaluations.nonEmpty) {
+            @v2.dashboard.blocks.evaluations(evaluations)
+          }
+        </div>
+        <div class="col-md-3">
+          <div class="panel panel-success notification-widget" id="completionWidget">
+          </div>
+          <div class="notification-widget info-board">
+            <div class="title">Info board</div>
+            <p>@future.length upcoming events</p>
+            <p>@evaluations.length evaluations for approval</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

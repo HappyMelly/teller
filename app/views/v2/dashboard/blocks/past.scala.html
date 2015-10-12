@@ -1,0 +1,31 @@
+@(events: List[Event])
+
+@import views.ViewHelpers.dateInterval
+
+<div class="block">
+  <h3>Last past events (@events.length)</h3>
+  <table id="events" class="table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Location</th>
+        <th>Total hours</th>
+        <th>Dates</th>
+      </tr>
+    </thead>
+    <tbody>
+    @for(event <- events) {
+      <tr>
+        <td>
+          <a href="@routes.Events.details(event.id.get).url">
+          @event.title
+          </a>
+        </td>
+        <td>@v2.element.location(event.location)</td>
+        <td>@event.schedule.totalHours</td>
+        <td>@dateInterval(event.schedule.start, event.schedule.end)</td>
+      </tr>
+    }
+    </tbody>
+  </table>
+</div>

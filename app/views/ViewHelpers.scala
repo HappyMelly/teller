@@ -42,10 +42,10 @@ object ViewHelpers {
       start.toString("d MMM yyyy")
     else if (start.year() == end.year())
       if (start.monthOfYear() == end.monthOfYear())
-        start.toString("d - ") + end.toString("d MMM yyyy")
+        start.toString("d — ") + end.toString("d MMM yyyy")
       else
-        start.toString("d MMM - ") + end.toString("d MMM yyyy")
+        start.toString("d MMM — ") + end.toString("d MMM yyyy")
     else
-      start.toString("d MMM yyyy - ") + end.toString("d MMM yyyy")
+      start.toString("d MMM yyyy — ") + end.toString("d MMM yyyy")
   }
 }

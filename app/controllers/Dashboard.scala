@@ -77,8 +77,11 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
 //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
 //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
           val cancellations = eventCancellationService.findByBrands(List(activeBrand.identifier))
-          Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
+          Ok(views.html.v2.dashboard.forBrandCoordinators(user, activeBrand, brands, licenses, cancellations))
         } else {
+          val licenses = licenseService.activeLicenses(account.personId)
+          val brand = licenses.head.brand
+          val brands = licenses.map(_.brand)
           val events = eventService.findByFacilitator(
             account.personId,
             brandId = None)
@@ -92,7 +95,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
             .findByEventsWithParticipants(pastEvents.map(_.id.get))
             .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
             .slice(0, 10)
-          Ok(views.html.dashboard.index(user,
+          Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
             upcomingEvents,
             pastEvents.slice(0, 2),
             evaluations))
@@ -116,7 +119,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
         //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
         //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
         val cancellations = eventCancellationService.findByBrands(List(activeBrand.identifier))
-        Ok(views.html.v2.dashboard.index(user, activeBrand, brands, licenses, cancellations))
+        Ok(views.html.v2.dashboard.forBrandCoordinators(user, activeBrand, brands, licenses, cancellations))
       } getOrElse Redirect(routes.Dashboard.index())
   }
 

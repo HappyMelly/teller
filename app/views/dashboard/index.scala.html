@@ -7,9 +7,6 @@
 
 @main("Home", "", user) {
   <div class="col-md-9 content-block">
-    @if(future.length > 0) {
-      @dashboard.blocks.upcoming(future)
-    }
     @if(past.length > 0) {
       @dashboard.blocks.past(past)
     }

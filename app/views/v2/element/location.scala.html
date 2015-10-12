@@ -1,0 +1,7 @@
+@(location: Location)
+
+@import views.Countries
+
+<img align="absmiddle" width="16"
+src="/assets/images/flags/16/@(location.countryCode.toLowerCase).png"/>
+@location.city, @Countries.name(location.countryCode)

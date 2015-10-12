@@ -111,6 +111,36 @@ dl.dl-horizontal {
     border-radius: 0;
   }
 }
+.list-group {
+  border-top: 1px solid @light-grey;
+  border-bottom: 1px solid @light-grey;
+  .list-group-item {
+    border: 0;
+    .list-group-item-body {
+      border-bottom: 1px solid @light-grey;
+    }
+    &:last-child {
+      border-bottom: 0;
+      border-radius: 0;
+      .list-group-item-body {
+        border: 0;
+      }
+    }
+    &:first-child {
+      border-top: 0;
+      border-radius: 0;
+    }
+    &.active {
+      border-color: @light-grey;
+      background-color: @light-blue;
+      .list-group-item-text {
+        color: black;
+      }
+    }
+  }
+}
+
+
 .modal {
   .modal-content {
     border-radius: 0;

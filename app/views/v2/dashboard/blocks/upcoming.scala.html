@@ -1,0 +1,35 @@
+@(events: List[Event])
+
+@import views.ViewHelpers.dateInterval
+
+<div class="row block">
+  <div class="col-md-12">
+    <h3>Upcoming events (@events.length)</h3>
+    @for((event, index) <- events.zipWithIndex) {
+      <div class="upcoming-event @if(index % 2 == 0) { left-widget }">
+        <div class="title">
+          <a href="@routes.Events.details(event.id.get).url">
+          <strong>@event.title</strong>
+          </a>
+        </div>
+        <div class="info">
+          <i class="fa fa-calendar"></i> @dateInterval(event.schedule.start, event.schedule.end)
+          <br/>
+          <i class="fa fa-clock-o"></i> @event.schedule.totalHours hours
+          <br/>
+          @v2.element.location(event.location)
+        </div>
+        <div class="links">
+          @if(event.confirmed) {
+            <span>Confirmed</span>
+          } else {
+            <span><a href="#">Confirm</a></span>
+          }
+          <span><a href="@routes.Events.edit(event.identifier)">Edit</a></span>
+          <span><a href="@routes.Events.duplicate(event.identifier)">Duplicate</a></span>
+          <span class="last"><a href="#">Cancel</a></span>
+        </div>
+      </div>
+    }
+  </div>
+</div>
