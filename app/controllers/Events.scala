@@ -281,9 +281,10 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
       eventService.findWithInvoice(id) map { x ⇒
         val acc = user.account
+        val brandId = x.event.brandId
+        val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
         //@TODO only funders must be retrieved
         val funders = if (acc.editor) orgService.findAll else List()
         val eventType = eventTypeService.find(x.event.eventTypeId).get
@@ -297,13 +298,32 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
           Event.withFee(x.event, y.fee, eventType.maxHours)
         } getOrElse x.event
-        Ok(views.html.event.details(user,
-          canFacilitate,
-          funders,
-          EventView(event, x.invoice),
-          eventType.name,
-          brand.name,
-          printableFees))
+        if (brands.nonEmpty) {
+          brands.find(_.id.exists(_ == brandId)) map { activeBrand =>
+            val facilitators = List((activeBrand.identifier,
+              License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
+            Ok(views.html.v2.event.details(user,
+              activeBrand,
+              brands,
+              canFacilitate,
+              funders,
+              EventView(event, x.invoice),
+              eventType.name,
+              printableFees))
+          } getOrElse Redirect(routes.Dashboard.index())
+        } else {
+          val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
+          facilitatorBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
+            Ok(views.html.v2.event.details(user,
+              activeBrand,
+              brands,
+              canFacilitate,
+              funders,
+              EventView(event, x.invoice),
+              eventType.name,
+              printableFees))
+          } getOrElse Redirect(routes.Dashboard.index())
+        }
       } getOrElse NotFound
   }
 

@@ -1,0 +1,233 @@
+@(user: ActiveUser,
+    brand: Brand,
+    brands: List[Brand],
+    canFacilitate: Boolean,
+    funders: List[Organisation],
+    view: EventView,
+    typeName: String,
+    fees: List[(String, String)])(implicit
+    request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+@import models.UserRole.DynamicRole
+
+@import helper.CSRF
+@import templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import org.joda.time.LocalDate
+@import views.Countries
+@import views.ViewHelpers.dateInterval
+
+@v2.main(view.event.title + " - Event", "events", user) {
+  @v2.element.brandHeader(brand, brands, "events") {
+    <a href="@routes.Events.index(brand.identifier)">Events</a>
+  }
+
+  <div class="row page-content">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9 content-block">
+          @element.evaluationActions()
+          @views.html.event.reason()
+          @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head)
+          <div class="page-header">
+            <div class="row">
+              <div class="col-md-12"><h1>@view.event.title</h1></div>
+              <div class="col-md-6">
+                @dateInterval(view.event.schedule.start, view.event.schedule.end)
+                @if(view.event.location.online) {
+                  online
+                } else {
+                  in @view.event.location.city, @Countries.name(view.event.location.countryCode)
+                }
+              </div>
+              <div class="col-md-4">
+                Event Rating @views.html.v2.element.rating(view.event.rating)
+              </div>
+            </div>
+          </div>
+          <div class="page-header">
+            @if(!view.event.confirmed) {
+              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#confirm">
+                Confirm
+              </a>
+            } else {
+              <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+            }
+            <a class="btn btn-default" href="@routes.Events.edit(view.event.id.get)">
+              Edit
+            </a>
+            <a class="btn btn-default" href="@routes.Events.duplicate(view.event.id.get)">
+              Duplicate
+            </a>
+            <a data-href="@routes.Events.cancel(view.event.id.get)" class="btn btn-default"
+              data-toggle="modal" data-target="#cancelDialog" id="cancelButton"
+                @if(!view.event.deletable) {disabled="disabled"} >Cancel</a>
+          </div>
+          @dynamic(handler, "event", DynamicRole.Facilitator) {
+            <!-- Confirm Modal -->
+            <div id="confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                      ×</button>
+                    <h3>Confirm event</h3>
+                  </div>
+                  <div class="modal-body">
+                    I confirm that this event
+                    @if(view.event.schedule.start.toString >= LocalDate.now().toString) { will take} else { took}
+                    place and understand I will get
+                    an invoice for @view.event.fee.map { fee => @fee} from a brand manager.
+                  </div>
+                  <div class="modal-footer">
+                    <form method="post" class="form-inline"
+                    action="@CSRF(routes.Events.confirm(view.event.id.getOrElse(0)))">
+                      <button class="btn btn-warning" type="submit">Confirm</button>
+                      <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+          @dynamic(handler, "event", DynamicRole.Coordinator) {
+            @if(!view.event.schedule.validateTotalHours) {
+              <div class="alert alert-warning">
+                <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
+                suspiciosly less than a number of hours per day multiplied to a number of days.
+              </div>
+            }
+          }
+
+          <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
+          <input type="hidden" disabled id="eventId" value="@view.event.id"/>
+          <div class="col-md-12">
+            <div class="col-md-5">
+              <strong class="text-muted">Facilitators</strong><br/>
+              @for(facilitator <- view.event.facilitators) {
+                <dd>
+                  @element.photo(facilitator, "100")
+                  <a href="@routes.People.details(facilitator.id.getOrElse(0))"> @facilitator.fullName</a> <br/>
+                </dd>
+              }
+            </div>
+            <div class="col-md-6 col-md-offset-1">
+              <strong class="text-muted">Event rundown</strong><br/>
+              <div class="col-md-6">
+                <dt>Spoken Language</dt>
+                <dd>@view.event.spokenLanguage</dd>
+                <dt>Materials in</dt>
+                <dd>@view.event.materialsLanguage</dd>
+                <dt>Hours</dt>
+                <dd>@view.event.schedule.totalHours (per day: @view.event.schedule.hoursPerDay)</dd>
+              </div>
+              <div class="col-md-6">
+                <dt class="text-muted">Event type</dt>
+                <dd>@typeName</dd>
+                <dt class="text-muted">Organizer</dt>
+                <dd id="organizer" data-id="@view.event.organizer.id"></dd>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            @view.event.organizer.webSite.map { url =>
+              <span class="text-muted">Website: </span><a href="@url" target="_blank">@url</a><br/>
+            }
+            @view.event.organizer.registrationPage.map { url =>
+              <span class="text-muted">Registration: </span><a href="@url" target="_blank">@url</a><br/>
+            }
+            @view.event.details.description.map { desc =>
+              <span class="text-muted">Description: </span>@desc.markdown<br/>
+            }
+            @view.event.details.specialAttention.map { attention =>
+              <span class="text-muted">Special attention: </span>@attention.markdown<br/>
+            }
+          </div>
+          @views.html.element.brandFees(brand.name, fees)
+        </div>
+        <div class="col-md-3">
+          <div class="panel panel-success notification-widget" id="completionWidget">
+          </div>
+          <div class="panel panel-success notification-widget">
+            <div class="alert alert-warning">
+              <i class="glyphicon glyphicon-info-sign"></i> You will be
+              invoiced for @view.event.fee.map { fee => @fee}. If the event didn't take place,
+              <b>delete it</b>.
+            </div>
+            <legend>Invoice</legend>
+            @if(view.event.free) {
+              <p>No invoice. Event is <b>free</b>.</p>
+            } else {
+              <p>
+                <strong>
+                  To:</strong> <a href="@routes.Organisations.details(view.invoice.invoiceTo)">@view.invoice.invoiceToOrg.get.name</a>
+                @view.invoice.invoiceBy.map { id =>
+                  &nbsp;&nbsp;&nbsp; <strong>
+                    By:</strong> <a href="@routes.Organisations.details(id)">@view.invoice.invoiceByOrg.get.name</a>
+                }
+                @view.invoice.number.map { number =>
+                  <br/>
+                  <strong>Invoice #:</strong> @number
+                }
+              </p>
+              @dynamic(handler, "event", DynamicRole.Coordinator) {
+                <form method="POST" action="@CSRF(routes.Events.invoice(view.event.id.get))">
+                  <input type="hidden" name="id" value="@view.invoice.id">
+                  <input type="hidden" name="invoiceTo" id="invoiceTo" value="@view.invoice.invoiceTo">
+                  <input type="hidden" name="eventId" value="@view.event.id">
+                  <div class="form-group" id="invoiceBy_field">
+                    <label for="invoiceBy" class="control-label">Invoiced By</label>
+                    <select name="invoiceBy" class="form-control" id="invoiceBy">
+                      <option value="">Choose an organisation</option>
+                      @funders.map { entity =>
+                        <option value="@entity.id" @if(view.invoice.invoiceBy.exists(_ == entity.id.get)) {selected}>@entity.name </option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group" id="number_field">
+                    <label for="number" class="control-label">Invoice Number</label>
+                    <input id="number" class="form-control" type="text" name="number" value="@view.invoice.number">
+                  </div>
+                  <p>
+                    <button class="btn btn-success">Update Invoice Info</button>
+                  </p>
+                </form>
+              }
+            }
+          </div>
+        </div>
+        <div class="col-md-12">
+          <div id="filter-containter">
+            <div class="pull-right">
+              <a class="input-sm" tabindex="-1"
+              href="@routes.Participants.add(Some(view.event.brandId), view.event.id, Some("event")).url" title="Add Participant">
+                <i class="glyphicon glyphicon-plus"></i> Add Participant</a>
+              <a class="input-sm" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                <i class="glyphicon glyphicon-envelope"></i>
+                Send Evaluation Request</a>
+              <a id="exportLink" class="input-sm" href="" title="Only evaluations, currently visible in the table, will be exported">
+                <i class="glyphicon glyphicon-cloud-download"></i>
+                Export to XLSX</a>
+            </div>
+          </div>
+          <table id="participants" class="datatables table table-rowed">
+            <thead>
+              <tr>
+                <th>Participant</th>
+                <th align="center" id="impression"></th>
+                <th>Evaluation Date</th>
+                <th>Handled Date</th>
+                <th>Certificate Number</th>
+                <th></th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("event/details.js")" type="text/javascript"></script>
+}
