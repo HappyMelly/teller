@@ -116,6 +116,8 @@ case class Evaluation(
 
   def approved: Boolean = status == EvaluationStatus.Approved
 
+  def rejected: Boolean = status == EvaluationStatus.Rejected
+
   /**
    * Adds new evaluation to database and sends email notification
    * @param defaultHook Link to a default confirmation page

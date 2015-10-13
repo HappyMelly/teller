@@ -34,3 +34,24 @@
 }
 <span class="text-muted">@Evaluations.Questions.changesToContent</span><br/>
 @evaluation.changesToHost<br/><br/>
+<div class="buttons">
+  <div class="buttons-block">
+    @if(evaluation.rejectable || evaluation.approvable) {
+      @if(evaluation.approved) {
+        <button class="btn btn-primary approve" disabled="disabled">Approved</button>
+      } else {
+        <button class="btn btn-primary approve" data-id="@evaluation.identifier">Approve</button>
+      }
+      @if(evaluation.rejected) {
+        <button class="btn btn-default reject" disabled="disabled">Rejected</button>
+      } else {
+        <button class="btn btn-default reject" data-id="@evaluation.identifier">Reject</button>
+      }
+    }
+  </div>
+  <div class="buttons-block">
+    <a class="btn btn-default" href="@routes.Evaluations.details(evaluation.identifier)">View</a>
+    <button class="btn btn-default move-evaluation" data-id="@evaluation.identifier">Move</button>
+    <button class="btn btn-default delete-evaluation" data-id="@evaluation.identifier">Delete</button>
+  </div>
+</div>

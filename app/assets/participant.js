@@ -35,6 +35,8 @@ function showParticipantDetails(object) {
             $("<td colspan='10'>").append(data));
         $(row).addClass('active').after(tableContainer);
         $(object).addClass('active');
+        $(object).children('span').removeClass('glyphicon-chevron-down').
+            addClass('glyphicon-chevron-up');
         initializeParticipantActionsInDetails();
     });
 }
@@ -42,6 +44,8 @@ function showParticipantDetails(object) {
 function hideParticipantDetails(object) {
     $(object).parents('tr').first().removeClass('active');
     $(object).removeClass('active');
+    $(object).children('span').removeClass('glyphicon-chevron-up').
+        addClass('glyphicon-chevron-down');
     $('.participant-details').remove();
 }
 
@@ -50,6 +54,79 @@ function toggleParticipantDetails(object) {
         hideParticipantDetails(object);
     } else {
         showParticipantDetails(object);
+    }
+}
+
+function getActiveRow() {
+    return $('tr[role="row"].active');
+}
+
+/**
+ * Sends reject request for the given evaluation and updates UI
+ * @param object {object} Reject button
+ */
+function rejectEvaluation(object) {
+    var evaluationId = $(object).data('id');
+    var url = jsRoutes.controllers.Evaluations.reject(evaluationId).url;
+    $.post(url, {}, function(data) {
+        var date = JSON.parse(data).date;
+        $(object).attr('disabled', 'disabled').text('Rejected');
+        $(object).parent('.buttons-block').children('.approve').first().
+            data('id', evaluationId).removeAttr('disabled').text('Approve');
+        var statusCell = getActiveRow().find('td.status');
+        var icon = statusCell.find('i').removeClass('fa-thumb-tack').
+            removeClass('fa-thumbs-up').addClass('fa-thumbs-down').
+            attr('value', 2);
+        statusCell.html(icon).append(' ' + date);
+        getActiveRow().find('td.certificate').html("");
+        var caption = "Evaluation is rejected and a notification is sent to the participant";
+        noty({text: caption, layout: 'bottom',
+            theme: 'relax', timeout: 2000 , type: 'success'});
+    });
+}
+
+/**
+ * Sends approval request for the given evaluation and updates UI
+ * @param object {object} Approve button
+ */
+function approveEvaluation(object) {
+    var evaluationId = $(object).data('id');
+    var url = jsRoutes.controllers.Evaluations.approve(evaluationId).url;
+    $.post(url, {}, function(data) {
+        var date = JSON.parse(data).date;
+        $(object).attr('disabled', 'disabled').text('Approved');
+        $(object).parent('.buttons-block').children('.reject').first().
+            data('id', evaluationId).removeAttr('disabled').text('Reject');
+        var statusCell = getActiveRow().find('td.status');
+        var icon = statusCell.find('i').removeClass('fa-thumb-tack').
+            removeClass('fa-thumbs-down').addClass('fa-thumbs-up').
+            attr('value', 1);
+        statusCell.html(icon).append(' ' + date);
+        var caption = "Evaluation is approved and certificate is sent to the participant";
+        noty({text: caption, layout: 'bottom',
+            theme: 'relax', timeout: 2000 , type: 'success'});
+    });
+}
+
+/**
+ * Delete the given evaluation
+ * @param object {object} Delete button
+ */
+function deleteEvaluation(object) {
+    var evaluationId = $(object).data('id');
+    var result = confirm("Remove this evaluation? You cannot undo this action.");
+    if (result == true) {
+        $.ajax({
+            type: "POST",
+            url: jsRoutes.controllers.Evaluations.delete(evaluationId).url,
+            data: {}
+        }).done(function(data) {
+            $('.evaluation-actions').remove();
+            getActiveRow().find('.evaluation-field').html('');
+            var caption = "Evaluation was successfully deleted";
+            noty({text: caption, layout: 'bottom',
+                theme: 'relax', timeout: 2000 , type: 'success'});
+        });
     }
 }
 
@@ -108,107 +185,20 @@ function initializeParticipantActionsInDetails() {
         }
         return false;
     });
-}
-
-/**
- * Render a dropdown with actions for a participant/event/evaluation
- *
- * @param data {object}
- * @param brand {string}
- * @returns {string}
- */
-function renderDropdown(data, brand) {
-    var emptyDropdown = true;
-    var html = '<div class="dropdown">';
-    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
-    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
-    if ('certificate' in data && data.certificate) {
-        if ('generate' in data.certificate && data.certificate.generate) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.certificate.generate;
-            html += '" title="Generate Certificate"><i class="glyphicon glyphicon-file"></i> Generate Certificate</a></li>';
-        }
-    }
-    if ('evaluation' in data && data.evaluation) {
-        var evaluation = data.evaluation;
-        if (!emptyDropdown) {
-            html += '<li class="divider"></li>';
-        }
-        if ('add' in evaluation && evaluation.add) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.add;
-            html += '" title="Add Evaluation"><i class="glyphicon glyphicon-plus"></i> Add Evaluation</a></li>';
-        }
-        if ('approve' in evaluation && evaluation.approve) {
-            emptyDropdown = false;
-            html += '<li><a class="approve" tabindex="-1" href="#approve" data-href="' + evaluation.approve;
-            html += '" data-toggle="modal" title="Approve Evaluation"><i class="glyphicon glyphicon-thumbs-up"></i> Approve Evaluation</a></li>';
-        }
-        if ('reject' in evaluation && evaluation.reject) {
-            emptyDropdown = false;
-            html += '<li><a class="reject" tabindex="-1" href="#reject" data-href="' + evaluation.reject;
-            html += '" data-toggle="modal" title="Reject Evaluation"><i class="glyphicon glyphicon-thumbs-down"></i> Reject Evaluation</a></li>';
-        }
-        if ('move' in evaluation && evaluation.move) {
-            emptyDropdown = false;
-            html += '<li><a class="move" tabindex="-1" href="#move" data-href="' + evaluation.move;
-            html += '" data-brand="' + brand + '" data-toggle="modal" title="Move Evaluation">';
-            html += '<i class="glyphicon glyphicon-random"></i> Move Evaluation</a></li>';
-        }
-        if ('view' in evaluation && evaluation.view) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.view;
-            html += '" title="View Evaluation"><i class="glyphicon glyphicon-eye-open"></i> View Evaluation</a></li>';
-        }
-        if ('edit' in evaluation && evaluation.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.edit;
-            html += '" title="Edit Evaluation"><i class="glyphicon glyphicon-pencil"></i> Edit Evaluation</a></li>';
-        }
-        if ('remove' in evaluation && evaluation.remove) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + evaluation.remove;
-            html += '" title="Delete Evaluation" onclick="';
-            html += "return confirm('Delete this evaluation? You cannot undo this action.')\">";
-            html += '<i class="glyphicon glyphicon-trash"></i> Delete Evaluation</a></li>';
-        }
-    }
-    if ('participant' in data && data.participant) {
-        var participant = data.participant;
-        if (!emptyDropdown) {
-            html += '<li class="divider"></li>';
-        }
-        if ('view' in participant && participant.view) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.view;
-            html += '" title="View Person"><i class="glyphicon glyphicon-eye-open"></i> View Person</a></li>';
-        }
-        if ('edit' in participant && participant.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.edit;
-            html += '" title="Edit Person"><i class="glyphicon glyphicon-pencil"></i> Edit Person</a></li>';
-        }
-        if ('remove' in participant && participant.remove) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + participant.remove;
-            html += '" title="Delete Person">';
-            html += '<i class="glyphicon glyphicon-trash"></i> Delete Person</a></li>';
-        }
-        if ('removeParticipation' in participant && participant.removeParticipation) {
-            emptyDropdown = false;
-            html += '<li class="divider"></li>';
-            html += '<li><a tabindex="-1" href="' + participant.removeParticipation;
-            html += '" title="Remove Participation" onclick="';
-            html += "return confirm('Remove this participation? The evaluation (if exists) will also be deleted. You cannot undo this action.')\">";
-            html += '<i class="glyphicon glyphicon-trash"></i> Remove Participation</a></li>';
-        }
-    }
-    html += '</ul></div>';
-    if (emptyDropdown) {
-        return '';
-    }
-    html = '<div class="circle-show-more"><span class="glyphicon glyphicon-chevron-down"></span></div>';
-    return html;
+    $('.approve').on('click', function(e) {
+        e.preventDefault();
+        approveEvaluation($(this));
+        return false;
+    });
+    $('.reject').on('click', function(e) {
+        e.preventDefault();
+        rejectEvaluation($(this));
+        return false;
+    });
+    $('.delete-evaluation').on('click', function(e) {
+        e.preventDefault();
+        deleteEvaluation($(this));
+    });
 }
 
 /**
@@ -261,9 +251,9 @@ function calculateAverageImpression(table) {
 }
 
 function drawStatus(data) {
-    var style = ['fa-thumbs-tack', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-hourglass'];
+    var style = ['fa-thumb-tack', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-hourglass'];
     if (data.status) {
-        var html = '<i class="fa fa-fw ' + style[data.status.value] + '"';
+        var html = '<i class="text-muted fa fa-fw ' + style[data.status.value] + '"';
         html += ' value="' + data.status.value + '"></i> ';
         if (data.status.value == 0 || data.status.value == 3) {
             html += data.status.label;
@@ -276,7 +266,7 @@ function drawStatus(data) {
 }
 
 function drawCertificate(data) {
-    if (data.certificate.generate) {
+    if (data.certificate.show) {
         if (data.certificate.number == null) {
             var html = '<a class="generate-certificate" href="#"';
             html += 'data-event="' + data.event +'"';
@@ -291,21 +281,7 @@ function drawCertificate(data) {
     }
 }
 
-function drawImpression(data) {
-    if (data) {
-        return '<strong>' + data.caption + '</strong>';
-    }
-    return '';
-}
-
-
 $(document).ready( function() {
-    $("#participants").on('click', '.approve', function(){
-        $("#approveLink").attr('href', $(this).data('href'));
-    });
-    $("#participants").on('click', '.reject', function(){
-        $("#rejectLink").attr('href', $(this).data('href'));
-    });
     $("#participants").on('click', '.move', function(){
         var href = $(this).data('href');
         getPastEvents($(this).data('brand'));

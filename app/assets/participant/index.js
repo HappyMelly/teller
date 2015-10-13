@@ -104,12 +104,17 @@ $(document).ready( function() {
                 "targets": 2,
                 "orderable": false
             }, {
+                "className": "evaluation-field",
+                "targets": [4, 5, 6, 7]
+            },{
                 "render": function(data) { return drawStatus(data); },
-                "targets": 6
+                "targets": 6,
+                "className": "status"
             }, {
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 7,
-                "orderable": false
+                "orderable": false,
+                "className": "certificate"
             }, {
                 "render": function(data) { return data.id; },
                 "visible": false,

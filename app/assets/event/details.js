@@ -43,7 +43,7 @@ function drawRequestEvaluationTable(table) {
             .text(rows[i].person.name + "  ")
             .append(input);
         var div = $('<div class="checkbox">').append(label);
-        div.append(drawStatus(rows[i].evaluation.status));
+        div.append(rows[i].evaluation.status);
         var td = $('<td>').append(div);
         tr.append(td);
     }
@@ -119,34 +119,43 @@ $(document).ready( function() {
         },
         "order": [[ 1, "asc" ]],
         "columns": [
-            { "data": "evaluation.status" },
             { "data": "person" },
             { "data": "evaluation.impression" },
             { "data": "evaluation.creation" },
-            { "data": "evaluation.handled" },
-            { "data": "evaluation.certificate" },
-            { "data": "actions" }
+            { "data": "evaluation" },
+            { "data": "participant" },
+            { "data": "participant" }
         ],
         "columnDefs": [{
-                "render": function(data) { return drawStatus(data); },
-                "targets": 0
-            }, {
                 "render": function(data) {
                     return '<a href="' + data.url + '">' + data.name + '</a>';
                 },
-                "targets": 1
+                "targets": 0
             }, {
-                "render": function(data) { return drawImpression(data); },
-                "targets": 2
+                "render": function(data) { return drawStatus(data); },
+                "targets": 3,
+                "className": "status"
             }, {
+                "className": "evaluation-field",
+                "targets": [1, 2, 3, 4]
+            },{
                 "render": function(data) { return drawCertificate(data); },
-                "targets": 5
+                "targets": 4,
+                "className": "certificate"
             }, {
-               "render": function(data) { return renderDropdown(data, $('#brandId').val()); },
-               "targets": 6,
-               "bSortable": false
+                "render": function(data) {
+                    var html = '<div class="circle-show-more" data-event="' + data.event + '"';
+                    html += ' data-person="' + data.person + '">';
+                    html += '<span class="glyphicon glyphicon-chevron-down"></span></div>';
+                    return html;
+                },
+                "targets": 5,
+                "bSortable": false
             }
         ]
+    });
+    participantTable.api().on('init.dt', function () {
+        initializeParticipantActions();
     });
 
     $("div.toolbar").html($('#filter-containter').html());
@@ -162,23 +171,6 @@ $(document).ready( function() {
     $('textarea[name=body]').on('input propertychange', toggleSentButton);
     $('[data-toggle="tooltip"]').tooltip();
 
-    $('#cancelButton').on('click', function(e) {
-        e.preventDefault();
-        $("#cancelLink").attr('href', $(this).data('href'));
-    });
-
-    $('#cancelLink').on('click', function(e) {
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr("href"),
-            data: $("#cancelForm").serialize()
-        }).done(function(data){
-            $("#cancelDialog").modal('hide');
-            window.location = "/events";
-            showSuccess("You successfully cancelled the event");
-        });
-    });
     updateOrganizer($('#organizer').data('id'));
     $('[data-toggle="popover"]').popover();
 });

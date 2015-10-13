@@ -143,27 +143,8 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "person" -> data.person.identifier,
                 "event" -> data.event.identifier,
                 "certificate" -> Json.obj(
-                  "generate" -> {if(brand.generateCert && !data.event.free) { true } else { false }},
-                  "number" -> data.certificate
-                )
-              ),
-              "actions" -> {
-                data.evaluationId match {
-                  case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand, data, "index"),
-                    "evaluation" -> evaluationActions(id, coordinator, data, "index"))
-                  case None ⇒ if (!data.event.archived) {
-                    Json.obj(
-                      "certificate" -> certificateActions(brand, data, "event"),
-                      "evaluation" -> Json.obj(
-                        "add" -> {
-                          if (coordinator) {
-                            routes.Evaluations.add(data.event.id, data.person.id).url
-                          } else ""
-                        }))
-                  } else Json.obj()
-                }
-              })
+                  "show" -> showCertificate(brand, data.event, data.status),
+                  "number" -> data.certificate)))
           }
         }
         val personId = account.personId
@@ -198,23 +179,12 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "name" -> data.person.fullName,
                 "id" -> data.person.id.get),
               "evaluation" -> evaluation(data),
-              "actions" -> {
-                data.evaluationId match {
-                  case Some(id) ⇒ Json.obj(
-                    "certificate" -> certificateActions(brand, data, "event"),
-                    "evaluation" -> evaluationActions(id, coordinator, data, "event"))
-                  case None ⇒ if (!data.event.archived) {
-                    Json.obj(
-                      "certificate" -> certificateActions(brand, data, "event"),
-                      "evaluation" -> Json.obj(
-                        "add" -> {
-                          if (coordinator) {
-                            routes.Evaluations.add(data.event.id, data.person.id).url
-                          } else ""
-                        }))
-                  } else Json.obj()
-                }
-              })
+              "participant" -> Json.obj(
+                "person" -> data.person.identifier,
+                "event" -> data.event.identifier,
+                "certificate" -> Json.obj(
+                  "show" -> showCertificate(brand, data.event, data.status),
+                  "number" -> data.certificate)))
           }
         }
         val participants = Participant.findByEvent(eventId)
@@ -403,6 +373,16 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Returns true if a link to certificate should be shown
+   * @param brand Brand
+   * @param event Event
+   * @param status Evaluation status
+   */
+  protected def showCertificate(brand: Brand, event: Event, status: Option[EvaluationStatus.Value]): Boolean = {
+    brand.generateCert && !event.free &&
+      (status.exists(_ == EvaluationStatus.Pending) || status.exists(_ == EvaluationStatus.Approved))
+  }
+  /**
    * Get JSON with evaluation data
    * @param data Data to convert to JSON
    * @return
@@ -415,47 +395,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
           "label" -> Messages("models.EvaluationStatus." + status),
           "value" -> status.id)),
       "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.handled.map(_.toString),
-      "certificate" -> data.certificate.map { id: String ⇒
-        Json.obj(
-          "id" -> id,
-          "url" -> routes.Certificates.certificate(id).url)
-      })
-  }
-
-  /** Return a list of possible actions for a certificate */
-  private def certificateActions(brand: Brand, data: ParticipantView, page: String): JsValue = {
-    Json.obj(
-      "generate" -> {
-        if (brand.generateCert && !data.event.free)
-          routes.Certificates.create(data.event.id.get, data.person.id.get, Some(page)).url
-        else ""
-      })
-  }
-
-  /** Return a list of possible actions for an evaluation */
-  private def evaluationActions(id: Long,
-    coordinator: Boolean,
-    data: ParticipantView,
-    page: String): JsValue = {
-    Json.obj(
-      "approve" -> {
-        if (Evaluation.approvable(data.status.get))
-          routes.Evaluations.approve(id, Some(page)).url
-        else ""
-      },
-      "reject" -> {
-        if (Evaluation.rejectable(data.status.get))
-          routes.Evaluations.reject(id, Some(page)).url
-        else ""
-      },
-      "move" -> routes.Evaluations.move(id).url,
-      "edit" -> {
-        if (coordinator)
-          routes.Evaluations.edit(id).url
-        else ""
-      },
-      "view" -> routes.Evaluations.details(id).url,
-      "remove" -> routes.Evaluations.delete(id, Some(page)).url)
+      "handled" -> data.handled.map(_.toString))
   }
 }

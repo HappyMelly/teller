@@ -49,20 +49,31 @@ h4 {
 .btn {
   padding: 6px 18px;
   line-height: 1.9;
-  border: 0px;
+  border: 0;
 
   &.btn-lg {
     border-radius: 4px;
   }
   &.btn-primary {
     background-color: @dark-sky-blue;
-    border-color: @dark-sky-blue;
+    &[disabled], &.disabled {
+      border: 1px solid @dark-sky-blue;
+      background-color: transparent;
+      opacity: 1;
+      color: @dark-sky-blue;
+    }
   }
   &.btn-default {
     color: #fff;
-    background-color: #9b9b9b;
-    border-color: #9b9b9b;
+    background-color: @grey;
+    &[disabled], &.disabled {
+      border: 1px solid @grey;
+      background-color: transparent;
+      opacity: 1;
+      color: @grey;
+    }
   }
+
 }
 
 dl.dl-horizontal {
@@ -210,6 +221,9 @@ dl.dl-horizontal {
           color: black;
           a {
             color: @dark-sky-blue;
+            &.btn {
+              color: white;
+            }
           }
         }
       }

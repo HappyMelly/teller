@@ -99,6 +99,16 @@
     }
   }
 }
+.evaluation-actions {
+  .buttons-block {
+    padding-right: 5em;
+    float: left;
+    .btn {
+      min-width: 9em;
+      margin-right: 1em;
+    }
+  }
+}
 .circle-show-more {
   width: 44px;
   height: 44px;
@@ -108,12 +118,16 @@
   text-align: center;
   color: @warm-grey;
   margin-right: 1em;
+  cursor: pointer;
   span {
     padding-top: 16px;
   }
   &.active {
     color: white;
     background-color: @dark-sky-blue;
+    span {
+      padding-top: 14px;
+    }
   }
 }
 .info-board {

@@ -66,7 +66,7 @@ GET           /brand/:id/template                                            @co
 POST          /brand/:id/template                                            @controllers.CertificateTemplates.create(id: Long)
 
 GET           /certificate/:id                                               @controllers.Certificates.certificate(id: String)
-GET           /certificate/new/:eventId/:personId                            @controllers.Certificates.create(eventId: Long, personId: Long, ref: Option[String])
+GET           /certificate/new/:eventId/:personId                            @controllers.Certificates.create(eventId: Long, personId: Long)
 
 POST          /contribution/new                                              @controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       @controllers.Contributions.delete(id: Long, page: String)
@@ -83,13 +83,13 @@ POST          /event/:eventId/endorsement/evaluation/:evaluationId           @co
 
 POST          /evaluation/                                                   @controllers.Evaluations.create
 GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
-GET           /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long, ref: Option[String])
-GET           /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long, ref: Option[String])
+POST          /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long)
+POST          /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long)
 POST          /evaluation/:id/move                                           @controllers.Evaluations.move(id: Long)
 GET           /evaluation/:id/edit                                           @controllers.Evaluations.edit(id: Long)
 GET           /evaluation/:id                                                @controllers.Evaluations.details(id: Long)
 POST          /evaluation/:id                                                @controllers.Evaluations.update(id: Long)
-GET           /evaluation/:id/delete                                         @controllers.Evaluations.delete(id: Long, ref: Option[String])
+DELETE        /evaluation/:id                                                @controllers.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                            @controllers.Evaluations.confirm(confirmationId: String)
 

@@ -30,7 +30,7 @@ import play.api.data.Forms._
 import play.api.data.format.Formatter
 import play.mvc.Controller
 
-trait EvaluationsController extends Controller with Services {
+trait EvaluationsController extends JsonController with Services {
 
   /**
    * Formatter used to define a form mapping for the `EvaluationStatus` enumeration.

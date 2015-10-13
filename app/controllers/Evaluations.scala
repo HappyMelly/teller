@@ -260,12 +260,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         evaluationService.find(id).map { x ⇒
-          val route: String = ref match {
-//            case Some("index") ⇒ routes.Participants.index().url
-            case Some("index") ⇒ routes.Dashboard.index().url
-            case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-            case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
-          }
           if (x.eval.approvable) {
             val evaluation = x.eval.approve
             // recalculate ratings
@@ -275,13 +269,13 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
             val log = activity(evaluation, user.person).approved.insert()
             sendApprovalConfirmation(user.person, evaluation, x.event)
 
-            Redirect(route).flashing("success" -> log.toString)
+            jsonOk(Json.obj("date" -> evaluation.handled))
           } else {
             val error = x.eval.status match {
               case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
               case _ ⇒ "error.evaluation.approve.approved"
             }
-            Redirect(route).flashing("error" -> Messages(error))
+            jsonBadRequest(Messages(error))
           }
         }.getOrElse(NotFound)
   }
@@ -295,14 +289,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       evaluationService.find(id).map { x ⇒
-        val route: String = ref match {
-//          case Some("index") ⇒ routes.Participants.index().url
-          case Some("index") ⇒ routes.Dashboard.index().url
-          case Some("evaluation") ⇒ routes.Evaluations.details(id).url
-          case _ ⇒ routes.Events.details(x.eval.eventId).url + "#participant"
-        }
         if (x.eval.rejectable) {
-          x.eval.reject()
+          val evaluation = x.eval.reject()
 
           // recalculate ratings
           Event.ratingActor ! x.eval.eventId
@@ -311,13 +299,13 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           val log = activity(x.eval, user.person).rejected.insert()
           sendRejectionConfirmation(user.person, x.eval.participant, x.event)
 
-          Redirect(route).flashing("success" -> log.toString)
+          jsonOk(Json.obj("date" -> evaluation.handled))
         } else {
           val error = x.eval.status match {
             case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
             case _ ⇒ "error.evaluation.reject.rejected"
           }
-          Redirect(route).flashing("error" -> Messages(error))
+          jsonBadRequest(Messages(error))
         }
       }.getOrElse(NotFound)
   }
