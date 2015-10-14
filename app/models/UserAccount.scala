@@ -39,7 +39,10 @@ case class UserAccount(id: Option[Long],
     twitterHandle: Option[String],
     facebookUrl: Option[String],
     linkedInUrl: Option[String],
-    googlePlusUrl: Option[String]) extends Subject with Services {
+    googlePlusUrl: Option[String],
+    isCoordinator: Boolean = false,
+    isFacilitator: Boolean = false,
+    activeRole: Boolean = false) extends Subject with Services {
 
   private var _roles: Option[List[UserRole]] = None
 
@@ -63,6 +66,9 @@ case class UserAccount(id: Option[Long],
   lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
   lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
   lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
+
+  def isCoordinatorNow: Boolean = isCoordinator && activeRole
+  def isFacilitatorNow: Boolean = isFacilitator && !activeRole
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])

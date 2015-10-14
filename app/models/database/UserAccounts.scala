@@ -39,11 +39,15 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
   def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
+  def coordinator = column[Boolean]("COORDINATOR")
+  def facilitator = column[Boolean]("FACILITATOR")
+  def activeRole = column[Boolean]("ACTIVE_ROLE")
 
   def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
   def * = (id.?, personId, role, twitterHandle, facebookUrl, linkedInUrl,
-    googlePlusUrl) <> (UserAccount.tupled, UserAccount.unapply)
+    googlePlusUrl, coordinator, facilitator,
+    activeRole) <> (UserAccount.tupled, UserAccount.unapply)
 
   def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
   def uniqueTwitter = index("IDX_TWITTER_HANDLE", twitterHandle, unique = true)

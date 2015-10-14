@@ -63,7 +63,11 @@ body {
 .activity td small {
     padding-left: 19px;
 }
-
+.switcher {
+    padding-top: 15px;
+    padding-right: 30px;
+    color: #9b9b9b;
+}
 header {
     margin-bottom: 1em;
 }

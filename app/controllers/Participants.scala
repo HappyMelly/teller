@@ -40,7 +40,8 @@ import views.ViewHelpers.dateInterval
 class Participants(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
     with Security
-    with Services {
+    with Services
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -100,16 +101,10 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val coordinatedBrands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-      if (coordinatedBrands.nonEmpty) {
-        coordinatedBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-          Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
-        } getOrElse Redirect(routes.Dashboard.index())
-      } else {
-        val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
-        facilitatorBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-          Ok(views.html.v2.participant.index(user, activeBrand, coordinatedBrands, activeBrand.identifier))
-        } getOrElse Redirect(routes.Dashboard.index())
+      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+        Ok(views.html.v2.participant.index(user, brand, brands))
+      } { (brand, brands) =>
+        Ok(views.html.v2.participant.index(user, brand, brands))
       }
   }
 

@@ -1,7 +1,8 @@
 @(user: ActiveUser,
     brand: Brand,
-    brands: List[Brand],
-    brandId: Long)(implicit request: Request[Any], request2flash: Flash, handler: AuthorisationHandler)
+    brands: List[Brand])(implicit request: Request[Any],
+    request2flash: Flash,
+    handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 
@@ -40,7 +41,7 @@
                 </div>
               </div>
             </div>
-            <table id="participants" class="datatables table table-rowed" brandId="@brandId">
+            <table id="participants" class="datatables table table-rowed" brandId="@brand.identifier">
               <thead>
                 <tr>
                   <th width="10%">Participant</th>

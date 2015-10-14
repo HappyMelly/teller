@@ -42,7 +42,8 @@ import views.Countries
 class Statistics(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
     with Security
-    with Services {
+    with Services
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   val TOP_LIMIT = 10
@@ -66,16 +67,10 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-      if (brands.nonEmpty) {
-        brands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-          Ok(views.html.v2.statistics.index(user, activeBrand, brands))
-        } getOrElse Redirect(routes.Dashboard.index())
-      } else {
-        val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
-        facilitatorBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-          Ok(views.html.v2.statistics.index(user, activeBrand, brands))
-        } getOrElse Redirect(routes.Dashboard.index())
+      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+        Ok(views.html.v2.statistics.index(user, brand, brands))
+      } { (brand, brands) =>
+        Ok(views.html.v2.statistics.index(user, brand, brands))
       }
   }
 

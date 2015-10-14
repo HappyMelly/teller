@@ -23,10 +23,13 @@
  */
 package controllers
 
+import models.{Brand, UserAccount}
+import models.service.Services
 import play.api.Play
 import play.api.Play.current
+import play.api.mvc._
 
-trait Utilities {
+trait Utilities extends Controller with Services {
 
   /**
    * Returns an url with domain
@@ -34,5 +37,34 @@ trait Utilities {
    */
   protected def fullUrl(url: String): String = {
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
+  }
+  
+  protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
+                                  (f: (Brand, List[Brand]) => Result)
+                                  (g: (Brand, List[Brand]) => Result): Result = {
+    if (account.isCoordinatorNow) {
+      val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
+      brandId map { identifier =>
+        brands.find(_.identifier == identifier) map { brand =>
+          f(brand, brands)
+        } getOrElse Redirect(routes.Dashboard.index())    
+      } getOrElse {
+        if (brands.nonEmpty) {
+          f(brands.head, brands)
+        } else Redirect(routes.Dashboard.index())
+      }
+    } else if (account.isFacilitatorNow) {
+      val licenses = licenseService.activeLicenses(account.personId)
+      val brands = licenses.map(_.brand)
+      brandId map { identifier =>
+        brands.find(_.identifier == identifier) map { brand =>
+          g(brand, brands)
+        } getOrElse Redirect(routes.Dashboard.index())
+      } getOrElse {
+        if (brands.nonEmpty) {
+          g(brands.head, brands)
+        } else Redirect(routes.Dashboard.index())
+      }
+    } else Ok("")
   }
 }

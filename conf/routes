@@ -252,6 +252,8 @@ GET           /template/:id                                                  @co
 GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)
 
 POST          /url/:url/validate                                             @controllers.Urls.validate(url)
+
+GET           /user/switch                                                   @controllers.UserAccounts.switchRole
 POST          /user                                                          @controllers.UserAccounts.update
 
 

@@ -50,7 +50,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     with Security
     with Services
     with Integrations
-    with Activities {
+    with Activities
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -366,20 +367,14 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             "facilitators" -> data._2)
         }
       }
-      val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-      if (brands.nonEmpty) {
-        brands.find(_.id == Some(brandId)) map { activeBrand =>
-          val facilitators = List((activeBrand.identifier,
-            License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-          Ok(views.html.v2.event.index(user, activeBrand, brands, Json.toJson(facilitators), facilitator = false))
-        } getOrElse Redirect(routes.Dashboard.index())
-      } else {
-        val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
-        facilitatorBrands.find(_.id == Some(brandId)) map { activeBrand =>
-          val facilitators = List((activeBrand.identifier,
-            License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-          Ok(views.html.v2.event.index(user, activeBrand, facilitatorBrands, Json.toJson(facilitators)))
-        } getOrElse Redirect(routes.Dashboard.index())
+      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+        val facilitators = List((brand.identifier,
+          License.allLicensees(brand.identifier).map(l ⇒ (l.id.get, l.fullName))))
+        Ok(views.html.v2.event.index(user, brand, brands, Json.toJson(facilitators), facilitator = false))
+      } { (brand, brands) =>
+        val facilitators = List((brand.identifier,
+          License.allLicensees(brand.identifier).map(l ⇒ (l.id.get, l.fullName))))
+        Ok(views.html.v2.event.index(user, brand, brands, Json.toJson(facilitators)))
       }
   }
 

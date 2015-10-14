@@ -35,7 +35,8 @@ import securesocial.core.RuntimeEnvironment
 class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
     with Security
-    with Services {
+    with Services
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   /**
@@ -69,19 +70,14 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val account = user.account
       if (account.viewer) {
-        val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
-        if (brands.nonEmpty) {
-          val activeBrand = brands.head
-          val licenses = licenseService.expiring(List(activeBrand.identifier))
-//          val events = eventService.
-//            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
-//          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
-          val cancellations = eventCancellationService.findByBrands(List(activeBrand.identifier))
-          Ok(views.html.v2.dashboard.forBrandCoordinators(user, activeBrand, brands, licenses, cancellations))
-        } else {
-          val licenses = licenseService.activeLicenses(account.personId)
-          val brand = licenses.head.brand
-          val brands = licenses.map(_.brand)
+        roleDiffirentiator(user.account) { (brand, brands) =>
+          val licenses = licenseService.expiring(List(brand.identifier))
+          //          val events = eventService.
+          //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
+          //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
+          val cancellations = eventCancellationService.findByBrands(List(brand.identifier))
+          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands, licenses, cancellations))
+        } { (brand, brands) =>
           val events = eventService.findByFacilitator(
             account.personId,
             brandId = None)
@@ -111,16 +107,32 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
    */
   def overview(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.account
-      val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
-      brands.find(_.identifier == id) map { activeBrand =>
-        val licenses = licenseService.expiring(List(activeBrand.identifier))
+      roleDiffirentiator(user.account, Some(id)) { (brand, brands) =>
+        val licenses = licenseService.expiring(List(brand.identifier))
         //          val events = eventService.
         //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
         //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
-        val cancellations = eventCancellationService.findByBrands(List(activeBrand.identifier))
-        Ok(views.html.v2.dashboard.forBrandCoordinators(user, activeBrand, brands, licenses, cancellations))
-      } getOrElse Redirect(routes.Dashboard.index())
+        val cancellations = eventCancellationService.findByBrands(List(brand.identifier))
+        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands, licenses, cancellations))
+      } { (brand, brands) =>
+        val events = eventService.findByFacilitator(
+          user.account.personId,
+          brandId = None)
+        val upcomingEvents = events
+          .filter(_.schedule.end.toString >= LocalDate.now().toString)
+          .slice(0, 3)
+        val pastEvents = events
+          .filter(_.schedule.end.toString < LocalDate.now().toString)
+          .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
+        val evaluations = evaluationService
+          .findByEventsWithParticipants(pastEvents.map(_.id.get))
+          .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
+          .slice(0, 10)
+        Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
+          upcomingEvents,
+          pastEvents.slice(0, 2),
+          evaluations))
+      }
   }
 
   /**

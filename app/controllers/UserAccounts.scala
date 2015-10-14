@@ -24,15 +24,15 @@
 
 package controllers
 
-import models.service.{ Services, UserAccountService }
-import play.api.mvc._
+import models.UserRole.Role.{Admin, Viewer}
+import models._
+import models.service.Services
+import org.joda.time.DateTime
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import models._
-import models.UserRole.Role.Admin
-import play.api.Logger
 import play.api.i18n.Messages
-import org.joda.time.DateTime
+import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 
 /**
@@ -48,6 +48,21 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   val userForm = Form(tuple(
     "personId" -> longNumber,
     "role" -> optional(text)))
+
+  /**
+   * Switches active role to Facilitator if it was Brand Coordinator, and
+   *  visa versa
+   */
+  def switchRole = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val account = user.account.copy(activeRole = !user.account.activeRole)
+      userAccountService.updateActiveRole(user.account.personId, account.activeRole)
+      env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+        _.updateUser(ActiveUser(user.identity, account, user.person,
+          user.person.member))
+      })
+      Redirect(request.headers("referer"))
+  }
 
   /**
    * Updates a person’s user role.
