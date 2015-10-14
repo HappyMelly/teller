@@ -4,15 +4,13 @@
     request2flash: Flash,
     handler: AuthorisationHandler)
 
-@import be.objectify.deadbolt.scala.views.html._
-
 @v2.main("Participants", "participants", user) {
     @v2.element.brandHeader(brand, brands, "participants") {
         <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
             Add Participant</a>
-        @dynamic(handler, "evaluation", "add") {
-            <a class="btn btn-default" href="@routes.Evaluations.add(None, None)">
-                Add Evaluation</a>
+        @if(user.account.isCoordinatorNow) {
+          <a class="btn btn-default" href="@routes.Evaluations.add(None, None)">
+            Add Evaluation</a>
         }
         <a id="exportLink" class="btn btn-default" href="" title="Only evaluations, currently visible in the table, will be exported">
           Export to XLSX</a>

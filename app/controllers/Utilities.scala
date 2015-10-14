@@ -65,6 +65,6 @@ trait Utilities extends Controller with Services {
           g(brands.head, brands)
         } else Redirect(routes.Dashboard.index())
       }
-    } else Ok("")
+    } else Ok(views.html.v2.dashboard.empty())
   }
 }

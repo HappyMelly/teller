@@ -7,8 +7,6 @@
   request: Request[Any],
   handler: AuthorisationHandler)
 
-@import be.objectify.deadbolt.scala.views.html._
-
 @v2.main("Home", "", user) {
   @v2.element.brandHeader(brand, brands){
     <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
@@ -23,9 +21,6 @@
           @if(past.nonEmpty) {
             @v2.dashboard.blocks.past(past)
           }
-          @if(evaluations.nonEmpty) {
-            @v2.dashboard.blocks.evaluations(evaluations)
-          }
         </div>
         <div class="col-md-3">
           <div class="panel panel-success notification-widget" id="completionWidget">
@@ -33,7 +28,7 @@
           <div class="notification-widget info-board">
             <div class="title">Info board</div>
             <p>@future.length upcoming events</p>
-            <p>@evaluations.length evaluations for approval</p>
+            @*<p>@evaluations.length evaluations for approval</p>*@
           </div>
         </div>
       </div>

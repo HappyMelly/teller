@@ -1,18 +1,9 @@
-@(user: ActiveUser,
-  future: List[Event],
-  past: List[Event],
-  evaluations: List[(Event, Person, Evaluation)])(implicit flash: Flash,
+@(user: ActiveUser)(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
 
 @main("Home", "", user) {
   <div class="col-md-9 content-block">
-    @if(past.length > 0) {
-      @dashboard.blocks.past(past)
-    }
-    @if(evaluations.length > 0) {
-      @dashboard.blocks.evaluations(evaluations)
-    }
   </div>
   <div class="col-md-3" style="padding-left: 50px; padding-top: 30px;">
     <div class="panel panel-success" id="completionWidget">
