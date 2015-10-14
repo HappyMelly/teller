@@ -464,6 +464,16 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       }
       Ok(Json.toJson(views))
   }
+
+  /**
+   * Renders form with cancelation reason
+   * @param id Event identifier
+   */
+  def reason(id: Long) = SecuredRestrictedAction(Viewer) { implicit request =>
+    implicit handler => implicit user =>
+      Ok(views.html.v2.event.reason(id))
+  }
+
   /**
    * Edit form submits to this action.
    * @param id Event ID
