@@ -49,6 +49,13 @@
     }
     .buttons {
       margin-top: 35px;
+      &.small {
+        margin-top: 15px;
+      }
+      span {
+        font-size: 18px;
+        font-weight: bold;
+      }
       .btn {
         margin-right: 0.5em;
       }
@@ -99,14 +106,16 @@
     }
   }
 }
-.evaluation-actions {
-  .buttons-block {
-    padding-right: 5em;
-    float: left;
-    .btn {
-      min-width: 9em;
-      margin-right: 1em;
-    }
+.header-block {
+  border-bottom: 1px solid @light-grey;
+  padding: 1em 0;
+}
+.buttons-block {
+  padding-right: 5em;
+  float: left;
+  .btn {
+    min-width: 9em;
+    margin-right: 1em;
   }
 }
 .circle-show-more {
@@ -130,17 +139,44 @@
     }
   }
 }
-.info-board {
-  border-top: 2px solid @light-grey;
-  border-bottom: 2px solid @light-grey;
-  .title {
-    text-transform: uppercase;
-    color: @text-grey;
-    letter-spacing: 3px;
-    padding: 1em 0;
-    font-size: 12px;
+
+.event-details {
+  .event-info {
+    padding-top: 2.5em;
+    padding-bottom: 4em;
+    .column {
+      width: 50%;
+      float: left;
+      img.photo {
+        padding-bottom: 1em;
+        padding-right: 1em;
+      }
+      dt {
+        color: @grey;
+        font-weight: normal;
+      }
+      dd {
+        padding-bottom: 1em;
+      }
+      .title {
+        color: @grey;
+        padding-bottom: 1em;
+        font-weight: bold;
+      }
+    }
   }
-  p {
-    padding: 0 1em;
+  .name {
+    font-size: 18px;
+  }
+  .table-title {
+    width: 100%;
+    padding-bottom: 0.5em;
+    display: inline-table;
+    .pull-right {
+      padding-top: 0.4em;
+      a {
+        padding-left: 3em;
+      }
+    }
   }
 }

@@ -35,62 +35,6 @@ function showSuccess(message) {
 }
 
 /**
- * Set a facilitator filter to current user (if exists)
- */
-function initFacilitatorsFilter() {
-    var id = $('#userId').val();
-    if (id) {
-        $('#facilitators').find('[value=' + id + ']').attr('selected', 'selected');
-    }
-}
-
-/**
- * Initialize a brand filter with the brand which license the user helds
- */
-function initBrandsFilter() {
-    var personalLicense = $('#personalLicense').val();
-    if (personalLicense) {
-        $('#brands').find('[value=' + personalLicense + ']').attr('selected', 'selected');
-    }
-}
-
-/**
- * Update a facilitators filter according to user actions
- *
- * @param brand Brand to filter
- */
-function updateFacilitatorsFilter(brand) {
-    var records = [];
-    if (brand) {
-        var data = $.grep(facilitators, function (f) {
-            return f.brandId == brand
-        })[0].facilitators;
-        records = data;
-    } else {
-        var ids = [];
-        for (var i = 0; i < facilitators.length; i++) {
-            var data = facilitators[i].facilitators;
-            for (var j = 0; j < data.length; j++) {
-                if (ids.indexOf(data[j].id) < 0) {
-                    records.push(data[j]);
-                    ids.push(data[j].id);
-                }
-            }
-        }
-    }
-    $('#facilitators').empty().append('<option value="all">All</option>');
-    records.sort(function(a, b) {
-        return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
-    });
-    for(var i = 0; i < records.length; i++) {
-        if (records[i].name) {
-            var option = $("<option></option>").attr("value", records[i].id).text(records[i].name);
-            $('#facilitators').append(option);
-        }
-    }
-}
-
-/**
  * This function collects data from all filters and provides a requests based on their values
  * @returns {string}
  */
@@ -112,20 +56,17 @@ function makeRequestUrl() {
         request += ((counter > 0) ? '&' : '') + 'archived=' + ((filter == 'archived') ? 'true' : 'false');
         counter += 1;
     }
-    filter = $('#brands').find(':selected').val();
-    if (filter !== undefined) {
-        if (filter != 'all') {
-            request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
-            counter += 1;
-        }
-    } else {
-        filter = $('#activeBrandId').val();
-        request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
-        counter += 1;
-    }
+    filter = $('#activeBrandId').val();
+    request += ((counter > 0) ? '&' : '') + 'brandId=' + filter;
+    counter += 1;
+
     filter = $('#facilitators').find(':selected').val();
-    if (filter != 'all') {
-        request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
+    if (filter == undefined) {
+        request += ((counter > 0) ? '&' : '') + 'facilitator=' + $('#activeUserId').val();
+    } else {
+        if (filter != 'all') {
+            request += ((counter > 0) ? '&' : '') + 'facilitator=' + filter;
+        }
     }
     return request;
 }
@@ -166,9 +107,6 @@ function renderDropdown(data) {
 }
 
 $(document).ready( function() {
-    updateFacilitatorsFilter(null);
-    initBrandsFilter();
-    initFacilitatorsFilter();
 
     var events = $('#events').dataTable({
         "sDom": '<"toolbar">rtip',
@@ -265,10 +203,6 @@ $(document).ready( function() {
                 $("body").css("cursor", "default");
             });
     }
-    $("#brands").change(function() {
-        var brand = $(this).find(':selected').val();
-        updateFacilitatorsFilter(brand);
-        updateTable(); });
     $('#past-future').on('change', function() { updateTable(); });
     $('#private').on('change', function() { updateTable(); });
     $('#archived').on('change', function() {  updateTable(); });

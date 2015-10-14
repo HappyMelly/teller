@@ -41,7 +41,7 @@ function cancelEvent(object) {
             var url = jsRoutes.controllers.Events.cancel($(object).data('id')).url;
             $.post(url, {}, function(data) {
                 $('#' + dialog).modal('hide');
-                $(object).parents('.upcoming-event').remove();
+                afterEventCancellation(object);
                 var msg = "Event was successfully canceled";
                 success(msg);
             });

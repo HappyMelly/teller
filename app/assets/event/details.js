@@ -91,6 +91,13 @@ function updateOrganizer(id) {
     }
 }
 
+/**
+ * Functions is called from 'cancelEvent' function
+ */
+function afterEventCancellation() {
+    window.location.replace(jsRoutes.controllers.Events.index($('#brandId').val()).url);
+}
+
 $(document).ready( function() {
 
     $('#details a').click(function (e) {
@@ -132,16 +139,16 @@ $(document).ready( function() {
                 },
                 "targets": 0
             }, {
+                "className": "evaluation-field",
+                "targets": [1, 2]
+            },{
                 "render": function(data) { return drawStatus(data); },
                 "targets": 3,
-                "className": "status"
+                "className": "status evaluation-field"
             }, {
-                "className": "evaluation-field",
-                "targets": [1, 2, 3, 4]
-            },{
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 4,
-                "className": "certificate"
+                "className": "certificate evaluation-field"
             }, {
                 "render": function(data) {
                     var html = '<div class="circle-show-more" data-event="' + data.event + '"';

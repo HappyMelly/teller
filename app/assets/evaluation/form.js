@@ -35,27 +35,28 @@ function showError(message) {
  * @param eventId String
  */
 function getParticipants(eventId) {
+    var url = jsRoutes.controllers.Participants.participants(eventId).url;
     $.ajax({
-        url: '/participants/' + eventId,
+        url: url,
         dataType: "json"
     }).done(function(data) {
-            var selector = "#participantId";
-            var value = parseInt($("#currentParticipantId").val());
-            $(selector)
-                .empty()
-                .append($("<option></option>").attr("value", 0).text("Choose a participant"));
-            for(var i = 0; i < data.length; i++) {
-                var option = $("<option></option>")
-                    .attr("value", data[i].id)
-                    .text(data[i].name);
-                if (value == data[i].id) {
-                    option.attr('selected', 'selected');
-                }
-                $(selector).append(option);
+        var selector = "#participantId";
+        var value = parseInt($("#currentParticipantId").val());
+        $(selector)
+            .empty()
+            .append($("<option></option>").attr("value", 0).text("Choose a participant"));
+        for(var i = 0; i < data.length; i++) {
+            var option = $("<option></option>")
+                .attr("value", data[i].id)
+                .text(data[i].name);
+            if (value == data[i].id) {
+                option.attr('selected', 'selected');
             }
-        }).fail(function() {
-            showError("Sorry we don't know anything about the event you try to request")
-        });
+            $(selector).append(option);
+        }
+    }).fail(function() {
+        showError("Sorry we don't know anything about the event you try to request")
+    });
 }
 
 $(document).ready( function() {

@@ -107,8 +107,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           val defaultHook = request.host + routes.Evaluations.confirm("").url
           val eval = evaluation.add(defaultHook, withConfirmation = true)
           val log = activity(eval, user.person).created.insert()
-//          Redirect(routes.Participants.index()).flashing("success" -> log.toString)
-          Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
+          Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
         })
   }
 
@@ -244,8 +243,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           evaluation ⇒ {
             val eval = evaluation.copy(id = Some(id)).update()
             val log = activity(eval, user.person).updated.insert()
-//            Redirect(routes.Participants.index()).flashing("success" -> log.toString)
-            Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
+            Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
           })
       }.getOrElse(NotFound)
   }

@@ -49,10 +49,18 @@ function hideParticipantDetails(object) {
     $('.participant-details').remove();
 }
 
+function hideAllParticipantDetails() {
+    $('.circle-show-more').removeClass('active').find('span').
+        removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+    $('tr.active').removeClass('active');
+    $('.participant-details').remove();
+}
+
 function toggleParticipantDetails(object) {
     if ($(object).hasClass('active')) {
         hideParticipantDetails(object);
     } else {
+        hideAllParticipantDetails();
         showParticipantDetails(object);
     }
 }
@@ -117,13 +125,34 @@ function deleteEvaluation(object) {
     var result = confirm("Remove this evaluation? You cannot undo this action.");
     if (result == true) {
         $.ajax({
-            type: "POST",
+            type: "DELETE",
             url: jsRoutes.controllers.Evaluations.delete(evaluationId).url,
             data: {}
         }).done(function(data) {
             $('.evaluation-actions').remove();
             getActiveRow().find('.evaluation-field').html('');
             var caption = "Evaluation was successfully deleted";
+            noty({text: caption, layout: 'bottom',
+                theme: 'relax', timeout: 2000 , type: 'success'});
+        });
+    }
+}
+
+/**
+ * Delete the given person
+ * @param object {object} Delete button
+ */
+function deletePerson(object) {
+    var personId = $(object).data('id');
+    var result = confirm("Remove this person? You cannot undo this action.");
+    if (result == true) {
+        $.ajax({
+            type: "POST",
+            url: jsRoutes.controllers.People.delete(personId).url,
+            data: {}
+        }).done(function(data) {
+            removeParticipant();
+            var caption = "Person was successfully deleted";
             noty({text: caption, layout: 'bottom',
                 theme: 'relax', timeout: 2000 , type: 'success'});
         });
@@ -198,6 +227,10 @@ function initializeParticipantActionsInDetails() {
     $('.delete-evaluation').on('click', function(e) {
         e.preventDefault();
         deleteEvaluation($(this));
+    });
+    $('.delete-person').on('click', function(e) {
+        e.preventDefault();
+        deletePerson($(this));
     });
 }
 

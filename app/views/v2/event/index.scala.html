@@ -1,10 +1,7 @@
 @(user: ActiveUser,
   brand: Brand,
   brands: List[Brand],
-  facilitators: play.api.libs.json.JsValue,
-  facilitator: Boolean = true)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
-
-@import be.objectify.deadbolt.scala.views.html._
+  facilitators: List[(Long, String)])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @v2.main("Events", "events", user) {
   @v2.element.brandHeader(brand, brands, "events") {
@@ -15,17 +12,21 @@
       <div class="row">
         <div class="col-md-12 content-block">
           @views.html.event.reason()
-          @if(facilitator) {
-            <input type="hidden" id="userId" value="@user.account.personId"/>
-          }
           <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
           <div id="filter-containter">
             <div class="table-filters pull-right">
-              <div class="btn-group">
-                <select id="facilitators" class="input-sm form-control">
-                  <option value="all">All</option>
-                </select>
-              </div>
+              @if(facilitators.nonEmpty) {
+                <div class="btn-group">
+                  <select id="facilitators" class="input-sm form-control">
+                    <option value="all">All</option>
+                    @for((id, name) <- facilitators) {
+                      <option value="@id">@name</option>
+                    }
+                  </select>
+                </div>
+              } else {
+                <input type="hidden" id="activeUserId" value="@user.person.identifier"/>
+              }
               <div class="btn-group">
                 <select id="past-future" class="input-sm form-control">
                   <option value="all">All</option>
@@ -67,8 +68,5 @@
       </div>
     </div>
   </div>
-  <script type="text/javascript">
-    var facilitators = @Html(facilitators.toString()) ;
-  </script>
   <script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
 }

@@ -1,4 +1,7 @@
-@(activeBrand: Brand, brands: List[Brand], tab: String = "")(content: Html)
+@(activeBrand: Brand,
+    brands: List[Brand],
+    tab: String = "",
+    small: Boolean = false)(content: Html)
 
 <div class="row brand-header">
   @if(brands.length > 1) {
@@ -19,15 +22,15 @@
       <div class="brand-image">
         <a href="@routes.Dashboard.overview(activeBrand.identifier)">
           @activeBrand.picture.map { picture =>
-            <img class="img-rounded" width="120" src="@routes.Brands.picture(activeBrand.code)"/>
+            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@routes.Brands.picture(activeBrand.code)"/>
           }.getOrElse {
-            <img class="img-rounded" width="120" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@routes.Assets.at("images/happymelly-face-white.png")"/>
           }
         </a>
       </div>
       <div class="brand-name">
         <h2>@activeBrand.name</h2>
-        <div class="buttons">
+        <div class="buttons @if(small) { small }">
           @content
         </div>
       </div>

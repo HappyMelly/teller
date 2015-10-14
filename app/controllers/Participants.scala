@@ -200,7 +200,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
           evaluationService.find(evaluationId).flatMap(x => Some(x.eval))
         } getOrElse None
         val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
-        Ok(views.html.v2.participant.details(participant, evaluation, virtual))
+        Ok(views.html.v2.participant.details(participant, evaluation, virtual, user.account.isCoordinatorNow))
       } getOrElse BadRequest("Participant does not exist")
   }
 

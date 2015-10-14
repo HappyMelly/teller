@@ -1,6 +1,7 @@
 @(participant: Participant,
     evaluation: Option[Evaluation],
-    virtual: Boolean)(implicit request: Request[Any],
+    virtual: Boolean,
+    coordinator: Boolean)(implicit request: Request[Any],
     token: play.filters.csrf.CSRF.Token)
 
 <table class="table table-rowed">
@@ -8,14 +9,20 @@
     <strong class="text-muted">Manage Person:</strong>&nbsp;
       @if(virtual) {
         <a href="@routes.People.edit(participant.personId)">Edit</a>
-        <a href="@routes.People.delete(participant.personId)">Delete</a>
+        <a class="delete-person" href="#" data-id="@participant.personId">Delete</a>
       }
       <a data-event="@participant.eventId" data-person="@participant.personId"
         class="remove-participation" href="#">Remove Participation</a>
+      @if(coordinator && evaluation.isEmpty) {
+        <a href="@routes.Evaluations.add(Some(participant.eventId), Some(participant.personId))">Add Evaluation</a>
+      }
   </td></tr>
   @evaluation.map { eval =>
     <tr><td class="evaluation-actions">
       <strong class="text-muted">Manage Evaluation:</strong>
+      @if(coordinator && evaluation.nonEmpty) {
+        <a href="@routes.Evaluations.edit(evaluation.get.identifier)">Edit</a>
+      }
       @views.html.v2.evaluation.body(eval)
     </td></tr>
   }

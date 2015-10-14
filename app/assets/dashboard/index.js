@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,30 +22,9 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-@import "settings";
-
-.profile-strength {
-  background-color: #eeeeee;
-  box-shadow: 0px 7px 4px 10px #eeeeee;
-
-  .strength-value {
-    font-size: 60px;
-    font-family: Days;
-    color: @pig-pink;
-  }
-  .steps {
-    color: #777777;
-    li {
-      padding-bottom: 11px;
-    }
-  }
-  .progress {
-    height: 5px;
-    .progress-bar {
-      background-color: @pig-pink;
-    }
-  }
-  .inspiration {
-    font-size: 12px;
-  }
+/**
+ * This function is called from 'cancelEvent' function
+ */
+function afterEventCancellation(object) {
+    $(object).parents('.upcoming-event').remove();
 }

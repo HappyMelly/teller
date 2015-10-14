@@ -28,12 +28,11 @@ import controllers.Forms._
 import mail.reminder.EvaluationReminder
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
-import models.brand.EventType
 import models.event.Comparator
 import models.event.Comparator.FieldChange
 import models.service.Services
-import models.{ Location, Schedule, _ }
-import org.joda.time.{ DateTime, LocalDate }
+import models.{Location, Schedule, _}
+import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.Formatter
@@ -41,9 +40,10 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Future
 import services.integrations.Integrations
 import views.Countries
+
+import scala.concurrent.Future
 
 class Events(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
@@ -196,8 +196,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             val inserted = eventService.insert(view)
             val log = activity(inserted.event, user.person).created.insert()
             sendEmailNotification(view.event, List.empty, log)
-            Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
-
+            Redirect(routes.Events.index(inserted.event.brandId)).flashing("success" -> log.toString)
           }
         })
   }
@@ -283,47 +282,29 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventService.findWithInvoice(id) map { x ⇒
-        val acc = user.account
-        val brandId = x.event.brandId
-        val brands = brandService.findByCoordinator(user.account.personId).sortBy(_.name)
-        //@TODO only funders must be retrieved
-        val funders = if (acc.editor) orgService.findAll else List()
-        val eventType = eventTypeService.find(x.event.eventTypeId).get
-        val canFacilitate = acc.editor || x.event.isFacilitator(acc.personId) ||
-          brandService.isCoordinator(x.event.brandId, acc.personId)
-        val fees = feeService.findByBrand(x.event.brandId)
-        val printableFees = fees.
-          map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-          sortBy(_._1)
-        val brand = brandService.find(x.event.brandId).get
-        val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
-          Event.withFee(x.event, y.fee, eventType.maxHours)
-        } getOrElse x.event
-        if (brands.nonEmpty) {
-          brands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-            val facilitators = List((activeBrand.identifier,
-              License.allLicensees(activeBrand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-            Ok(views.html.v2.event.details(user,
-              activeBrand,
-              brands,
-              canFacilitate,
-              funders,
-              EventView(event, x.invoice),
-              eventType.name,
-              printableFees))
-          } getOrElse Redirect(routes.Dashboard.index())
-        } else {
-          val facilitatorBrands = licenseService.activeLicenses(user.account.personId).map(_.brand).sortBy(_.name)
-          facilitatorBrands.find(_.id.exists(_ == brandId)) map { activeBrand =>
-            Ok(views.html.v2.event.details(user,
-              activeBrand,
-              brands,
-              canFacilitate,
-              funders,
-              EventView(event, x.invoice),
-              eventType.name,
-              printableFees))
-          } getOrElse Redirect(routes.Dashboard.index())
+        roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
+          val orgs = user.person.organisations
+          val eventType = eventTypeService.find(x.event.eventTypeId).get
+          val fees = feeService.findByBrand(x.event.brandId)
+          val printableFees = fees.
+            map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+            sortBy(_._1)
+          val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+            Event.withFee(x.event, y.fee, eventType.maxHours)
+          } getOrElse x.event
+          Ok(views.html.v2.event.details(user, brand, brands, orgs,
+            EventView(event, x.invoice), eventType.name, printableFees))
+        } { (brand, brands) =>
+          val eventType = eventTypeService.find(x.event.eventTypeId).get
+          val fees = feeService.findByBrand(x.event.brandId)
+          val printableFees = fees.
+            map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+            sortBy(_._1)
+          val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+            Event.withFee(x.event, y.fee, eventType.maxHours)
+          } getOrElse x.event
+          Ok(views.html.v2.event.details(user, brand, brands, List(),
+            EventView(event, x.invoice), eventType.name, printableFees))
         }
       } getOrElse NotFound
   }
@@ -353,28 +334,12 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      implicit val facilitatorWrites = new Writes[(Long, String)] {
-        def writes(data: (Long, String)): JsValue = {
-          Json.obj(
-            "id" -> data._1,
-            "name" -> data._2)
-        }
-      }
-      implicit val facilitatorsWrites = new Writes[(Long, List[(Long, String)])] {
-        def writes(data: (Long, List[(Long, String)])): JsValue = {
-          Json.obj(
-            "brandId" -> data._1,
-            "facilitators" -> data._2)
-        }
-      }
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-        val facilitators = List((brand.identifier,
-          License.allLicensees(brand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-        Ok(views.html.v2.event.index(user, brand, brands, Json.toJson(facilitators), facilitator = false))
+        val facilitators = License.allLicensees(brand.identifier).
+          map(l ⇒ (l.identifier, l.fullName)).sortBy(_._2)
+        Ok(views.html.v2.event.index(user, brand, brands, facilitators))
       } { (brand, brands) =>
-        val facilitators = List((brand.identifier,
-          License.allLicensees(brand.identifier).map(l ⇒ (l.id.get, l.fullName))))
-        Ok(views.html.v2.event.index(user, brand, brands, Json.toJson(facilitators)))
+        Ok(views.html.v2.event.index(user, brand, brands, List()))
       }
   }
 
@@ -407,11 +372,11 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       else if (account.coordinator)
         events.filter(!_.notPublic) :::
           events.filter(e ⇒ e.notPublic &&
-            account.brands.exists(_.code == e.brandId))
+            account.brands.exists(_.identifier == e.brandId))
       else
         events.filter(!_.notPublic) :::
           events.filter(e ⇒ e.notPublic &&
-            e.facilitators.exists(_.id.get == account.personId))
+            e.facilitators.exists(_.identifier == account.personId))
 
       val views = eventService.withInvoices(filteredEvents)
 
@@ -444,21 +409,9 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
               "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" })),
             "actions" -> {
               Json.obj(
-                "edit" -> {
-                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.edit(data.event.id.get).url
-                  } else ""
-                },
-                "duplicate" -> {
-                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.duplicate(data.event.id.get).url
-                  } else ""
-                },
-                "cancel" -> {
-                  if (account.editor || data.event.facilitators.exists(_.id.get == account.personId)) {
-                    routes.Events.cancel(data.event.id.get).url
-                  } else ""
-                })
+                "edit" -> routes.Events.edit(data.event.id.get).url,
+                "duplicate" -> routes.Events.duplicate(data.event.id.get).url,
+                "cancel" -> routes.Events.cancel(data.event.id.get).url)
             })
         }
       }
