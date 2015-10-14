@@ -38,29 +38,8 @@ function updateEndorsementAction(url, type) {
 }
 
 $(document).ready( function() {
-
-    // Delete links.
-    $('form.delete').submit(function() {
-        return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
-    });
-
-    $(".approve").on('click', function(){
-        $("#approveLink").attr('href', $(this).data('href'));
-    });
-    $(".reject").on('click', function(){
-        $("#rejectLink").attr('href', $(this).data('href'));
-    });
-    $(".move").on('click', function(){
-        var href = $(this).data('href');
-        getPastEvents($(this).data('brand'));
-        $("#moveButton").on('click', function(e) {
-            e.preventDefault();
-            $.post(href, { eventId: $("#eventIdMoveForm").find(':selected').val() }, function() {
-                $('#move').modal('hide');
-                location.reload();
-            });
-        });
-    });
+    initializeParticipantActions();
+    initializeParticipantActionsInDetails();
     $("#endorsement").on('click', function(e) {
         e.preventDefault();
         if ($(this).hasClass("add")) {

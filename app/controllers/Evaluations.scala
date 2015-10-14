@@ -42,7 +42,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     with Security
     with Integrations
     with Services
-    with Activities {
+    with Activities
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -186,20 +187,26 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
       evaluationService.find(id) map { x ⇒
-        val brand = brandService.find(x.event.brandId).get
         val participant = personService.find(x.eval.personId).get
         val personId = user.person.identifier
         val (facilitator, endorsement) = if (x.event.facilitatorIds.contains(personId))
           (true, personService.findEndorsementByEvaluation(id, personId))
         else
           (false, None)
-        Ok(views.html.evaluation.details(user, x,
-          participant.fullName,
-          brand.generateCert,
-          facilitator,
-          endorsement))
+        roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
+          Ok(views.html.v2.evaluation.details(user, brand, brands, x,
+            participant.fullName,
+            brand.generateCert,
+            facilitator,
+            endorsement))
+        } { (brand, brands) =>
+          Ok(views.html.v2.evaluation.details(user, brand, brands, x,
+            participant.fullName,
+            brand.generateCert,
+            facilitator,
+            endorsement))
+        }
       } getOrElse NotFound
 
   }

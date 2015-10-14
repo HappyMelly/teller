@@ -20,7 +20,7 @@
 
 @v2.main(view.event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true) {
-    <span><a href="@routes.Events.index(brand.identifier)">Events</a></h3>
+    <span><a href="@routes.Events.index(brand.identifier)">Events</a></span>
   }
   <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@view.event.id"/>
@@ -29,7 +29,6 @@
     <div class="container">
       <div class="row event-details  content-block">
         <div class="col-md-9">
-          @element.evaluationActions()
           @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head)
           <div class="header-block">
             <div class="row">

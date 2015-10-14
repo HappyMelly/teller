@@ -1,0 +1,90 @@
+@(user: ActiveUser,
+    brand: Brand,
+    brands: List[Brand],
+    pair: EvaluationPair,
+    participantName: String,
+    withCertificate: Boolean,
+    facilitator: Boolean,
+    endorsement: Option[Endorsement])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import views.Evaluations
+
+@v2.main("Evaluation for %s".format(participantName), "participants", user) {
+  @v2.element.brandHeader(brand, brands, "participants", small = true) {
+    <span><a href="@routes.Participants.index(brand.identifier)">Participants</a></span>
+  }
+  <div class="row page-content">
+    <div class="container">
+      <div class="row evaluation-details content-block">
+        <div class="col-md-12">
+          <div class="header-block">
+            <div class="row">
+              <div class="col-md-12"><h1>Evaluation for @participantName</h1></div>
+              <div class="col-md-12">
+                <strong>Event: </strong> <a href="@routes.Events.details(pair.event.id.get)">@pair.event.title</a>
+              </div>
+            </div>
+          </div>
+          @views.html.v2.evaluation.buttons(pair.eval)
+          <div class="row">
+            <div class="col-md-12">
+              <h3>Facilitator</h3>
+              <dt>Impression</dt>
+              <dl>@Evaluations.impression(pair.eval.facilitatorImpression)</dl>
+              <dt>@Evaluations.Questions.facilitatorReview</dt>
+              <dl>@pair.eval.facilitatorReview</dl>
+              @if(facilitator) {
+                @endorsement.map { x =>
+                <a id="endorsement" class="remove" href="@routes.Endorsements.remove(user.person.identifier, x.id.get)">Remove Endorsement</a>
+                }.getOrElse {
+                  <a id="endorsement" class="add" href="@routes.Endorsements.createFromEvaluation(pair.event.identifier, pair.eval.identifier)">Add as Endorsement</a>
+                }
+                <br/>
+              }
+
+              <h3>Event & Participant</h3>
+              <dt>Recommendation</dt>
+              <dl>@Evaluations.recommendation(pair.eval.recommendationScore)</dl>
+              <dt>Reason to register</dt>
+              <dl>@pair.eval.reasonToRegister</dl>
+              <dt>Action items</dt>
+              <dl>@pair.eval.actionItems</dl>
+              <dt>@Evaluations.Questions.changesToEvent</dt>
+              <dl>@pair.eval.changesToEvent</dl>
+
+              <h3>Organizer</h3>
+              @pair.eval.hostImpression.map { impression =>
+                <dt>Impression</dt>
+                <dl>@Evaluations.impression(impression)</dl>
+              }
+              <dt>@Evaluations.Questions.changesToHost</dt>
+              <dl>@pair.eval.changesToHost</dl>
+
+              <h3>Content</h3>
+              @pair.eval.contentImpression.map { impression =>
+                <dt>Impression</dt>
+                <dl>@Evaluations.impression(impression)</dl>
+              }
+              <dt>@Evaluations.Questions.changesToContent</dt>
+              <dl>@pair.eval.changesToHost</dl>
+            </div>
+          </div>
+          @views.html.v2.evaluation.buttons(pair.eval)
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    var _serverData = {
+      personId: @user.person.identifier,
+      eventId: @pair.event.identifier,
+      evaluationId: @pair.eval.identifier,
+      endorsementId: @endorsement.map(_.id.get).getOrElse(0)
+    };
+  </script>
+  <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("evaluation/details.js")" type="text/javascript"></script>
+}

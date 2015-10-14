@@ -171,8 +171,10 @@ function generateCertificate(object) {
     $.get(url, {}, function(data) {
         var certificate = JSON.parse(data).certificate;
         var url = jsRoutes.controllers.Certificates.certificate(certificate).url;
-        $(object).removeClass('generate-certificate').off('click').
-            attr('href', url).attr('target', '_blank').text(certificate);
+        $(object).removeClass('generate-certificate').off('click');
+        if (!$(object).hasClass('btn')) {
+            $(object).attr('href', url).attr('target', '_blank').text(certificate);
+        }
         var caption = 'Certificate was generated and sent to the participant';
         noty({text: caption, layout: 'bottom',
             theme: 'relax', timeout: 2000 , type: 'success'});
