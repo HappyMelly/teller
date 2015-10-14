@@ -105,7 +105,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         Ok(views.html.v2.participant.index(user, brand, brands))
       } { (brand, brands) =>
         Ok(views.html.v2.participant.index(user, brand, brands))
-      }
+      } { Redirect(routes.Dashboard.index()) }
   }
 
   /**

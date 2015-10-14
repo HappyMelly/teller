@@ -26,7 +26,7 @@
  * Filter evaluations by an event
  */
 function filterByEvent(oSettings, aData, iDataIndex) {
-    var index = 9;
+    var index = 8;
     var filter = $('#events').find(':selected').val();
     if (filter == '') {
         return true;
@@ -38,13 +38,13 @@ function filterByEvent(oSettings, aData, iDataIndex) {
  * Filter evaluations checking if they are pending, approved or rejected
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
-    var index = 6;
+    var index = 10;
     var filter = $('#status').find(':selected').val();
     if (filter == 'all') {
         return true;
     }
-    var value = $(aData[index]).attr('value');
-    return value == filter;
+    console.log(aData[index]);
+    return aData[index] == filter;
 }
 
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
@@ -83,7 +83,8 @@ $(document).ready( function() {
             { "data": "evaluation" },
             { "data": "participant" },
             { "data": "event" },
-            { "data": "participant" }
+            { "data": "participant"},
+            { "data": "evaluation.status" }
         ],
         "columnDefs": [{
                 "render": function(data) {
@@ -128,6 +129,16 @@ $(document).ready( function() {
                },
                "targets": 9,
                "bSortable": false
+            }, {
+                "render": function(data) {
+                    if (data) {
+                        return data.value;
+                    } else {
+                        return "";
+                    }
+                },
+                "visible": false,
+                "targets": 10
             }
         ]
     });

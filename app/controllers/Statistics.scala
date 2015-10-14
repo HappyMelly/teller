@@ -71,7 +71,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
         Ok(views.html.v2.statistics.index(user, brand, brands))
       } { (brand, brands) =>
         Ok(views.html.v2.statistics.index(user, brand, brands))
-      }
+      } { Redirect(routes.Dashboard.index()) }
   }
 
   /**

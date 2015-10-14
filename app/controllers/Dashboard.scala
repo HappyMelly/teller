@@ -95,7 +95,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
             upcomingEvents,
             pastEvents.slice(0, 2),
             evaluations))
-        }
+        } { Ok(views.html.v2.dashboard.index(user)) }
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
       }
@@ -132,7 +132,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           upcomingEvents,
           pastEvents.slice(0, 2),
           evaluations))
-      }
+      } { Ok(views.html.v2.dashboard.index(user)) }
   }
 
   /**

@@ -206,7 +206,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
             brand.generateCert,
             facilitator,
             endorsement))
-        }
+        } { Redirect(routes.Dashboard.index()) }
       } getOrElse NotFound
 
   }

@@ -305,7 +305,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           } getOrElse x.event
           Ok(views.html.v2.event.details(user, brand, brands, List(),
             EventView(event, x.invoice), eventType.name, printableFees))
-        }
+        } { Redirect(routes.Dashboard.index()) }
       } getOrElse NotFound
   }
 
@@ -340,7 +340,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         Ok(views.html.v2.event.index(user, brand, brands, facilitators))
       } { (brand, brands) =>
         Ok(views.html.v2.event.index(user, brand, brands, List()))
-      }
+      } { Redirect(routes.Dashboard.index()) }
   }
 
   /**
