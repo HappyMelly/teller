@@ -47,6 +47,8 @@ GET           /brand/:code/picture                                           @co
 POST          /brand/:id/picture/delete                                      @controllers.Brands.deletePicture(id: Long)
 GET           /brand/:brandId/eventtype                                      @controllers.EventTypes.add(brandId: Long)
 POST          /brand/:brandId/eventtype                                      @controllers.EventTypes.create(brandId: Long)
+POST          /brand/:brandId/eventtype/:id                                  @controllers.EventTypes.update(brandId: Long, id: Long)
+GET           /brand/:brandId/eventtype/:id/delete                           @controllers.EventTypes.delete(brandId: Long, id: Long)
 GET           /brand/:id/eventtypes                                          @controllers.EventTypes.index(id: Long)
 GET           /brand/:id/facilitators                                        @controllers.Facilitators.index(id: Long)
 POST          /brand/:id/coordinator/:personId/type/:notification/off        @controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
@@ -112,9 +114,6 @@ POST          /event/:id/cancel                                              @co
 POST          /event/:id/invoice                                             @controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                                @controllers.Events.sendRequest(id: Long)
 GET           /event/:id/participants                                        @controllers.Participants.participants(id: Long)
-
-POST          /eventtype/:id                                                 @controllers.EventTypes.update(id: Long)
-GET           /eventtype/:id/delete                                          @controllers.EventTypes.delete(id: Long)
 
 GET           /exchangerate                                                  controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                  controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)

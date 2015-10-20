@@ -175,11 +175,11 @@
                     </p>
                   </form>
                 }
-              }
-              @if(user.account.isFacilitatorNow) {
-                <div class="text-warning">
-                  You will be invoiced for @view.event.fee.map { fee => @fee }. If the event didn't take place,
-                  <b>cancel it</b>.</div>
+                @if(user.account.isFacilitatorNow) {
+                  <div class="text-warning">
+                    You will be invoiced for @view.event.fee.map { fee => @fee }. If the event didn't take place,
+                    <b>cancel it</b>.</div>
+                }
               }
             </div>
           </div>

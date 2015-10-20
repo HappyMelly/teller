@@ -5,9 +5,8 @@
 
 @import _root_.templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
-@import models.UserRole.Role._
+@import models.UserRole.DynamicRole
 
 <div id="deactivatedStatus" class="alert alert-warning">
   <i class="glyphicon glyphicon-info-sign"></i> This brand is <strong>deactivated</strong>.
@@ -70,7 +69,7 @@
     <p>@desc.markdown</p>
   }
   <legend>Links</legend>
-  @if(links.length > 0) {
+  @if(links.nonEmpty) {
     <table id="links" class="datatables table table-bordered">
       <thead>
         <tr>
@@ -85,7 +84,7 @@
             <td>@link.linkType.capitalize</td>
             <td><a href="@link.link" target="_blank">@link.link</td>
             <td style="font-weight: normal;">
-              @restrict(handler, List(as(Editor.toString))) {
+              @dynamic(handler, "brand", DynamicRole.Coordinator) {
                 <a data-id="@link.id.get" href="#" class="remove"
                   data-href="@routes.BrandLinks.remove(brand.id.get, link.id.get)">
                   <i class="glyphicon glyphicon-trash"></i> Remove</a>
@@ -97,7 +96,7 @@
     </table>
   }
   <div id="brandLinkNotification"></div>
-  @restrict(handler, List(as(Editor.toString))) {
+    @dynamic(handler, "brand", DynamicRole.Coordinator) {
     <form id="addLinkForm" class="form-inline pull-right" method="POST"
       action="@CSRF(routes.BrandLinks.create(brand.id.get))">
       <select name="type" id="linkType" class="form-control input-sm">

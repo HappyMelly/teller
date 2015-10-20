@@ -5,8 +5,7 @@
     handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import models.UserRole.Role._
+@import models.UserRole.DynamicRole
 
 <p>Event Types help you to categories your events. The brand should have at least
   1 event type to be able to have events. </p>
@@ -20,7 +19,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
 <br/>
 <div id="notification">
 </div>
-@if(eventTypes.length > 0) {
+@if(eventTypes.nonEmpty) {
   <table id="eventTypes" class="datatables table table-bordered">
     <thead>
       <tr>
@@ -39,8 +38,8 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <td data-name="maxHours">@eventType.maxHours</td>
         <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
-        @restrict(handler, List(as(Editor.toString))) {
-          <a href="@routes.EventTypes.delete(eventType.id.get)">
+        @dynamic(handler, "brand", DynamicRole.Coordinator) {
+          <a href="@routes.EventTypes.delete(eventType.brandId, eventType.id.get)">
             <i class="glyphicon glyphicon-trash"></i> Remove</a>
         }
         </th>
@@ -49,7 +48,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
     </tbody>
   </table>
 }
-@restrict(handler, List(as(Editor.toString))) {
+@dynamic(handler, "brand", DynamicRole.Coordinator) {
   <a class="btn btn-success btn-sm pull-right"
     href="@routes.EventTypes.add(brandId)">
     <i class="glyphicon glyphicon-plus"></i>Add Event Type

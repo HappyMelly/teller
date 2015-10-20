@@ -6,10 +6,10 @@
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
-@import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.DynamicRole
+
 
 @main(brand.code + " - Brand", "brands", user) {
 
@@ -43,7 +43,8 @@
     <div class="page-header">
     <h1>
       @brand.name
-      @restrict(handler, List(as(Editor.toString))) {
+
+      @dynamic(handler, "brand", DynamicRole.Coordinator) {
         <div class="actions pull-right">
           <div class="button">
             <a class="btn btn-default" href="@routes.Brands.edit(brand.id.get)">
@@ -54,12 +55,10 @@
             <div class="button">
               <form class="delete form-inline" method="post" text="image"
               action="@CSRF(routes.Brands.deletePicture(brand.id.get))">
-              @restrict(handler, List(as(Editor.toString))) {
                 <button class="btn btn-warning btn-sm" type="submit">
                   <i class="glyphicon glyphicon-white glyphicon-trash"></i>
                   Delete Picture
                 </button>
-              }
               </form>
             </div>
           }

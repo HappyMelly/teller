@@ -18,7 +18,9 @@
       @v2.html.block("") { <h1>@title</h1> }
       <div id="emptyForm" value="@emptyForm"></div>
       @v2.html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
-        <div id="currentUserId" value="@user.person.id.get"></div>
+        @if(user.account.isFacilitatorNow) {
+          <div id="currentUserId" value="@user.person.id.get"></div>
+        }
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
         <div id="currentInvoiceToId" value="@form("invoice").value"></div>
         @v2.html.block("General") {

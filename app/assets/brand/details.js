@@ -93,11 +93,12 @@ function collectEventTypePostData(element) {
 function updateEventType(object, value) {
     $('#notification').html("");
     var id = $(object).parent().data('id');
+    var brandId = $(object).parent().data('brandid');
     var data = collectEventTypePostData($(object).parent());
     $("body").css("cursor", "progress");
     $.ajax({
         type: "POST",
-        url: jsRoutes.controllers.EventTypes.update(id).url,
+        url: jsRoutes.controllers.EventTypes.update(brandId, id).url,
         data: data
     }).done(function(data) {
         showEventTypeNotification("You successfully updated the event type", 'success');

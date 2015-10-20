@@ -94,6 +94,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
               val withErrors = form.withError(x._1, x._2)
               BadRequest(views.html.eventtype.form(user, brand, withErrors))
             } getOrElse {
+              println(received)
               val inserted = eventTypeService.insert(received.copy(brandId = brandId))
               val log = activity(inserted, user.person, Some(brand)).connected.insert()
               val route = routes.Brands.details(brandId).url + "#types"
@@ -108,7 +109,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Type identifier
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       eventTypeService.find(id).map { eventType ⇒
@@ -142,18 +143,19 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Event type identifier
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      eventTypeForm.bindFromRequest.fold(
-        hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
-        updated ⇒ brandService.find(updated.brandId) map { brand ⇒
-          validateUpdatedEventType(id, updated) map { x ⇒
-            jsonRequest(x._1, Messages(x._2))
-          } getOrElse {
-            eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
-            jsonSuccess("success")
-          }
-        } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
+  def update(brandId: Long, id: Long) =  SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        eventTypeForm.bindFromRequest.fold(
+          hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
+          updated ⇒ brandService.find(updated.brandId) map { brand ⇒
+            validateUpdatedEventType(id, updated) map { x ⇒
+              jsonRequest(x._1, Messages(x._2))
+            } getOrElse {
+              eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
+              jsonSuccess("success")
+            }
+          } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
   }
 
   /**

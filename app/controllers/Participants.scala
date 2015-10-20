@@ -144,7 +144,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         }
         val personId = account.personId
         val participants =
-          if (coordinator) {
+          if (coordinator & user.account.isCoordinatorNow) {
             Participant.findByBrand(brand.id)
           } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
             val events = eventService.findByFacilitator(personId, brand.id).map(_.id.get)

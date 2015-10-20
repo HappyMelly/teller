@@ -3,8 +3,7 @@
     handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import models.UserRole.Role._
+@import models.UserRole.DynamicRole
 
 <p>Share with everyone what satisfied customers say about you</p>
 <div id="testimonialList">
@@ -30,7 +29,7 @@
     }
   }
 </div>
-@restrict(handler, List(as(Editor.toString))) {
+@dynamic(handler, "brand", DynamicRole.Coordinator) {
   <a type="button" class="btn btn-success pull-right"
     href="@routes.BrandTestimonials.add(brandId)">
     <i class="glyphicon glyphicon-plus"></i> Add Testimonial</a>

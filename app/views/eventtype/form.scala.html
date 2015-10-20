@@ -16,7 +16,7 @@
     @html.form(action = CSRF(routes.EventTypes.create(brand.id.get))) {
       <input type="hidden" name="brandId" value="@brand.id.get"/>
       @html.text(form("name"), '_label -> "Name")
-      @html.text(form("defaultTitle"), '_label -> "Default title",
+      @html.text(form("title"), '_label -> "Default title",
       '_placeholder -> "Ex: Regular Management 3.0 event")
       @html.number(form("maxHours"), '_label -> "Maximum chargable hours")
       @html.checkbox(form("free"), '_label -> "Facilitators are able to create free events of this type")
