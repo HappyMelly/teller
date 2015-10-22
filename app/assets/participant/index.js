@@ -146,7 +146,7 @@ $(document).ready( function() {
         .api()
         .on('init.dt', function (e, settings, data) {
             loadEventList(events);
-            initializeParticipantActions();
+            initializeParticipantActions("table");
         });
 
     $("div.toolbar").html($('#filter-containter').html());

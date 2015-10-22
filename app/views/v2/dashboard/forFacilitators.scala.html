@@ -21,6 +21,9 @@
           @if(past.nonEmpty) {
             @v2.dashboard.blocks.past(past)
           }
+          @if(evaluations.nonEmpty) {
+            @v2.dashboard.blocks.evaluations(evaluations)
+          }
         </div>
         <div class="col-md-3">
           <div class="panel panel-success notification-widget" id="completionWidget">
@@ -28,12 +31,14 @@
           <div class="notification-widget info-board">
             <div class="title">Info board</div>
             <p>@future.length upcoming events</p>
-            @*<p>@evaluations.length evaluations for approval</p>*@
+            <p>@past.length past events</p>
+            <p>@evaluations.length evaluations to act on</p>
           </div>
         </div>
       </div>
     </div>
   </div>
 }
+<script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
 <script src="@routes.Assets.at("dashboard/index.js")" type="text/javascript"></script>
 

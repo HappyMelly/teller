@@ -84,16 +84,13 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           val upcomingEvents = events
             .filter(_.schedule.end.toString >= LocalDate.now().toString)
             .slice(0, 3)
-          val pastEvents = events
-            .filter(_.schedule.end.toString < LocalDate.now().toString)
-            .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
           val evaluations = evaluationService
-            .findByEventsWithParticipants(pastEvents.map(_.id.get))
+            .findUnhandled(events)
             .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
             .slice(0, 10)
           Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
             upcomingEvents,
-            pastEvents.slice(0, 2),
+            pastEvents(events),
             evaluations))
         } { Ok(views.html.v2.dashboard.index(user)) }
       } else {
@@ -117,20 +114,17 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       } { (brand, brands) =>
         val events = eventService.findByFacilitator(
           user.account.personId,
-          brandId = None)
+          brandId = Some(id))
         val upcomingEvents = events
           .filter(_.schedule.end.toString >= LocalDate.now().toString)
           .slice(0, 3)
-        val pastEvents = events
-          .filter(_.schedule.end.toString < LocalDate.now().toString)
-          .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
         val evaluations = evaluationService
-          .findByEventsWithParticipants(pastEvents.map(_.id.get))
+          .findUnhandled(events)
           .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
           .slice(0, 10)
         Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
           upcomingEvents,
-          pastEvents.slice(0, 2),
+          pastEvents(events),
           evaluations))
       } { Ok(views.html.v2.dashboard.index(user)) }
   }
@@ -144,6 +138,23 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       val currentUser = user.person
       Redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
+
+  /**
+   * Returns 3 past events happened in the last 7 days
+   * @param events List of all events
+   */
+  protected def pastEvents(events: List[Event]): List[Event] = {
+    val now = LocalDate.now()
+    val weekBefore = now.minusDays(7)
+    events
+      .filter(_.schedule.end.isBefore(now))
+      .filter(_.schedule.end.isAfter(weekBefore))
+      .sortBy(_.schedule.end.toString)(Ordering[String].reverse).slice(0, 2)
+  }
+//
+//  protected def unhandledEvaluations() = {
+//    evaluationService.find
+//  }
 
 }
 

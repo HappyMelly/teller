@@ -28,3 +28,7 @@
 function afterEventCancellation(object) {
     $(object).parents('.upcoming-event').remove();
 }
+
+$(document).ready( function() {
+    initializeParticipantActions("list");
+});

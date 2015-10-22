@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.{Evaluations, Events, Participants, People}
-import models.{Evaluation, EvaluationPair}
+import models.{EvaluationStatus, Evaluation, EvaluationPair, Event}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -104,6 +104,29 @@ class EvaluationService extends Services{
       } else {
         List()
       }
+  }
+
+  /**
+   * Returns list of unhandled (Pending, Unconfirmed) evaluations for the given
+   *  events
+   * @param events List of events
+   */
+  def findUnhandled(events: List[Event]) = DB.withSession {
+    implicit session =>
+      import models.database.Evaluations._
+
+      if (events.nonEmpty) {
+        val baseQuery = for {
+          e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
+          part ← TableQuery[Participants] if part.eventId === e.id
+          p ← TableQuery[People] if p.id === part.personId
+          ev ← evaluations if ev.id === part.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
+        } yield (e, p, ev)
+        baseQuery.list
+      } else {
+        List()
+      }
+
   }
 
   /**

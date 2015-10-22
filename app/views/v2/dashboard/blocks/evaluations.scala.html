@@ -4,7 +4,7 @@
 @import views.ViewHelpers.dateInterval
 
 <div class="block evaluations">
-  <h3>Evaluations waiting for approval (@evaluations.length)</h3>
+  <h3>Evaluations to act on (@evaluations.length)</h3>
   <div class="list-group-container">
     <div class="list-group">
       @for((event, person, evaluation) <- evaluations) {
@@ -17,9 +17,19 @@
                     @person.fullName</a> rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
-                <p class="text-muted">@event.location.city, @dateInterval(event.schedule.start, event.schedule.end)</p>
+                <p class="text-muted">
+                  @event.location.city, @dateInterval(event.schedule.start, event.schedule.end)
+                  <span class="pull-right">
+                    @if(evaluation.status == models.EvaluationStatus.Pending) {
+                      <i class="fa fa-fw fa-thumb-tack"></i>
+                    } else {
+                      <i class="fa fa-fw fa-hourglass"></i>
+                    }
+                    @Messages("models.EvaluationStatus." + evaluation.status)
+                  </span>
+                </p>
               </div>
-              <div class="circle-show-more">
+              <div class="circle-show-more" data-event="@evaluation.eventId" data-person="@person.identifier">
                 <span class="glyphicon glyphicon-chevron-down"></span>
               </div>
             </div>
