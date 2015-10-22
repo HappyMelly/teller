@@ -55,7 +55,7 @@ trait Utilities extends Controller with Services {
         } else Redirect(routes.Dashboard.index())
       }
     } else if (account.isFacilitatorNow) {
-      val licenses = licenseService.activeLicenses(account.personId)
+      val licenses = licenseService.licenses(account.personId)
       val brands = licenses.map(_.brand)
       brandId map { identifier =>
         brands.find(_.identifier == identifier) map { brand =>
