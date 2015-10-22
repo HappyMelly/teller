@@ -41,7 +41,7 @@ trait Utilities extends Controller with Services {
   
   protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
                                   (coordinator: (Brand, List[Brand]) => Result)
-                                  (facilitator: (Brand, List[Brand]) => Result)
+                                  (facilitator: (Option[Brand], List[Brand]) => Result)
                                   (ordinaryUser: Result): Result = {
     if (account.isCoordinatorNow) {
       val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
@@ -59,12 +59,14 @@ trait Utilities extends Controller with Services {
       val brands = licenses.map(_.brand)
       brandId map { identifier =>
         brands.find(_.identifier == identifier) map { brand =>
-          facilitator(brand, brands)
+          facilitator(Some(brand), brands)
         } getOrElse Redirect(routes.Dashboard.index())
       } getOrElse {
-        if (brands.nonEmpty) {
-          facilitator(brands.head, brands)
-        } else Redirect(routes.Dashboard.index())
+        brands.length match {
+          case 1 => facilitator(Some(brands.head), brands)
+          case 0 => Redirect(routes.Dashboard.index())
+          case _ => facilitator(None, brands)
+        }
       }
     } else ordinaryUser
   }

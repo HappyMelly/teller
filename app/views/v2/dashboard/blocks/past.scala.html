@@ -1,4 +1,4 @@
-@(events: List[Event])
+@(events: List[(Event, Option[Brand])], withBrand: Boolean)
 
 @import views.ViewHelpers.dateInterval
 
@@ -7,6 +7,7 @@
   <table id="events" class="table">
     <thead>
       <tr>
+        @if(withBrand) { <th>Brand</th> }
         <th>Title</th>
         <th>Location</th>
         <th>Total hours</th>
@@ -14,8 +15,15 @@
       </tr>
     </thead>
     <tbody>
-    @for(event <- events) {
+    @for((event, brand) <- events) {
       <tr>
+        @if(withBrand) {
+          <td>
+            @brand.map { value =>
+              <a href="@routes.Dashboard.overview(value.identifier)">@value.name</a>
+            }.getOrElse { No brand }
+          </td>
+        }
         <td>
           <a href="@routes.Events.details(event.id.get).url">
           @event.title

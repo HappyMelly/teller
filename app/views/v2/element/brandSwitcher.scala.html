@@ -1,0 +1,24 @@
+@(activeBrand: Option[Brand],
+    brands: List[Brand],
+    withAllBrands: Boolean = false)
+
+@if(brands.length > 1) {
+  <div class="brand-menu">
+    <div class="container">
+      @if(withAllBrands) {
+        @if(activeBrand.nonEmpty) {
+          <span><a href="@routes.Dashboard.index()">All brands</a></span>
+        } else {
+          <span>All brands</span>
+        }
+      }
+      @for(brand <- brands) {
+        @if(activeBrand.exists(_.identifier == brand.identifier)) {
+          <span>@brand.name</span>
+        } else {
+          <span><a href="@routes.Dashboard.overview(brand.identifier)">@brand.name</a></span>
+        }
+      }
+    </div>
+  </div>
+}

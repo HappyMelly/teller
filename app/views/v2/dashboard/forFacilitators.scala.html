@@ -1,28 +1,34 @@
 @(user: ActiveUser,
-  brand: Brand,
+  activeBrand: Option[Brand],
   brands: List[Brand],
-  future: List[Event],
-  past: List[Event],
-  evaluations: List[(Event, Person, Evaluation)])(implicit flash: Flash,
+  future: List[(Event, Option[Brand])],
+  past: List[(Event, Option[Brand])],
+  evaluations: List[((Event, Person, Evaluation),Option[Brand])])(implicit flash: Flash,
   request: Request[Any],
   handler: AuthorisationHandler)
 
 @v2.main("Home", "", user) {
-  @v2.element.brandHeader(brand, brands){
-    <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
+  @activeBrand.map { brand =>
+    @v2.element.brandHeader(brand, brands, withAllBrands = true){
+      <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
+    }
+  }.getOrElse {
+    <div class="row brand-header">
+      @v2.element.brandSwitcher(None, brands, withAllBrands = true)
+    </div>
   }
   <div class="row page-content">
     <div class="container">
       <div class="row">
         <div class="col-md-9 content-block">
           @if(future.nonEmpty) {
-            @v2.dashboard.blocks.upcoming(future)
+            @v2.dashboard.blocks.upcoming(future, activeBrand.isEmpty)
           }
           @if(past.nonEmpty) {
-            @v2.dashboard.blocks.past(past)
+            @v2.dashboard.blocks.past(past, activeBrand.isEmpty)
           }
           @if(evaluations.nonEmpty) {
-            @v2.dashboard.blocks.evaluations(evaluations)
+            @v2.dashboard.blocks.evaluations(evaluations, activeBrand.isEmpty)
           }
         </div>
         <div class="col-md-3">

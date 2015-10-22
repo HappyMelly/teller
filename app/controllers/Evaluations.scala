@@ -201,9 +201,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
             facilitator,
             endorsement))
         } { (brand, brands) =>
-          Ok(views.html.v2.evaluation.details(user, brand, brands, x,
+          Ok(views.html.v2.evaluation.details(user, brand.get, brands, x,
             participant.fullName,
-            brand.generateCert,
+            brand.get.generateCert,
             facilitator,
             endorsement))
         } { Redirect(routes.Dashboard.index()) }

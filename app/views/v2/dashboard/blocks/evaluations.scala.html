@@ -1,4 +1,5 @@
-@(evaluations: List[(Event, Person, Evaluation)])
+@(evaluations: List[((Event, Person, Evaluation), Option[Brand])],
+    withBrand: Boolean)
 
 @import views.Evaluations
 @import views.ViewHelpers.dateInterval
@@ -7,7 +8,7 @@
   <h3>Evaluations to act on (<span class="evaluation-number">@evaluations.length</span>)</h3>
   <div class="list-group-container">
     <div class="list-group">
-      @for((event, person, evaluation) <- evaluations) {
+      @for(((event, person, evaluation), brand) <- evaluations) {
         <div class="list-group-item">
           <div class="list-group-item-body">
             <div class="row list-group-item-text">
@@ -18,6 +19,9 @@
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
                 <p class="text-muted">
+                  @if(withBrand) {
+                    @brand.map { value => @value.name, }
+                  }
                   @event.location.city, @dateInterval(event.schedule.start, event.schedule.end)
                   <span class="pull-right">
                     @if(evaluation.status == models.EvaluationStatus.Pending) {
