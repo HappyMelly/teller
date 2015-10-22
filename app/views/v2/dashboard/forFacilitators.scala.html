@@ -30,9 +30,9 @@
           </div>
           <div class="notification-widget info-board">
             <div class="title">Info board</div>
-            <p>@future.length upcoming events</p>
+            <p><span class="upcoming-number">@future.length</span> upcoming events</p>
             <p>@past.length past events</p>
-            <p>@evaluations.length evaluations to act on</p>
+            <p><span class="evaluation-number">@evaluations.length</span> evaluations to act on</p>
           </div>
         </div>
       </div>
@@ -40,5 +40,6 @@
   </div>
 }
 <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("dashboard/infoBoard.js")" type="text/javascript"></script>
 <script src="@routes.Assets.at("dashboard/index.js")" type="text/javascript"></script>
 

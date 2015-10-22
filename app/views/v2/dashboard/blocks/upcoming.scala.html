@@ -4,7 +4,7 @@
 
 <div class="row block">
   <div class="col-md-12">
-    <h3>Upcoming events (@events.length)</h3>
+    <h3>Upcoming events (<span class="upcoming-number">@events.length</span>)</h3>
     @for((event, index) <- events.zipWithIndex) {
       <div class="upcoming-event @if(index % 2 == 0) { left-widget }">
         <div class="title">

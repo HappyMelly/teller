@@ -52,6 +52,7 @@ function removeParticipantDetailsFromList(object) {
 
 function removeParticipantFromList() {
     $('.evaluations').find('div.active').remove();
+    updateEvaluationNumber();
 }
 
 /**

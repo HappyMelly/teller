@@ -84,14 +84,10 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           val upcomingEvents = events
             .filter(_.schedule.end.toString >= LocalDate.now().toString)
             .slice(0, 3)
-          val evaluations = evaluationService
-            .findUnhandled(events)
-            .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-            .slice(0, 10)
           Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
             upcomingEvents,
             pastEvents(events),
-            evaluations))
+            unhandledEvaluations(events)))
         } { Ok(views.html.v2.dashboard.index(user)) }
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
@@ -118,14 +114,10 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
         val upcomingEvents = events
           .filter(_.schedule.end.toString >= LocalDate.now().toString)
           .slice(0, 3)
-        val evaluations = evaluationService
-          .findUnhandled(events)
-          .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-          .slice(0, 10)
         Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
           upcomingEvents,
           pastEvents(events),
-          evaluations))
+          unhandledEvaluations(events)))
       } { Ok(views.html.v2.dashboard.index(user)) }
   }
 
@@ -151,10 +143,16 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       .filter(_.schedule.end.isAfter(weekBefore))
       .sortBy(_.schedule.end.toString)(Ordering[String].reverse).slice(0, 2)
   }
-//
-//  protected def unhandledEvaluations() = {
-//    evaluationService.find
-//  }
+
+  /**
+   * Returns unhandled evaluations for the given events
+   * @param events List of events
+   */
+  protected def unhandledEvaluations(events: List[Event]) = {
+    evaluationService
+      .findUnhandled(events)
+      .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
+  }
 
 }
 
