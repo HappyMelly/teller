@@ -22,15 +22,17 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-
-/**
- * This function is called from 'cancelEvent' function
- */
-function afterEventCancellation(object) {
-    $(object).parents('.upcoming-event').remove();
-    updateUpcomingEventsNumber();
+function updateEvaluationNumber() {
+    var number = $('.evaluations').find('.list-group-item').length;
+    if (number == 0) {
+        $('.evaluations').remove();
+    } else {
+        $('.evaluation-number').text(number);
+    }
 }
 
-$(document).ready( function() {
-    initializeParticipantActions("list");
-});
+function updateUpcomingEventsNumber() {
+    var number = $.find('.upcoming-event').length;
+    $('.upcoming-number').text(number);
+}
+

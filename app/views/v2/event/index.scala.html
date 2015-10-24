@@ -4,7 +4,7 @@
   facilitators: List[(Long, String)])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
 
 @v2.main("Events", "events", user) {
-  @v2.element.brandHeader(brand, brands, "events") {
+  @v2.element.brandHeader(brand, brands, "events", facilitator = user.account.isFacilitatorNow) {
     <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
   }
   <div class="row">

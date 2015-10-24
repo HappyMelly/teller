@@ -46,7 +46,7 @@ class EvaluationsApiSpec extends Specification {
   def e1 = new MockContext {
     val evalService = mock[EvaluationService]
     val id = "test"
-    (evalService.find(_: String)).expects(id).returning(None)
+    (evalService.findByConfirmationId(_: String)).expects(id).returning(None)
     val controller = new TestEvaluationsApi
     controller.evaluationService_=(evalService)
     val res = controller.confirm(id).apply(FakeRequest("POST", ""))

@@ -303,7 +303,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
             Event.withFee(x.event, y.fee, eventType.maxHours)
           } getOrElse x.event
-          Ok(views.html.v2.event.details(user, brand, brands, List(),
+          Ok(views.html.v2.event.details(user, brand.get, brands, List(),
             EventView(event, x.invoice), eventType.name, printableFees))
         } { Redirect(routes.Dashboard.index()) }
       } getOrElse NotFound
@@ -339,7 +339,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           map(l ⇒ (l.identifier, l.fullName)).sortBy(_._2)
         Ok(views.html.v2.event.index(user, brand, brands, facilitators))
       } { (brand, brands) =>
-        Ok(views.html.v2.event.index(user, brand, brands, List()))
+        Ok(views.html.v2.event.index(user, brand.get, brands, List()))
       } { Redirect(routes.Dashboard.index()) }
   }
 

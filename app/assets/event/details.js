@@ -162,7 +162,7 @@ $(document).ready( function() {
         ]
     });
     participantTable.api().on('init.dt', function () {
-        initializeParticipantActions();
+        initializeParticipantActions("table");
     });
 
     $("div.toolbar").html($('#filter-containter').html());

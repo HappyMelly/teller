@@ -1,13 +1,14 @@
-@(evaluations: List[(Event, Person, Evaluation)])
+@(evaluations: List[((Event, Person, Evaluation), Option[Brand])],
+    withBrand: Boolean)
 
 @import views.Evaluations
 @import views.ViewHelpers.dateInterval
 
 <div class="block evaluations">
-  <h3>Evaluations waiting for approval (@evaluations.length)</h3>
+  <h3>Evaluations to act on (<span class="evaluation-number">@evaluations.length</span>)</h3>
   <div class="list-group-container">
     <div class="list-group">
-      @for((event, person, evaluation) <- evaluations) {
+      @for(((event, person, evaluation), brand) <- evaluations) {
         <div class="list-group-item">
           <div class="list-group-item-body">
             <div class="row list-group-item-text">
@@ -17,9 +18,26 @@
                     @person.fullName</a> rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
-                <p class="text-muted">@event.location.city, @dateInterval(event.schedule.start, event.schedule.end)</p>
+                <div class="text-muted">
+                  <div class="pull-left evaluation-event-info">
+                    @if(withBrand) {
+                      @brand.map { value => @value.name, }
+                    }
+                    @event.location.city, @dateInterval(event.schedule.start, event.schedule.end)
+                  </div>
+                  <div class="pull-left">
+                    @if(evaluation.status == models.EvaluationStatus.Pending) {
+                      <i class="fa fa-fw fa-thumb-tack"></i>
+                      @Messages("models.EvaluationStatus." + evaluation.status)
+                    } else {
+                      <i class="fa fa-fw fa-hourglass"></i>
+                      @Messages("models.EvaluationStatus." + evaluation.status)<br/>
+                      <a class="send-confirmation-request" data-id="@evaluation.identifier" href="#">Resend email</a>
+                    }
+                  </div>
+                </div>
               </div>
-              <div class="circle-show-more">
+              <div class="circle-show-more" data-event="@evaluation.eventId" data-person="@person.identifier">
                 <span class="glyphicon glyphicon-chevron-down"></span>
               </div>
             </div>

@@ -38,7 +38,7 @@ function updateEndorsementAction(url, type) {
 }
 
 $(document).ready( function() {
-    initializeParticipantActions();
+    initializeParticipantActions("table");
     initializeParticipantActionsInDetails();
     $("#endorsement").on('click', function(e) {
         e.preventDefault();

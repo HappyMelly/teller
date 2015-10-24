@@ -6,7 +6,7 @@
 
 
 @v2.main("Statistics", "statistics", user) {
-  @v2.element.brandHeader(brand, brands, "statistics") { }
+  @v2.element.brandHeader(brand, brands, "statistics", facilitator = user.account.isFacilitatorNow) { }
   <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
   <div class="container">
     <div class="row statistics-block">

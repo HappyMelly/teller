@@ -1,11 +1,12 @@
 @(user: ActiveUser,
     brand: Brand,
-    brands: List[Brand])(implicit request: Request[Any],
+    brands: List[Brand],
+    facilitator: Boolean = false)(implicit request: Request[Any],
     request2flash: Flash,
     handler: AuthorisationHandler)
 
 @v2.main("Participants", "participants", user) {
-    @v2.element.brandHeader(brand, brands, "participants") {
+    @v2.element.brandHeader(brand, brands, "participants", facilitator = user.account.isFacilitatorNow) {
         <a class="btn btn-default" href="@routes.Participants.add(brandId = None, eventId = None, ref = None)">
             Add Participant</a>
         @if(user.account.isCoordinatorNow) {

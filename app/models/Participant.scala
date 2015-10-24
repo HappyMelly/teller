@@ -27,7 +27,7 @@ package models
 import models.database.PortableJodaSupport._
 import models.database.{ Participants, People, Events, Evaluations }
 import models.database.Evaluations.evaluationStatusTypeMapper
-import models.service.{ PersonService, EventService }
+import models.service.{EvaluationService, PersonService, EventService}
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -57,7 +57,7 @@ case class Participant(
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
   lazy val person: Option[Person] = PersonService.get.find(personId)
-  lazy val evaluation: Option[Evaluation] = Evaluation.find(evaluationId.getOrElse(0))
+  lazy val evaluation: Option[Evaluation] = EvaluationService.get.find(evaluationId.getOrElse(0))
 
   /**
    * A participant is a person that's why only an event and evaluation are updatable

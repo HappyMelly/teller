@@ -1,7 +1,8 @@
 @(participant: Participant,
     evaluation: Option[Evaluation],
     virtual: Boolean,
-    coordinator: Boolean)(implicit request: Request[Any],
+    coordinator: Boolean,
+    identicalEvaluation: Option[Evaluation])(implicit request: Request[Any],
     token: play.filters.csrf.CSRF.Token)
 
 <table class="table table-rowed">
@@ -23,7 +24,7 @@
       @if(coordinator && evaluation.nonEmpty) {
         <a href="@routes.Evaluations.edit(evaluation.get.identifier)">Edit</a>
       }
-      @views.html.v2.evaluation.body(eval)
+      @views.html.v2.evaluation.body(eval, identicalEvaluation)
     </td></tr>
   }
 </table>

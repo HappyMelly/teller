@@ -57,7 +57,7 @@ object EvaluationStatus extends Enumeration {
  * @param eval Evaluation
  * @param event Related event
  */
-case class EvaluationPair(eval: Evaluation, event: Event)
+case class EvaluationEventView(eval: Evaluation, event: Event)
 
 /**
  * An evaluation which a participant gives to an event
@@ -166,6 +166,23 @@ case class Evaluation(
   }
 
   /**
+   * Returns approved/rejected evaluation with the same impression and
+   * a participant of the same name
+   */
+  def identical(): Option[Evaluation] = {
+    val evaluations = evaluationService.
+      findByEventsWithParticipants(List(this.eventId))
+    evaluations.find(_._3.identifier == this.identifier).map { view =>
+      evaluations.
+        filter(x => x._3.approved || x._3.rejected).
+        filter(_._3.impression == this.impression).
+        find(x => x._2.firstName.toLowerCase == view._2.firstName.toLowerCase &&
+        x._2.lastName.toLowerCase == view._2.lastName.toLowerCase).
+        flatMap(x => Some(x._3))
+    } getOrElse None
+  }
+
+  /**
    * Sets the evaluation to Pending state and returns the updated evaluation
    */
   def confirm(): Evaluation =
@@ -173,6 +190,19 @@ case class Evaluation(
       copy(status = EvaluationStatus.Pending).
       update().
       sendNewEvaluationNotification()
+
+  /**
+   * Sends a confirmation request to the participant
+   * @param defaultHook Link to a default confirmation page
+   * @return Returns the evaluation
+   */
+  def sendConfirmationRequest(defaultHook: String) = {
+    val brand = brandService.find(event.brandId).get
+    val participant = personService.find(this.personId).get
+    val token = this.confirmationId getOrElse ""
+    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
+    this
+  }
 
   protected def sendNewEvaluationNotification() = {
     val brand = brandService.findWithCoordinators(event.brandId).get
@@ -187,21 +217,10 @@ case class Evaluation(
     this
   }
 
-  /**
-   * Sends a confirmation request to the participant
-   * @param defaultHook Link to a default confirmation page
-   * @return Returns the evaluation
-   */
-  protected def sendConfirmationRequest(defaultHook: String) = {
-    val brand = brandService.find(event.brandId).get
-    val participant = personService.find(this.personId).get
-    val token = this.confirmationId getOrElse ""
-    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
-    this
-  }
 }
 
-object Evaluation {
+object Evaluation extends Services {
+
 
   /**
    * Returns true if the evaluation can be approved
@@ -228,10 +247,6 @@ object Evaluation {
       TableQuery[Evaluations].
         filter(_.personId === personId).
         filter(_.eventId === eventId).firstOption
-  }
-
-  def find(id: Long) = DB.withSession { implicit session ⇒
-    TableQuery[Evaluations].filter(_.id === id).firstOption
   }
 
   def findAll: List[Evaluation] = DB.withSession { implicit session ⇒

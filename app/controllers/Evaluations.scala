@@ -91,6 +91,36 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Approve form submits to this action
+   *
+   * @param id Evaluation identifier
+   * @param ref Identifier of a page where a user should be redirected
+   */
+  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        evaluationService.findWithEvent(id).map { x ⇒
+          if (x.eval.approvable) {
+            val evaluation = x.eval.approve
+            // recalculate ratings
+            Event.ratingActor ! evaluation.eventId
+            Facilitator.ratingActor ! evaluation.eventId
+
+            val log = activity(evaluation, user.person).approved.insert()
+            sendApprovalConfirmation(user.person, evaluation, x.event)
+
+            jsonOk(Json.obj("date" -> evaluation.handled))
+          } else {
+            val error = x.eval.status match {
+              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
+              case _ ⇒ "error.evaluation.approve.approved"
+            }
+            jsonBadRequest(Messages(error))
+          }
+        }.getOrElse(NotFound)
+  }
+
+  /**
    * Add form submits to this action
    * @return
    */
@@ -122,7 +152,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
-        Evaluation.find(id).map { x ⇒
+        evaluationService.find(id).map { x ⇒
           x.delete()
           // recalculate ratings
           Event.ratingActor ! x.eventId
@@ -148,7 +178,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
-        Evaluation.find(id).map { evaluation ⇒
+        evaluationService.find(id).map { evaluation ⇒
           val form = Form(single(
             "eventId" -> longNumber))
           val (eventId) = form.bindFromRequest
@@ -187,7 +217,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      evaluationService.find(id) map { x ⇒
+      evaluationService.findWithEvent(id) map { x ⇒
         val participant = personService.find(x.eval.personId).get
         val personId = user.person.identifier
         val (facilitator, endorsement) = if (x.event.facilitatorIds.contains(personId))
@@ -201,9 +231,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
             facilitator,
             endorsement))
         } { (brand, brands) =>
-          Ok(views.html.v2.evaluation.details(user, brand, brands, x,
+          Ok(views.html.v2.evaluation.details(user, brand.get, brands, x,
             participant.fullName,
-            brand.generateCert,
+            brand.get.generateCert,
             facilitator,
             endorsement))
         } { Redirect(routes.Dashboard.index()) }
@@ -219,7 +249,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   def edit(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      Evaluation.find(id).map { evaluation ⇒
+      evaluationService.find(id).map { evaluation ⇒
         val account = user.account
         val events = findEvents(account)
 
@@ -230,62 +260,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Update an evaluation
-   *
-   * @param id Unique evaluation identifier
-   * @return
-   */
-  def update(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      Evaluation.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm(user.name, edit = true).bindFromRequest
-        form.fold(
-          formWithErrors ⇒ {
-            val account = user.account
-            val events = findEvents(account)
-
-            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None))
-          },
-          evaluation ⇒ {
-            val eval = evaluation.copy(id = Some(id)).update()
-            val log = activity(eval, user.person).updated.insert()
-            Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
-          })
-      }.getOrElse(NotFound)
-  }
-
-  /**
-   * Approve form submits to this action
-   *
-   * @param id Evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
-   */
-  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        evaluationService.find(id).map { x ⇒
-          if (x.eval.approvable) {
-            val evaluation = x.eval.approve
-            // recalculate ratings
-            Event.ratingActor ! evaluation.eventId
-            Facilitator.ratingActor ! evaluation.eventId
-
-            val log = activity(evaluation, user.person).approved.insert()
-            sendApprovalConfirmation(user.person, evaluation, x.event)
-
-            jsonOk(Json.obj("date" -> evaluation.handled))
-          } else {
-            val error = x.eval.status match {
-              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
-              case _ ⇒ "error.evaluation.approve.approved"
-            }
-            jsonBadRequest(Messages(error))
-          }
-        }.getOrElse(NotFound)
-  }
-
-  /**
    * Reject form submits to this action
    *
    * @param id Evaluation identifier
@@ -293,7 +267,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    */
   def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      evaluationService.find(id).map { x ⇒
+      evaluationService.findWithEvent(id).map { x ⇒
         if (x.eval.rejectable) {
           val evaluation = x.eval.reject()
 
@@ -316,11 +290,51 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Sends a request to a participant to confirm the evaluation
+   * @param id Evaluation id
+   */
+  def sendConfirmationRequest(id: Long) =  SecuredDynamicAction("evaluation", DynamicRole.Coordinator) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+        evaluationService.find(id) map { evaluation ⇒
+          val defaultHook = request.host + routes.Evaluations.confirm("").url
+          evaluation.sendConfirmationRequest(defaultHook)
+          jsonSuccess("Confirmation request was sent")
+        } getOrElse jsonNotFound("Evaluation not found")
+  }
+
+  /**
+   * Update an evaluation
+   *
+   * @param id Unique evaluation identifier
+   * @return
+   */
+  def update(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+
+      evaluationService.find(id).map { existingEvaluation ⇒
+        val form: Form[Evaluation] = evaluationForm(user.name, edit = true).bindFromRequest
+        form.fold(
+          formWithErrors ⇒ {
+            val account = user.account
+            val events = findEvents(account)
+
+            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None))
+          },
+          evaluation ⇒ {
+            val eval = evaluation.copy(id = Some(id)).update()
+            val log = activity(eval, user.person).updated.insert()
+            Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
+          })
+      }.getOrElse(NotFound)
+  }
+
+  /**
    * Confirms the given evaluation
    * @param confirmationId Confirmation unique id
    */
   def confirm(confirmationId: String) = Action { implicit request ⇒
-    evaluationService.find(confirmationId) map { x ⇒
+    evaluationService.findByConfirmationId(confirmationId) map { x ⇒
       x.confirm()
       Ok(views.html.evaluation.confirmed())
     } getOrElse NotFound(views.html.evaluation.notfound())

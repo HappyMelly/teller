@@ -81,20 +81,10 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           val events = eventService.findByFacilitator(
             account.personId,
             brandId = None)
-          val upcomingEvents = events
-            .filter(_.schedule.end.toString >= LocalDate.now().toString)
-            .slice(0, 3)
-          val pastEvents = events
-            .filter(_.schedule.end.toString < LocalDate.now().toString)
-            .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
-          val evaluations = evaluationService
-            .findByEventsWithParticipants(pastEvents.map(_.id.get))
-            .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-            .slice(0, 10)
           Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
-            upcomingEvents,
-            pastEvents.slice(0, 2),
-            evaluations))
+            upcomingEvents(events, brands),
+            pastEvents(events, brands),
+            unhandledEvaluations(events, brands)))
         } { Ok(views.html.v2.dashboard.index(user)) }
       } else {
         Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
@@ -117,21 +107,11 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       } { (brand, brands) =>
         val events = eventService.findByFacilitator(
           user.account.personId,
-          brandId = None)
-        val upcomingEvents = events
-          .filter(_.schedule.end.toString >= LocalDate.now().toString)
-          .slice(0, 3)
-        val pastEvents = events
-          .filter(_.schedule.end.toString < LocalDate.now().toString)
-          .sortBy(_.schedule.end.toString)(Ordering[String].reverse)
-        val evaluations = evaluationService
-          .findByEventsWithParticipants(pastEvents.map(_.id.get))
-          .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-          .slice(0, 10)
+          brandId = Some(id))
         Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
-          upcomingEvents,
-          pastEvents.slice(0, 2),
-          evaluations))
+          upcomingEvents(events, brands),
+          pastEvents(events, brands),
+          unhandledEvaluations(events, brands)))
       } { Ok(views.html.v2.dashboard.index(user)) }
   }
 
@@ -145,5 +125,40 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       Redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
 
+  /**
+   * Returns 3 past events happened in the last 7 days
+   * @param events List of all events
+   */
+  protected def pastEvents(events: List[Event], brands: List[Brand]) = {
+    val now = LocalDate.now()
+    val weekBefore = now.minusDays(7)
+    events
+      .filter(_.schedule.end.isBefore(now))
+      .filter(_.schedule.end.isAfter(weekBefore))
+      .sortBy(_.schedule.end.toString)(Ordering[String].reverse).slice(0, 2)
+      .map(event => (event, brands.find(_.identifier == event.brandId)))
+  }
+
+  /**
+   * Returns unhandled evaluations for the given events
+   * @param events List of events
+   */
+  protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
+    evaluationService
+      .findUnhandled(events)
+      .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
+      .map(value => (value, brands.find(_.identifier == value._1.brandId)))
+  }
+
+  /**
+   * Returns list of upcoming events (not more than 3)
+   * @param events List of all events
+   * @param brands List of related brands
+   */
+  protected def upcomingEvents(events: List[Event], brands: List[Brand]) = {
+    events
+      .filter(_.schedule.end.toString >= LocalDate.now().toString)
+      .slice(0, 3).map(event => (event, brands.find(_.identifier == event.brandId)))
+  }
 }
 

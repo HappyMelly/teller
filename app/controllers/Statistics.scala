@@ -70,7 +70,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         Ok(views.html.v2.statistics.index(user, brand, brands))
       } { (brand, brands) =>
-        Ok(views.html.v2.statistics.index(user, brand, brands))
+        Ok(views.html.v2.statistics.index(user, brand.get, brands))
       } { Redirect(routes.Dashboard.index()) }
   }
 

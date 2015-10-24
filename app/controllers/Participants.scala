@@ -104,7 +104,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         Ok(views.html.v2.participant.index(user, brand, brands))
       } { (brand, brands) =>
-        Ok(views.html.v2.participant.index(user, brand, brands))
+        Ok(views.html.v2.participant.index(user, brand.get, brands))
       } { Redirect(routes.Dashboard.index()) }
   }
 
@@ -197,10 +197,20 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
     implicit request => implicit handler => implicit user =>
       participantService.find(personId, eventId) map { participant =>
         val evaluation = participant.evaluationId map { evaluationId =>
-          evaluationService.find(evaluationId).flatMap(x => Some(x.eval))
+          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
+        } getOrElse None
+        val identical = evaluation.map { x =>
+          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
+            x.identical()
+          } else
+            None
         } getOrElse None
         val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
-        Ok(views.html.v2.participant.details(participant, evaluation, virtual, user.account.isCoordinatorNow))
+        Ok(views.html.v2.participant.details(participant,
+          evaluation,
+          virtual,
+          user.account.isCoordinatorNow,
+          identical))
       } getOrElse BadRequest("Participant does not exist")
   }
 
@@ -384,6 +394,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   private def evaluation(data: ParticipantView): JsValue = {
     Json.obj(
+      "id" -> data.evaluationId,
       "impression" -> data.impression,
       "status" -> data.status.map(status ⇒
         Json.obj(

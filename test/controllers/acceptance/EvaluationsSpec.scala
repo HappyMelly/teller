@@ -28,7 +28,7 @@ import controllers.Evaluations
 import helpers._
 import integration.PlayAppSpec
 import models.service._
-import models.{ EvaluationPair, EvaluationStatus }
+import models.{ EvaluationEventView, EvaluationStatus }
 import org.joda.time.DateTime
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.test.FakeRequest
@@ -64,8 +64,8 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     controller.identity_=(FakeUserIdentity.editor)
-    val evalPair = EvaluationPair(evaluation, EventHelper.one)
-    (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
+    val evalPair = EvaluationEventView(evaluation, EventHelper.one)
+    (evalService.findWithEvent(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
     val res = controller.details(1L).apply(fakeGetRequest())
 
@@ -77,8 +77,8 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Pending)
-    val evalPair = EvaluationPair(eval, EventHelper.one)
-    (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
+    val evalPair = EvaluationEventView(eval, EventHelper.one)
+    (evalService.findWithEvent(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
     val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
@@ -90,8 +90,8 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Approved)
-    val evalPair = EvaluationPair(eval, EventHelper.one)
-    (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
+    val evalPair = EvaluationEventView(eval, EventHelper.one)
+    (evalService.findWithEvent(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
     val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
@@ -103,8 +103,8 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e4 = {
     controller.identity_=(FakeUserIdentity.editor)
     val eval = evaluation.copy(status = EvaluationStatus.Rejected)
-    val evalPair = EvaluationPair(eval, EventHelper.one)
-    (evalService.find(_: Long)).expects(1L).returning(Some(evalPair))
+    val evalPair = EvaluationEventView(eval, EventHelper.one)
+    (evalService.findWithEvent(_: Long)).expects(1L).returning(Some(evalPair))
     expectations()
     val res = controller.details(1L).apply(fakeGetRequest("/1"))
 
@@ -115,7 +115,7 @@ class EvaluationsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e5 = {
     val id = "test"
-    (evalService.find(_: String)).expects(id).returning(None)
+    (evalService.findByConfirmationId(_: String)).expects(id).returning(None)
     val res = controller.confirm(id).apply(FakeRequest())
 
     status(res) must equalTo(NOT_FOUND)

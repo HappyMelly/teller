@@ -1,12 +1,17 @@
-@(events: List[Event])
+@(events: List[(Event, Option[Brand])], withBrand: Boolean)
 
 @import views.ViewHelpers.dateInterval
 
 <div class="row block">
   <div class="col-md-12">
-    <h3>Upcoming events (@events.length)</h3>
-    @for((event, index) <- events.zipWithIndex) {
+    <h3>Upcoming events (<span class="upcoming-number">@events.length</span>)</h3>
+    @for(((event, brand), index) <- events.zipWithIndex) {
       <div class="upcoming-event @if(index % 2 == 0) { left-widget }">
+        @if(withBrand) {
+          @brand.map { value =>
+            <small class="text-muted">@value.name</small>
+          }
+        }
         <div class="title">
           <a href="@routes.Events.details(event.id.get).url">
           <strong>@event.title</strong>
