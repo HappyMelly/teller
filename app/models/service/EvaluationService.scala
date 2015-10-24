@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.{Evaluations, Events, Participants, People}
-import models.{EvaluationStatus, Evaluation, EvaluationPair, Event}
+import models.{EvaluationStatus, Evaluation, EvaluationEventView, Event}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -47,28 +47,45 @@ class EvaluationService extends Services{
   }
 
   /**
+   * Returns the requested evaluation
+   * @param id Evaluation id
+   */
+  def find(id: Long) = DB.withSession { implicit session ⇒
+    TableQuery[Evaluations].filter(_.id === id).firstOption
+  }
+
+  /**
    * Returns evaluation with related event if exists; otherwise, None
    * @param id Evaluation id
    * @return
    */
-  def find(id: Long): Option[EvaluationPair] = DB.withSession {
+  def findWithEvent(id: Long): Option[EvaluationEventView] = DB.withSession {
     implicit session ⇒
       val query = for {
         x ← evaluations if x.id === id
         y ← TableQuery[Events] if y.id === x.eventId
       } yield (x, y)
-      query.firstOption.map(EvaluationPair.tupled)
+      query.firstOption.map(EvaluationEventView.tupled)
   }
 
   /**
    * Returns evaluation if it exists; otherwise, None
    * @param confirmationId Confirmation unique id
    */
-  def find(confirmationId: String): Option[Evaluation] = DB.withSession {
+  def findByConfirmationId(confirmationId: String): Option[Evaluation] = DB.withSession {
     implicit session ⇒
       evaluations.filter(_.confirmationId === confirmationId).firstOption
   }
 
+  /**
+   * Returns list of evaluation for the given event
+   * @param eventId Event id
+   */
+  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
+    implicit session ⇒
+      evaluations.filter(_.eventId === eventId).list
+  }
+  
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
@@ -86,7 +103,7 @@ class EvaluationService extends Services{
         List()
       }
   }
-
+  
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
@@ -126,16 +143,6 @@ class EvaluationService extends Services{
       } else {
         List()
       }
-
-  }
-
-  /**
-   * Returns list of evaluation for the given event
-   * @param eventId Event id
-   */
-  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
-    implicit session ⇒
-      evaluations.filter(_.eventId === eventId).list
   }
 
   /**

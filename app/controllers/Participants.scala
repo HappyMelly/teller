@@ -197,7 +197,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
     implicit request => implicit handler => implicit user =>
       participantService.find(personId, eventId) map { participant =>
         val evaluation = participant.evaluationId map { evaluationId =>
-          evaluationService.find(evaluationId).flatMap(x => Some(x.eval))
+          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
         } getOrElse None
         val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
         Ok(views.html.v2.participant.details(participant, evaluation, virtual, user.account.isCoordinatorNow))
@@ -384,6 +384,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   private def evaluation(data: ParticipantView): JsValue = {
     Json.obj(
+      "id" -> data.evaluationId,
       "impression" -> data.impression,
       "status" -> data.status.map(status ⇒
         Json.obj(

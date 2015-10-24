@@ -57,7 +57,7 @@ object EvaluationStatus extends Enumeration {
  * @param eval Evaluation
  * @param event Related event
  */
-case class EvaluationPair(eval: Evaluation, event: Event)
+case class EvaluationEventView(eval: Evaluation, event: Event)
 
 /**
  * An evaluation which a participant gives to an event
@@ -174,6 +174,19 @@ case class Evaluation(
       update().
       sendNewEvaluationNotification()
 
+  /**
+   * Sends a confirmation request to the participant
+   * @param defaultHook Link to a default confirmation page
+   * @return Returns the evaluation
+   */
+  def sendConfirmationRequest(defaultHook: String) = {
+    val brand = brandService.find(event.brandId).get
+    val participant = personService.find(this.personId).get
+    val token = this.confirmationId getOrElse ""
+    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
+    this
+  }
+
   protected def sendNewEvaluationNotification() = {
     val brand = brandService.findWithCoordinators(event.brandId).get
     val impression = views.Evaluations.impression(facilitatorImpression)
@@ -187,18 +200,6 @@ case class Evaluation(
     this
   }
 
-  /**
-   * Sends a confirmation request to the participant
-   * @param defaultHook Link to a default confirmation page
-   * @return Returns the evaluation
-   */
-  protected def sendConfirmationRequest(defaultHook: String) = {
-    val brand = brandService.find(event.brandId).get
-    val participant = personService.find(this.personId).get
-    val token = this.confirmationId getOrElse ""
-    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
-    this
-  }
 }
 
 object Evaluation {
@@ -228,10 +229,6 @@ object Evaluation {
       TableQuery[Evaluations].
         filter(_.personId === personId).
         filter(_.eventId === eventId).firstOption
-  }
-
-  def find(id: Long) = DB.withSession { implicit session ⇒
-    TableQuery[Evaluations].filter(_.id === id).firstOption
   }
 
   def findAll: List[Evaluation] = DB.withSession { implicit session ⇒

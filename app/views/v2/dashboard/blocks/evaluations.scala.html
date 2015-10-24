@@ -18,20 +18,24 @@
                     @person.fullName</a> rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
-                <p class="text-muted">
-                  @if(withBrand) {
-                    @brand.map { value => @value.name, }
-                  }
-                  @event.location.city, @dateInterval(event.schedule.start, event.schedule.end)
-                  <span class="pull-right">
+                <div class="text-muted">
+                  <div class="pull-left evaluation-event-info">
+                    @if(withBrand) {
+                      @brand.map { value => @value.name, }
+                    }
+                    @event.location.city, @dateInterval(event.schedule.start, event.schedule.end)
+                  </div>
+                  <div class="pull-left">
                     @if(evaluation.status == models.EvaluationStatus.Pending) {
                       <i class="fa fa-fw fa-thumb-tack"></i>
+                      @Messages("models.EvaluationStatus." + evaluation.status)
                     } else {
                       <i class="fa fa-fw fa-hourglass"></i>
+                      @Messages("models.EvaluationStatus." + evaluation.status)<br/>
+                      <a class="send-confirmation-request" data-id="@evaluation.identifier" href="#">Resend email</a>
                     }
-                    @Messages("models.EvaluationStatus." + evaluation.status)
-                  </span>
-                </p>
+                  </div>
+                </div>
               </div>
               <div class="circle-show-more" data-event="@evaluation.eventId" data-person="@person.identifier">
                 <span class="glyphicon glyphicon-chevron-down"></span>

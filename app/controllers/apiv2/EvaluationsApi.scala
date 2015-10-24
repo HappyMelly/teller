@@ -140,7 +140,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
   def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) {
     implicit request ⇒
       implicit token ⇒
-        evaluationService.find(confirmationId) map { x ⇒
+        evaluationService.findByConfirmationId(confirmationId) map { x ⇒
           x.confirm()
           val msg = "participant %s confirmed evaluation %s".format(x.personId, x.eventId)
           Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)

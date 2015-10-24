@@ -197,7 +197,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           eventService.find(eventId) map { event =>
             val personId = user.person.identifier
             if (event.facilitatorIds.contains(personId)) {
-              Evaluation.find(evaluationId) map { evaluation =>
+              evaluationService.find(evaluationId) map { evaluation =>
                 val endorsements = personService.endorsements(personId)
                 val maxPosition = maxEndorsementPosition(endorsements)
                 val endorsement = Endorsement(None, personId,

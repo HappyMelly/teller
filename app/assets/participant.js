@@ -137,8 +137,7 @@ function rejectEvaluation(object,container) {
             removeParticipantFromList();
         }
         var caption = "Evaluation is rejected and a notification is sent to the participant";
-        noty({text: caption, layout: 'bottom',
-            theme: 'relax', timeout: 2000 , type: 'success'});
+        success(caption);
     });
 }
 
@@ -165,8 +164,7 @@ function approveEvaluation(object, container) {
             removeParticipantFromList();
         }
         var caption = "Evaluation is approved and certificate is sent to the participant";
-        noty({text: caption, layout: 'bottom',
-            theme: 'relax', timeout: 2000 , type: 'success'});
+        success(caption);
     });
 }
 
@@ -191,8 +189,7 @@ function deleteEvaluation(object, container) {
                 removeParticipantFromList();
             }
             var caption = "Evaluation was successfully deleted";
-            noty({text: caption, layout: 'bottom',
-                theme: 'relax', timeout: 2000 , type: 'success'});
+            success(caption);
         });
     }
 }
@@ -217,8 +214,7 @@ function deletePerson(object, container) {
                 removeParticipantFromList();
             }
             var caption = "Person was successfully deleted";
-            noty({text: caption, layout: 'bottom',
-                theme: 'relax', timeout: 2000 , type: 'success'});
+            success(caption);
         });
     }
 }
@@ -240,8 +236,22 @@ function generateCertificate(object) {
             $(object).attr('href', url).attr('target', '_blank').text(certificate);
         }
         var caption = 'Certificate was generated and sent to the participant';
-        noty({text: caption, layout: 'bottom',
-            theme: 'relax', timeout: 2000 , type: 'success'});
+        success(caption);
+    });
+}
+
+/**
+ * Sends a request to the server to send confirmation request to the participant
+ * @param object {object} Target Link
+ */
+function sendConfirmationRequest(object) {
+    var evaluationId = $(object).data('id');
+    var url = jsRoutes.controllers.Evaluations.sendConfirmationRequest(evaluationId).url;
+    $.post(url, {}, function(data) {
+        success(JSON.parse(data).message);
+    }).fail(function(jqXHR) {
+        var msg = JSON.parse(jqXHR.responseText);
+        error(msg.message)
     });
 }
 
@@ -263,6 +273,11 @@ function initializeParticipantActions(container) {
     $('.generate-certificate').on('click', function(e) {
         e.preventDefault();
         generateCertificate($(this));
+        return true;
+    });
+    $('.send-confirmation-request').on('click', function(e) {
+        e.preventDefault();
+        sendConfirmationRequest($(this));
         return true;
     });
 }
@@ -367,9 +382,13 @@ function drawStatus(data) {
         var html = '<i class="text-muted fa fa-fw ' + style[data.status.value] + '"';
         html += ' value="' + data.status.value + '"></i> ';
         if (data.status.value == 0 || data.status.value == 3) {
-            html += data.status.label;
+            html += data.status.label.replace(/ /g, '&nbsp;');
         } else {
             html += data.handled;
+        }
+        if (data.status.value == 3) {
+            html += '<br/><a class="send-confirmation-request" data-id="';
+            html += data.id + '" href="#">Resend email</a>';
         }
         return html;
     }
