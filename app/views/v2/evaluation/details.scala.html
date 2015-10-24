@@ -13,7 +13,7 @@
 @import views.Evaluations
 
 @v2.main("Evaluation for %s".format(participantName), "participants", user) {
-  @v2.element.brandHeader(brand, brands, "participants", small = true) {
+  @v2.element.brandHeader(brand, brands, "participants", small = true, facilitator = user.account.isFacilitatorNow) {
     <span><a href="@routes.Participants.index(brand.identifier)">Participants</a></span>
   }
   <div class="row page-content">

@@ -2,10 +2,10 @@
     brands: List[Brand],
     tab: String = "",
     small: Boolean = false,
-    withAllBrands: Boolean = false)(content: Html)
+    facilitator: Boolean = false)(content: Html)
 
 <div class="row brand-header">
-  @v2.element.brandSwitcher(Some(activeBrand), brands, withAllBrands)
+  @v2.element.brandSwitcher(Some(activeBrand), brands, facilitator)
   <div class="brand-header-content">
     <div class="container">
       <div class="brand-image">
@@ -33,7 +33,10 @@
         @if(tab == "statistics") { <span>Statistics</span> } else {
           <span><a href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a></span>
         }
-        <span><a href="@routes.Brands.details(activeBrand.identifier).url">Settings</a></span>
+        @if(!facilitator) {
+          <span><a href="@routes.Brands.details(activeBrand.identifier).url">
+            Settings</a></span>
+        }
       </div>
     </div>
   </div>

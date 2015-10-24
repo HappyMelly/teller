@@ -19,7 +19,7 @@
 @import views.ViewHelpers.dateInterval
 
 @v2.main(view.event.title + " - Event", "events", user, withMelly = true) {
-  @v2.element.brandHeader(brand, brands, "events", small = true) {
+  @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
     <span><a href="@routes.Events.index(brand.identifier)">Events</a></span>
   }
   <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
@@ -99,8 +99,10 @@
               <div class="column">
                 <dt>Spoken Language</dt>
                 <dd>@view.event.spokenLanguage</dd>
-                <dt>Materials in</dt>
-                <dd>@view.event.materialsLanguage</dd>
+                @view.event.materialsLanguage.map { language =>
+                  <dt>Materials in</dt>
+                  <dd>@language</dd>
+                }
                 <dt>Hours</dt>
                 <dd>@view.event.schedule.totalHours (per day: @view.event.schedule.hoursPerDay)</dd>
               </div>
