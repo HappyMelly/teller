@@ -72,11 +72,9 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
       if (account.viewer) {
         roleDiffirentiator(user.account) { (brand, brands) =>
           val licenses = licenseService.expiring(List(brand.identifier))
-          //          val events = eventService.
-          //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
-          //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
-          val cancellations = eventCancellationService.findByBrands(List(brand.identifier))
-          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands, licenses, cancellations))
+          val events = unbilledEvents(brand)
+          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+            licenses, events))
         } { (brand, brands) =>
           val events = eventService.findByFacilitator(
             account.personId,
@@ -99,11 +97,9 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (brand, brands) =>
         val licenses = licenseService.expiring(List(brand.identifier))
-        //          val events = eventService.
-        //            findByParameters(Some(activeBrand.identifier), confirmed = Some(true), future = Some(false))
-        //          val withInvoices = eventService.withInvoices(events).filter(_.invoice.invoiceBy.nonEmpty)
-        val cancellations = eventCancellationService.findByBrands(List(brand.identifier))
-        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands, licenses, cancellations))
+        val events = unbilledEvents(brand)
+        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+          licenses, events))
       } { (brand, brands) =>
         val events = eventService.findByFacilitator(
           user.account.personId,
@@ -159,6 +155,22 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     events
       .filter(_.schedule.end.toString >= LocalDate.now().toString)
       .slice(0, 3).map(event => (event, brands.find(_.identifier == event.brandId)))
+  }
+
+  /**
+   * Returns list of past confirmed events without invoices
+   * @param brand Brand of interest
+   */
+  protected def unbilledEvents(brand: Brand): List[Event] = {
+    val events = eventService.
+      findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
+    val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
+    eventService.
+      withInvoices(events).
+      filter(_.invoice.invoiceBy.isEmpty).
+      map(_.event).filterNot(_.free).
+      filter(_.schedule.start.isAfter(TELLER_LAUNCHED_DATE)).
+      sortBy(_.schedule.start.toString)
   }
 }
 

@@ -2,11 +2,9 @@
   brand: Brand,
   brands: List[Brand],
   licenses: List[LicenseLicenseeView],
-  cancellations: List[models.event.EventCancellation])(implicit flash: Flash,
+  events: List[Event])(implicit flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler)
-
-@import be.objectify.deadbolt.scala.views.html._
 
 @v2.main("Home", "", user) {
   @v2.element.brandHeader(brand, brands){
@@ -18,12 +16,16 @@
           @if(licenses.nonEmpty) {
             @v2.dashboard.blocks.expiring(licenses)
           }
-          @if(cancellations.nonEmpty) {
-            @v2.dashboard.blocks.cancellation(cancellations)
+          @if(events.nonEmpty) {
+            @v2.dashboard.blocks.withoutInvoice(events)
           }
         </div>
-        <div class="col-md-3" style="padding-left: 50px; padding-top: 30px;">
-          <div class="panel panel-success" id="completionWidget">
+        <div class="col-md-3">
+          <div class="panel panel-success notification-widget" id="completionWidget"></div>
+          <div class="notification-widget info-board">
+            <div class="title">Info board</div>
+            <p><span class="licenses-number">@licenses.length</span> expiring licenses</p>
+            <p>@events.length events without invoice</p>
           </div>
         </div>
       </div>
