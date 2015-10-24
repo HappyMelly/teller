@@ -326,8 +326,5 @@ GET           /assets/*file                                                  con
 ## SecureSocial
 GET           /login                                                         @controllers.LoginPage.login
 GET           /logout                                                        @controllers.LoginPage.logout(error: Option[String] ?= None)
-
-
-# OAuth entry points
-GET           /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticate(provider)
-POST          /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticateByPost(provider)
+GET           /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
+POST          /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
