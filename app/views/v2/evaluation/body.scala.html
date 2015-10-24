@@ -1,7 +1,14 @@
-@(evaluation: Evaluation)
+@(evaluation: Evaluation, identical: Option[Evaluation])
 
 @import views.Evaluations
 
+@identical.map { value =>
+  <br/><br/>
+  <span class="identical text-danger">
+    Identical @if(value.approved) { approved } else { rejected } evaluation <a href="@routes.Evaluations.details(value.identifier)">exists</a>.
+    We recommend to <a class="delete-person" href="#" data-id="@evaluation.personId">delete</a> this participant and his/her evaluation.
+  </span>
+}
 <br/><br/>
 <strong>Facilitator</strong><br/>
 <span class="text-muted">Impression</span><br/>

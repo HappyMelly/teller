@@ -199,8 +199,18 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val evaluation = participant.evaluationId map { evaluationId =>
           evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
         } getOrElse None
+        val identical = evaluation.map { x =>
+          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
+            x.identical()
+          } else
+            None
+        } getOrElse None
         val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
-        Ok(views.html.v2.participant.details(participant, evaluation, virtual, user.account.isCoordinatorNow))
+        Ok(views.html.v2.participant.details(participant,
+          evaluation,
+          virtual,
+          user.account.isCoordinatorNow,
+          identical))
       } getOrElse BadRequest("Participant does not exist")
   }
 
