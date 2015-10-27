@@ -134,12 +134,31 @@ trait MembersApi extends Controller
         PeopleCollection.addresses(people)
         val views = filteredMembers.map { member =>
           val countryCode = if (member.person)
-            people.find(_.id == member.memberObj._1.get.id).map(_.address.countryCode).getOrElse("")
+            people.find(_.identifier == member.objectId).map(_.address.countryCode).getOrElse("")
           else
             member.memberObj._2.get.countryCode
           MemberView(member, Countries.name(countryCode))
         }
         jsonOk(Json.toJson(views.sortBy(_.member.name)))
+  }
+
+  /**
+   * Returns list of members for the given query
+   * @param query List of member names separated by commas
+   */
+  def membersByNames(query: String) = TokenSecuredAction(readWrite = false) {
+    implicit request => implicit token =>
+      val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
+      val people = personService.findByNames(names.toList)
+      PeopleCollection.addresses(people)
+      val members = memberService.find(people.map(_.identifier)).filter(_.person)
+      val views = members.map { member =>
+        people.find(_.identifier == member.objectId) map { person =>
+          member.memberObj_=(person)
+          MemberView(member, Countries.name(person.address.countryCode))
+        } getOrElse MemberView(member, "")
+      }
+      jsonOk(Json.toJson(views.sortBy(_.member.name)))
   }
 
   /**

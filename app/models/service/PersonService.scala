@@ -224,6 +224,21 @@ class PersonService extends Services {
   }
 
   /**
+   * Returns list of people for the given names
+   * @param names List of names
+   */
+  def findByNames(names: List[String]): List[Person] = DB.withSession {
+    implicit session =>
+      val people = TableQuery[People]
+      val transformed = names.map(name => name.replace(".", " "))
+      val query = for {
+        person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase inSet transformed
+      } yield person
+
+      query.list
+  }
+
+  /**
    * Returns endorsement if it exists
    *
    * @param endorsementId Endorsement identifier

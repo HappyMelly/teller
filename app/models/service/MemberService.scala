@@ -77,6 +77,15 @@ class MemberService {
   }
 
   /**
+   * Returns list of members for the given ids
+   *
+   * @param objectIds List of identifiers
+   */
+  def find(objectIds: List[Long]): List[Member] = DB.withSession { implicit session =>
+    members.filter(_.objectId inSet objectIds).list
+  }
+
+  /**
    * Returns member by related object, otherwise - None
    * @param objectId Object identifier
    * @param person Person if true, otherwise - organisation

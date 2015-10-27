@@ -309,6 +309,7 @@ POST          /api/v2/eventrequest/brand/:code                               con
 GET           /api/v2/experiments                                            controllers.apiv2.ExperimentsApi.experiments()
 GET           /api/v2/fees/:brand                                            controllers.apiv2.BrandFeesApi.fees(brand: String)
 
+GET           /api/v2/members/bynames                                        controllers.apiv2.MembersApi.membersByNames(query: String)
 GET           /api/v2/members                                                controllers.apiv2.MembersApi.members(funder: Option[Boolean] ?= None)
 GET           /api/v2/member/:identifier                                     controllers.apiv2.MembersApi.member(identifier: String, person: Boolean ?= true)
 
