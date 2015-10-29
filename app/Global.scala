@@ -25,8 +25,7 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
-import mail.reminder.{EvaluationReminder, ProfileStrengthReminder, EventReminder}
-import models.Facilitator.RatingCalculatorActor
+import mail.reminder.{ExperimentReminder, EvaluationReminder, ProfileStrengthReminder, EventReminder}
 import services.{TellerRoutesService, LoginIdentityService}
 import models.{Facilitator, ActiveUser}
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
@@ -123,7 +122,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     // sending notifications through  a separate process
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
-      scheduleProfileImprovementAlert
+      scheduleMonthlyAlert
     }
   }
 
@@ -148,7 +147,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   /**
    * Sends profile improvement alert in the beginning of each month
    */
-  private def scheduleProfileImprovementAlert = {
+  private def scheduleMonthlyAlert = {
     val now = LocalDateTime.now
     val targetDate = LocalDate.now.withDayOfMonth(1).plusMonths(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
@@ -157,6 +156,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(30, TimeUnit.DAYS)) {
         ProfileStrengthReminder.sendToFacilitators()
+        ExperimentReminder.sendStatus()
       }
   }
 }
