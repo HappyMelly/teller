@@ -208,11 +208,20 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param url Link to the member's profile
    */
   protected def notifyMembers(member: Member, experiment: Experiment, url: String) {
-    val who = "%s started a new experiment,".format(member.name)
-    val what = "%s *%s* and it's awesome!".format(who, experiment.name)
-    val msg = "%s Check it here %s. You may find it useful :wink:".format(what,
-      s"http://happymelly.com/members/#/${member.identifier}")
-    Play.configuration.getString("slack.additional_channel") map { name ⇒
+    val who = "%s started a new experiment.".format(member.name)
+    val hmUrl = s"http://happymelly.com/members/#/${member.identifier}"
+    val url = experiment.url.map { value => "Experiment link: " + value } getOrElse ""
+    val msg =
+      """%s
+
+*%s*
+%s
+
+%s
+
+Check it here %s. You may find it useful :wink:
+      """.format(who, experiment.name, experiment.description, url, hmUrl)
+    Play.configuration.getString("slack.channel") map { name ⇒
       slack.send(msg, Some(name))
     }
   }
