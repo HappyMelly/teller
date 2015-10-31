@@ -43,7 +43,8 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
     with JsonController
     with Security
     with Activities
-    with Utilities {
+    with Utilities
+    with MemberNotifications {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -274,7 +275,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
             Cache.remove(Members.cacheId(user.person.id.get))
             activity(person, user.person).created.insert()
             val log = activity(member, user.person).made.insert()
-            notify(person, None, member.fee, member)
+            notify(person, None, member)
             subscribe(person, member)
 
             val profileUrl = routes.People.details(person.id.get).url
@@ -308,7 +309,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
                   val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val log = activity(member, user.person).made.insert()
-                  notify(person, None, member.fee, member)
+                  notify(person, None, member)
                   subscribe(person, member)
 
                   val profileUrl = routes.People.details(person.id.get).url
@@ -399,18 +400,6 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
       routes.People.details(member.objectId).url
     else
       routes.Organisations.details(member.objectId).url
-  }
-
-  /**
-   * Returns a well-formed Slack notification message
-   * @param member Member object
-   * @param name Name of a new member either an organisation or a person
-   * @param url Profile url
-   */
-  protected def newMemberMsg(member: Member, name: String, url: String): String = {
-    val typeName = if (member.funder) "Funder" else "Supporter"
-    "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
-      typeName, name, member.fee.toString, fullUrl(url))
   }
 
   /**

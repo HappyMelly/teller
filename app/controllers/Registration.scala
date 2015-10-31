@@ -254,7 +254,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                   person.becomeMember(funder = false, fee)
                 }
                 updateActiveUser(user.identity, person, member)
-                notify(person, org, fee, member)
+                notify(person, org, member)
                 subscribe(person, member)
 
                 activity(member, person).becameSupporter.insert()

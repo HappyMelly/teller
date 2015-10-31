@@ -48,7 +48,8 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     with Services
     with Integrations
     with Files
-    with Activities {
+    with Activities
+    with MemberNotifications {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -244,8 +245,9 @@ class People(environment: RuntimeEnvironment[ActiveUser])
                   .copy(photo = oldPerson.photo, customerId = oldPerson.customerId)
                   .copy(addressId = oldPerson.addressId)
                 personService.member(id) foreach { x ⇒
-                  val msg = composeSocialNotification(oldPerson, updatedPerson)
-                  msg foreach { slack.send(_) }
+                  val msg = connectMeMessage(oldPerson.socialProfile,
+                    updatedPerson.socialProfile)
+                  msg foreach { x => slack.send(updateMsg(updatedPerson.fullName, x)) }
                 }
                 updatedPerson.update
                 val log = activity(updatedPerson, user.person).updated.insert()
@@ -386,29 +388,6 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     list.toList
   }
 
-  /**
-   * Compares social profiles and returns a list of errors for a form
-   *
-   * @param existing Person
-   * @param updated Updated person
-   */
-  protected def composeSocialNotification(existing: Person,
-    updated: Person): Option[String] = {
-    val updatedProfile = updated.socialProfile
-    val oldProfile = existing.socialProfile
-    val notifications = List(
-      composeNotification("twitter", oldProfile.twitterHandle, updatedProfile.twitterHandle),
-      composeNotification("facebook", oldProfile.facebookUrl, updatedProfile.facebookUrl),
-      composeNotification("google", oldProfile.googlePlusUrl, updatedProfile.googlePlusUrl),
-      composeNotification("linkedin", oldProfile.linkedInUrl, updatedProfile.linkedInUrl),
-      composeNotification("blog", existing.blog, updated.blog))
-    val nonEmptyNotifications = notifications.filterNot(_.isEmpty)
-    nonEmptyNotifications.headOption map { first ⇒
-      val prefix = "%s updated her/his social profile.".format(updated.fullName)
-      val msg = nonEmptyNotifications.tail.foldLeft(first.get.capitalize)(_ + ", " + _.get)
-      Some(prefix + " " + msg)
-    } getOrElse None
-  }
 
   /**
    * Retrieve facilitator statistics by brand, including years of experience,
@@ -425,31 +404,9 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     }
   }
 
-  /**
-   * Composes notification if the given value was updated
-   *
-   * @param msgType Notification type
-   * @param old Old value
-   * @param updated New value
-   */
-  protected def composeNotification(msgType: String,
-    old: Option[String],
-    updated: Option[String]): Option[String] = {
-    if (updated.isDefined && old != updated)
-      Some(notificatonMsg(msgType, updated.get))
-    else
-      None
+  protected def updateMsg(name: String, msg: String): String = {
+    "%s updated her/his social profile. %s".format(name, msg)
   }
-
-  protected def notificatonMsg(msgType: String, value: String): String =
-    msgType match {
-      case "twitter" ⇒ "follow her/him on <http://twitter.com/%s|Twitter>".format(value)
-      case "facebook" ⇒ "become friends on <%s|Facebook>".format(value)
-      case "google" ⇒ "add her/him to your circles on <%s|G+>".format(value)
-      case "linkedin" ⇒ "connect on <%s|LinkedIn>".format(value)
-      case "blog" ⇒ "read his/her blog <%s|here>".format(value)
-      case _ ⇒ ""
-    }
 }
 
 object People {

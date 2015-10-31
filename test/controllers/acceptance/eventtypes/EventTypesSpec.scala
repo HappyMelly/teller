@@ -78,7 +78,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val req = withPostData(editorPostRequest)
 
-    val res = controller.update(1L).apply(req)
+    val res = controller.update(1L, 1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must contain("Event type is not found")
@@ -95,7 +95,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     val controller = new AnotherTestEventTypes
     controller.brandService_=(brandService)
 
-    val res = controller.update(3L).apply(req)
+    val res = controller.update(1L, 3L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must contain("already exists")
@@ -108,7 +108,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     (eventTypeService.update _).expects(*)
     (brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
-    val res = controller.update(1L).apply(req)
+    val res = controller.update(1L, 1L).apply(req)
     status(res) must equalTo(OK)
     contentAsString(res) must contain("success")
     contentAsJson(res) must beAnInstanceOf[JsObject]
@@ -119,7 +119,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
     val req = withPostData(editorPostRequest)
 
-    val res = controller.update(1L).apply(req)
+    val res = controller.update(1L, 1L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must contain("Brand is not found")
@@ -169,7 +169,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
     val controller = new AnotherTestEventTypes
     controller.brandService_=(brandService)
 
-    val res = controller.update(3L).apply(req)
+    val res = controller.update(1L, 3L).apply(req)
     status(res) must equalTo(BAD_REQUEST)
     val data = contentAsJson(res).as[JsObject]
     (data \ "message").as[String] must contain("belong to the selected brand")

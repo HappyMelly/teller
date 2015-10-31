@@ -305,7 +305,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       existingObject = Some(true))
     Cache.set(Members.cacheId(1L), m, 1800)
     val service = mock[OrganisationService]
-    (service.find _).expects(*).returning(None)
+    (service.find(_: Long)).expects(*).returning(None)
     (service.findNonMembers _).expects().returning(List())
     controller.orgService_=(service)
     val request = fakePostRequest("/member/existing/organisation").
@@ -324,7 +324,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       val org = OrganisationHelper.one.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       val service = mock[OrganisationService]
-      (service.find _).expects(*).returning(Some(org))
+      (service.find(_: Long)).expects(*).returning(Some(org))
       (service.findNonMembers _).expects().returning(List())
       controller.orgService_=(service)
       // val identity = FakeUserIdentity.editor
@@ -412,7 +412,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       existingObject = Some(true))
     member.memberObj_=(PersonHelper.one)
     val memberService = mock[MemberService]
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     controller.memberService_=(memberService)
 
     val result = controller.edit(1L).apply(fakeGetRequest())
@@ -438,7 +438,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       since = Some(LocalDate.parse("2015-01-15")),
       existingObject = Some(true))
     val memberService = mock[MemberService]
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     (memberService.update _) expects (where {
       (m: Member) ⇒
         m.objectId == 1 && m.person == true && m.funder == false &&
@@ -456,7 +456,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
   def e27 = new MockContext {
     val memberService = mock[MemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
-    (memberService.find _).expects(1L).returning(Some(member))
+    (memberService.find(_: Long)).expects(1L).returning(Some(member))
     (memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
     val result = controller.delete(1L).apply(fakePostRequest())

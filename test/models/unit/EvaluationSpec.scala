@@ -25,7 +25,7 @@
 package models.unit
 
 import models.service.EvaluationService
-import models.{ EvaluationStatus, Evaluation, Activity }
+import models.{DateStamp, EvaluationStatus, Evaluation, Activity}
 import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
@@ -45,16 +45,16 @@ class EvaluationSpec extends Specification {
     question6: Int,
     question7: Int,
     question8: String,
+    contentImpression: Option[Int] = None,
+    hostImpression: Option[Int] = None,
     status: EvaluationStatus.Value,
     handled: Option[LocalDate],
     confirmationId: Option[String],
-    created: DateTime,
-    createdBy: String,
-    updated: DateTime,
-    updatedBy: String) extends Evaluation(id,
+    recordInfo: DateStamp) extends Evaluation(id,
     eventId, personId, question1, question2, question3, question4,
-    question5, question6, question7, question8, status, handled,
-    confirmationId, created, createdBy, updated, updatedBy) with FakeServices {
+    question5, question6, question7, question8, contentImpression,
+    hostImpression, status, handled,
+    confirmationId, recordInfo) with FakeServices {
 
     var newEvalCallCount = 0
     var confirmEvalCallCount = 0
@@ -80,16 +80,15 @@ class EvaluationSpec extends Specification {
       question6: Int = question6,
       question7: Int = question7,
       question8: String = question8,
+      contentImpression: Option[Int] = None,
+      hostImpression: Option[Int] = None,
       status: EvaluationStatus.Value = status,
       handled: Option[LocalDate] = handled,
       confirmationId: Option[String] = confirmationId,
-      created: DateTime = created,
-      createdBy: String = createdBy,
-      updated: DateTime = updated,
-      updatedBy: String = updatedBy): TestEvaluation = {
+      recordInfo: DateStamp = recordInfo): TestEvaluation = {
       val eval = new TestEvaluation(id, eventId, personId, question1, question2, question3,
-        question4, question5, question6, question7, question8, status,
-        handled, confirmationId, created, createdBy, updated, updatedBy)
+        question4, question5, question6, question7, question8, contentImpression,
+        hostImpression, status, handled, confirmationId, recordInfo)
       eval.evaluationService_=(this.evaluationService)
       eval
     }
@@ -106,8 +105,8 @@ class EvaluationSpec extends Specification {
   }
 
   val eval = new TestEvaluation(Some(1L), 1L, 2L, "", "", "", "", "",
-    1, 1, "", EvaluationStatus.Pending, None, None, DateTime.now(), "",
-    DateTime.now(), "")
+    1, 1, "", None, None, EvaluationStatus.Pending, None, None,
+    DateStamp(DateTime.now(), "", DateTime.now(), ""))
 
   "Evaluation" should {
     "have well-formed activity attributes" in {

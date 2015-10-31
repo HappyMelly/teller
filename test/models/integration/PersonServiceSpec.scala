@@ -45,8 +45,8 @@ class PersonServiceSpec extends PlayAppSpec {
     val links = List(Material(None, 1L, 0, "video", "http://test.com"),
       Material(None, 1L, 0, "blog", "http://test1.com"))
     links.foreach(PersonService.get.insertMaterial(_))
-    val endorsements = List(Endorsement(None, 1L, "", "nikolai"),
-      Endorsement(None, 1L, "", "viktor"))
+    val endorsements = List(Endorsement(None, 1L, 1L, "", "nikolai"),
+      Endorsement(None, 1L, 1L, "", "viktor"))
     endorsements.foreach(PersonService.get.insertEndorsement(_))
   }
 

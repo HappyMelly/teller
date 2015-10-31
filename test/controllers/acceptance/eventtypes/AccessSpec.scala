@@ -52,9 +52,10 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'delete'" should {
-    "have Editor access rights" in {
-      controller.delete(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+    "have coordinator access rights for brand object" in {
+      controller.delete(1L, 1L).apply(fakePostRequest())
+      controller.checkedDynamicObject must_== Some("brand")
+      controller.checkedDynamicLevel must_== Some(DynamicRole.Coordinator)
     }
   }
 

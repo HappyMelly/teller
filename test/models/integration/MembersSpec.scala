@@ -188,7 +188,7 @@ class MembersSpec extends PlayAppSpec {
 
   "On step 2 an existing organisation " should {
     "be linked to a member object" in new WithStubs {
-      (orgService.find _) expects 1L returning Some(org)
+      (orgService.find(_: Long)) expects 1L returning Some(org)
       val m = member(person = false).copy(objectId = 1L)
       //test line
       (memberService.insert _) expects * returning m.copy(id = Some(1L))
@@ -247,7 +247,7 @@ class MembersSpec extends PlayAppSpec {
       controller.slackInstance.message must contain("First Tester")
     }
     "when an existing organisation becomes a member" in new WithStubs {
-      (orgService.find _) expects 1L returning Some(org)
+      (orgService.find(_: Long)) expects 1L returning Some(org)
       val m = member(person = false).copy(id = Some(1L))
       (memberService.insert _) expects * returning m
       val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
@@ -276,7 +276,7 @@ class MembersSpec extends PlayAppSpec {
     "membership is revoked" in new WithStubs {
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find _) expects 2L returning Some(member)
+      (memberService.find(_: Long)) expects 2L returning Some(member)
       (memberService.delete _) expects (1L, true)
       controller.counter = 0
       controller.delete(2L).apply(fakePostRequest())
@@ -287,7 +287,7 @@ class MembersSpec extends PlayAppSpec {
     "when membership is changed" in new WithStubs {
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find _) expects 2L returning Some(member)
+      (memberService.find(_: Long)) expects 2L returning Some(member)
       (memberService.update _) expects *
       // (memberService.update _) expects (where {
       //   (m: Member) ⇒ m.funder == true && m.since.toString == "2015-01-01"

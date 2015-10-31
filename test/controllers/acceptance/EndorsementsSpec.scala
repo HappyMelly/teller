@@ -99,10 +99,11 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     (personService.find(_: Long)) expects 1L returning Some(person)
-    val endorsement = Endorsement(None, 1L, "blabla", "katja", Some("test"))
-    (personService.insertEndorsement _) expects endorsement
+    val endorsement = Endorsement(None, 1L, 0L, "blabla", "katja", Some("test"))
+    (personService.insertEndorsement _) expects endorsement.copy(position = 1)
+    (personService.endorsements _) expects 1L returning List()
     val req = fakePostRequest().
-      withFormUrlEncodedBody("content" -> "blabla", "name" -> "katja", "company" -> "test")
+      withFormUrlEncodedBody("brandId" -> "0", "content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(SEE_OTHER)
   }
@@ -130,10 +131,10 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e8 = {
-    val endorsement = Endorsement(Some(2L), 1L, "blabla", "katja", Some("test"))
+    val endorsement = Endorsement(Some(2L), 1L, 0L, "blabla", "katja", Some("test"))
     (personService.updateEndorsement _) expects endorsement
     val req = fakePostRequest().
-      withFormUrlEncodedBody("content" -> "blabla", "name" -> "katja", "company" -> "test")
+      withFormUrlEncodedBody("brandId" -> "0", "content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.update(1L, 2L).apply(req)
     status(res) must equalTo(SEE_OTHER)
   }

@@ -135,7 +135,7 @@ class EventServiceSpec extends PlayAppSpec {
   "Method findByEvaluation" should {
     "return an event connected to an evaluation 1" in {
       val eval = EvaluationHelper.make(Some(1L), 1L, 1L, EvaluationStatus.Approved, 10, DateTime.now())
-      Participant.insert(Participant(None, 1L, 1L, None, None, None, None, None))
+      Participant.insert(Participant(None, 1L, 1L, None, None, None, None, None, None))
       EvaluationService.get.add(eval)
       val event = service.findByEvaluation(1L)
       event map { x ⇒
@@ -145,55 +145,6 @@ class EventServiceSpec extends PlayAppSpec {
     }
     "return no event connected to an evaluation 4" in {
       service.findByEvaluation(4L) must_== None
-    }
-  }
-
-  "Method sendConfirmationAlert" should {
-    "send 1 email and record an activity" in new MockContext {
-      class StubBrandService extends BrandService {
-        override def findAll: List[Brand] = List(BrandHelper.one)
-      }
-      class FakeEmail extends Email {
-        override def send(to: Set[Person],
-          cc: Option[Set[Person]] = None,
-          bcc: Option[Set[Person]] = None,
-          subject: String,
-          body: String,
-          richMessage: Boolean = false,
-          attachment: Option[(String, String)] = None) = {
-          val people: Set[Person] = Set(PersonHelper.one(), PersonHelper.two())
-          to.size must_== people.size
-          to.exists(_.fullName == "First Tester")
-          to.exists(_.fullName == "Second Tester")
-          cc must_== None
-          bcc must_== None
-          subject must_== "Confirm your event One"
-        }
-      }
-      class TestEventService extends EventService with FakeServices {
-        override def findByParameters(
-          brandId: Option[Long],
-          future: Option[Boolean] = None,
-          public: Option[Boolean] = None,
-          archived: Option[Boolean] = None,
-          confirmed: Option[Boolean] = None,
-          country: Option[String] = None,
-          eventType: Option[Long] = None): List[Event] = List(EventHelper.one)
-
-        override def email = new FakeEmail
-      }
-      val service = new TestEventService
-      val brand = new StubBrandService
-      service.brandService_=(brand)
-
-      service.sendConfirmationAlert()
-
-      val activities = ActivityService.get.findAll
-      activities.length must_== 1
-      activities.head.subject must_== "Teller"
-      activities.head.predicate must_== Activity.Predicate.Sent.toString
-      val msg = "confirmation email for event One (id = 1)"
-      activities.head.activityObject must_== Some(msg)
     }
   }
 

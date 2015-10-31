@@ -91,7 +91,7 @@ class EventsAccessSpec extends PlayAppSpec {
 
   "Method 'index'" should {
     "have Viewer access rights" in {
-      controller.index.apply(fakePostRequest())
+      controller.index(1L).apply(fakePostRequest())
       controller.checkedRole must_== Some(Role.Viewer)
     }
   }

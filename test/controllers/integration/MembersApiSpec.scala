@@ -49,9 +49,9 @@ class MembersApiSpec extends PlayAppSpec {
       memberOne.memberObj_=(PersonHelper.one)
 
       val service = mock[MemberService]
-      (service.find _) expects 1L returning Some(memberOne)
+      (service.find(_: Long)) expects 1L returning Some(memberOne)
       controller.memberService_=(service)
-      val res = controller.member(1L).apply(FakeRequest())
+      val res = controller.member("1").apply(FakeRequest())
       val data = contentAsJson(res).asInstanceOf[JsObject]
 
       (data \ "id").as[JsNumber].value must_== BigDecimal(1L)
@@ -69,11 +69,11 @@ class MembersApiSpec extends PlayAppSpec {
       controller.memberService_=(memberService)
       val orgService = mock[OrganisationService]
       controller.orgService_=(orgService)
-      (memberService.find _) expects 2L returning Some(memberTwo)
+      (memberService.find(_: Long)) expects 2L returning Some(memberTwo)
       val profile = SocialProfile(0, ProfileType.Organisation, "")
       val view = OrgView(OrganisationHelper.one, profile)
       (orgService.findWithProfile _) expects 2L returning Some(view)
-      val res = controller.member(2L).apply(FakeRequest())
+      val res = controller.member("2").apply(FakeRequest())
       val data = contentAsJson(res).asInstanceOf[JsObject]
 
       (data \ "id").as[JsNumber].value must_== BigDecimal(2L)

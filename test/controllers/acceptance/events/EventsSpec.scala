@@ -90,7 +90,7 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
     (invoiceService.update _) expects invoice.copy(invoiceBy = Some(6L), number = Some("31"))
     controller.eventInvoiceService_=(invoiceService)
     val orgService = mock[OrganisationService]
-    (orgService.find _) expects 6L returning Some(OrganisationHelper.one)
+    (orgService.find(_: Long)) expects 6L returning Some(OrganisationHelper.one)
     controller.orgService_=(orgService)
     val request = fakePostRequest().
       withFormUrlEncodedBody(("invoiceBy", "6"), ("number", "31"))

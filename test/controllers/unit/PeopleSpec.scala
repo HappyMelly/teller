@@ -40,14 +40,14 @@ class PeopleSpec extends Specification {
       compareSocialProfiles(left, right)
     }
 
-    def callComposeSocialNotification(existing: Person,
-      updated: Person): Option[String] = {
-      composeSocialNotification(existing, updated)
+    def callComposeSocialNotification(existing: SocialProfile,
+      updated: SocialProfile): Option[String] = {
+      connectMeMessage(existing, updated)
     }
 
     def callComposeNotification(msgType: String, old: Option[String],
       updated: Option[String]): Option[String] =
-      composeNotification(msgType, old, updated)
+      fieldMessage(msgType, old, updated)
   }
 
   val controller = new TestPeople
@@ -89,65 +89,43 @@ class PeopleSpec extends Specification {
 
   "Method 'composeSocialNotification'" should {
     "produce no notification if no social account has changed" in {
-      controller.callComposeSocialNotification(person, updatedPerson) must_== None
+      controller.callComposeSocialNotification(left, right) must_== None
     }
     "add Twitter info to notification if Twitter has been added" in {
-      val old = person.socialProfile
-      val updated = old.copy(twitterHandle = Some("skotlov"))
-      updatedPerson.socialProfile_=(updated)
-      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      val updated = left.copy(twitterHandle = Some("skotlov"))
+      val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Follow her/him on <http://twitter.com/skotlov|Twitter>")
+        x must contain("Let's show him/her some love by linking on  <http://twitter.com/skotlov|Twitter>")
       } getOrElse ko
     }
     "add Facebook info to notification if Facebook has been added" in {
-      val old = person.socialProfile
-      val updated = old.copy(facebookUrl = Some("https://facebook.com/skotlov"))
-      updatedPerson.socialProfile_=(updated)
-      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      val updated = left.copy(facebookUrl = Some("https://facebook.com/skotlov"))
+      val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Become friends on <https://facebook.com/skotlov|Facebook>")
+        x must contain("Let's show him/her some love by linking on  <https://facebook.com/skotlov|Facebook>")
       } getOrElse ko
     }
     "add Google info to notification if Google has been added" in {
-      val old = person.socialProfile
-      val updated = old.copy(googlePlusUrl = Some("https://plus.google.com/+SergeyKotlov"))
-      updatedPerson.socialProfile_=(updated)
-      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      val updated = left.copy(googlePlusUrl = Some("https://plus.google.com/+SergeyKotlov"))
+      val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Add her/him to your circles on <https://plus.google.com/+SergeyKotlov|G+>")
+        x must contain("Let's show him/her some love by linking on  <https://plus.google.com/+SergeyKotlov|G+>")
       } getOrElse ko
     }
     "add LinkedIn info to notification if LinkedIn has been added" in {
-      val old = person.socialProfile
-      val updated = old.copy(linkedInUrl = Some("https://www.linkedin.com/in/skotlov"))
-      updatedPerson.socialProfile_=(updated)
-      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      val updated = left.copy(linkedInUrl = Some("https://www.linkedin.com/in/skotlov"))
+      val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Connect on <https://www.linkedin.com/in/skotlov|LinkedIn>")
+        x must contain("Let's show him/her some love by linking on  <https://www.linkedin.com/in/skotlov|LinkedIn>")
       } getOrElse ko
     }
-    "add blog info to notification if blog has been added" in {
-      val updated = person.copy(blog = Some("http://changegeek.ru/blog"))
-      val msg = controller.callComposeSocialNotification(person, updated)
-      msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Read his/her blog <http://changegeek.ru/blog|here>")
-      } getOrElse ko
-    }
+
     "add Twitter and Facebook info to notification if both have been added" in {
-      val old = person.socialProfile
-      val updated = old.copy(twitterHandle = Some("skotlov"), facebookUrl = Some("https://facebook.com/skotlov"))
-      updatedPerson.socialProfile_=(updated)
-      val msg = controller.callComposeSocialNotification(person, updatedPerson)
+      val updated = left.copy(twitterHandle = Some("skotlov"), facebookUrl = Some("https://facebook.com/skotlov"))
+      val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("First Tester updated her/his social profile.")
-        x must contain("Follow her/him on <http://twitter.com/skotlov|Twitter>")
-        x must contain(", become friends on <https://facebook.com/skotlov|Facebook>")
+        x must contain("Let's show him/her some love by linking on  <http://twitter.com/skotlov|Twitter>")
+        x must contain(", <https://facebook.com/skotlov|Facebook>")
       } getOrElse ko
     }
   }

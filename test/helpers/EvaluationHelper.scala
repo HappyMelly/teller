@@ -23,7 +23,7 @@
  */
 package helpers
 
-import models.{ EvaluationStatus, Evaluation }
+import models.{DateStamp, EvaluationStatus, Evaluation}
 import org.joda.time.DateTime
 
 object EvaluationHelper {
@@ -34,22 +34,22 @@ object EvaluationHelper {
     status: EvaluationStatus.Value,
     impression: Int,
     created: DateTime): Evaluation = {
+    val recordInfo = DateStamp(created, "Sergey Kotlov", DateTime.now(), "Tom Cat")
     new Evaluation(id, eventId, personId,
-      "question1_" + id.toString,
-      "question2_" + id.toString,
-      "question3_" + id.toString,
-      "question4_" + id.toString,
-      "question5_" + id.toString,
+      "reasonToRegister_" + id.toString,
+      "actionItems_" + id.toString,
+      "changesToContent_" + id.toString,
+      "facilitatorReview_" + id.toString,
+      "changesToHost_" + id.toString,
       impression,
       impression,
-      "question8_" + id.toString,
+      "changesToEvent_" + id.toString,
+      contentImpression = None,
+      hostImpression = None,
       status,
       handled = None,
       None,
-      created = created,
-      createdBy = "Sergey Kotlov",
-      updated = DateTime.now(),
-      updatedBy = "Tom Cat")
+      recordInfo = recordInfo)
   }
 
 }

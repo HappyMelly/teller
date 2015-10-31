@@ -65,13 +65,13 @@ class MembersSpec extends PlayAppSpec {
         funder = true,
         money = Some(Money.parse("EUR 100")))
       val msg1 = controller.callNewMemberMsg(m1, "One", "/person/1")
-      msg1 must_== "Hey @channel, we have *new Funder*. One, EUR 100.00. <http://localhost:9000/person/1|View profile>"
+      msg1 must_== "Hooray!! We have *new Funder*, One. <http://localhost:9000/person/1|View profile>"
       val m2 = MemberHelper.make(Some(2L), 2L,
         person = false,
         funder = false,
         money = Some(Money.parse("EUR 200")))
       val msg2 = controller.callNewMemberMsg(m2, "Two", "/organisation/2")
-      msg2 must_== "Hey @channel, we have *new Supporter*. Two, EUR 200.00. <http://localhost:9000/organisation/2|View profile>"
+      msg2 must_== "Hooray!! We have *new Supporter*, Two. <http://localhost:9000/organisation/2|View profile>"
     }
   }
 

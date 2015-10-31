@@ -43,7 +43,7 @@ class RegistrationSpec extends PlayAppSpec {
   class TestRegistration extends Registration(FakeRuntimeEnvironment)
       with FakeIntegrations
       with FakeSecurity {
-    var notifyData: Option[(Person, Option[Organisation], Money, Member)] = None
+    var notifyData: Option[(Person, Option[Organisation], Member)] = None
 
     def callPersonCacheId(userId: String): String = personCacheId(userId)
 
@@ -53,9 +53,8 @@ class RegistrationSpec extends PlayAppSpec {
 
     override def notify(person: Person,
       org: Option[Organisation],
-      fee: Money,
       member: Member): Unit = {
-      notifyData = Some((person, org, fee, member))
+      notifyData = Some((person, org, member))
     }
   }
 
@@ -65,9 +64,8 @@ class RegistrationSpec extends PlayAppSpec {
 
     def callNotify(person: Person,
       org: Option[Organisation],
-      fee: Money,
       member: Member) =
-      notify(person, org, fee, member)
+      notify(person, org, member)
   }
 
   val controller = new TestRegistration
@@ -200,8 +198,7 @@ class RegistrationSpec extends PlayAppSpec {
       controller.notifyData map { data ⇒
         data._1.fullName must_== "First Member"
         data._2 must_== None
-        data._3.getAmountMajorInt must_== 50
-        data._4.funder must_== false
+        data._3.funder must_== false
       } getOrElse ko
     }
     "send notifications when a new org becomes a member" in new TruncateBefore {
@@ -216,8 +213,7 @@ class RegistrationSpec extends PlayAppSpec {
         data._2 map { x ⇒
           x.name must_== "OneMember"
         } getOrElse ko
-        data._3.getAmountMajorInt must_== 50
-        data._4.funder must_== false
+        data._3.funder must_== false
       } getOrElse ko
     }
   }

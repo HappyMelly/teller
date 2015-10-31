@@ -68,9 +68,8 @@ class EnrollmentSpec extends PlayAppSpec {
 
     def callNotify(person: Person,
       org: Option[Organisation],
-      fee: Money,
       member: Member) =
-      notify(person, org, fee, member)
+      notify(person, org, member)
 
     def callSubscribe(person: Person, member: Member) = subscribe(person, member)
   }
@@ -80,11 +79,10 @@ class EnrollmentSpec extends PlayAppSpec {
   "Method 'notify'" should {
     "send Slack and Email notifications for a new person member" in {
       val person = PersonHelper.one()
-      val fee = Money.parse("EUR 100")
       val member = MemberHelper.make(Some(1L), 1L, funder = false, person = true)
-      controller.callNotify(person, None, fee, member)
+      controller.callNotify(person, None, member)
 
-      controller.slack.message must contain("Hey @channel, we have *new Supporter*")
+      controller.slack.message must contain("Hooray!! We have *new Supporter*")
       controller.slack.message must contain("First Tester")
       controller.slack.message must contain("/person/1")
       controller.email.to.exists(_.lastName == "Tester") must_== true
@@ -97,12 +95,11 @@ class EnrollmentSpec extends PlayAppSpec {
     }
     "send Slack and Email notifications for a new organisation member" in {
       val person = PersonHelper.one()
-      val fee = Money.parse("EUR 100")
       val org = OrganisationHelper.two
       val member = MemberHelper.make(Some(1L), 2L, funder = true, person = false)
-      controller.callNotify(person, Some(org), fee, member)
+      controller.callNotify(person, Some(org), member)
 
-      controller.slack.message must contain("Hey @channel, we have *new Funder*")
+      controller.slack.message must contain("Hooray!! We have *new Funder*")
       controller.slack.message must contain("Two")
       controller.slack.message must contain("/organization/2")
       controller.email.to.exists(_.lastName == "Tester") must_== true

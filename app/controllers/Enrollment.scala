@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.{ Member, Organisation, Person }
+import models.{SocialProfile, Member, Organisation, Person}
 import models.service.Services
 import models.payment.Payment
 import org.joda.money.Money
@@ -45,7 +45,8 @@ case class PaymentData(token: String,
 trait Enrollment extends Controller
     with Services
     with Integrations
-    with Utilities {
+    with Utilities
+    with MemberNotifications {
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -55,30 +56,15 @@ trait Enrollment extends Controller
   /**
    * Sends Slack and email notifications
    * @param person Person making all membership-related actions
-   * @param org Organisation which want to become a member
-   * @param fee Membership fee
+   * @param org Organisation which wants to become a member
    * @param member Member data
    */
   protected def notify(person: Person,
     org: Option[Organisation],
-    fee: Money,
-    member: Member) = {
-    val url = org map { x ⇒ routes.Organisations.details(x.id.get).url
-    } getOrElse routes.People.details(person.id.get).url
-    val name = org map (_.name) getOrElse person.fullName
-    val memberType = if (member.funder) "Funder" else "Supporter"
-    val text = "Hey @channel, we have *new %s*. %s, %s. <%s|View profile>".format(
-      memberType,
-      name,
-      fee.toString,
-      fullUrl(url))
-    slack.send(text)
-    val shortName = org map (_.name) getOrElse person.firstName
-    email.send(Set(person),
-      subject = "Welcome to Happy Melly network",
-      body = mail.templates.html.welcome(fullUrl(url), member.profileUrl, shortName).toString(),
-      richMessage = true)
-  }
+    member: Member) = org map {
+      notifyAboutOrg(_, member, person)
+    } getOrElse
+      notifyAboutPerson(person, member)
 
   /**
    * Subscribes the given person to a membership list
@@ -106,5 +92,33 @@ trait Enrollment extends Controller
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
     payment.subscribe(person, org, data.token, data.fee)
+  }
+
+  private def notifyAboutPerson(person: Person, member: Member) = {
+    val url: String = routes.People.details(person.id.get).url
+    slack.send(personSlackMsg(person, member, url))
+    sendWelcomeEmail(person, member.profileUrl, person.firstName)
+  }
+
+  private def notifyAboutOrg(org: Organisation, member: Member, person: Person) = {
+    val url: String = routes.Organisations.details(org.identifier).url
+    slack.send(newMemberMsg(member, org.name, url))
+    sendWelcomeEmail(person, member.profileUrl, org.name)
+  }
+
+  private def sendWelcomeEmail(person: Person, url: String, name: String) = {
+    email.send(Set(person),
+      subject = "Welcome to Happy Melly network",
+      body = mail.templates.html.welcome(fullUrl(url), url, name).toString(),
+      richMessage = true)
+  }
+
+  private def personSlackMsg(person: Person, member: Member, url: String): String = {
+    val headline = newMemberMsg(member, person.fullName, url)
+    val dummy = SocialProfile(email = "dummy")
+    connectMeMessage(dummy, person.socialProfile) map { value =>
+      headline + " " + value
+    } getOrElse
+      headline
   }
 }

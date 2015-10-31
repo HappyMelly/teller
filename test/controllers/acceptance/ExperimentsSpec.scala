@@ -114,7 +114,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    (memberService.find _) expects 1L returning None
+    (memberService.find(_: Long)) expects 1L returning None
     val result = controller.create(1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
@@ -122,7 +122,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None)
     (experimentService.insert _) expects experiment returning experiment.copy(id = Some(1L))
     (experimentService.update _) expects experiment.copy(id = Some(1L), picture = true)
@@ -133,7 +133,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None)
     (experimentService.insert _) expects experiment returning experiment.copy(id = Some(1L))
     controller._uploadValue = false
@@ -158,7 +158,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e7 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     (experimentService.update _) expects experiment.copy(id = Some(1),
@@ -170,7 +170,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e8 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
-    (memberService.find _) expects 1L returning Some(member)
+    (memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     (experimentService.update _) expects experiment.copy(id = Some(1),
@@ -183,7 +183,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e9 = {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
-    (memberService.find _) expects 5L returning None
+    (memberService.find(_: Long)) expects 5L returning None
     val result = controller.update(5L, 1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
@@ -200,7 +200,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = true, funder = false)
-    (memberService.find _) expects 5L returning Some(member)
+    (memberService.find(_: Long)) expects 5L returning Some(member)
     (experimentService.update _) expects experiment.copy(id = Some(1L),
       name = "Test", description = "Test", memberId = 5L, picture = true)
     val result = controller.update(5L, 1L).apply(postReq)
@@ -211,7 +211,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None)
     (experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = false, funder = false)
-    (memberService.find _) expects 5L returning Some(member)
+    (memberService.find(_: Long)) expects 5L returning Some(member)
     (experimentService.update _) expects experiment.copy(id = Some(1L),
       name = "Test", description = "Test", memberId = 5L) returning * once
     val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",

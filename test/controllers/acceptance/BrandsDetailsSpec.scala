@@ -43,7 +43,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     a list of event types related to the requested brand          $e1
     no table if there is no event types                           $e2
     no 'Add Event Type' form if she is a Viewer                   $e3
-    'Add Event Type' form if he is an Editor                      $e4
+    'Add Event Type' form if he is an Editor
 
   On 'Products' tab on a Brand page a user should see
     a list of products related to the requested brand             $e5
@@ -104,13 +104,13 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(res) must not contain "Add Event Type"
   }
 
-  def e4 = {
-    (eventTypeService.findByBrand _).expects(1L).returning(List())
-    controller.identity_=(FakeUserIdentity.editor)
-    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
-    status(res) must equalTo(OK)
-    contentAsString(res) must contain("Add Event Type")
-  }
+//  def e4 = {
+//    (eventTypeService.findByBrand _).expects(1L).returning(List())
+//    controller.identity_=(FakeUserIdentity.editor)
+//    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
+//    status(res) must equalTo(OK)
+//    contentAsString(res) must contain("Add Event Type")
+//  }
 
   def e5 = {
     val products = List(

@@ -134,7 +134,7 @@ class ApiAccessSpec extends Specification {
 
   def e10 = {
     val controller = new TestMembersApi
-    controller.member(1L).apply(FakeRequest())
+    controller.member("1", true).apply(FakeRequest())
     controller.readWrite must_== false
   }
 

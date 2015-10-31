@@ -69,7 +69,7 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    val person = PersonHelper.one
+    val person = PersonHelper.one()
     (personService.find(_: Long)) expects 1L returning Some(person)
     val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "video", "url" -> "")
@@ -80,12 +80,12 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    val person = PersonHelper.one
+    val person = PersonHelper.one()
     (personService.find(_: Long)) expects 1L returning Some(person)
     val material = Material(None, 1L, 0, "article", "http://test.com")
     (personService.insertMaterial _) expects material returning material.copy(id = Some(1L))
     val req = fakePostRequest().
-      withFormUrlEncodedBody("type" -> "blabla", "url" -> "http://test.com")
+      withFormUrlEncodedBody("brandId" -> "1", "type" -> "blabla", "url" -> "http://test.com")
     val res = controller.create(1L).apply(req)
     status(res) must equalTo(OK)
   }

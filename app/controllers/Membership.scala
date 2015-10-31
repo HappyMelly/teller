@@ -130,7 +130,7 @@ class Membership(environment: RuntimeEnvironment[ActiveUser])
                   Some(member)))
               })
             }
-            notify(user.person, org, fee, member)
+            notify(user.person, org, member)
             subscribe(user.person, member)
 
             activity(member, user.person).becameSupporter.insert()
