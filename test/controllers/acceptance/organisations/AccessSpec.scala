@@ -26,7 +26,7 @@ package controllers.acceptance.organisations
 
 import _root_.integration.PlayAppSpec
 import controllers.Organisations
-import models.UserRole.{ DynamicRole, Role }
+import models.UserRole.Role
 import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
 
 class AccessSpec extends PlayAppSpec {
@@ -36,16 +36,16 @@ class AccessSpec extends PlayAppSpec {
   val controller = new TestOrganisations
 
   "Method 'activate'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.activation(1L).apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'add'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.add.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
@@ -58,14 +58,14 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'create'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.create.apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'createOrganizer'" should {
-    "have Editor access rights" in {
+    "have add access rights for events" in {
       controller.createOrganizer.apply(fakePostRequest())
       controller.checkedDynamicObject must_== Some("event")
       controller.checkedDynamicLevel must_== Some("add")
@@ -73,9 +73,9 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'delete'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.delete(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
@@ -103,9 +103,9 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'index'" should {
-    "have Viewer access rights" in {
+    "have Admin access rights" in {
       controller.index.apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Viewer)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 

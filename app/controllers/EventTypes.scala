@@ -68,7 +68,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def add(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def add(brandId: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
@@ -82,7 +82,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def create(brandId: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val form = eventTypeForm.bindFromRequest
@@ -109,7 +109,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Type identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       eventTypeService.find(id).map { eventType ⇒
@@ -133,7 +133,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
   }
@@ -143,7 +143,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Event type identifier
    */
-  def update(brandId: Long, id: Long) =  SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def update(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         eventTypeForm.bindFromRequest.fold(

@@ -254,16 +254,12 @@ object Event {
    * @deprecated
    */
   def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
-    if (user.editor)
-      TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
-    else {
-      val brands = Brand.findByUser(user)
-      if (brands.nonEmpty) {
-        val events = TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
-        events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
-      } else {
-        List[Event]()
-      }
+    val brands = Brand.findByUser(user)
+    if (brands.nonEmpty) {
+      val events = TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
+      events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
+    } else {
+      List[Event]()
     }
   }
 

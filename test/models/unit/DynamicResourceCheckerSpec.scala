@@ -182,9 +182,7 @@ class DynamicResourceCheckerSpec extends Specification with IsolatedMockFactory 
     with FakeServices
 
   val editor = UserAccount(None, 1L, "editor", None, None, None, None)
-  editor.roles_=(List(UserRole.forName("editor")))
   val viewer = editor.copy(role = "viewer")
-  viewer.roles_=(List(UserRole.forName("viewer")))
   val viewerChecker = new TestDynamicResourceChecker(viewer)
   val editorChecker = new TestDynamicResourceChecker(editor)
   val brandService = mock[BrandService]

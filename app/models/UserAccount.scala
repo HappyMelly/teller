@@ -42,30 +42,32 @@ case class UserAccount(id: Option[Long],
     googlePlusUrl: Option[String],
     isCoordinator: Boolean = false,
     isFacilitator: Boolean = false,
+    admin: Boolean = false,
+    member: Boolean = false,
+    registered: Boolean = false,
     activeRole: Boolean = false) extends Subject with Services {
-
-  private var _roles: Option[List[UserRole]] = None
-
-  def roles_=(roles: List[UserRole]): Unit = {
-    _roles = Some(roles)
-  }
 
   /**
    * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = {
-    if (_roles.isEmpty) {
-      val accountRole = userAccountService.findRole(personId).map(role ⇒ UserRole(role))
-      roles_=(accountRole.map(_.list).getOrElse(List()))
-      _roles.get
+    if (registered) {
+      val withRegistered = List(UserRole(UserRole.Role.Viewer))
+      val withAdmin = if(admin)
+        UserRole(UserRole.Role.Admin) :: withRegistered
+      else
+        withRegistered
+      val withMember = if(member)
+        UserRole(UserRole.Role.Member) :: withAdmin
+      else
+        withAdmin
+      withMember
     } else {
-      _roles.get
+      List(UserRole.forName("unregistered"))
     }
   }
 
-  lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
-  lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
-  lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
+  val viewer = registered
 
   def isCoordinatorNow: Boolean = isCoordinator && activeRole
   def isFacilitatorNow: Boolean = isFacilitator && !activeRole

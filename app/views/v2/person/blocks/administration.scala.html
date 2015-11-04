@@ -39,7 +39,6 @@
             <input type="radio" name="role" value="" @if(accountRole.isEmpty) {checked}> None (cannot log in)
           </label>
           @roleInput(accountRole, models.UserRole.Role.Viewer, "Viewer (can view data)")
-          @roleInput(accountRole, models.UserRole.Role.Editor, "Editor (can modify data)")
           @roleInput(accountRole, models.UserRole.Role.Admin, "Admin (can change user roles)")
         </div>
 

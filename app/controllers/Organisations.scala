@@ -52,7 +52,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -74,7 +74,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
@@ -119,7 +119,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Organisations.organisationForm.bindFromRequest.fold(
@@ -150,7 +150,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Delete an organisation
    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -209,7 +209,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val organisations = orgService.findAll

@@ -112,7 +112,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Product id
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       brandService.find(id).map { brand ⇒
@@ -137,7 +137,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @return
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = personService.findActive
       Ok(views.html.brand.form(user, None, people, brandsForm(user.name)))
@@ -146,7 +146,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create a new brand
    */
-  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form: Form[Brand] = brandsForm(user.name).bindFromRequest
@@ -189,7 +189,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Brand identifier
    */
-  def delete(id: Long) = SecuredDynamicAction("brand", "coordinator") { implicit request ⇒
+  def delete(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { brand ⇒
         brand.picture.foreach { picture ⇒
@@ -207,7 +207,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Brand string identifier
    */
-  def deletePicture(id: Long) = SecuredDynamicAction("brand", "coordinator") { implicit request ⇒
+  def deletePicture(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id).map { brand ⇒
         brand.picture.foreach { picture ⇒
@@ -267,7 +267,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    * Adds new coordinator to the given brand
    * @param id Brand identifier
    */
-  def addCoordinator(id: Long) = SecuredDynamicAction("brand", "coordinator") {
+  def addCoordinator(id: Long) = SecuredBrandAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val data = Form(single("personId" -> longNumber(min = 1)))
@@ -295,7 +295,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    * @param id Brand id
    * @param personId Person id
    */
-  def removeCoordinator(id: Long, personId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def removeCoordinator(id: Long, personId: Long) = SecuredBrandAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(id) map { x ⇒
@@ -316,7 +316,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    */
   def turnNotificationOff(id: Long,
     personId: Long,
-    notification: String) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    notification: String) = SecuredBrandAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandCoordinatorService.update(id, personId, notification, false)
@@ -331,7 +331,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    */
   def turnNotificationOn(id: Long,
     personId: Long,
-    notification: String) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+    notification: String) = SecuredBrandAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandCoordinatorService.update(id, personId, notification, true)
@@ -343,7 +343,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Brand identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("brand", "coordinator") { implicit request ⇒
+  def edit(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { brand ⇒
         val filledForm = brandsForm(user.name).fill(brand)
@@ -357,7 +357,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Brand identifier
    */
-  def update(id: Long) = AsyncSecuredDynamicAction("brand", "coordinator") { implicit request ⇒
+  def update(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       brandService.find(id).map { x ⇒
@@ -455,7 +455,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
 
         brandService.findWithCoordinators(brandId) map { x ⇒
           val account = user.account
-          val events = if (account.editor ||
+          val events = if (
             x.coordinators.exists(_._1.id == Some(account.personId))) {
             eventService.findByParameters(x.brand.id, future, archived = Some(false))
           } else {

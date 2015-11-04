@@ -23,7 +23,7 @@
             }
             @view.product.title
             <div class="actions pull-right">
-            @restrict(handler, List(as(Editor.toString))) {
+            @restrict(handler, List(as(Admin.toString))) {
                 <div class="button">
                     <a class="btn btn-default" href="@routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit
@@ -131,7 +131,7 @@
                             </td>
                             <td>@contributor.contribution.role</td>
                             <td>
-                            @restrict(handler, List(as(Editor.toString))) {
+                            @restrict(handler, List(as(Admin.toString))) {
                                 <a href="@routes.Contributions.delete(contributor.contribution.id.get, "product")">
                                     <i class="glyphicon glyphicon-pencil"></i> Remove contributor</a>
                             }
@@ -140,7 +140,7 @@
                     }
                     </tbody>
                 </table>
-                @restrict(handler, List(as(Editor.toString))) {
+                @restrict(handler, List(as(Admin.toString))) {
                     <form class="form-inline pull-right" method="POST"
                     action="@CSRF(routes.Contributions.create("contributor"))" id="contributor">
                         <input type="hidden" name="page" value="product">
@@ -166,7 +166,7 @@
             </div>
             <div class="tab-pane" id="products">
             @views.html.product.table(derivatives) { product =>
-                @restrict(handler, List(as(Editor.toString))) {
+                @restrict(handler, List(as(Admin.toString))) {
                     <a href="@routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit</a>
                 }
@@ -185,7 +185,7 @@
                         <tr>
                             <td><a href="@routes.Brands.details(brand.id.get)">@brand.name</a></td>
                             <td>
-                            @restrict(handler, List(as(Editor.toString))) {
+                            @restrict(handler, List(as(Admin.toString))) {
                                 <a href="@routes.Products.deleteBrand("product", view.product.id.get, brand.id.get)">
                                     <i class="glyphicon glyphicon-pencil"></i> Unassign brand</a>
                             }
@@ -194,7 +194,7 @@
                     }
                     </tbody>
                 </table>
-                @restrict(handler, List(as(Editor.toString))) {
+                @restrict(handler, List(as(Admin.toString))) {
                     <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Products.addBrand)">
                         <p>
                             <input type="hidden" name="page" value="product">

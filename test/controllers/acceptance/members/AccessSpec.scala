@@ -48,63 +48,63 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'add'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.add().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'edit'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.edit(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'update'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.update(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addOrganisation'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addOrganisation().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addPerson'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addPerson().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addExistingOrganisation'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addExistingOrganisation().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addExistingPerson'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addExistingPerson().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'delete'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.delete(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'updateReason'" should {
-    "have Editor access rights" in {
+    "have edit access rights for the given person" in {
       controller.updateReason(1L).apply(fakePostRequest())
       controller.checkedDynamicObject must_== Some("person")
       controller.checkedDynamicLevel must_== Some("edit")

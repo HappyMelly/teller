@@ -39,7 +39,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param brandId Brand identifier
    */
   def isBrandCoordinator(brandId: Long): Boolean = {
-    user.editor || brandService.isCoordinator(brandId, user.personId)
+    brandService.isCoordinator(brandId, user.personId)
   }
 
   /**
@@ -48,7 +48,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param brandId Brand identifier
    */
   def isBrandFacilitator(brandId: Long): Boolean = {
-    user.editor || brandService.isCoordinator(brandId, user.personId) ||
+    brandService.isCoordinator(brandId, user.personId) ||
       licenseService.activeLicense(brandId, user.personId).nonEmpty
   }
 
@@ -58,7 +58,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param eventId Event identifier
    */
   def isEventCoordinator(eventId: Long): Boolean = {
-    user.editor || eventService.find(eventId).exists { x ⇒
+    eventService.find(eventId).exists { x ⇒
       brandService.isCoordinator(x.brandId, user.personId)
     }
   }
@@ -70,7 +70,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    */
   def isEventFacilitator(eventId: Long): Boolean = {
     val userId = user.personId
-    user.editor || eventService.find(eventId).exists { x ⇒
+    eventService.find(eventId).exists { x ⇒
       x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
     }
   }
@@ -81,7 +81,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param evaluationId Evaluation identifier
    */
   def isEvaluationCoordinator(evaluationId: Long): Boolean = {
-    user.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
+    eventService.findByEvaluation(evaluationId).exists { x ⇒
       brandService.isCoordinator(x.brandId, user.personId)
     }
   }
@@ -93,7 +93,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    */
   def isEvaluationFacilitator(evaluationId: Long): Boolean = {
     val userId = user.personId
-    user.editor || eventService.findByEvaluation(evaluationId).exists { x ⇒
+    eventService.findByEvaluation(evaluationId).exists { x ⇒
       x.isFacilitator(userId) || brandService.isCoordinator(x.brandId, userId)
     }
   }
@@ -104,7 +104,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param memberId Member identifier
    */
   def isMemberEditor(memberId: Long): Boolean = {
-    user.editor || brandService.isCoordinator(memberId, user.personId)
+    user.admin || brandService.isCoordinator(memberId, user.personId)
   }
 
   /**
@@ -112,7 +112,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param personId Person identifier
    */
   def canEditPerson(personId: Long): Boolean = {
-    user.editor || user.personId == personId ||
+    user.admin || user.personId == personId ||
       personService.find(personId).exists { person ⇒
         if (person.virtual)
           eventService.findByParticipation(personId, user.personId).nonEmpty
@@ -126,7 +126,7 @@ class DynamicResourceChecker(user: UserAccount) extends Services {
    * @param personId Person identifier
    */
   def canDeletePerson(personId: Long): Boolean = {
-    user.editor || personService.find(personId).exists { person ⇒
+    user.admin || personService.find(personId).exists { person ⇒
       if (person.virtual)
         eventService.findByParticipation(personId, user.personId).nonEmpty
       else

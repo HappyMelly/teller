@@ -36,7 +36,7 @@
               <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
             </div>
           } -->
-          @restrict(handler, List(as(Editor.toString))) {
+          @restrict(handler, List(as(Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="organisation"
                 action="@CSRF(routes.Organisations.delete(view.org.id.getOrElse(0)))">

@@ -7,7 +7,7 @@
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 <h3>Content Licenses</h3>
-@restrict(handler, List(as(Editor.toString))) {
+@restrict(handler, List(as(Admin.toString))) {
   <p><a href="@routes.Licenses.add(person.id.getOrElse(0))">
     + Add Content License</a></p>
 }
@@ -17,7 +17,7 @@
       <div class="list-group-item">
         <div class="list-group-item-heading">@record._1.brand.name
           &nbsp;&nbsp;&nbsp;@views.html.v2.element.rating(record._2)
-          @restrict(handler, List(as(Editor.toString))) {
+          @restrict(handler, List(as(Admin.toString))) {
             <a class="pull-right"
             href="@routes.Licenses.edit(license.id.getOrElse(0))">Edit</a>
           }

@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.{Evaluations, Events, Participants, People}
-import models.{EvaluationStatus, Evaluation, EvaluationEventView, Event}
+import models._
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -66,6 +66,19 @@ class EvaluationService extends Services{
         y ← TableQuery[Events] if y.id === x.eventId
       } yield (x, y)
       query.firstOption.map(EvaluationEventView.tupled)
+  }
+
+  /**
+   * Returns evaluation with the related participant if exists; otherwise, None
+   * @param id Evaluation id
+   */
+  def findWithParticipant(id: Long): Option[EvaluationParticipantView] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← evaluations if x.id === id
+        y ← TableQuery[People] if y.id === x.personId
+      } yield (x, y)
+      query.firstOption.map(EvaluationParticipantView.tupled)
   }
 
   /**

@@ -53,12 +53,12 @@ class Contributions(environment: RuntimeEnvironment[ActiveUser])
    * @param page Label of a page where the action happened
    * @return
    */
-  def create(page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
-      val route = if (page == "organisation") {
+      val route: String = if (page == "organisation") {
         routes.Organisations.details(contributorId).url
       } else if (page == "person") {
         routes.People.details(contributorId).url + "#contributions"
@@ -89,7 +89,7 @@ class Contributions(environment: RuntimeEnvironment[ActiveUser])
    * @param page Label of a page where the action happened
    * @return
    */
-  def delete(id: Long, page: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long, page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Contribution.find(id).map { contribution ⇒
@@ -100,7 +100,7 @@ class Contributions(environment: RuntimeEnvironment[ActiveUser])
         Contribution.delete(id)
 
         val log = activity(contribution, user.person).disconnected.insert()
-        val route = if (page == "organisation") {
+        val route: String = if (page == "organisation") {
           routes.Organisations.details(contribution.contributorId).url
         } else if (page == "product") {
           routes.Products.details(contribution.productId).url

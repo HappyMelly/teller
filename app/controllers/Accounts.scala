@@ -71,7 +71,7 @@ class Accounts(environment: RuntimeEnvironment[ActiveUser])
   /**
    * An overview of bookings for the given account.
    */
-  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Editor) {
+  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val entries = BookingEntry.findByAccountId(id, from, to)
@@ -91,7 +91,7 @@ class Accounts(environment: RuntimeEnvironment[ActiveUser])
         Ok(views.html.booking.index(user, account, entriesWithBalance, from, to))
   }
 
-  def details(id: Long) = SecuredRestrictedAction(Editor) {
+  def details(id: Long) = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map { account ⇒
@@ -99,7 +99,7 @@ class Accounts(environment: RuntimeEnvironment[ActiveUser])
         }.getOrElse(NotFound)
   }
 
-  def activate(id: Long) = SecuredRestrictedAction(Editor) {
+  def activate(id: Long) = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map { account ⇒
@@ -120,7 +120,7 @@ class Accounts(environment: RuntimeEnvironment[ActiveUser])
 
   }
 
-  def deactivate(id: Long) = SecuredRestrictedAction(Editor) {
+  def deactivate(id: Long) = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Account.find(id).map(account ⇒
@@ -135,7 +135,7 @@ class Accounts(environment: RuntimeEnvironment[ActiveUser])
           }).getOrElse(NotFound)
   }
 
-  def index = SecuredRestrictedAction(Editor) {
+  def index = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Ok(views.html.account.index(user, Account.findAllActiveWithBalance))

@@ -113,7 +113,7 @@
             }
           </ul>
           @if(!showFacilitationTab) {
-            @restrict(handler, List(as(Editor.toString))) {
+            @restrict(handler, List(as(Admin.toString))) {
               <a href="@routes.Licenses.add(person.id.getOrElse(0))"
                 class="btn btn-upload btn-block">
                 Make a Facilitator</a>

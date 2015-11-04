@@ -13,7 +13,7 @@
     <thead>
       <th>Product</th>
       <th>Role</th>
-      @restrict(handler, List(as(Editor.toString))) {<th></th>}
+      @restrict(handler, List(as(Admin.toString))) {<th></th>}
     </thead>
     <tbody>
     @for(contribution <- contributions) {
@@ -21,7 +21,7 @@
         <td><a href="@routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
         <td>@contribution.contribution.role</td>
         <td>
-        @restrict(handler, List(as(Editor.toString))) {
+        @restrict(handler, List(as(Admin.toString))) {
           <a href="@routes.Contributions.delete(contribution.contribution.id.get, objectType)" class="font-sm">
             Remove contribution</a>
         }

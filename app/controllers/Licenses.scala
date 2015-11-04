@@ -75,7 +75,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @return
    */
-  def add(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add(personId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       PersonService.get.find(personId).map { person ⇒
@@ -91,7 +91,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(personId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(personId).map { person ⇒
@@ -118,7 +118,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id License identifier
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       licenseService.findWithBrandAndLicensee(id).map { view ⇒
@@ -135,7 +135,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id License identifier
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       licenseService.findWithBrandAndLicensee(id) map { view ⇒
@@ -161,7 +161,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id License identifier
    */
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       License.find(id).map { license ⇒

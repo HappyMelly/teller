@@ -25,6 +25,7 @@
 package controllers
 
 import be.objectify.deadbolt.scala.DeadboltActions
+import models.service.Services
 import models.{ActiveUser, UserRole}
 import play.api.mvc._
 import securesocial.core._
@@ -34,7 +35,9 @@ import scala.concurrent.Future
 /**
  * Integrates SecureSocial authentication with Deadbolt.
  */
-trait Security extends SecureSocial[ActiveUser] with DeadboltActions {
+trait Security extends SecureSocial[ActiveUser]
+  with DeadboltActions
+  with Services {
 
   /**
    * A redirect to the login page, used when authorisation fails due to
@@ -100,6 +103,122 @@ trait Security extends SecureSocial[ActiveUser] with DeadboltActions {
   }
 
   /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param brandId Evaluation identifier
+   */
+  def SecuredBrandAction(brandId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val userId = user.account.personId
+          val handler = new AuthorisationHandler(user)
+          if (brandService.isCoordinator(brandId, userId))
+            Future.apply(f(request)(handler)(user))
+          else
+            handler.onAuthFailure(request)
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param brandId Evaluation identifier
+   */
+  def AsyncSecuredBrandAction(brandId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val userId = user.account.personId
+          val handler = new AuthorisationHandler(user)
+          if (brandService.isCoordinator(brandId, userId))
+            f(request)(handler)(user)
+          else
+            handler.onAuthFailure(request)
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param evaluationId Evaluation identifier
+   */
+  def SecuredEvaluationAction(evaluationId: Long, role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val userId = user.account.personId
+          val handler = new AuthorisationHandler(user)
+          eventService.findByEvaluation(evaluationId).map { event ⇒
+            if (eventManager(userId, role, event))
+              Future.apply(f(request)(handler)(user)(event))
+            else
+              handler.onAuthFailure(request)
+          } getOrElse Future.successful(NotFound)
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param eventId Event identifier
+   */
+  def SecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val userId = user.account.personId
+          val handler = new AuthorisationHandler(user)
+          eventService.find(eventId).map { event ⇒
+            if (eventManager(userId, role, event))
+              Future.apply(f(request)(handler)(user)(event))
+            else
+              handler.onAuthFailure(request)
+          } getOrElse Future.successful(NotFound)
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param eventId Event identifier
+   */
+  def AsyncSecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val userId = user.account.personId
+          val handler = new AuthorisationHandler(user)
+          eventService.find(eventId).map { event ⇒
+            if (eventManager(userId, role, event))
+              f(request)(handler)(user)(event)
+            else
+              handler.onAuthFailure(request)
+          } getOrElse Future.successful(NotFound)
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  /**
    * Asynchronously authenticates using SecureSocial, and uses Deadbolt
    * to restrict access to the given role
    *
@@ -152,5 +271,17 @@ trait Security extends SecureSocial[ActiveUser] with DeadboltActions {
       }
     }
   }
+
+  protected def eventManager(userId: Long,
+                             role: UserRole.Role.Role,
+                             event: models.Event): Boolean = {
+    val facilitator = event.isFacilitator(userId)
+    if (role == UserRole.Role.Coordinator)
+      facilitator || brandService.isCoordinator(event.brandId, userId)
+    else
+      facilitator
+  }
+
+
 }
 

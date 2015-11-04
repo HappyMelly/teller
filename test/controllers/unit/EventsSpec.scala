@@ -54,7 +54,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
 
   val controller = new TestEvents
   val user = UserAccount(None, 1L, "editor", None, None, None, None)
-  user.roles_=(List(UserRole.forName("editor")))
+//  user.roles_=(List(UserRole.forName("editor")))
   val licenseService = mock[LicenseService]
   val eventTypeService = mock[EventTypeService]
   controller.licenseService_=(licenseService)
@@ -74,7 +74,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       val checker = mock[MockedChecker]
       (checker.isBrandFacilitator _) expects 1L returning false
       val anotherController = new AnotherTestEvents(checker)
-      user.roles_=(List(UserRole.forName("viewer")))
+//      user.roles_=(List(UserRole.forName("viewer")))
       val event = EventHelper.one
       val res = anotherController.callValidateEvent(event, user)
       res.nonEmpty must_== true

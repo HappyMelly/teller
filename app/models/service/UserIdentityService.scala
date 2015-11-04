@@ -98,10 +98,6 @@ class UserIdentityService {
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
       }
       q.firstOption map { d ⇒
-        val account = d._2
-        val roles = UserRole.forName(account.role)
-        account.roles_=(roles.list)
-
         val person: Person = d._3
         val member = if (d._4.nonEmpty)
           Some(Member(d._4, person.id.get, person = true,
@@ -110,7 +106,7 @@ class UserIdentityService {
             DateTime.now(), 0L, DateTime.now(), 0L))
         else
           None
-        Some(ActiveUser(d._1, account, person, member))
+        Some(ActiveUser(d._1, d._2, person, member))
       } getOrElse None
   }
 
@@ -148,7 +144,6 @@ class UserIdentityService {
           } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
         }
         q.firstOption map { d ⇒
-          d._1.roles_=(UserRole.forName(d._1.role).list)
           val person: Person = d._2
           val member = if (d._3.nonEmpty)
             Some(Member(d._3, person.id.get, person = true,

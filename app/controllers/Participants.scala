@@ -26,6 +26,7 @@ package controllers
 
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
+import models.UserRole.Role
 import models._
 import models.service.{EventService, PersonService, Services}
 import org.joda.time.DateTime
@@ -119,7 +120,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       brandService.findWithCoordinators(brandId) map { x ⇒
         val brand = x.brand
         val account = user.account
-        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
+        val coordinator = x.coordinators.exists(_._1.id == Some(account.personId))
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -165,7 +166,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val account = user.account
         val x = brandService.findWithCoordinators(event.brandId).get
         val brand = x.brand
-        val coordinator = account.editor || x.coordinators.exists(_._1.id == Some(account.personId))
+        val coordinator = x.coordinators.exists(_._1.id == Some(account.personId))
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -359,9 +360,9 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId).map { value ⇒
 
           val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)

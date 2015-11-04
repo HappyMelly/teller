@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.UserRole.DynamicRole
+import models.UserRole.Role
 import models.service.Services
 import models.{ActiveUser, Certificate}
 import org.joda.time.LocalDate
@@ -48,16 +48,15 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    */
   def create(eventId: Long,
     personId: Long,
-    ref: Option[String] = None) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+    ref: Option[String] = None) = SecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId) map { participant ⇒
           val approver = user.person
           val evaluation = if (participant.evaluationId.nonEmpty)
             participant.evaluation
           else
             None
-          val event = participant.event.get
           if (event.free) {
             NotFound
           } else {

@@ -27,7 +27,7 @@ package controllers
 import controllers.Forms._
 import mail.reminder.EvaluationReminder
 import models.UserRole.DynamicRole
-import models.UserRole.Role._
+import models.UserRole.Role
 import models.event.Comparator
 import models.event.Comparator.FieldChange
 import models.service.Services
@@ -148,7 +148,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def add = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val defaultDetails = Details(Some(""), Some(""))
@@ -169,9 +169,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param id Event Id
    * @return
    */
-  def duplicate(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
+  def duplicate(id: Long) = SecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+    implicit handler => implicit user ⇒ implicit event =>
       eventService.findWithInvoice(id) map { view ⇒
         val brands = Brand.findByUser(user.account)
         Ok(views.html.v2.event.form(user, None, brands, false, eventForm.fill(view)))
@@ -181,7 +180,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredDynamicAction("event", "add") { implicit request ⇒
+  def create = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form = eventForm.bindFromRequest
@@ -205,9 +204,9 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Cancel the given event
    * @param id Event ID
    */
-  def cancel(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
+  def cancel(id: Long) = SecuredEventAction(id, Role.Facilitator) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event =>
 
         case class CancellationData(reason: Option[String],
           participants: Option[Int],
@@ -218,36 +217,31 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
           "participantNumber" -> optional(number),
           "details" -> optional(text))(CancellationData.apply)(CancellationData.unapply))
 
-        eventService.find(id) map { event ⇒
-          if (event.deletable) {
-            cancelForm.bindFromRequest.fold(
-              failure ⇒
-                Redirect(routes.Dashboard.index()).flashing("error" -> "Something goes wrong :("),
-              data ⇒ {
-                event.cancel(user.person.id.get, data.reason,
-                  data.participants, data.details)
-                val log = activity(event, user.person).deleted.insert()
-                sendEmailNotification(event, List.empty, log)
-                Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
-              })
-          } else {
-            Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
-          }
-        } getOrElse NotFound
+        if (event.deletable) {
+          cancelForm.bindFromRequest.fold(
+            failure ⇒
+              Redirect(routes.Dashboard.index()).flashing("error" -> "Something goes wrong :("),
+            data ⇒ {
+              event.cancel(user.person.id.get, data.reason,
+                data.participants, data.details)
+              val log = activity(event, user.person).deleted.insert()
+              sendEmailNotification(event, List.empty, log)
+              Redirect(routes.Dashboard.index()).flashing("success" -> log.toString)
+            })
+        } else {
+          Redirect(routes.Events.details(id)).flashing("error" -> Messages("error.event.nonDeletable"))
+        }
   }
 
   /**
    * Confirm form submits to this action.
    * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredDynamicAction("event", DynamicRole.Facilitator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        eventService.find(id) map { event ⇒
-          eventService.confirm(id)
-          val log = activity(event, user.person).confirmed.insert()
-          success(id, log.toString)
-        } getOrElse Future.successful(NotFound)
+  def confirm(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒ implicit event =>
+      eventService.confirm(id)
+      val log = activity(event, user.person).confirmed.insert()
+      success(id, log.toString)
   }
 
   /**
@@ -279,7 +273,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Details page.
    * @param id Event ID
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventService.findWithInvoice(id) map { x ⇒
         roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
@@ -316,7 +310,6 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   def edit(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-
         eventService.findWithInvoice(id) map { view ⇒
           val account = user.account
           val brands = Brand.findByUser(account)
@@ -332,7 +325,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Renders list of events
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         val facilitators = License.allLicensees(brand.identifier).
@@ -355,7 +348,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     facilitator: Option[Long],
     future: Option[Boolean],
     public: Option[Boolean],
-    archived: Option[Boolean]) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    archived: Option[Boolean]) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val events = facilitator map {
         eventService.findByFacilitator(_, brandId, future, public, archived)
@@ -366,10 +359,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
 
       val account = user.account
       // we do not show private events of other facilitators to anyone except
-      // brand coordinator or Editor
-      val filteredEvents: List[Event] = if (account.editor)
-        events
-      else if (account.coordinator)
+      // brand coordinator
+      val filteredEvents: List[Event] = if (account.isCoordinatorNow)
         events.filter(!_.notPublic) :::
           events.filter(e ⇒ e.notPublic &&
             account.brands.exists(_.identifier == e.brandId))
@@ -419,10 +410,10 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders form with cancelation reason
+   * Renders form with cancellation reason
    * @param id Event identifier
    */
-  def reason(id: Long) = SecuredRestrictedAction(Viewer) { implicit request =>
+  def reason(id: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
       Ok(views.html.v2.event.reason(id))
   }
@@ -467,8 +458,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
-  def sendRequest(id: Long) = SecuredDynamicAction("event", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def sendRequest(id: Long) = SecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒ implicit event =>
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(
         "participantIds" -> list(longNumber),
@@ -479,30 +470,28 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             url.isDefined
           }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
 
-      eventService.find(id).map { event ⇒
-        form.fold(
-          formWithErrors ⇒ {
-            Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")
-          },
-          requestData ⇒ {
-            val participantIds = event.participants.map(_.id.get)
-            if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
-              import scala.util.matching.Regex
-              val namePattern = new Regex("""(PARTICIPANT_NAME_TOKEN)""", "name")
-              val brand = brandService.find(event.brandId).get
-              requestData.participantIds.foreach { id ⇒
-                val participant = personService.find(id).get
-                val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
-                EvaluationReminder.sendEvaluationRequest(participant, brand, body)
-              }
-
-              val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
-              Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
-            } else {
-              Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event.")
+      form.fold(
+        formWithErrors ⇒ {
+          Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form.")
+        },
+        requestData ⇒ {
+          val participantIds = event.participants.map(_.id.get)
+          if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
+            import scala.util.matching.Regex
+            val namePattern = new Regex("""(PARTICIPANT_NAME_TOKEN)""", "name")
+            val brand = brandService.find(event.brandId).get
+            requestData.participantIds.foreach { id ⇒
+              val participant = personService.find(id).get
+              val body = namePattern replaceAllIn (requestData.body, m ⇒ participant.fullName)
+              EvaluationReminder.sendEvaluationRequest(participant, brand, body)
             }
-          })
-      }.getOrElse(NotFound)
+
+            val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
+            Redirect(routes.Events.details(id)).flashing("success" -> activity.toString)
+          } else {
+            Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event.")
+          }
+        })
   }
 
   /**

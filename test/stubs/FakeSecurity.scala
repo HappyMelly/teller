@@ -176,19 +176,18 @@ trait FakeSecurity extends Security {
   private def user: ActiveUser = {
     val identity = new FakeUserIdentity(Some(123213L),
       _identity, "Sergey", "Kotlov", "Sergey Kotlov", None)
-    val account = UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
-    val admin = UserRole.forName("admin")
-    val editor = UserRole.forName("editor")
-    val viewer = UserRole.forName("viewer")
-    _identity match {
+    val account = _identity match {
       case FakeUserIdentity.unregistered ⇒
-        account.roles_=(List(UserRole.forName("unregistered")))
+        UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
       case FakeUserIdentity.admin ⇒
-        account.roles_=(List(viewer, editor, admin))
+        UserAccount(Some(1L), 1L, "viewer", None, None, None, None, admin = true,
+          registered = true)
       case FakeUserIdentity.editor ⇒
-        account.roles_=(List(viewer, editor))
+        UserAccount(Some(1L), 1L, "viewer", None, None, None, None,
+          registered = true)
       case _ ⇒
-        account.roles_=(List(viewer))
+        UserAccount(Some(1L), 1L, "viewer", None, None, None, None,
+          registered = true)
     }
     val person = _activeUser getOrElse PersonHelper.one()
     ActiveUser(identity, account, person)

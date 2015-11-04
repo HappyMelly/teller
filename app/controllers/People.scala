@@ -60,7 +60,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
@@ -83,7 +83,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Render a Create page
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.v2.person.form(user, None, People.personForm(user.name)))
   }
@@ -122,7 +122,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       People.personForm(user.name).bindFromRequest.fold(
@@ -196,9 +196,9 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
-        val accountRole = if (user.account.editor)
+        val accountRole = if (user.account.admin)
           userAccountService.findRole(id) else None
-        val duplicated = if (user.account.editor)
+        val duplicated = if (user.account.admin)
           userAccountService.findDuplicateIdentity(person)
         else None
         Ok(views.html.v2.person.details(user, person,

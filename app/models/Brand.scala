@@ -172,12 +172,8 @@ object Brand {
    *  license holders.
    */
   def findByUser(user: UserAccount): List[Brand] = DB.withSession { implicit session ⇒
-    if (user.editor)
-      TableQuery[Brands].list.sortBy(_.name)
-    else {
-      val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
-      BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
-    }
+    val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
+    BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
   }
 
   def find(code: String): Option[BrandView] = DB.withSession { implicit session ⇒

@@ -49,11 +49,10 @@ class ResourceHandler(user: ActiveUser)
         meta match {
           case "edit" ⇒
             val organisationId = """\d+""".r findFirstIn request.uri
-            // A User should have an Editor role or should be a member of the organisation
-            user.account.editor ||
-              (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
-                _.people.find(_.id == Some(user.account.personId)).nonEmpty
-              })
+            // User should be a member of the organisation
+            (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
+              _.people.find(_.id == Some(user.account.personId)).nonEmpty
+            })
           case _ ⇒ true
         }
       case _ ⇒ false
@@ -73,7 +72,7 @@ class ResourceHandler(user: ActiveUser)
   protected def checkEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean = {
     val userId = account.personId
     meta match {
-      case "add" ⇒ account.editor || account.coordinator
+      case "add" ⇒ account.coordinator
       case DynamicRole.Coordinator ⇒
         id(url) exists { evaluationId ⇒
           checker(account).isEvaluationCoordinator(evaluationId)
@@ -95,7 +94,7 @@ class ResourceHandler(user: ActiveUser)
   protected def checkEventPermission(account: UserAccount, meta: String, url: String): Boolean = {
     val userId = account.personId
     meta match {
-      case "add" ⇒ account.editor || account.facilitator || account.coordinator
+      case "add" ⇒ account.facilitator || account.coordinator
       case DynamicRole.Facilitator ⇒
         id(url) exists { eventId ⇒ checker(account).isEventFacilitator(eventId) }
       case DynamicRole.Coordinator ⇒
@@ -125,7 +124,7 @@ class ResourceHandler(user: ActiveUser)
    */
   protected def checkMemberPermission(user: ActiveUser, url: String): Boolean = {
     id(url) exists { memberId ⇒
-      if (user.account.editor || user.person.member.exists(_.id == Some(memberId)))
+      if (user.account.admin || user.person.member.exists(_.id == Some(memberId)))
         true
       else
         memberService.find(memberId) exists { member ⇒

@@ -56,9 +56,7 @@ class ResourceHandlerSpec extends Specification {
   }
 
   val editor = UserAccount(None, 1L, "editor", None, None, None, None)
-  editor.roles_=(List(UserRole.forName("editor")))
   val viewer = editor.copy(role = "viewer")
-  viewer.roles_=(List(UserRole.forName("viewer")))
   val person = PersonHelper.one
   person.member_=(MemberHelper.make(Some(1L), 1L, person = true, funder = false))
   val identity = new FakeUserIdentity(Some(123213L), FakeUserIdentity.viewer,

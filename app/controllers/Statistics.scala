@@ -65,7 +65,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * Renders index page with statistics for brands
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         Ok(views.html.v2.statistics.index(user, brand, brands))
@@ -80,7 +80,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byFacilitators(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byFacilitators(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
 
@@ -115,7 +115,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byEvents(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byEvents(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val now = LocalDate.now()
       val events = eventService.findByParameters(Some(brandId))
@@ -171,7 +171,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byCountries(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val events = eventService.
         findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
@@ -200,7 +200,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byParticipants(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byParticipants(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val participants = participantService.findByBrand(brandId)
 

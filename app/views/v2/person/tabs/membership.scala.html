@@ -86,7 +86,7 @@
       <p>Your membership ends <b>@m.until</b>.</p>
     }
   </div>
-  @restrict(handler, List(as(Editor.toString))) {
+  @restrict(handler, List(as(Admin.toString))) {
     @views.html.v2.element.administration(m)
   }
   </div>
