@@ -81,7 +81,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def addLanguage(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def addLanguage(id: Long) = SecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val membershipForm = Form(single("language" -> nonEmptyText))
@@ -115,7 +115,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
    * @param id Person identifier
    * @param language Two-letters language identifier
    */
-  def deleteLanguage(id: Long, language: String) = SecuredDynamicAction("person", "edit") {
+  def deleteLanguage(id: Long, language: String) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id).map { person ⇒
@@ -143,7 +143,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def addCountry(id: Long) = SecuredDynamicAction("person", "edit") {
+  def addCountry(id: Long) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
@@ -176,7 +176,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
    * @param id Person identifier
    * @param country Two-letters country identifier
    */
-  def deleteCountry(id: Long, country: String) = SecuredDynamicAction("person", "edit") {
+  def deleteCountry(id: Long, country: String) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 

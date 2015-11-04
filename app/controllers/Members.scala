@@ -168,7 +168,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def updateReason(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def updateReason(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.member(personId) map { member ⇒

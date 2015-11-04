@@ -91,7 +91,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def addRelationship() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val relationshipForm = Form(tuple("page" -> text,
@@ -163,7 +163,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    */
   def deleteRelationship(page: String,
     personId: Long,
-    organisationId: Long) = SecuredDynamicAction("person", "edit") {
+    organisationId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
@@ -315,7 +315,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    * Cancels a subscription for yearly-renewing membership
    * @param id Person id
    */
-  def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def cancel(id: Long) = SecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val url = routes.People.details(id).url + "#membership"
       personService.find(id) map { person ⇒

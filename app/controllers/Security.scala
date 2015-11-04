@@ -110,17 +110,11 @@ trait Security extends SecureSocial[ActiveUser]
    */
   def SecuredBrandAction(brandId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          val userId = user.account.personId
-          val handler = new AuthorisationHandler(user)
-          if (brandService.isCoordinator(brandId, userId))
-            Future.apply(f(request)(handler)(user))
-          else
-            handler.onAuthFailure(request)
-        case _ ⇒ MissingUserAccountResult
-      }
+    securedAction() { implicit request => implicit handler => implicit user =>
+      if (brandService.isCoordinator(brandId, user.account.personId))
+        f(request)(handler)(user)
+      else
+        throw new AuthenticationException
     }
   }
 
@@ -132,17 +126,11 @@ trait Security extends SecureSocial[ActiveUser]
    */
   def AsyncSecuredBrandAction(brandId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          val userId = user.account.personId
-          val handler = new AuthorisationHandler(user)
-          if (brandService.isCoordinator(brandId, userId))
-            f(request)(handler)(user)
-          else
-            handler.onAuthFailure(request)
-        case _ ⇒ MissingUserAccountResult
-      }
+    asyncSecuredAction() { implicit request => implicit handler => implicit user =>
+      if (brandService.isCoordinator(brandId, user.account.personId))
+        f(request)(handler)(user)
+      else
+        throw new AuthenticationException
     }
   }
 
@@ -154,19 +142,13 @@ trait Security extends SecureSocial[ActiveUser]
    */
   def SecuredEvaluationAction(evaluationId: Long, role: UserRole.Role.Role)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          val userId = user.account.personId
-          val handler = new AuthorisationHandler(user)
-          eventService.findByEvaluation(evaluationId).map { event ⇒
-            if (eventManager(userId, role, event))
-              Future.apply(f(request)(handler)(user)(event))
-            else
-              handler.onAuthFailure(request)
-          } getOrElse Future.successful(NotFound)
-        case _ ⇒ MissingUserAccountResult
-      }
+    securedAction() { implicit request => implicit handler => implicit user =>
+      eventService.findByEvaluation(evaluationId).map { event ⇒
+        if (eventManager(user.account.personId, role, event))
+          f(request)(handler)(user)(event)
+        else
+          throw new AuthenticationException
+      } getOrElse NotFound
     }
   }
 
@@ -178,19 +160,13 @@ trait Security extends SecureSocial[ActiveUser]
    */
   def SecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          val userId = user.account.personId
-          val handler = new AuthorisationHandler(user)
-          eventService.find(eventId).map { event ⇒
-            if (eventManager(userId, role, event))
-              Future.apply(f(request)(handler)(user)(event))
-            else
-              handler.onAuthFailure(request)
-          } getOrElse Future.successful(NotFound)
-        case _ ⇒ MissingUserAccountResult
-      }
+    securedAction() { implicit request => implicit handler => implicit user =>
+      eventService.find(eventId).map { event ⇒
+        if (eventManager(user.account.personId, role, event))
+          f(request)(handler)(user)(event)
+        else
+          throw new AuthenticationException
+      } getOrElse NotFound
     }
   }
 
@@ -202,22 +178,48 @@ trait Security extends SecureSocial[ActiveUser]
    */
   def AsyncSecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          val userId = user.account.personId
-          val handler = new AuthorisationHandler(user)
-          eventService.find(eventId).map { event ⇒
-            if (eventManager(userId, role, event))
-              f(request)(handler)(user)(event)
-            else
-              handler.onAuthFailure(request)
-          } getOrElse Future.successful(NotFound)
-        case _ ⇒ MissingUserAccountResult
-      }
+    asyncSecuredAction() { implicit request => implicit handler => implicit user =>
+      eventService.find(eventId).map { event ⇒
+        if (eventManager(user.account.personId, role, event))
+          f(request)(handler)(user)(event)
+        else
+          throw new AuthenticationException
+      } getOrElse Future.successful(NotFound)
     }
   }
 
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param personId Person identifier
+   */
+  def AsyncSecuredProfileAction(personId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
+    asyncSecuredAction() { implicit request => implicit handler => implicit user =>
+      if (user.account.admin || user.account.personId == personId)
+        f(request)(handler)(user)
+      else
+        throw new AuthenticationException
+    }
+  }
+
+  /**
+   * Authenticates using SecureSocial
+   * and uses Deadbolt to restrict access to the given role
+   *
+   * @param personId Person identifier
+   */
+  def SecuredProfileAction(personId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    securedAction() { implicit request => implicit handler => implicit user =>
+      if (user.account.admin || user.account.personId == personId)
+        f(request)(handler)(user)
+      else
+        throw new AuthenticationException
+    }
+  }
+  
   /**
    * Asynchronously authenticates using SecureSocial, and uses Deadbolt
    * to restrict access to the given role
@@ -282,6 +284,37 @@ trait Security extends SecureSocial[ActiveUser]
       facilitator
   }
 
+  protected def asyncSecuredAction()(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val handler = new AuthorisationHandler(user)
+          try {
+            f(request)(handler)(user)
+          } catch {
+            case _: AuthenticationException => handler.onAuthFailure(request)
+          }
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
+
+  protected def securedAction()(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    SecuredAction.async { implicit request ⇒
+      request.user match {
+        case user: ActiveUser ⇒
+          val handler = new AuthorisationHandler(user)
+          try {
+            Future.apply(f(request)(handler)(user))
+          } catch {
+            case _: AuthenticationException => handler.onAuthFailure(request)
+          }
+        case _ ⇒ MissingUserAccountResult
+      }
+    }
+  }
 
 }
 

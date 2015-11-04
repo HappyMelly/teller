@@ -48,7 +48,7 @@ class Signatures(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def delete(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def delete(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId).map { person ⇒
@@ -74,7 +74,7 @@ class Signatures(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def upload(personId: Long) = AsyncSecuredDynamicAction("person", "edit") {
+  def upload(personId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 

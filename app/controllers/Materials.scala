@@ -56,7 +56,7 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def create(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
@@ -85,11 +85,10 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id Material identifier
    */
-  def remove(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.deleteMaterial(personId, id)
-        jsonSuccess("ok")
+  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      personService.deleteMaterial(personId, id)
+      jsonSuccess("ok")
   }
 
 }
