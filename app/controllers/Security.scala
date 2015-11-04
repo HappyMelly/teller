@@ -80,33 +80,6 @@ trait Security extends SecureSocial[ActiveUser]
    * Authenticates using SecureSocial
    * and uses Deadbolt to restrict access to the given role
    *
-   * @param name Object name
-   * @param meta Access level description
-   */
-  def SecuredDynamicAction(name: String, meta: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
-    SecuredAction.async { implicit request ⇒
-      request.user match {
-        case user: ActiveUser ⇒
-          try {
-            // Use the authenticated user’s account details to construct
-            // a handler (to look up account role) for Deadbolt authorisation
-            val handler = new AuthorisationHandler(user)
-            val restrictedAction = Dynamic(name, meta, handler)(Action(f(_)(handler)(user)))
-            val result: Future[Result] = restrictedAction(request)
-            result
-          } catch {
-            case _: NoSuchElementException ⇒ MissingUserAccountResult
-          }
-        case _ ⇒ MissingUserAccountResult
-      }
-    }
-  }
-
-  /**
-   * Authenticates using SecureSocial
-   * and uses Deadbolt to restrict access to the given role
-   *
    * @param brandId Evaluation identifier
    */
   def SecuredBrandAction(brandId: Long)(
@@ -145,24 +118,6 @@ trait Security extends SecureSocial[ActiveUser]
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
     securedAction() { implicit request => implicit handler => implicit user =>
       eventService.findByEvaluation(evaluationId).map { event ⇒
-        if (eventManager(user.account.personId, role, event))
-          f(request)(handler)(user)(event)
-        else
-          throw new AuthenticationException
-      } getOrElse NotFound
-    }
-  }
-
-  /**
-   * Authenticates using SecureSocial
-   * and uses Deadbolt to restrict access to the given role
-   *
-   * @param eventId Event identifier
-   */
-  def SecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
-    securedAction() { implicit request => implicit handler => implicit user =>
-      eventService.find(eventId).map { event ⇒
         if (eventManager(user.account.personId, role, event))
           f(request)(handler)(user)(event)
         else
@@ -252,11 +207,11 @@ trait Security extends SecureSocial[ActiveUser]
    * Asynchronously authenticates using SecureSocial and uses Deadbolt to
    * restrict access to the given role
    *
-   * @param name Name of the object
-   * @param level Access right level
+   * @param role Role name
+   * @param id Object identifier
    * @return
    */
-  def AsyncSecuredDynamicAction(name: String, level: String)(
+  def AsyncSecuredDynamicAction(role: String, id: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
       request.user match {
@@ -265,7 +220,7 @@ trait Security extends SecureSocial[ActiveUser]
             // Use the authenticated user’s account details to construct
             // a handler (to look up account role) for Deadbolt authorisation.
             val handler = new AuthorisationHandler(user)
-            val restrictedAction = Dynamic(name, level, handler)(Action.async(f(_)(handler)(user)))
+            val restrictedAction = Dynamic(role, id.toString, handler)(Action.async(f(_)(handler)(user)))
             restrictedAction(request)
           } catch {
             case _: NoSuchElementException ⇒ MissingUserAccountResult

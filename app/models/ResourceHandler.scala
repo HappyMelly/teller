@@ -37,65 +37,21 @@ class ResourceHandler(user: ActiveUser)
     extends DynamicResourceHandler
     with Services {
 
-//  case "evaluation" ⇒ checkEvaluationPermission(user.account, meta, request.uri)
-//  case "event" ⇒ checkEventPermission(user.account, meta, request.uri)
-
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    val userId = user.account.personId
+    val objectId = meta.toLong
     name match {
-      case "person" ⇒ checkPersonPermission(user.account, meta, request.uri)
-      case DynamicRole.Coordinator => checkBrandPermission(user.account, meta.toLong)
-      case DynamicRole.Member ⇒ checkMemberPermission(user, meta.toLong)
+      case DynamicRole.Coordinator => checkBrandPermission(user.account, objectId)
+      case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
       case DynamicRole.ProfileEditor =>
-        user.account.admin || user.account.personId == meta.toLong
+        user.account.admin || user.account.personId == objectId
       case DynamicRole.OrgMember =>
-        orgService.people(meta.toLong).exists(_.identifier == user.account.personId)
+        orgService.people(objectId).exists(_.identifier == user.account.personId)
       case _ ⇒ false
     }
   }
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
     false
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute an evaluation-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "add" ⇒ account.coordinator
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { evaluationId ⇒
-          checker(account).isEvaluationCoordinator(evaluationId)
-        }
-      case DynamicRole.Facilitator ⇒
-        id(url) exists { evaluationId ⇒
-          checker(account).isEvaluationFacilitator(evaluationId)
-        }
-      case _ ⇒ false
-    }
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute an event-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkEventPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "add" ⇒ account.facilitator || account.coordinator
-      case DynamicRole.Facilitator ⇒
-        id(url) exists { eventId ⇒ checker(account).isEventFacilitator(eventId) }
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { eventId ⇒ checker(account).isEventCoordinator(eventId) }
-      case _ ⇒ false
-    }
   }
 
   /**
@@ -122,26 +78,6 @@ class ResourceHandler(user: ActiveUser)
         else
           orgService.people(member.objectId).exists(_.identifier == user.account.personId)
       }
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute a person-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkPersonPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "edit" ⇒ id(url) exists { personId ⇒
-        checker(account).canEditPerson(personId)
-      }
-      case "delete" ⇒ id(url) exists { personId ⇒
-        checker(account).canDeletePerson(personId)
-      }
-      case _ ⇒ false
-    }
-
   }
 
   /**

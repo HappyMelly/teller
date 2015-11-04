@@ -25,6 +25,7 @@
 package controllers
 
 import controllers.Forms._
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -39,6 +40,7 @@ import play.api.{Logger, Play}
 import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
+import scala.concurrent.Future
 import scala.collection.mutable
 import scala.language.postfixOps
 
@@ -140,7 +142,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
@@ -215,13 +217,13 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.v2.person.form(user, Some(id),
-          People.personForm(user.name).fill(person)))
-      }.getOrElse(NotFound)
+        Future.successful(
+          Ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name).fill(person))))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -229,16 +231,16 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def update(id: Long) = SecuredDynamicAction("person", "edit") {
+  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { oldPerson ⇒
           People.personForm(user.name).bindFromRequest.fold(
             formWithErrors ⇒
-              BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors)),
+              Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors))),
             person ⇒ {
               checkDuplication(person, id, user.name) map { form ⇒
-                BadRequest(views.html.v2.person.form(user, Some(id), form))
+                Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), form)))
               } getOrElse {
                 val updatedPerson = person
                   .copy(id = Some(id), active = oldPerson.active)
@@ -251,11 +253,11 @@ class People(environment: RuntimeEnvironment[ActiveUser])
                 }
                 updatedPerson.update
                 val log = activity(updatedPerson, user.person).updated.insert()
-                Redirect(routes.People.details(id)).flashing(
-                  "success" -> log.toString)
+                Future.successful(
+                  Redirect(routes.People.details(id)).flashing("success" -> log.toString))
               }
             })
-        } getOrElse NotFound
+        } getOrElse Future.successful(NotFound)
   }
 
   /**

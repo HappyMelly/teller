@@ -102,7 +102,7 @@ DELETE        /person/:personId/material/:id                                 @co
 GET           /report/create/:brandId/event/:eventId/status/:status          @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 
 GET           /events                                                        @controllers.Events.index(brandId: Long)
-GET           /events/filtered                                               @controllers.Events.events(brandId: Option[Long], facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
+GET           /events/filtered                                               @controllers.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
 POST          /event                                                         @controllers.Events.create
 GET           /events/new/                                                   @controllers.Events.add
 GET           /event/:id/duplicate                                           @controllers.Events.duplicate(id: Long)

@@ -102,8 +102,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
   def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
-      val currentUser = user.account
-      val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+      val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
 
       Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
   }
@@ -120,7 +119,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       // Extracted function to handle the error case, either from validation or currency conversion failure,
       // by redisplaying the edit page with error messages.
       val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
         val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
@@ -229,8 +228,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         if (bookingEntry.editable) {
           val form = bookingEntryForm.fill(bookingEntry)
-          val currentUser = user.account
-          val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+          val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
           Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
           Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
@@ -264,23 +262,21 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       Ok(views.html.booking.index(user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
 
-  private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
+  private def findFromAndToAccounts(user: ActiveUser): (List[AccountSummary], List[AccountSummary]) = {
     val allActive: List[AccountSummary] = Account.findAllActive
-    if (user.admin) {
+    if (user.account.admin) {
       (allActive, allActive)
     } else {
-      val person: Option[Person] = user.person
-      val accessible: List[AccountSummary] = person.map(_.findAccessibleAccounts).toList.flatten
+      val accessible: List[AccountSummary] = user.person.findAccessibleAccounts
       (accessible, allActive)
     }
   }
 
   private def isAccessible(user: ActiveUser, accountId: Long): Boolean = {
-    val account = user.account
-    if (account.admin) {
+    if (user.account.admin) {
       true
     } else {
-      val accessibleAccountIds = account.person.map(_.findAccessibleAccounts.map(_.id)).toList.flatten
+      val accessibleAccountIds = user.person.findAccessibleAccounts.map(_.id)
       accessibleAccountIds.contains(accountId)
     }
   }
@@ -299,7 +295,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
           // Extracted function to handle the error case, either from validation or currency conversion failure,
           // by redisplaying the edit page with error messages.
           val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-            val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+            val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
             val brands = Brand.findAllWithCoordinator
             val transactionTypes = TransactionType.findAll
             BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
@@ -374,7 +370,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
     next match {
       case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
       case Some("copy") ⇒ {
-        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
         val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))

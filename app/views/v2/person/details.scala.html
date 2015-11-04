@@ -10,7 +10,7 @@
     token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import models.UserRole.Role._
+@import models.UserRole._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
@@ -28,7 +28,7 @@
         </h2>
         @views.html.v2.element.profiles(person.socialProfile, person.member)
         <div class="actions pull-right">
-          @dynamic(handler, "person", "delete") {
+          @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="person"
               action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
@@ -43,10 +43,10 @@
               </form>
             </div>
           }
-          @dynamic(handler, "person", "edit") {
+          @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
             <div class="button">
               <form method="post" class="form-inline"
-              action="@CSRF(routes.People.activation(person.id.getOrElse(0)))">
+              action="@CSRF(routes.People.activation(person.identifier))">
                 <input name="active" value="@(!person.active)" type="hidden">
                 @if(person.active) {
                   <button class="btn btn-default" type="submit">
@@ -113,7 +113,7 @@
             }
           </ul>
           @if(!showFacilitationTab) {
-            @restrict(handler, List(as(Admin.toString))) {
+            @restrict(handler, List(as(Role.Admin.toString))) {
               <a href="@routes.Licenses.add(person.id.getOrElse(0))"
                 class="btn btn-upload btn-block">
                 Make a Facilitator</a>

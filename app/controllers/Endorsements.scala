@@ -32,6 +32,8 @@ import play.api.i18n.Messages
 import play.api.libs.json.{JsArray, JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
 
+import scala.concurrent.Future
+
 case class EndorsementFormData(content: String,
   name: String,
   brandId: Long,
@@ -190,7 +192,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
-    SecuredEventAction(eventId, Role.Facilitator) {
+    AsyncSecuredEventAction(eventId, Role.Facilitator) {
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds.contains(personId)) {
@@ -202,10 +204,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
               position = maxPosition + 1, evaluationId = view.evaluation.id.get,
               rating = Some(view.evaluation.impression))
             val id = personService.insertEndorsement(endorsement).id.get
-            jsonOk(Json.obj("endorsementId" -> id))
-          } getOrElse jsonNotFound("Evaluation doesn't exist")
+            Future.successful(jsonOk(Json.obj("endorsementId" -> id)))
+          } getOrElse Future.successful(jsonNotFound("Evaluation doesn't exist"))
         } else {
-          jsonBadRequest("Internal error. You shouldn't be able to make this request")
+          Future.successful(jsonBadRequest("Internal error. You shouldn't be able to make this request"))
         }
   }
 

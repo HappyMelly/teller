@@ -4,12 +4,10 @@
     token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import helper.CSRF
 @import models.UserRole.DynamicRole
 
 <div class="photo-block @if(org.logo) { real }">
-  @dynamicOr(handler, "organisation", "edit") {
+  @dynamicOr(handler, DynamicRole.OrgMember, org.identifier.toString) {
     @if(org.logo) {
       <div id="real">
         <img width="@width" class="img-rounded"
@@ -29,12 +27,12 @@
       <a href="#" class="choosePhotoLink" data-toggle="modal"
         data-target="#photoDialog">Edit</a>
       <a href="#" id="btnLogoDelete"
-        data-href="@routes.Organisations.deleteLogo(org.id.get)">Delete</a>
+        data-href="@routes.Organisations.deleteLogo(org.identifier)">Delete</a>
     </div>
   } {
     @if(org.logo) {
       <img id="photo" width="@width" class="img-rounded"
-        src="@routes.Organisations.logo(org.id.getOrElse(0))"/>
+        src="@routes.Organisations.logo(org.identifier)"/>
     } else {
       <img id="photo" width="@width" class="img-rounded"
         src="@routes.Assets.at("images/add-logo.png")"/>
@@ -50,7 +48,7 @@
           <div class="option" id="custom">
             @if(org.logo) {
               <img width="250" id="logo"
-                src="@routes.Organisations.logo(org.id.getOrElse(0))"/>
+                src="@routes.Organisations.logo(org.identifier)"/>
             } else {
               <img width="250" id="logo"
                 src="@routes.Assets.at("images/happymelly-face-white.png")"/>
@@ -61,7 +59,7 @@
                 <button type="button" class="btn btn-primary">Choose File</button>
                 <div>No file chosen</div>
                 <input type="file" id="logoUpload" class="form-control"
-                  name="logo" data-url="@routes.Organisations.uploadLogo(org.id.getOrElse(0))"/>
+                  name="logo" data-url="@routes.Organisations.uploadLogo(org.identifier)"/>
               </div>
               <button class="btn btn-upload" id="btnLogoUpload">Upload</button>
               <br/>

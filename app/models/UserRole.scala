@@ -39,6 +39,7 @@ case class UserRole(role: UserRole.Role.Role) extends be.objectify.deadbolt.core
   def facilitator: Boolean = role == Role.Facilitator
   def coordinator: Boolean = role == Role.Coordinator
   def brandViewer: Boolean = facilitator || coordinator
+
 }
 
 object UserRole {

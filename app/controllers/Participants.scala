@@ -201,7 +201,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) = SecuredEventAction(eventId, Role.Facilitator) {
+  def delete(eventId: Long, personId: Long, ref: Option[String]) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId).map { value ⇒
@@ -215,8 +215,8 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
             case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
             case _ ⇒ routes.Dashboard.index().url
           }
-          Redirect(route).flashing("success" -> activity.toString)
-        }.getOrElse(NotFound)
+          Future.successful(Redirect(route).flashing("success" -> activity.toString))
+        } getOrElse Future.successful(NotFound)
   }
 
   /**

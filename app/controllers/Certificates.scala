@@ -31,6 +31,8 @@ import org.joda.time.LocalDate
 import play.api.libs.json.Json
 import securesocial.core.RuntimeEnvironment
 
+import scala.concurrent.Future
+
 class Certificates(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
     with Security
@@ -44,11 +46,9 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param eventId Event identifier
    * @param personId Person identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
   def create(eventId: Long,
-    personId: Long,
-    ref: Option[String] = None) = SecuredEventAction(eventId, Role.Facilitator) {
+    personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId) map { participant ⇒
@@ -58,7 +58,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
           else
             None
           if (event.free) {
-            NotFound
+            Future.successful(NotFound)
           } else {
             val brand = brandService.findWithCoordinators(event.brandId).get
             val person = participant.person.get
@@ -68,9 +68,9 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
             participant.copy(
               certificate = Some(certificate.id),
               issued = Some(issued)).update
-            jsonOk(Json.obj("certificate" -> certificate.id))
+            Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
           }
-        } getOrElse NotFound
+        } getOrElse Future.successful(NotFound)
   }
 
   /**

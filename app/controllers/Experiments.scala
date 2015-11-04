@@ -70,7 +70,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
+  def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
@@ -104,7 +104,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.delete(memberId, id)
@@ -119,7 +119,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
+  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
@@ -174,7 +174,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
+  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(

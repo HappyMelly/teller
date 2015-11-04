@@ -34,18 +34,18 @@ import scala.collection.mutable.ListBuffer
  * A log-in user account.
  */
 case class UserAccount(id: Option[Long],
-    personId: Long,
-    role: String,
-    twitterHandle: Option[String],
-    facebookUrl: Option[String],
-    linkedInUrl: Option[String],
-    googlePlusUrl: Option[String],
-    isCoordinator: Boolean = false,
-    isFacilitator: Boolean = false,
-    admin: Boolean = false,
-    member: Boolean = false,
-    registered: Boolean = false,
-    activeRole: Boolean = false) extends Subject with Services {
+                       personId: Long,
+                       role: String,
+                       twitterHandle: Option[String],
+                       facebookUrl: Option[String],
+                       linkedInUrl: Option[String],
+                       googlePlusUrl: Option[String],
+                       coordinator: Boolean = false,
+                       facilitator: Boolean = false,
+                       admin: Boolean = false,
+                       member: Boolean = false,
+                       registered: Boolean = false,
+                       activeRole: Boolean = false) extends Subject with Services {
 
   /**
    * Returns a string list of role names, for the Subject interface.
@@ -55,9 +55,9 @@ case class UserAccount(id: Option[Long],
       val roles = ListBuffer[UserRole](UserRole(UserRole.Role.Viewer))
       if (admin) roles += UserRole(UserRole.Role.Admin)
       if (member) roles += UserRole(UserRole.Role.Member)
-      if (isFacilitator) roles += UserRole(UserRole.Role.Facilitator)
-      if (isCoordinator) roles += UserRole(UserRole.Role.Coordinator)
-      if (isFacilitator || isCoordinator) roles += UserRole(UserRole.Role.BrandViewer)
+      if (facilitator) roles += UserRole(UserRole.Role.Facilitator)
+      if (coordinator) roles += UserRole(UserRole.Role.Coordinator)
+      if (facilitator || coordinator) roles += UserRole(UserRole.Role.BrandViewer)
       roles
     } else {
       List(UserRole.forName("unregistered"))
@@ -66,23 +66,10 @@ case class UserAccount(id: Option[Long],
 
   val viewer = registered
 
-  def isCoordinatorNow: Boolean = isCoordinator && activeRole
-  def isFacilitatorNow: Boolean = isFacilitator && !activeRole
+  def isCoordinatorNow: Boolean = coordinator && activeRole
+  def isFacilitatorNow: Boolean = facilitator && !activeRole
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 
-  /**
-   * True if this person is a facilitator
-   */
-  lazy val facilitator: Boolean = licenseService.activeLicenses(personId).nonEmpty
-
-  /**
-   * True if this person coordinates at least one brand
-   */
-  def coordinator: Boolean = brands.nonEmpty
-
-  lazy val brands: List[Brand] = brandService.findByCoordinator(personId)
-
-  lazy val person: Option[Person] = personService.find(personId)
 }
