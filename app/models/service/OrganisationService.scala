@@ -87,6 +87,15 @@ class OrganisationService extends Services {
   }
 
   /**
+   * Returns list of organisation for the given ids
+   *
+   * @param objectIds List of identifiers
+   */
+  def find(objectIds: List[Long]): List[Organisation] = DB.withSession { implicit session =>
+    orgs.filter(_.id inSet objectIds).list
+  }
+
+  /**
    * Returns organisation if it exists, otherwise - None
    *
    * @param identifier Organisation identifier
