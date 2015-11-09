@@ -196,19 +196,18 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         implicit handler ⇒ implicit user ⇒
           eventService.find(eventId) map { event =>
             val personId = user.person.identifier
-            if (event.facilitatorIds.contains(personId)) {
-              evaluationService.find(evaluationId) map { evaluation =>
-                val endorsements = personService.endorsements(personId)
-                val maxPosition = maxEndorsementPosition(endorsements)
-                val endorsement = Endorsement(None, personId,
-                  event.brandId, evaluation.facilitatorReview, user.person.fullName,
-                  position = maxPosition + 1, evaluationId = evaluation.id.get,
-                  rating = Some(evaluation.impression))
-                val id = personService.insertEndorsement(endorsement).id.get
-                jsonOk(Json.obj("endorsementId" -> id))
-              } getOrElse jsonNotFound("Evaluation doesn't exist")
-            } else {
-              jsonBadRequest("Internal error. You shouldn't be able to make this request")
+             if (event.facilitatorIds.contains(personId)) { 
+             evaluationService.findWithParticipant(evaluationId) map { view => 
+              val endorsements = personService.endorsements(personId) 
+              val maxPosition = maxEndorsementPosition(endorsements) 
+              val endorsement = Endorsement(None, personId, 
+               event.brandId, view.evaluation.facilitatorReview, view.person.fullName, 
+               position = maxPosition + 1, evaluationId = view.evaluation.id.get, 
+               rating = Some(view.evaluation.impression)) 
+              val id = personService.insertEndorsement(endorsement).id.get 
+              jsonOk(Json.obj("endorsementId" -> id)) 
+            } getOrElse jsonNotFound("Evaluation doesn't exist") } else { 
+              jsonBadRequest("Internal error. You shouldn't be able to make this request") 
             }
           } getOrElse jsonNotFound("Event doesn't exist")
   }
