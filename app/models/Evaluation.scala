@@ -60,12 +60,12 @@ object EvaluationStatus extends Enumeration {
 case class EvaluationEventView(eval: Evaluation, event: Event)
 
 
-/** 
- * Represents an evaluation with the related participant 
- * @param evaluation Evaluation 
- * @param person Participant 
+/**
+ * Represents an evaluation with the related participant
+ * @param evaluation Evaluation
+ * @param person Participant
  */
- case class EvaluationParticipantView(evaluation: Evaluation, person: Person)
+case class EvaluationParticipantView(evaluation: Evaluation, person: Person)
 
 /**
  * An evaluation which a participant gives to an event

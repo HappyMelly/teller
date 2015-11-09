@@ -68,17 +68,17 @@ class EvaluationService extends Services{
       query.firstOption.map(EvaluationEventView.tupled)
   }
 
-  /** 
-    * Returns evaluation with the related participant if exists; otherwise, None 
-    * @param id Evaluation id 
+  /**
+    * Returns evaluation with the related participant if exists; otherwise, None
+    * @param id Evaluation id
     */
-   def findWithParticipant(id: Long): Option[EvaluationParticipantView] = DB.withSession { 
-   implicit session ⇒ 
-    val query = for {
-       x ← evaluations if x.id === id 
-      y ← TableQuery[People] if y.id === x.personId 
-    } yield (x, y) 
-    query.firstOption.map(EvaluationParticipantView.tupled) 
+  def findWithParticipant(id: Long): Option[EvaluationParticipantView] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← evaluations if x.id === id
+        y ← TableQuery[People] if y.id === x.personId
+      } yield (x, y)
+      query.firstOption.map(EvaluationParticipantView.tupled)
   }
 
   /**
