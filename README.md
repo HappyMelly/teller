@@ -22,45 +22,61 @@ from third-party apps and websites.
     * Set checkbox **Allow this application to be used to Sign in with Twitter**
 
 ### Application
-1. Clone the repo, for the meantime pull the branch that works with vagrant ..
+1. Clone the repo, (for the meantime pull the branch that works with vagrant) ..
 
-2. Run the application, specifying configuration properties on the command line or as environment variables. You can use
-   any value for AWS keys if you don’t need booking entry attachments to work. You can also provide dummy values for
-   authentication service keys that you don’t need to use.
+2. Supply the needed values for the following:
 
-        > cd teller
+    ```
+      > cd teller/vagrant
+      > vim up.bash
+      ...
+      # hm-teller specific variables
+      aws_key=
+      aws_secret=
+      fb_app_id=
+      fb_secret=
+      google_app_id=
+      google_secret=
+      linkedin_key=
+      linkedin_secret=
+      twitter_key=
+      twitter_secret=
+      memcached_url=127.0.0.1:112111
+      memcached_username=happymelly
+      memcached_password=
+      ...
+    ```
 
-        <!-- export AWS_ACCESS_KEY_ID=[Amazon web services key] -->
-        <!-- export AWS_SECRET_KEY=false TWITTER_KEY=[your app consumer key] -->
-        <!-- export TWITTER_SECRET=[Twitter app consumer secret] -->
-        <!-- export FACEBOOK_ID=[App ID] -->
-        <!-- export FACEBOOK_SECRET=[App secret] -->
-        <!-- export GOOGLE_ID=[App ID] -->
-        <!-- export GOOGLE_SECRET=[App secret] -->
-        <!-- export LINKEDIN_KEY=[App key] -->
-        <!-- export LINKEDIN_SECRET=[App secret] -->
-        <!-- export GOOGLE_ID=[App ID] -->
-        <!-- export GOOGLE_SECRET=[App secret] -->
-        <!-- export MEMCACHIER_SERVERS=[url] -->
-        <!-- export MEMCACHIER_USERNAME=[username] -->
-        <!-- export MEMCACHIER_PASSWORD=[password] -->
+    Save your changes then go back to the root directory (ie teller)
 
+    ```
+      > cd teller
+    ```
+
+2. Run the application.
+  Start vagrant (vagrant up) then tunnel your way with ssh(vagrant ssh). From inside vagrant,
+  you can run  `sbt run` .
+
+    ```
         > vagrant up
         > vagrant ssh
-        vagrant@hm-teller:/> sbt run
-        <!-- play run -->
+        #.. inside vagrant
+        vagrant@hm-teller:/ > sbt run
+    ```
 
 3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
     * on the _Database 'default' needs evolution!_ page, click _Apply this script now!_
 
-4. Update database (required to give you access by your Twitter account). Alternatively, add a Facebook profile URL, a
-   Google+ profile URL or a LinkedIn public profile URL, in the appropriate table columns.
+4. Update database (required to give you access by your twitter account).
 
-        update PERSON set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";
-
-        insert into USER_ACCOUNT (PERSON_ID, TWITTER_HANDLE, ROLE)
-        select ID, TWITTER_HANDLE, 'admin' from PERSON where lower(TWITTER_HANDLE) = '[your twitter id]';
+  ```
+    > vagrant ssh
+    vagrant@hm-teller > mysql -u melly -pshum
+    mysql > update user_account set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";
+    mysql > insert into user_account (PERSON_ID, TWITTER_HANDLE, ROLE);
+    mysql > select ID, TWITTER_HANDLE, 'admin' from user_account where lower(TWITTER_HANDLE) = '[your twitter id]';
+  ```
 
 5. Time to log in, pal!
 
