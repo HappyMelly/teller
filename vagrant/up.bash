@@ -23,7 +23,7 @@ memcached_password=
 echo "========================================"
 echo " CREATE /tmp directory for used when preseeding mysql db"
 echo "========================================"
-mkdir /vagrant/tmp
+mkdir -p /vagrant/tmp
 
 
 echo "========================================"
