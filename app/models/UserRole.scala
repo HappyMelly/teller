@@ -74,6 +74,8 @@ object UserRole {
     val Facilitator = "facilitator"
     val Coordinator = "coordinator"
     val Member = "member"
+    val ProfileEditor = "profile-editor"
+    val OrgMember = "org-member"
   }
 
   def forName(name: String): UserRole = UserRole(Role.withName(name))

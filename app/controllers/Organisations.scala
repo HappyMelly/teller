@@ -25,6 +25,7 @@
 package controllers
 
 import controllers.Forms._
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.payment.{ GatewayWrapper, PaymentException, RequestException }
@@ -84,7 +85,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Cancels a subscription for yearly-renewing membership
    * @param id Organisation id
    */
-  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def cancel(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val url = routes.Organisations.details(id).url + "#membership"
@@ -165,7 +166,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Organisation identifier
    */
-  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def deleteLogo(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Organisation.logo(id).remove()
@@ -197,7 +198,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Render an Edit page
    * @param id Organisation ID
    */
-  def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.findWithProfile(id).map { view ⇒
@@ -265,7 +266,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Updates an organisation
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def update(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         orgService.findWithProfile(id).map { view ⇒
@@ -293,7 +294,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Organisation identifier
    */
-  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
+  def uploadLogo(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         uploadFile(Organisation.logo(id), "logo") map { _ ⇒

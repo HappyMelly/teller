@@ -37,24 +37,19 @@ class ResourceHandler(user: ActiveUser)
     extends DynamicResourceHandler
     with Services {
 
+//  case "evaluation" ⇒ checkEvaluationPermission(user.account, meta, request.uri)
+//  case "event" ⇒ checkEventPermission(user.account, meta, request.uri)
+
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val userId = user.account.personId
     name match {
-      case "brand" ⇒ checkBrandPermission(user.account, meta, request.uri)
-      case "evaluation" ⇒ checkEvaluationPermission(user.account, meta, request.uri)
-      case "event" ⇒ checkEventPermission(user.account, meta, request.uri)
-      case "member" ⇒ checkMemberPermission(user, request.uri)
       case "person" ⇒ checkPersonPermission(user.account, meta, request.uri)
-      case "organisation" ⇒
-        meta match {
-          case "edit" ⇒
-            val organisationId = """\d+""".r findFirstIn request.uri
-            // User should be a member of the organisation
-            (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
-              _.people.find(_.id == Some(user.account.personId)).nonEmpty
-            })
-          case _ ⇒ true
-        }
+      case DynamicRole.Coordinator => checkBrandPermission(user.account, meta.toLong)
+      case DynamicRole.Member ⇒ checkMemberPermission(user, meta.toLong)
+      case DynamicRole.ProfileEditor =>
+        user.account.admin || user.account.personId == meta.toLong
+      case DynamicRole.OrgMember =>
+        orgService.people(meta.toLong).exists(_.identifier == user.account.personId)
       case _ ⇒ false
     }
   }
@@ -106,34 +101,27 @@ class ResourceHandler(user: ActiveUser)
   /**
    * Returns true if the given user is allowed to execute a brand-related action
    * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
+   * @param brandId Brand identifier
    */
-  protected def checkBrandPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    meta match {
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { brandId ⇒ checker(account).isBrandCoordinator(brandId) }
-      case _ ⇒ false
-    }
+  protected def checkBrandPermission(account: UserAccount, brandId: Long): Boolean = {
+    checker(account).isBrandCoordinator(brandId)
   }
 
   /**
    * Returns true if the given user is allowed to execute a member-related action
    * @param user Active user
-   * @param url Request url
+   * @param memberId Member id to check
    */
-  protected def checkMemberPermission(user: ActiveUser, url: String): Boolean = {
-    id(url) exists { memberId ⇒
-      if (user.account.admin || user.person.member.exists(_.id == Some(memberId)))
-        true
-      else
-        memberService.find(memberId) exists { member ⇒
-          if (member.person)
-            false
-          else
-            orgService.people(member.objectId).exists(_.id == Some(user.account.personId))
-        }
-    }
+  protected def checkMemberPermission(user: ActiveUser, memberId: Long): Boolean = {
+    if (user.account.admin || user.person.member.exists(_.identifier == memberId))
+      true
+    else
+      memberService.find(memberId) exists { member ⇒
+        if (member.person)
+          false
+        else
+          orgService.people(member.objectId).exists(_.identifier == user.account.personId)
+      }
   }
 
   /**

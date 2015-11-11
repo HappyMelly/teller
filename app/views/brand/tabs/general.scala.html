@@ -84,7 +84,7 @@
             <td>@link.linkType.capitalize</td>
             <td><a href="@link.link" target="_blank">@link.link</td>
             <td style="font-weight: normal;">
-              @dynamic(handler, "brand", DynamicRole.Coordinator) {
+              @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
                 <a data-id="@link.id.get" href="#" class="remove"
                   data-href="@routes.BrandLinks.remove(brand.id.get, link.id.get)">
                   <i class="glyphicon glyphicon-trash"></i> Remove</a>
@@ -96,7 +96,7 @@
     </table>
   }
   <div id="brandLinkNotification"></div>
-    @dynamic(handler, "brand", DynamicRole.Coordinator) {
+    @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
     <form id="addLinkForm" class="form-inline pull-right" method="POST"
       action="@CSRF(routes.BrandLinks.create(brand.id.get))">
       <select name="type" id="linkType" class="form-control input-sm">

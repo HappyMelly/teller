@@ -24,6 +24,7 @@
 package controllers
 
 import controllers.Forms._
+import models.UserRole.DynamicRole
 import models.{ ActiveUser, Experiment, Member }
 import models.UserRole.Role._
 import models.service.Services
@@ -69,7 +70,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
@@ -103,7 +104,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.delete(memberId, id)
@@ -118,7 +119,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
@@ -173,7 +174,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(

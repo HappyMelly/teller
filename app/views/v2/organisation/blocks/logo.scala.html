@@ -3,9 +3,10 @@
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import helper.CSRF
+@import models.UserRole.DynamicRole
 
 <div class="photo-block @if(org.logo) { real }">
   @dynamicOr(handler, "organisation", "edit") {
@@ -40,7 +41,7 @@
     }
   }
 </div>
-@dynamic(handler, "organisation", "edit") {
+@dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
   <div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" id="choosePhotoContent">
     @v2.html.alert("photoDialog",

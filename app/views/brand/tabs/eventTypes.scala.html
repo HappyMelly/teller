@@ -38,7 +38,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <td data-name="maxHours">@eventType.maxHours</td>
         <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
-        @dynamic(handler, "brand", DynamicRole.Coordinator) {
+        @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
           <a href="@routes.EventTypes.delete(eventType.brandId, eventType.id.get)">
             <i class="glyphicon glyphicon-trash"></i> Remove</a>
         }
@@ -48,7 +48,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
     </tbody>
   </table>
 }
-@dynamic(handler, "brand", DynamicRole.Coordinator) {
+@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
   <a class="btn btn-success btn-sm pull-right"
     href="@routes.EventTypes.add(brandId)">
     <i class="glyphicon glyphicon-plus"></i>Add Event Type

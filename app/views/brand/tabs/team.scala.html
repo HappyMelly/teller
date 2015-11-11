@@ -7,6 +7,7 @@
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
+@import models.UserRole.DynamicRole
 
 <p>Brand coordinators help a brand owner to run brand-related activities. They have
   the same access rights as the owner: managing events, facilitators and
@@ -39,7 +40,7 @@ to receive from the system.</p>
         <td><input type="checkbox" value="event" @if(data.notification.event) {checked}/></td>
         <td><input type="checkbox" value="evaluation" @if(data.notification.evaluation) {checked}/></td>
         <td><input type="checkbox" value="certificate" @if(data.notification.certificate) {checked}/></td>
-        @dynamic(handler, "brand", "coordinator") {
+        @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
           <td><a class="remove" data-href="@routes.Brands.removeCoordinator(brandId, member.id.get)"
           href="#" data-name="@member.fullName" data-id="@member.id.get"><i class="glyphicon glyphicon-trash"></i></a></td>
         }
@@ -47,7 +48,7 @@ to receive from the system.</p>
     }
   </tbody>
 </table>
-@dynamic(handler, "brand", "coordinator") {
+@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
   <form id="addMemberForm" class="form-inline pull-right" method="POST" action="@CSRF(routes.Brands.addCoordinator(brandId))">
     <select class="form-control input-sm" name="personId">
     @for(person <- people) {

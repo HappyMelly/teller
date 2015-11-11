@@ -6,7 +6,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
-@import models.UserRole.Role._
+@import models.UserRole._
 
 @org.member.map { m =>
 
@@ -41,7 +41,7 @@
         Your membership will be automatically renewed at the end of a renewal
         period. The date of the next renewal is <b>@m.until</b>.
       </p>
-      @dynamic(handler, "organisation", "edit") {
+      @dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
         <p>
           You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
           will be valid till <b>@m.until</b>.
@@ -64,7 +64,7 @@
       <p>Your membership ends <b>@m.until</b>.</p>
     }
   </div>
-  @restrict(handler, List(as(Admin.toString))) {
+  @restrict(handler, List(as(Role.Admin.toString))) {
     @views.html.v2.element.administration(m)
   }
 }
