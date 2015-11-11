@@ -16,7 +16,7 @@ linkedin_key=
 linkedin_secret=
 twitter_key=
 twitter_secret=
-memcached_url=127.0.0.1:112111
+memcached_url=127.0.0.1:11211
 memcached_username=happymelly
 memcached_password=
 
