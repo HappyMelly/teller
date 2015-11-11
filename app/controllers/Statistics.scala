@@ -92,7 +92,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       val stats = if (licenses.isEmpty)
         List[(LocalDate, Int)]()
       else
-        quarterStatsByFacilitators(licenses)
+        quarterStatsByFacilitators(licenses.filter(_.active))
 
       Ok(Json.obj("joined" -> joined,
         "left" -> left,
