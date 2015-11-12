@@ -294,7 +294,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Organisation identifier
    */
-  def uploadLogo(id: Long) = SecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id.toString) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         uploadFile(Organisation.logo(id), "logo") map { _ ⇒

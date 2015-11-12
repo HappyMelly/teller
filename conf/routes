@@ -115,6 +115,10 @@ POST          /event/:id/cancel                                              @co
 POST          /event/:id/invoice                                             @controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                                @controllers.Events.sendRequest(id: Long)
 GET           /event/:id/participants                                        @controllers.Participants.participants(id: Long)
+GET           /event/:id/participant/:personId/person/edit                   @controllers.Participants.editPerson(id: Long, personId: Long)
+DELETE        /event/:id/participant/:personId/person                        @controllers.Participants.deletePerson(id: Long, personId: Long)
+GET           /event/:id/participant/:personId/person                        @controllers.Participants.person(id: Long, personId: Long)
+POST          /event/:id/participant/:personId/person                        @controllers.Participants.updatePerson(id: Long, personId: Long)
 
 GET           /exchangerate                                                  controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                  controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)

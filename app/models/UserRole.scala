@@ -24,9 +24,6 @@
 
 package models
 
-import play.libs.Scala
-import scala.collection.mutable.ListBuffer
-
 /**
  *
  */
@@ -42,19 +39,6 @@ case class UserRole(role: UserRole.Role.Role) extends be.objectify.deadbolt.core
   def facilitator: Boolean = role == Role.Facilitator
   def coordinator: Boolean = role == Role.Coordinator
   def brandViewer: Boolean = facilitator || coordinator
-
-  /**
-   * Returns the list of rules implied by this role.
-   */
-  def list: List[UserRole] = {
-    val roles = ListBuffer[UserRole]()
-    if (viewer) roles += UserRole(Role.Viewer)
-    if (admin) roles += UserRole(Role.Admin)
-    if (unregistered) roles += UserRole(Role.Unregistered)
-    if (facilitator) roles += UserRole(Role.Facilitator)
-    if (brandViewer) roles += UserRole(Role.BrandViewer)
-    roles.toList
-  }
 }
 
 object UserRole {

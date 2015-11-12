@@ -6,7 +6,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
+@import models.UserRole._
 @import templates.Formatters._
 
 @person.member.map { m =>
@@ -86,7 +86,7 @@
       <p>Your membership ends <b>@m.until</b>.</p>
     }
   </div>
-  @restrict(handler, List(as(Admin.toString))) {
+  @restrict(handler, List(as(Role.Admin.toString))) {
     @views.html.v2.element.administration(m)
   }
   </div>

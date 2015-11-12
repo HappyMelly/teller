@@ -14,7 +14,11 @@
             <div class="row list-group-item-text">
               <div class="evaluation-overview col-md-10">
                 <p>
-                  <a href="@routes.People.details(person.identifier)">
+                  @if(person.virtual) {
+                    <a href="@routes.Participants.person(event.identifier, person.identifier)">
+                  } else {
+                    <a href="@routes.People.details(person.identifier)">
+                  }
                     @person.fullName</a> rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>

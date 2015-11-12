@@ -51,6 +51,7 @@ trait Security extends SecureSocial[ActiveUser]
    * Authenticates using SecureSocial, and uses Deadbolt to restrict access to
    * the given role
    *
+   * @deprecated Use Async version instead of this one
    * @param role Allowed role
    */
   def SecuredRestrictedAction(role: UserRole.Role.Role)(

@@ -27,8 +27,8 @@ package models
 import be.objectify.deadbolt.core.models.{ Permission, Subject }
 import models.service.Services
 import play.libs.Scala
-
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 
 /**
  * A log-in user account.
@@ -52,16 +52,13 @@ case class UserAccount(id: Option[Long],
    */
   def getRoles: java.util.List[UserRole] = {
     if (registered) {
-      val withRegistered = List(UserRole(UserRole.Role.Viewer))
-      val withAdmin = if(admin)
-        UserRole(UserRole.Role.Admin) :: withRegistered
-      else
-        withRegistered
-      val withMember = if(member)
-        UserRole(UserRole.Role.Member) :: withAdmin
-      else
-        withAdmin
-      withMember
+      val roles = ListBuffer[UserRole](UserRole(UserRole.Role.Viewer))
+      if (admin) roles += UserRole(UserRole.Role.Admin)
+      if (member) roles += UserRole(UserRole.Role.Member)
+      if (isFacilitator) roles += UserRole(UserRole.Role.Facilitator)
+      if (isCoordinator) roles += UserRole(UserRole.Role.Coordinator)
+      if (isFacilitator || isCoordinator) roles += UserRole(UserRole.Role.BrandViewer)
+      roles
     } else {
       List(UserRole.forName("unregistered"))
     }

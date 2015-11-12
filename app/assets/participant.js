@@ -197,22 +197,20 @@ function deleteEvaluation(object, container) {
 /**
  * Delete the given person
  * @param object {object} Delete button
- * @param container {string} Type of container (table or link)
+ * @param callback {function} Function to process the returned data
  */
-function deletePerson(object, container) {
+function deletePerson(object, callback) {
     var personId = $(object).data('id');
+    var eventId = $(object).data('event');
     var result = confirm("Remove this person? You cannot undo this action.");
     if (result == true) {
         $.ajax({
-            type: "POST",
-            url: jsRoutes.controllers.People.delete(personId).url,
-            data: {}
+            type: "DELETE",
+            url: jsRoutes.controllers.Participants.deletePerson(eventId, personId).url,
+            data: {},
+            dataType: "json"
         }).done(function(data) {
-            if (container == "table") {
-                removeParticipant();
-            } else {
-                removeParticipantFromList();
-            }
+            callback(data);
             var caption = "Person was successfully deleted";
             success(caption);
         });
@@ -323,7 +321,13 @@ function initializeParticipantActionsInDetails(container) {
     });
     $('.delete-person').on('click', function(e) {
         e.preventDefault();
-        deletePerson($(this), container);
+        deletePerson($(this), function() {
+            if (container == "table") {
+                removeParticipant();
+            } else {
+                removeParticipantFromList();
+            }
+        });
     });
 }
 
