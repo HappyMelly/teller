@@ -5,7 +5,6 @@
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
 @import templates.Formatters._
 
 @v2.main(person.fullName + " - Person", "people", user) {
@@ -19,7 +18,7 @@
             <a class="delete-person btn btn-default" href="#" data-id="@person.identifier" data-event="@eventId">Delete</a>
           </div>
           <div class="button">
-            <a class="btn btn-primary" href="@routes.Participants.editPerson(eventId, person.identifier)">
+            <a class="btn btn-primary" href="@routes.Participants.edit(eventId, person.identifier)">
               Edit Profile
             </a>
           </div>
@@ -32,7 +31,7 @@
     <div class="container">
       <div class="left">
         <div class="photo-block">
-          <img width="199px" src="@routes.Assets.at("images/add-photo.png")"/>
+          <img width="199px" class="img-rounded" src="@routes.Assets.at("images/hm-face.jpg")"/>
         </div>
         <div class="sidemenu">
           <ul class="nav nav-stacked" role="tablist" id="sidemenu">

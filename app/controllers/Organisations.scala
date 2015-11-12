@@ -136,7 +136,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Adds new organization to the system
    */
-  def createOrganizer = AsyncSecuredDynamicAction("event", "add") {
+  def createOrganizer = AsyncSecuredRestrictedAction(BrandViewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),

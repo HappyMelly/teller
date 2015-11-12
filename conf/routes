@@ -115,10 +115,14 @@ POST          /event/:id/cancel                                              @co
 POST          /event/:id/invoice                                             @controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                                @controllers.Events.sendRequest(id: Long)
 GET           /event/:id/participants                                        @controllers.Participants.participants(id: Long)
-GET           /event/:id/participant/:personId/person/edit                   @controllers.Participants.editPerson(id: Long, personId: Long)
+GET           /event/:id/participant/new/                                    @controllers.Participants.add(id: Long)
+GET           /event/:id/participant/:personId/person/edit                   @controllers.Participants.edit(id: Long, personId: Long)
 DELETE        /event/:id/participant/:personId/person                        @controllers.Participants.deletePerson(id: Long, personId: Long)
 GET           /event/:id/participant/:personId/person                        @controllers.Participants.person(id: Long, personId: Long)
-POST          /event/:id/participant/:personId/person                        @controllers.Participants.updatePerson(id: Long, personId: Long)
+POST          /event/:id/participant/:personId/person                        @controllers.Participants.update(id: Long, personId: Long)
+POST          /event/:id/participant/person                                  @controllers.Participants.createParticipantAndPerson(id: Long)
+POST          /event/:id/participant                                         @controllers.Participants.create(id: Long)
+
 
 GET           /exchangerate                                                  controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                  controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
@@ -184,9 +188,6 @@ POST          /organization/:id/logo                                         @co
 GET           /participants                                                  @controllers.Participants.index(brandId: Long)
 GET           /participants/brand/:brandId                                   @controllers.Participants.participantsByBrand(brandId: Long)
 GET           /participants/event/:eventId                                   @controllers.Participants.participantsByEvent(eventId: Long)
-GET           /participant/new/                                              @controllers.Participants.add(brandId: Option[Long], eventId: Option[Long], ref: Option[String])
-POST          /participant                                                   @controllers.Participants.create(ref: Option[String])
-POST          /participant/person                                            @controllers.Participants.createParticipantAndPerson(ref: Option[String])
 GET           /participant/:eventId/:personId/delete/                        @controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
 GET           /participant/event/:eventId/person/:personId                   @controllers.Participants.details(eventId: Long, personId: Long)
 

@@ -9,7 +9,7 @@
   <tr><td class="person-actions">
     <strong class="text-muted">Manage Person:</strong>&nbsp;
       @if(virtual) {
-        <a href="@routes.Participants.editPerson(participant.eventId, participant.personId)">Edit</a>
+        <a href="@routes.Participants.edit(participant.eventId, participant.personId)">Edit</a>
         <a class="delete-person" href="#" data-id="@participant.personId" data-event="@participant.eventId">Delete</a>
       }
       <a data-event="@participant.eventId" data-person="@participant.personId"

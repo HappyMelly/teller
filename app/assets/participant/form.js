@@ -30,40 +30,6 @@ function showError(message) {
     );
 }
 
-/**
- * Retrieve a list of event types for the brand
- * @param brandId {int}
- * @param currentEvent  {string}
- */
-function getEvents(brandId, currentEvent) {
-    //TODO it should retrieve archived events only
-    $.ajax({
-        url: '/brand/' + brandId + '/events',
-        dataType: "json"
-    }).done(function(data) {
-            var selector = "[name=eventId]";
-            var value = parseInt($(selector).attr('value'));
-            $(selector)
-                .empty()
-                .append($("<option></option>").attr("value", 0).text("Choose an event"));
-            for(var i = 0; i < data.length; i++) {
-                var option = $("<option></option>")
-                    .attr("value", data[i].id)
-                    .text(data[i].title);
-                if (value == data[i].id) {
-                    option.attr('selected', 'selected');
-                }
-                $(selector).append(option);
-            }
-            if (currentEvent) {
-                selector = 'option[value="' + currentEvent + '"]';
-                $('[name=eventId]').find(selector).attr('selected', 'selected');
-            }
-        }).fail(function() {
-            showError("Sorry we don't know anything about the brand you try to request");
-        });
-}
-
 function showNewPersonForm() {
   $('.newPerson').show();
   $('.existingPerson').hide();
@@ -85,22 +51,5 @@ $(document).ready(function() {
         showNewPersonForm();
     } else {
         showExistingPersonForm();
-    }
-
-    $("[name=brandId]").change(function() {
-        var code = $(this).find(':selected').val();
-        $("[name=brandId]").find('[value=' + code + ']').attr('selected', 'selected');
-        getEvents(code, "");
-    });
-    $("[name=eventId]").change(function() {
-        var id = $(this).find(':selected').val();
-        $("[name=eventId]").find('[value=' + id + ']').attr('selected', 'selected');
-    });
-
-    var eventId = $('#currentEvent').attr('value');
-    var brandId = $('#currentBrand').attr('value');
-    if (brandId) {
-        $("[name=brandId]").find('[value=' + brandId + ']').attr('selected', 'selected');
-        getEvents(brandId, eventId);
     }
 });

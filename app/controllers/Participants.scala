@@ -47,12 +47,8 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
-  def newPersonForm(account: UserAccount, userName: String) = {
+  def newPersonForm(eventId: Long, userName: String) = {
     Form(mapping(
-      "id" -> ignored(Option.empty[Long]),
-      "eventId" -> longNumber.verifying(
-        "error.event.invalid",
-        (eventId: Long) ⇒ Event.canManage(eventId, account)),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "birthday" -> optional(jodaLocalDate),
@@ -62,139 +58,127 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         "Unknown country",
         (country: String) ⇒ Countries.all.exists(_._1 == country)),
       "role" -> optional(text))({
-        (id, eventId, firstName, lastName, birthday, email, city, country, role) ⇒
-          ParticipantData(id, eventId, firstName, lastName, birthday, email,
+        (firstName, lastName, birthday, email, city, country, role) ⇒
+          ParticipantData(None, eventId, firstName, lastName, birthday, email,
             Address(None, None, None, Some(city), None, None, country),
             organisation = None, comment = None, role,
             DateTime.now(), userName, DateTime.now(), userName)
       })({
         (p: ParticipantData) ⇒
-          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
+          Some((p.firstName, p.lastName, p.birthday, p.emailAddress,
             p.address.city.getOrElse(""), p.address.countryCode, p.role))
       }))
   }
 
-  def existingPersonForm(implicit user: ActiveUser) = {
+  /**
+   * HTML form mapping for creating and editing.
+   */
+  def personForm(eventId: Long, editorName: String) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
-      "brandId" -> longNumber(min = 1),
-      "eventId" -> longNumber.verifying(
-        "error.event.invalid",
-        (eventId: Long) ⇒ Event.canManage(eventId, user.account)),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "emailAddress" -> play.api.data.Forms.email,
+      "birthday" -> optional(jodaLocalDate),
+      "address" -> People.addressMapping,
+      "role" -> optional(text))({
+      (id, firstName, lastName, email, birthday, address, role) ⇒
+        ParticipantData(id, eventId, firstName, lastName, birthday, email,
+          address, organisation = None, comment = None, role,
+          DateTime.now(), editorName, DateTime.now(), editorName)
+    })({
+      (p: ParticipantData) ⇒
+        Some((p.id, p.firstName, p.lastName, p.emailAddress, p.birthday,
+          p.address, p.role))
+    }))
+  }
+
+  def existingPersonForm(eventId: Long) = {
+    Form(mapping(
       "participantId" -> longNumber.verifying(
         "error.person.notExist",
         (participantId: Long) ⇒ PersonService.get.find(participantId).nonEmpty),
       "evaluationId" -> optional(longNumber),
       "role" -> optional(text))({
-        (id, brandId, eventId, participantId, evaluationId, role) ⇒
-          Participant(id, eventId, participantId, evaluationId,
+        (participantId, evaluationId, role) ⇒
+          Participant(None, eventId, participantId, evaluationId,
             certificate = None, issued = None, organisation = None,
             comment = None, role = role)
       })({
-        (p: Participant) ⇒
-          Some(p.id, p.event.get.brandId, p.eventId,
-            p.personId, p.evaluationId, p.role)
+        (p: Participant) ⇒ Some(p.personId, p.evaluationId, p.role)
       }))
   }
 
   /**
    * Render a Create page
    *
-   * @param brandId Brand id to add participant to
    * @param eventId An identifier of the event to add participant to
-   * @param ref An identifier of a page where a user should be redirected
-   * @return
    */
-  def add(brandId: Option[Long],
-    eventId: Option[Long],
-    ref: Option[String]) = SecuredDynamicAction("event", "add") {
+  def add(eventId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        val account = user.account
-        val brands = Brand.findByUser(account)
+      implicit handler ⇒ implicit user ⇒ implicit event =>
         val people = personService.findActive
-        val selectedBrand = brandId.getOrElse {
-          request.session.get("brandId").map(_.toLong).getOrElse(0L)
-        }
-        Ok(views.html.participant.form(user, id = None, brands, people,
-          newPersonForm(account, user.name), existingPersonForm(user),
-          showExistingPersonForm = true, Some(selectedBrand), eventId, ref))
+        Future.successful(
+          Ok(views.html.v2.participant.form(user, eventId, people,
+            newPersonForm(eventId, user.name), existingPersonForm(eventId),
+            showExistingPersonForm = true)))
   }
 
   /**
-   * Add a new participant to the event from a list of people inside the Teller
+   * Adds a new participant to the event from a list of people inside the Teller
    *
-   * @param ref An identifier of a page where a user should be redirected
-   * @return
+   * @param eventId Event identifier
    */
-  def create(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val form: Form[Participant] = existingPersonForm.bindFromRequest
+  def create(eventId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      val form: Form[Participant] = existingPersonForm(eventId).bindFromRequest
 
       form.fold(
         formWithErrors ⇒ {
-          val account = user.account
-          val brands = Brand.findByUser(account)
           val people = personService.findActive
-          val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
-          BadRequest(views.html.participant.form(user, None, brands, people,
-            newPersonForm(account, user.name), formWithErrors,
-            showExistingPersonForm = true, formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
-            Some(chosenEventId),
-            ref))
+          Future.successful(
+            BadRequest(views.html.v2.participant.form(user, eventId, people,
+              newPersonForm(eventId, user.name), formWithErrors,
+              showExistingPersonForm = true)))
         },
         participant ⇒ {
-          participantService.find(participant.personId, participant.eventId) match {
-            case Some(p) ⇒ {
-              val account = user.account
-              val brands = Brand.findByUser(account)
+          participantService.find(participant.personId, eventId) match {
+            case Some(p) ⇒
               val people = personService.findActive
-              val chosenEventId = form("eventId").value.map(_.toLong).getOrElse(0L)
-              BadRequest(views.html.participant.form(user, None, brands, people,
-                newPersonForm(account, user.name), form.withError("participantId", "error.participant.exist"),
-                showExistingPersonForm = true, form("brandId").value.flatMap(x ⇒ Some(x.toLong)),
-                Some(chosenEventId), ref))
-            }
-            case _ ⇒ {
+              Future.successful(
+                BadRequest(views.html.v2.participant.form(user, eventId, people,
+                  newPersonForm(eventId, user.name), form.withError("participantId", "error.participant.exist"),
+                  showExistingPersonForm = true)))
+            case _ ⇒
               Participant.insert(participant)
               val activityObject = Messages("activity.participant.create",
                 participant.person.get.fullName,
-                participant.event.get.title)
+                event.title)
               val activity = Activity.create(user.name,
                 Activity.Predicate.Created,
                 activityObject)
-              val route = ref match {
-                case Some("event") ⇒ routes.Events.details(participant.eventId).url + "#participant"
-                case _ ⇒ routes.Dashboard.index().url
-              }
-              Redirect(route).flashing("success" -> activity.toString)
-            }
+              val route = routes.Events.details(eventId).url
+              Future.successful(
+                Redirect(route).flashing("success" -> activity.toString))
           }
         })
   }
 
   /**
-   * Add a new person to the system and a new participant to the event
+   * Adds a new person to the system and a new participant to the given event
    *
-   * @param ref An identifier of a page where a user should be redirected
-   * @return
+   * @param eventId Event identifier
    */
-  def createParticipantAndPerson(ref: Option[String]) = SecuredDynamicAction("event", "add") { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val account = user.account
-      val form: Form[ParticipantData] = newPersonForm(account, user.name).bindFromRequest
+  def createParticipantAndPerson(eventId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
-      form.fold(
+      newPersonForm(eventId, user.name).bindFromRequest.fold(
         formWithErrors ⇒ {
           val people = personService.findActive
-          val brands = Brand.findByUser(account)
-          val chosenEventId = formWithErrors("eventId").value.map(_.toLong).getOrElse(0L)
-          BadRequest(views.html.participant.form(user, None, brands, people,
-            formWithErrors, existingPersonForm(user),
-            showExistingPersonForm = false,
-            formWithErrors("brandId").value.flatMap(x ⇒ Some(x.toLong)),
-            Some(chosenEventId), ref))
+          Future.successful(
+            BadRequest(views.html.v2.participant.form(user, eventId, people,
+            formWithErrors, existingPersonForm(eventId),
+            showExistingPersonForm = false)))
         },
         data ⇒ {
           Participant.create(data)
@@ -204,11 +188,9 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
           val activity = Activity.create(user.name,
             Activity.Predicate.Created,
             activityObject)
-          val route = ref match {
-            case Some("event") ⇒ routes.Events.details(data.eventId).url + "#participant"
-            case _ ⇒ routes.Dashboard.index().url
-          }
-          Redirect(route).flashing("success" -> activity.toString)
+          val route = routes.Events.details(eventId).url
+          Future.successful(
+            Redirect(route).flashing("success" -> activity.toString))
         })
   }
 
@@ -261,7 +243,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * Returns the details of the given participant
    * @param eventId Event identifier
    * @param personId Person identifier
-   * @return
    */
   def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request => implicit handler => implicit user => implicit event =>
@@ -290,11 +271,19 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def editPerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
+  def edit(eventId: Long, personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      personService.find(personId) map { person ⇒
+      personService.findComplete(personId) map { person ⇒
         if (person.virtual) {
-          Future.successful(Ok("Ok"))
+          participantService.find(personId, eventId) map { participant =>
+            val data = ParticipantData(person.id, eventId, person.firstName,
+              person.lastName, person.birthday, person.socialProfile.email,
+              person.address, participant.organisation, None, participant.role,
+              person.dateStamp.created, person.dateStamp.createdBy,
+              person.dateStamp.updated, person.dateStamp.updatedBy)
+            val form = personForm(eventId, user.name).fill(data)
+            Future.successful(Ok(views.html.v2.participant.editForm(user, personId, eventId, form)))
+          } getOrElse Future.successful(NotFound("Unknown participant"))
         } else {
           Future.successful(Forbidden("You are not allowed to edit this person"))
         }
@@ -436,9 +425,33 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def updatePerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
+  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
     implicit request => implicit handler => implicit user => implicit event =>
-      Future.successful(Ok("OK"))
+      personService.findComplete(personId) map { person ⇒
+        if (person.virtual) {
+          participantService.find(personId, eventId) map { participant =>
+            personForm(eventId, user.name).bindFromRequest.fold(
+              errors => Future.successful(
+                BadRequest(views.html.v2.participant.editForm(user, personId, eventId, errors))
+              ),
+              data => {
+                val updated = person.copy(firstName = data.firstName,
+                  lastName = data.lastName, birthday = data.birthday)
+                updated.address_=(data.address)
+                updated.socialProfile_=(updated.socialProfile.copy(email = data.emailAddress))
+                personService.update(updated)
+                Future.successful(
+                  Redirect(routes.Participants.person(eventId, personId)).flashing("success" -> "Participant was successfully updated"))
+              }
+            )
+          } getOrElse Future.successful(
+            Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown participant"))
+        } else {
+          Future.successful(
+            Redirect(routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this person"))
+        }
+      } getOrElse Future.successful(
+        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
   }
 
   /**

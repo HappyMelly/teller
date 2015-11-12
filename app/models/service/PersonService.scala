@@ -32,6 +32,8 @@ import play.api.Play.current
 
 class PersonService extends Services {
 
+  private val people = TableQuery[People]
+
   /**
    * Associates this person with given organisation.
    * @TEST
@@ -130,7 +132,6 @@ class PersonService extends Services {
    */
   def insert(person: Person): Person = DB.withTransaction {
     implicit session ⇒
-      val people = TableQuery[People]
       val accounts = TableQuery[Accounts]
       val address = Address.insert(person.address)
 
@@ -189,7 +190,6 @@ class PersonService extends Services {
    * @param name Person Identifier
    */
   def find(name: String): Option[Person] = DB.withSession { implicit session ⇒
-    val people = TableQuery[People]
     val transformed = name.replace(".", " ")
     val query = for {
       person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
@@ -207,7 +207,6 @@ class PersonService extends Services {
     implicit session =>
       import models.database.SocialProfilesStatic._
 
-      val people = TableQuery[People]
       val query = for {
         person <- people if person.id inSet ids
         profile <- TableQuery[SocialProfiles] if profile.objectType === ProfileType.Person &&
@@ -220,7 +219,7 @@ class PersonService extends Services {
    * Returns a list of active people
    */
   def findActive: List[Person] = DB.withSession { implicit session ⇒
-    TableQuery[People].filter(_.active === true).sortBy(_.firstName.toLowerCase).list
+    people.filter(_.active === true).sortBy(_.firstName.toLowerCase).list
   }
 
   /**
@@ -229,13 +228,32 @@ class PersonService extends Services {
    */
   def findByNames(names: List[String]): List[Person] = DB.withSession {
     implicit session =>
-      val people = TableQuery[People]
       val transformed = names.map(name => name.replace(".", " "))
       val query = for {
         person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase inSet transformed
       } yield person
 
       query.list
+  }
+
+  /**
+   * Returns person with an address and social profile if the person exists,
+   * otherwise - None
+   * @param id Person Identifier
+   */
+  def findComplete(id: Long): Option[Person] = DB.withSession { implicit session ⇒
+    import models.database.SocialProfilesStatic._
+
+    val query = for {
+      person <- people if person.id === id
+      social <- TableQuery[SocialProfiles] if social.objectType === ProfileType.Person && social.objectId === id
+      address <- TableQuery[Addresses] if address.id === person.addressId
+    } yield (person, social, address)
+    query.firstOption.map { value =>
+      value._1.socialProfile_=(value._2)
+      value._1.address_=(value._3)
+      value._1
+    }
   }
 
   /**

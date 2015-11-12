@@ -1,13 +1,9 @@
 @(user: ActiveUser,
-  id: Option[Long],
-  brands: List[Brand],
+  eventId: Long,
   people: List[Person],
   newPersonForm: Form[ParticipantData],
   existingPersonForm: Form[Participant],
-  showExistingPersonForm: Boolean = true,
-  currentBrand: Option[Long],
-  currentEvent: Option[Long],
-  ref: Option[String])(implicit request2flash: Flash,
+  showExistingPersonForm: Boolean = true)(implicit request2flash: Flash,
     request: Request[Any],
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -28,12 +24,6 @@
       <h1>Add Participant</h1>
     </div>
     <div id="switcher">
-      @currentEvent.map { value =>
-        <div id="currentEvent" value="@value"></div>
-      }
-      @currentBrand.map { value =>
-        <div id="currentBrand" value="@value"></div>
-      }
       <div class="row">
         <div class="col-sm-3"></div>
         <div class="col-sm-9 toolbar">
@@ -52,11 +42,7 @@
         </div>
       </div>
       <div class="existingPerson">
-        @html.form(action = CSRF(routes.Participants.create(ref))) {
-          @html.select(existingPersonForm("brandId"),
-            ("", "Choose a brand") :: brands.map(b => (b.id.get.toString, b.name)), '_label->"Brand", '_help->"")
-          @html.select(existingPersonForm("eventId"),
-            ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
+        @html.form(action = CSRF(routes.Participants.create(eventId))) {
           @html.select(existingPersonForm("participantId"),
             ("", "Choose a person") :: people.map(p => (p.id.get.toString, p.fullName)), '_label -> "Person", '_help ->"")
           @html.select(existingPersonForm("role"),
@@ -70,11 +56,7 @@
         }
       </div>
       <div class="newPerson">
-        @html.form(action = CSRF(routes.Participants.createParticipantAndPerson(ref))) {
-          @html.select(newPersonForm("brandId"),
-            ("", "Choose a brand") :: brands.map(b => (b.id.get.toString, b.name)), '_label->"Brand", '_help->"")
-          @html.select(newPersonForm("eventId"),
-            ("", "Choose an event") :: Nil, '_label -> "Event", '_help ->"")
+        @html.form(action = CSRF(routes.Participants.createParticipantAndPerson(eventId))) {
           @html.text(newPersonForm("firstName"), '_label -> "First name")
           @html.text(newPersonForm("lastName"), '_label -> "Last name")
           @html.date(newPersonForm("birthday"), '_label -> "Birth date")
