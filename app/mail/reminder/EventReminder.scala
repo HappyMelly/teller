@@ -30,6 +30,7 @@ object EventReminder extends Services with Integrations {
         None,
         subject,
         body,
+        from = brand.name,
         richMessage = true)
       val msg = "confirmation email for event %s (id = %s)".format(
         event.title,

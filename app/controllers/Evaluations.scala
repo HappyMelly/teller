@@ -362,7 +362,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           email.send(Set(ev.participant),
             Some(event.facilitators.toSet),
             Some(bcc.toSet),
-            subject, body, richMessage = true, None)
+            subject, body, from = x.brand.name, richMessage = true, None)
         } else {
           val cert = new Certificate(ev.handled, event, ev.participant, renew = true)
           cert.send(x, approver)

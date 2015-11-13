@@ -46,15 +46,17 @@ class Email {
     bcc: Option[Set[Person]] = None,
     subject: String,
     body: String,
+    from: String = "Happy Melly",
     richMessage: Boolean = false,
     attachment: Option[(String, String)] = None): Unit = {
     val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>")
     val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>"))
     val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.socialProfile.email}>"))
+    val mailFrom = from + " " + EmailService.from
     val message = EmailMessage(toAddresses.toList,
       ccAddresses.map(_.toList).getOrElse(List[String]()),
       bccAddresses.map(_.toList).getOrElse(List[String]()),
-      EmailService.from, subject, body, richMessage, attachment)
+      mailFrom, subject, body, richMessage, attachment)
     EmailService.emailServiceActor ! message
   }
 

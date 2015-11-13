@@ -48,7 +48,8 @@ object EvaluationReminder extends Services with Integrations {
   def sendEvaluationRequest(participant: Person, brand: Brand, body: String): Unit = {
     val subject = "Your Opinion Counts!"
     email.send(Set(participant), None, None, subject,
-      mail.templates.evaluation.html.request(brand, participant, body).toString(), richMessage = true)
+      mail.templates.evaluation.html.request(brand, participant, body).toString(),
+      from = brand.name, richMessage = true)
   }
 
   /**
@@ -67,6 +68,6 @@ object EvaluationReminder extends Services with Integrations {
       concat(token)
     email.send(Set(participant), None, None, subject,
       mail.templates.evaluation.html.confirm(brand, participant.fullName, url).toString(),
-      richMessage = true)
+      from = brand.name, richMessage = true)
   }
 }

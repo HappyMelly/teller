@@ -98,6 +98,7 @@ case class Certificate(
       Some(bcc.toSet),
       subject,
       body,
+      from = brand.brand.name,
       richMessage = true,
       Some((file.getPath, name)))
   }
