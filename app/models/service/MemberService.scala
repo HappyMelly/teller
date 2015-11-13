@@ -82,7 +82,7 @@ class MemberService {
    * @param objectIds List of identifiers
    */
   def find(objectIds: List[Long]): List[Member] = DB.withSession { implicit session =>
-    members.filter(_.objectId inSet objectIds).list
+    members.filter(_.id inSet objectIds).list
   }
 
   /**
