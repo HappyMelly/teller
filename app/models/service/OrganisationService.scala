@@ -59,6 +59,19 @@ class OrganisationService extends Services {
     orgs.filter(_.id === id).delete
   }
 
+  /**
+   * Returns list of organisation for the given ids
+   *
+   * @param objectIds List of identifiers
+   */
+  def find(objectIds: List[Long]): List[Organisation] = DB.withSession {
+    implicit session =>
+      if (objectIds.isEmpty)
+        List()
+      else
+        orgs.filter(_.id inSet objectIds).list
+  }
+
   /** Returns list of active organisations */
   def findActive: List[Organisation] = DB.withSession { implicit session ⇒
     orgs.filter(_.active === true).sortBy(_.name.toLowerCase).list

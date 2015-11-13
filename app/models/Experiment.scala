@@ -28,7 +28,8 @@ case class Experiment(id: Option[Long],
   name: String,
   description: String,
   picture: Boolean,
-  url: Option[String])
+  url: Option[String],
+  recordInfo: DateStamp)
 
 object Experiment {
 

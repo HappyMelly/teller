@@ -24,9 +24,10 @@
 package controllers
 
 import controllers.Forms._
-import models.{ ActiveUser, Experiment, Member }
+import models.{DateStamp, ActiveUser, Experiment, Member}
 import models.UserRole.Role._
 import models.service.Services
+import org.joda.time.DateTime
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
@@ -45,13 +46,19 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
-  val form = Form(mapping(
+  def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "memberId" -> ignored(0L),
     "name" -> nonEmptyText,
     "description" -> nonEmptyText,
     "picture" -> ignored(false),
-    "url" -> optional(webUrl))(Experiment.apply)(Experiment.unapply))
+    "url" -> optional(webUrl),
+    "recordInfo" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(editorName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply)
+    )(Experiment.apply)(Experiment.unapply))
 
   /**
    * Renders add form for an experiment
@@ -59,9 +66,9 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    */
   def add(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Future.successful(Ok(views.html.v2.experiment.form(user, memberId, form)))
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+        Future.successful(
+          Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
   }
 
   /**
@@ -70,9 +77,8 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    */
   def create(memberId: Long) = AsyncSecuredDynamicAction("member", "editor") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        form.bindFromRequest.fold(
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+        form(user.name).bindFromRequest.fold(
           error ⇒ Future.successful(
             BadRequest(views.html.v2.experiment.form(user, memberId, error))),
           experiment ⇒ {
@@ -142,7 +148,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
           Future.successful(
-            Ok(views.html.v2.experiment.form(user, memberId, form.fill(experiment), Some(id))))
+            Ok(views.html.v2.experiment.form(user, memberId, form(user.name).fill(experiment), Some(id))))
         } getOrElse Future.successful(NotFound("Experiment not found"))
   }
 
@@ -176,7 +182,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
   def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
-        form.bindFromRequest.fold(
+        form(user.name).bindFromRequest.fold(
           error ⇒ Future.successful(
             BadRequest(views.html.v2.experiment.form(user, memberId, error))),
           experiment ⇒ {

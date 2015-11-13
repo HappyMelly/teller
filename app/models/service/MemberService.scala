@@ -79,10 +79,25 @@ class MemberService {
   /**
    * Returns list of members for the given ids
    *
+   * @param ids List of identifiers
+   */
+  def find(ids: List[Long]): List[Member] = DB.withSession { implicit session =>
+    if (ids.isEmpty)
+      List()
+    else
+      members.filter(_.id inSet ids).list
+  }
+
+  /**
+   * Returns list of members for the given ids
+   *
    * @param objectIds List of identifiers
    */
-  def find(objectIds: List[Long]): List[Member] = DB.withSession { implicit session =>
-    members.filter(_.objectId inSet objectIds).list
+  def findByObjects(objectIds: List[Long]): List[Member] = DB.withSession { implicit session =>
+    if (objectIds.isEmpty)
+      List()
+    else
+      members.filter(_.objectId inSet objectIds).list
   }
 
   /**

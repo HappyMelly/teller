@@ -151,7 +151,7 @@ trait MembersApi extends Controller
       val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
       val people = personService.findByNames(names.toList)
       PeopleCollection.addresses(people)
-      val members = memberService.find(people.map(_.identifier)).filter(_.person)
+      val members = memberService.findByObjects(people.map(_.identifier)).filter(_.person)
       val views = members.map { member =>
         people.find(_.identifier == member.objectId) map { person =>
           member.memberObj_=(person)

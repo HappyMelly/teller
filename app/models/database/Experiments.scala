@@ -23,7 +23,9 @@
  */
 package models.database
 
-import models.Experiment
+import PortableJodaSupport._
+import models.{DateStamp, Experiment}
+import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
 /**
@@ -36,9 +38,21 @@ private[models] class Experiments(tag: Tag) extends Table[Experiment](tag, "EXPE
   def picture = column[Boolean]("PICTURE")
   def description = column[String]("DESCRIPTION")
   def url = column[Option[String]]("URL")
+  def created = column[DateTime]("CREATED")
+  def createdBy = column[String]("CREATED_BY")
+  def updated = column[DateTime]("UPDATED")
+  def updatedBy = column[String]("UPDATED_BY")
 
-  def * = (id.?, memberId, name, description, picture,
-    url) <> ((Experiment.apply _).tupled, Experiment.unapply)
+  type ExperimentFields = (Option[Long], Long, String, Boolean, String,
+    Option[String], DateTime, String, DateTime, String)
 
-  def forUpdate = (name, description, picture, url)
+  def * = (id.?, memberId, name, picture, description, url, created,
+    createdBy, updated, updatedBy) <> (
+    (e: ExperimentFields) => Experiment(e._1, e._2, e._3, e._5, e._4, e._6,
+      DateStamp(e._7, e._8, e._9, e._10)),
+    (e: Experiment) => Some(e.id, e.memberId, e.name, e.picture, e.description,
+      e.url, e.recordInfo.created, e.recordInfo.createdBy, e.recordInfo.updated,
+      e.recordInfo.updatedBy))
+
+  def forUpdate = (name, description, picture, url, updated, updatedBy)
 }

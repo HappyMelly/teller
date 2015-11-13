@@ -93,7 +93,10 @@ class ExperimentService extends Services {
    * @param experiment Experiment
    */
   def update(experiment: Experiment): Unit = DB.withSession { implicit session ⇒
-    experiments.filter(_.id === experiment.id.get).update(experiment)
+    val fields = (experiment.name, experiment.description,
+      experiment.picture, experiment.url, experiment.recordInfo.updated,
+      experiment.recordInfo.updatedBy)
+    experiments.filter(_.id === experiment.id.get).map(_.forUpdate).update(fields)
   }
 }
 
