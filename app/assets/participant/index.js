@@ -160,6 +160,7 @@ $(document).ready( function() {
 
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
+        initializeParticipantActions("table");
     });
     $('#exportLink').on('click', function() {
         buildExportLink(false)

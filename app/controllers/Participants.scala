@@ -385,7 +385,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   protected def showCertificate(brand: Brand, event: Event, status: Option[EvaluationStatus.Value]): Boolean = {
     brand.generateCert && !event.free &&
-      (status.exists(_ == EvaluationStatus.Pending) || status.exists(_ == EvaluationStatus.Approved))
+      (status.isEmpty || status.exists(_ == EvaluationStatus.Pending) || status.exists(_ == EvaluationStatus.Approved))
   }
   /**
    * Get JSON with evaluation data

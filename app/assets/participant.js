@@ -267,15 +267,15 @@ function removeParticipant() {
  * @param container {string} Type of container (table or link)
  */
 function initializeParticipantActions(container) {
-    $('.circle-show-more').on('click', function() {
+    $('.circle-show-more').off('click').on('click', function() {
         toggleParticipantDetails($(this), container);
     });
-    $('.generate-certificate').on('click', function(e) {
+    $('.generate-certificate').off('click').on('click', function(e) {
         e.preventDefault();
         generateCertificate($(this));
         return true;
     });
-    $('.send-confirmation-request').on('click', function(e) {
+    $('.send-confirmation-request').off('click').on('click', function(e) {
         e.preventDefault();
         sendConfirmationRequest($(this));
         return true;

@@ -100,7 +100,7 @@
       @dynamic(handler, "person", "edit") {
         <form class="form-inline material-form" method="POST"
         action="@CSRF(routes.Materials.create(person.id.get))">
-          <input type="hidden" name="brandId" value="@brandData._1"/>
+          <input type="hidden" name="brandId" value="@brandData._1.brandId"/>
           <select name="type" id="linkType" class="form-control input-sm">
             <option value="article">Article</option>
             <option value="casestudy">Case Study</option>
