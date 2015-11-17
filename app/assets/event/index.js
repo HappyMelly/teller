@@ -126,6 +126,7 @@ $(document).ready( function() {
             { "data": "location" },
             { "data": "schedule" },
             { "data": "totalHours" },
+            { "data": "materials" },
             { "data": "invoice" },
             { "data": "confirmed" },
             { "data": "actions" }
@@ -135,31 +136,26 @@ $(document).ready( function() {
                 return '<a href="' + data.url + '">' + data.title + '</a>';
             },
             "targets": 0
-        }, {
-            "render": function(data) {
-                var html = '';
-                for (var i = 0; i < data.length; i++) {
-                    html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
-                }
-                return html;
-            },
-            "targets": 1
+        },{
+             "render": function(data) {
+                 var html = '';
+                 for (var i = 0; i < data.length; i++) {
+                     html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
+                 }
+                 return html;
+             },
+             "targets": 1
         },{
             "render": function(data) {
-                if (data.online) {
-                    return data.city;
-                } else {
-                    return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
-                        data.country + '.png"/> ' + data.city;
-                }
+                return data.city + ", " + data.countryName;
             },
             "targets": 2
-        }, {
+        },{
             "render": function(data) {
-                return data.start + ' / ' + data.end;
+                return data.formatted;
             },
             "targets": 3
-        }, {
+        },{
             "render": function(data) {
                 if(data.free) {
                     return '<span class="label label-success">free</span>';
@@ -167,8 +163,8 @@ $(document).ready( function() {
                     return data.invoice;
                 }
             },
-            "targets": 5
-        }, {
+            "targets": 6
+        },{
             "render": function(data) {
                 if(data) {
                     return '<span class="label label-success">yes</span>';
@@ -176,15 +172,30 @@ $(document).ready( function() {
                     return '<span class="label label-danger">no</span>';
                 }
             },
-            "targets": 6
+            "targets": 7
         },{
+            // "render": function(data) {
+                // return renderDropdown(data);
+            // },
             "render": function(data) {
-                return renderDropdown(data);
+                var html = '<div class="circle-show-more" data-event="' + data.event_id + '"';
+                html += ' data-person="' + data.person + '">';
+                html += '<span class="glyphicon glyphicon-chevron-down"></span></div>';
+                return html;
             },
-            "targets": 7,
-            "orderable": false
+            "targets": 8,
+            "bSortable": false
         }]
     });
+
+    events
+        .api()
+        .on('init.dt', function (e, settings, data) {
+            // loadEventList(events);
+            // initializeParticipantActions("table");
+            initializeEventActions("table");
+    });
+
     $("body").css("cursor", "progress");
     events.on( 'xhr.dt', function () {
         $("body").css("cursor", "default");

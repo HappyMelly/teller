@@ -53,13 +53,14 @@
           <table id="events" class="datatables table table-rowed">
             <thead>
               <tr>
-                <th width="20%">Title</th>
-                <th>Facilitators</th>
-                <th>Location</th>
-                <th width="20%">Dates</th>
-                <th width="5%" align="center">Hours</th>
-                <th width="5%" align="center">Invoice</th>
-                <th width="5%" align="center">Confirmed</th>
+                <th width="20%">Event</th>
+                <th width="15%">Facilitator</th>
+                <th width="10%">Location</th>
+                <th width="12%">Dates</th>
+                <th width="8%" align="center">Total Hours</th>
+                <th width="10%" align="center">Materials</th>
+                <th width="8%" align="center">Invoice</th>
+                <th width="8%" align="center">Confirmed</th>
                 <th></th>
               </tr>
             </thead>
@@ -68,5 +69,6 @@
       </div>
     </div>
   </div>
+  <script src="@routes.Assets.at("event.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("event/index.js")" type="text/javascript"></script>
 }

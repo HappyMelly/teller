@@ -1,0 +1,22 @@
+@(view: EventView)
+<div class="buttons">
+  <div class="buttons-block">
+    @if(!view.event.confirmed) {
+      <a href="#" data-id="@view.event.identifier" class="btn btn-primary event-confirm">
+        Confirm
+      </a>
+    } else {
+      <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+    }
+    <a class="btn btn-default" href="@routes.Events.edit(view.event.id.get)">
+      Edit
+    </a>
+  </div>
+  <div class="buttons-block">
+    <a class="btn btn-default" href="@routes.Events.duplicate(view.event.id.get)">
+      Duplicate
+    </a>
+    <a data-id="@view.event.identifier" class="btn btn-default event-cancel"
+      id="cancelButton" @if(!view.event.deletable) {disabled="disabled"} >Cancel</a>
+  </div>
+</div>

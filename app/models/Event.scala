@@ -50,6 +50,8 @@ case class Schedule(start: LocalDate,
     hoursPerDay: Int,
     totalHours: Int) {
 
+  lazy val formatted: String = views.ViewHelpersV2.dateInterval(start,end);
+
   /**
    * Returns true if number of total hours is inside a threshold for an allowed
    * number of total hours
@@ -83,6 +85,8 @@ case class Details(
 case class Location(city: String, countryCode: String) {
 
   lazy val online: Boolean = countryCode == "00"
+
+  lazy val countryName: String = views.Countries.name(countryCode)
 }
 
 /**
@@ -275,4 +279,3 @@ object Event {
     }
   }
 }
-
