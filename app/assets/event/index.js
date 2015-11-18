@@ -71,41 +71,6 @@ function makeRequestUrl() {
     return request;
 }
 
-/**
- * Render a dropdown with actions for an event
- *
- * @param data {object}
- * @returns {string}
- */
-function renderDropdown(data) {
-    var emptyDropdown = true;
-    var html = '<div class="dropdown">';
-    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
-    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
-    if ('edit' in data && data.edit) {
-        if ('edit' in data && data.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.edit;
-            html += '" title="Edit Event"><i class="glyphicon glyphicon-pencil"></i> Edit</a></li>';
-        }
-        if ('duplicate' in data && data.duplicate) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.duplicate;
-            html += '" title="Duplicate Event"><i class="glyphicon glyphicon-edit"></i> Duplicate</a></li>';
-        }
-        if ('cancel' in data && data.cancel) {
-            emptyDropdown = false;
-            html += '<li><a class="delete" tabindex="-1" href="#cancelDialog" data-href="' + data.cancel;
-            html += '" data-toggle="modal" title="Cancel Event"><i class="glyphicon glyphicon-trash"></i> Cancel</a></li>';
-        }
-    }
-    html += '</ul></div>';
-    if (emptyDropdown) {
-        return '';
-    }
-    return html;
-}
-
 $(document).ready( function() {
 
     var events = $('#events').dataTable({
@@ -174,9 +139,6 @@ $(document).ready( function() {
             },
             "targets": 7
         },{
-            // "render": function(data) {
-                // return renderDropdown(data);
-            // },
             "render": function(data) {
                 var html = '<div class="circle-show-more" data-event="' + data.event_id + '"';
                 html += ' data-person="' + data.person + '">';
@@ -191,16 +153,16 @@ $(document).ready( function() {
     events
         .api()
         .on('init.dt', function (e, settings, data) {
-            // loadEventList(events);
-            // initializeParticipantActions("table");
             initializeEventActions("table");
-    });
+          })
+        .on('xhr.dt', function(){
+          $("body").css("cursor", "default");
+        })
+        .on('page.dt', function(){
+          initializeEventActions("table");
+        });
 
     $("body").css("cursor", "progress");
-    events.on( 'xhr.dt', function () {
-        $("body").css("cursor", "default");
-    });
-
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
 
@@ -212,18 +174,28 @@ $(document).ready( function() {
             .url(makeRequestUrl())
             .load(function(){
                 $("body").css("cursor", "default");
+                initializeEventActions("table");
             });
     }
-    $('#past-future').on('change', function() { updateTable(); });
+
+    // filtering events for "Events"
+    $('#past-future').on('change', function() { updateTable(); alert("hello") });
     $('#private').on('change', function() { updateTable(); });
     $('#archived').on('change', function() {  updateTable(); });
     $('#facilitators').on('change', function() { updateTable(); });
+    // $('#events_paginate ul.pagination li').click(function(e){
+      // alert("hello");
+    // });
+    // $('#events_paginate .pagination li').on('click',function(){ alert("Hello")});
+
+    // $('.pagination').on('click', function(){ alert("hello")});
 
     events.fnDraw();
 
     $("#events").on('click', '.delete', function(){
         $("#cancelLink").attr('href', $(this).data('href'));
     });
+
     $('#cancelLink').on('click', function(e) {
         e.preventDefault();
         $.ajax({
