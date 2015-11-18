@@ -14,58 +14,68 @@ from third-party apps and websites.
 
 ### Pre-requisites
 
-1. Install Java JDK 1.7
-2. Download and install Play framework 2.3.9
-    * [http://www.playframework.com/download](http://www.playframework.com/download)
-    * [http://www.playframework.com/documentation/2.3.9/Installing](http://www.playframework.com/documentation/2.3.9/Installing)
-3. Download/install and start MySQL 5.6
-4. Create the database and user:
+1. Install Vagrant. Follow this guide from their official site: [https://docs.vagrantup.com/v2/installation/index.html](Installing Vagrant)
 
-        create database happymelly;
-        grant all on happymelly.* TO 'melly'@'localhost' identified by 'shum' with grant option;
-        use happymelly;
-
-5. Create and setup Twitter application
+2. Create and setup Twitter application
     * Create a new application on [https://dev.twitter.com](https://dev.twitter.com)
     * Add callback URL `http://127.0.0.1:9000/authenticate/twitter`
     * Set checkbox **Allow this application to be used to Sign in with Twitter**
 
-6. Set up Memcache (you can use any Memcache service like [Memcachier](http://memcachier.com)
-
 ### Application
+1. Clone the repo, (for the meantime pull the branch that works with vagrant) ..
 
-1. Clone the repo
-2. Run the application, specifying configuration properties on the command line or as environment variables. You can use
-   any value for AWS keys if you don’t need booking entry attachments to work. You can also provide dummy values for
-   authentication service keys that you don’t need to use.
+2. Supply the needed values for the following:
 
-        cd teller
-        export AWS_ACCESS_KEY_ID=[Amazon web services key]
-        export AWS_SECRET_KEY=false TWITTER_KEY=[your app consumer key]
-        export TWITTER_SECRET=[Twitter app consumer secret]
-        export FACEBOOK_ID=[App ID]
-        export FACEBOOK_SECRET=[App secret]
-        export GOOGLE_ID=[App ID]
-        export GOOGLE_SECRET=[App secret]
-        export LINKEDIN_KEY=[App key]
-        export LINKEDIN_SECRET=[App secret]
-        export GOOGLE_ID=[App ID]
-        export GOOGLE_SECRET=[App secret]
-        export MEMCACHIER_SERVERS=[url]
-        export MEMCACHIER_USERNAME=[username]
-        export MEMCACHIER_PASSWORD=[password]
-        play run
+    ```
+      > cd teller/vagrant
+      > vim up.bash
+      ...
+      # hm-teller specific variables
+      aws_key=
+      aws_secret=
+      fb_app_id=
+      fb_secret=
+      google_app_id=
+      google_secret=
+      linkedin_key=
+      linkedin_secret=
+      twitter_key=
+      twitter_secret=
+      memcached_url=127.0.0.1:112111
+      memcached_username=happymelly
+      memcached_password=
+      ...
+    ```
+
+    Save your changes then go back to the root directory (ie teller)
+
+    ```
+      > cd teller
+    ```
+
+2. Run the application.
+  Start vagrant (vagrant up) then tunnel your way with ssh(vagrant ssh). From inside vagrant,
+  you can run  `sbt run` .
+
+    ```
+        > vagrant up
+        > vagrant ssh
+        #.. inside vagrant
+        vagrant@hm-teller:/ > cd /vagrant
+        vagrant@hm-teller:/ > sbt run
+    ```
 
 3. Open the application in a web browser and run Evolutions to populate the database
     * open [http://localhost:9000](http://localhost:9000)
     * on the _Database 'default' needs evolution!_ page, click _Apply this script now!_
-4. Update database (required to give you access by your Twitter account). Alternatively, add a Facebook profile URL, a
-   Google+ profile URL or a LinkedIn public profile URL, in the appropriate table columns.
 
-        update PERSON set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";
+4. Update database (required to give you access by your twitter account).
 
-        insert into USER_ACCOUNT (PERSON_ID, TWITTER_HANDLE, ROLE)
-        select ID, TWITTER_HANDLE, 'admin' from PERSON where lower(TWITTER_HANDLE) = '[your twitter id]';
+  ```
+    > vagrant ssh
+    vagrant@hm-teller > mysql -u melly -pshum
+    mysql > update user_account set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="skotlov";
+  ```
 
 5. Time to log in, pal!
 

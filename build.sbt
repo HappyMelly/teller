@@ -2,7 +2,7 @@ import play.PlayImport.PlayKeys._
 
 name := "happymelly-teller"
 
-version :="1.6-SNAPSHOT"
+version := "1.6-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
@@ -13,13 +13,14 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 libraryDependencies ++=
   Seq(
     jdbc,
-    cache,
+  cache,
+//  play.PlayImport.cache,
     ws,
     filters,
     "be.objectify" %% "deadbolt-scala" % "2.3.3",
     "com.andersen-gott" %% "scravatar" % "1.0.3", //gravatar support
     "com.sksamuel.scrimage" %% "scrimage-core" % "2.1.0", //image resizing
-    "com.github.mumoshu" %% "play2-memcached" % "0.5.0-RC1",
+    "com.github.mumoshu" %% "play2-memcached-play23" % "0.7.0",
     "com.github.tototoshi" %% "slick-joda-mapper" % "1.2.0",
     "com.typesafe.play" %% "play-slick" % "0.8.0",
     "joda-time" % "joda-time" % "2.4",
@@ -35,12 +36,14 @@ libraryDependencies ++=
     // update selenium to avoid browser test to hang
     "org.seleniumhq.selenium" % "selenium-java" % "2.39.0" % Test,
     "ws.securesocial" %% "securesocial" % "3.0-M3",
-    "nl.rhinofly" %% "play-s3" % "6.0.0"  //s3 amazon support
+    "nl.rhinofly" %% "play-s3" % "6.0.0" //s3 amazon support
   )
 
 resolvers += Resolver.sonatypeRepo("releases")
 
 resolvers += "Rhinofly Internal Repository" at "http://maven-repository.rhinofly.net:8081/artifactory/libs-release-local"
+
+resolvers += "Spy Repo" at "http://files.couchbase.com/maven2"
 
 routesImport += "binders._"
 
@@ -57,20 +60,20 @@ herokuProcessTypes in Compile := Map(
   "web" -> "target/universal/stage/bin/happymelly-teller -Dconfig.file=conf/$CONF_FILENAME -Dhttp.port=$PORT"
 )
 
-includeFilter in (Assets, LessKeys.less) := "*.less"
+includeFilter in(Assets, LessKeys.less) := "*.less"
 
 LessKeys.compress in Assets := true
 
 // disable publishing the main API jar
-publishArtifact in (Compile, packageDoc) := false
+publishArtifact in(Compile, packageDoc) := false
 
 // disable publishing the main sources jar
-publishArtifact in (Compile, packageSrc) := false
+publishArtifact in(Compile, packageSrc) := false
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting in Test := false
 
 ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages in Test := "<empty>;Reverse.*;.*AuthService.*;models\\.database\\..*;.*routes_.*"
 
-sources in (Compile, doc) := Seq.empty
+sources in(Compile, doc) := Seq.empty
 
 fork in run := true
