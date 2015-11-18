@@ -61,6 +61,7 @@ from third-party apps and websites.
         > vagrant up
         > vagrant ssh
         #.. inside vagrant
+        vagrant@hm-teller:/ > cd /vagrant
         vagrant@hm-teller:/ > sbt run
     ```
 
@@ -73,9 +74,7 @@ from third-party apps and websites.
   ```
     > vagrant ssh
     vagrant@hm-teller > mysql -u melly -pshum
-    mysql > update user_account set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="happy_melly";
-    mysql > insert into user_account (PERSON_ID, TWITTER_HANDLE, ROLE);
-    mysql > select ID, TWITTER_HANDLE, 'admin' from user_account where lower(TWITTER_HANDLE) = '[your twitter id]';
+    mysql > update user_account set TWITTER_HANDLE="[your twitter id]" where TWITTER_HANDLE="skotlov";
   ```
 
 5. Time to log in, pal!
