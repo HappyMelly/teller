@@ -40,15 +40,23 @@ table.dataTable > thead > tr > th {
   }
 
   &.sorting:after {
-    content: "\f0dc";
+    content: "\f";
     padding-top: 0.12em;
   }
 
   &.sorting_asc:after {
-    content: "\f160";
+    content: "\f15d";
   }
 
   &.sorting_desc:after {
+    content: "\f15e";
+  }
+
+  #date.sorting_asc:after {
+    content: "\f160";
+  }
+
+  #date.sorting_desc:after{
     content: "\f161";
   }
 }

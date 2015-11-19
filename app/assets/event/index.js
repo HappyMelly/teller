@@ -73,7 +73,8 @@ function makeRequestUrl() {
 
 $(document).ready( function() {
 
-    var events = $('#events').dataTable({
+    var events = $('#events')
+      .dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
@@ -89,7 +90,8 @@ $(document).ready( function() {
             { "data": "event" },
             { "data": "facilitators" },
             { "data": "location" },
-            { "data": "schedule" },
+            { "data": "schedule"
+           },
             { "data": "totalHours" },
             { "data": "materials" },
             { "data": "invoice" },
@@ -122,20 +124,14 @@ $(document).ready( function() {
             "targets": 3
         },{
             "render": function(data) {
-                if(data.free) {
-                    return '<span class="label label-success">free</span>';
-                } else {
-                    return data.invoice;
-                }
+              if(data.free)
+                return '<span class="glyphicon glyphicon-ok"/> Free';
+              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon glyphicon-minus"/> No';
             },
             "targets": 6
         },{
             "render": function(data) {
-                if(data) {
-                    return '<span class="label label-success">yes</span>';
-                } else {
-                    return '<span class="label label-danger">no</span>';
-                }
+              return data ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon glyphicon-minus" aria-hidden="true"/> No';
             },
             "targets": 7
         },{
@@ -151,16 +147,13 @@ $(document).ready( function() {
     });
 
     events
-        .api()
-        .on('init.dt', function (e, settings, data) {
-            initializeEventActions("table");
-          })
-        .on('xhr.dt', function(){
+      .on('draw.dt', function(){
+        console.log("Draw.dt is called.");
+        initializeEventActions("table");
+      })
+      .on('xhr.dt', function(){
           $("body").css("cursor", "default");
-        })
-        .on('page.dt', function(){
-          initializeEventActions("table");
-        });
+      });
 
     $("body").css("cursor", "progress");
     $("div.toolbar").html($('#filter-containter').html());
@@ -179,16 +172,10 @@ $(document).ready( function() {
     }
 
     // filtering events for "Events"
-    $('#past-future').on('change', function() { updateTable(); alert("hello") });
+    $('#past-future').on('change', function() { updateTable();});
     $('#private').on('change', function() { updateTable(); });
     $('#archived').on('change', function() {  updateTable(); });
     $('#facilitators').on('change', function() { updateTable(); });
-    // $('#events_paginate ul.pagination li').click(function(e){
-      // alert("hello");
-    // });
-    // $('#events_paginate .pagination li').on('click',function(){ alert("Hello")});
-
-    // $('.pagination').on('click', function(){ alert("hello")});
 
     events.fnDraw();
 

@@ -138,7 +138,18 @@ function toggleDetails(object, container) {
 /**
 */
 function initializeEventActions(container) {
-  $('.circle-show-more').on('click', function() {
+  var elem = $('.circle-show-more')
+  // var ev = $._data(elem, 'events');
+  // console.log("Event[" + ev + "]");
+  // if(typeof ev === "undefined" || !ev.click) {
+    elem.on('click', function(){
       toggleDetails($(this), container);
-  });
+    });
+  // }
+  // $('.circle-show-more').on('click', function() {
+      // var ev = $._data(this, 'events');
+      // console.log(ev.click);
+      // if(ev && !ev.click)
+        // toggleDetails($(this), container);
+  // });
 }
