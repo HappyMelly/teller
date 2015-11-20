@@ -48,7 +48,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    */
   def create(eventId: Long,
-    personId: Long) = AsyncSecuredEventAction(eventId, Role.Facilitator) {
+    personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId) map { participant ⇒

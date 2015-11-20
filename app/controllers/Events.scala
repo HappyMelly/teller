@@ -168,7 +168,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param id Event Id
    * @return
    */
-  def duplicate(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+  def duplicate(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
     implicit handler => implicit user ⇒ implicit event =>
       eventService.findWithInvoice(id) map { view ⇒
         val brands = Brand.findByUser(user.account)
@@ -204,7 +204,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Cancel the given event
    * @param id Event ID
    */
-  def cancel(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) {
+  def cancel(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
 
@@ -238,7 +238,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Confirm form submits to this action.
    * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+  def confirm(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       eventService.confirm(id)
       val log = activity(event, user.person).confirmed.insert()
@@ -251,7 +251,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param id Event ID
    * @return
    */
-  def invoice(id: Long) = AsyncSecuredEventAction(id, Role.Coordinator) {
+  def invoice(id: Long) = AsyncSecuredEventAction(Role.Coordinator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         eventService.findWithInvoice(id) map { view ⇒
           invoiceForm.bindFromRequest.fold(
@@ -307,7 +307,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Edit page.
    * @param id Event ID
    */
-  def edit(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) {
+  def edit(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         eventService.findWithInvoice(id) map { view ⇒
           val account = user.account
@@ -414,7 +414,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Edit form submits to this action.
    * @param id Event ID
    */
-  def update(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
 
       val form = eventForm.bindFromRequest
@@ -450,7 +450,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
-  def sendRequest(id: Long) = AsyncSecuredEventAction(id, Role.Facilitator) { implicit request ⇒
+  def sendRequest(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(

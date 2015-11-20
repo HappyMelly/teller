@@ -114,7 +114,7 @@ trait Security extends SecureSocial[ActiveUser]
    *
    * @param evaluationId Evaluation identifier
    */
-  def SecuredEvaluationAction(evaluationId: Long, role: UserRole.Role.Role)(
+  def SecuredEvaluationAction(role: UserRole.Role.Role, evaluationId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
     securedAction() { implicit request => implicit handler => implicit user =>
       eventService.findByEvaluation(evaluationId).map { event ⇒
@@ -132,7 +132,7 @@ trait Security extends SecureSocial[ActiveUser]
    *
    * @param eventId Event identifier
    */
-  def AsyncSecuredEventAction(eventId: Long, role: UserRole.Role.Role)(
+  def AsyncSecuredEventAction(role: UserRole.Role.Role, eventId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit handler => implicit user =>
       eventService.find(eventId).map { event ⇒

@@ -26,7 +26,7 @@ package controllers
 
 import models.UserRole._
 import models._
-import models.service.{ EventService, Services }
+import models.service.{EventService, Services}
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
@@ -95,7 +95,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(id, Role.Facilitator) {
+  def approve(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         evaluationService.find(id).map { eval ⇒
@@ -147,7 +147,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param ref Identifier of a page where a user should be redirected
    * @return
    */
-  def delete(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(id, Role.Facilitator) {
+  def delete(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         evaluationService.find(id).map { x ⇒
@@ -171,7 +171,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Unique evaluation identifier
    * @return
    */
-  def move(id: Long) = SecuredEvaluationAction(id, Role.Facilitator) {
+  def move(id: Long) = SecuredEvaluationAction(Role.Facilitator, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
 
@@ -243,7 +243,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def edit(id: Long) = SecuredEvaluationAction(id, Role.Coordinator) {
+  def edit(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { evaluation ⇒
@@ -262,7 +262,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Evaluation identifier
    * @param ref Identifier of a page where a user should be redirected
    */
-  def reject(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(id, Role.Facilitator) {
+  def reject(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       evaluationService.find(id).map { eval ⇒
         if (eval.rejectable) {
@@ -290,7 +290,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Sends a request to a participant to confirm the evaluation
    * @param id Evaluation id
    */
-  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(id, Role.Coordinator) {
+  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       evaluationService.find(id) map { evaluation ⇒
         val defaultHook = request.host + routes.Evaluations.confirm("").url
@@ -305,7 +305,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Unique evaluation identifier
    * @return
    */
-  def update(id: Long) = SecuredEvaluationAction(id, Role.Coordinator) {
+  def update(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { existingEvaluation ⇒
