@@ -27,13 +27,15 @@ package controllers
 import models.JodaMoney.jodaMoney
 import models.UserRole.Role._
 import models._
-import models.service.{ PersonService, Services }
+import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
 import securesocial.core.RuntimeEnvironment
+
+import scala.concurrent.Future
 
 /**
  * Content license pages and API.
@@ -45,7 +47,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * HTML form mapping for creating and editing.
-   * TODO Validate licensee ID and brand ID
+    * TODO Validate and brand ID
    */
   val licenseForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -70,43 +72,48 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Page for adding a new content license
+    * Renders add form for a new content license
    *
    * @param personId Person identifier
-   * @return
    */
-  def add(personId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def add(personId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      PersonService.get.find(personId).map { person ⇒
-        val form = licenseForm.fill(License.blank(personId))
-        Ok(views.html.v2.license.form(user, None, form, person))
-      } getOrElse {
-        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
-      }
+      val form = licenseForm.fill(License.blank(personId))
+      Future.successful(
+        Ok(views.html.v2.license.addForm(user, form, coordinatedBrands(user.account.personId), personId)))
   }
 
   /**
-   * A handler for adding a new content license
+    * Adds a new content license for the given person
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def create(personId: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
       personService.find(personId).map { person ⇒
-        licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.v2.license.form(user, None, form, person)),
+        val brands = coordinatedBrands(user.account.personId)
+        val form = licenseForm.bindFromRequest
+        form.fold(
+          formWithErrors ⇒ BadRequest(views.html.v2.license.addForm(user, formWithErrors, brands, personId)),
           license ⇒ {
-            val newLicense = licenseService.add(license.copy(licenseeId = personId))
-            val brand = brandService.find(newLicense.brandId).get
-            profileStrengthService.find(personId, false) map { x ⇒
-              profileStrengthService.update(ProfileStrength.forFacilitator(x))
+            brands.find(_._1 == license.brandId) map { brand =>
+              licenseService.add(license.copy(licenseeId = personId))
+              profileStrengthService.find(personId, org = false) map { x ⇒
+                profileStrengthService.update(ProfileStrength.forFacilitator(x))
+              }
+              val account = userAccountService.findByPerson(personId).getOrElse(
+                UserAccount.empty(personId).copy(facilitator = true))
+              account.id.map { id =>
+                true
+              } getOrElse userAccountService.insert(account)
+              val activityObject = Messages("activity.relationship.create", brand._2, person.fullName)
+              val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
+              val route = routes.People.details(personId).url + "#facilitation"
+              Redirect(route).flashing("success" -> activity.toString)
+            } getOrElse {
+              val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")
+              BadRequest(views.html.v2.license.addForm(user, formWithError, brands, personId))
             }
-            val activityObject = Messages("activity.relationship.create", brand.name, person.fullName)
-            val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
-            val route = routes.People.details(personId).url + "#facilitation"
-            Redirect(route).flashing("success" -> activity.toString)
           })
       } getOrElse {
         Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
@@ -116,32 +123,51 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Deletes a license
    *
+    * @param brandId Brand identifier
    * @param id License identifier
    */
-  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
       licenseService.findWithBrandAndLicensee(id).map { view ⇒
         License.delete(id)
         val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
         val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
         val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#facilitation"
         Redirect(route).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+      } getOrElse NotFound
   }
 
   /**
-   * A handler for updating an existing content license
+    * Renders a license edit form
+    *
+    * @param id License identifier
+    */
+  def edit(id: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      License.find(id).map { license ⇒
+        val brands = coordinatedBrands(user.account.personId)
+        brands.find(_._1 == license.brandId) map { brand =>
+          Ok(views.html.v2.license.editForm(user, license.id.get, licenseForm.fill(license), brands, brand._1))
+        } getOrElse {
+          Redirect(routes.Dashboard.index()).flashing("error" -> "You are not a coordinator of the selected brand")
+        }
+      } getOrElse NotFound
+  }
+
+  /**
+    * Updates existing license
    *
    * @param id License identifier
    */
-  def update(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      licenseService.findWithBrandAndLicensee(id) map { view ⇒
-        licenseForm.bindFromRequest.fold(
-          form ⇒ BadRequest(views.html.v2.license.form(user, None, form, view.licensee)),
-          license ⇒ {
+  def update(id: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    licenseService.findWithBrandAndLicensee(id) map { view ⇒
+      val brands = coordinatedBrands(user.account.personId)
+      val form = licenseForm.bindFromRequest
+      form.fold(
+        formWithErrors ⇒
+          BadRequest(views.html.v2.license.editForm(user, id, formWithErrors, brands, view.brand.identifier)),
+        license ⇒ {
+          brands.find(_._1 == license.brandId) map { brand =>
             val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
             licenseService.update(editedLicense)
 
@@ -150,26 +176,20 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
             val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
             val route = routes.People.details(view.license.licenseeId).url + "#facilitation"
             Redirect(route).flashing("success" -> "License was updated")
-          })
-      } getOrElse {
-        Redirect(routes.People.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
-      }
+          } getOrElse {
+            val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")
+            BadRequest(views.html.v2.license.editForm(user, id, formWithError, brands, license.brandId))
+          }
+        })
+    } getOrElse {
+      Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.notFound", Messages("models.License")))
+    }
   }
 
   /**
-   * Draw a License edit page
-   *
-   * @param id License identifier
-   */
-  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      License.find(id).map { license ⇒
-        PersonService.get.find(license.licenseeId).map { licensee ⇒
-          Ok(views.html.v2.license.form(user, license.id, licenseForm.fill(license), licensee))
-        }.getOrElse {
-          throw new Exception(s"No person with ID ${license.licenseeId} found, for license with ID ${license.id}")
-        }
-      }.getOrElse(NotFound)
-  }
+    * Returns a list of brands coordinated by the given person
+    * @param coordinatorId Coordinator identifier
+    */
+  protected def coordinatedBrands(coordinatorId: Long): List[(Long, String)] =
+    brandService.findByCoordinator(coordinatorId).map(x => (x.identifier, x.name))
 }

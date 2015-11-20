@@ -26,8 +26,8 @@ package controllers.acceptance.events
 
 import _root_.integration.PlayAppSpec
 import controllers.Events
-import models.UserRole.{ DynamicRole, Role }
-import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
+import models.UserRole.Role
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class EventsAccessSpec extends PlayAppSpec {
   class TestEvents() extends Events(FakeRuntimeEnvironment) with AccessCheckSecurity
@@ -35,88 +35,86 @@ class EventsAccessSpec extends PlayAppSpec {
   val controller = new TestEvents()
 
   "Method 'add'" should {
-    "have 'add' access rights for 'event' object" in {
+    "have Facilitator, Coordinator access rights" in {
       controller.add.apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some("add")
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
     }
   }
 
   "Method 'cancel'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.cancel(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'confirm'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.confirm(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'create'" should {
-    "have 'add' access rights for 'event' object" in {
+    "have Facilitator, Coordinator access rights" in {
       controller.create.apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some("add")
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
     }
   }
 
   "Method 'details'" should {
-    "have Viewer access rights" in {
+    "have Facilitator, Coordinator access rights" in {
       controller.details(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Viewer)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
     }
   }
 
   "Method 'duplicate'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.duplicate(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'edit'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.edit(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'index'" should {
     "have Viewer access rights" in {
       controller.index(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Viewer)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
     }
   }
 
   "Method 'invoice'" should {
     "have Coordinator access rights for 'event' object" in {
       controller.invoice(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Coordinator)
+      controller.checkedRoles must_== List(Role.Coordinator)
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'sendRequest'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.sendRequest(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 
   "Method 'update'" should {
     "have Facilitator access rights for 'event' object" in {
       controller.update(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("event")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Facilitator)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 }

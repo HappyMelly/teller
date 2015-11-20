@@ -25,20 +25,16 @@ package controllers.acceptance.events
 
 import _root_.integration.PlayAppSpec
 import controllers.Events
-import helpers.{ EventHelper, OrganisationHelper }
-import models.{ EventInvoice, EventView }
-import models.service.{ EventService, OrganisationService }
+import helpers.{EventHelper, OrganisationHelper}
 import models.service.event.EventInvoiceService
+import models.service.{EventService, OrganisationService}
+import models.{EventInvoice, EventView}
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
 
 class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
-
-  Given an event doesn't exist
-    when its confirmation is requested
-      then an error should be returned                                       $e1
 
   Given an event exists
     when its confirmation is requested
@@ -62,14 +58,7 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
   val eventService = mock[EventService]
   controller.eventService_=(eventService)
 
-  def e1 = {
-    (eventService.find _) expects 1L returning None
-    val result = controller.confirm(1L).apply(fakePostRequest())
-    status(result) must equalTo(NOT_FOUND)
-  }
-
   def e2 = {
-    (eventService.find _) expects 1L returning Some(EventHelper.one)
     (eventService.confirm _) expects 1L
     val result = controller.confirm(1L).apply(fakePostRequest())
     header("Location", result) must beSome.which(_.contains("/event/1"))

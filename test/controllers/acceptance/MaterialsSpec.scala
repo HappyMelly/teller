@@ -27,12 +27,10 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Materials
 import helpers._
-import models.Person
 import models.Material
 import models.service.PersonService
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
-import play.api.test.FakeRequest
 import stubs._
 
 class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
@@ -82,7 +80,7 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     val person = PersonHelper.one()
     (personService.find(_: Long)) expects 1L returning Some(person)
-    val material = Material(None, 1L, 0, "article", "http://test.com")
+    val material = Material(None, 1L, 1, "article", "http://test.com")
     (personService.insertMaterial _) expects material returning material.copy(id = Some(1L))
     val req = fakePostRequest().
       withFormUrlEncodedBody("brandId" -> "1", "type" -> "blabla", "url" -> "http://test.com")

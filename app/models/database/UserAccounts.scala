@@ -28,13 +28,12 @@ import models.UserAccount
 import play.api.db.slick.Config.driver.simple._
 
 /**
- * `Brand` database table mapping.
+  * `UserAccount` database table mapping.
  */
 private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "USER_ACCOUNT") {
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Long]("PERSON_ID")
-  def role = column[String]("ROLE")
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
@@ -48,9 +47,9 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
 
   def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
-  def * = (id.?, personId, role, twitterHandle, facebookUrl, linkedInUrl,
+  def * = (id.?, personId, twitterHandle, facebookUrl, linkedInUrl,
     googlePlusUrl, coordinator, facilitator, admin, member, registered,
-    activeRole) <> (UserAccount.tupled, UserAccount.unapply)
+    activeRole) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 
   def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
   def uniqueTwitter = index("IDX_TWITTER_HANDLE", twitterHandle, unique = true)

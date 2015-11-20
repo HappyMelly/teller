@@ -24,9 +24,10 @@
 package stubs
 
 import controllers.Files
-import models.File
+import models.{File, Image}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
+
 import scala.concurrent.Future
 
 trait FakeFiles extends Files {
@@ -40,6 +41,14 @@ trait FakeFiles extends Files {
    * @param fieldName Name of a file field on the form
    */
   override def uploadFile(file: File, fieldName: String)(
+    implicit request: Request[AnyContent]): Future[Any] = {
+    if (_uploadValue)
+      Future[Boolean](_uploadValue)
+    else
+      Future.failed(new RuntimeException("error"))
+  }
+
+  override protected def uploadImage(image: Image, fieldName: String)(
     implicit request: Request[AnyContent]): Future[Any] = {
     if (_uploadValue)
       Future[Boolean](_uploadValue)

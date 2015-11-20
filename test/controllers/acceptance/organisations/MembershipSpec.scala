@@ -26,25 +26,17 @@ package controllers.acceptance.organisations
 
 import _root_.integration.PlayAppSpec
 import controllers.Organisations
-import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
+import helpers.{MemberHelper, OrganisationHelper}
 import models.payment.Record
 import models.service._
-import models.{ OrgView, ProfileType, SocialProfile }
+import models.{OrgView, ProfileType, SocialProfile}
 import org.joda.money.Money
-import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
-import play.api.mvc.Result
+import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import stubs._
-
-import scala.concurrent.Future
 
 class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   override def is = s2"""
-
-  When an organisation is not a member, 'Become a Member' button should
-    be visible to members of this organisation                              $e1
-    be invisible to Editors                                                 $e2
-    be invisible to Viewers                                                 $e3
 
   Org Details page should
     contain a supporter badge if the org is a supporter                     $e4
@@ -53,11 +45,11 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   When subscription exists, 'Stop automatic...' button should be visible,
   'No automatic renewal' badge should not be visible to
-    an Editor                                                               $e8
+    an Admin                                                               $e8
 
   When subscription does not exist, 'Stop automatic...' button should not be
   visible, 'No automatic renewal' badge should be visible to
-    an Editor                                                               $e10
+    an Admin                                                               $e10
     a Viewer                                                                $e11
 
   Non-member Viewer should not see subscription-related buttons
@@ -70,7 +62,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   'Edit Membership' and 'Delete Membership' buttons should
     not be visible to Viewers                                               $e16
-    be visible to Editors                                                   $e17
+    be visible to Admins                                                   $e17
   """
 
   class TestOrganisations()
@@ -103,44 +95,6 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     (paymentService.findByOrganisation _).expects(id).returning(List()).never()
   }
 
-  def e1 = new ExtendedNonMemberMockContext {
-    // we insert an org object here to prevent crashing on account retrieval
-    // when @org.deletable is called
-    OrganisationService.get.insert(OrgView(org, profile))
-    org.people_=(List(PersonHelper.one()))
-    val controller = fakedController()
-    val result = controller.details(id).apply(fakeGetRequest())
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must contain("Become a Member")
-    contentAsString(result) must contain("/membership/welcome")
-  }
-
-  def e2 = new ExtendedNonMemberMockContext {
-    // we insert an org object here to prevent crashing on account retrieval
-    // when @org.deletable is called
-    OrganisationService.get.insert(OrgView(org, profile))
-    org.people_=(List())
-    val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
-    val result = controller.details(id).apply(fakeGetRequest())
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Become a Member"
-  }
-
-  def e3 = new ExtendedNonMemberMockContext {
-    // we insert an org object here to prevent crashing on account retrieval
-    // when @org.deletable is called
-    OrganisationService.get.insert(OrgView(org, profile))
-    org.people_=(List())
-    val controller = fakedController()
-    val result = controller.details(id).apply(fakeGetRequest())
-
-    status(result) must equalTo(OK)
-    contentAsString(result) must not contain "Become a Member"
-  }
-
   def e4 = new ExtendedMemberMockContext {
     // we insert an org object here to prevent crashing on account retrieval
     // when @org.deletable is called
@@ -164,7 +118,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -202,7 +156,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -221,7 +175,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -270,7 +224,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     truncateTables()
     (orgService.find(_: Long)) expects id returning None
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(NOT_FOUND)
@@ -281,7 +235,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     val org = OrganisationHelper.one
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
@@ -296,7 +250,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
@@ -329,7 +283,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)

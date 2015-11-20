@@ -192,7 +192,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
-    AsyncSecuredEventAction(Role.Facilitator, eventId) {
+    AsyncSecuredEventAction(List(Role.Facilitator), eventId) {
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds.contains(personId)) {

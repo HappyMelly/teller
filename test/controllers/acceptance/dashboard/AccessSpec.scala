@@ -27,7 +27,7 @@ package controllers.acceptance.dashboard
 import _root_.integration.PlayAppSpec
 import controllers.Dashboard
 import models.UserRole.Role
-import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class AccessSpec extends PlayAppSpec {
   class TestDashboard() extends Dashboard(FakeRuntimeEnvironment)
@@ -52,7 +52,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'apiv2'" should {
     "have Admin access rights" in {
       controller.apiv2.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Admin)
+      controller.checkedRole must_== Some(Role.Viewer)
     }
   }
 

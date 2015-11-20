@@ -26,8 +26,8 @@ package controllers.acceptance.eventtypes
 
 import _root_.integration.PlayAppSpec
 import controllers.EventTypes
-import models.UserRole.{ DynamicRole, Role }
-import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
+import models.UserRole.Role
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class AccessSpec extends PlayAppSpec {
   class TestEventTypes() extends EventTypes(FakeRuntimeEnvironment)
@@ -36,33 +36,41 @@ class AccessSpec extends PlayAppSpec {
   val controller = new TestEventTypes
 
   "Method 'add'" should {
-    "have coordinator access rights for brand object" in {
-      controller.add(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("brand")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Coordinator)
+    "have brand access rights" in {
+      controller.add(2L).apply(fakeGetRequest())
+      controller.checkedMethod must_== Some("brand")
+      controller.checkedObjectId must_== Some(2L)
     }
   }
 
   "Method 'create'" should {
     "have coordinator access rights for brand object" in {
-      controller.create(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("brand")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Coordinator)
+      controller.create(2L).apply(fakePostRequest())
+      controller.checkedMethod must_== Some("brand")
+      controller.checkedObjectId must_== Some(2L)
     }
   }
 
   "Method 'delete'" should {
     "have coordinator access rights for brand object" in {
-      controller.delete(1L, 1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("brand")
-      controller.checkedDynamicLevel must_== Some(DynamicRole.Coordinator)
+      controller.delete(2L, 1L).apply(fakePostRequest())
+      controller.checkedMethod must_== Some("brand")
+      controller.checkedObjectId must_== Some(2L)
     }
   }
 
   "Method 'index'" should {
-    "have Viewer access rights" in {
+    "have Facilitator, Coordinator access rights" in {
       controller.index(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Viewer)
+      controller.checkedRoles.diff(List(Role.Facilitator, Role.Coordinator)).isEmpty must_== true
+    }
+  }
+
+  "Method 'update'" should {
+    "have coordinator access rights for brand object" in {
+      controller.update(2L, 1L).apply(fakePostRequest())
+      controller.checkedMethod must_== Some("brand")
+      controller.checkedObjectId must_== Some(2L)
     }
   }
 }

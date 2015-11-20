@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import models.UserRole.Role._
-import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class ExperimentsAccessSpec extends PlayAppSpec {
 
@@ -44,19 +44,19 @@ class ExperimentsAccessSpec extends PlayAppSpec {
   "Method 'create'" should {
     "have Member access right" in {
       controller.create(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("member")
+      controller.checkedDynamicRole must_== Some("member")
     }
   }
   "Method 'delete'" should {
     "have Member access right" in {
       controller.delete(1L, 1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("member")
+      controller.checkedDynamicRole must_== Some("member")
     }
   }
   "Method 'deletePicture'" should {
     "have Member access right" in {
       controller.deletePicture(1L, 1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("member")
+      controller.checkedDynamicRole must_== Some("member")
     }
   }
   "Method 'edit'" should {
@@ -74,7 +74,7 @@ class ExperimentsAccessSpec extends PlayAppSpec {
   "Method 'update'" should {
     "have Member access right" in {
       controller.update(1L, 1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("member")
+      controller.checkedDynamicRole must_== Some("member")
     }
   }
 }

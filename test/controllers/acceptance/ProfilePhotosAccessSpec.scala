@@ -25,12 +25,8 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.{ Security, ProfilePhotos }
-import models.service.PersonService
-import play.api.mvc.Result
-import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
-
-import scala.concurrent.Future
+import controllers.ProfilePhotos
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class ProfilePhotosAccessSpec extends PlayAppSpec {
   class TestProfilePhotos() extends ProfilePhotos(FakeRuntimeEnvironment)
@@ -38,20 +34,35 @@ class ProfilePhotosAccessSpec extends PlayAppSpec {
 
   val controller = new TestProfilePhotos()
 
-  "Method 'update'" should {
-    "have 'edit' access rights for 'person' object" in {
-      controller.update(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("person")
-      controller.checkedDynamicLevel must_== Some("edit")
-    }
-  }
-
   "Method 'choose'" should {
-    "have 'edit' access rights for 'person' object" in {
-      controller.choose(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("person")
-      controller.checkedDynamicLevel must_== Some("edit")
+    "have profile access rights" in {
+      controller.choose(2L).apply(fakeGetRequest())
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== Some(2L)
     }
   }
 
+  "Method 'delete'" should {
+    "have profile access rights" in {
+      controller.delete(3L).apply(fakeGetRequest())
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== Some(3L)
+    }
+  }
+
+  "Method 'update'" should {
+    "have profile access rights" in {
+      controller.update(2L).apply(fakePostRequest())
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== Some(2L)
+    }
+  }
+
+  "Method 'upload'" should {
+    "have profile access rights" in {
+      controller.upload(2L).apply(fakePostRequest())
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== Some(2L)
+    }
+  }
 }

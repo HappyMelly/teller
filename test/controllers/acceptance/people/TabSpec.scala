@@ -26,9 +26,9 @@ package controllers.acceptance.people
 
 import _root_.integration.PlayAppSpec
 import controllers.People
-import helpers.{ PersonHelper, MemberHelper }
+import helpers.{MemberHelper, PersonHelper}
 import models.payment.Record
-import models.service.{ PersonService, PaymentRecordService }
+import models.service.{PaymentRecordService, PersonService}
 import org.joda.money.Money
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -45,16 +45,16 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     when the person's membership tab is requested
       then it should contain a list of payments                              $e2
 
-  Given a person is a member and a user is an editor
+  Given a person is a member and a user is an Admin
     when the person's membership tab is requested
       then a list of payments shouldn't have links to remote payments        $e3
 
-  Given a person is a member, a user is an editor and subscription exists
+  Given a person is a member, a user is an Admin and subscription exists
     when the person's membership tab is requested
       then 'Stop subscription' button should be visible and
       'No automatic renewal' button should not be visible                    $e4
 
-  Given a person is a member, a user is an editor
+  Given a person is a member, a user is an Admin
       and subscription doesn't exist
     when the person's membership tab is requested
       then 'Stop subscription' button should NOT be visible and
@@ -76,7 +76,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     when the user's membership tab is requested
       then membership related buttons shouldn't be visible                   $e9
 
-  Given a user is an editor and a person is a membership
+  Given a user is an Admin and a person has a membership
     when the user's membership tab is requested
       then membership related buttons should be visible                     $e10
   """
@@ -117,7 +117,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     (paymentService.findByPerson _) expects 1L returning payments
     (personService.find(_: Long)) expects 1L returning Some(person)
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must contain("One Year Membership Fee")
@@ -127,7 +127,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e4 = {
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest("/1"))
 
     contentAsString(res) must contain("stop automatic renewal")
@@ -142,7 +142,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     person.member_=(member)
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must not contain "stop automatic renewal"
@@ -194,7 +194,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e10 = {
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must contain("Edit Membership")

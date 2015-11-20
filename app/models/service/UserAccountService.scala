@@ -24,14 +24,11 @@
  */
 package models.service
 
-import models.JodaMoney._
-import models.{ UserIdentity, UserAccount, Person, UserRole, Member }
-import models.database.{ Members, People, UserAccounts }
-import org.joda.time.DateTime
+import models.database.UserAccounts
+import models.{Person, UserAccount, UserIdentity}
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
-import securesocial.core._
 import securesocial.core.providers._
 
 class UserAccountService {
@@ -43,6 +40,14 @@ class UserAccountService {
   def delete(personId: Long) = DB.withSession { implicit session ⇒
     val accounts = TableQuery[UserAccounts]
     accounts.filter(_.personId === personId).delete
+  }
+
+  /**
+    * Returns an account for the given person if exists
+    * @param personId Person identifier
+    */
+  def findByPerson(personId: Long): Option[UserAccount] = DB.withSession { implicit session =>
+    TableQuery[UserAccounts].filter(_.personId === personId).firstOption
   }
 
   /**
@@ -69,37 +74,6 @@ class UserAccountService {
   }
 
   /**
-   * Returns the given person’s role
-   * @param personId Person identifier
-   */
-  def findRole(personId: Long): Option[UserRole.Role.Role] = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val query = for {
-        account ← accounts if account.personId === personId
-      } yield account.role
-      query.firstOption.map(role ⇒ UserRole.Role.withName(role))
-  }
-
-  /**
-   * Returns the account for the person who has a duplicate social network
-   * identity, if there is one
-   *
-   * @param person Person object
-   */
-  def findDuplicateIdentity(person: Person): Option[UserAccount] = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val query = accounts.filter(_.personId =!= person.id).filter { account ⇒
-        account.twitterHandle.toLowerCase === person.socialProfile.twitterHandle.map(_.toLowerCase) ||
-          account.googlePlusUrl === person.socialProfile.googlePlusUrl ||
-          (account.facebookUrl like "https?".r.replaceFirstIn(person.socialProfile.facebookUrl.getOrElse(""), "%")) ||
-          (account.linkedInUrl like "https?".r.replaceFirstIn(person.socialProfile.linkedInUrl.getOrElse(""), "%"))
-      }
-      query.firstOption
-  }
-
-  /**
    * Inserts the given account to database
    * @param account Account object
    * @return The given account with updated id
@@ -108,19 +82,6 @@ class UserAccountService {
     val accounts = TableQuery[UserAccounts]
     val id = (accounts returning accounts.map(_.id)) += account
     account.copy(id = Some(id))
-  }
-
-  /**
-   * Updates the user’s role
-   * @TEST
-   */
-  def updateRole(personId: Long, role: String): Unit = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val query = for {
-        account ← accounts if account.personId === personId
-      } yield account.role
-      query.update(role)
   }
 
   /**

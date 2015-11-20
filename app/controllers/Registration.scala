@@ -24,14 +24,13 @@
 
 package controllers
 
-import models._
 import models.UserRole.Role._
-import models.payment.{ RequestException, PaymentException, Payment }
+import models._
+import models.payment.{Payment, PaymentException, RequestException}
 import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.DateTime
-import play.api.{ Logger, Play }
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
@@ -39,7 +38,8 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
-import securesocial.core.{ RuntimeEnvironment, SecureSocial }
+import play.api.{Logger, Play}
+import securesocial.core.{RuntimeEnvironment, SecureSocial}
 import views.Countries
 
 /**
@@ -301,7 +301,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Adds new person as a viewer and updates cached object
+   * Adds new person as a member and updates cached object
    *
    * By updating cached object we give the user a full access to the system
    *  without relogging
@@ -312,11 +312,12 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   protected def updateActiveUser(identity: UserIdentity,
     person: Person,
     member: Member)(implicit request: RequestHeader) = {
-    val account = UserAccount(None, person.id.get, "viewer",
+    val account = UserAccount(None, person.id.get,
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,
-      person.socialProfile.googlePlusUrl)
+      person.socialProfile.googlePlusUrl,
+      member = true, registered = true)
     val inserted = userAccountService.insert(account)
     env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
       _.updateUser(ActiveUser(identity, inserted, person, Some(member)))

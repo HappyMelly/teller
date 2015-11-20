@@ -23,7 +23,7 @@
  */
 package models
 
-import be.objectify.deadbolt.scala.{ DeadboltHandler, DynamicResourceHandler }
+import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
 import models.UserRole.DynamicRole
 import models.service.Services
 import play.api.mvc._
@@ -40,27 +40,16 @@ class ResourceHandler(user: ActiveUser)
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong
     name match {
-      case DynamicRole.Coordinator => checkBrandPermission(user.account, objectId)
+      case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
       case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
-      case DynamicRole.ProfileEditor =>
-        user.account.admin || user.account.personId == objectId
-      case DynamicRole.OrgMember =>
-        orgService.people(objectId).exists(_.identifier == user.account.personId)
+      case DynamicRole.ProfileEditor => user.account.admin || user.account.personId == objectId
+      case DynamicRole.OrgMember => user.account.admin || orgMember(objectId, user.account.personId)
       case _ ⇒ false
     }
   }
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
     false
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute a brand-related action
-   * @param account User account
-   * @param brandId Brand identifier
-   */
-  protected def checkBrandPermission(account: UserAccount, brandId: Long): Boolean = {
-    checker(account).isBrandCoordinator(brandId)
   }
 
   /**
@@ -76,23 +65,15 @@ class ResourceHandler(user: ActiveUser)
         if (member.person)
           false
         else
-          orgService.people(member.objectId).exists(_.identifier == user.account.personId)
+          orgMember(member.objectId, user.account.personId)
       }
   }
 
   /**
-   * Returns the first long number from the given url
-   * @param url Url
-   */
-  protected def id(url: String): Option[Long] = """\d+""".r findFirstIn url flatMap { x ⇒
-    try { Some(x.toLong) } catch { case _: NumberFormatException ⇒ None }
-  }
-
-  /**
-   * Returns new resource checker
-   *
-   * @param account User account
-   */
-  protected def checker(account: UserAccount): DynamicResourceChecker =
-    new DynamicResourceChecker(account)
+    * Returns true if the given person is a member of the given organisation
+    * @param orgId Organisation identifier
+    * @param personId Person identifier
+    */
+  private def orgMember(orgId: Long, personId: Long): Boolean =
+    orgService.people(orgId).exists(_.identifier == personId)
 }

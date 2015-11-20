@@ -40,8 +40,8 @@ import play.api.{Logger, Play}
 import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
-import scala.concurrent.Future
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.language.postfixOps
 
 class People(environment: RuntimeEnvironment[ActiveUser])
@@ -198,14 +198,8 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
-        val accountRole = if (user.account.admin)
-          userAccountService.findRole(id) else None
-        val duplicated = if (user.account.admin)
-          userAccountService.findDuplicateIdentity(person)
-        else None
         Ok(views.html.v2.person.details(user, person,
-          memberships, otherOrganisations,
-          facilitator, accountRole, duplicated))
+          memberships, otherOrganisations, facilitator))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -307,7 +301,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @return
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
       Ok(views.html.v2.person.index(user, people))

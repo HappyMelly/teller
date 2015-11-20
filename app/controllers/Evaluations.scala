@@ -93,11 +93,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Approve form submits to this action
    *
    * @param id Evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
+  def approve(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         evaluationService.find(id).map { eval ⇒
           if (eval.approvable) {
             val evaluation = eval.approve
@@ -144,34 +142,25 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Delete an evaluation
    * @param id Unique evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
-   * @return
    */
-  def delete(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
-        evaluationService.find(id).map { x ⇒
-          x.delete()
-          // recalculate ratings
-          Event.ratingActor ! x.eventId
-          Facilitator.ratingActor ! x.eventId
-
-          val log = activity(x, user.person).deleted.insert()
-
-          val route = ref match {
-            case Some("index") ⇒ routes.Dashboard.index().url
-            case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
-          }
-          Redirect(route).flashing("success" -> log.toString)
-        }.getOrElse(NotFound)
+  def delete(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      evaluationService.find(id).map { x ⇒
+        x.delete()
+        // recalculate ratings
+        Event.ratingActor ! x.eventId
+        Facilitator.ratingActor ! x.eventId
+        val log = activity(x, user.person).deleted.insert()
+        val route = routes.Events.details(x.eventId).url
+        Redirect(route).flashing("success" -> log.toString)
+      }.getOrElse(NotFound)
   }
 
   /**
    * Move an evaluation to another event
    * @param id Unique evaluation identifier
-   * @return
    */
-  def move(id: Long) = SecuredEvaluationAction(Role.Facilitator, id) {
+  def move(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
 
@@ -212,7 +201,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       evaluationService.findWithEvent(id) map { x ⇒
         val participant = personService.find(x.eval.personId).get
@@ -243,7 +232,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def edit(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
+  def edit(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { evaluation ⇒
@@ -260,9 +249,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Reject form submits to this action
    *
    * @param id Evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
-  def reject(id: Long, ref: Option[String] = None) = SecuredEvaluationAction(Role.Facilitator, id) {
+  def reject(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       evaluationService.find(id).map { eval ⇒
         if (eval.rejectable) {
@@ -290,7 +278,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Sends a request to a participant to confirm the evaluation
    * @param id Evaluation id
    */
-  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
+  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       evaluationService.find(id) map { evaluation ⇒
         val defaultHook = request.host + routes.Evaluations.confirm("").url
@@ -305,7 +293,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Unique evaluation identifier
    * @return
    */
-  def update(id: Long) = SecuredEvaluationAction(Role.Coordinator, id) {
+  def update(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { existingEvaluation ⇒

@@ -147,7 +147,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
+  def add = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val defaultDetails = Details(Some(""), Some(""))
@@ -168,7 +168,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param id Event Id
    * @return
    */
-  def duplicate(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
+  def duplicate(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler => implicit user ⇒ implicit event =>
       eventService.findWithInvoice(id) map { view ⇒
         val brands = Brand.findByUser(user.account)
@@ -180,7 +180,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
+  def create = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form = eventForm.bindFromRequest
@@ -204,9 +204,8 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Cancel the given event
    * @param id Event ID
    */
-  def cancel(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
+  def cancel(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
         case class CancellationData(reason: Option[String],
           participants: Option[Int],
@@ -238,7 +237,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Confirm form submits to this action.
    * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
+  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       eventService.confirm(id)
       val log = activity(event, user.person).confirmed.insert()
@@ -251,7 +250,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param id Event ID
    * @return
    */
-  def invoice(id: Long) = AsyncSecuredEventAction(Role.Coordinator, id) {
+  def invoice(id: Long) = AsyncSecuredEventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         eventService.findWithInvoice(id) map { view ⇒
           invoiceForm.bindFromRequest.fold(
@@ -273,55 +272,59 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Details page.
    * @param id Event ID
    */
-  def details(id: Long) = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
+  def details(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventService.findWithInvoice(id) map { x ⇒
-        roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
-          val orgs = user.person.organisations
-          val eventType = eventTypeService.find(x.event.eventTypeId).get
-          val fees = feeService.findByBrand(x.event.brandId)
-          val printableFees = fees.
-            map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-            sortBy(_._1)
-          val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
-            Event.withFee(x.event, y.fee, eventType.maxHours)
-          } getOrElse x.event
-          Ok(views.html.v2.event.details(user, brand, brands, orgs,
-            EventView(event, x.invoice), eventType.name, printableFees))
-        } { (brand, brands) =>
-          val eventType = eventTypeService.find(x.event.eventTypeId).get
-          val fees = feeService.findByBrand(x.event.brandId)
-          val printableFees = fees.
-            map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-            sortBy(_._1)
-          val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
-            Event.withFee(x.event, y.fee, eventType.maxHours)
-          } getOrElse x.event
-          Ok(views.html.v2.event.details(user, brand.get, brands, List(),
-            EventView(event, x.invoice), eventType.name, printableFees))
-        } { Redirect(routes.Dashboard.index()) }
-      } getOrElse NotFound
+      Future.successful {
+        eventService.findWithInvoice(id) map { x ⇒
+          roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
+            val orgs = user.person.organisations
+            val eventType = eventTypeService.find(x.event.eventTypeId).get
+            val fees = feeService.findByBrand(x.event.brandId)
+            val printableFees = fees.
+              map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+              sortBy(_._1)
+            val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+              Event.withFee(x.event, y.fee, eventType.maxHours)
+            } getOrElse x.event
+            Ok(views.html.v2.event.details(user, brand, brands, orgs,
+              EventView(event, x.invoice), eventType.name, printableFees))
+          } { (brand, brands) =>
+            val eventType = eventTypeService.find(x.event.eventTypeId).get
+            val fees = feeService.findByBrand(x.event.brandId)
+            val printableFees = fees.
+              map(x ⇒ (Countries.name(x.country), x.fee.toString)).
+              sortBy(_._1)
+            val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+              Event.withFee(x.event, y.fee, eventType.maxHours)
+            } getOrElse x.event
+            Ok(views.html.v2.event.details(user, brand.get, brands, List(),
+              EventView(event, x.invoice), eventType.name, printableFees))
+          } {
+            Redirect(routes.Dashboard.index())
+          }
+        } getOrElse NotFound
+      }
   }
 
   /**
    * Edit page.
    * @param id Event ID
    */
-  def edit(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) {
+  def edit(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-        eventService.findWithInvoice(id) map { view ⇒
-          val account = user.account
-          val brands = Brand.findByUser(account)
-          Future.successful(
-            Ok(views.html.v2.event.form(user, Some(id), brands, emptyForm = false, eventForm.fill(view))))
-        } getOrElse Future.successful(NotFound)
+      eventService.findWithInvoice(id) map { view ⇒
+        val account = user.account
+        val brands = Brand.findByUser(account)
+        Future.successful(
+          Ok(views.html.v2.event.form(user, Some(id), brands, emptyForm = false, eventForm.fill(view))))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
    * Renders list of events
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Role.BrandViewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         val facilitators = License.allLicensees(brand.identifier).
@@ -414,7 +417,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Edit form submits to this action.
    * @param id Event ID
    */
-  def update(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
 
       val form = eventForm.bindFromRequest
@@ -450,7 +453,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Send requests for evaluation to participants of the event
    * @param id Event ID
    */
-  def sendRequest(id: Long) = AsyncSecuredEventAction(Role.Facilitator, id) { implicit request ⇒
+  def sendRequest(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       case class EvaluationRequestData(participantIds: List[Long], body: String)
       val form = Form(mapping(
@@ -496,17 +499,13 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * @param account User account
    */
   protected def validateEvent(event: Event, account: UserAccount): Option[List[(String, String)]] = {
-    if (checker(account).isBrandFacilitator(event.brandId)) {
-      val licenseErrors = validateLicenses(event) map { x ⇒ List(x) } getOrElse List()
-      val eventTypeErrors = validateEventType(event) map { x ⇒ List(x) } getOrElse List()
-      val errors = licenseErrors ++ eventTypeErrors
-      if (errors.isEmpty)
-        None
-      else
-        Some(errors)
-    } else {
-      Some(List(("brandId", "error.brand.invalid")))
-    }
+    val licenseErrors = validateLicenses(event) map { x ⇒ List(x) } getOrElse List()
+    val eventTypeErrors = validateEventType(event) map { x ⇒ List(x) } getOrElse List()
+    val errors = licenseErrors ++ eventTypeErrors
+    if (errors.isEmpty)
+      None
+    else
+      Some(errors)
   }
 
   /**
@@ -537,14 +536,6 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
         None
     } getOrElse Some(("eventTypeId", "error.eventType.notFound"))
   }
-
-  /**
-   * Returns new resource checker
-   *
-   * @param account User account
-   */
-  protected def checker(account: UserAccount): DynamicResourceChecker =
-    new DynamicResourceChecker(account)
 
   /**
    * Returns event form with highlighted errors

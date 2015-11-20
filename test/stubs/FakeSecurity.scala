@@ -24,11 +24,11 @@
 
 package stubs
 
-import controllers.{ AuthorisationHandler, Security }
+import controllers.{AuthorisationHandler, Security}
 import helpers.PersonHelper
 import models._
 import org.joda.time.DateTime
-import play.api.mvc.{ Action, AnyContent, Request, Result }
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import securesocial.core.authenticator.Authenticator
 
 import scala.concurrent.Future
@@ -149,7 +149,7 @@ trait FakeSecurity extends Security {
     }
   }
 
-  override def AsyncSecuredDynamicAction(name: String, level: String)(
+  override def AsyncSecuredDynamicAction(role: String, id: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     Action.async { implicit req ⇒
       val handler = new AuthorisationHandler(user)
@@ -157,8 +157,25 @@ trait FakeSecurity extends Security {
     }
   }
 
-  override def SecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
+  override def SecuredBrandAction(brandId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val handler = new AuthorisationHandler(user)
+      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
+    }
+  }
+
+//  override def AsyncSecuredEventAction(role: UserRole.Role.Role, eventId: Long)(
+//    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+//    Action.async { implicit req ⇒
+//      val handler = new AuthorisationHandler(user)
+//      val event = Event(Some(eventId), 1, 1, "ets", Language("EN", None, None), )
+//      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
+//    }
+//  }
+
+  override def SecuredProfileAction(personId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
     Action.async { implicit req ⇒
       val handler = new AuthorisationHandler(user)
       Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
@@ -166,6 +183,14 @@ trait FakeSecurity extends Security {
   }
 
   override def SecuredRestrictedAction(role: UserRole.Role.Role)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val handler = new AuthorisationHandler(user)
+      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
+    }
+  }
+
+  override def SecuredRestrictedAction(roles: List[UserRole.Role.Role])(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     Action.async { implicit req ⇒
       val handler = new AuthorisationHandler(user)
@@ -178,16 +203,15 @@ trait FakeSecurity extends Security {
       _identity, "Sergey", "Kotlov", "Sergey Kotlov", None)
     val account = _identity match {
       case FakeUserIdentity.unregistered ⇒
-        UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
+        UserAccount(Some(1L), 1L, None, None, None, None)
       case FakeUserIdentity.admin ⇒
-        UserAccount(Some(1L), 1L, "viewer", None, None, None, None, admin = true,
-          registered = true)
-      case FakeUserIdentity.editor ⇒
-        UserAccount(Some(1L), 1L, "viewer", None, None, None, None,
-          registered = true)
+        UserAccount(Some(1L), 1L, None, None, None, None, admin = true, registered = true)
+      case FakeUserIdentity.coordinator ⇒
+        UserAccount(Some(1L), 1L, None, None, None, None, coordinator = true, registered = true, activeRole = true)
+      case FakeUserIdentity.facilitator ⇒
+        UserAccount(Some(1L), 1L, None, None, None, None, facilitator = true, registered = true)
       case _ ⇒
-        UserAccount(Some(1L), 1L, "viewer", None, None, None, None,
-          registered = true)
+        UserAccount(Some(1L), 1L, None, None, None, None, registered = true)
     }
     val person = _activeUser getOrElse PersonHelper.one()
     ActiveUser(identity, account, person)
@@ -200,14 +224,16 @@ trait FakeSecurity extends Security {
 trait AccessCheckSecurity extends Security {
 
   var checkedRole: Option[UserRole.Role.Role] = None
-  var checkedDynamicObject: Option[String] = None
-  var checkedDynamicLevel: Option[String] = None
+  var checkedRoles: List[UserRole.Role.Role] = List()
+  var checkedDynamicRole: Option[String] = None
+  var checkedObjectId: Option[Long] = None
+  var checkedMethod: Option[String] = None
 
-  override def AsyncSecuredDynamicAction(name: String, level: String)(
+  override def AsyncSecuredDynamicAction(role: String, id: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     cleanTrace()
-    checkedDynamicObject = Some(name)
-    checkedDynamicLevel = Some(level)
+    checkedDynamicRole = Some(role)
+    checkedObjectId = Some(id)
     Action({ Ok("") })
   }
 
@@ -218,14 +244,46 @@ trait AccessCheckSecurity extends Security {
     Action({ Ok("") })
   }
 
-  override def SecuredDynamicAction(name: String, level: String)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
+  override def AsyncSecuredEventAction(roles: List[UserRole.Role.Role], eventId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     cleanTrace()
-    checkedDynamicObject = Some(name)
-    checkedDynamicLevel = Some(level)
+    checkedRoles = roles
+    checkedObjectId = Some(eventId)
     Action({ Ok("") })
   }
 
+  override def AsyncSecuredProfileAction(personId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
+    cleanTrace()
+    checkedObjectId = Some(personId)
+    checkedMethod = Some("profile")
+    Action({ Ok("") })
+  }
+
+  override def SecuredBrandAction(brandId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    cleanTrace()
+    checkedObjectId = Some(brandId)
+    checkedMethod = Some("brand")
+    Action({ Ok("") })
+  }
+
+  override def SecuredProfileAction(personId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
+    cleanTrace()
+    checkedObjectId = Some(personId)
+    checkedMethod = Some("profile")
+    Action({ Ok("") })
+  }
+
+  override def SecuredRestrictedAction(roles: List[UserRole.Role.Role])(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
+    cleanTrace()
+    checkedRoles = roles
+    Action({
+      Ok("")
+    })
+  }
   override def SecuredRestrictedAction(role: UserRole.Role.Role)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
     cleanTrace()
@@ -236,7 +294,7 @@ trait AccessCheckSecurity extends Security {
   /** Clean side-effects of previous calls */
   private def cleanTrace(): Unit = {
     checkedRole = None
-    checkedDynamicLevel = None
-    checkedDynamicObject = None
+    checkedObjectId = None
+    checkedDynamicRole = None
   }
 }

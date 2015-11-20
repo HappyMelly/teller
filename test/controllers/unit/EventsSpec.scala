@@ -26,14 +26,14 @@ package controllers.unit
 
 import controllers.Events
 import helpers.EventHelper
-import models.{ Event, UserAccount, UserRole, DynamicResourceChecker }
 import models.brand.EventType
 import models.service.LicenseService
 import models.service.brand.EventTypeService
+import models.{Event, UserAccount}
 import org.joda.time.LocalDate
-import org.specs2.mutable._
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{ FakeRuntimeEnvironment, FakeServices }
+import org.specs2.mutable._
+import stubs.{FakeRuntimeEnvironment, FakeServices}
 
 class EventsSpec extends Specification with IsolatedMockFactory {
 
@@ -48,12 +48,10 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       validateLicenses(event)
   }
 
-  class AnotherTestEvents(checker: DynamicResourceChecker) extends TestEvents {
-    override def checker(account: UserAccount): DynamicResourceChecker = checker
-  }
+  class AnotherTestEvents() extends TestEvents {}
 
   val controller = new TestEvents
-  val user = UserAccount(None, 1L, "editor", None, None, None, None)
+  val user = UserAccount(None, 1L, None, None, None, None)
 //  user.roles_=(List(UserRole.forName("editor")))
   val licenseService = mock[LicenseService]
   val eventTypeService = mock[EventTypeService]
@@ -68,18 +66,6 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       res.nonEmpty must_== true
       res.get._1 == "facilitatorIds"
       res.get._2 == "error.event.invalidLicense"
-    }
-    "if user is not allowed to facilitate the brand" in {
-      class MockedChecker extends DynamicResourceChecker(user)
-      val checker = mock[MockedChecker]
-      (checker.isBrandFacilitator _) expects 1L returning false
-      val anotherController = new AnotherTestEvents(checker)
-//      user.roles_=(List(UserRole.forName("viewer")))
-      val event = EventHelper.one
-      val res = anotherController.callValidateEvent(event, user)
-      res.nonEmpty must_== true
-      res.get.exists(_._1 == "brandId")
-      res.get.exists(_._2 == "error.brand.invalid")
     }
     "if the event type doesn't belong to the brand" in {
       val eventType = EventType(None, 2L, "test", None, 16, false)

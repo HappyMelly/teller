@@ -115,7 +115,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param eventId An identifier of the event to add participant to
    */
-  def add(eventId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒ implicit event =>
         val people = personService.findActive
@@ -130,7 +130,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param eventId Event identifier
    */
-  def create(eventId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def create(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       val form: Form[Participant] = existingPersonForm(eventId).bindFromRequest
 
@@ -170,7 +170,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param eventId Event identifier
    */
-  def createParticipantAndPerson(eventId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def createParticipantAndPerson(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       newPersonForm(eventId, user.name).bindFromRequest.fold(
@@ -202,22 +202,23 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param ref An identifier of a page where a user should be redirected
    * @return
    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
-        participantService.find(personId, eventId).map { value ⇒
+  def delete(eventId: Long, personId: Long, ref: Option[String]) =
+    AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+      implicit request ⇒
+        implicit handler ⇒ implicit user ⇒ implicit event =>
+          participantService.find(personId, eventId).map { value ⇒
 
-          val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
-          value.delete()
-          val activity = Activity.create(user.name,
-            Activity.Predicate.Deleted,
-            activityObject)
-          val route = ref match {
-            case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
-            case _ ⇒ routes.Dashboard.index().url
-          }
-          Future.successful(Redirect(route).flashing("success" -> activity.toString))
-        } getOrElse Future.successful(NotFound)
+            val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
+            value.delete()
+            val activity = Activity.create(user.name,
+              Activity.Predicate.Deleted,
+              activityObject)
+            val route = ref match {
+              case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
+              case _ ⇒ routes.Dashboard.index().url
+            }
+            Future.successful(Redirect(route).flashing("success" -> activity.toString))
+          } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -226,7 +227,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def deletePerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def deletePerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       personService.find(personId) map { person ⇒
         if (person.virtual) {
@@ -245,7 +246,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
       participantService.find(personId, eventId) map { participant =>
         val evaluation = participant.evaluationId map { evaluationId =>
@@ -272,7 +273,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def edit(eventId: Long, personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def edit(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       personService.findComplete(personId) map { person ⇒
         if (person.virtual) {
@@ -411,7 +412,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def person(eventId: Long, personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def person(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
       participantService.find(personId, eventId) map { participant =>
         personService.find(participant.personId) map { person =>
@@ -426,7 +427,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    * @param eventId Event identifier
    * @param personId Person identifier
    */
-  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
+  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
       personService.findComplete(personId) map { person ⇒
         if (person.virtual) {

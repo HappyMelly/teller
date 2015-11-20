@@ -26,8 +26,8 @@ package controllers.acceptance.people
 
 import _root_.integration.PlayAppSpec
 import controllers.People
-import models.UserRole.Role
-import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
+import models.UserRole.{DynamicRole, Role}
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class PeopleAccessSpec extends PlayAppSpec {
   class TestPeople() extends People(FakeRuntimeEnvironment)
@@ -35,18 +35,78 @@ class PeopleAccessSpec extends PlayAppSpec {
 
   val controller = new TestPeople()
 
-  "Method 'cancel'" should {
-    "have 'edit' access rights for 'person' object" in {
-      controller.cancel(1L).apply(fakeGetRequest())
-      controller.checkedDynamicObject must_== Some("person")
-      controller.checkedDynamicLevel must_== Some("edit")
+  "Method 'activation'" should {
+    "have Admin access rights" in {
+      controller.activation(1L).apply(fakeGetRequest())
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
-
+  "Method 'add'" should {
+    "have Admin access rights" in {
+      controller.add().apply(fakeGetRequest())
+      controller.checkedRole must_== Some(Role.Admin)
+    }
+  }
+  "Method 'addRelationship'" should {
+    "have Admin access rights" in {
+      controller.addRelationship().apply(fakeGetRequest())
+      controller.checkedRole must_== Some(Role.Admin)
+    }
+  }
+  "Method 'create'" should {
+    "have Admin access rights" in {
+      controller.create().apply(fakeGetRequest())
+      controller.checkedRole must_== Some(Role.Admin)
+    }
+  }
+  "Method 'delete'" should {
+    "have Admin access rights" in {
+      controller.delete(1L).apply(fakeGetRequest())
+      controller.checkedRole must_== Some(Role.Admin)
+    }
+  }
+  "Method 'deleteRelationship'" should {
+    "have profile access rights" in {
+      controller.deleteRelationship("test", 3L, 1L).apply(fakeGetRequest())
+      controller.checkedRole must_== None
+      controller.checkedObjectId must_== Some(3L)
+    }
+  }
   "Method 'details'" should {
     "have Viewer access rights" in {
       controller.details(1L).apply(fakePostRequest())
       controller.checkedRole must_== Some(Role.Viewer)
+    }
+  }
+  "Method 'edit'" should {
+    "have ProfileEditor access rights" in {
+      controller.edit(3L).apply(fakeGetRequest())
+      controller.checkedRole must_== None
+      controller.checkedDynamicRole must_== Some(DynamicRole.ProfileEditor)
+      controller.checkedObjectId must_== Some(3L)
+    }
+  }
+  "Method 'index'" should {
+    "have Admin access rights" in {
+      controller.index().apply(fakePostRequest())
+      controller.checkedRole must_== Some(Role.Admin)
+    }
+  }
+  "Method 'update'" should {
+    "have ProfileEditor access rights" in {
+      controller.update(3L).apply(fakeGetRequest())
+      controller.checkedRole must_== None
+      controller.checkedDynamicRole must_== Some(DynamicRole.ProfileEditor)
+      controller.checkedObjectId must_== Some(3L)
+    }
+  }
+
+  "Method 'cancel'" should {
+    "have profile access rights" in {
+      controller.cancel(5L).apply(fakeGetRequest())
+      controller.checkedDynamicRole must_== None
+      controller.checkedRole must_== None
+      controller.checkedObjectId must_== Some(5L)
     }
   }
 

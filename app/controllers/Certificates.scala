@@ -48,9 +48,8 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    */
   def create(eventId: Long,
-    personId: Long) = AsyncSecuredEventAction(Role.Facilitator, eventId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
+             personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId) map { participant ⇒
           val approver = user.person
           val evaluation = if (participant.evaluationId.nonEmpty)
@@ -58,6 +57,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
           else
             None
           if (event.free) {
+            //TODO move higher
             Future.successful(NotFound)
           } else {
             val brand = brandService.findWithCoordinators(event.brandId).get

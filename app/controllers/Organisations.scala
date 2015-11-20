@@ -25,10 +25,9 @@
 package controllers
 
 import controllers.Forms._
-import models.UserRole.DynamicRole
-import models.UserRole.Role._
+import models.UserRole._
 import models._
-import models.payment.{ GatewayWrapper, PaymentException, RequestException }
+import models.payment.{GatewayWrapper, PaymentException, RequestException}
 import models.service.Services
 import org.joda.time.DateTime
 import play.api.Play.current
@@ -36,7 +35,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.{ Logger, Play }
+import play.api.{Logger, Play}
 import securesocial.core.RuntimeEnvironment
 
 import scala.concurrent.Future
@@ -53,7 +52,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -75,7 +74,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def add = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
@@ -120,7 +119,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def create = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Organisations.organisationForm.bindFromRequest.fold(
@@ -136,7 +135,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Adds new organization to the system
    */
-  def createOrganizer = AsyncSecuredRestrictedAction(BrandViewer) {
+  def createOrganizer = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),
@@ -151,7 +150,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Delete an organisation
    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -180,7 +179,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Renders Details page
    * @param id Organisation ID
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgService.findWithProfile(id).map { view ⇒
         val members = view.org.people
@@ -212,7 +211,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def index = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val organisations = orgService.findAll
@@ -230,7 +229,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Returns name of the given organisation
    * @param id Organisation id
    */
-  def name(id: Long) = AsyncSecuredRestrictedAction(Viewer) {
+  def name(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request => implicit handler => implicit user =>
       val name = if (id != 0)
         orgService.find(id) map { _.name } getOrElse ""
@@ -244,7 +243,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param query Search query
    */
-  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Viewer) {
+  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         implicit val orgWrites = new Writes[Organisation] {

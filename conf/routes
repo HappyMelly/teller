@@ -140,18 +140,18 @@ GET           /experiment/:id/picture                                        @co
 
 POST          /facilitator/:id/country                                       @controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                      @controllers.Facilitators.addLanguage(id: Long)
-GET           /facilitator/:id/country/:country/delete                       @controllers.Facilitators.deleteCountry(id: Long, country: String)
-GET           /facilitator/:id/language/:lang/delete                         @controllers.Facilitators.deleteLanguage(id: Long, lang: String)
+GET         /facilitator/:id/country/:country/delete        @controllers.Facilitators.deleteCountry(id: Long, country: String)
+GET         /facilitator/:id/language/:lang/delete          @controllers.Facilitators.deleteLanguage(id: Long, lang: String)
 
-GET           /license/:id/edit                                              @controllers.Licenses.edit(id: Long)
-POST          /license/:id                                                   @controllers.Licenses.update(id: Long)
-POST          /license/:id/delete                                            @controllers.Licenses.delete(id: Long)
+GET         /license/:id/edit                               @controllers.Licenses.edit(id: Long)
+POST        /license/:id                                    @controllers.Licenses.update(id: Long)
+POST        /license/:id/brand/:brandId/delete              @controllers.Licenses.delete(brandId: Long, id: Long)
 
-GET           /members                                                       @controllers.Members.index
-GET           /member/new                                                    @controllers.Members.add
-GET           /member/new/organisation                                       @controllers.Members.addOrganisation
-GET           /member/new/person                                             @controllers.Members.addPerson
-GET           /member/existing/organisation                                  @controllers.Members.addExistingOrganisation
+GET         /members                                        @controllers.Members.index
+GET         /member/new                                     @controllers.Members.add
+GET         /member/new/organisation                        @controllers.Members.addOrganisation
+GET         /member/new/person                              @controllers.Members.addPerson
+GET         /member/existing/organisation                   @controllers.Members.addExistingOrganisation
 GET           /member/existing/person                                        @controllers.Members.addExistingPerson
 POST          /member                                                        @controllers.Members.create
 POST          /member/organisation                                           @controllers.Members.createNewOrganisation
@@ -260,8 +260,6 @@ GET           /template/:id/delete                                           @co
 POST          /url/:url/validate                                             @controllers.Urls.validate(url)
 
 GET           /user/switch                                                   @controllers.UserAccounts.switchRole
-POST          /user                                                          @controllers.UserAccounts.update
-
 
 # API (v1)
 GET           /api/v1/brands                                                 controllers.api.BrandsApi.brands

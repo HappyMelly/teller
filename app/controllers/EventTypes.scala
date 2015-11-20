@@ -25,14 +25,13 @@
 package controllers
 
 import models.ActiveUser
-import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.brand.EventType
 import models.service.Services
-import play.api.data._
 import play.api.data.Forms._
+import play.api.data._
 import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
+import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
 
 class EventTypes(environment: RuntimeEnvironment[ActiveUser])
@@ -133,7 +132,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def index(brandId: Long) = SecuredRestrictedAction(BrandViewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
   }

@@ -24,14 +24,11 @@
 
 package controllers
 
-import models.UserRole.Role.{Admin, Viewer}
+import models.UserRole.Role.Viewer
 import models._
 import models.service.Services
-import org.joda.time.DateTime
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 
@@ -62,40 +59,6 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
           user.person.member))
       })
       Redirect(request.headers("referer"))
-  }
-
-  /**
-   * Updates a person’s user role.
-   */
-  def update = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      userForm.bindFromRequest.fold(
-        form ⇒ BadRequest("invalid form data"),
-        account ⇒ {
-          val (personId, role) = account
-          personService.find(personId).map { person ⇒
-            Logger.debug(s"update role for person (${person.fullName}}) to $role")
-            val activityObject = Messages("object.UserAccount", person.fullNamePossessive)
-            if (role.isDefined) {
-              if (userAccountService.findRole(personId).isDefined) {
-                userAccountService.updateRole(personId, role.get)
-              } else {
-                val account = UserAccount(None, personId, role.get, person.socialProfile.twitterHandle,
-                  person.socialProfile.facebookUrl,
-                  person.socialProfile.googlePlusUrl,
-                  person.socialProfile.linkedInUrl)
-                userAccountService.insert(account)
-              }
-            } else { // Remove the account
-              userAccountService.delete(personId)
-            }
-            val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
-            val dateStamp = person.dateStamp.copy(updated = DateTime.now, updatedBy = user.name)
-            person.copy(dateStamp = dateStamp).update
-            Redirect(routes.People.details(person.id.getOrElse(0))).flashing("success" -> activity.toString)
-          }.getOrElse(BadRequest("invalid form data - person not found"))
-        })
   }
 
 }

@@ -24,14 +24,14 @@
  */
 package models.integration
 
-import helpers.{ MemberHelper, PersonHelper }
+import helpers.{MemberHelper, PersonHelper}
 import integration.PlayAppSpec
-import models.{ UserAccount, ProfileType, Member, Material, Endorsement }
 import models.payment.Record
-import models.service.{ SocialProfileService, PaymentRecordService, PersonService, UserAccountService }
+import models.service.{PersonService, UserAccountService}
+import models.{Endorsement, Material, Member, UserAccount}
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{DateTime, LocalDate}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -140,7 +140,7 @@ class PersonServiceSpec extends PlayAppSpec {
         funder = false).insert
       Record("123", id, id, person = true, "desc", Money.parse("EUR 100")).insert
       Record("234", id, id, person = true, "desc", Money.parse("EUR 200")).insert
-      UserAccountService.get.insert(UserAccount(None, id, "viewer", Some("test"), None, None, None))
+      UserAccountService.get.insert(UserAccount(None, id, Some("test"), None, None, None))
       //test
       val addressId = person.address.id.get
       service.delete(id)

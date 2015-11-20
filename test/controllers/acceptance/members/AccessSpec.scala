@@ -26,11 +26,8 @@ package controllers.acceptance.members
 
 import _root_.integration.PlayAppSpec
 import controllers.Members
-import models.UserRole.{ DynamicRole, Role }
-import org.specs2.matcher._
-import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
-
-import scala.concurrent.Future
+import models.UserRole.Role
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 /** Contains only access tests */
 class AccessSpec extends PlayAppSpec {
@@ -104,10 +101,10 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'updateReason'" should {
-    "have edit access rights for the given person" in {
+    "have profile access rights" in {
       controller.updateReason(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("person")
-      controller.checkedDynamicLevel must_== Some("edit")
+      controller.checkedMethod must_== Some("profile")
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 

@@ -26,8 +26,8 @@ package controllers.acceptance.registration
 
 import _root_.integration.PlayAppSpec
 import controllers.Registration
-import models.UserRole.{ DynamicRole, Role }
-import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
+import models.UserRole.Role
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class AccessSpec extends PlayAppSpec {
   class TestRegistration() extends Registration(FakeRuntimeEnvironment)
@@ -39,8 +39,8 @@ class AccessSpec extends PlayAppSpec {
     "have no access rights" in {
       controller.congratulations().apply(fakePostRequest())
       controller.checkedRole must_== None
-      controller.checkedDynamicObject must_== None
-      controller.checkedDynamicLevel must_== None
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== None
     }
   }
 
@@ -48,8 +48,8 @@ class AccessSpec extends PlayAppSpec {
     "have no access rights" in {
       controller.welcome().apply(fakePostRequest())
       controller.checkedRole must_== None
-      controller.checkedDynamicObject must_== None
-      controller.checkedDynamicLevel must_== None
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== None
     }
   }
 
@@ -57,8 +57,8 @@ class AccessSpec extends PlayAppSpec {
     "have no access rights" in {
       controller.step1().apply(fakePostRequest())
       controller.checkedRole must_== None
-      controller.checkedDynamicObject must_== None
-      controller.checkedDynamicLevel must_== None
+      controller.checkedDynamicRole must_== None
+      controller.checkedObjectId must_== None
     }
   }
 

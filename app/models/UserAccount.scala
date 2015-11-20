@@ -24,9 +24,10 @@
 
 package models
 
-import be.objectify.deadbolt.core.models.{ Permission, Subject }
+import be.objectify.deadbolt.core.models.{Permission, Subject}
 import models.service.Services
 import play.libs.Scala
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
@@ -35,7 +36,6 @@ import scala.collection.mutable.ListBuffer
  */
 case class UserAccount(id: Option[Long],
                        personId: Long,
-                       role: String,
                        twitterHandle: Option[String],
                        facebookUrl: Option[String],
                        linkedInUrl: Option[String],
@@ -57,7 +57,6 @@ case class UserAccount(id: Option[Long],
       if (member) roles += UserRole(UserRole.Role.Member)
       if (facilitator) roles += UserRole(UserRole.Role.Facilitator)
       if (coordinator) roles += UserRole(UserRole.Role.Coordinator)
-      if (facilitator || coordinator) roles += UserRole(UserRole.Role.BrandViewer)
       roles
     } else {
       List(UserRole.forName("unregistered"))
@@ -71,5 +70,13 @@ case class UserAccount(id: Option[Long],
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
+}
 
+object UserAccount {
+
+  /**
+    * Returns an empty user account for the given person
+    * @param personId Person identifier
+    */
+  def empty(personId: Long): UserAccount = UserAccount(None, personId, None, None, None, None)
 }
