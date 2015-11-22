@@ -25,7 +25,7 @@
 package stubs
 
 import controllers.{AuthorisationHandler, Security}
-import helpers.PersonHelper
+import helpers.{EventHelper, PersonHelper}
 import models._
 import org.joda.time.DateTime
 import play.api.mvc.{Action, AnyContent, Request, Result}
@@ -157,6 +157,14 @@ trait FakeSecurity extends Security {
     }
   }
 
+  override def AsyncSecuredBrandAction(brandId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val handler = new AuthorisationHandler(user)
+      Action.async(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
+    }
+  }
+
   override def SecuredBrandAction(brandId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
     Action.async { implicit req ⇒
@@ -165,14 +173,13 @@ trait FakeSecurity extends Security {
     }
   }
 
-//  override def AsyncSecuredEventAction(role: UserRole.Role.Role, eventId: Long)(
-//    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
-//    Action.async { implicit req ⇒
-//      val handler = new AuthorisationHandler(user)
-//      val event = Event(Some(eventId), 1, 1, "ets", Language("EN", None, None), )
-//      Action(f(_)(handler)(user))(SecuredRequest(user, authenticator, req))
-//    }
-//  }
+  override def AsyncSecuredEventAction(roles: List[UserRole.Role.Role], eventId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+    Action.async { implicit req ⇒
+      val handler = new AuthorisationHandler(user)
+      Action.async(f(_)(handler)(user)(EventHelper.one))(SecuredRequest(user, authenticator, req))
+    }
+  }
 
   override def SecuredProfileAction(personId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {

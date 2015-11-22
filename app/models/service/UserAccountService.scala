@@ -85,6 +85,14 @@ class UserAccountService {
   }
 
   /**
+    * Updates the given account in database
+    * @param account User account
+    */
+  def update(account: UserAccount) = DB.withSession { implicit session =>
+    TableQuery[UserAccounts].filter(_.id === account.id).update(account)
+  }
+
+  /**
    * Updates active role for the given user
    */
   def updateActiveRole(personId: Long, role: Boolean): Unit = DB.withSession {

@@ -40,14 +40,15 @@ import scala.concurrent.Future
 /**
  * Content license pages and API.
  */
-class Licenses(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller with Security with Services {
+class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends Controller
+with Security
+with Services
+with Activities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * HTML form mapping for creating and editing.
-    * TODO Validate and brand ID
    */
   val licenseForm = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -97,19 +98,19 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
           formWithErrors ⇒ BadRequest(views.html.v2.license.addForm(user, formWithErrors, brands, personId)),
           license ⇒ {
             brands.find(_._1 == license.brandId) map { brand =>
-              licenseService.add(license.copy(licenseeId = personId))
+              val addedLicense = licenseService.add(license.copy(licenseeId = personId))
               profileStrengthService.find(personId, org = false) map { x ⇒
                 profileStrengthService.update(ProfileStrength.forFacilitator(x))
               }
-              val account = userAccountService.findByPerson(personId).getOrElse(
-                UserAccount.empty(personId).copy(facilitator = true))
-              account.id.map { id =>
-                true
-              } getOrElse userAccountService.insert(account)
-              val activityObject = Messages("activity.relationship.create", brand._2, person.fullName)
-              val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
+              userAccountService.findByPerson(personId) map { account =>
+                userAccountService.update(account.copy(facilitator = true))
+              } getOrElse {
+                val account = UserAccount.empty(personId).copy(facilitator = true, registered = true)
+                userAccountService.insert(account)
+              }
+              activity(addedLicense, user.person).created.insert()
               val route = routes.People.details(personId).url + "#facilitation"
-              Redirect(route).flashing("success" -> activity.toString)
+              Redirect(route).flashing("success" -> "License for brand %s was added".format(brand._2))
             } getOrElse {
               val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")
               BadRequest(views.html.v2.license.addForm(user, formWithError, brands, personId))
@@ -126,15 +127,21 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
     * @param brandId Brand identifier
    * @param id License identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       licenseService.findWithBrandAndLicensee(id).map { view ⇒
-        License.delete(id)
-        val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
-        val route = routes.People.details(view.licensee.id.getOrElse(0)).url + "#facilitation"
-        Redirect(route).flashing("success" -> activity.toString)
-      } getOrElse NotFound
+        val licenseeId = view.licensee.identifier
+        licenseService.delete(id)
+        if (licenseService.licenses(licenseeId).isEmpty) {
+          userAccountService.findByPerson(licenseeId) foreach { account =>
+            userAccountService.update(account.copy(facilitator = false, activeRole = true))
+          }
+        }
+        activity(view.license, user.person).deleted.insert()
+        val route = routes.People.details(view.licensee.identifier).url + "#facilitation"
+        Future.successful(
+          Redirect(route).flashing("success" -> "License for brand %s was deleted".format(view.brand.name)))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -171,9 +178,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser])
             val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
             licenseService.update(editedLicense)
 
-            //TODO: replace activity section
-            val activityObject = Messages("activity.relationship.delete", view.brand.name, view.licensee.fullName)
-            val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
+            activity(license, user.person).updated.insert()
             val route = routes.People.details(view.license.licenseeId).url + "#facilitation"
             Redirect(route).flashing("success" -> "License was updated")
           } getOrElse {

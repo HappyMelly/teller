@@ -25,7 +25,7 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.{ ActiveUser, Member }
+import models.{UserAccount, ActiveUser, Member}
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
@@ -272,6 +272,12 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
           cached map { m ⇒
             val person = personService.insert(success)
             val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
+            userAccountService.findByPerson(person.identifier) map { account =>
+              userAccountService.update(account.copy(member = true))
+            } getOrElse {
+              val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+              userAccountService.insert(account)
+            }
             Cache.remove(Members.cacheId(user.person.id.get))
             activity(person, user.person).created.insert()
             val log = activity(member, user.person).made.insert()
@@ -307,6 +313,12 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
                     peopleNonMembers, formWithError))
                 } else {
                   val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
+                  userAccountService.findByPerson(person.identifier) map { account =>
+                    userAccountService.update(account.copy(member = true))
+                  } getOrElse {
+                    val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+                    userAccountService.insert(account)
+                  }
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val log = activity(member, user.person).made.insert()
                   notify(person, None, member)

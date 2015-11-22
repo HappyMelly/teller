@@ -7,9 +7,9 @@
     flash: Flash,
     handler: AuthorisationHandler)
 
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils.as
+    @import be.objectify.deadbolt.scala.views.html._
+    @import models.UserRole.Role._
 
 <!DOCTYPE html>
 <html>
@@ -34,14 +34,13 @@
                       <li @if(menu == "orgs") {
                         class="active"}><a href="@routes.Organisations.index()">
                         Organizations</a></li>
-                      <li @if(menu == "people") {
-                        class="active"}><a href="@routes.People.index()">
-                        People</a></li>
                     }
                     <li @if(menu == "brands") {
                       class="active"}><a href="@routes.Brands.index()">Brands</a></li>
                     <li @if(menu == "products") {
                       class="active"}><a href="@routes.Products.index()">Products</a></li>
+                      <li @if(menu == "people") {
+                          class="active"}><a href="@routes.People.index()">People</a></li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
                     @views.html.v2.element.roleSwitcher(user.account)

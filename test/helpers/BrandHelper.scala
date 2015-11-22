@@ -53,4 +53,18 @@ object BrandHelper {
 
     brand
   }
+
+  def two: Brand = {
+    val brandCode = "TEST2"
+    val brandUniqueName = "test2.brand"
+    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
+
+    var brand = new Brand(Some(2L), brandCode, brandUniqueName,
+      "Test Brand", ownerId = 1, None, None, generateCert = false, None,
+      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      DateTime.now(), "Sergey Kotlov")
+    brand.socialProfile_=(socialProfile)
+
+    brand
+  }
 }

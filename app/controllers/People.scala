@@ -301,7 +301,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @return
    */
-  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = models.Person.findAll
       Ok(views.html.v2.person.index(user, people))

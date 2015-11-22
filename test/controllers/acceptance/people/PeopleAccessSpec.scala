@@ -87,9 +87,9 @@ class PeopleAccessSpec extends PlayAppSpec {
     }
   }
   "Method 'index'" should {
-    "have Admin access rights" in {
+    "have Viewer access rights" in {
       controller.index().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Admin)
+      controller.checkedRole must_== Some(Role.Viewer)
     }
   }
   "Method 'update'" should {
