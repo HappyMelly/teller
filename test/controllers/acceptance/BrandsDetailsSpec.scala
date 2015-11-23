@@ -25,13 +25,13 @@
 package controllers.acceptance
 
 import controllers.Brands
-import helpers.{ PersonHelper, ProductHelper }
+import helpers.{PersonHelper, ProductHelper}
 import integration.PlayAppSpec
-import models.brand.{ BrandCoordinator, CertificateTemplate, EventType }
-import models.service.{ BrandService, ProductService }
-import models.service.brand.{ CertificateTemplateService, EventTypeService }
-import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
-import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeServices, FakeSecurity }
+import models.brand.{BrandCoordinator, CertificateTemplate, EventType}
+import models.service.brand.{CertificateTemplateService, EventTypeService}
+import models.service.{BrandService, ProductService}
+import org.scalamock.specs2.IsolatedMockFactory
+import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeServices, FakeUserIdentity}
 
 /**
  * Tests Brands controller methods, rendering Details page
@@ -53,12 +53,10 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     a list of templates related to the requested brand            $e7
     no table if there is no templates                             $e8
     no 'Add Certificate Template' button if she is a Viewer       $e9
-    'Add Certificate Template' button if he is an Editor          $e10
 
   On 'Team' tab on a Brand page a user should see
     a list of team members of the requested brand                 $e11
     no 'Add Coordinator' or 'Delete' buttons if she is a Viewer   $e13
-    'Add Coordinator' or 'Delete' buttons if he is an Editor      $e14
 
   """
 
@@ -158,14 +156,6 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(res) must not contain "Add Certificate Template"
   }
 
-  def e10 = {
-    (certificateService.findByBrand _).expects(1L).returning(List())
-    controller.identity_=(FakeUserIdentity.editor)
-    val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
-    status(res) must equalTo(OK)
-    contentAsString(res) must contain("Add Certificate Template")
-  }
-
   def e11 = {
     val team = List(
       (PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)),
@@ -173,7 +163,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     (brandService.coordinators _).expects(1L).returning(team)
     controller.identity_=(FakeUserIdentity.viewer)
     val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
-    status(res) must equalTo(OK)
+
     contentAsString(res) must contain("First Tester")
     contentAsString(res) must contain("Second Tester")
   }
@@ -181,18 +171,8 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e13 = {
     (brandService.coordinators _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
-    status(res) must equalTo(OK)
+
     contentAsString(res) must not contain "Add Coordinator"
     contentAsString(res) must not contain "glyphicon-trash"
-  }
-
-  def e14 = {
-    val coordinators = List((PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)))
-    (brandService.coordinators _) expects 1L returning coordinators
-    controller.identity_=(FakeUserIdentity.editor)
-    val res = controller.renderTabs(1L, "team").apply(fakeGetRequest("/1"))
-    status(res) must equalTo(OK)
-    contentAsString(res) must contain("Add Coordinator")
-    contentAsString(res) must contain("glyphicon-trash")
   }
 }

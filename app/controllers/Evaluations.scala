@@ -24,10 +24,9 @@
 
 package controllers
 
-import models.UserRole.DynamicRole
-import models.UserRole.Role._
+import models.UserRole._
 import models._
-import models.service.{ EventService, Services }
+import models.service.{EventService, Services}
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
@@ -82,7 +81,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param participantId Optional unique person identifier to create evaluation for
    * @return
    */
-  def add(eventId: Option[Long], participantId: Option[Long]) = SecuredDynamicAction("evaluation", "add") {
+  def add(eventId: Option[Long], participantId: Option[Long]) = SecuredRestrictedAction(Role.Coordinator) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val account = user.account
@@ -94,24 +93,22 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Approve form submits to this action
    *
    * @param id Evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
-  def approve(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        evaluationService.findWithEvent(id).map { x ⇒
-          if (x.eval.approvable) {
-            val evaluation = x.eval.approve
+  def approve(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      evaluationService.find(id).map { eval ⇒
+        if (eval.approvable) {
+          val evaluation = eval.approve
             // recalculate ratings
             Event.ratingActor ! evaluation.eventId
             Facilitator.ratingActor ! evaluation.eventId
 
             val log = activity(evaluation, user.person).approved.insert()
-            sendApprovalConfirmation(user.person, evaluation, x.event)
+          sendApprovalConfirmation(user.person, evaluation, event)
 
             jsonOk(Json.obj("date" -> evaluation.handled))
           } else {
-            val error = x.eval.status match {
+          val error = eval.status match {
               case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
               case _ ⇒ "error.evaluation.approve.approved"
             }
@@ -124,7 +121,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Add form submits to this action
    * @return
    */
-  def create = SecuredDynamicAction("evaluation", "add") { implicit request ⇒
+  def create = SecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
@@ -145,38 +142,27 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Delete an evaluation
    * @param id Unique evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
-   * @return
    */
-  def delete(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        evaluationService.find(id).map { x ⇒
-          x.delete()
-          // recalculate ratings
-          Event.ratingActor ! x.eventId
-          Facilitator.ratingActor ! x.eventId
-
-          val log = activity(x, user.person).deleted.insert()
-
-          val route = ref match {
-            case Some("index") ⇒ routes.Dashboard.index().url
-//            case Some("index") ⇒ routes.Participants.index().url
-            case _ ⇒ routes.Events.details(x.eventId).url + "#participant"
-          }
-          Redirect(route).flashing("success" -> log.toString)
-        }.getOrElse(NotFound)
+  def delete(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      evaluationService.find(id).map { x ⇒
+        x.delete()
+        // recalculate ratings
+        Event.ratingActor ! x.eventId
+        Facilitator.ratingActor ! x.eventId
+        val log = activity(x, user.person).deleted.insert()
+        val route = routes.Events.details(x.eventId).url
+        Redirect(route).flashing("success" -> log.toString)
+      }.getOrElse(NotFound)
   }
 
   /**
    * Move an evaluation to another event
    * @param id Unique evaluation identifier
-   * @return
    */
-  def move(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) {
+  def move(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event =>
 
         evaluationService.find(id).map { evaluation ⇒
           val form = Form(single(
@@ -189,7 +175,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
                 val log = activity(evaluation, user.person).updated.insert()
                 Ok(Json.obj("success" -> log.toString))
               } else {
-                EventService.get.find(eventId).map { event ⇒
+                eventService.find(eventId).map { event ⇒
                   participantService.find(evaluation.personId, evaluation.eventId).map { oldParticipant ⇒
                     // first we need to check if this event has already the participant
                     participantService.find(evaluation.personId, eventId).map { participant ⇒
@@ -215,7 +201,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       evaluationService.findWithEvent(id) map { x ⇒
         val participant = personService.find(x.eval.personId).get
@@ -246,8 +232,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { evaluation ⇒
         val account = user.account
@@ -263,24 +249,23 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Reject form submits to this action
    *
    * @param id Evaluation identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
-  def reject(id: Long, ref: Option[String] = None) = SecuredDynamicAction("evaluation", DynamicRole.Facilitator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      evaluationService.findWithEvent(id).map { x ⇒
-        if (x.eval.rejectable) {
-          val evaluation = x.eval.reject()
+  def reject(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      evaluationService.find(id).map { eval ⇒
+        if (eval.rejectable) {
+          val evaluation = eval.reject()
 
           // recalculate ratings
-          Event.ratingActor ! x.eval.eventId
-          Facilitator.ratingActor ! x.eval.eventId
+          Event.ratingActor ! eval.eventId
+          Facilitator.ratingActor ! eval.eventId
 
-          val log = activity(x.eval, user.person).rejected.insert()
-          sendRejectionConfirmation(user.person, x.eval.participant, x.event)
+          val log = activity(eval, user.person).rejected.insert()
+          sendRejectionConfirmation(user.person, eval.participant, eval.event)
 
           jsonOk(Json.obj("date" -> evaluation.handled))
         } else {
-          val error = x.eval.status match {
+          val error = eval.status match {
             case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
             case _ ⇒ "error.evaluation.reject.rejected"
           }
@@ -293,14 +278,13 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * Sends a request to a participant to confirm the evaluation
    * @param id Evaluation id
    */
-  def sendConfirmationRequest(id: Long) =  SecuredDynamicAction("evaluation", DynamicRole.Coordinator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        evaluationService.find(id) map { evaluation ⇒
-          val defaultHook = request.host + routes.Evaluations.confirm("").url
-          evaluation.sendConfirmationRequest(defaultHook)
-          jsonSuccess("Confirmation request was sent")
-        } getOrElse jsonNotFound("Evaluation not found")
+  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      evaluationService.find(id) map { evaluation ⇒
+        val defaultHook = request.host + routes.Evaluations.confirm("").url
+        evaluation.sendConfirmationRequest(defaultHook)
+        jsonSuccess("Confirmation request was sent")
+      } getOrElse jsonNotFound("Evaluation not found")
   }
 
   /**
@@ -309,8 +293,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param id Unique evaluation identifier
    * @return
    */
-  def update(id: Long) = SecuredDynamicAction("evaluation", DynamicRole.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
       evaluationService.find(id).map { existingEvaluation ⇒
         val form: Form[Evaluation] = evaluationForm(user.name, edit = true).bindFromRequest
@@ -397,20 +381,14 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param account User object
    */
   private def findEvents(account: UserAccount): List[Event] = {
-    if (account.editor) {
-      EventService.get.findByParameters(
+    val brands = brandService.findByCoordinator(account.personId)
+    if (brands.nonEmpty) {
+      val events = EventService.get.findByParameters(
         brandId = None,
         archived = Some(false))
+      events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
     } else {
-      val brands = brandService.findByCoordinator(account.personId)
-      if (brands.length > 0) {
-        val events = EventService.get.findByParameters(
-          brandId = None,
-          archived = Some(false))
-        events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
-      } else {
-        List[Event]()
-      }
+      List[Event]()
     }
   }
 }

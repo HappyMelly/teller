@@ -23,14 +23,16 @@
  */
 package controllers
 
-import models.{Evaluation, Brand, ActiveUser, Endorsement}
+import models.UserRole.Role
 import models.service.Services
-import models.UserRole.DynamicRole
+import models.{ActiveUser, Brand, Endorsement}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import play.api.libs.json.{JsArray, JsValue, Writes, Json}
+import play.api.libs.json.{JsArray, JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
+
+import scala.concurrent.Future
 
 case class EndorsementFormData(content: String,
   name: String,
@@ -66,7 +68,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * Renders endorsement add form
    * @param personId Person identifier
    */
-  def add(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def add(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
@@ -80,7 +82,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person id
    */
-  def renderSelectForm(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def renderSelectForm(personId: Long) = SecuredProfileAction(personId) {
     implicit request =>
       implicit handler => implicit user =>
         val brands = brandService.findAll
@@ -107,7 +109,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def edit(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
+  def edit(personId: Long, id: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
@@ -124,7 +126,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def create(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(personId) map { person ⇒
@@ -152,37 +154,36 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def createFromSelected(personId: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val form = Form(single("evaluations" -> nonEmptyText))
-        form.bindFromRequest.fold(
-          error => jsonBadRequest("'evaluations' param is empty"),
-          formData => {
-            val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
-            val brands = brandService.findAll
-            val events = eventService.findByFacilitator(personId).map { x =>
-              (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
-            }
-            val endorsements = personService.endorsements(personId)
-            val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
-            val evaluations = evaluationService.
-              findByEvents(events.map(_._1.id.get)).
-              filter(x => receivedIds.contains(x.id.get)).
-              filterNot(x => evaluationIds.contains(x.id.get))
-            val people = personService.find(evaluations.map(_.personId).distinct)
-            val maxPosition = maxEndorsementPosition(endorsements)
-            val newEndorsements = evaluations.map { x =>
-              val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
-              val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
-              Endorsement(None, personId, brandId, x.facilitatorReview, name,
-                evaluationId = x.id.get, rating = Some(x.impression))
-            }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
-            newEndorsements.foreach { x => personService.insertEndorsement(x) }
-            val url = routes.People.details(personId).url + "#experience"
-            jsonOk(Json.obj("url" -> url))
+  def createFromSelected(personId: Long) = SecuredProfileAction(personId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      val form = Form(single("evaluations" -> nonEmptyText))
+      form.bindFromRequest.fold(
+        error => jsonBadRequest("'evaluations' param is empty"),
+        formData => {
+          val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
+          val brands = brandService.findAll
+          val events = eventService.findByFacilitator(personId).map { x =>
+            (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
           }
-        )
+          val endorsements = personService.endorsements(personId)
+          val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+          val evaluations = evaluationService.
+            findByEvents(events.map(_._1.id.get)).
+            filter(x => receivedIds.contains(x.id.get)).
+            filterNot(x => evaluationIds.contains(x.id.get))
+          val people = personService.find(evaluations.map(_.personId).distinct)
+          val maxPosition = maxEndorsementPosition(endorsements)
+          val newEndorsements = evaluations.map { x =>
+            val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
+            val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
+            Endorsement(None, personId, brandId, x.facilitatorReview, name,
+              evaluationId = x.id.get, rating = Some(x.impression))
+          }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
+          newEndorsements.foreach { x => personService.insertEndorsement(x) }
+          val url = routes.People.details(personId).url + "#experience"
+          jsonOk(Json.obj("url" -> url))
+        }
+      )
   }
 
   /**
@@ -191,26 +192,23 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
-    SecuredDynamicAction("event", DynamicRole.Facilitator) {
-      implicit request ⇒
-        implicit handler ⇒ implicit user ⇒
-          eventService.find(eventId) map { event =>
-            val personId = user.person.identifier
-            if (event.facilitatorIds.contains(personId)) {
-              evaluationService.findWithParticipant(evaluationId) map { view =>
-                val endorsements = personService.endorsements(personId)
-                val maxPosition = maxEndorsementPosition(endorsements)
-                val endorsement = Endorsement(None, personId,
-                 event.brandId, view.evaluation.facilitatorReview, view.person.fullName,
-                 position = maxPosition + 1, evaluationId = view.evaluation.id.get,
-                 rating = Some(view.evaluation.impression))
-                val id = personService.insertEndorsement(endorsement).id.get
-                jsonOk(Json.obj("endorsementId" -> id))
-              } getOrElse jsonNotFound("Evaluation doesn't exist")
-            } else {
-              jsonBadRequest("Internal error. You shouldn't be able to make this request")
-            }
-          } getOrElse jsonNotFound("Event doesn't exist")
+    AsyncSecuredEventAction(List(Role.Facilitator), eventId) {
+      implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+        val personId = user.person.identifier
+        if (event.facilitatorIds.contains(personId)) {
+          evaluationService.findWithParticipant(evaluationId) map { view =>
+            val endorsements = personService.endorsements(personId)
+            val maxPosition = maxEndorsementPosition(endorsements)
+            val endorsement = Endorsement(None, personId,
+              event.brandId, view.evaluation.facilitatorReview, view.person.fullName,
+              position = maxPosition + 1, evaluationId = view.evaluation.id.get,
+              rating = Some(view.evaluation.impression))
+            val id = personService.insertEndorsement(endorsement).id.get
+            Future.successful(jsonOk(Json.obj("endorsementId" -> id)))
+          } getOrElse Future.successful(jsonNotFound("Evaluation doesn't exist"))
+        } else {
+          Future.successful(jsonBadRequest("Internal error. You shouldn't be able to make this request"))
+        }
   }
 
         /**
@@ -218,9 +216,8 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def updatePositions(personId: Long) = SecuredDynamicAction("person", "edit") {
-    implicit request =>
-      implicit handler => implicit user =>
+        def updatePositions(personId: Long) = SecuredProfileAction(personId) {
+          implicit request => implicit handler => implicit user =>
         val form = Form(single("positions" -> nonEmptyText))
         form.bindFromRequest.fold(
           error => jsonBadRequest("Positions param is empty"),
@@ -245,7 +242,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id endorsement identifier
    */
-  def remove(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
+  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.deleteEndorsement(personId, id)
@@ -258,7 +255,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def update(personId: Long, id: Long) = SecuredDynamicAction("person", "edit") {
+  def update(personId: Long, id: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(

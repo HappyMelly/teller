@@ -1,0 +1,60 @@
+@(user: ActiveUser,
+        personId: Long,
+        eventId: Long,
+        form: Form[ParticipantData])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.{Countries, Participants}
+@import views.ViewHelpersV2._
+
+@v2.main("Person", "people", user, withMelly = true) {
+    <div class="form">
+        @v2.html.block("") {
+            <h1>Edit Participant</h1>
+        }
+        @html.form(action = CSRF(routes.Participants.update(eventId, personId))) {
+            @v2.html.block("Personal") {
+                @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
+                @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
+                @v2.html.email(form("emailAddress"), '_label -> "E-mail address", '_required -> true, '_help -> "")
+                @v2.html.date(form("birthday"), '_label -> "Birthday")
+            }
+            @v2.html.block("Address", Some("grey")) {
+                @v2.html.text(form("address.street1"), '_label -> "Address line 1")
+                @v2.html.text(form("address.street2"), '_label -> "Address line 2")
+                @v2.html.text(form("address.postCode"), '_label -> "Post code")
+                @v2.html.text(form("address.city"), '_label -> "City")
+                @v2.html.text(form("address.province"), '_label -> "Province or state")
+                @v2.html.select(form("address.country"), ("", "Choose a country") :: Countries.all,
+                    '_label -> "Country", '_required -> true, '_help -> "")
+            }
+            @v2.html.block("Role", Some("yellow")) {
+                @v2.html.select(form("role"),
+                    ("", "I don't know") :: Participants.roles.map(x => (x, x)), '_label -> "Role", '_help -> "")
+            }
+
+            @if(form.hasErrors) {
+                @v2.html.block("") {
+                    <div class="errors">
+                    @for( error <- form.errors) {
+                        @play.api.i18n.Messages(error.message) <br/>
+                    }
+                    </div>
+                }
+            }
+            @v2.html.block("") {
+                <div class="row">
+                    <div class="col-md-5">
+                        <button class="btn btn-primary btn-block btn-lg" type="submit">
+                            Save</button>
+                    </div>
+                    <div class="col-md-3 cancel">
+                        <a href="javascript:history.back()">Cancel changes</a></div>
+                </div>
+            }
+        }
+        </div>
+    }

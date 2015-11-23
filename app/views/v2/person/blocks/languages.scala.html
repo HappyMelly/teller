@@ -5,6 +5,7 @@
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
+@import models.UserRole.DynamicRole
 @import views.Languages
 
 <div class="col-md-6">
@@ -14,14 +15,14 @@
       @for(language <- person.languages) {
         <tr><td>
           @Languages.all.get(language.language)&nbsp;
-          @dynamic(handler, "person", "edit") {
+          @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
             <a class="pull-right" href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">Delete</a>
           }
         </td></tr>
       }
     </tbody>
   </table>
-  @dynamic(handler, "person", "edit") {
+  @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
     <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
       <div class="form-group">
         <select name="language" class="form-control input-sm">

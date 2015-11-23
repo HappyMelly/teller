@@ -6,7 +6,7 @@
 @main("Products", "products", user) {
 
   @html.indexPageHeader("Products") {
-    @restrict(handler, List(as(Editor.toString))) {
+    @restrict(handler, List(as(Admin.toString))) {
       <a class="btn btn-success pull-right" href="@routes.Products.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Product</a>
     }
@@ -17,7 +17,7 @@
       <p>There are no products</p>
     } else {
       @table(products) { product =>
-        @restrict(handler, List(as(Editor.toString))) {
+        @restrict(handler, List(as(Admin.toString))) {
           <a href="@routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }

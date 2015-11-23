@@ -27,7 +27,7 @@ package controllers.acceptance.dashboard
 import _root_.integration.PlayAppSpec
 import controllers.Dashboard
 import models.UserRole.Role
-import stubs.{ AccessCheckSecurity, FakeRuntimeEnvironment }
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 class AccessSpec extends PlayAppSpec {
   class TestDashboard() extends Dashboard(FakeRuntimeEnvironment)
@@ -36,35 +36,35 @@ class AccessSpec extends PlayAppSpec {
   val controller = new TestDashboard
 
   "Method 'about'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.about.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'api'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.api.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'apiv2'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.apiv2.apply(fakeGetRequest())
       controller.checkedRole must_== Some(Role.Viewer)
     }
   }
 
   "Method 'index'" should {
-    "have Unregistered access rights" in {
+    "have Viewer access rights" in {
       controller.index.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Unregistered)
+      controller.checkedRole must_== Some(Role.Viewer)
     }
   }
 
   "Method 'profile'" should {
-    "have Viewer access rights" in {
+    "have Registered access rights" in {
       controller.profile.apply(fakeGetRequest())
       controller.checkedRole must_== Some(Role.Viewer)
     }

@@ -98,13 +98,13 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Add page **/
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.product.form(user, None, None, productForm))
   }
 
   /** Add form submits to this action **/
-  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form: Form[Product] = productForm.bindFromRequest
@@ -142,7 +142,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Assign the product to a brand
    */
-  def addBrand() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addBrand() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
@@ -175,7 +175,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Product id
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id).map { product ⇒
@@ -194,7 +194,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Unassign the product from the brand
    */
-  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(productId) map { product: Product ⇒
@@ -215,7 +215,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Delete a product **/
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map { product ⇒
@@ -231,7 +231,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def deletePicture(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       productService.find(id) map { product ⇒
         product.picture.foreach { picture ⇒
@@ -268,7 +268,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Edit page **/
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map {
@@ -279,7 +279,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map { existingProduct ⇒

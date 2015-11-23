@@ -26,9 +26,9 @@ package models.integration
 
 import _root_.integration.PlayAppSpec
 import helpers.PersonHelper
-import models.{ UserIdentity, UserAccount }
-import models.service.{ UserAccountService, UserIdentityService }
-import securesocial.core.{ BasicProfile, AuthenticationMethod }
+import models.service.{UserAccountService, UserIdentityService}
+import models.{UserAccount, UserIdentity}
+import securesocial.core.{AuthenticationMethod, BasicProfile}
 
 class UserIdentityServiceSpec extends PlayAppSpec {
 
@@ -47,7 +47,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     }
     "return None if person data are not available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, "viewer", Some("tester"),
+      val account = new UserAccount(None, 1L, Some("tester"),
         None, None, None)
       service.insert(user(userId, providerId, twitter = Some("tester")))
       accountService.insert(account)
@@ -57,7 +57,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     }
     "return identity with Twitter if all data are available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, "viewer", Some("tester"),
+      val account = new UserAccount(None, 1L, Some("tester"),
         None, None, None)
       service.insert(user(userId, providerId, twitter = Some("tester")))
       accountService.insert(account)
@@ -77,7 +77,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with Facebook if all data are available" in {
       truncateTables()
       val providerId = "facebook"
-      val account = new UserAccount(None, 1L, "viewer", None,
+      val account = new UserAccount(None, 1L, None,
         Some("tester"), None, None)
       service.insert(user(userId, providerId, facebook = Some("tester")))
       accountService.insert(account)
@@ -98,7 +98,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val providerId = "google"
       val url = "https://plus.google.com/tester"
-      val account = new UserAccount(None, 1L, "viewer", None,
+      val account = new UserAccount(None, 1L, None,
         None, None, Some(url))
       service.insert(user(userId, providerId, google = Some(url)))
       accountService.insert(account)
@@ -118,7 +118,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with LinkedIn if all data are available" in {
       truncateTables()
       val providerId = "linkedin"
-      val account = new UserAccount(None, 1L, "viewer", None,
+      val account = new UserAccount(None, 1L, None,
         None, Some("tester"), None)
       service.insert(user(userId, providerId, linkedin = Some("tester")))
       accountService.insert(account)

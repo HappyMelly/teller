@@ -55,7 +55,7 @@ class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def create(brandId: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
@@ -79,7 +79,7 @@ class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def remove(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def remove(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.deleteLink(brandId, id)

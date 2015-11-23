@@ -65,7 +65,7 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    * @todo change access rights to all brand managers
    * @param brandId Unique text brand identifier
    */
-  def add(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add(brandId: Long) = SecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(brandId) map { brand ⇒
         val templates = certificateService.findByBrand(brandId)
@@ -79,7 +79,7 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Unique brand identifier
    */
-  def create(brandId: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create(brandId: Long) = SecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(brandId) map { brand ⇒
         val templates = certificateService.findByBrand(brandId)
@@ -154,7 +154,7 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique template identifier
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       CertificateTemplate.find(id).map { tpl ⇒

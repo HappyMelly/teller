@@ -44,7 +44,7 @@
     <h1>
       @brand.name
 
-      @dynamic(handler, "brand", DynamicRole.Coordinator) {
+      @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
         <div class="actions pull-right">
           <div class="button">
             <a class="btn btn-default" href="@routes.Brands.edit(brand.id.get)">

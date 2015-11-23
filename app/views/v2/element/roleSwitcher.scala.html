@@ -1,6 +1,6 @@
 @(account: UserAccount)(implicit request: Request[Any])
 
-@if(account.isCoordinator && account.isFacilitator) {
+@if(account.coordinator && account.facilitator) {
   <li class="switcher">
     @if(account.activeRole) {
       <span>Brand Coodinator / <a href="@routes.UserAccounts.switchRole()">Facilitator</a></span>

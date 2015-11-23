@@ -25,9 +25,10 @@ package stubs
 
 import _root_.services.LoginIdentityService
 import helpers.PersonHelper
-import models.{ UserAccount, ActiveUser }
+import models.{ActiveUser, UserAccount}
 import securesocial.core.BasicProfile
 import securesocial.core.services.SaveMode
+
 import scala.concurrent.Future
 
 class StubLoginIdentityService extends LoginIdentityService {
@@ -41,7 +42,7 @@ class StubLoginIdentityService extends LoginIdentityService {
   override def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
     val identity = new FakeUserIdentity(Some(123213L), ("123", "twitter"),
       "Sergey", "kotlov", "Sergey Kotlov", None)
-    val account = UserAccount(Some(1L), 1L, "viewer", None, None, None, None)
+    val account = UserAccount(Some(1L), 1L, None, None, None, None)
     val person = PersonHelper.one()
     Future.successful(ActiveUser(identity, account, person))
   }

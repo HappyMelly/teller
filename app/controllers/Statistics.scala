@@ -26,15 +26,16 @@ package controllers
 
 
 
-import models.{Participant, ActiveUser, License, Event}
 import models.UserRole.Role._
 import models.service.Services
-import org.joda.time.{ LocalDate, Months, Interval }
-import play.api.libs.json.{ Json, JsValue, Writes }
-import scala.language.postfixOps
-import scala.util.Random
+import models.{ActiveUser, Event, License, Participant}
+import org.joda.time.{Interval, LocalDate, Months}
+import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
 import views.Countries
+
+import scala.language.postfixOps
+import scala.util.Random
 
 /**
  * Contains a set of functions for handling brand statistics
@@ -65,7 +66,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    * Renders index page with statistics for brands
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = SecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         Ok(views.html.v2.statistics.index(user, brand, brands))
@@ -80,7 +81,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byFacilitators(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byFacilitators(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val licenses: List[License] = licenseService.findByBrand(brandId)
 
@@ -115,7 +116,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byEvents(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byEvents(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val now = LocalDate.now()
       val events = eventService.findByParameters(Some(brandId))
@@ -171,7 +172,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byCountries(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byCountries(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val events = eventService.
         findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
@@ -200,7 +201,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand id
    */
-  def byParticipants(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def byParticipants(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val participants = participantService.findByBrand(brandId)
 

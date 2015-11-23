@@ -24,26 +24,24 @@
  */
 package integration
 
-import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.specification.Fragments
-import play.api.cache.Cache
-import play.api.db.slick._
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.{ PlaySpecification, FakeHeaders, FakeRequest, FakeApplication }
 import play.api.Play
 import play.api.Play.current
+import play.api.db.slick._
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.{FakeApplication, FakeHeaders, FakeRequest, PlaySpecification}
 import play.filters.csrf.CSRF
-import scala.slick.jdbc.{ StaticQuery ⇒ Q }
-import stubs.FakeUserIdentity
+
+import scala.slick.jdbc.{StaticQuery => Q}
 
 trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
   sequential
   lazy val app: FakeApplication = {
     val conf = Map(
       "db.default.url" -> "jdbc:mysql://localhost/teller_test?reconnect=true&characterEncoding=UTF-8",
-      "db.default.user" -> "root",
-      "db.default.password" -> "",
+      "db.default.user" -> "melly",
+      "db.default.password" -> "shum",
       "logger.play" -> "ERROR",
       "logger.application" -> "ERROR",
       "ehcacheplugin" -> "enabled",

@@ -20,7 +20,7 @@
             "Booking entries"
         }) { title =>
             @html.indexPageHeader(title) {
-                @restrict(handler, List(as(Editor.toString))) {
+                @restrict(handler, List(as(Admin.toString))) {
                     <a class="btn btn-success pull-right" href="@routes.BookingEntries.add()">
                         <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Booking</a>
                 }

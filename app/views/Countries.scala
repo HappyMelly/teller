@@ -201,7 +201,6 @@ object Countries {
       ("NU", "Niue"),
       ("NF", "Norfolk Island"),
       ("KP", "North Korea"),
-      ("VD", "North Vietnam"),
       ("MP", "Northern Mariana Islands"),
       ("NO", "Norway"),
       ("OM", "Oman"),

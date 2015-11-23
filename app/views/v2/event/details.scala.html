@@ -9,12 +9,9 @@
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
-@import models.UserRole.DynamicRole
 
 @import helper.CSRF
 @import templates.Formatters._
-@import be.objectify.deadbolt.scala.views.html._
-@import org.joda.time.LocalDate
 @import views.Countries
 @import views.ViewHelpers.dateInterval
 
@@ -73,11 +70,11 @@
               </div>
             </div>
           </div>
-          @dynamic(handler, "event", DynamicRole.Coordinator) {
+          @if(user.account.isCoordinatorNow) {
             @if(!view.event.schedule.validateTotalHours) {
               <div class="alert alert-warning">
                 <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
-                suspiciosly less than a number of hours per day multiplied to a number of days.
+                suspiciously less than a number of hours per day multiplied to a number of days.
               </div>
             }
           }
@@ -193,7 +190,7 @@
             </div>
             <div class="pull-right">
               <a tabindex="-1"
-                href="@routes.Participants.add(Some(view.event.brandId), view.event.id, Some("event")).url" title="Add Participant">
+              href="@routes.Participants.add(view.event.identifier)" title="Add Participant">
                 Add Participant</a>
               <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                 Send Evaluation Request</a>

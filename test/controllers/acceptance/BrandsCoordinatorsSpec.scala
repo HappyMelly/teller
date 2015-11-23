@@ -148,6 +148,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     val brand = BrandHelper.one
     (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (brandService.findByCoordinator _) expects 2L returning List(BrandHelper.two)
     (brandTeamMemberService.delete(_, _)) expects (1L, 2L)
     val res = controller.removeCoordinator(1L, 2L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)

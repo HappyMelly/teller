@@ -250,6 +250,20 @@ function initializeEmptyForm() {
 }
 
 
+function connectAddOrganizerAction(object) {
+    $(object).on('click', function () {
+        $('.search-block').hide();
+        $('#addOrgBlock').append($('#addOrgForm'));
+        $('.autocomplete-suggestions').hide();
+        $('#addOrgFormBack').on('click', function () {
+            $('.search-block').show();
+            $('#addOrgFormContainer').append($('#addOrgForm'));
+            return false;
+        });
+        return false;
+    });
+}
+
 $(document).ready( function() {
 
     // Binds
@@ -316,8 +330,11 @@ $(document).ready( function() {
         minChars: 3,
         preserveInput: true,
         showNoSuggestionNotice: true,
-        noSuggestionNotice: $('<div class="new-organizer">').append(
-                $('<a>').attr('href', '#').text("Add new organizer")),
+        noSuggestionNotice: function () {
+            var link = $('<a id="addOrg">').attr('href', '#').text("Add new organizer");
+            connectAddOrganizerAction(link);
+            return $('<div class="new-organizer">').append(link);
+        },
         formatResult: function (suggestion, currentValue) {
             return suggestion.value;
         },
@@ -340,17 +357,7 @@ $(document).ready( function() {
             var action = $('<div class="new-organizer">').append(
                 $('<a id="addOrg">').attr('href', '#').text("Add new organizer"));
             $(container).append(action);
-            $('#addOrg').on('click', function() {
-                $('#searchBlock').hide();
-                $('#addOrgBlock').append($('#addOrgForm'));
-                $('.autocomplete-suggestions').hide();
-                $('#addOrgFormBack').on('click', function() {
-                    $('#searchBlock').show();
-                    $('#addOrgFormContainer').append($('#addOrgForm'));
-                    return false;
-                });
-                return false;
-            });
+            connectAddOrganizerAction('#addOrg');
         }
     });
     $('#addOrgForm').on('submit', function(e) {

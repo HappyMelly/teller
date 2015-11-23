@@ -33,6 +33,8 @@ trait WithTestApp extends Around with Scope {
 
   val conf = Map(
     "db.default.url" -> "jdbc:mysql://localhost/mellytest",
+    "db.default.user" -> "melly",
+    "db.default.password" -> "shum",
     "logger.play" -> "INFO",
     "logger.application" -> "DEBUG")
   val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")

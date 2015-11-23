@@ -28,10 +28,10 @@ import _root_.integration.PlayAppSpec
 import controllers.People
 import helpers._
 import models.service._
-import models.{ License, LicenseView, SocialProfile }
+import models.{License, LicenseView, SocialProfile}
 import org.joda.money.Money
 import org.joda.time.LocalDate
-import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
+import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import stubs._
 
 class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
@@ -45,8 +45,8 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     contain a funder badge if the person is a funder                     $e5
 
   'Make a Facilitator' button should
-    be visible to an Editor if a person has no licenses                  $e7
-    not be visible to an Editor if a person has licenses                 $e8
+    be visible to a Coordinator if a person has no licenses              $e7
+    not be visible to a Coordinator if a person has licenses             $e8
     not be visible to a Viewer if a person has no licenses               $e9
 
   On automatic renewal cancellation the system should
@@ -60,12 +60,10 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val personService = mock[PersonService]
   val orgService = mock[OrganisationService]
-  val accountService = mock[UserAccountService]
   val licenseService = mock[LicenseService]
   val controller = new TestPeople()
   controller.personService_=(personService)
   controller.orgService_=(orgService)
-  controller.userAccountService_=(accountService)
   controller.licenseService_=(licenseService)
 
   val id = 1L
@@ -82,17 +80,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     licenseService.licenses _ expects (id) returning List()
   }
 
-  trait EditorMockContext extends ExtendedMockContext {
-    (accountService.findRole _).expects(id).returning(None)
-    (accountService.findDuplicateIdentity _).expects(person).returning(None)
-  }
-
-  trait ViewerMockContext extends ExtendedMockContext {
-    (accountService.findRole _).expects(id).returning(None).never()
-    (accountService.findDuplicateIdentity _).expects(person).returning(None).never()
-  }
-
-  def e3 = new EditorMockContext {
+  def e3 = new ExtendedMockContext {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
@@ -103,7 +91,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must not contain "Account history"
   }
 
-  def e4 = new ViewerMockContext {
+  def e4 = new ExtendedMockContext {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
@@ -114,7 +102,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must not contain "/member/1/edit"
   }
 
-  def e5 = new EditorMockContext {
+  def e5 = new ExtendedMockContext {
     // we insert a person object here to prevent crashing on account retrieval
     // when @person.deletable is called
     person.insert
@@ -126,14 +114,13 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     contentAsString(result) must contain("funder")
   }
 
-  def e7 = new EditorMockContext {
+  def e7 = new ExtendedMockContext {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeUserIdentity.coordinator)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
-    // contentAsString(result) must contain("/person/1/licenses/new")
     contentAsString(result) must contain("Make a Facilitator")
   }
 
@@ -147,15 +134,13 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       Money.parse("EUR 10"), None)
     val licenses = List(LicenseView(BrandHelper.one, license))
     licenseService.licenses _ expects id returning licenses
-    accountService.findRole _ expects id returning None
-    accountService.findDuplicateIdentity _ expects person returning None
     controller.identity_=(FakeUserIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Make a Facilitator"
   }
 
-  def e9 = new ViewerMockContext {
+  def e9 = new ExtendedMockContext {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)

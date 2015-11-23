@@ -29,7 +29,7 @@
     }
   }
 </div>
-@dynamic(handler, "brand", DynamicRole.Coordinator) {
+@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
   <a type="button" class="btn btn-success pull-right"
     href="@routes.BrandTestimonials.add(brandId)">
     <i class="glyphicon glyphicon-plus"></i> Add Testimonial</a>

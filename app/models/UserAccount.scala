@@ -24,66 +24,60 @@
 
 package models
 
-import be.objectify.deadbolt.core.models.{ Permission, Subject }
+import be.objectify.deadbolt.core.models.{Permission, Subject}
 import models.service.Services
 import play.libs.Scala
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 
 /**
  * A log-in user account.
  */
 case class UserAccount(id: Option[Long],
-    personId: Long,
-    role: String,
-    twitterHandle: Option[String],
-    facebookUrl: Option[String],
-    linkedInUrl: Option[String],
-    googlePlusUrl: Option[String],
-    isCoordinator: Boolean = false,
-    isFacilitator: Boolean = false,
-    activeRole: Boolean = false) extends Subject with Services {
-
-  private var _roles: Option[List[UserRole]] = None
-
-  def roles_=(roles: List[UserRole]): Unit = {
-    _roles = Some(roles)
-  }
+                       personId: Long,
+                       twitterHandle: Option[String],
+                       facebookUrl: Option[String],
+                       linkedInUrl: Option[String],
+                       googlePlusUrl: Option[String],
+                       coordinator: Boolean = false,
+                       facilitator: Boolean = false,
+                       admin: Boolean = false,
+                       member: Boolean = false,
+                       registered: Boolean = false,
+                       activeRole: Boolean = false) extends Subject with Services {
 
   /**
    * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = {
-    if (_roles.isEmpty) {
-      val accountRole = userAccountService.findRole(personId).map(role ⇒ UserRole(role))
-      roles_=(accountRole.map(_.list).getOrElse(List()))
-      _roles.get
+    if (registered) {
+      val roles = ListBuffer[UserRole](UserRole(UserRole.Role.Viewer))
+      if (admin) roles += UserRole(UserRole.Role.Admin)
+      if (member) roles += UserRole(UserRole.Role.Member)
+      if (facilitator) roles += UserRole(UserRole.Role.Facilitator)
+      if (coordinator) roles += UserRole(UserRole.Role.Coordinator)
+      roles
     } else {
-      _roles.get
+      List(UserRole.forName("unregistered"))
     }
   }
 
-  lazy val admin = getRoles.contains(UserRole(UserRole.Role.Admin))
-  lazy val editor = getRoles.contains(UserRole(UserRole.Role.Editor))
-  lazy val viewer = getRoles.contains(UserRole(UserRole.Role.Viewer))
+  val viewer = registered
 
-  def isCoordinatorNow: Boolean = isCoordinator && activeRole
-  def isFacilitatorNow: Boolean = isFacilitator && !activeRole
+  def isCoordinatorNow: Boolean = coordinator && activeRole
+
+  def isFacilitatorNow: Boolean = facilitator && !activeRole
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
+}
+
+object UserAccount {
 
   /**
-   * True if this person is a facilitator
-   */
-  lazy val facilitator: Boolean = licenseService.activeLicenses(personId).nonEmpty
-
-  /**
-   * True if this person coordinates at least one brand
-   */
-  def coordinator: Boolean = brands.nonEmpty
-
-  lazy val brands: List[Brand] = brandService.findByCoordinator(personId)
-
-  lazy val person: Option[Person] = personService.find(personId)
+    * Returns an empty user account for the given person
+    * @param personId Person identifier
+    */
+  def empty(personId: Long): UserAccount = UserAccount(None, personId, None, None, None, None)
 }

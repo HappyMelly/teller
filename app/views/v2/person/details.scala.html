@@ -2,17 +2,15 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    showFacilitationTab: Boolean,
-    accountRole: Option[models.UserRole.Role.Role],
-    otherUser: Option[UserAccount])(implicit request: Request[Any],
+        showFacilitationTab: Boolean)(implicit request: Request[Any],
     flash: Flash,
     handler: AuthorisationHandler,
     token: play.filters.csrf.CSRF.Token)
 
-@import helper.CSRF
-@import models.UserRole.Role._
-@import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import models.UserRole._
 
 @v2.main(person.fullName + " - Person", "people", user) {
   <div class="row profile-header
@@ -28,7 +26,7 @@
         </h2>
         @views.html.v2.element.profiles(person.socialProfile, person.member)
         <div class="actions pull-right">
-          @dynamic(handler, "person", "delete") {
+          @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="person"
               action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
@@ -43,10 +41,10 @@
               </form>
             </div>
           }
-          @dynamic(handler, "person", "edit") {
+          @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
             <div class="button">
               <form method="post" class="form-inline"
-              action="@CSRF(routes.People.activation(person.id.getOrElse(0)))">
+              action="@CSRF(routes.People.activation(person.identifier))">
                 <input name="active" value="@(!person.active)" type="hidden">
                 @if(person.active) {
                   <button class="btn btn-default" type="submit">
@@ -112,19 +110,13 @@
               </li>
             }
           </ul>
-          @if(!showFacilitationTab) {
-            @restrict(handler, List(as(Editor.toString))) {
-              <a href="@routes.Licenses.add(person.id.getOrElse(0))"
-                class="btn btn-upload btn-block">
-                Make a Facilitator</a>
-            }
+          @if(!showFacilitationTab && user.account.isCoordinatorNow) {
+            <a href="@routes.Licenses.add(person.id.getOrElse(0))"
+            class="btn btn-upload btn-block">
+              Make a Facilitator</a>
           }
           <br/>
           <br/>
-          <div>
-            @views.html.v2.person.blocks.administration(user, person, showFacilitationTab,
-             accountRole, otherUser)
-          </div>
         </div>
       </div>
 

@@ -27,10 +27,10 @@ package models
 import models.database._
 import models.service._
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{DateTime, LocalDate}
+import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -367,7 +367,7 @@ object Person {
    */
   def findActiveAdmins: Set[Person] = DB.withSession { implicit session: Session ⇒
     val query = for {
-      account ← TableQuery[UserAccounts] if account.role === UserRole.Role.Admin.toString
+      account ← TableQuery[UserAccounts] if account.admin === true
       person ← TableQuery[People] if person.id === account.personId
     } yield person
     query.list.toSet

@@ -25,6 +25,7 @@
 package controllers
 
 import controllers.Forms._
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -40,6 +41,7 @@ import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.language.postfixOps
 
 class People(environment: RuntimeEnvironment[ActiveUser])
@@ -60,7 +62,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
@@ -83,7 +85,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Render a Create page
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.v2.person.form(user, None, People.personForm(user.name)))
   }
@@ -91,7 +93,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def addRelationship() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val relationshipForm = Form(tuple("page" -> text,
@@ -122,7 +124,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       People.personForm(user.name).bindFromRequest.fold(
@@ -140,7 +142,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = SecuredDynamicAction("person", "delete") { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
@@ -162,8 +164,8 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    * @param organisationId Org identifier
    */
   def deleteRelationship(page: String,
-    personId: Long,
-    organisationId: Long) = SecuredDynamicAction("person", "edit") {
+                         personId: Long,
+                         organisationId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
 
@@ -196,14 +198,8 @@ class People(environment: RuntimeEnvironment[ActiveUser])
         val memberships = person.organisations
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
-        val accountRole = if (user.account.editor)
-          userAccountService.findRole(id) else None
-        val duplicated = if (user.account.editor)
-          userAccountService.findDuplicateIdentity(person)
-        else None
         Ok(views.html.v2.person.details(user, person,
-          memberships, otherOrganisations,
-          facilitator, accountRole, duplicated))
+          memberships, otherOrganisations, facilitator))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))
@@ -215,13 +211,13 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def edit(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       personService.find(id).map { person ⇒
-        Ok(views.html.v2.person.form(user, Some(id),
-          People.personForm(user.name).fill(person)))
-      }.getOrElse(NotFound)
+        Future.successful(
+          Ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name).fill(person))))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -229,16 +225,16 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def update(id: Long) = SecuredDynamicAction("person", "edit") {
+  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { oldPerson ⇒
           People.personForm(user.name).bindFromRequest.fold(
             formWithErrors ⇒
-              BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors)),
+              Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors))),
             person ⇒ {
               checkDuplication(person, id, user.name) map { form ⇒
-                BadRequest(views.html.v2.person.form(user, Some(id), form))
+                Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), form)))
               } getOrElse {
                 val updatedPerson = person
                   .copy(id = Some(id), active = oldPerson.active)
@@ -251,11 +247,11 @@ class People(environment: RuntimeEnvironment[ActiveUser])
                 }
                 updatedPerson.update
                 val log = activity(updatedPerson, user.person).updated.insert()
-                Redirect(routes.People.details(id)).flashing(
-                  "success" -> log.toString)
+                Future.successful(
+                  Redirect(routes.People.details(id)).flashing("success" -> log.toString))
               }
             })
-        } getOrElse NotFound
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -315,7 +311,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    * Cancels a subscription for yearly-renewing membership
    * @param id Person id
    */
-  def cancel(id: Long) = SecuredDynamicAction("person", "edit") { implicit request ⇒
+  def cancel(id: Long) = SecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val url = routes.People.details(id).url + "#membership"
       personService.find(id) map { person ⇒

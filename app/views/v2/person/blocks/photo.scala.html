@@ -3,10 +3,10 @@
     handler: AuthorisationHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.DynamicRole
 
 <div class="photo-block @if(person.photo.url.nonEmpty) { real }">
-  @dynamicOr(handler, "person", "edit") {
+@dynamicOr(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
     @person.photo.url.map { photo =>
       <div id="real">
         <img width="@width" class="img-rounded" src="@photo"/>

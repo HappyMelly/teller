@@ -23,7 +23,7 @@
  */
 package stubs
 
-import securesocial.core.{ AuthenticationMethod, BasicProfile }
+import securesocial.core.{AuthenticationMethod, BasicProfile}
 
 class FakeUserIdentity(
   override val uid: Option[Long],
@@ -41,6 +41,8 @@ class FakeUserIdentity(
 object FakeUserIdentity {
   val unregistered: (String, String) = ("unregistered", "twitter")
   val viewer: (String, String) = ("viewer", "twitter")
-  val editor: (String, String) = ("editor", "twitter")
+  val coordinator: (String, String) = ("coordinator", "twitter")
+  val facilitator: (String, String) = ("facilitator", "twitter")
+  val editor: (String, String) = ("viewer", "twitter")
   val admin: (String, String) = ("admin", "twitter")
 }

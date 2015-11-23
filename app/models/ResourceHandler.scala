@@ -23,7 +23,7 @@
  */
 package models
 
-import be.objectify.deadbolt.scala.{ DeadboltHandler, DynamicResourceHandler }
+import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
 import models.UserRole.DynamicRole
 import models.service.Services
 import play.api.mvc._
@@ -38,24 +38,12 @@ class ResourceHandler(user: ActiveUser)
     with Services {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
-    val userId = user.account.personId
+    val objectId = meta.toLong
     name match {
-      case "brand" ⇒ checkBrandPermission(user.account, meta, request.uri)
-      case "evaluation" ⇒ checkEvaluationPermission(user.account, meta, request.uri)
-      case "event" ⇒ checkEventPermission(user.account, meta, request.uri)
-      case "member" ⇒ checkMemberPermission(user, request.uri)
-      case "person" ⇒ checkPersonPermission(user.account, meta, request.uri)
-      case "organisation" ⇒
-        meta match {
-          case "edit" ⇒
-            val organisationId = """\d+""".r findFirstIn request.uri
-            // A User should have an Editor role or should be a member of the organisation
-            user.account.editor ||
-              (organisationId.nonEmpty && orgService.find(organisationId.get.toLong).exists {
-                _.people.find(_.id == Some(user.account.personId)).nonEmpty
-              })
-          case _ ⇒ true
-        }
+      case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
+      case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
+      case DynamicRole.ProfileEditor => user.account.admin || user.account.personId == objectId
+      case DynamicRole.OrgMember => user.account.admin || orgMember(objectId, user.account.personId)
       case _ ⇒ false
     }
   }
@@ -65,111 +53,27 @@ class ResourceHandler(user: ActiveUser)
   }
 
   /**
-   * Returns true if the given user is allowed to execute an evaluation-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkEvaluationPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "add" ⇒ account.editor || account.coordinator
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { evaluationId ⇒
-          checker(account).isEvaluationCoordinator(evaluationId)
-        }
-      case DynamicRole.Facilitator ⇒
-        id(url) exists { evaluationId ⇒
-          checker(account).isEvaluationFacilitator(evaluationId)
-        }
-      case _ ⇒ false
-    }
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute an event-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkEventPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "add" ⇒ account.editor || account.facilitator || account.coordinator
-      case DynamicRole.Facilitator ⇒
-        id(url) exists { eventId ⇒ checker(account).isEventFacilitator(eventId) }
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { eventId ⇒ checker(account).isEventCoordinator(eventId) }
-      case _ ⇒ false
-    }
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute a brand-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkBrandPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    meta match {
-      case DynamicRole.Coordinator ⇒
-        id(url) exists { brandId ⇒ checker(account).isBrandCoordinator(brandId) }
-      case _ ⇒ false
-    }
-  }
-
-  /**
    * Returns true if the given user is allowed to execute a member-related action
    * @param user Active user
-   * @param url Request url
+    * @param memberId Member id to check
    */
-  protected def checkMemberPermission(user: ActiveUser, url: String): Boolean = {
-    id(url) exists { memberId ⇒
-      if (user.account.editor || user.person.member.exists(_.id == Some(memberId)))
-        true
-      else
-        memberService.find(memberId) exists { member ⇒
-          if (member.person)
-            false
-          else
-            orgService.people(member.objectId).exists(_.id == Some(user.account.personId))
-        }
-    }
-  }
-
-  /**
-   * Returns true if the given user is allowed to execute a person-related action
-   * @param account User account
-   * @param meta Action identifier
-   * @param url Request url
-   */
-  protected def checkPersonPermission(account: UserAccount, meta: String, url: String): Boolean = {
-    val userId = account.personId
-    meta match {
-      case "edit" ⇒ id(url) exists { personId ⇒
-        checker(account).canEditPerson(personId)
+  protected def checkMemberPermission(user: ActiveUser, memberId: Long): Boolean = {
+    if (user.account.admin || user.person.member.exists(_.identifier == memberId))
+      true
+    else
+      memberService.find(memberId) exists { member ⇒
+        if (member.person)
+          false
+        else
+          orgMember(member.objectId, user.account.personId)
       }
-      case "delete" ⇒ id(url) exists { personId ⇒
-        checker(account).canDeletePerson(personId)
-      }
-      case _ ⇒ false
-    }
-
   }
 
   /**
-   * Returns the first long number from the given url
-   * @param url Url
-   */
-  protected def id(url: String): Option[Long] = """\d+""".r findFirstIn url flatMap { x ⇒
-    try { Some(x.toLong) } catch { case _: NumberFormatException ⇒ None }
-  }
-
-  /**
-   * Returns new resource checker
-   *
-   * @param account User account
-   */
-  protected def checker(account: UserAccount): DynamicResourceChecker =
-    new DynamicResourceChecker(account)
+    * Returns true if the given person is a member of the given organisation
+    * @param orgId Organisation identifier
+    * @param personId Person identifier
+    */
+  private def orgMember(orgId: Long, personId: Long): Boolean =
+    orgService.people(orgId).exists(_.identifier == personId)
 }

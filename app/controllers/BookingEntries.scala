@@ -99,11 +99,10 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Renders the page for adding a new booking entry.
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val form = bookingEntryForm.fill(BookingEntry.blank)
-      val currentUser = user.account
-      val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+      val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
 
       Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
   }
@@ -111,7 +110,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Creates a booking entry from an ‘add form’ submission.
    */
-  def create = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val currentUser = user.account
@@ -120,7 +119,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       // Extracted function to handle the error case, either from validation or currency conversion failure,
       // by redisplaying the edit page with error messages.
       val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
         val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
@@ -162,7 +161,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       richMessage = true)
   }
 
-  def details(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def details(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val attachmentForm = s3Form(bookingNumber)
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
@@ -183,7 +182,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
    * @param key The S3 object key for the uploaded file
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         // Update entity
@@ -208,7 +207,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
    * @param bookingNumber the id of the BookingEntry to remove the attachment from
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
         val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
@@ -224,13 +223,12 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       }.getOrElse(NotFound)
   }
 
-  def edit(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
         if (bookingEntry.editable) {
           val form = bookingEntryForm.fill(bookingEntry)
-          val currentUser = user.account
-          val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+          val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
           Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
         } else {
           Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
@@ -238,7 +236,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       }.getOrElse(NotFound)
   }
 
-  def delete(bookingNumber: Int) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
@@ -259,28 +257,26 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
       }.getOrElse(NotFound)
   }
 
-  def index = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.booking.index(user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
   }
 
-  private def findFromAndToAccounts(user: UserAccount): (List[AccountSummary], List[AccountSummary]) = {
+  private def findFromAndToAccounts(user: ActiveUser): (List[AccountSummary], List[AccountSummary]) = {
     val allActive: List[AccountSummary] = Account.findAllActive
-    if (user.editor) {
+    if (user.account.admin) {
       (allActive, allActive)
     } else {
-      val person: Option[Person] = user.person
-      val accessible: List[AccountSummary] = person.map(_.findAccessibleAccounts).toList.flatten
+      val accessible: List[AccountSummary] = user.person.findAccessibleAccounts
       (accessible, allActive)
     }
   }
 
   private def isAccessible(user: ActiveUser, accountId: Long): Boolean = {
-    val account = user.account
-    if (account.admin) {
+    if (user.account.admin) {
       true
     } else {
-      val accessibleAccountIds = account.person.map(_.findAccessibleAccounts.map(_.id)).toList.flatten
+      val accessibleAccountIds = user.person.findAccessibleAccounts.map(_.id)
       accessibleAccountIds.contains(accountId)
     }
   }
@@ -288,7 +284,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Updates a booking entry.
    */
-  def update(bookingNumber: Int) = AsyncSecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       BookingEntry.findByBookingNumber(bookingNumber).map { existingEntry ⇒
@@ -299,7 +295,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
           // Extracted function to handle the error case, either from validation or currency conversion failure,
           // by redisplaying the edit page with error messages.
           val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-            val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+            val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
             val brands = Brand.findAllWithCoordinator
             val transactionTypes = TransactionType.findAll
             BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
@@ -374,7 +370,7 @@ class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
     next match {
       case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
       case Some("copy") ⇒ {
-        val (fromAccounts, toAccounts) = findFromAndToAccounts(currentUser)
+        val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
         val brands = Brand.findAllWithCoordinator
         val transactionTypes = TransactionType.findAll
         Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))

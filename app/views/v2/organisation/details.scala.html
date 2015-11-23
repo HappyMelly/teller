@@ -10,11 +10,10 @@
   handler: AuthorisationHandler,
   token: play.filters.csrf.CSRF.Token)
 
-@import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.Role._
-@import templates.Formatters._
+@import models.UserRole._
 
 
 @v2.main(view.org.name + " - Organization", "orgs", user) {
@@ -31,12 +30,7 @@
         </h2>
         @views.html.element.profiles(view.profile, view.org.member)
         <div class="actions pull-right">
-<!--           @if(view.org.member.isEmpty && members.exists(_.id == user.person.id)) {
-            <div class="button">
-              <a class="btn btn-success" href="@routes.Membership.welcome()">Become a Member</a>
-            </div>
-          } -->
-          @restrict(handler, List(as(Editor.toString))) {
+          @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="organisation"
                 action="@CSRF(routes.Organisations.delete(view.org.id.getOrElse(0)))">
@@ -64,7 +58,7 @@
               </form>
             </div>
           }
-          @dynamic(handler, "organisation", "edit") {
+          @dynamic(handler, DynamicRole.OrgMember, view.org.identifier.toString) {
             <div class="button">
               <a class="btn btn-primary"
                 href="@routes.Organisations.edit(view.org.id.get)">Edit</a>

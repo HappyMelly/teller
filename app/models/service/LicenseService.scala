@@ -24,9 +24,9 @@
  */
 package models.service
 
-import models.database.PortableJodaSupport._
-import models.database.{ Licenses, People }
 import models._
+import models.database.PortableJodaSupport._
+import models.database.{Licenses, People}
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -81,6 +81,14 @@ class LicenseService extends Services {
         .filter(_.start <= LocalDate.now())
         .filter(_.end >= LocalDate.now())
         .firstOption
+  }
+
+  /**
+    * Deletes the given license from database
+    * @param id License identifier
+    */
+  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
+    licenses.filter(_.id === id).delete
   }
 
   /**

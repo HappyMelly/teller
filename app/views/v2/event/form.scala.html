@@ -93,11 +93,11 @@
             id="@form("organizer.id").id" name="@form("organizer.id").name"/>
           <div class="form-group @if(form.error("organizer.id").isDefined) {has-error} ">
             <label for="organizerSearch" class="control-label col-md-2">Organizer</label>
-            <div class="col-md-7" id="searchBlock">
+            <div class="col-md-7 search-block" id="searchBlock">
               <input id="organizerSearch" name="organizerSearch"
                 class="form-control" placeholder="Start typing organizer's name">
             </div>
-            <div class="col-md-2 field-type">
+            <div class="col-md-2 search-block field-type">
               <span>required</span>
             </div>
             <div class="col-md-7" id="addOrgBlock"></div>

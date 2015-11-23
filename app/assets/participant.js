@@ -116,26 +116,13 @@ function getActiveRow() {
 /**
  * Sends reject request for the given evaluation and updates UI
  * @param object {object} Reject button
- * @param container {string} Type of container (table or link)
+ * @param callback {function} Result handler
  */
-function rejectEvaluation(object,container) {
+function rejectEvaluation(object, callback) {
     var evaluationId = $(object).data('id');
     var url = jsRoutes.controllers.Evaluations.reject(evaluationId).url;
     $.post(url, {}, function(data) {
-        if (container == "table") {
-            var date = JSON.parse(data).date;
-            $(object).attr('disabled', 'disabled').text('Rejected');
-            $(object).parent('.buttons-block').children('.approve').first().
-                data('id', evaluationId).removeAttr('disabled').text('Approve');
-            var statusCell = getActiveRow().find('td.status');
-            var icon = statusCell.find('i').removeClass('fa-thumb-tack').
-                removeClass('fa-thumbs-up').addClass('fa-thumbs-down').
-                attr('value', 2);
-            statusCell.html(icon).append(' ' + date);
-            getActiveRow().find('td.certificate').html("");
-        } else {
-            removeParticipantFromList();
-        }
+        callback(data);
         var caption = "Evaluation is rejected and a notification is sent to the participant";
         success(caption);
     });
@@ -144,25 +131,13 @@ function rejectEvaluation(object,container) {
 /**
  * Sends approval request for the given evaluation and updates UI
  * @param object {object} Approve button
- * @param container {string} Type of container (table or link)
+ * @param callback {function} Result handler
  */
-function approveEvaluation(object, container) {
+function approveEvaluation(object, callback) {
     var evaluationId = $(object).data('id');
     var url = jsRoutes.controllers.Evaluations.approve(evaluationId).url;
     $.post(url, {}, function(data) {
-        if (container == "table") {
-            var date = JSON.parse(data).date;
-            $(object).attr('disabled', 'disabled').text('Approved');
-            $(object).parent('.buttons-block').children('.reject').first().
-                data('id', evaluationId).removeAttr('disabled').text('Reject');
-            var statusCell = getActiveRow().find('td.status');
-            var icon = statusCell.find('i').removeClass('fa-thumb-tack').
-                removeClass('fa-thumbs-down').addClass('fa-thumbs-up').
-                attr('value', 1);
-            statusCell.html(icon).append(' ' + date);
-        } else {
-            removeParticipantFromList();
-        }
+        callback(data);
         var caption = "Evaluation is approved and certificate is sent to the participant";
         success(caption);
     });
@@ -197,22 +172,20 @@ function deleteEvaluation(object, container) {
 /**
  * Delete the given person
  * @param object {object} Delete button
- * @param container {string} Type of container (table or link)
+ * @param callback {function} Function to process the returned data
  */
-function deletePerson(object, container) {
+function deletePerson(object, callback) {
     var personId = $(object).data('id');
+    var eventId = $(object).data('event');
     var result = confirm("Remove this person? You cannot undo this action.");
     if (result == true) {
         $.ajax({
-            type: "POST",
-            url: jsRoutes.controllers.People.delete(personId).url,
-            data: {}
+            type: "DELETE",
+            url: jsRoutes.controllers.Participants.deletePerson(eventId, personId).url,
+            data: {},
+            dataType: "json"
         }).done(function(data) {
-            if (container == "table") {
-                removeParticipant();
-            } else {
-                removeParticipantFromList();
-            }
+            callback(data);
             var caption = "Person was successfully deleted";
             success(caption);
         });
@@ -309,12 +282,45 @@ function initializeParticipantActionsInDetails(container) {
     });
     $('.approve').on('click', function(e) {
         e.preventDefault();
-        approveEvaluation($(this), container);
+        var that = this;
+        var evaluationId = $(that).data('id');
+        approveEvaluation($(this), function (data) {
+            if (container == "table") {
+                var date = JSON.parse(data).date;
+                $(that).attr('disabled', 'disabled').text('Approved');
+                $(that).parent('.buttons-block').children('.reject').first().
+                data('id', evaluationId).removeAttr('disabled').text('Reject');
+                var statusCell = getActiveRow().find('td.status');
+                var icon = statusCell.find('i').removeClass('fa-thumb-tack').
+                removeClass('fa-thumbs-down').addClass('fa-thumbs-up').
+                attr('value', 1);
+                statusCell.html(icon).append(' ' + date);
+            } else {
+                removeParticipantFromList();
+            }
+        });
         return false;
     });
     $('.reject').on('click', function(e) {
         e.preventDefault();
-        rejectEvaluation($(this), container);
+        var that = this;
+        var evaluationId = $(that).data('id');
+        rejectEvaluation($(this), function (data) {
+            if (container == "table") {
+                var date = JSON.parse(data).date;
+                $(that).attr('disabled', 'disabled').text('Rejected');
+                $(that).parent('.buttons-block').children('.approve').first().
+                data('id', evaluationId).removeAttr('disabled').text('Approve');
+                var statusCell = getActiveRow().find('td.status');
+                var icon = statusCell.find('i').removeClass('fa-thumb-tack').
+                removeClass('fa-thumbs-up').addClass('fa-thumbs-down').
+                attr('value', 2);
+                statusCell.html(icon).append(' ' + date);
+                getActiveRow().find('td.certificate').html("");
+            } else {
+                removeParticipantFromList();
+            }
+        });
         return false;
     });
     $('.delete-evaluation').on('click', function(e) {
@@ -323,7 +329,13 @@ function initializeParticipantActionsInDetails(container) {
     });
     $('.delete-person').on('click', function(e) {
         e.preventDefault();
-        deletePerson($(this), container);
+        deletePerson($(this), function () {
+            if (container == "table") {
+                removeParticipant();
+            } else {
+                removeParticipantFromList();
+            }
+        });
     });
 }
 

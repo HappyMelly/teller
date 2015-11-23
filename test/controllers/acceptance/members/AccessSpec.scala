@@ -26,11 +26,8 @@ package controllers.acceptance.members
 
 import _root_.integration.PlayAppSpec
 import controllers.Members
-import models.UserRole.{ DynamicRole, Role }
-import org.specs2.matcher._
-import stubs.{ FakeRuntimeEnvironment, AccessCheckSecurity }
-
-import scala.concurrent.Future
+import models.UserRole.Role
+import stubs.{AccessCheckSecurity, FakeRuntimeEnvironment}
 
 /** Contains only access tests */
 class AccessSpec extends PlayAppSpec {
@@ -48,66 +45,66 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'add'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.add().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'edit'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.edit(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'update'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.update(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addOrganisation'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addOrganisation().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addPerson'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addPerson().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addExistingOrganisation'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addExistingOrganisation().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'addExistingPerson'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.addExistingPerson().apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'delete'" should {
-    "have Editor access rights" in {
+    "have Admin access rights" in {
       controller.delete(1L).apply(fakePostRequest())
-      controller.checkedRole must_== Some(Role.Editor)
+      controller.checkedRole must_== Some(Role.Admin)
     }
   }
 
   "Method 'updateReason'" should {
-    "have Editor access rights" in {
+    "have profile access rights" in {
       controller.updateReason(1L).apply(fakePostRequest())
-      controller.checkedDynamicObject must_== Some("person")
-      controller.checkedDynamicLevel must_== Some("edit")
+      controller.checkedMethod must_== Some("profile")
+      controller.checkedObjectId must_== Some(1L)
     }
   }
 

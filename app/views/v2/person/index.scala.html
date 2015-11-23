@@ -8,7 +8,7 @@
 @main("People", "people", user) {
 
   @html.indexPageHeader("People") {
-    @restrict(handler, List(as(Editor.toString))) {
+    @restrict(handler, List(as(Admin.toString))) {
       <a class="btn btn-success pull-right" href="@routes.People.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Person</a>
     }
@@ -19,7 +19,7 @@
       <p>There are no people</p>
     } else {
       @table(people) { person =>
-        @restrict(handler, List(as(Editor.toString))) {
+        @restrict(handler, List(as(Admin.toString))) {
           <a href="@routes.People.edit(person.id)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }

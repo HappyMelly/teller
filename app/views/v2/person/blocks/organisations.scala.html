@@ -32,7 +32,7 @@
           <img width="16" src="/assets/images/flags/16/@(org.countryCode.toLowerCase).png" align="absmiddle">
           @Messages("country." + org.countryCode)
         </td>
-        <td>@restrict(handler, List(as(Editor.toString))) {
+          <td>@restrict(handler, List(as(Admin.toString))) {
             <a href="@routes.People.deleteRelationship("person", person.id.get, org.id.get)" class="font-sm">Remove Relation</a>
         }</td>
       </tr>
@@ -40,7 +40,7 @@
     </tbody>
 </table>
 }
-@restrict(handler, List(as(Editor.toString))) {
+@restrict(handler, List(as(Admin.toString))) {
     <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship())">
         <input type="hidden" name="page" value="person">
         <input type="hidden" name="personId" value="@person.id.get">

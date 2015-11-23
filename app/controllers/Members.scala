@@ -25,7 +25,7 @@ package controllers
 
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.{ ActiveUser, Member }
+import models.{UserAccount, ActiveUser, Member}
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import play.api.Play.current
@@ -98,7 +98,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Renders Add form */
-  def add() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.form(user, None, form(user.person.id.get)))
   }
@@ -107,7 +107,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    * Records a first block of data about member to database and redirects
    * users to the next step
    */
-  def create() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       form(user.person.id.get).bindFromRequest.fold(
         formWithErrors ⇒ BadRequest(views.html.member.form(user,
@@ -129,7 +129,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Renders Edit form */
-  def edit(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { m ⇒
         val formWithData = form(user.person.id.get).fill(m)
@@ -141,7 +141,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    * Updates membership data
    * @param id Member identifier
    */
-  def update(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def update(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { existing ⇒
         form(user.person.id.get).bindFromRequest.fold(
@@ -168,7 +168,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def updateReason(personId: Long) = SecuredDynamicAction("person", "edit") {
+  def updateReason(personId: Long) = SecuredProfileAction(personId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.member(personId) map { member ⇒
@@ -193,7 +193,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    * Removes a membership of the given member
    * @param id Member id
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       memberService.find(id) map { m ⇒
         memberService.delete(m.objectId, m.person)
@@ -207,31 +207,31 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Renders Add new person page */
-  def addPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.newPerson(user, None, People.personForm(user.name)))
   }
 
   /** Renders Add new organisation page */
-  def addOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addOrganisation() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
-  def addExistingOrganisation() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addExistingOrganisation() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.existingOrg(user, orgsNonMembers, existingOrgForm))
   }
 
   /** Renders Add existing person page */
-  def addExistingPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def addExistingPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.member.existingPerson(user, peopleNonMembers, existingPersonForm))
   }
 
   /** Records a new member-organisation to database */
-  def createNewOrganisation() = SecuredRestrictedAction(Editor) {
+  def createNewOrganisation() = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val orgForm = Organisations.organisationForm.bindFromRequest
@@ -261,7 +261,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Records a new member-person to database */
-  def createNewPerson() = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def createNewPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val personForm = People.personForm(user.name).bindFromRequest
       personForm.fold(
@@ -272,6 +272,12 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
           cached map { m ⇒
             val person = personService.insert(success)
             val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
+            userAccountService.findByPerson(person.identifier) map { account =>
+              userAccountService.update(account.copy(member = true))
+            } getOrElse {
+              val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+              userAccountService.insert(account)
+            }
             Cache.remove(Members.cacheId(user.person.id.get))
             activity(person, user.person).created.insert()
             val log = activity(member, user.person).made.insert()
@@ -288,7 +294,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Records an existing member-person to database */
-  def updateExistingPerson() = SecuredRestrictedAction(Editor) {
+  def updateExistingPerson() = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val personForm = existingPersonForm.bindFromRequest
@@ -307,6 +313,12 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
                     peopleNonMembers, formWithError))
                 } else {
                   val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
+                  userAccountService.findByPerson(person.identifier) map { account =>
+                    userAccountService.update(account.copy(member = true))
+                  } getOrElse {
+                    val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+                    userAccountService.insert(account)
+                  }
                   Cache.remove(Members.cacheId(user.person.id.get))
                   val log = activity(member, user.person).made.insert()
                   notify(person, None, member)
@@ -329,7 +341,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Records an existing organisation-person to database */
-  def updateExistingOrg() = SecuredRestrictedAction(Editor) {
+  def updateExistingOrg() = SecuredRestrictedAction(Admin) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val orgForm = existingOrgForm.bindFromRequest

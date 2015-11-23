@@ -72,7 +72,9 @@
       <tr>
         <th>Member</th>
         <th>Country</th>
-        @restrict(handler, List(as(Editor.toString))) { <th></th> }
+        @restrict(handler, List(as(Admin.toString))) {
+          <th></th>
+        }
       </tr>
     </thead>
     <tbody>
@@ -84,7 +86,7 @@
             @Messages("country." + person.address.countryCode)
           </td>
           <td>
-          @restrict(handler, List(as(Editor.toString))) {
+          @restrict(handler, List(as(Admin.toString))) {
             <a href="@routes.People.deleteRelationship("organisation", person.id.get, view.org.id.get)" class="font-sm">Delete relation</a>
           }
           </td>
@@ -92,7 +94,7 @@
       }
     </tbody>
   </table>
-  @restrict(handler, List(as(Editor.toString))) {
+  @restrict(handler, List(as(Admin.toString))) {
     <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship)">
       <input type="hidden" name="page" value="organisation">
       <input type="hidden" name="organisationId" value="@view.org.id.get">

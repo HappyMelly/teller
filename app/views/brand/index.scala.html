@@ -6,7 +6,7 @@
 @main("Brands", "brands", user) {
 
   @html.indexPageHeader("Brands") {
-    @restrict(handler, List(as(Editor.toString))) {
+    @restrict(handler, List(as(Admin.toString))) {
       <a class="btn btn-success pull-right" href="@routes.Brands.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Brand</a>
     }
@@ -19,7 +19,7 @@
         <tr>
           <th>Name</th>
           <th>Owner</th>
-          @restrict(handler, List(as(Editor.toString))) {
+          @restrict(handler, List(as(Admin.toString))) {
             <th></th>
           }
         </tr>
@@ -29,7 +29,7 @@
           <tr @if(!brand.brand.active) { class="inactive" title="Deactivated" }>
             <td><a href="@routes.Brands.details(brand.brand.id.get)">@brand.brand.name</a></td>
             <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
-            @restrict(handler, List(as(Editor.toString))) {
+            @restrict(handler, List(as(Admin.toString))) {
               <td><a href="@routes.Brands.edit(brand.brand.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a></td>
             }
           </tr>

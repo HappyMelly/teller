@@ -60,7 +60,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
     "name" -> nonEmptyText,
     "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
-  def add(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def add(brandId: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
@@ -68,7 +68,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
         } getOrElse NotFound(Messages("error.brand.notFound"))
   }
 
-  def edit(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def edit(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
@@ -85,7 +85,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def create(brandId: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
@@ -111,7 +111,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def remove(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def remove(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.deleteTestimonial(brandId, id)
@@ -124,7 +124,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def update(brandId: Long, id: Long) = SecuredDynamicAction("brand", DynamicRole.Coordinator) {
+  def update(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(

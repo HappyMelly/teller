@@ -36,23 +36,39 @@ import play.api.db.slick.DB
  * A content license - a person’s agreement with Happy Melly to use a `Brand`.
  */
 case class License(
-    id: Option[Long],
-    licenseeId: Long,
-    brandId: Long,
-    version: String,
-    signed: LocalDate,
-    start: LocalDate,
-    end: LocalDate,
-    confirmed: Boolean,
-    fee: Money,
-    feePaid: Option[Money]) {
+                    id: Option[Long],
+                    licenseeId: Long,
+                    brandId: Long,
+                    version: String,
+                    signed: LocalDate,
+                    start: LocalDate,
+                    end: LocalDate,
+                    confirmed: Boolean,
+                    fee: Money,
+                    feePaid: Option[Money]) extends ActivityRecorder {
 
-  def active: Boolean = new Interval(start.toDateTimeAtStartOfDay,
-    end.toDateTimeAtStartOfDay).containsNow
+  def active: Boolean = new Interval(start.toDateTimeAtStartOfDay, end.toDateTimeAtStartOfDay).containsNow
+
+  /**
+    * Returns identifier of the object
+    */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+    * Returns string identifier which can be understood by human
+    *
+    * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+    */
+  def humanIdentifier: String = s"for %s brand and person %s".format(brandId, licenseeId)
 
   /** Returns current length of the license */
-  def length: Duration = new Interval(start.toDateTimeAtStartOfDay,
-    end.toDateTimeAtStartOfDay).toDuration
+  def length: Duration = new Interval(start.toDateTimeAtStartOfDay, end.toDateTimeAtStartOfDay).toDuration
+
+  /**
+    * Returns type of this object
+    */
+  def objectType: String = Activity.Type.License
+
 }
 
 case class LicenseView(brand: Brand, license: License)
@@ -62,14 +78,6 @@ case class LicenseLicenseeView(license: License, licensee: Person)
 case class LicenseLicenseeBrandView(license: License, brand: Brand, licensee: Person)
 
 object License {
-
-  /**
-   * @TEST
-   * @param id
-   */
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    TableQuery[Licenses].filter(_.id === id).delete
-  }
 
   /**
    * Returns a blanks license with default values, for the given licensee, for editing.

@@ -25,9 +25,9 @@
 package controllers
 
 import controllers.Forms._
-import models.UserRole.Role._
+import models.UserRole._
 import models._
-import models.payment.{ GatewayWrapper, PaymentException, RequestException }
+import models.payment.{GatewayWrapper, PaymentException, RequestException}
 import models.service.Services
 import org.joda.time.DateTime
 import play.api.Play.current
@@ -35,7 +35,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.{ Logger, Play }
+import play.api.{Logger, Play}
 import securesocial.core.RuntimeEnvironment
 
 import scala.concurrent.Future
@@ -52,7 +52,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def activation(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -74,7 +74,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def add = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
@@ -84,7 +84,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Cancels a subscription for yearly-renewing membership
    * @param id Organisation id
    */
-  def cancel(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def cancel(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val url = routes.Organisations.details(id).url + "#membership"
@@ -98,28 +98,28 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
                 m.copy(renewal = false).update
               } catch {
                 case e: PaymentException ⇒
-                  Redirect(url).flashing("error" -> Messages(e.msg))
+                  Future.successful(Redirect(url).flashing("error" -> Messages(e.msg)))
                 case e: RequestException ⇒
                   e.log.foreach(Logger.error(_))
-                  Redirect(url).flashing("error" -> Messages(e.getMessage))
+                  Future.successful(Redirect(url).flashing("error" -> Messages(e.getMessage)))
               }
-              Redirect(url).
-                flashing("success" -> "Subscription was successfully canceled")
+              Future.successful(
+                Redirect(url).flashing("success" -> "Subscription was successfully canceled"))
             } else {
-              Redirect(url).
-                flashing("error" -> Messages("error.membership.noSubscription"))
+              Future.successful(
+                Redirect(url).flashing("error" -> Messages("error.membership.noSubscription")))
             }
           } getOrElse {
-            Redirect(url).
-              flashing("error" -> Messages("error.membership.noSubscription"))
+            Future.successful(
+              Redirect(url).flashing("error" -> Messages("error.membership.noSubscription")))
           }
-        } getOrElse NotFound
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def create = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Organisations.organisationForm.bindFromRequest.fold(
@@ -135,7 +135,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Adds new organization to the system
    */
-  def createOrganizer = AsyncSecuredDynamicAction("event", "add") {
+  def createOrganizer = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),
@@ -150,7 +150,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Delete an organisation
    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -165,20 +165,21 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Organisation identifier
    */
-  def deleteLogo(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def deleteLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         Organisation.logo(id).remove()
         orgService.updateLogo(id, false)
         val route = routes.Organisations.details(id).url
-        jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
+        Future.successful(
+          jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url)))
   }
 
   /**
    * Renders Details page
    * @param id Organisation ID
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgService.findWithProfile(id).map { view ⇒
         val members = view.org.people
@@ -197,19 +198,20 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Render an Edit page
    * @param id Organisation ID
    */
-  def edit(id: Long) = SecuredDynamicAction("organisation", "edit") { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.findWithProfile(id).map { view ⇒
-        Ok(views.html.v2.organisation.form(user, Some(id),
-          Organisations.organisationForm.fill(OrgView(view.org, view.profile))))
-      }.getOrElse(NotFound)
+        Future.successful(
+          Ok(views.html.v2.organisation.form(user, Some(id),
+            Organisations.organisationForm.fill(OrgView(view.org, view.profile)))))
+      } getOrElse Future.successful(NotFound)
   }
 
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val organisations = orgService.findAll
@@ -227,7 +229,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Returns name of the given organisation
    * @param id Organisation id
    */
-  def name(id: Long) = AsyncSecuredRestrictedAction(Viewer) {
+  def name(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request => implicit handler => implicit user =>
       val name = if (id != 0)
         orgService.find(id) map { _.name } getOrElse ""
@@ -241,7 +243,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param query Search query
    */
-  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Viewer) {
+  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         implicit val orgWrites = new Writes[Organisation] {
@@ -265,16 +267,14 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Updates an organisation
    * @param id Organisation ID
    */
-  def update(id: Long) = SecuredDynamicAction("organisation", "edit") {
+  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         orgService.findWithProfile(id).map { view ⇒
           Organisations.organisationForm.bindFromRequest.fold(
             formWithErrors ⇒
-              BadRequest(views.html.v2.organisation.form(
-                user,
-                Some(id),
-                formWithErrors)),
+              Future.successful(
+                BadRequest(views.html.v2.organisation.form(user, Some(id), formWithErrors))),
             view ⇒ {
               val updatedOrg = view.org.
                 copy(id = Some(id), active = view.org.active).
@@ -282,10 +282,10 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
               val updatedProfile = view.profile.forOrg.copy(objectId = id)
               orgService.update(OrgView(updatedOrg, updatedProfile))
               val log = activity(updatedOrg, user.person).updated.insert()
-              Redirect(routes.Organisations.details(id)).
-                flashing("success" -> log.toString)
+              Future.successful(
+                Redirect(routes.Organisations.details(id)).flashing("success" -> log.toString))
             })
-        }.getOrElse(NotFound)
+        } getOrElse Future.successful(NotFound)
   }
 
   /**
@@ -293,7 +293,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Organisation identifier
    */
-  def uploadLogo(id: Long) = AsyncSecuredDynamicAction("organisation", "edit") {
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         uploadFile(Organisation.logo(id), "logo") map { _ ⇒

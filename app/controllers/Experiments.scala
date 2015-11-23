@@ -26,6 +26,7 @@ package controllers
 import controllers.Forms._
 import models.{DateStamp, ActiveUser, Experiment, Member}
 import models.UserRole.Role._
+import models.UserRole.DynamicRole
 import models.service.Services
 import org.joda.time.DateTime
 import play.api.Play
@@ -67,8 +68,8 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    */
   def add(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-        Future.successful(
-          Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
+      Future.successful(
+        Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
   }
 
   /**
@@ -76,28 +77,28 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-        form(user.name).bindFromRequest.fold(
-          error ⇒ Future.successful(
-            BadRequest(views.html.v2.experiment.form(user, memberId, error))),
-          experiment ⇒ {
-            memberService.find(memberId) map { member ⇒
-              val inserted = experimentService.insert(experiment.copy(memberId = memberId))
-              uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
-                experimentService.update(inserted.copy(picture = true))
-              } recover {
-                case e: RuntimeException ⇒ Unit
-              } map { _ ⇒
-                val url = if (member.person)
-                  routes.People.details(member.objectId).url
-                else
-                  routes.Organisations.details(member.objectId).url
-                notifyMembers(member, experiment, url + "#experiments")
-                Redirect(url + "#experiments")
-              }
-            } getOrElse Future.successful(NotFound("Member not found"))
-          })
+      form(user.name).bindFromRequest.fold(
+        error ⇒ Future.successful(
+          BadRequest(views.html.v2.experiment.form(user, memberId, error))),
+        experiment ⇒ {
+          memberService.find(memberId) map { member ⇒
+            val inserted = experimentService.insert(experiment.copy(memberId = memberId))
+            uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
+              experimentService.update(inserted.copy(picture = true))
+            } recover {
+              case e: RuntimeException ⇒ Unit
+            } map { _ ⇒
+              val url = if (member.person)
+                routes.People.details(member.objectId).url
+              else
+                routes.Organisations.details(member.objectId).url
+              notifyMembers(member, experiment, url + "#experiments")
+              Redirect(url + "#experiments")
+            }
+          } getOrElse Future.successful(NotFound("Member not found"))
+        })
   }
 
   /**
@@ -109,7 +110,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.delete(memberId, id)
@@ -124,7 +125,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         experimentService.find(id) map { experiment ⇒
@@ -179,7 +180,7 @@ class Experiments(environment: RuntimeEnvironment[ActiveUser])
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction("member", "editor") {
+  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form(user.name).bindFromRequest.fold(

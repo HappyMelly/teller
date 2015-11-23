@@ -38,8 +38,34 @@ function updateEndorsementAction(url, type) {
 }
 
 $(document).ready( function() {
-    initializeParticipantActions("table");
-    initializeParticipantActionsInDetails();
+    //initializeParticipantActionsInDetails();
+    $('.generate-certificate').off('click').on('click', function (e) {
+        e.preventDefault();
+        generateCertificate($(this));
+        return true;
+    });
+    $('.approve').on('click', function (e) {
+        e.preventDefault();
+        var that = this;
+        var evaluationId = $(that).data('id');
+        approveEvaluation($(this), function (data) {
+            $(that).attr('disabled', 'disabled').text('Approved');
+            $(that).parent('.buttons-block').children('.reject').first().
+            data('id', evaluationId).removeAttr('disabled').text('Reject');
+        });
+        return false;
+    });
+    $('.reject').on('click', function (e) {
+        e.preventDefault();
+        var that = this;
+        var evaluationId = $(that).data('id');
+        rejectEvaluation($(this), function (data) {
+            $(that).attr('disabled', 'disabled').text('Rejected');
+            $(that).parent('.buttons-block').children('.approve').first().
+            data('id', evaluationId).removeAttr('disabled').text('Approve');
+        });
+        return false;
+    });
     $("#endorsement").on('click', function(e) {
         e.preventDefault();
         if ($(this).hasClass("add")) {

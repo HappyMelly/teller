@@ -39,10 +39,11 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
     with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+
   /**
    * About page - credits.
    */
-  def about = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def about = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.about(user))
   }
@@ -50,7 +51,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
   /**
    * API documentation page.
    */
-  def api = SecuredRestrictedAction(Editor) { implicit request ⇒
+  def api = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.api.index(user))
   }
@@ -66,26 +67,23 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = SecuredRestrictedAction(Unregistered) { implicit request ⇒
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val account = user.account
-      if (account.viewer) {
-        roleDiffirentiator(user.account) { (brand, brands) =>
-          val licenses = licenseService.expiring(List(brand.identifier))
-          val events = unbilledEvents(brand)
-          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
-            licenses, events))
-        } { (brand, brands) =>
-          val events = eventService.findByFacilitator(
-            account.personId,
-            brandId = None)
-          Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
-            upcomingEvents(events, brands),
-            pastEvents(events, brands),
-            unhandledEvaluations(events, brands)))
-        } { Ok(views.html.v2.dashboard.index(user)) }
-      } else {
-        Redirect(routes.LoginPage.logout(Some(Messages("login.unregistered"))))
+      roleDiffirentiator(user.account) { (brand, brands) =>
+        val licenses = licenseService.expiring(List(brand.identifier))
+        val events = unbilledEvents(brand)
+        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+          licenses, events))
+      } { (brand, brands) =>
+        val events = eventService.findByFacilitator(
+          user.account.personId,
+          brandId = None)
+        Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
+          upcomingEvents(events, brands),
+          pastEvents(events, brands),
+          unhandledEvaluations(events, brands)))
+      } {
+        Ok(views.html.v2.dashboard.index(user))
       }
   }
 

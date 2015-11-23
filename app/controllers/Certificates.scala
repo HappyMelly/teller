@@ -24,12 +24,14 @@
 
 package controllers
 
-import models.UserRole.DynamicRole
+import models.UserRole.Role
 import models.service.Services
 import models.{ActiveUser, Certificate}
 import org.joda.time.LocalDate
 import play.api.libs.json.Json
 import securesocial.core.RuntimeEnvironment
+
+import scala.concurrent.Future
 
 class Certificates(environment: RuntimeEnvironment[ActiveUser])
     extends JsonController
@@ -44,22 +46,19 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param eventId Event identifier
    * @param personId Person identifier
-   * @param ref Identifier of a page where a user should be redirected
    */
   def create(eventId: Long,
-    personId: Long,
-    ref: Option[String] = None) = SecuredDynamicAction("event", DynamicRole.Facilitator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+             personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         participantService.find(personId, eventId) map { participant ⇒
           val approver = user.person
           val evaluation = if (participant.evaluationId.nonEmpty)
             participant.evaluation
           else
             None
-          val event = participant.event.get
           if (event.free) {
-            NotFound
+            //TODO move higher
+            Future.successful(NotFound)
           } else {
             val brand = brandService.findWithCoordinators(event.brandId).get
             val person = participant.person.get
@@ -69,9 +68,9 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
             participant.copy(
               certificate = Some(certificate.id),
               issued = Some(issued)).update
-            jsonOk(Json.obj("certificate" -> certificate.id))
+            Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
           }
-        } getOrElse NotFound
+        } getOrElse Future.successful(NotFound)
   }
 
   /**

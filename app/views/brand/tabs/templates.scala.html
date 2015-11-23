@@ -22,7 +22,7 @@ for English language. It means you need to upload at least one certificate for E
     <a href="mailto:sergey.kotlov@@happymelly.com">Sergey Kotlov</a> for more information.
 </div>
 <br/>
-@if(templates.length > 0) {
+@if(templates.nonEmpty) {
     <table class="datatables table table-bordered">
         <thead>
             <tr>
@@ -45,7 +45,7 @@ for English language. It means you need to upload at least one certificate for E
         </tbody>
     </table>
 }
-@restrict(handler, List(as(Editor.toString))) {
+@restrict(handler, List(as(Admin.toString))) {
     <a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(id)">
         <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
     </a>

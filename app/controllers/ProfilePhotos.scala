@@ -45,7 +45,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def choose(id: Long) = SecuredDynamicAction("person", "edit") {
+  def choose(id: Long) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
@@ -61,7 +61,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = SecuredDynamicAction("person", "edit") {
+  def delete(id: Long) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
@@ -80,11 +80,11 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
   def photo(id: Long) = file(Person.photo(id))
 
   /**
-   * Updates profile photo and may be a facebook profile link
+    * Updates profile photo
    *
    * @param id Person identifier
    */
-  def update(id: Long) = SecuredDynamicAction("person", "edit") {
+  def update(id: Long) = SecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         val form = Form(single("type" -> nonEmptyText)).bindFromRequest
@@ -111,7 +111,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def upload(id: Long) = AsyncSecuredDynamicAction("person", "edit") {
+  def upload(id: Long) = AsyncSecuredProfileAction(id) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         uploadFile(Person.photo(id), "photo") map { _ ⇒
