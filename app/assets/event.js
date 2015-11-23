@@ -101,6 +101,17 @@ function showDetails(object, container) {
     });
 }
 
+// TESting !!!!
+
+function format(object, data){
+    var url = jsRoutes.controllers.Events.detailsButtons(data.event.id).url;
+    $.get(url).done(function(data2){
+        object(data2);
+    });
+}
+
+// TEsting !!!!
+
 function hideDetails(object, container) {
     if (container == "table") {
         removeDetailsFromTable(object);
@@ -118,7 +129,7 @@ function hideAllDetails() {
         removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
     $('tr.active').removeClass('active');
     $('div.active').removeClass('active');
-    $('.event-details').remove();
+    // $('.event-details').remove();
 }
 
 /**

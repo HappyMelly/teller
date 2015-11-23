@@ -90,13 +90,15 @@ $(document).ready( function() {
             { "data": "event" },
             { "data": "facilitators" },
             { "data": "location" },
-            { "data": "schedule"
-           },
+            { "data": "schedule" },
             { "data": "totalHours" },
             { "data": "materials" },
             { "data": "invoice" },
             { "data": "confirmed" },
-            { "data": "actions" }
+            { "data": "actions",
+              "className": 'details-control',
+              "orderable": false
+           }
         ],
         "columnDefs": [{
             "render": function(data) {
@@ -147,12 +149,31 @@ $(document).ready( function() {
     });
 
     events
-      .on('draw.dt', function(){
-        console.log("Draw.dt is called.");
-        initializeEventActions("table");
-      })
       .on('xhr.dt', function(){
           $("body").css("cursor", "default");
+      });
+
+
+      $('#events tbody').on('click', 'td.details-control', function(){
+          var tr = $(this).closest('tr');
+          var row = events.api().row(tr);
+
+          if(row.child.isShown()){
+            row.child.hide();
+            tr.children('.details-control').children('.circle-show-more').children('span').removeClass('glyphicon-chevron-up');
+            tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-down');
+            tr.children('.details-control').children('.circle-show-more').removeClass('active');
+            tr.removeClass('shown active');
+          } else {
+            // Open this row
+            var details = row.child;
+            details('').show();
+            format(details, row.data());
+            tr.children('.details-control').children('.circle-show-more').children('span').removeClass('glyphicon-chevron-down');
+            tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-up');
+            tr.children('.details-control').children('.circle-show-more').addClass('active');
+            tr.addClass('shown active');
+          }
       });
 
     $("body").css("cursor", "progress");
@@ -167,7 +188,6 @@ $(document).ready( function() {
             .url(makeRequestUrl())
             .load(function(){
                 $("body").css("cursor", "default");
-                initializeEventActions("table");
             });
     }
 
