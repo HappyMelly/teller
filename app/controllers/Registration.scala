@@ -112,7 +112,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * Renders welcome page for new users
    */
   def welcome = Action { implicit request ⇒
-    Ok(views.html.registration.welcome())
+    Ok(views.html.v2.registration.welcome())
   }
 
   /**
@@ -124,9 +124,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     val cookie = Cookie(REGISTRATION_COOKIE, "org")
     val discardingCookie = DiscardingCookie(REGISTRATION_COOKIE)
     if (org)
-      Ok(views.html.registration.step1()).withCookies(cookie)
+      Ok(views.html.v2.registration.step1()).withCookies(cookie)
     else
-      Ok(views.html.registration.step1()).discardingCookies(discardingCookie)
+      Ok(views.html.v2.registration.step1()).discardingCookies(discardingCookie)
   }
 
   /**

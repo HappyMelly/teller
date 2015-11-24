@@ -1,0 +1,62 @@
+@(loginForm: Form[(String, String)],
+    errorMsg: Option[String] = None)(implicit request: RequestHeader,
+    env: securesocial.core.RuntimeEnvironment[_])
+
+@alert(alertType: String) = {
+@request.flash.get(alertType).map { message =>
+    <div class="alert @if(alertType == "error") {alert-danger} else {alert-@alertType}">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            @message
+    </div>
+}
+}
+
+@v2.layout.unauthorized("Log In") {
+    <div class="action-block">
+        <h3>Login to Happy Melly Teller</h3>
+        @alert("error")
+        @alert("success")
+        @errorMsg.map { msg =>
+            <div class="alert alert-danger">
+                @Messages(msg)
+            </div>
+        }
+        <div class="action-area">
+            <div class="column">
+                <div class="social">
+                    <a class="btn btn-twitter btn-login btn-block" href="@env.routes.authenticationUrl("twitter")">
+                        <i class="fa fa-twitter"></i>  Login with Twitter
+                    </a>
+                    <a class="btn btn-facebook btn-login btn-block" href="@env.routes.authenticationUrl("facebook")">
+                        <i class="fa fa-facebook-square"></i>  Login with Facebook
+                    </a>
+                    <a class="btn btn-linkedin btn-login btn-block" href="@env.routes.authenticationUrl("linkedin")">
+                        <i class="fa fa-linkedin"></i>  Login with LinkedIn
+                    </a>
+                    <a class="btn btn-google btn-login btn-block" href="@env.routes.authenticationUrl("google")">
+                        <i class="fa fa-google-plus"></i>  Login with Google
+                    </a>
+                </div>
+            </div>
+            <div class="middle-column">
+                <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
+            </div>
+            <div class="column">
+                <form>
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="email" placeholder="Email"/>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="password" name="password" placeholder="Password"/>
+                    </div>
+                    <div class="form-group">
+                        <button class="form-control btn btn-block btn-primary" type="submit">Login</button>
+                    </div>
+                </form>
+                <div class="join-now">
+                    Not a member? <a href="@routes.Registration.welcome()">Join now!</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
