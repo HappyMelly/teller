@@ -18,7 +18,7 @@
               <span>Filter by Facilitator: </span>
               @if(facilitators.nonEmpty) {
                 <div class="btn-group">
-                  <select id="facilitators" class="selectpicker" data-style="btn-primary"  data-width="auto" data-live-search="true">
+                  <select id="facilitators" class="selectpicker" data-style="btn-details"  data-width="auto" data-live-search="true">
                     <option value="all">All</option>
                     @for((id, name) <- facilitators) {
                       <option value="@id">@name</option>
@@ -32,7 +32,7 @@
             <div class="table-filters pull-right">
               <div class="btn-group">
                 <span>By Time: </span>
-                <select id="past-future" class="selectpicker" data-style="btn-inverse" data-width="auto">
+                <select id="past-future" class="selectpicker" data-style="btn-details" data-width="auto">
                   <option value="all">All</option>
                   <option value="future" selected>Future</option>
                   <option value="past">Past</option>
@@ -40,7 +40,7 @@
               </div>
               <div class="btn-group">
                 <span> By Privacy: </span>
-                <select id="private" class="selectpicker" data-style="btn-inverse" data-width="auto">
+                <select id="private" class="selectpicker" data-style="btn-details" data-width="auto">
                   <option value="all">All</option>
                   <option value="public">Public</option>
                   <option value="private">Private</option>
@@ -48,7 +48,7 @@
               </div>
               <div class="btn-group">
                 <span>By Actuality: </span>
-                <select id="archived" class="selectpicker" data-style="btn-inverse" data-width="auto">
+                <select id="archived" class="selectpicker" data-style="btn-details" data-width="auto">
                   <option value="all">All</option>
                   <option value="current">Current</option>
                   <option value="archived">Archived</option>
