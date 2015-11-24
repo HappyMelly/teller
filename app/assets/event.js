@@ -101,16 +101,15 @@ function showDetails(object, container) {
     });
 }
 
-// TESting !!!!
-
+/**
+    Writes the html for events details.
+*/
 function format(object, data){
     var url = jsRoutes.controllers.Events.detailsButtons(data.event.id).url;
     $.get(url).done(function(data2){
         object(data2);
     });
 }
-
-// TEsting !!!!
 
 function hideDetails(object, container) {
     if (container == "table") {
@@ -129,7 +128,6 @@ function hideAllDetails() {
         removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
     $('tr.active').removeClass('active');
     $('div.active').removeClass('active');
-    // $('.event-details').remove();
 }
 
 /**
@@ -149,7 +147,7 @@ function toggleDetails(object, container) {
 /**
 */
 function initializeEventActions(container) {
-  var elem = $('.circle-show-more')
+  var elem = $('.circle-show-more');
   // var ev = $._data(elem, 'events');
   // console.log("Event[" + ev + "]");
   // if(typeof ev === "undefined" || !ev.click) {

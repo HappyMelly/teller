@@ -164,6 +164,7 @@ $(document).ready( function() {
             tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-down');
             tr.children('.details-control').children('.circle-show-more').removeClass('active');
             tr.removeClass('shown active');
+
           } else {
             // Open this row
             var details = row.child;
@@ -173,7 +174,7 @@ $(document).ready( function() {
             tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-up');
             tr.children('.details-control').children('.circle-show-more').addClass('active');
             tr.addClass('shown active');
-          }
+        }
       });
 
     $("body").css("cursor", "progress");

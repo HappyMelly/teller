@@ -40,7 +40,7 @@ table.dataTable > thead > tr > th {
   }
 
   &.sorting:after {
-    content: "\f";
+    content: "\f0dc";
     padding-top: 0.12em;
   }
 
@@ -52,11 +52,19 @@ table.dataTable > thead > tr > th {
     content: "\f15e";
   }
 
-  #date.sorting_asc:after {
+  &#date.sorting_asc:after {
     content: "\f160";
   }
 
-  #date.sorting_desc:after{
+  &#date.sorting_desc:after{
     content: "\f161";
+  }
+
+  &#hours.sorting_asc:after{
+    content: "\f162";
+  }
+
+  &#hours.sorting_desc:after{
+    content: "\f163";
   }
 }
