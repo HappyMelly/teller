@@ -58,107 +58,13 @@ function getPastEvents(brand) {
     });
 }
 
-function addDetailsToTable(object, data) {
-    var row = $(object).parents('tr').first();
-    var tableContainer = $("<tr class='event-details active'>").append(
-        $("<td colspan='10'>").append(data));
-    $(row).addClass('active').after(tableContainer);
-}
-
-function addDetailsToList(object, data) {
-    var body = $(object).parents('.list-group-item-body').first();
-    var div = $("<div class='row list-group-item-text event-details'>").append(
-        $("<div class='evaluation-overview col-md-12'>").append(data));
-    $(body).append(div);
-    $(object).parents('.list-group-item').addClass('active');
-}
-
-function removeDetailsFromTable(object) {
-    $(object).parents('tr').first().removeClass('active');
-}
-
-function removeDetailsFromList(object) {
-    $(object).parents('.list-group-item').removeClass('active');
-}
-
 /**
- * Shows details  of events
- * @param object {object} Action button
- * @param container {string} Type of container (table or link)
+ *   Writes the html for events details.
+ *   @param object {} , data {}
  */
-function showDetails(object, container) {
-    var url = jsRoutes.controllers.Events.detailsButtons($(object).data('event')).url;
-    $.get(url, {}, function(data) {
-        if (container == "table") {
-            addDetailsToTable(object, data);
-        } else {
-            addDetailsToList(object,data);
-        }
-        $(object).children('span').removeClass('glyphicon-chevron-down').
-        addClass('glyphicon-chevron-up');
-        $(object).addClass('active');
-        // initializeParticipantActionsInDetails(container);
-    });
-}
-
-/**
-    Writes the html for events details.
-*/
 function format(object, data){
     var url = jsRoutes.controllers.Events.detailsButtons(data.event.id).url;
     $.get(url).done(function(data2){
         object(data2);
     });
-}
-
-function hideDetails(object, container) {
-    if (container == "table") {
-        removeDetailsFromTable(object);
-    } else {
-        removeDetailsFromList(object);
-    }
-    $(object).children('span').removeClass('glyphicon-chevron-up').
-        addClass('glyphicon-chevron-down');
-    $('.event-details').remove();
-    $(object).removeClass('active');
-}
-
-function hideAllDetails() {
-    $('.circle-show-more').removeClass('active').find('span').
-        removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
-    $('tr.active').removeClass('active');
-    $('div.active').removeClass('active');
-}
-
-/**
- * Shows/hides details
- * @param object {object} Action button
- * @param container {string} Type of container (table or list)
- */
-function toggleDetails(object, container) {
-    if ($(object).hasClass('active')) {
-        hideDetails(object, container);
-    } else {
-        hideAllDetails();
-        showDetails(object, container);
-    }
-}
-
-/**
-*/
-function initializeEventActions(container) {
-  var elem = $('.circle-show-more');
-  // var ev = $._data(elem, 'events');
-  // console.log("Event[" + ev + "]");
-  // if(typeof ev === "undefined" || !ev.click) {
-    elem.on('click', function(){
-      toggleDetails($(this), container);
-    });
-  // }
-  // $('.circle-show-more').on('click', function() {
-      // var ev = $._data(this, 'events');
-      // console.log(ev.click);
-      // if(ev && !ev.click)
-        // toggleDetails($(this), container);
-  // });
 }

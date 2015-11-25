@@ -128,12 +128,12 @@ $(document).ready( function() {
             "render": function(data) {
               if(data.free)
                 return '<span class="glyphicon glyphicon-ok"/> Free';
-              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon glyphicon-minus"/> No';
+              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon"/> No';
             },
             "targets": 6
         },{
             "render": function(data) {
-              return data ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon glyphicon-minus" aria-hidden="true"/> No';
+              return data ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon" aria-hidden="true"/> No';
             },
             "targets": 7
         },{
@@ -153,16 +153,17 @@ $(document).ready( function() {
           $("body").css("cursor", "default");
       });
 
-
       $('#events tbody').on('click', 'td.details-control', function(){
           var tr = $(this).closest('tr');
           var row = events.api().row(tr);
+          var chevronCol = tr.children('.details-control').children('.circle-show-more');
+          var chevron = tr.children('.details-control').children('.circle-show-more').children('span');
 
           if(row.child.isShown()){
             row.child.hide();
-            tr.children('.details-control').children('.circle-show-more').children('span').removeClass('glyphicon-chevron-up');
-            tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-down');
-            tr.children('.details-control').children('.circle-show-more').removeClass('active');
+            chevron.removeClass('glyphicon-chevron-up');
+            chevron.addClass('glyphicon-chevron-down');
+            chevronCol.removeClass('active');
             tr.removeClass('shown active');
 
           } else {
@@ -170,9 +171,9 @@ $(document).ready( function() {
             var details = row.child;
             details('').show();
             format(details, row.data());
-            tr.children('.details-control').children('.circle-show-more').children('span').removeClass('glyphicon-chevron-down');
-            tr.children('.details-control').children('.circle-show-more').children('span').addClass('glyphicon-chevron-up');
-            tr.children('.details-control').children('.circle-show-more').addClass('active');
+            chevron.removeClass('glyphicon-chevron-down');
+            chevron.addClass('glyphicon-chevron-up');
+            chevronCol.addClass('active');
             tr.addClass('shown active');
         }
       });

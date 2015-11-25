@@ -308,15 +308,9 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
 
 
   def detailsButtons(id: Long) = SecuredRestrictedAction(Viewer){ implicit request =>
-    implicit handler => implicit user =>
-        eventService.findWithInvoice(id) map { x =>
-           val eventType = eventTypeService.find(x.event.eventTypeId).get
-           val fees = feeService.findByBrand(x.event.brandId)
-           val event = fees.find(_.country == x.event.location.countryCode) map { y =>
-             Event.withFee(x.event, y.fee, eventType.maxHours)
-           } getOrElse x.event
-          Ok(views.html.v2.event.details_buttons(EventView(event, x.invoice)))
-        } getOrElse NotFound
+    implicit handler => implicit user => eventService.find(id) map { event =>
+        Ok(views.html.v2.event.detailsButtons(event))
+      } getOrElse NotFound
   }
 
   /**
