@@ -306,11 +306,13 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       }
   }
 
-
-  def detailsButtons(id: Long) = SecuredRestrictedAction(Viewer){ implicit request =>
-    implicit handler => implicit user => eventService.find(id) map { event =>
+  def detailsButtons(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒ 
+    implicit handler ⇒ implicit user ⇒
+    Future.successful {
+      eventService.find(id) map { event ⇒
         Ok(views.html.v2.event.detailsButtons(event))
       } getOrElse NotFound
+    }
   }
 
   /**
