@@ -63,38 +63,38 @@ body.unauthorized {
             @icon-grey 1px,
             @light-grey 3px,
             @light-grey 2px
-    );;
-    padding-top: 140px;
+    );
   }
-  .action-block {
-    padding: 20px 46px 46px 46px;
+  .subpage {
+    margin-top: 140px;
     width: 710px;
-    height: 423px;
-    background-color: white;
     display: inline-block;
-    border-radius: 10px;
-    box-shadow: 0 0 7px 1px @grey;
-    &.registration {
-      height: 710px;
+    .action-block {
+      padding: 20px 46px 46px 46px;
+      height: 423px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 7px 1px @grey;
+      .column {
+        width: 45%;
+        float: left;
+      }
+      .middle-column {
+        width: 10%;
+        float: left;
+        background-image: url('../images/login-or.png');
+      }
+      .action-area {
+        padding-top: 25px;
+      }
+      .join-now {
+        font-family: "kg_skinny_latteregular";
+        text-transform: uppercase;
+        font-size: 24px;
+        padding-top: 10px;
+      }
     }
-    .column {
-      width: 45%;
-      float: left;
-    }
-    .middle-column {
-      width: 10%;
-      float: left;
-      background-image: url('../images/login-or.png');
-    }
-    .action-area {
-      padding-top: 25px;
-    }
-    .join-now {
-      font-family: "kg_skinny_latteregular";
-      text-transform: uppercase;
-      font-size: 24px;
-      padding-top: 10px;
-    }
+
   }
   .bottom-stripe {
     width: 100%;

@@ -1,4 +1,4 @@
-@()(implicit request: Request[Any])
+@()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.Assets.at,
@@ -45,6 +45,7 @@
   routes.javascript.People.renderTabs,
   routes.javascript.Products.activation,
   routes.javascript.ProfileStrengths.personWidget,
+    routes.javascript.Registration.step1,
   routes.javascript.Statistics.byFacilitators,
   routes.javascript.Statistics.byEvents,
   routes.javascript.Statistics.byCountries,

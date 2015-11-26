@@ -18,17 +18,11 @@
   Stripe.setPublishableKey("@apiKey");
 </script>
 
-<div class="col-md-8 col-md-offset-2">
-  @org.map { organisation =>
-  <h1 class="text-center">Make My Organisation a Supporter</h1>
-  }.getOrElse {
-    <h1 class="text-center">Become a Supporter</h1>
-  }
   <div class="row">
-    <p class="payment-bottom-space">
+    <div class="text-left">
       To be a Happy Melly Supporter, all you need is to do is pay a small annual membership fee.
       The minimum fee amount depends on the country you live in.
-    </p>
+    </div>
     <form class="form-inline payment-bottom-space"
       action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
       method="POST" id="payment-form" autocomplete="on">
@@ -36,7 +30,6 @@
       @org.map { organisation =>
         <input type="hidden" name="orgId" value="@organisation.id.getOrElse(0)"/>
       }
-      <legend>Step 1: Fee</legend>
       <div class="row payment-bottom-space fee">
         <div class="form-group col-md-12 @if(form("fee").hasErrors) {error}">
           <div class="col-md-6 text-right">
@@ -134,20 +127,4 @@
         </div>
       </div>
     </form>
-    <div class="row">
-      <div class="col-md-2">
-        <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")"/>
-      </div>
-      <div class="col-md-10">
-        <p class="text-muted">Happy Melly does not store your card details. All payments are securily
-          processed by <a href="http://stripe.com" target="_blank">Stripe, Inc.</a>
-            </p>
-        <p class="text-muted">
-              The information transfer is secured and verified by SSL 128 bit certificate
-          issued by RapidSSL. Web site fully satisfies the security standards of
-          Visa and Mastercard (PCI compliancy).
-        </p>
-      </div>
-    </div>
   </div>
-</div>

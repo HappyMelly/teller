@@ -17,19 +17,47 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+@import "settings";
 
-jQuery(function($) {
-    $('input[type=radio][name=supporterType]').change(function () {
-        var url = '';
-        if (this.value == 'person') {
-            url = jsRoutes.controllers.Registration.step1(false).url;
-        } else {
-            url = jsRoutes.controllers.Registration.step1(true).url;
+body.unauthorized {
+  .subpage {
+    margin-top: 100px;
+    .action-block {
+      &.registration {
+        height: 710px;
+      }
+    }
+
+    .registration-menu {
+      margin-bottom: 10px;
+      span {
+        padding-right: 15px;
+        &.inactive {
+          color: @warm-grey;
         }
-        $('#registrationButton').attr('href', url);
-    });
-});
+      }
+    }
+  }
+  .welcome {
+    .selector {
+      margin-top: 20px;
+    }
+    .button-line {
+      margin-top: 30px;
+    }
+  }
+  .congratulation {
+    .right-column {
+      text-align: left;
+      padding-top: 30px;
+      .action-button {
+        margin-top: 30px;
+        width: 80%;
+      }
+    }
+  }
+}
