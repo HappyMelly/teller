@@ -1,9 +1,15 @@
 @()(implicit request: Request[Any])
 
-@import securesocial.core.providers.UsernamePasswordProvider.UsernamePassword
-@import securesocial.core.AuthenticationMethod._
-
-@v2.layout.unauthorized("Welcome") {
+@v2.layout.unauthorized("Create account") {
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <div class="registration-menu">
+        <span>Join Happy Melly</span>
+        <span>Create account</span>
+        <span class="inactive">Personal Data</span>
+        <span class="inactive">Organisation Data</span>
+        <span class="inactive">Payment</span>
+        <span class="inactive">Congratulations</span>
+    </div>
     <div class="action-block registration">
         <h3>Create Account</h3>
         <div class="action-area">

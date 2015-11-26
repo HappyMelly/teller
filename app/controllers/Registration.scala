@@ -140,7 +140,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
         val form = userForm.bind(Map(("firstName", firstName),
           ("lastName", lastName),
           ("email", user.identity.profile.email.getOrElse(""))))
-        Ok(views.html.registration.step2(user, form))
+        Ok(views.html.v2.registration.step2(user, form))
       }
   }
 
@@ -150,7 +150,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        Ok(views.html.registration.step3(user, orgForm))
+        Ok(views.html.v2.registration.step3(user, orgForm))
       }
   }
 
@@ -161,7 +161,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
         userForm.bindFromRequest.fold(
-          errForm ⇒ BadRequest(views.html.registration.step2(user, errForm)),
+          errForm ⇒ BadRequest(views.html.v2.registration.step2(user, errForm)),
           data ⇒ {
             val id = personCacheId(user.identity.profile.userId)
             Cache.set(id, data, 900)
@@ -185,7 +185,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       redirectViewer {
         checkPersonData { implicit userData ⇒
           orgForm.bindFromRequest.fold(
-            errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
+            errForm ⇒ BadRequest(views.html.v2.registration.step3(user, errForm)),
             data ⇒ {
               val id = personCacheId(user.identity.profile.userId)
               Cache.set(id, userData.copy(org = true, orgData = data), 900)
@@ -210,7 +210,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
           else
             None
           val fee = Payment.countryBasedFees(country)
-          Ok(views.html.registration.payment(paymentForm, person, publicKey, fee, org))
+          Ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, org))
         }
       }
   }
@@ -294,9 +294,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
     orgId map { id ⇒
-      Ok(views.html.registration.congratulations(routes.Organisations.details(id).url, true))
+      Ok(views.html.v2.registration.congratulations(routes.Organisations.details(id).url, true))
     } getOrElse {
-      Ok(views.html.registration.congratulations(routes.Dashboard.profile().url, false))
+      Ok(views.html.v2.registration.congratulations(routes.Dashboard.profile().url, false))
     }
   }
 
