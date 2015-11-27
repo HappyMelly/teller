@@ -36,7 +36,7 @@ import securesocial.core.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Future, Await}
 
 /**
  * Used by SecureSocial to look up and save authentication data.
@@ -102,8 +102,14 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param info the password info
    * @return
    */
-  def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] =
-    Future.successful(None)
+  def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
+    user.account.email map { email =>
+      userIdentityService.findByEmail(email) map { identity =>
+
+        Future.successful(None)
+      } getOrElse Future.successful(None)
+    } getOrElse Future.successful(None)
+  }
 
   /**
    * Creates new user and adds its data to database
@@ -145,9 +151,8 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param identity User identity
    */
   protected def unregisteredActiveUser(identity: UserIdentity): ActiveUser = {
-    val account = new UserAccount(None, 0, None, None, None, None)
-    val person = Person(identity.profile.firstName.getOrElse(""),
-      identity.profile.lastName.getOrElse(""))
+    val account = UserAccount.empty(0)
+    val person = Person(identity.profile.firstName.getOrElse(""), identity.profile.lastName.getOrElse(""))
     ActiveUser(identity, account, person)
   }
 

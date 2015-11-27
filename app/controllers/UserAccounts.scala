@@ -29,8 +29,14 @@ import models._
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.Messages
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import securesocial.controllers.{BaseRegistration, ChangeInfo}
+import securesocial.core.providers.UsernamePasswordProvider
+import securesocial.core.{PasswordInfo, AuthenticationMethod, BasicProfile, RuntimeEnvironment}
+import securesocial.core.providers.utils.PasswordValidator
+
+import scala.concurrent.{Await, Future}
 
 /**
  * User administration controller.
@@ -42,9 +48,87 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
+  val CurrentPassword = "currentPassword"
+  val NewPassword = "newPassword"
+  val InvalidPasswordMessage = "securesocial.passwordChange.invalidPassword"
+  val Password1 = "password1"
+  val Password2 = "password2"
+  val OkMessage = "securesocial.passwordChange.ok"
+
+  val newPasswordForm = Form[String](
+    mapping(
+      NewPassword ->
+        tuple(
+          Password1 -> nonEmptyText.verifying(PasswordValidator.constraint),
+          Password2 -> nonEmptyText
+        ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
+    )((newPassword) => newPassword._1)((password: String) => Some(("", ""))))
+
+  def changePasswordForm(implicit user: ActiveUser) = Form[ChangeInfo](
+    mapping(
+      CurrentPassword ->
+        nonEmptyText.verifying(Messages(InvalidPasswordMessage), { suppliedPassword =>
+          import scala.concurrent.duration._
+          Await.result(checkCurrentPassword(suppliedPassword), 10.seconds)
+        }),
+      NewPassword ->
+        tuple(
+          Password1 -> nonEmptyText.verifying(PasswordValidator.constraint),
+          Password2 -> nonEmptyText
+        ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
+
+    )((currentPassword, newPassword) => ChangeInfo(currentPassword, newPassword._1))((changeInfo: ChangeInfo) => Some(("", ("", ""))))
+  )
+
   val userForm = Form(tuple(
     "personId" -> longNumber,
     "role" -> optional(text)))
+
+  def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+    implicit handler => implicit user => Future.successful {
+      if (user.account.password.isEmpty) {
+        Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
+      } else {
+        Ok(views.html.v2.userAccount.account(user, changePasswordForm))
+      }
+    }
+  }
+
+  /**
+    * checks if the supplied password matches the stored one
+    * @param suppliedPassword the password entered in the form
+    * @param user the current user
+    * @return a future boolean
+    */
+  def checkCurrentPassword(suppliedPassword: String)(implicit user: ActiveUser): Future[Boolean] = {
+    env.userService.passwordInfoFor(user).map {
+      case Some(info) =>
+        env.passwordHashers.get(info.hasher).exists {
+          _.matches(info, suppliedPassword)
+        }
+      case None => false
+    }
+  }
+
+  /**
+    * Creates new password for a current user
+    */
+  def handleNewPassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+    implicit handler => implicit user =>
+      Future.successful {
+        newPasswordForm.bindFromRequest().fold(
+          errors => BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
+          password => {
+            val account = createPasswordInfo(user, env.currentHasher.hash(password))
+            env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+              _.updateUser(ActiveUser(user.identity, account, user.person, user.person.member))
+            })
+            Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage))
+          }
+        )
+      }
+  }
+
 
   /**
    * Switches active role to Facilitator if it was Brand Coordinator, and
@@ -61,4 +145,44 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       Redirect(request.headers("referer"))
   }
 
+  /**
+    * Creates new password identity record for a given user
+    *
+    * @param user a user instance
+    * @param info the password info
+    */
+  protected def createPasswordInfo(user: ActiveUser, info: PasswordInfo): UserAccount = {
+    val profile = BasicProfile(UsernamePasswordProvider.UsernamePassword, user.account.email.get,
+      Some(user.person.firstName), Some(user.person.lastName), Some(user.person.fullName),
+      user.account.email, None, AuthenticationMethod.UserPassword, None, None, Some(info))
+    val identity = UserIdentity(None, profile, "", None, None, None, None)
+    userIdentityService.insert(identity)
+    userAccountService.update(user.account.copy(password = Some(info.password)))
+  }
+
+
+  private def execute(f: Form[ChangeInfo] => Future[Result])(implicit user: ActiveUser): Future[Result] = {
+    val form = Form[ChangeInfo](
+      mapping(
+        CurrentPassword ->
+          nonEmptyText.verifying(Messages(InvalidPasswordMessage), { suppliedPassword =>
+            import scala.concurrent.duration._
+            Await.result(checkCurrentPassword(suppliedPassword), 10.seconds)
+          }),
+        NewPassword ->
+          tuple(
+            Password1 -> nonEmptyText.verifying(PasswordValidator.constraint),
+            Password2 -> nonEmptyText
+          ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
+
+      )((currentPassword, newPassword) => ChangeInfo(currentPassword, newPassword._1))((changeInfo: ChangeInfo) => Some(("", ("", ""))))
+    )
+
+    env.userService.passwordInfoFor(user).flatMap {
+      case Some(info) =>
+        f(form)
+      case None =>
+        Future.successful(Forbidden)
+    }
+  }
 }

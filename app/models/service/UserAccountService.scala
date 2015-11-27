@@ -90,6 +90,7 @@ class UserAccountService {
     */
   def update(account: UserAccount) = DB.withSession { implicit session =>
     TableQuery[UserAccounts].filter(_.id === account.id).update(account)
+    account
   }
 
   /**

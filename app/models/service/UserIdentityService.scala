@@ -39,7 +39,14 @@ class UserIdentityService {
   private val identities = TableQuery[UserIdentities]
 
   /**
-   * @TEST
+    * Returns an identify for the given email if exists
+    * @param email Email address
+    */
+  def findByEmail(email: String): Option[UserIdentity] = DB.withSession {
+    implicit session ⇒ identities.filter(_.email === email).firstOption
+  }
+
+  /**
    * @param token
    * @return
    */
@@ -179,6 +186,7 @@ class UserIdentityService {
         identities.filter(_.uid === existing.uid).update(identity)
         identity
     }
+
 }
 
 object UserIdentityService {
