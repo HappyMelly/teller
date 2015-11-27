@@ -36,6 +36,8 @@ import scala.collection.mutable.ListBuffer
  */
 case class UserAccount(id: Option[Long],
                        personId: Long,
+                       email: Option[String],
+                       password: Option[String],
                        twitterHandle: Option[String],
                        facebookUrl: Option[String],
                        linkedInUrl: Option[String],
@@ -79,5 +81,5 @@ object UserAccount {
     * Returns an empty user account for the given person
     * @param personId Person identifier
     */
-  def empty(personId: Long): UserAccount = UserAccount(None, personId, None, None, None, None)
+  def empty(personId: Long): UserAccount = UserAccount(None, personId, None, None, None, None, None, None)
 }
