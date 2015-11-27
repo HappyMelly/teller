@@ -306,6 +306,15 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
       }
   }
 
+  def detailsButtons(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒ 
+    implicit handler ⇒ implicit user ⇒
+    Future.successful {
+      eventService.find(id) map { event ⇒
+        Ok(views.html.v2.event.detailsButtons(event))
+      } getOrElse NotFound
+    }
+  }
+
   /**
    * Edit page.
    * @param id Event ID
@@ -356,6 +365,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             "url" -> routes.People.details(data.id.get).url)
         }
       }
+
       implicit val eventWrites = new Writes[EventView] {
         def writes(data: EventView): JsValue = {
           Json.obj(
@@ -366,11 +376,13 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             "location" -> Json.obj(
               "online" -> data.event.location.online,
               "country" -> data.event.location.countryCode.toLowerCase,
+              "countryName" -> data.event.location.countryName,
               "city" -> data.event.location.city),
             "facilitators" -> data.event.facilitators,
             "schedule" -> Json.obj(
               "start" -> data.event.schedule.start.toString,
-              "end" -> data.event.schedule.end.toString),
+              "end" -> data.event.schedule.end.toString,
+              "formatted" -> data.event.schedule.formatted),
             "totalHours" -> data.event.schedule.totalHours,
             "confirmed" -> data.event.confirmed,
             "invoice" -> Json.obj(
@@ -378,10 +390,13 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
               "invoice" -> (if (data.invoice.invoiceBy.isEmpty) { "No" } else { "Yes" })),
             "actions" -> {
               Json.obj(
+                "event_id" -> data.event.id,
                 "edit" -> routes.Events.edit(data.event.id.get).url,
                 "duplicate" -> routes.Events.duplicate(data.event.id.get).url,
                 "cancel" -> routes.Events.cancel(data.event.id.get).url)
-            })
+            },
+            "materials" -> data.event.materialsLanguage
+          )
         }
       }
 

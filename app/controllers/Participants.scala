@@ -352,7 +352,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "title" -> data.event.title,
                 "longTitle" -> data.event.longTitle),
               "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
-              "schedule" -> dateInterval(data.event.schedule.start, data.event.schedule.end),
+              "schedule" -> data.event.schedule.formatted,
               "evaluation" -> evaluation(data),
               "participant" -> Json.obj(
                 "person" -> data.person.identifier,

@@ -71,44 +71,10 @@ function makeRequestUrl() {
     return request;
 }
 
-/**
- * Render a dropdown with actions for an event
- *
- * @param data {object}
- * @returns {string}
- */
-function renderDropdown(data) {
-    var emptyDropdown = true;
-    var html = '<div class="dropdown">';
-    html += '<a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-tasks"></i></a>';
-    html += '<ul class="dropdown-menu pull-right" aria-labelledby="dLabel">';
-    if ('edit' in data && data.edit) {
-        if ('edit' in data && data.edit) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.edit;
-            html += '" title="Edit Event"><i class="glyphicon glyphicon-pencil"></i> Edit</a></li>';
-        }
-        if ('duplicate' in data && data.duplicate) {
-            emptyDropdown = false;
-            html += '<li><a tabindex="-1" href="' + data.duplicate;
-            html += '" title="Duplicate Event"><i class="glyphicon glyphicon-edit"></i> Duplicate</a></li>';
-        }
-        if ('cancel' in data && data.cancel) {
-            emptyDropdown = false;
-            html += '<li><a class="delete" tabindex="-1" href="#cancelDialog" data-href="' + data.cancel;
-            html += '" data-toggle="modal" title="Cancel Event"><i class="glyphicon glyphicon-trash"></i> Cancel</a></li>';
-        }
-    }
-    html += '</ul></div>';
-    if (emptyDropdown) {
-        return '';
-    }
-    return html;
-}
-
 $(document).ready( function() {
 
-    var events = $('#events').dataTable({
+    var events = $('#events')
+      .dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
@@ -126,70 +92,93 @@ $(document).ready( function() {
             { "data": "location" },
             { "data": "schedule" },
             { "data": "totalHours" },
+            { "data": "materials" },
             { "data": "invoice" },
             { "data": "confirmed" },
-            { "data": "actions" }
+            { "data": "actions",
+              "className": 'details-control',
+              "orderable": false
+           }
         ],
         "columnDefs": [{
             "render": function(data) {
                 return '<a href="' + data.url + '">' + data.title + '</a>';
             },
             "targets": 0
-        }, {
-            "render": function(data) {
-                var html = '';
-                for (var i = 0; i < data.length; i++) {
-                    html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
-                }
-                return html;
-            },
-            "targets": 1
+        },{
+             "render": function(data) {
+                 var html = '';
+                 for (var i = 0; i < data.length; i++) {
+                     html += '<div><a href="' + data[i].url + '">' + data[i].name + '</a><br/></div>';
+                 }
+                 return html;
+             },
+             "targets": 1
         },{
             "render": function(data) {
-                if (data.online) {
-                    return data.city;
-                } else {
-                    return '<img align="absmiddle" width="16" src="/assets/images/flags/16/' +
-                        data.country + '.png"/> ' + data.city;
-                }
+                return data.city + ", " + data.countryName;
             },
             "targets": 2
-        }, {
+        },{
             "render": function(data) {
-                return data.start + ' / ' + data.end;
+                return data.formatted;
             },
             "targets": 3
-        }, {
+        },{
             "render": function(data) {
-                if(data.free) {
-                    return '<span class="label label-success">free</span>';
-                } else {
-                    return data.invoice;
-                }
-            },
-            "targets": 5
-        }, {
-            "render": function(data) {
-                if(data) {
-                    return '<span class="label label-success">yes</span>';
-                } else {
-                    return '<span class="label label-danger">no</span>';
-                }
+              if(data.free)
+                return '<span class="glyphicon glyphicon-ok"/> Free';
+              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon"/> No';
             },
             "targets": 6
         },{
             "render": function(data) {
-                return renderDropdown(data);
+              return data ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon" aria-hidden="true"/> No';
             },
-            "targets": 7,
-            "orderable": false
+            "targets": 7
+        },{
+            "render": function(data) {
+                var html = '<div class="circle-show-more" data-event="' + data.event_id + '"';
+                html += ' data-person="' + data.person + '">';
+                html += '<span class="glyphicon glyphicon-chevron-down"></span></div>';
+                return html;
+            },
+            "targets": 8,
+            "bSortable": false
         }]
     });
-    $("body").css("cursor", "progress");
-    events.on( 'xhr.dt', function () {
-        $("body").css("cursor", "default");
-    });
 
+    events
+      .on('xhr.dt', function(){
+          $("body").css("cursor", "default");
+      });
+
+      $('#events tbody').on('click', 'td.details-control', function(){
+          var tr = $(this).closest('tr');
+          var row = events.api().row(tr);
+          var chevronCol = tr.children('.details-control').children('.circle-show-more');
+          var chevron = tr.children('.details-control').children('.circle-show-more').children('span');
+
+          if(row.child.isShown()){
+            row.child.hide();
+            chevron.removeClass('glyphicon-chevron-up');
+            chevron.addClass('glyphicon-chevron-down');
+            chevronCol.removeClass('active');
+            tr.removeClass('shown active');
+
+          } else {
+            // Open this row
+            var details = row.child;
+            details('').show();
+            format(details, row.data());
+            chevron.removeClass('glyphicon-chevron-down');
+            chevron.addClass('glyphicon-chevron-up');
+            chevronCol.addClass('active');
+            tr.addClass('shown active');
+        }
+      });
+
+    $("body").css("cursor", "progress");
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
 
@@ -203,7 +192,9 @@ $(document).ready( function() {
                 $("body").css("cursor", "default");
             });
     }
-    $('#past-future').on('change', function() { updateTable(); });
+
+    // filtering events for "Events"
+    $('#past-future').on('change', function() { updateTable();});
     $('#private').on('change', function() { updateTable(); });
     $('#archived').on('change', function() {  updateTable(); });
     $('#facilitators').on('change', function() { updateTable(); });
@@ -213,6 +204,7 @@ $(document).ready( function() {
     $("#events").on('click', '.delete', function(){
         $("#cancelLink").attr('href', $(this).data('href'));
     });
+
     $('#cancelLink').on('click', function(e) {
         e.preventDefault();
         $.ajax({

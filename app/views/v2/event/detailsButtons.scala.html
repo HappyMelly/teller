@@ -1,0 +1,23 @@
+@(event: Event)
+<div class="buttons">
+  <div class="buttons-block">
+    @if(!event.confirmed) {
+      <a href="#" data-id="@event.identifier" class="btn btn-primary event-confirm">
+        Confirm
+      </a>
+    } else {
+      <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+    }
+    <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
+      Edit
+    </a>
+  </div>
+  <div class="buttons-block">
+    <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
+      Duplicate
+    </a>
+    <a data-id="@event.identifier" class="btn btn-default event-cancel"
+      id="cancelButton" @if(!event.deletable) {disabled="disabled"} >Cancel</a>
+  </div>
+</div>
+<script src="@routes.Assets.at("element/events.js")" type="text/javascript"></script>

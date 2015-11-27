@@ -40,15 +40,47 @@ table.dataTable > thead > tr > th {
   }
 
   &.sorting:after {
-    content: "\f0dc";
+    content: "\f15d";
     padding-top: 0.12em;
   }
 
   &.sorting_asc:after {
-    content: "\f160";
+    content: "\f15d";
+    color: black;
   }
 
   &.sorting_desc:after {
+    content: "\f15e";
+    color: black;
+  }
+
+  &#date.sorting:after {
+    content: "\f160";
+    padding-top: 0.12em;
+  }
+
+  &#date.sorting_asc:after {
+    content: "\f160";
+    color: black;
+  }
+
+  &#date.sorting_desc:after{
     content: "\f161";
+    color: black;
+  }
+
+  &#hours.sorting:after {
+    content: "\f162";
+    padding-top: 0.12em;
+  }
+
+  &#hours.sorting_asc:after{
+    content: "\f162";
+    color: black;
+  }
+
+  &#hours.sorting_desc:after{
+    content: "\f163";
+    color: black;
   }
 }

@@ -57,3 +57,14 @@ function getPastEvents(brand) {
         showError("Sorry we don't know anything about the brand you try to request");
     });
 }
+
+/**
+ *   Writes the html for events details.
+ *   @param object {} , data {}
+ */
+function format(object, data){
+    var url = jsRoutes.controllers.Events.detailsButtons(data.event.id).url;
+    $.get(url).done(function(data2){
+        object(data2);
+    });
+}
