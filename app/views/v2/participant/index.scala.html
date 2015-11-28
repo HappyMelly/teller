@@ -21,14 +21,16 @@
         <div class="row">
           <div class="col-md-12 content-block">
             <div id="filter-containter">
-              <div class="table-filters pull-right">
+              <div class="table-filters pull-left">
+                Sort by events:
                 <div class="btn-group">
-                  <select id="events" class="input-sm form-control">
-                      <option value="">Select an event</option>
-                  </select>
+                  <select id="events" class="selectpicker" data-style="btn-details" data-live-search="true"></select>
                 </div>
-                <div class="btn-group">
-                  <select id="status" class="input-sm form-control">
+              </div>
+              <div class="table-filters pull-right">
+                By handled status:
+                <div class="btn-group" style="width=auto">
+                  <select id="status" class="selectpicker" data-style="btn-details" title="All">
                       <option value="all"></option>
                       <option value="3">Unconfirmed</option>
                       <option value="0">Pending</option>

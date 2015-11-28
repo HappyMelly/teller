@@ -50,11 +50,12 @@ $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
 
 function loadEventList(events) {
-    $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
+    $('#events').empty().append($("<option></option>").attr("value", "").text("All"));
     for(var i = 0; i < events.length; i++) {
         var event = events[i];
         $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
     }
+    $('#events').selectpicker('refresh');
 }
 
 
@@ -150,6 +151,7 @@ $(document).ready( function() {
     $('#status').on('change', function() {
         participantTable.fnDraw();
     });
+
     $("#events").on('change', function() {
         participantTable.fnDraw();
     });
@@ -161,5 +163,4 @@ $(document).ready( function() {
     $('#exportLink').on('click', function() {
         buildExportLink(false)
     });
-
 });
