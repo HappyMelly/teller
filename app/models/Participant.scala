@@ -25,10 +25,10 @@
 package models
 
 import models.database.PortableJodaSupport._
-import models.database.{ Participants, People, Events, Evaluations }
+import models.database.{Participants, People, Events, Evaluations}
 import models.database.Evaluations.evaluationStatusTypeMapper
 import models.service.{EvaluationService, PersonService, EventService}
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{DateTime, LocalDate}
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -45,15 +45,15 @@ import play.api.Play.current
  * @param comment Comment, used in email notification only. Not available in HM Teller UI
  */
 case class Participant(
-    id: Option[Long],
-    eventId: Long,
-    personId: Long,
-    evaluationId: Option[Long],
-    certificate: Option[String],
-    issued: Option[LocalDate],
-    organisation: Option[String],
-    comment: Option[String],
-    role: Option[String]) {
+                        id: Option[Long],
+                        eventId: Long,
+                        personId: Long,
+                        evaluationId: Option[Long],
+                        certificate: Option[String],
+                        issued: Option[LocalDate],
+                        organisation: Option[String],
+                        comment: Option[String],
+                        role: Option[String]) {
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
   lazy val person: Option[Person] = PersonService.get.find(personId)
@@ -94,14 +94,14 @@ case class Participant(
  * @param confirmationToken Token used in a confirmation url to identify an evaluation
  */
 case class ParticipantView(person: Person,
-    event: Event,
-    evaluationId: Option[Long],
-    impression: Option[Int],
-    status: Option[EvaluationStatus.Value],
-    date: Option[DateTime],
-    handled: Option[LocalDate],
-    certificate: Option[String],
-    confirmationToken: Option[String]) {
+                           event: Event,
+                           evaluationId: Option[Long],
+                           impression: Option[Int],
+                           status: Option[EvaluationStatus.Value],
+                           date: Option[DateTime],
+                           handled: Option[LocalDate],
+                           certificate: Option[String],
+                           confirmationToken: Option[String]) {
 
   override def equals(other: Any): Boolean =
     other match {
@@ -117,29 +117,32 @@ case class ParticipantView(person: Person,
 
   override def hashCode: Int =
     41 * (41 + person.id.get.toInt) + event.id.get.toInt
+
+  lazy val formattedHandledDate: String = views.ViewHelpersV2.formatted(handled.getOrElse(LocalDate.now()))
+
+  lazy val formattedEvaluationDate: String = views.ViewHelpersV2.formatted(date.getOrElse(DateTime.now()).toLocalDate())
 }
 
 /** This object is used to get data from a form **/
 case class ParticipantData(id: Option[Long],
-    eventId: Long,
-    firstName: String,
-    lastName: String,
-    birthday: Option[LocalDate],
-    emailAddress: String,
-    address: Address,
-    organisation: Option[String],
-    comment: Option[String],
-    role: Option[String],
-    created: DateTime = DateTime.now(),
-    createdBy: String,
-    updated: DateTime,
-    updatedBy: String) {
+                           eventId: Long,
+                           firstName: String,
+                           lastName: String,
+                           birthday: Option[LocalDate],
+                           emailAddress: String,
+                           address: Address,
+                           organisation: Option[String],
+                           comment: Option[String],
+                           role: Option[String],
+                           created: DateTime = DateTime.now(),
+                           createdBy: String,
+                           updated: DateTime,
+                           updatedBy: String) {
 
   lazy val event: Option[Event] = EventService.get.find(eventId)
 }
 
 object Participant {
-
 
   /**
    * Find all participants for all events of the specified brand
@@ -250,6 +253,7 @@ object Participant {
       data.role)
     Participant.insert(eventParticipant)
   }
+
 
   /**
    * Insert a participant to database

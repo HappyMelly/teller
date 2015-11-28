@@ -98,11 +98,9 @@ $(document).ready( function() {
                     }
                     return '<a href="' + data.url + '">' + data.title + '</a>';
                 },
-                "targets": 1,
-                "orderable": false
+                "targets": 1
             }, {
-                "targets": 2,
-                "orderable": false
+                "targets": 2
             }, {
                 "className": "evaluation-field",
                 "targets": [4, 5, 6, 7]
@@ -113,7 +111,6 @@ $(document).ready( function() {
             }, {
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 7,
-                "orderable": false,
                 "className": "certificate"
             }, {
                 "render": function(data) { return data.id; },
