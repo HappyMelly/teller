@@ -12,12 +12,15 @@
             @v2.html.block("") {
                 <h1>Manage account</h1>
             }
-            @v2.html.form(CSRF(routes.Experiments.create(user.account.personId))) {
+            @v2.html.form(CSRF(routes.UserAccounts.changePassword())) {
                 @v2.html.block("") {
                     <legend>Change password</legend>
-                    @v2.html.text(passwordForm("currentPassword"), '_label -> "Old password", '_required -> true, '_help -> "")
-                    @v2.html.text(passwordForm("newPassword.password1"), '_label -> "New password", '_required -> true, '_help -> "")
-                    @v2.html.text(passwordForm("newPassword.password2"), '_label -> "New password", '_required -> true, '_help -> "")
+                    @v2.html.password(passwordForm("currentPassword"), '_label -> "Old password",
+                        '_required -> true, '_help -> "")
+                    @v2.html.password(passwordForm("newPassword.password1"), '_label -> "New password",
+                        '_required -> true, '_help -> "")
+                    @v2.html.password(passwordForm("newPassword.password2"), '_label -> "New password",
+                        '_required -> true, '_help -> "")
                 }
                 @if(passwordForm.hasErrors) {
                     @v2.html.block("") {
