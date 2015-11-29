@@ -115,33 +115,44 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     */
   def handleNewPassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
-      Future.successful {
-        newPasswordForm.bindFromRequest().fold(
-          errors => BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
-          password => {
-            val account = createPasswordInfo(user, env.currentHasher.hash(password))
-            env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-              _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
-            })
-            Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage))
+      newPasswordForm.bindFromRequest().fold(
+        errors => Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))),
+        password => {
+          val account = createPasswordInfo(user, env.currentHasher.hash(password))
+          env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
+            _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
+          }).flatMap { _ =>
+            Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
           }
-        )
-      }
+        }
+      )
+  }
+
+  /**
+    * Changes the password for the current user
+    */
+  def changePassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+    implicit handler => implicit user =>
+      changePasswordForm.bindFromRequest().fold(
+        errors => Future.successful(BadRequest(views.html.v2.userAccount.account(user, errors))),
+        info => {
+          env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
+          Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
+        }
+      )
   }
 
   /**
    * Switches active role to Facilitator if it was Brand Coordinator, and
    *  visa versa
    */
-  def switchRole = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def switchRole = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account.copy(activeRole = !user.account.activeRole)
       userAccountService.updateActiveRole(user.account.personId, account.activeRole)
-      env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-        _.updateUser(ActiveUser(user.id, account, user.person,
-          user.person.member))
-      })
-      Redirect(request.headers("referer"))
+      env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
+        _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
+      }).flatMap(_ => Future.successful(Redirect(request.headers("referer"))) )
   }
 
   /**

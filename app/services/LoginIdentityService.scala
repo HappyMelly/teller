@@ -64,7 +64,6 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param mode a mode that tells you why the save method was called
    */
   def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
-    println(mode)
     val user = mode match {
       case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
       case SaveMode.SignUp ⇒ createUser(profile)
@@ -73,7 +72,6 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
   }
 
   def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] = {
-    println(email)
     Future.successful(None)
   }
 
@@ -98,9 +96,10 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param user a user instance
    * @return returns an optional PasswordInfo
    */
-  def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] = {
-    println(user)
-    Future.successful(None)
+  def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] = Future.successful {
+    identityService.findByEmail(user.person.socialProfile.email) map { identity =>
+      Some(PasswordInfo(identity.hasher, identity.password))
+    } getOrElse None
   }
 
   /**
@@ -111,11 +110,9 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @return
    */
   def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
-    user.account.email map { email =>
-      identityService.findByEmail(email) map { identity =>
-
-        Future.successful(None)
-      } getOrElse Future.successful(None)
+    identityService.findByEmail(user.person.socialProfile.email) map { identity =>
+      identityService.update(identity.copy(password = info.password, hasher = info.hasher))
+      Future.successful(None)
     } getOrElse Future.successful(None)
   }
 

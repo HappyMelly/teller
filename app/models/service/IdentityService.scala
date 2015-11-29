@@ -216,6 +216,15 @@ class IdentityService {
   }
 
   /**
+    * Updates the given identity in the database
+    * @param identity Identity object
+    */
+  def update(identity: PasswordIdentity): PasswordIdentity = DB.withSession { implicit session =>
+    TableQuery[PasswordIdentities].filter(_.email === identity.email).update(identity)
+    identity
+  }
+
+  /**
    * Updates the given idenitity
    * @param updated Updated identity
    * @param existing Existing identity
