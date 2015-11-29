@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.UserIdentity
+import models.SocialIdentity
 import play.api.db.slick.Config.driver.simple._
 import scala.language.implicitConversions
 import securesocial.core.{ BasicProfile, OAuth2Info, OAuth1Info, AuthenticationMethod }
@@ -32,7 +32,7 @@ import securesocial.core.{ BasicProfile, OAuth2Info, OAuth1Info, AuthenticationM
 /**
  * `LoginIdentity` database table mapping.
  */
-private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, "LOGIN_IDENTITY") {
+private[models] class SocialIdentities(tag: Tag) extends Table[SocialIdentity](tag, "SOCIAL_IDENTITY") {
 
   implicit def string2AuthenticationMethod = MappedColumnType.base[AuthenticationMethod, String](
     authenticationMethod ⇒ authenticationMethod.method,
@@ -73,7 +73,10 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
   // oAuth 2
   def accessToken = column[Option[String]]("ACCESS_TOKEN")
 
-  type UserIdentityFields = (Option[Long], String, String, Option[String], Option[String], Option[String], Option[String], Option[String], AuthenticationMethod, Option[String], Option[String], Option[String], Option[String], Option[Int], Option[String], String, Option[String], Option[String], Option[String], Option[String])
+  type SocialIdentitiesFields = (Option[Long], String, String, Option[String], Option[String],
+    Option[String], Option[String], Option[String], AuthenticationMethod, Option[String], Option[String],
+    Option[String], Option[String], Option[Int], Option[String], String,
+    Option[String], Option[String], Option[String], Option[String])
 
   def * = (uid.?,
     userId, providerId,
@@ -87,10 +90,10 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
     accessToken, tokenType, expiresIn, refreshToken,
     apiToken,
     twitterHandle, facebookUrl, googlePlusUrl, linkedInUrl) <> (
-      (u: UserIdentityFields) ⇒ UserIdentity(u._1, BasicProfile(u._2, u._3, u._4, u._5,
+      (u: SocialIdentitiesFields) ⇒ SocialIdentity(u._1, BasicProfile(u._2, u._3, u._4, u._5,
         u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15),
         None), u._16, u._17, u._18, u._19, u._20),
-      (u: UserIdentity) ⇒ {
+      (u: SocialIdentity) ⇒ {
         Some((u.uid, u.profile.userId, u.profile.providerId, u.profile.firstName,
           u.profile.lastName, u.profile.fullName, u.profile.email,
           u.profile.avatarUrl, u.profile.authMethod,

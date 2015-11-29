@@ -84,7 +84,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Financial account"
@@ -95,7 +95,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("supporter")
@@ -108,7 +108,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("funder")
@@ -118,7 +118,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.coordinator)
+    controller.identity_=(FakeSocialIdentity.coordinator)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("Make a Facilitator")
@@ -134,7 +134,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       Money.parse("EUR 10"), None)
     val licenses = List(LicenseView(BrandHelper.one, license))
     licenseService.licenses _ expects id returning licenses
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Make a Facilitator"
@@ -144,7 +144,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "/person/1/licenses/new"

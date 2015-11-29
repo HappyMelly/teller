@@ -31,7 +31,7 @@ import models.brand.{ BrandCoordinator, BrandNotifications }
 import models.service.{ BrandService, PersonService }
 import models.service.brand.BrandCoordinatorService
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeUserIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
 
 /**
  * Tests Brands controller methods, managing brand coordinators

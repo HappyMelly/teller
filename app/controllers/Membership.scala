@@ -124,7 +124,7 @@ class Membership(environment: RuntimeEnvironment[ActiveUser])
             }
             if (org.isEmpty) {
               env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-                _.updateUser(ActiveUser(user.identity,
+                _.updateUser(ActiveUser(user.id,
                   user.account,
                   user.person,
                   Some(member)))

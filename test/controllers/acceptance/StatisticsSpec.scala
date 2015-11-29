@@ -33,7 +33,7 @@ import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeUserIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
 
 class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 

@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,30 +21,25 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
 
-import _root_.services.LoginIdentityService
-import helpers.PersonHelper
-import models.{ActiveUser, UserAccount}
-import securesocial.core.BasicProfile
-import securesocial.core.services.SaveMode
+package models.database
 
-import scala.concurrent.Future
+import models.PasswordIdentity
+import play.api.db.slick.Config.driver.simple._
 
-class StubLoginIdentityService extends LoginIdentityService {
+/**
+  * Maps PasswordIdentity to its datase representation
+  */
+private[models] class PasswordIdentities(tag: Tag) extends Table[PasswordIdentity](tag, "PASSWORD_IDENTITY") {
+  def userId = column[Option[Long]]("USER_ID")
+  def email = column[String]("EMAIL")
+  def password = column[String]("PASSWORD")
+  def firstName = column[Option[String]]("FIRST_NAME")
+  def lastName = column[Option[String]]("LAST_NAME")
+  def hasher = column[String]("HASHER")
 
-  override def find(providerId: String, userId: String) = {
-    val identity = new FakeSocialIdentity(Some(123213L), (providerId, userId),
-      "Sergey", "Kotlov", "Sergey Kotlov", None)
-    Future.successful(Some(identity.profile))
-  }
+  type PasswordIdentityFields = (Option[Long], String, String, Option[String], Option[String], String)
 
-  override def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
-    val identity = new FakeSocialIdentity(Some(123213L), ("123", "twitter"),
-      "Sergey", "kotlov", "Sergey Kotlov", None)
-    val account = UserAccount(Some(1L), 1L, None, None, None, None, None)
-    val person = PersonHelper.one()
-    Future.successful(ActiveUser(identity, account, person))
-  }
-
+  def * = (userId, email, password, firstName, lastName, hasher) <> (
+    (PasswordIdentity.apply _).tupled, PasswordIdentity.unapply)
 }

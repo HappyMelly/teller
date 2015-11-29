@@ -67,7 +67,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
   /**
    * Create an evaluation through API call
    */
-  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
+  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: SocialIdentity) ⇒
     //@TODO this should be changed as soon as API is refactored
     val name = "Teller API"
     val form: Form[Evaluation] = evaluationForm(name).bindFromRequest()(request)

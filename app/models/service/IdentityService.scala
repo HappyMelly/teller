@@ -27,35 +27,36 @@ package models.service
 import models.database.PortableJodaSupport._
 import models.JodaMoney._
 import models._
-import models.database.{ Members, People, UserAccounts, UserIdentities }
+import models.database._
 import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
 
-class UserIdentityService {
+class IdentityService {
 
-  private val identities = TableQuery[UserIdentities]
+  private val identities = TableQuery[SocialIdentities]
+  private val passwordIdentities = TableQuery[PasswordIdentities]
 
   /**
-    * Returns an identify for the given email if exists
+    * Returns a password identify for the given email if exists
     * @param email Email address
     */
-  def findByEmail(email: String): Option[UserIdentity] = DB.withSession {
-    implicit session ⇒ identities.filter(_.email === email).firstOption
+  def findByEmail(email: String): Option[PasswordIdentity] = DB.withSession {
+    implicit session ⇒ passwordIdentities.filter(_.email === email).firstOption
   }
 
   /**
    * @param token
    * @return
    */
-  def findBytoken(token: String): Option[UserIdentity] = DB.withSession {
+  def findBytoken(token: String): Option[SocialIdentity] = DB.withSession {
     implicit session ⇒
       identities.filter(_.apiToken === token).list.headOption
   }
 
-  def findByUserId(userId: String, providerId: String): Option[UserIdentity] =
+  def findByUserId(userId: String, providerId: String): Option[SocialIdentity] =
     DB.withSession { implicit session ⇒
       identities.
         filter(_.userId === userId).
@@ -113,7 +114,37 @@ class UserIdentityService {
             DateTime.now(), 0L, DateTime.now(), 0L))
         else
           None
-        Some(ActiveUser(d._1, d._2, person, member))
+        Some(ActiveUser(userId, d._2, person, member))
+      } getOrElse None
+  }
+
+  /**
+    * Returns active user filled with account and person data if identity exists,
+    * otherwise - None
+    *
+    * @param email Email
+    * @return
+    */
+  def findActiveUserByEmail(email: String): Option[ActiveUser] = DB.withSession {
+    implicit session: Session ⇒
+      val accounts = TableQuery[UserAccounts]
+      val people = TableQuery[People]
+      val members = TableQuery[Members]
+      val query = for {
+        identity ← passwordIdentities if identity.email === email
+        a ← accounts if a.personId === identity.userId
+        (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+      } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
+      query.firstOption map { d ⇒
+        val person: Person = d._3
+        val member = if (d._4.nonEmpty)
+          Some(Member(d._4, person.id.get, person = true,
+            funder = d._5.get, "EUR" -> d._6.get, d._7.get,
+            d._8.get, d._9.get, existingObject = true, reason = None,
+            DateTime.now(), 0L, DateTime.now(), 0L))
+        else
+          None
+        Some(ActiveUser(email, d._2, person, member))
       } getOrElse None
   }
 
@@ -123,7 +154,7 @@ class UserIdentityService {
    * @todo cover with tests
    * @param identity Identity
    */
-  def findActiveUserData(identity: UserIdentity): Option[(UserAccount, Person, Option[Member])] =
+  def findActiveUserData(identity: SocialIdentity): Option[(UserAccount, Person, Option[Member])] =
     DB.withSession {
       implicit session ⇒
         val accounts = TableQuery[UserAccounts]
@@ -168,10 +199,20 @@ class UserIdentityService {
    * @param identity Identity object
    * @return The given identity with updated id
    */
-  def insert(identity: UserIdentity): UserIdentity = DB.withSession {
+  def insert(identity: SocialIdentity): SocialIdentity = DB.withSession {
     implicit session ⇒
       val id = (identities returning identities.map(_.uid)) += identity
       identity.copy(uid = Some(id))
+  }
+
+  /**
+    * Inserts the given password identity to database
+    * @param identity Identity object
+    * @return The given identity with updated id
+    */
+  def insert(identity: PasswordIdentity): PasswordIdentity = DB.withSession { implicit session ⇒
+    TableQuery[PasswordIdentities].insert(identity)
+    identity
   }
 
   /**
@@ -179,7 +220,7 @@ class UserIdentityService {
    * @param updated Updated identity
    * @param existing Existing identity
    */
-  def update(updated: UserIdentity, existing: UserIdentity): UserIdentity =
+  def update(updated: SocialIdentity, existing: SocialIdentity): SocialIdentity =
     DB.withSession {
       implicit session ⇒
         val identity = updated.copy(uid = existing.uid, apiToken = existing.apiToken)
@@ -189,8 +230,8 @@ class UserIdentityService {
 
 }
 
-object UserIdentityService {
-  private val instance = new UserIdentityService
+object IdentityService {
+  private val instance = new IdentityService
 
-  def get: UserIdentityService = instance
+  def get: IdentityService = instance
 }
