@@ -97,7 +97,7 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   /**
    * Create a participant through API call
    */
-  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: UserIdentity) ⇒
+  def create = TokenSecuredActionWithIdentity { (request: Request[AnyContent], identity: SocialIdentity) ⇒
     //@TODO this should be changed as soon as API is refactored
     val name = "Teller API"
     val account = userAccountService.findByIdentity(identity)

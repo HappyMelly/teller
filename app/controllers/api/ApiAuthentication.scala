@@ -24,7 +24,7 @@
 
 package controllers.api
 
-import models.UserIdentity
+import models.SocialIdentity
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
@@ -42,10 +42,10 @@ trait ApiAuthentication extends Controller with Services {
    */
   def TokenSecuredAction(f: Request[AnyContent] ⇒ Result) = Action { implicit request ⇒
     request.getQueryString(ApiTokenParam).flatMap { token ⇒
-      Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
+      Cache.getAs[SocialIdentity]("identity." + token).map { identity ⇒
         Some(f(request))
       }.getOrElse {
-        userIdentityService.findBytoken(token).map { identity ⇒
+        identityService.findBytoken(token).map { identity ⇒
           Cache.set("identity." + token, identity)
           f(request)
         }
@@ -57,12 +57,12 @@ trait ApiAuthentication extends Controller with Services {
    * Make an action require token authentication
    * @deprecated
    */
-  def TokenSecuredActionWithIdentity(f: (Request[AnyContent], UserIdentity) ⇒ Result) = Action { implicit request ⇒
+  def TokenSecuredActionWithIdentity(f: (Request[AnyContent], SocialIdentity) ⇒ Result) = Action { implicit request ⇒
     request.getQueryString(ApiTokenParam).flatMap { token ⇒
-      Cache.getAs[UserIdentity]("identity." + token).map { identity ⇒
+      Cache.getAs[SocialIdentity]("identity." + token).map { identity ⇒
         Some(f(request, identity))
       }.getOrElse {
-        userIdentityService.findBytoken(token).map { identity ⇒
+        identityService.findBytoken(token).map { identity ⇒
           Cache.set("identity." + token, identity)
           f(request, identity)
         }

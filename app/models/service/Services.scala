@@ -81,5 +81,5 @@ trait Services {
 
   def userAccountService: UserAccountService = UserAccountService.get
 
-  def userIdentityService: UserIdentityService = UserIdentityService.get
+  def identityService: IdentityService = IdentityService.get
 }

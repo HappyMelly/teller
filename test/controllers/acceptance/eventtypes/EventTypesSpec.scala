@@ -34,7 +34,7 @@ import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test._
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeUserIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
 
 import scala.concurrent.Future
 

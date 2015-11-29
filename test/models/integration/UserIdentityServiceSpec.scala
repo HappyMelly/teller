@@ -26,15 +26,15 @@ package models.integration
 
 import _root_.integration.PlayAppSpec
 import helpers.PersonHelper
-import models.service.{UserAccountService, UserIdentityService}
-import models.{UserAccount, UserIdentity}
+import models.service.{UserAccountService, IdentityService$}
+import models.{UserAccount, SocialIdentity$}
 import securesocial.core.{AuthenticationMethod, BasicProfile}
 
 class UserIdentityServiceSpec extends PlayAppSpec {
 
   val userId = "1"
   val providerId = "twitter"
-  val service = new UserIdentityService
+  val service = new IdentityService
   val accountService = new UserAccountService
 
   "Method findActiveUser" should {
@@ -42,28 +42,28 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       service.insert(user(userId, providerId, twitter = Some("tester")))
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result must_== None
     }
     "return None if person data are not available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, Some("tester"),
+      val account = new UserAccount(None, 1L, None, Some("tester"),
         None, None, None)
       service.insert(user(userId, providerId, twitter = Some("tester")))
       accountService.insert(account)
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result must_== None
     }
     "return identity with Twitter if all data are available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, Some("tester"),
+      val account = new UserAccount(None, 1L, None, Some("tester"),
         None, None, None)
       service.insert(user(userId, providerId, twitter = Some("tester")))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
         i.identity.profile.firstName must_== Some("First")
         i.identity.profile.lastName must_== Some("Tester")
@@ -77,13 +77,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with Facebook if all data are available" in {
       truncateTables()
       val providerId = "facebook"
-      val account = new UserAccount(None, 1L, None,
+      val account = new UserAccount(None, 1L, None, None,
         Some("tester"), None, None)
       service.insert(user(userId, providerId, facebook = Some("tester")))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
         i.identity.profile.firstName must_== Some("First")
         i.identity.profile.lastName must_== Some("Tester")
@@ -98,13 +98,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val providerId = "google"
       val url = "https://plus.google.com/tester"
-      val account = new UserAccount(None, 1L, None,
+      val account = new UserAccount(None, 1L, None, None,
         None, None, Some(url))
       service.insert(user(userId, providerId, google = Some(url)))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
         i.identity.profile.firstName must_== Some("First")
         i.identity.profile.lastName must_== Some("Tester")
@@ -118,13 +118,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with LinkedIn if all data are available" in {
       truncateTables()
       val providerId = "linkedin"
-      val account = new UserAccount(None, 1L, None,
+      val account = new UserAccount(None, 1L, None, None,
         None, Some("tester"), None)
       service.insert(user(userId, providerId, linkedin = Some("tester")))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
         i.identity.profile.firstName must_== Some("First")
         i.identity.profile.lastName must_== Some("Tester")
@@ -141,8 +141,8 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     twitter: Option[String] = None,
     facebook: Option[String] = None,
     google: Option[String] = None,
-    linkedin: Option[String] = None): UserIdentity = {
-    new UserIdentity(None, BasicProfile(providerId, userId, Some("First"),
+    linkedin: Option[String] = None): SocialIdentity = {
+    new SocialIdentity(None, BasicProfile(providerId, userId, Some("First"),
       Some("Tester"), Some("First Tester"), Some("t@t.com"), None,
       AuthenticationMethod.OAuth2, None, None, None), "token123",
       twitter, facebook, google, linkedin)

@@ -51,7 +51,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
   class AnotherTestEvents() extends TestEvents {}
 
   val controller = new TestEvents
-  val user = UserAccount(None, 1L, None, None, None, None)
+  val user = UserAccount.empty(1L)
   //  user.roles_=(List(UserRole.forName("editor")))
   val licenseService = mock[LicenseService]
   val eventTypeService = mock[EventTypeService]

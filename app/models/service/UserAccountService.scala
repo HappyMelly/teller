@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.UserAccounts
-import models.{Person, UserAccount, UserIdentity}
+import models.{Person, UserAccount, SocialIdentity}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -57,7 +57,7 @@ class UserAccountService {
    * @param identity User Identity object
    * @return
    */
-  def findByIdentity(identity: UserIdentity): UserAccount = DB.withSession {
+  def findByIdentity(identity: SocialIdentity): UserAccount = DB.withSession {
     implicit session ⇒
       val accounts = TableQuery[UserAccounts]
       val query = identity.profile.providerId match {

@@ -25,7 +25,7 @@
 package controllers.unit
 
 import controllers.Registration
-import models.{ ActiveUser, UserIdentity }
+import models.{ ActiveUser, SocialIdentity$ }
 import org.specs2.mutable._
 import securesocial.core.{ BasicProfile, AuthenticationMethod }
 import stubs.FakeRuntimeEnvironment
@@ -36,7 +36,7 @@ class RegistrationSpec extends Specification {
   class TestRegistration extends Registration(FakeRuntimeEnvironment)
       with FakeIntegrations {
 
-    def callUserNames(identity: UserIdentity) = userNames(identity)
+    def callUserNames(identity: SocialIdentity) = userNames(identity)
   }
 
   val controller = new TestRegistration
@@ -44,7 +44,7 @@ class RegistrationSpec extends Specification {
   "Method 'userNames'" should {
     "return first and last names if they are set in identity object" in {
       val identity = ("123", "twitter")
-      val user = new UserIdentity(None, BasicProfile(identity._1, identity._2,
+      val user = new SocialIdentity(None, BasicProfile(identity._1, identity._2,
         Some("First"), Some("Tester"), Some(""),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
         oAuth1Info = None, oAuth2Info = None, passwordInfo = None),
@@ -57,7 +57,7 @@ class RegistrationSpec extends Specification {
     }
     "return first and last names if full name set in identity object" in {
       val identity = ("123", "twitter")
-      val user = new UserIdentity(None, BasicProfile(identity._1, identity._2,
+      val user = new SocialIdentity(None, BasicProfile(identity._1, identity._2,
         Some(""), Some(""), Some("First Tester Andre"),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
         oAuth1Info = None, oAuth2Info = None, passwordInfo = None),

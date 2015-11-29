@@ -37,7 +37,6 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
 
   def email = column[Option[String]]("EMAIL")
 
-  def password = column[Option[String]]("PASSWORD")
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
   def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
@@ -54,7 +53,7 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
 
   def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
-  def * = (id.?, personId, email, password, twitterHandle, facebookUrl, linkedInUrl,
+  def * = (id.?, personId, email, twitterHandle, facebookUrl, linkedInUrl,
     googlePlusUrl, coordinator, facilitator, admin, member, registered,
     activeRole) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 

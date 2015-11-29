@@ -86,7 +86,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
 
   def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user => Future.successful {
-      if (user.account.password.isEmpty) {
+      if (user.account.email.isEmpty) {
         Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       } else {
         Ok(views.html.v2.userAccount.account(user, changePasswordForm))
@@ -121,14 +121,13 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
           password => {
             val account = createPasswordInfo(user, env.currentHasher.hash(password))
             env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-              _.updateUser(ActiveUser(user.identity, account, user.person, user.person.member))
+              _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
             })
             Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage))
           }
         )
       }
   }
-
 
   /**
    * Switches active role to Facilitator if it was Brand Coordinator, and
@@ -139,7 +138,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       val account = user.account.copy(activeRole = !user.account.activeRole)
       userAccountService.updateActiveRole(user.account.personId, account.activeRole)
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-        _.updateUser(ActiveUser(user.identity, account, user.person,
+        _.updateUser(ActiveUser(user.id, account, user.person,
           user.person.member))
       })
       Redirect(request.headers("referer"))
@@ -152,12 +151,11 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     * @param info the password info
     */
   protected def createPasswordInfo(user: ActiveUser, info: PasswordInfo): UserAccount = {
-    val profile = BasicProfile(UsernamePasswordProvider.UsernamePassword, user.account.email.get,
-      Some(user.person.firstName), Some(user.person.lastName), Some(user.person.fullName),
-      user.account.email, None, AuthenticationMethod.UserPassword, None, None, Some(info))
-    val identity = UserIdentity(None, profile, "", None, None, None, None)
-    userIdentityService.insert(identity)
-    userAccountService.update(user.account.copy(password = Some(info.password)))
+    val email = user.person.socialProfile.email
+    val identity = PasswordIdentity(user.person.id, email, info.password, Some(user.person.firstName),
+      Some(user.person.lastName), info.hasher)
+    identityService.insert(identity)
+    userAccountService.update(user.account.copy(email = Some(email)))
   }
 
 

@@ -24,8 +24,8 @@
 
 package services
 
-import models.{ UserIdentity }
-import models.service.UserIdentityService
+import models.{ SocialIdentity$ }
+import models.service.IdentityService$
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable.Specification
 import securesocial.core._
@@ -49,8 +49,8 @@ class LoginIdentityServiceSpec extends Specification with IsolatedMockFactory {
 
   class TestLoginIdentityService extends LoginIdentityService with FakeServices
   val service = new TestLoginIdentityService
-  val userIdentityService = mock[UserIdentityService]
-  service.userIdentityService_=(userIdentityService)
+  val userIdentityService = mock[IdentityService]
+  service.identityService_=(userIdentityService)
 
   //  def e1 = {
   //    val fb = FacebookProvider.Facebook

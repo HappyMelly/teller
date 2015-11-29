@@ -57,6 +57,7 @@ class FakeEmail extends Email {
     bcc: Option[Set[Person]] = None,
     subject: String,
     body: String,
+    from: String = "Happy Melly",
     richMessage: Boolean = false,
     attachment: Option[(String, String)] = None): Unit = {
     this.to = to

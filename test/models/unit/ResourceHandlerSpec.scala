@@ -29,7 +29,7 @@ import models._
 import models.service.{MemberService, OrganisationService}
 import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import org.specs2.mutable.Specification
-import stubs.{FakeServices, FakeUserIdentity}
+import stubs.{FakeServices, FakeSocialIdentity}
 
 class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
@@ -42,11 +42,11 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
   }
 
-  val viewer = UserAccount(None, 1L, None, None, None, None)
+  val viewer = UserAccount.empty(1L)
   val admin = viewer.copy(admin = true)
   val person = PersonHelper.one()
   person.member_=(MemberHelper.make(Some(1L), 1L, person = true, funder = false))
-  val identity = new FakeUserIdentity(Some(123213L), FakeUserIdentity.viewer,
+  val identity = new FakeSocialIdentity(Some(123213L), FakeSocialIdentity.viewer,
     "Sergey", "Kotlov", "Sergey Kotlov", None)
   val activeUser = ActiveUser(identity, viewer, person)
 
