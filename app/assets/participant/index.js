@@ -34,6 +34,25 @@ function filterByEvent(oSettings, aData, iDataIndex) {
     return aData[index] == filter;
 }
 
+function filterByTime(oSettings, aData, iDataIndex){
+    var index = 11; 
+    var filter = $('#past-future').find(':selected').val();
+    if(filter == 'all'){
+        return true;
+    } else if(filter == 'future'){
+        var date = new Date(aData[index].start);
+        console.log("Future :: " + date);
+        return date > new Date();
+        // return aData[index].start > new Date();
+    } else {
+        var date = new Date(aData[index].end);
+        console.log("Past :: " + date);
+        return date <= new Date();
+    }
+    return aData[index] == filter;
+}
+
+
 /**
  * Filter evaluations checking if they are pending, approved or rejected
  */
@@ -48,6 +67,7 @@ function filterByStatus(oSettings, aData, iDataIndex) {
 
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
+$.fn.dataTableExt.afnFiltering.push(filterByTime);
 
 function loadEventList(events) {
     $('#events').empty().append($("<option></option>").attr("value", "").text("All"));
@@ -84,7 +104,8 @@ $(document).ready( function() {
             { "data": "participant" },
             { "data": "event" },
             { "data": "participant"},
-            { "data": "evaluation.status" }
+            { "data": "evaluation.status" },
+            { "data": "schedule" }
         ],
         "columnDefs": [{
                 "render": function(data) {
@@ -103,6 +124,9 @@ $(document).ready( function() {
             }, {
                 "targets": 2
             }, {
+               "render" : function(data){ return data.formatted; },
+                "targets": 3
+            },{
                 "className": "evaluation-field",
                 "targets": [4, 5, 6, 7]
             },{
@@ -136,6 +160,10 @@ $(document).ready( function() {
                 },
                 "visible": false,
                 "targets": 10
+            },{
+                "render": function(data){ return data },
+                "visible": false,
+                "targets": 11
             }
         ]
     });
@@ -153,6 +181,10 @@ $(document).ready( function() {
     });
 
     $("#events").on('change', function() {
+        participantTable.fnDraw();
+    });
+
+    $("#past-future").on('change', function(){
         participantTable.fnDraw();
     });
 

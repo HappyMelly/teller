@@ -35,7 +35,6 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import securesocial.core.RuntimeEnvironment
 import views.Countries
-import views.ViewHelpers.dateInterval
 
 import scala.concurrent.Future
 

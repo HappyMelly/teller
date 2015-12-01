@@ -389,7 +389,7 @@ function calculateAverageImpression(table) {
 }
 
 function drawStatus(data) {
-    var style = ['fa-thumb-tack', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-hourglass'];
+    var style = ['fa-hourglass', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-thumb-tack'];
     if (data.status) {
         var html = '<i class="text-muted fa fa-fw ' + style[data.status.value] + '"';
         html += ' value="' + data.status.value + '"></i> ';
