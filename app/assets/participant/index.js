@@ -41,26 +41,34 @@ function filterByTime(oSettings, aData, iDataIndex){
         return true;
     } else if(filter == 'future'){
         var date = new Date(aData[index].start);
-        console.log("Future :: " + date);
         return date > new Date();
-        // return aData[index].start > new Date();
     } else {
         var date = new Date(aData[index].end);
-        console.log("Past :: " + date);
         return date <= new Date();
     }
     return aData[index] == filter;
 }
-
 
 /**
  * Filter evaluations checking if they are pending, approved or rejected
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
     var index = 10;
+    var evalTypeIndex = 12;
     var filter = $('#status').find(':selected').val();
-    if (filter == 'all') {
-        return true;
+    if(filter == 3){
+        var forEvaluation = aData[evalTypeIndex];
+        var isValid = forEvaluation !== undefined && forEvaluation !== null;
+        if(isValid){
+            var dataId = aData[evalTypeIndex].id;
+            console.log("Data-id :"+dataId);
+        }
+        $('.resend').removeClass('hidden');
+    } else {
+        $('.resend').addClass('hidden');
+        if (filter == 'all') {
+            return true;
+        }
     }
     return aData[index] == filter;
 }
@@ -90,7 +98,8 @@ $(document).ready( function() {
         "bLengthChange": false,
         "ajax": {
             "url" : "participants/brand/" + currentBrand,
-            "dataSrc": ""
+            "dataSrc": "",
+            "deferRender": true
         },
         "order": [[ 6, "desc" ]],
         "columns": [
@@ -105,7 +114,8 @@ $(document).ready( function() {
             { "data": "event" },
             { "data": "participant"},
             { "data": "evaluation.status" },
-            { "data": "schedule" }
+            { "data": "schedule" },
+            { "data": "evaluation"}
         ],
         "columnDefs": [{
                 "render": function(data) {
@@ -161,9 +171,15 @@ $(document).ready( function() {
                 "visible": false,
                 "targets": 10
             },{
-                "render": function(data){ return data },
+                "render": function(data){ return data; },
                 "visible": false,
                 "targets": 11
+            },{
+                "render": function(data){ 
+                    // evaluation data
+                    return data; },
+                "visible": false,
+                "targets": 12
             }
         ]
     });

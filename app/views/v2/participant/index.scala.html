@@ -37,13 +37,14 @@
               <div class="table-filters pull-right">
                 <span>By handled status:</span>
                 <div class="btn-group" style="width=auto">
-                  <select id="status" class="selectpicker" data-style="btn-details" title="All">
+                  <select id="status" class="selectpicker" data-style="btn-details" data-width="auto" title="All">
                       <option value="all">All</option>
                       <option value="3" data-icon="fa fa-thumb-tack">Unconfirmed</option>
                       <option value="0" data-icon="fa fa-hourglass">Pending</option>
                       <option value="1" data-icon="fa fa-thumbs-up">Approved</option>
                       <option value="2" data-icon="fa fa-thumbs-down">Rejected</option>
                   </select>
+                  <a id="bulkResend" class="resend send-confirmation-request hidden" href="#">Resend emails to all</a>
                 </div>
               </div>
             </div>
