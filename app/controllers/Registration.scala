@@ -320,7 +320,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       person.socialProfile.googlePlusUrl,
       member = true, registered = true)
     val inserted = userAccountService.insert(account)
-    env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+    env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
       _.updateUser(ActiveUser(id, inserted, person, Some(member)))
     })
   }

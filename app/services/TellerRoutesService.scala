@@ -39,6 +39,16 @@ class TellerRoutesService extends RoutesService.Default {
      absoluteUrl(_root_.controllers.routes.LoginPage.login())
    }
 
+  override def handleResetPasswordUrl(mailToken: String)(implicit req: RequestHeader): String = {
+    absoluteUrl(controllers.routes.PasswordReset.handleResetPassword(mailToken))
+  }
+
+  override def startResetPasswordUrl(implicit request: RequestHeader): String = loginPageUrl(request)
+
+  override def resetPasswordUrl(mailToken: String)(implicit req: RequestHeader): String = {
+    absoluteUrl(controllers.routes.PasswordReset.resetPassword(mailToken))
+  }
+
   override protected def valueFor(key: String, default: String) = {
     val value = conf.getString(key).getOrElse(default)
     _root_.controllers.routes.Assets.at(value)

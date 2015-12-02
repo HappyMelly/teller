@@ -40,7 +40,7 @@ import securesocial.controllers.ViewTemplates
 import securesocial.core._
 import securesocial.core.providers._
 import securesocial.core.services.RoutesService
-import templates.SecureSocialTemplates
+import templates.{MailTemplates, SecureSocialTemplates}
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -50,6 +50,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   object TellerRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
     override lazy val routes: RoutesService = new TellerRoutesService()
     override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this)
+    override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
     override lazy val userService: LoginIdentityService = new LoginIdentityService
     override lazy val providers = ListMap(
       include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),

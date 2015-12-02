@@ -61,6 +61,8 @@ trait Services {
 
   def feeService: BrandFeeService = BrandFeeService.get
 
+  def mailTokenService: MailTokenService = MailTokenService.get
+
   def memberService: MemberService = MemberService.get
 
   def licenseService: LicenseService = LicenseService.get

@@ -73,6 +73,8 @@ GET           /certificate/new/:eventId/:personId                            @co
 POST          /contribution/new                                              @controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       @controllers.Contributions.delete(id: Long, page: String)
 
+POST          /password/reset                                                @controllers.PasswordReset.handleStartResetPassword
+
 GET           /person/:personId/endorsement                                  @controllers.Endorsements.add(personId: Long)
 GET           /person/:personId/endorsement/select                           @controllers.Endorsements.renderSelectForm(personId: Long)
 GET           /person/:personId/endorsement/:id                              @controllers.Endorsements.edit(personId: Long, id: Long)
@@ -100,6 +102,9 @@ POST          /person/:personId/material                                   @cont
 DELETE        /person/:personId/material/:id                               @controllers.Materials.remove(personId: Long, id: Long)
 
 GET           /report/create/:brandId/event/:eventId/status/:status        @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
+
+GET           /reset/:token                                                @controllers.PasswordReset.resetPassword(token: String)
+POST          /reset/:token                                                @controllers.PasswordReset.handleResetPassword(token: String)
 
 GET           /events                                                      @controllers.Events.index(brandId: Long)
 GET           /events/filtered                                             @controllers.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
@@ -252,17 +257,17 @@ GET           /brand/:brandId/statistics                                     @co
 GET           /brand/:brandId/statistics/type/facilitators/                  @controllers.Statistics.byFacilitators(brandId: Long)
 GET           /brand/:brandId/statistics/type/events/                        @controllers.Statistics.byEvents(brandId: Long)
 GET           /brand/:brandId/statistics/type/countries/                     @controllers.Statistics.byCountries(brandId: Long)
-GET         /brand/:brandId/statistics/type/participants/                    @controllers.Statistics.byParticipants(brandId: Long)
+GET           /brand/:brandId/statistics/type/participants/                  @controllers.Statistics.byParticipants(brandId: Long)
 
-GET         /template/:id                                                    @controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET         /template/:id/delete                                             @controllers.CertificateTemplates.delete(id: Long)
+GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
+GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)
 
-POST        /url/:url/validate                                               @controllers.Urls.validate(url)
+POST          /url/:url/validate                                             @controllers.Urls.validate(url)
 
-GET         /user/account                                                    @controllers.UserAccounts.account
-POST        /user/newPassword                                                @controllers.UserAccounts.handleNewPassword
-POST        /user/password                                                   @controllers.UserAccounts.changePassword
-GET         /user/switch                                                     @controllers.UserAccounts.switchRole
+GET           /user/account                                                  @controllers.UserAccounts.account
+POST          /user/newPassword                                              @controllers.UserAccounts.handleNewPassword
+POST          /user/password                                                 @controllers.UserAccounts.changePassword
+GET           /user/switch                                                   @controllers.UserAccounts.switchRole
 
 # API (v1)
 GET         /api/v1/brands                                       controllers.api.BrandsApi.brands
