@@ -1,0 +1,49 @@
+@(title: String)(content: Html)(footer: Html = play.twirl.api.Html(""))
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head>
+    <body>
+        <table cellpadding="0" cellspacing="0" border="0"
+        style="margin:0px;padding:0px;width:100%!important;line-height:100%!important;font-family: Helvetica;color: #606060;">
+            <tbody>
+                <tr>
+                    <td valign="top">
+                        <table cellpadding="15" cellspacing="0" border="0" align="center"
+                        width="550" style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204)">
+                            <tbody>
+                                <tr>
+                                    <td valign="top" style="background-color:#F4A7AF; color: #000;text-align: center;padding-top: 20px">
+                                        <img src="https://stripe-images.s3.amazonaws.com/emails/acct_15UuoaBoZAd076OP/5/circular_icon.png"/>
+                                        <h3 style="font-size:20px;font-weight:normal">@title</h3>
+                                    </td>
+                                </tr>
+                                <tr style="color: #606060;font-size: 15px; line-height: 150% ;">
+                                    <td valign="top" style="padding-top:30px;">
+                                        @content
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>@footer</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table cellpadding="0" cellspacing="0" border="0" align="center"
+                        style="margin-top:10px;width:550px">
+                            <tbody>
+                                <tr>
+                                    <td valign="top"
+                                    style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px;width:50%"> THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">HAPPY MELLY TELLER</a>
+                  </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br><br><br><br>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>

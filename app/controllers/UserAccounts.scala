@@ -32,9 +32,8 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
-import securesocial.core.providers.UsernamePasswordProvider
-import securesocial.core.{PasswordInfo, AuthenticationMethod, BasicProfile, RuntimeEnvironment}
 import securesocial.core.providers.utils.PasswordValidator
+import securesocial.core.{PasswordInfo, RuntimeEnvironment}
 
 import scala.concurrent.{Await, Future}
 
@@ -119,6 +118,8 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
         errors => Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))),
         password => {
           val account = createPasswordInfo(user, env.currentHasher.hash(password))
+          env.mailer.sendEmail("New password", user.person.socialProfile.email,
+            (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
           env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
             _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
           }).flatMap { _ =>
@@ -169,29 +170,4 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     userAccountService.update(user.account.copy(email = Some(email)))
   }
 
-
-  private def execute(f: Form[ChangeInfo] => Future[Result])(implicit user: ActiveUser): Future[Result] = {
-    val form = Form[ChangeInfo](
-      mapping(
-        CurrentPassword ->
-          nonEmptyText.verifying(Messages(InvalidPasswordMessage), { suppliedPassword =>
-            import scala.concurrent.duration._
-            Await.result(checkCurrentPassword(suppliedPassword), 10.seconds)
-          }),
-        NewPassword ->
-          tuple(
-            Password1 -> nonEmptyText.verifying(PasswordValidator.constraint),
-            Password2 -> nonEmptyText
-          ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
-
-      )((currentPassword, newPassword) => ChangeInfo(currentPassword, newPassword._1))((changeInfo: ChangeInfo) => Some(("", ("", ""))))
-    )
-
-    env.userService.passwordInfoFor(user).flatMap {
-      case Some(info) =>
-        f(form)
-      case None =>
-        Future.successful(Forbidden)
-    }
-  }
 }

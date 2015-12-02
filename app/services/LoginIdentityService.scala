@@ -67,19 +67,50 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     val user = mode match {
       case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
       case SaveMode.SignUp ⇒ createUser(profile)
+      case SaveMode.PasswordChange => updatePassword(profile)
     }
     Future.successful(user)
   }
 
-  def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] = {
-    Future.successful(None)
+  /**
+    * Returns user's profile for the given email if exists. ProviderId is not checked
+    * @param email Email
+    * @param providerId Provider identifier is not checked
+    */
+  def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] = Future.successful {
+    identityService.findByEmail(email) map { identity => Some(identity.profile) } getOrElse None
   }
 
-  // Since we're not using username/password login, we don't need the methods below
-  def saveToken(token: MailToken): Future[MailToken] = ???
-  def findToken(token: String) = ???
-  def deleteToken(uuid: String): Future[Option[MailToken]] = ???
-  def deleteExpiredTokens() {}
+  /**
+    * Saves a mail token.  This is needed for users that
+    * are creating an account in the system or trying to reset a password
+    *
+    * @param token The token to save
+    */
+  def saveToken(token: MailToken): Future[MailToken] = Future.successful {
+    mailTokenService.insert(token)
+  }
+
+  /**
+    * Finds a token
+    *
+    * @param token the token id
+    */
+  def findToken(token: String): Future[Option[MailToken]] = Future.successful(mailTokenService.find(token))
+
+  /**
+    * Deletes a token
+    *
+    * @param uuid the token id
+    */
+  def deleteToken(uuid: String): Future[Option[MailToken]] = Future.successful {
+    mailTokenService.delete(uuid)
+    None
+  }
+
+  def deleteExpiredTokens(): Unit = {
+    mailTokenService.deleteExpiredTokens()
+  }
 
   /**
    * Links the current user to another profile
@@ -154,6 +185,18 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
       identityService.findActiveUser(profile.userId, profile.providerId) getOrElse {
         throw new AuthenticationException
       }
+    }
+  }
+
+  protected def updatePassword(profile: BasicProfile): ActiveUser = {
+    identityService.findByEmail(profile.userId) map { identity =>
+      identityService.update(identity.copy(password = profile.passwordInfo.get.password,
+        hasher = profile.passwordInfo.get.hasher))
+    } getOrElse {
+      throw new AuthenticationException
+    }
+    identityService.findActiveUserByEmail(profile.userId) map(user => user) getOrElse {
+      throw new AuthenticationException
     }
   }
 

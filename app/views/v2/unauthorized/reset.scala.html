@@ -1,0 +1,33 @@
+@import securesocial.core.providers.MailToken
+@(form: Form[(String, String)], token: MailToken)(implicit request: RequestHeader,
+    env: securesocial.core.RuntimeEnvironment[_])
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.layout.unauthorized("Reset Password") {
+    <div class="action-block">
+        <h3>Enter new password</h3>
+        <div>for your <strong>@token.email</strong> account</div>
+        <div class="action-area col-md-6 col-md-offset-3">
+            @if(form.hasErrors) {
+                <div class="errors text-left">
+                    @for((error, index) <- form.errors.zipWithIndex) {
+                        @play.api.i18n.Messages(error.message)<br/>
+                    }
+                </div>
+            }
+            <form action="@CSRF(routes.PasswordReset.handleResetPassword(token.uuid))" method="post">
+                <div class="form-group">
+                    <input class="form-control" type="password" name="password.password1" placeholder="New password"/>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="password" name="password.password2" placeholder="Retype password"/>
+                </div>
+                <div class="form-group">
+                    <button class="form-control btn btn-block btn-primary" type="submit">Save and login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
