@@ -122,7 +122,6 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     // sending notifications through  a separate process
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
-      scheduleMonthlyAlert
     }
   }
 
@@ -138,25 +137,12 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
         EventReminder.sendPostFactumConfirmation()
-//        EventReminder.sendUpcomingConfirmation()
         EvaluationReminder.sendToParticipants()
         Facilitator.updateFacilitatorExperience()
-      }
-  }
-
-  /**
-   * Sends profile improvement alert in the beginning of each month
-   */
-  private def scheduleMonthlyAlert = {
-    val now = LocalDateTime.now
-    val targetDate = LocalDate.now.withDayOfMonth(1).plusMonths(1)
-    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
-    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    Akka.system.scheduler.schedule(
-      Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
-      Duration.create(30, TimeUnit.DAYS)) {
-        ProfileStrengthReminder.sendToFacilitators()
-        ExperimentReminder.sendStatus()
+        if (now.getDayOfMonth == 1) {
+          ProfileStrengthReminder.sendToFacilitators()
+          ExperimentReminder.sendStatus()
+        }
       }
   }
 }
