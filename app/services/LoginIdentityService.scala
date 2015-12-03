@@ -153,11 +153,19 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @return Created user
    */
   protected def createUser(profile: BasicProfile): ActiveUser = {
-    val identity = identityFromProfile(profile)
-    identityService.findActiveUserData(identity) map { userData ⇒
-      identityService.insert(identity)
-      ActiveUser(identity.profile.userId, userData._1, userData._2)
-    } getOrElse unregisteredActiveUser(identity)
+    if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
+      val account = UserAccount.empty(0)
+      val person = Person("", "")
+      val social = SocialProfile(email = profile.userId)
+      person.socialProfile_=(social)
+      ActiveUser(profile.userId, account, person)
+    } else {
+      val identity = identityFromProfile(profile)
+      identityService.findActiveUserData(identity) map { userData ⇒
+        identityService.insert(identity)
+        ActiveUser(identity.profile.userId, userData._1, userData._2)
+      } getOrElse unregisteredActiveUser(identity)
+    }
   }
 
   /**
