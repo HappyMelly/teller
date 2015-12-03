@@ -21,7 +21,6 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import models.UserRole.Role._
@@ -39,8 +38,18 @@ import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
-import securesocial.core.{RuntimeEnvironment, SecureSocial}
+import securesocial.controllers.BaseRegistration
+import securesocial.controllers.BaseRegistration._
+import securesocial.core.authenticator.CookieAuthenticator
+import securesocial.core.providers.UsernamePasswordProvider
+import securesocial.core.providers.utils.PasswordValidator
+import securesocial.core.services.SaveMode
+import securesocial.core.utils._
+import securesocial.core.{AuthenticationMethod, BasicProfile, RuntimeEnvironment, SecureSocial}
 import views.Countries
+
+import scala.concurrent.{Await, Future}
+
 
 /**
  * Contains registration data required to create a person object
@@ -62,6 +71,8 @@ case class UserData(firstName: String,
  * @param country Country where the organization is registered
  */
 case class OrgData(name: String, country: String)
+
+case class AuthenticationInfo(email: String, password: String)
 
 /**
  * -v
@@ -95,6 +106,20 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       "error.unknown_country",
       (value: String) ⇒ Countries.all.exists(_._1 == value)))(OrgData.apply)(OrgData.unapply))
 
+  private def passwordForm = Form[AuthenticationInfo](
+    mapping(
+      "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
+        import scala.concurrent.duration._
+        Await.result(Future.successful(identityService.findByEmail(suppliedEmail).isEmpty), 10.seconds)
+      }),
+      "password" ->
+        tuple(
+          "password1" -> nonEmptyText.verifying(PasswordValidator.constraint),
+          "password2" -> nonEmptyText
+        ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
+
+    )((email, password) => AuthenticationInfo(email, password._1))((info: AuthenticationInfo) => Some((info.email, ("", "")))))
+
   /**
    * The authentication flow for all providers starts here.
    *
@@ -106,6 +131,35 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       (SecureSocial.OriginalUrlKey -> routes.Registration.step2().url)
     val route = env.routes.authenticationUrl(provider)
     Redirect(route).withSession(session)
+  }
+
+  def authenticateByEmail() = Action.async { implicit request =>
+    passwordForm.bindFromRequest().fold(
+      errors => Future.successful(BadRequest(views.html.v2.registration.step1(errors))),
+      info => {
+        val newUser = BasicProfile(
+          UsernamePasswordProvider.UsernamePassword,
+          info.email,
+          None,
+          None,
+          None,
+          Some(info.email),
+          None,
+          AuthenticationMethod.UserPassword,
+          passwordInfo = Some(env.currentHasher.hash(info.password))
+        )
+        env.userService.save(newUser, SaveMode.SignUp).map { user =>
+          env.authenticatorService.find(CookieAuthenticator.Id).map {
+            _.fromUser(user).flatMap { authenticator =>
+              Redirect(routes.Registration.step2().url).startingAuthenticator(authenticator)
+            }
+          } getOrElse {
+            Logger.error(s"[securesocial] There isn't CookieAuthenticator registered in the RuntimeEnvironment")
+            Future.successful(Redirect(routes.LoginPage.login()).flashing("error" -> Messages("There was an error signing you up")))
+          }
+        }.flatMap(f => f)
+      }
+    )
   }
 
   /**
@@ -124,9 +178,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     val cookie = Cookie(REGISTRATION_COOKIE, "org")
     val discardingCookie = DiscardingCookie(REGISTRATION_COOKIE)
     if (org)
-      Ok(views.html.v2.registration.step1()).withCookies(cookie)
+      Ok(views.html.v2.registration.step1(passwordForm)).withCookies(cookie)
     else
-      Ok(views.html.v2.registration.step1()).discardingCookies(discardingCookie)
+      Ok(views.html.v2.registration.step1(passwordForm)).discardingCookies(discardingCookie)
   }
 
   /**
@@ -136,7 +190,6 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-//        val (firstName, lastName) = userNames(user.id)
         val form = userForm.bind(Map(("firstName", user.person.firstName),
           ("lastName", user.person.lastName),
           ("email", user.person.socialProfile.email)))

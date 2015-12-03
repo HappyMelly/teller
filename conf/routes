@@ -247,6 +247,7 @@ POST          /registration/save/org                                         @co
 GET           /registration/payment                                          @controllers.Registration.payment
 POST          /registration/payment                                          @controllers.Registration.charge
 GET           /registration/authenticate/:provider                           @controllers.Registration.authenticate(provider)
+POST          /registration/authenticate                                     @controllers.Registration.authenticateByEmail
 GET           /registration/congratulations                                  @controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
 POST          /person/:personId/signature                                    @controllers.Signatures.upload(personId: Long)

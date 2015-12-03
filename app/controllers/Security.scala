@@ -251,6 +251,7 @@ with Services {
   protected def securedAction()(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
     SecuredAction.async { implicit request ⇒
+      println(request)
       request.user match {
         case user: ActiveUser ⇒
           val handler = new AuthorisationHandler(user)
