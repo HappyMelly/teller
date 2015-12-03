@@ -49,6 +49,7 @@ function filterByTime(oSettings, aData, iDataIndex){
     return aData[index] == filter;
 }
 
+
 /**
  * Filter evaluations checking if they are pending, approved or rejected
  */
@@ -59,9 +60,16 @@ function filterByStatus(oSettings, aData, iDataIndex) {
     if(filter == 3){
         var forEvaluation = aData[evalTypeIndex];
         var isValid = forEvaluation !== undefined && forEvaluation !== null;
-        if(isValid){
+        if(isValid && aData[index] == filter){
             var dataId = aData[evalTypeIndex].id;
-            console.log("Data-id :"+dataId);
+            var dataIds = [];
+            if($('.resend').data() !== undefined){
+                dataIds = $('.resend').data().ids !== undefined ? $('.resend').data().ids : [];
+                if(dataId !== null && dataId !== undefined)
+                    dataIds.push(dataId);
+                $('.resend').data({'ids':dataIds});
+                dataIds = [];
+            }
         }
         $('.resend').removeClass('hidden');
     } else {
@@ -78,7 +86,7 @@ $.fn.dataTableExt.afnFiltering.push(filterByEvent);
 $.fn.dataTableExt.afnFiltering.push(filterByTime);
 
 function loadEventList(events) {
-    $('#events').empty().append($("<option></option>").attr("value", "").text("All"));
+    $('#events').empty().append($("<option></option>").attr("value", "").text("Specific"));
     for(var i = 0; i < events.length; i++) {
         var event = events[i];
         $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
@@ -210,5 +218,13 @@ $(document).ready( function() {
     });
     $('#exportLink').on('click', function() {
         buildExportLink(false)
+    });
+
+    $('.resend').on('click',function(){
+        var arrIds = $('.resend').data().ids;
+        var distinct = [];
+        $.each(arrIds, function(i,el){
+            if($.inArray(el,distinct) === -1) distinct.push(el);
+        });
     });
 });
