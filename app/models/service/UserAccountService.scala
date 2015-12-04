@@ -62,13 +62,13 @@ class UserAccountService {
       val accounts = TableQuery[UserAccounts]
       val query = identity.profile.providerId match {
         case TwitterProvider.Twitter ⇒
-          accounts.filter(_.twitterHandle === identity.twitterHandle)
+          accounts.filter(_.twitterHandle === identity.profileUrl)
         case FacebookProvider.Facebook ⇒
-          accounts.filter(_.facebookUrl like "https?".r.replaceFirstIn(identity.facebookUrl.getOrElse(""), "%"))
+          accounts.filter(_.facebookUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
         case GoogleProvider.Google ⇒
-          accounts.filter(_.googlePlusUrl === identity.googlePlusUrl)
+          accounts.filter(_.googlePlusUrl === identity.profileUrl)
         case LinkedInProvider.LinkedIn ⇒
-          accounts.filter(_.linkedInUrl like "https?".r.replaceFirstIn(identity.linkedInUrl.getOrElse(""), "%"))
+          accounts.filter(_.linkedInUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
       }
       query.first
   }

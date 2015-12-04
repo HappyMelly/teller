@@ -80,28 +80,28 @@ class IdentityService {
         case TwitterProvider.Twitter ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.twitterHandle === identity.twitterHandle
+          a ← accounts if a.twitterHandle === identity.profileUrl
           (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case FacebookProvider.Facebook ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.facebookUrl === identity.facebookUrl
+          a ← accounts if a.facebookUrl === identity.profileUrl
           (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case GoogleProvider.Google ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.googlePlusUrl === identity.googlePlusUrl
+          a ← accounts if a.googlePlusUrl === identity.profileUrl
           (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
         case LinkedInProvider.LinkedIn ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.linkedInUrl === identity.linkedInUrl
+          a ← accounts if a.linkedInUrl === identity.profileUrl
           (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
         } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
       }
@@ -162,22 +162,22 @@ class IdentityService {
         val members = TableQuery[Members]
         val q = identity.profile.providerId match {
           case TwitterProvider.Twitter ⇒ for {
-            a ← accounts if a.twitterHandle === identity.twitterHandle
+            a ← accounts if a.twitterHandle === identity.profileUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case FacebookProvider.Facebook ⇒ for {
-            a ← accounts if a.facebookUrl === identity.facebookUrl
+            a ← accounts if a.facebookUrl === identity.profileUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case GoogleProvider.Google ⇒ for {
-            a ← accounts if a.googlePlusUrl === identity.googlePlusUrl
+            a ← accounts if a.googlePlusUrl === identity.profileUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
 
           case LinkedInProvider.LinkedIn ⇒ for {
-            a ← accounts if a.linkedInUrl === identity.linkedInUrl
+            a ← accounts if a.linkedInUrl === identity.profileUrl
             (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
         }

@@ -34,7 +34,7 @@ class FakeSocialIdentity(
   email: Option[String]) extends models.SocialIdentity(uid,
   BasicProfile(identity._2, identity._1, Some(firstName), Some(lastName),
     Some(fullName), email, None, AuthenticationMethod.OAuth2, None,
-    None, None), "api_token", None, None, None, None) {
+    None, None), "api_token", None) {
 
 }
 
