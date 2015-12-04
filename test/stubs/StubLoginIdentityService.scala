@@ -44,7 +44,7 @@ class StubLoginIdentityService extends LoginIdentityService {
       "Sergey", "kotlov", "Sergey Kotlov", None)
     val account = UserAccount(Some(1L), 1L, None, None, None, None, None)
     val person = PersonHelper.one()
-    Future.successful(ActiveUser(identity, account, person))
+    Future.successful(ActiveUser(identity.profile.userId, account, person))
   }
 
 }

@@ -24,8 +24,8 @@
 
 package services
 
-import models.{ SocialIdentity$ }
-import models.service.IdentityService$
+import models.{ SocialIdentity }
+import models.service.IdentityService
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable.Specification
 import securesocial.core._

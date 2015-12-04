@@ -25,9 +25,9 @@
 package controllers.unit
 
 import controllers.Registration
-import models.{ ActiveUser, SocialIdentity$ }
+import models.SocialIdentity
 import org.specs2.mutable._
-import securesocial.core.{ BasicProfile, AuthenticationMethod }
+import securesocial.core.{AuthenticationMethod, BasicProfile}
 import stubs.FakeRuntimeEnvironment
 import stubs.services.FakeIntegrations
 
@@ -48,8 +48,7 @@ class RegistrationSpec extends Specification {
         Some("First"), Some("Tester"), Some(""),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
         oAuth1Info = None, oAuth2Info = None, passwordInfo = None),
-        apiToken = "test", twitterHandle = None, facebookUrl = None,
-        googlePlusUrl = None, linkedInUrl = None)
+        apiToken = "test", profileUrl = None)
 
       val names = controller.callUserNames(user)
       names._1 must_== "First"
@@ -61,8 +60,7 @@ class RegistrationSpec extends Specification {
         Some(""), Some(""), Some("First Tester Andre"),
         email = None, avatarUrl = None, AuthenticationMethod.OAuth2,
         oAuth1Info = None, oAuth2Info = None, passwordInfo = None),
-        apiToken = "test", twitterHandle = None, facebookUrl = None,
-        googlePlusUrl = None, linkedInUrl = None)
+        apiToken = "test", profileUrl = None)
       controller.callUserNames(user) must_== ("First", "Tester Andre")
       controller.callUserNames(
         user.copy(profile = user.profile.copy(fullName = Some("FirstTester")))) must_== ("FirstTester", "")
