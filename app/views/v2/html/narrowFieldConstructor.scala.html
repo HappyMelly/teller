@@ -1,9 +1,9 @@
 @(elements: views.html.helper.FieldElements)
 
-<div class="form-group @elements.args.get('_class) @if(elements.hasErrors) {has-error} text-right"
+<div class="form-group @elements.args.get('_class) @if(elements.hasErrors) {has-error} narrow"
 id="@elements.args.getOrElse('_id, elements.id + "_field")">
-    <label for="@elements.id" class="control-label col-md-2">@elements.label(elements.lang)</label>
-    <div class="col-md-7">
+    <label for="@elements.id" class="control-label col-md-3">@elements.label(elements.lang)</label>
+    <div class="col-md-6">
         @elements.input
         <div class="col-md-12 help">
         @Html(elements.infos(elements.lang).mkString(", "))

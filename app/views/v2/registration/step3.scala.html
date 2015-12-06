@@ -3,7 +3,7 @@
 
 @import helper.CSRF
 @import views.Countries
-@import views.ViewHelpers._
+@import views.ViewHelpersV2._
 
 @v2.layout.unauthorized("Add Organisation Data") {
     <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
@@ -14,22 +14,26 @@
         <span>Organisation Data</span>
         <span class="inactive">Payment</span>
         <span class="inactive">Congratulations</span>
+        <span><a class="stop-registration" href="@routes.LoginPage.logout()">Back to login</a></span>
     </div>
     <div class="action-block registration">
         <h3>Add Organisation Data</h3>
-        <div class="action-area col-md-10 col-md-offset-1">
+        <div class="action-area col-md-11 col-md-offset-1">
         @v2.html.form(action = CSRF(routes.Registration.saveOrg())) {
-            @v2.html.text(form("name"), '_label -> "Name", '_help -> "")
+            @v2.html.text(form("name"), '_label -> "Name", '_help -> "")(narrow, implicitly[Lang])
             @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country",
-                '_help -> "")
+                '_help -> "")(narrow, implicitly[Lang])
 
-            <div class="row">
+            <div class="form-group">
                 <div class="col-sm-3"></div>
-                <div class="col-sm-9">
-                    <button class="btn btn-primary btn-block pull-right" type="submit">Make a Payment</button>
+                <div class="col-sm-6">
+                    <button class="btn btn-primary btn-block" type="submit">Make a Payment</button>
                 </div>
             </div>
         }
         </div>
+    </div>
+    <div>
+        <a href="@routes.LoginPage.logout()">Back to login</a>
     </div>
 }

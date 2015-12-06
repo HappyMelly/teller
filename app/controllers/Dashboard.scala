@@ -87,7 +87,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           Ok(views.html.v2.dashboard.index(user))
         }
       } else {
-        Redirect(routes.Registration.step1())
+        Redirect(routes.Registration.step2())
       }
   }
 

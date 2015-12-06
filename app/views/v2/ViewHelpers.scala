@@ -31,7 +31,7 @@ object ViewHelpersV2 {
 
   implicit val fields = FieldConstructor(views.html.v2.html.fieldConstructor.f)
   val asIs = FieldConstructor(views.html.v2.html.asIsConstructor.f)
-
+  val narrow = FieldConstructor(views.html.v2.html.narrowFieldConstructor.f)
   /**
    * Returns well-formatted date interval
    * @param start Start date
