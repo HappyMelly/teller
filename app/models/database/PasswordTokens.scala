@@ -8,7 +8,7 @@ import securesocial.core.providers.MailToken
 /**
   * `MailToken` database table mapping
   */
-private[models] class MailTokens(tag: Tag) extends Table[MailToken](tag, "MAIL_TOKEN") {
+private[models] class PasswordTokens(tag: Tag) extends Table[MailToken](tag, "PASSWORD_TOKEN") {
   def userId = column[String]("USER_ID", O.DBType("VARCHAR(254)"))
   def email = column[String]("EMAIL", O.DBType("VARCHAR(254)"))
   def created = column[DateTime]("CREATED")

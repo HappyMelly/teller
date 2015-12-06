@@ -24,27 +24,27 @@
  */
 package models.service
 
+import models.EmailToken
+import models.database.EmailTokens
 import models.database.PortableJodaSupport._
-import models.database.MailTokens
 import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import securesocial.core.providers.MailToken
 
 /**
-  * Created by sery0ga on 02/12/15.
+  * Contains methods for managing EmailToken records in database
   */
-class MailTokenService extends Services {
+class EmailTokenService extends Services {
 
-  private val tokens = TableQuery[MailTokens]
+  private val tokens = TableQuery[EmailTokens]
 
   /**
     * Deletes a token for the given token identifier
-    * @param userId Token identifier
+    * @param token Token identifier
     */
-  def delete(userId: String): Unit = DB.withSession { implicit session =>
-    tokens.filter(_.userId === userId).mutate(_.delete())
+  def delete(token: String): Unit = DB.withSession { implicit session =>
+    tokens.filter(_.token === token).delete
   }
 
   /**
@@ -55,25 +55,25 @@ class MailTokenService extends Services {
   }
 
   /**
-    * Returns a mail token if it exists
-    * @param userId Token identifier
+    * Returns an email token if it exists
+    * @param token Token identifier
     */
-  def find(userId: String): Option[MailToken] = DB.withSession { implicit session =>
-    tokens.filter(_.userId === userId).firstOption
+  def find(token: String): Option[EmailToken] = DB.withSession { implicit session =>
+    tokens.filter(_.token === token).firstOption
   }
 
   /**
     * Adds new token to the database
     * @param token Token
     */
-  def insert(token: MailToken): MailToken = DB.withSession { implicit session =>
+  def insert(token: EmailToken): EmailToken = DB.withSession { implicit session =>
     tokens.insert(token)
     token
   }
 }
 
-object MailTokenService {
-  private val _instance = new MailTokenService
+object EmailTokenService {
+  private val _instance = new EmailTokenService
 
-  def get: MailTokenService = _instance
+  def get: EmailTokenService = _instance
 }

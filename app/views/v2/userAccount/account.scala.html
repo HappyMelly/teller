@@ -1,8 +1,10 @@
 @(user: ActiveUser,
-        passwordForm: Form[securesocial.controllers.ChangeInfo])(implicit flash: Flash,
-        request: Request[Any],
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+    email: String,
+    emailForm: Form[(String, String)],
+    passwordForm: Form[securesocial.controllers.ChangeInfo])(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
 
     @import helper.CSRF
     @import views.ViewHelpersV2._
@@ -12,6 +14,42 @@
             @v2.html.block("") {
                 <h1>Manage account</h1>
             }
+            @v2.html.form(CSRF(routes.UserAccounts.changeEmail())) {
+                @v2.html.block("") {
+                    <legend>Change email</legend>
+                    <div class="form-group">
+                        <label for="oldEmail" class="control-label col-md-2">Current email</label>
+                        <div class="col-md-7">
+                            <input type="email" class="form-control" value="@email" disabled>
+                        </div>
+                        <div class="col-md-2 field-type"></div>
+                    </div>
+                    @v2.html.email(emailForm("email"), '_label -> "New email",
+                        '_required -> true, '_help -> "")
+                    @v2.html.password(emailForm("password"), '_label -> "Happy Melly Teller password",
+                        '_required -> true, '_help -> "")
+                }
+                @if(emailForm.hasErrors) {
+                    @v2.html.block("") {
+                        <div class="errors">
+                        @for( error <- emailForm.errors) {
+                            @play.api.i18n.Messages(error.message) <br/>
+                        }
+                        </div>
+                    }
+                }
+                @v2.html.block("") {
+                    <div class="row">
+                        <div class="col-md-5">
+                            <button class="btn btn-primary btn-block btn-lg" type="submit">
+                                Save new email</button>
+                        </div>
+                    </div>
+                }
+            }
+            <div class="row">
+                <div class="col-md-6" style="border-top: solid 1px #e7e7e7; margin-left: 60px;"></div>
+            </div>
             @v2.html.form(CSRF(routes.UserAccounts.changePassword())) {
                 @v2.html.block("") {
                     <legend>Change password</legend>

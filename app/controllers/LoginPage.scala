@@ -46,7 +46,7 @@ class LoginPage(override implicit val env: RuntimeEnvironment[ActiveUser]) exten
    *
    * @return
    */
-  def logout(error: Option[String] = None) = UserAwareAction.async {
+  def logout(error: Option[String] = None, success: Option[String] = None) = UserAwareAction.async {
     implicit request ⇒
       val redirectTo = Redirect(Play.configuration.getString(onLogoutGoTo).getOrElse(env.routes.loginPageUrl))
       val result = for {
@@ -54,10 +54,13 @@ class LoginPage(override implicit val env: RuntimeEnvironment[ActiveUser]) exten
         authenticator ← request.authenticator
       } yield {
         redirectTo.discardingAuthenticator(authenticator).map { auth ⇒
-          val flashedAuth = error map { value ⇒
+          val withError = error map { value ⇒
             auth.flashing("error" -> value)
           } getOrElse auth
-          flashedAuth.withSession(Events.fire(new LogoutEvent(user)).getOrElse(request.session))
+          val withSuccess = success map { value =>
+            withError.flashing("success" -> value)
+          } getOrElse withError
+          withSuccess.withSession(Events.fire(new LogoutEvent(user)).getOrElse(request.session))
         }
       }
       result.getOrElse {
