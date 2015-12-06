@@ -54,6 +54,14 @@ class IdentityService {
   }
 
   /**
+    * Deletes a password identity for the given email
+    * @param email Email
+    */
+  def delete(email: String): Unit = DB.withSession { implicit session =>
+    passwordIdentities.filter(_.email === email).delete
+  }
+
+  /**
     * Returns a password identify for the given email if exists
     * @param email Email address
     */

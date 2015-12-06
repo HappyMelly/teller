@@ -24,9 +24,12 @@
 
 package controllers
 
+import java.util.UUID
+
 import models.UserRole.Role.Viewer
 import models._
 import models.service.Services
+import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -44,7 +47,8 @@ import scala.concurrent.{Await, Future}
 class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
     with Security
-    with Services {
+    with Services
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -54,6 +58,15 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   val Password1 = "password1"
   val Password2 = "password2"
   val OkMessage = "securesocial.passwordChange.ok"
+
+  def changeEmailForm(implicit user: ActiveUser) = Form[(String, String)](
+    mapping(
+      "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
+        import scala.concurrent.duration._
+        Await.result(Future.successful(identityService.checkEmail(suppliedEmail)), 10.seconds)
+      }),
+      "password" -> nonEmptyText
+    )((email, password) => (email, password))((data: (String, String)) => Some(data._1, "")))
 
   val newPasswordForm = Form[String](
     mapping(
@@ -92,7 +105,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       if (user.account.email.isEmpty) {
         Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       } else {
-        Ok(views.html.v2.userAccount.account(user, changePasswordForm))
+        Ok(views.html.v2.userAccount.account(user, user.person.socialProfile.email, changeEmailForm, changePasswordForm))
       }
     }
   }
@@ -110,6 +123,39 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
           _.matches(info, suppliedPassword)
         }
       case None => false
+    }
+  }
+
+  /**
+    * Updates the email for the given token
+    * @param tokenId Token
+    */
+  def handleEmailChange(tokenId: String) = Action.async { implicit request =>
+    Future.successful {
+      emailToken.find(tokenId) map { token =>
+        if (token.isExpired) {
+          Redirect(routes.Dashboard.index()).flashing("error" -> "The confirmation link has expired")
+        } else {
+          val profile = socialProfileService.find(token.userId, ProfileType.Person)
+          identityService.findByEmail(profile.email) map { identity =>
+            userAccountService.findByPerson(token.userId) map { account =>
+              identityService.delete(identity.email)
+              identityService.insert(identity.copy(email = token.email))
+              userAccountService.update(account.copy(email = Some(token.email)))
+              socialProfileService.update(profile.copy(email = token.email), ProfileType.Person)
+              emailToken.delete(tokenId)
+              val msg = "Your email was successfully updated. Please log in with your new email"
+              Redirect(routes.LoginPage.logout(success = Some(msg)))
+            } getOrElse {
+              Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
+            }
+          } getOrElse {
+            Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
+          }
+        }
+      } getOrElse {
+        Redirect(routes.Dashboard.index()).flashing("error" -> "Requested token is not found")
+      }
     }
   }
 
@@ -140,12 +186,51 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+    * Sends confirmation email with a link to change email
+    */
+  def changeEmail = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+    implicit handler => implicit user =>
+      val form = changeEmailForm.bindFromRequest()
+      form.fold(
+        errors => Future.successful(
+          BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, errors, changePasswordForm))
+        ),
+        info => {
+          val response = for (
+              identity <- identityService.findByEmail(info._1);
+              pinfo <- identity.profile.passwordInfo;
+              hasher <- env.passwordHashers.get(identity.hasher) if hasher.matches(pinfo, info._2)
+            ) yield {
+              val now = DateTime.now
+              val token = EmailToken(UUID.randomUUID().toString, info._1, user.person.identifier, now, now.plusMinutes(60))
+              emailToken.insert(token)
+              env.mailer.sendEmail("Confirm your email", info._1,
+                (None, Some(mail.templates.password.html.confirmEmail(
+                  user.person.firstName,
+                  fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
+                  user.person.socialProfile.email)))
+              )
+              val msg = "Confirmation email was sent to your new email address"
+              Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> msg))
+            }
+          response getOrElse {
+            val errors = form.withError("password", "Wrong password")
+            Future.successful(
+              BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, errors, changePasswordForm))
+            )
+          }
+        }
+      )
+  }
+
+  /**
     * Changes the password for the current user
     */
   def changePassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
-        errors => Future.successful(BadRequest(views.html.v2.userAccount.account(user, errors))),
+        errors => Future.successful(
+          BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, changeEmailForm, errors))),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
           Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))

@@ -43,6 +43,8 @@ trait Services {
 
   def contributionService: ContributionService = ContributionService.get
 
+  def emailToken: EmailTokenService = EmailTokenService.get
+
   def evaluationService: EvaluationService = EvaluationService.get
 
   def eventService: EventService = EventService.get
@@ -61,7 +63,7 @@ trait Services {
 
   def feeService: BrandFeeService = BrandFeeService.get
 
-  def mailTokenService: MailTokenService = MailTokenService.get
+  def mailTokenService: PasswordTokenService = PasswordTokenService.get
 
   def memberService: MemberService = MemberService.get
 
