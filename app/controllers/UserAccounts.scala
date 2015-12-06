@@ -32,6 +32,7 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
+import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.providers.utils.PasswordValidator
 import securesocial.core.{PasswordInfo, RuntimeEnvironment}
 
@@ -83,6 +84,9 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     "personId" -> longNumber,
     "role" -> optional(text)))
 
+  /**
+    * Renders form for creating or changing the password
+    */
   def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user => Future.successful {
       if (user.account.email.isEmpty) {
@@ -117,13 +121,19 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       newPasswordForm.bindFromRequest().fold(
         errors => Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))),
         password => {
-          val account = createPasswordInfo(user, env.currentHasher.hash(password))
-          env.mailer.sendEmail("New password", user.person.socialProfile.email,
-            (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
-          env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
-            _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
-          }).flatMap { _ =>
-            Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
+          if (identityService.checkEmail(user.person.socialProfile.email)) {
+            val account = createPasswordInfo(user, env.currentHasher.hash(password))
+            env.mailer.sendEmail("New password", user.person.socialProfile.email,
+              (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
+            env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
+              _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.person.member))
+            }).flatMap { _ =>
+              Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
+            }
+          } else {
+            val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
+            val errors = newPasswordForm.withGlobalError(msg)
+            Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)))
           }
         }
       )
@@ -152,7 +162,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       val account = user.account.copy(activeRole = !user.account.activeRole)
       userAccountService.updateActiveRole(user.account.personId, account.activeRole)
       env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
-        _.updateUser(ActiveUser(user.id, account, user.person, user.person.member))
+        _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.person.member))
       }).flatMap(_ => Future.successful(Redirect(request.headers("referer"))) )
   }
 
@@ -166,7 +176,12 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     val email = user.person.socialProfile.email
     val identity = PasswordIdentity(user.person.id, email, info.password, Some(user.person.firstName),
       Some(user.person.lastName), info.hasher)
-    identityService.insert(identity)
+    identityService.findByEmail(email) map { existingIdentity =>
+      registeringUserService.delete(email, UsernamePasswordProvider.UsernamePassword)
+      identityService.update(identity)
+    } getOrElse {
+      identityService.insert(identity)
+    }
     userAccountService.update(user.account.copy(email = Some(email)))
   }
 

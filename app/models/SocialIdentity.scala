@@ -21,20 +21,17 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
-import models.service.{ PersonService, UserAccountService, IdentityService$ }
-import play.api.Play.current
-import play.api.cache.Cache
 import play.api.libs.Crypto
 import securesocial.core.providers._
-import securesocial.core.{ OAuth1Info, OAuth2Info, PasswordInfo, _ }
+import securesocial.core.{PasswordInfo, _}
 
 import scala.Predef._
 import scala.util.Random
 
 case class ActiveUser(id: String,
+                      providerId: String,
                       account: UserAccount,
                       person: Person,
                       member: Option[Member] = None) {
@@ -43,7 +40,7 @@ case class ActiveUser(id: String,
 }
 
 /**
- * Contains profile and authentication info for a SecureSocial Identity
+ * Contains profile and authentication info when a user authenticates using a social network
  */
 case class SocialIdentity(uid: Option[Long],
                           profile: BasicProfile,
@@ -55,6 +52,9 @@ case class SocialIdentity(uid: Option[Long],
   }
 }
 
+/**
+  * Contains profile and authentication info when a user authenticates using email
+  */
 case class PasswordIdentity(userId: Option[Long],
   email: String,
   password: String,
