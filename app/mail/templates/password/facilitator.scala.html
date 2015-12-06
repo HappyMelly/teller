@@ -1,0 +1,14 @@
+@(recipient: String,
+    mailToken: String,
+    brand: String)(implicit request: RequestHeader,
+        env: securesocial.core.RuntimeEnvironment[_])
+
+@mail.templates.html.hmTmpl(s"Your Facilitator Account for $brand") {
+    <h2>Hi @recipient,</h2>
+    <p>Your facilitator account for @brand has been created.</p>
+    <p>Please create a new password to log in:</p>
+    @mail.templates.html.button("Create new password", env.routes.resetPasswordUrl(mailToken))
+    <p>If you didn't request @brand facilitator license, please ignore this email.</p>
+    <p>All the best, <br>
+        Happy Melly Teller Team</p>
+} { }
