@@ -67,23 +67,27 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index = SecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account) { (brand, brands) =>
-        val licenses = licenseService.expiring(List(brand.identifier))
-        val events = unbilledEvents(brand)
-        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
-          licenses, events))
-      } { (brand, brands) =>
-        val events = eventService.findByFacilitator(
-          user.account.personId,
-          brandId = None)
-        Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
-          upcomingEvents(events, brands),
-          pastEvents(events, brands),
-          unhandledEvaluations(events, brands)))
-      } {
-        Ok(views.html.v2.dashboard.index(user))
+      if (user.account.registered) {
+        roleDiffirentiator(user.account) { (brand, brands) =>
+          val licenses = licenseService.expiring(List(brand.identifier))
+          val events = unbilledEvents(brand)
+          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+            licenses, events))
+        } { (brand, brands) =>
+          val events = eventService.findByFacilitator(
+            user.account.personId,
+            brandId = None)
+          Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
+            upcomingEvents(events, brands),
+            pastEvents(events, brands),
+            unhandledEvaluations(events, brands)))
+        } {
+          Ok(views.html.v2.dashboard.index(user))
+        }
+      } else {
+        Redirect(routes.Registration.step1())
       }
   }
 
