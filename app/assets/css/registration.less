@@ -24,6 +24,7 @@
 @import "settings";
 
 body.unauthorized {
+
   .subpage {
     margin-top: 100px;
     .action-block {
@@ -34,6 +35,10 @@ body.unauthorized {
 
     .registration-menu {
       margin-bottom: 10px;
+      margin-right: -127px;
+      .stop-registration {
+        padding-left: 20px;
+      }
       span {
         padding-right: 15px;
         &.inactive {
@@ -58,6 +63,11 @@ body.unauthorized {
         margin-top: 30px;
         width: 80%;
       }
+    }
+  }
+  .narrow {
+    label {
+      text-align: right !important;
     }
   }
 }
