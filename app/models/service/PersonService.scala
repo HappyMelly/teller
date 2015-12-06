@@ -63,6 +63,7 @@ class PersonService extends Services {
       TableQuery[ProfileStrengths].
         filter(_.objectId === person.id.get).
         filter(_.org === false).delete
+      TableQuery[PasswordIdentities].filter(_.userId === id).delete
     }
   }
 

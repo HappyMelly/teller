@@ -32,18 +32,22 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.mvc.Controller
+import play.api.mvc.{Controller, RequestHeader}
+import securesocial.controllers.BasePasswordReset
 import securesocial.core.RuntimeEnvironment
+import securesocial.core.providers.MailToken
 
 import scala.concurrent.Future
+import scala.util.Random
 
 /**
  * Content license pages and API.
  */
-class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends Controller
-with Security
-with Services
-with Activities {
+class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePasswordReset[ActiveUser]
+  with Security
+  with Services
+  with Activities
+  with Controller {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -91,26 +95,28 @@ with Activities {
    */
   def create(personId: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      personService.find(personId).map { person ⇒
+      personService.findComplete(personId).map { person ⇒
         val brands = coordinatedBrands(user.account.personId)
         val form = licenseForm.bindFromRequest
         form.fold(
           formWithErrors ⇒ BadRequest(views.html.v2.license.addForm(user, formWithErrors, brands, personId)),
           license ⇒ {
             brands.find(_._1 == license.brandId) map { brand =>
-              val addedLicense = licenseService.add(license.copy(licenseeId = personId))
-              profileStrengthService.find(personId, org = false) map { x ⇒
-                profileStrengthService.update(ProfileStrength.forFacilitator(x))
+              if (!checkOtherAccountEmail(person)) {
+                val addedLicense = licenseService.add(license.copy(licenseeId = personId))
+                profileStrengthService.find(personId, org = false) map { x ⇒
+                  profileStrengthService.update(ProfileStrength.forFacilitator(x))
+                }
+                createFacilitatorAccount(person, brand._2)
+                activity(addedLicense, user.person).created.insert()
+                val route = routes.People.details(personId).url + "#facilitation"
+                Redirect(route).flashing("success" -> "License for brand %s was added".format(brand._2))
+              } else {
+                val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
+                  " by email. Please update the email first and then proceed."
+                val errors = form.withGlobalError(msg)
+                BadRequest(views.html.v2.license.addForm(user, errors, brands, personId))
               }
-              userAccountService.findByPerson(personId) map { account =>
-                userAccountService.update(account.copy(facilitator = true))
-              } getOrElse {
-                val account = UserAccount.empty(personId).copy(facilitator = true, registered = true)
-                userAccountService.insert(account)
-              }
-              activity(addedLicense, user.person).created.insert()
-              val route = routes.People.details(personId).url + "#facilitation"
-              Redirect(route).flashing("success" -> "License for brand %s was added".format(brand._2))
             } getOrElse {
               val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")
               BadRequest(views.html.v2.license.addForm(user, formWithError, brands, personId))
@@ -197,4 +203,69 @@ with Activities {
     */
   protected def coordinatedBrands(coordinatorId: Long): List[(Long, String)] =
     brandService.findByCoordinator(coordinatorId).map(x => (x.identifier, x.name))
+
+  /**
+    * Creates an account with facilitator access
+    * It also sends an email to the user inviting to create new password
+    *
+    * @param person Person
+    * @param brand Brand name
+    */
+  protected def createFacilitatorAccount(person: Person, brand: String)(implicit request: RequestHeader): Unit = {
+    createToken(person.socialProfile.email, isSignUp = false).map { token =>
+      userAccountService.findByPerson(person.identifier) map { account =>
+        if (account.email.isEmpty) {
+          userAccountService.update(account.copy(email = Some(person.socialProfile.email), facilitator = true))
+          setupLoginByEmailEnvironment(person, token)
+          sendFacilitatorWelcomeEmail(person, brand, token.uuid)
+        } else {
+          userAccountService.update(account.copy(facilitator = true))
+        }
+      } getOrElse {
+        val account = UserAccount.empty(person.identifier).copy(
+          email = Some(person.socialProfile.email),
+          facilitator = true, registered = true)
+        userAccountService.insert(account)
+        setupLoginByEmailEnvironment(person, token)
+        sendFacilitatorWelcomeEmail(person, brand, token.uuid)
+      }
+    }
+  }
+
+  /**
+    * Returns true if another registered user account with the same email exist
+    * @param person User
+    */
+  protected def checkOtherAccountEmail(person: Person): Boolean =
+    identityService.findByEmail(person.socialProfile.email).exists(_.userId != person.id)
+
+  /**
+    * Creates dummy password and adds all required records to resetting password for newly created
+    *  facilitator account
+    * @param person Person
+    * @param token Token
+    */
+  protected def setupLoginByEmailEnvironment(person: Person, token: MailToken): Unit = {
+    val dummyPassword = env.currentHasher.hash(Random.nextFloat().toString)
+    val identity = PasswordIdentity(person.id,
+      person.socialProfile.email,
+      dummyPassword.password,
+      Some(person.firstName),
+      Some(person.lastName), dummyPassword.hasher)
+    identityService.insert(identity)
+    env.userService.saveToken(token)
+  }
+
+  /**
+    * Sends a welcome email to a new facilitator
+    * @param person Person
+    * @param brand Brand name
+    * @param token Unique token for password creation
+    */
+  protected def sendFacilitatorWelcomeEmail(person: Person, brand: String, token: String)(implicit request: RequestHeader) = {
+    env.mailer.sendEmail(s"Your Facilitator Account for $brand",
+      person.socialProfile.email,
+      (None, Some(mail.templates.password.html.facilitator(person.firstName, token, brand)))
+    )
+  }
 }
