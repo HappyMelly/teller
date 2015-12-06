@@ -69,7 +69,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
    */
   def index = SecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      if (user.account.viewer) {
+      if (user.account.registered) {
         roleDiffirentiator(user.account) { (brand, brands) =>
           val licenses = licenseService.expiring(List(brand.identifier))
           val events = unbilledEvents(brand)
@@ -87,7 +87,7 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
           Ok(views.html.v2.dashboard.index(user))
         }
       } else {
-        Redirect(routes.LoginPage.logout(error = Some("This social account is not linked to any user")))
+        Redirect(routes.Registration.step1())
       }
   }
 

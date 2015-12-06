@@ -22,13 +22,12 @@
             @v2.html.text(form("firstName"), '_label -> "First name", '_help -> "")
             @v2.html.text(form("lastName"), '_label -> "Last name", '_help -> "")
             @v2.html.email(form("email"), '_label -> "Email", '_help -> "")
-            @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country")
+            @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country",
+                '_help -> "")
 
-            <div class="row">
-                <div class="col-sm-3"></div>
-                <div class="col-sm-9">
-                    <button class="btn btn-primary btn-block pull-right" type="submit">Continue</button>
-                </div>
+            <div class="col-sm-3"></div>
+            <div class="col-sm-9">
+                <button class="btn btn-primary btn-block pull-right" type="submit">Continue</button>
             </div>
         }
         </div>

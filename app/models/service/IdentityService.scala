@@ -32,7 +32,7 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
-import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
+import securesocial.core.providers._
 
 class IdentityService {
 
@@ -40,11 +40,25 @@ class IdentityService {
   private val passwordIdentities = TableQuery[PasswordIdentities]
 
   /**
+    * Returns true if the given email doesn't exist in the set of registered emails
+    * @param email Email to check
+    */
+  def checkEmail(email: String): Boolean = DB.withSession { implicit session =>
+    val query = for {
+      (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
+        p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email
+    } yield (identity, registering.userId.?)
+    query.firstOption.map { result =>
+      result._2.isDefined
+    } getOrElse true
+  }
+
+  /**
     * Returns a password identify for the given email if exists
     * @param email Email address
     */
-  def findByEmail(email: String): Option[PasswordIdentity] = DB.withSession {
-    implicit session ⇒ passwordIdentities.filter(_.email === email).firstOption
+  def findByEmail(email: String): Option[PasswordIdentity] = DB.withSession { implicit session ⇒
+    passwordIdentities.filter(_.email === email).firstOption
   }
 
   /**

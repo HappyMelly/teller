@@ -79,6 +79,8 @@ trait Services {
 
   def profileStrengthService: ProfileStrengthService = ProfileStrengthService.get
 
+  def registeringUserService: RegisteringUserService = RegisteringUserService.get
+
   def socialProfileService: SocialProfileService = SocialProfileService.get
 
   def userAccountService: UserAccountService = UserAccountService.get

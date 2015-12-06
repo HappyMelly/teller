@@ -71,6 +71,19 @@ case class PasswordIdentity(userId: Option[Long],
   } else ""
 }
 
+object PasswordIdentity {
+
+  /**
+    * Returns new identity based on the given profile
+    * @param profile Profile
+    */
+  def fromProfile(profile: BasicProfile): PasswordIdentity = profile.passwordInfo.map { info =>
+    PasswordIdentity(None, profile.userId, info.password, profile.firstName, profile.lastName, info.hasher)
+  }.getOrElse {
+    PasswordIdentity(None, profile.userId, "", profile.firstName, profile.lastName, "")
+  }
+}
+
 object SocialIdentity {
 
   /**

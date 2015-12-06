@@ -110,7 +110,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     mapping(
       "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(Future.successful(identityService.findByEmail(suppliedEmail).isEmpty), 10.seconds)
+        Await.result(Future.successful(identityService.checkEmail(suppliedEmail)), 10.seconds)
       }),
       "password" ->
         tuple(

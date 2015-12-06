@@ -154,11 +154,13 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    */
   protected def createUser(profile: BasicProfile): ActiveUser = {
     if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
-      val account = UserAccount.empty(0)
-      val person = Person("", "")
-      val social = SocialProfile(email = profile.userId)
-      person.socialProfile_=(social)
-      ActiveUser(profile.userId, account, person)
+      val identity = identityService.findByEmail(profile.userId).map { identity =>
+        identityService.update(PasswordIdentity.fromProfile(profile))
+      }.getOrElse {
+        registeringUserService.insert(profile.userId, profile.providerId)
+        identityService.insert(PasswordIdentity.fromProfile(profile))
+      }
+      user(identity)
     } else {
       val identity = identityFromProfile(profile)
       identityService.findActiveUserData(identity) map { userData ⇒
@@ -187,7 +189,15 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
   protected def retrieveLoggedInUser(profile: BasicProfile): ActiveUser = {
     if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
       identityService.findActiveUserByEmail(profile.userId) getOrElse {
-        throw new AuthenticationException
+        if (registeringUserService.exists(profile.userId, profile.providerId)) {
+          identityService.findByEmail(profile.userId).map { identity =>
+            user(identity)
+          } getOrElse {
+            throw new AuthenticationException
+          }
+        } else {
+          throw new AuthenticationException
+        }
       }
     } else {
       identityService.findActiveUser(profile.userId, profile.providerId) getOrElse {
@@ -206,6 +216,14 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     identityService.findActiveUserByEmail(profile.userId) map(user => user) getOrElse {
       throw new AuthenticationException
     }
+  }
+
+  protected def user(identity: PasswordIdentity): ActiveUser = {
+    val account = UserAccount.empty(0)
+    val person = Person("", "")
+    val social = SocialProfile(email = identity.email)
+    person.socialProfile_=(social)
+    ActiveUser(identity.email, account, person)
   }
 
   /**
