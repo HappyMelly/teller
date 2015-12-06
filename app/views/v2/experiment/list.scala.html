@@ -8,7 +8,7 @@
 @import templates.Formatters._
 
 <div class="block">
-<h3>Experiments</h3>
+<h4>Experiments</h4>
 <p class="text-muted"><i>You can add an unlimited number of experiments you run. These
 experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
 website.</i></p>
@@ -21,7 +21,7 @@ website.</i></p>
 <div class="experiments" id="experimentList">
   @for(experiment <- experiments) {
     <div class="block" data-id="@experiment.id.get">
-      <h3>@experiment.name</h3>
+      <h4>@experiment.name</h4>
       @experiment.url.map { url =>
         <p class="font-sm">
           <i class="fa fa-external-link"></i> <a href="@url" target="_blank">@url</a>

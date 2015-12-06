@@ -13,6 +13,15 @@ class RegisteringUserService extends Services {
   private val users = TableQuery[RegisteringUsers]
 
   /**
+    * Removes the given user from a list of registering one
+    * @param userId User identifier
+    * @param providerId Provider identifier
+    */
+  def delete(userId: String, providerId: String): Unit = DB.withSession { implicit session =>
+    users.filter(_.userId === userId).filter(_.providerId === providerId).mutate(_.delete())
+  }
+
+  /**
     * Returns true if a user with the given id and provider exists
     * @param userId User identifier
     * @param providerId Provider identifier

@@ -306,7 +306,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                 } getOrElse {
                   person.becomeMember(funder = false, fee)
                 }
-                updateActiveUser(user.id, person, member)
+                updateActiveUser(user.id, user.providerId, person, member)
                 notify(person, org, member)
                 subscribe(person, member)
 
@@ -363,6 +363,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * @param person Person
    */
   protected def updateActiveUser(id: String,
+                                 providerId: String,
                                  person: Person,
                                  member: Member)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get,
@@ -373,8 +374,19 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       person.socialProfile.googlePlusUrl,
       member = true, registered = true)
     val inserted = userAccountService.insert(account)
+    if (providerId == UsernamePasswordProvider.UsernamePassword) {
+      registeringUserService.delete(id, providerId)
+      identityService.findByEmail(id) map { identity =>
+        identityService.update(identity.copy(userId = person.id,
+          firstName = Some(person.firstName),
+          lastName = Some(person.lastName)))
+      } getOrElse {
+        Logger.error(s"$id wasn't found in PasswordIdentity table on the final stage of registration")
+        throw new RuntimeException("Internal error. Please contact support")
+      }
+    }
     env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
-      _.updateUser(ActiveUser(id, inserted, person, Some(member)))
+      _.updateUser(ActiveUser(id, providerId, inserted, person, Some(member)))
     })
   }
 

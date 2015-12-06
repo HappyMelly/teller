@@ -128,7 +128,7 @@ class IdentityService {
             DateTime.now(), 0L, DateTime.now(), 0L))
         else
           None
-        Some(ActiveUser(userId, d._2, person, member))
+        Some(ActiveUser(userId, providerId, d._2, person, member))
       } getOrElse None
   }
 
@@ -158,7 +158,7 @@ class IdentityService {
             DateTime.now(), 0L, DateTime.now(), 0L))
         else
           None
-        Some(ActiveUser(email, d._2, person, member))
+        Some(ActiveUser(email, UsernamePasswordProvider.UsernamePassword, d._2, person, member))
       } getOrElse None
   }
 

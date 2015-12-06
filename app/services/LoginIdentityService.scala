@@ -165,7 +165,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
       val identity = identityFromProfile(profile)
       identityService.findActiveUserData(identity) map { userData ⇒
         identityService.insert(identity)
-        ActiveUser(identity.profile.userId, userData._1, userData._2)
+        ActiveUser(identity.profile.userId, identity.profile.providerId, userData._1, userData._2)
       } getOrElse unregisteredActiveUser(identity)
     }
   }
@@ -223,7 +223,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     val person = Person("", "")
     val social = SocialProfile(email = identity.email)
     person.socialProfile_=(social)
-    ActiveUser(identity.email, account, person)
+    ActiveUser(identity.email, UsernamePasswordProvider.UsernamePassword, account, person)
   }
 
   /**
@@ -236,7 +236,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     val person = Person(firstName, lastName)
     val profile = SocialProfile(email = identity.profile.email.getOrElse(""))
     person.socialProfile_=(profile)
-    ActiveUser(identity.profile.userId, account, person)
+    ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 
   /**

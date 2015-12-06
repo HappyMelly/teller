@@ -14,7 +14,7 @@
 
 <div class="block">
   <div class="block">
-    <h3>On The Web</h3>
+    <h4>On The Web</h4>
     <p><i class="fa fa-envelope fa-fw fa-lg"></i>
       <a href="mailto:@view.profile.email">@view.profile.email</a>
     </p>
@@ -61,12 +61,12 @@
 </div>
 @view.org.about.map { text =>
   <div class="block">
-    <h3>About</h3>
+    <h4>About</h4>
     <p>@text.markdown</p>
   </div>
 }
 <div class="block">
-  <h3>Members</h3>
+  <h4>Members</h4>
   <table class="table">
     <thead>
       <tr>
@@ -79,7 +79,7 @@
     </thead>
     <tbody>
       @for(person <- members) {
-        <tr @if(!person.active) { class="inactive" title="deactivated" })>
+        <tr @if(!person.active) { class="inactive" title="deactivated" }>
           <td><a href="@routes.People.details(person.id.get)">@person.fullName</a></td>
           <td>
             <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">

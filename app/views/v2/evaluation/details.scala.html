@@ -22,7 +22,7 @@
         <div class="col-md-12">
           <div class="header-block">
             <div class="row">
-              <div class="col-md-12"><h1>Evaluation for @participantName</h1></div>
+              <div class="col-md-12"><h2>Evaluation for @participantName</h2></div>
               <div class="col-md-12">
                 <strong>Event: </strong> <a href="@routes.Events.details(pair.event.id.get)">@pair.event.title</a>
               </div>
@@ -31,7 +31,7 @@
           @views.html.v2.evaluation.buttons(pair.eval)
           <div class="row">
             <div class="col-md-12">
-              <h3>Facilitator</h3>
+              <h4>Facilitator</h4>
               <dt>Impression</dt>
               <dl>@Evaluations.impression(pair.eval.facilitatorImpression)</dl>
               <dt>@Evaluations.Questions.facilitatorReview</dt>
@@ -45,7 +45,7 @@
                 <br/>
               }
 
-              <h3>Event & Participant</h3>
+              <h4>Event & Participant</h4>
               <dt>Recommendation</dt>
               <dl>@Evaluations.recommendation(pair.eval.recommendationScore)</dl>
               <dt>Reason to register</dt>
@@ -55,7 +55,7 @@
               <dt>@Evaluations.Questions.changesToEvent</dt>
               <dl>@pair.eval.changesToEvent</dl>
 
-              <h3>Organizer</h3>
+              <h4>Organizer</h4>
               @pair.eval.hostImpression.map { impression =>
                 <dt>Impression</dt>
                 <dl>@Evaluations.impression(impression)</dl>
@@ -63,7 +63,7 @@
               <dt>@Evaluations.Questions.changesToHost</dt>
               <dl>@pair.eval.changesToHost</dl>
 
-              <h3>Content</h3>
+              <h4>Content</h4>
               @pair.eval.contentImpression.map { impression =>
                 <dt>Impression</dt>
                 <dl>@Evaluations.impression(impression)</dl>
