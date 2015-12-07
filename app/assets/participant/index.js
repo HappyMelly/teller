@@ -55,23 +55,9 @@ function filterByTime(oSettings, aData, iDataIndex){
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
     var index = 10;
-    var evalTypeIndex = 12;
     var filter = $('#status').find(':selected').val();
-    if(filter == 3){
-        var forEvaluation = aData[evalTypeIndex];
-        var isValid = forEvaluation !== undefined && forEvaluation !== null;
-        if(isValid && aData[index] == filter){
-            var dataId = aData[evalTypeIndex].id;
-            var dataIds = [];
-            if($('.resend').data() !== undefined){
-                dataIds = $('.resend').data().ids !== undefined ? $('.resend').data().ids : [];
-                if(dataId !== null && dataId !== undefined)
-                    dataIds.push(dataId);
-                $('.resend').data({'ids':dataIds});
-                dataIds = [];
-            }
-        }
-        $('.resend').removeClass('hidden');
+    if(filter == 3){ //unconfirmed status
+      $('.resend').removeClass('hidden');
     } else {
         $('.resend').addClass('hidden');
         if (filter == 'all') {
@@ -191,9 +177,11 @@ $(document).ready( function() {
             }
         ]
     });
+
     participantTable
         .api()
         .on('init.dt', function (e, settings, data) {
+            participantTable.fnDraw();
             loadEventList(events);
             initializeParticipantActions("table");
         });
@@ -216,15 +204,20 @@ $(document).ready( function() {
         calculateAverageImpression(participantTable);
         initializeParticipantActions("table");
     });
+
     $('#exportLink').on('click', function() {
         buildExportLink(false)
     });
 
     $('.resend').on('click',function(){
-        var arrIds = $('.resend').data().ids;
-        var distinct = [];
-        $.each(arrIds, function(i,el){
-            if($.inArray(el,distinct) === -1) distinct.push(el);
+       var distincts = participantTable._('tr',{"filter":"applied"}).map(function(object){
+            return object.evaluation.id;
         });
+
+        initModal(distincts);
+
+        // resend email to these data-id (ie participant id)
+        resendEmailsToAll();
+
     });
 });
