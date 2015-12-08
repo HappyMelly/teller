@@ -28,38 +28,28 @@ var html = `
 	    <div class="modal-content">
 	      <div class="modal-header">
 	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-	        <h4>Sending email to all</h4>
-	      </div>
-	      <div class="modal-body">
-	        <form class="" id="cancelForm" action="" method="post">
-	          <p>Are you sure you want to proceed?</p>
-	        </form>
+	        <h4>Are you sure you want to proceed?</h4>
 	      </div>
 	      <div class="modal-footer">
 	        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-	        <a id="confirmLink" class="btn btn-primary" href="#"> Confirm Resend </a>
+	        <a id="confirmLink" class="send-confirmation-request btn btn-primary" href="#"> Confirm Resend </a>
 	      </div>
 	    </div>
 	  </div>
 	</div>`
 
-
 var dialog = 'resend';
 
-function resendEmailsToAll() {
+function resendEmailsToAll(data) {
+	$('#confirmLink').data({'ids': data});
     $('#' + dialog).modal('show');
+    window.setTimeout(function(){
+    	$('#confirmEmail').modal('show');
+    }, 25);
 }
 
-function initModal(ids){
-	$('#' + dialog).on('shown.bs.modal', function(){
-    	window.setTimeout(function(){
-    		$('#confirmEmail').modal('show');
-    	}, 300);
-    });
-
-    $('#confirmLink').on('click', function(e){
-    	alert('Resend email to ' + ids.length + ' participants');
-    });
+function afterConfirmation(msg) {
+	success(msg);
 }
 
 $(document).ready(function(){
@@ -67,4 +57,17 @@ $(document).ready(function(){
 		$('<div id="confirmEmail" class="modal fade" tabIndex="-1">').
         attr('id', dialog).attr('role', 'dialog').
         attr('aria-hidden', 'true').append(html));
+
+	$('#confirmLink').on('click', function(e){
+		var ids = $.data(this, 'ids');
+
+		$.each(ids, function(index, value){
+			console.log("INDEX: " + index + " VALUE: " + value);
+			$.ajax({
+        	    type: "POST",
+        	    url: $(this).attr("href"),
+        	    data: value
+        	});
+		});
+    });
 });

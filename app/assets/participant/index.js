@@ -181,9 +181,9 @@ $(document).ready( function() {
     participantTable
         .api()
         .on('init.dt', function (e, settings, data) {
-            participantTable.fnDraw();
             loadEventList(events);
             initializeParticipantActions("table");
+            participantTable.fnDraw();
         });
 
     $("div.toolbar").html($('#filter-containter').html());
@@ -213,11 +213,7 @@ $(document).ready( function() {
        var distincts = participantTable._('tr',{"filter":"applied"}).map(function(object){
             return object.evaluation.id;
         });
-
-        initModal(distincts);
-
         // resend email to these data-id (ie participant id)
-        resendEmailsToAll();
-
+        resendEmailsToAll(distincts);
     });
 });
