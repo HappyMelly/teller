@@ -34,6 +34,9 @@ function filterByEvent(oSettings, aData, iDataIndex) {
     return aData[index] == filter;
 }
 
+/**
+ * Filter evaluations by time
+ */
 function filterByTime(oSettings, aData, iDataIndex){
     var index = 11; 
     var filter = $('#past-future').find(':selected').val();
@@ -71,6 +74,9 @@ $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
 $.fn.dataTableExt.afnFiltering.push(filterByTime);
 
+/**
+ * Events to show in the filter dropdown.=
+ */
 function loadEventList(events) {
     $('#events').empty().append($("<option></option>").attr("value", "").text("Specific"));
     for(var i = 0; i < events.length; i++) {
@@ -79,7 +85,6 @@ function loadEventList(events) {
     }
     $('#events').selectpicker('refresh');
 }
-
 
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
@@ -213,7 +218,6 @@ $(document).ready( function() {
        var distincts = participantTable._('tr',{"filter":"applied"}).map(function(object){
             return object.evaluation.id;
         });
-        // resend email to these data-id (ie participant id)
         resendEmailsToAll(distincts);
     });
 });

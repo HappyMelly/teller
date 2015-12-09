@@ -388,6 +388,9 @@ function calculateAverageImpression(table) {
     $("#impression").html("Impression " + badge);
 }
 
+/**
+ * Generate the html for the status column
+ */
 function drawStatus(data) {
     var style = ['fa-hourglass', 'fa-thumbs-up', 'fa-thumbs-down', 'fa-thumb-tack'];
     if (data.status) {
@@ -407,6 +410,9 @@ function drawStatus(data) {
     return '';
 }
 
+/**
+ * Generate the html for creating certificate
+ */
 function drawCertificate(data) {
     if (data.certificate.show) {
         if (data.certificate.number == null) {
