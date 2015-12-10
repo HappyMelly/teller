@@ -415,7 +415,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
       .copy(id = existing.id, active = existing.active)
       .copy(photo = existing.photo, customerId = existing.customerId)
       .copy(addressId = existing.addressId)
-    val modifiedWithEmail = if (user.person.identifier == existing.identifier && user.account.emailAuthentication)
+    val modifiedWithEmail = if (user.person.identifier == existing.identifier && user.account.byEmail)
       modified.copy(email = existing.email)
     else
       modified

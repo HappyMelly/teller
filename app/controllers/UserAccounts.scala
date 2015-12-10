@@ -103,9 +103,9 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user => Future.successful {
       if (user.account.byEmail) {
-        Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
-      } else {
         Ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
+      } else {
+        Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       }
     }
   }

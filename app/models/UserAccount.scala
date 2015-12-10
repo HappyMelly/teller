@@ -49,11 +49,6 @@ case class UserAccount(id: Option[Long],
                        activeRole: Boolean = false) extends Subject with Services {
 
   /**
-    * Returns true if this account has an email authentication
-    */
-  def emailAuthentication: Boolean = byEmail
-
-  /**
    * Returns a string list of role names, for the Subject interface.
    */
   def getRoles: java.util.List[UserRole] = {
