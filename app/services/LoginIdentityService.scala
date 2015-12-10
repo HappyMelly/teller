@@ -128,7 +128,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @return returns an optional PasswordInfo
    */
   def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] = Future.successful {
-    identityService.findByEmail(user.person.socialProfile.email) map { identity =>
+    identityService.findByEmail(user.person.email) map { identity =>
       Some(PasswordInfo(identity.hasher, identity.password))
     } getOrElse None
   }
@@ -141,7 +141,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @return
    */
   def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
-    identityService.findByEmail(user.person.socialProfile.email) map { identity =>
+    identityService.findByEmail(user.person.email) map { identity =>
       identityService.update(identity.copy(password = info.password, hasher = info.hasher))
       Future.successful(None)
     } getOrElse Future.successful(None)
@@ -220,9 +220,8 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
 
   protected def user(identity: PasswordIdentity): ActiveUser = {
     val account = UserAccount.empty(0)
-    val person = Person("", "")
-    val social = SocialProfile(email = identity.email)
-    person.socialProfile_=(social)
+    val person = Person("", "", identity.email)
+    person.socialProfile_=(SocialProfile())
     ActiveUser(identity.email, UsernamePasswordProvider.UsernamePassword, account, person)
   }
 
@@ -233,9 +232,8 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
   protected def unregisteredActiveUser(identity: SocialIdentity): ActiveUser = {
     val account = UserAccount.empty(0)
     val (firstName, lastName) = userNames(identity)
-    val person = Person(firstName, lastName)
-    val profile = SocialProfile(email = identity.profile.email.getOrElse(""))
-    person.socialProfile_=(profile)
+    val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
+    person.socialProfile_=(SocialProfile())
     ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 

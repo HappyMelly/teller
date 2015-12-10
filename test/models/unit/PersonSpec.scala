@@ -66,7 +66,7 @@ class PersonSpec extends Specification {
       val address = Address(id = Some(7L), countryCode = "GE")
       person.address_=(address)
       person.copy(active = false).address must_== address
-      val socialProfile = SocialProfile(email = "indigo@mail.com")
+      val socialProfile = SocialProfile(twitterHandle = Some("skotlov"))
       person.socialProfile_=(socialProfile)
       person.copy(active = false).socialProfile must_== socialProfile
     }

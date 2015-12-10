@@ -95,7 +95,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
    */
   def create(personId: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      personService.findComplete(personId).map { person ⇒
+      personService.find(personId).map { person ⇒
         val brands = coordinatedBrands(user.account.personId)
         val form = licenseForm.bindFromRequest
         form.fold(
@@ -212,10 +212,10 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
     * @param brand Brand name
     */
   protected def createFacilitatorAccount(person: Person, brand: String)(implicit request: RequestHeader): Unit = {
-    createToken(person.socialProfile.email, isSignUp = false).map { token =>
+    createToken(person.email, isSignUp = false).map { token =>
       userAccountService.findByPerson(person.identifier) map { account =>
         if (account.email.isEmpty) {
-          userAccountService.update(account.copy(email = Some(person.socialProfile.email), facilitator = true))
+          userAccountService.update(account.copy(email = Some(person.email), facilitator = true))
           setupLoginByEmailEnvironment(person, token)
           sendFacilitatorWelcomeEmail(person, brand, token.uuid)
         } else {
@@ -223,7 +223,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
         }
       } getOrElse {
         val account = UserAccount.empty(person.identifier).copy(
-          email = Some(person.socialProfile.email),
+          email = Some(person.email),
           facilitator = true, registered = true)
         userAccountService.insert(account)
         setupLoginByEmailEnvironment(person, token)
@@ -237,7 +237,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
     * @param person User
     */
   protected def checkOtherAccountEmail(person: Person): Boolean =
-    identityService.findByEmail(person.socialProfile.email).exists(_.userId != person.id)
+    identityService.findByEmail(person.email).exists(_.userId != person.id)
 
   /**
     * Creates dummy password and adds all required records to resetting password for newly created
@@ -248,7 +248,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
   protected def setupLoginByEmailEnvironment(person: Person, token: MailToken): Unit = {
     val dummyPassword = env.currentHasher.hash(Random.nextFloat().toString)
     val identity = PasswordIdentity(person.id,
-      person.socialProfile.email,
+      person.email,
       dummyPassword.password,
       Some(person.firstName),
       Some(person.lastName), dummyPassword.hasher)
@@ -264,7 +264,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
     */
   protected def sendFacilitatorWelcomeEmail(person: Person, brand: String, token: String)(implicit request: RequestHeader) = {
     env.mailer.sendEmail(s"Your Facilitator Account for $brand",
-      person.socialProfile.email,
+      person.email,
       (None, Some(mail.templates.password.html.facilitator(person.firstName, token, brand)))
     )
   }

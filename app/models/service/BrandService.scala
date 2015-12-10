@@ -260,7 +260,7 @@ class BrandService extends Services {
         .update(u.socialProfile.copy(objectId = u.id.get))
 
       val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
-        u.description, u.picture, u.tagLine, u.webSite, u.blog,
+        u.description, u.picture, u.tagLine, u.webSite, u.blog, u.contactEmail,
         u.evaluationHookUrl, u.updated, u.updatedBy)
       brands.filter(_.id === u.id).map(_.forUpdate).update(updateTuple)
 

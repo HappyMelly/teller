@@ -115,7 +115,7 @@ trait Enrollment extends Controller
 
   private def personSlackMsg(person: Person, member: Member, url: String): String = {
     val headline = newMemberMsg(member, person.fullName, url)
-    val dummy = SocialProfile(email = "dummy")
+    val dummy = SocialProfile()
     connectMeMessage(dummy, person.socialProfile) map { value =>
       headline + " " + value
     } getOrElse

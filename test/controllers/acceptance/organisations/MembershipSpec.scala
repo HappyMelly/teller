@@ -77,7 +77,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   val paymentService = mock[PaymentRecordService]
   val org = OrganisationHelper.one
   val id = 1L
-  val profile = SocialProfile(0, ProfileType.Organisation, "")
+  val profile = SocialProfile(0, ProfileType.Organisation)
 
   trait DefaultMockContext extends MockContext {
     truncateTables()

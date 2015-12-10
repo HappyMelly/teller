@@ -231,13 +231,11 @@ object Participant {
   def create(data: ParticipantData): Participant = {
     val virtual = true
     val active = false
-    val person = Person(None, data.firstName, data.lastName, data.birthday,
+    val person = Person(None, data.firstName, data.lastName, data.emailAddress, data.birthday,
       Photo(None, None), signature = false, 0, None, None,
       None, None, None, virtual, active,
       DateStamp(data.created, data.createdBy, data.updated, data.updatedBy))
-    val profile = SocialProfile(objectId = 0,
-      objectType = ProfileType.Person,
-      email = data.emailAddress)
+    val profile = SocialProfile(objectId = 0, objectType = ProfileType.Person)
     person.socialProfile_=(profile)
     person.address_=(data.address)
     val newPerson = person.insert

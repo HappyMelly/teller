@@ -30,12 +30,10 @@ class PhotoSpec extends Specification {
 
   "Photo object with a valid type should be returned" >> {
     "if the type is Gravatar" in {
-      val profile = SocialProfile(email = "test@test.com")
-      Photo("gravatar", profile).id must_== Some("gravatar")
+      Photo("gravatar", "test@test.com").id must_== Some("gravatar")
     }
     "if the type is anything but Gravatar" in {
-      val profile = SocialProfile(email = "test@test.com")
-      Photo("test", profile).id must_== None
+      Photo("test", "test@test.com").id must_== None
     }
   }
 }

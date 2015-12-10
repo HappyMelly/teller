@@ -73,7 +73,7 @@ object PeopleApi extends ApiAuthentication {
         "unique_name" -> person.uniqueName,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
-        "email_address" -> person.socialProfile.email,
+        "email_address" -> person.email,
         "image" -> person.photo.url,
         "address" -> person.address,
         "bio" -> person.bio,

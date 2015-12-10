@@ -69,7 +69,7 @@ object BrandsApi extends Controller with ApiAuthentication {
           controllers.routes.Brands.picture(brandView.brand.code).url),
         "coordinator" -> brandView.coordinator,
         "contact_info" -> Json.obj(
-          "email" -> brandView.brand.socialProfile.email,
+          "email" -> brandView.brand.contactEmail,
           "skype" -> brandView.brand.socialProfile.skype,
           "phone" -> brandView.brand.socialProfile.phone),
         "social_profile" -> Json.obj(

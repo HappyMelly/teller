@@ -101,7 +101,6 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
       service.findWithProfile(id) map { x ⇒
         x.org.name must_== "First org"
         x.org.id must_== Some(id)
-        x.profile.email must_== "test@test.ru"
       } getOrElse ko
     }
   }
@@ -148,7 +147,7 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
             id = id,
             name = name,
             countryCode = country)
-          val profile = SocialProfile(0, ProfileType.Organisation, "test@test.ru")
+          val profile = SocialProfile(0, ProfileType.Organisation)
           OrganisationService.get.insert(OrgView(org, profile))
       }
   }

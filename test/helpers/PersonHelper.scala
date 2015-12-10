@@ -49,11 +49,11 @@ object PersonHelper {
       "Sergey Kotlov",
       DateTime.now(),
       "Sergey Kotlov")
-    val person = new Person(id, firstName, lastName, birthday, realPhoto,
+    val person = new Person(id, firstName, lastName, "test@test.ru", birthday, realPhoto,
       signature, address.id.get, bio, interests,
       webSite, blog, Some("customer"), virtual, active, dateStamp)
     person.address_=(address)
-    person.socialProfile_=(new SocialProfile(email = "test@test.ru"))
+    person.socialProfile_=(new SocialProfile())
     person
   }
 

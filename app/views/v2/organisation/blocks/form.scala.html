@@ -22,7 +22,7 @@
 }
 
 @v2.html.block("Social Profiles") {
-  @v2.html.email(form("profile.email"), '_label -> "Email")
+  @v2.html.email(form("email"), '_label -> "Email")
   @defining(form("profile.twitterHandle")) { field =>
     <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
       <label for="@field.id" class="col-sm-2 control-label">Twitter username</label>

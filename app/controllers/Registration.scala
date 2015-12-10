@@ -192,7 +192,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       redirectViewer {
         val form = userForm.bind(Map(("firstName", user.person.firstName),
           ("lastName", user.person.lastName),
-          ("email", user.person.socialProfile.email)))
+          ("email", user.person.email)))
         Ok(views.html.v2.registration.step2(user, form))
       }
   }
@@ -277,7 +277,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
         Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
           val person = unregisteredPerson(userData, user).insert
           val org = if (userData.org) {
-            val profile = SocialProfile(0, ProfileType.Organisation, userData.email)
+            val profile = SocialProfile(0, ProfileType.Organisation)
             val view = orgService.insert(OrgView(unregisteredOrg(userData), profile))
             Some(view.org)
           } else {
@@ -367,7 +367,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                                  person: Person,
                                  member: Member)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get,
-      Some(person.socialProfile.email),
+      Some(person.email),
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,
@@ -431,12 +431,12 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     val photo = new Photo(None, None)
     val fullName = userData.firstName + " " + userData.lastName
     val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)
-    val person = new Person(None, userData.firstName, userData.lastName, None, photo,
+    val person = new Person(None, userData.firstName, userData.lastName, userData.email, None, photo,
       false, 0, None, None, webSite = None, blog = None, active = false,
       dateStamp = dateStamp)
     val address = new Address(countryCode = userData.country)
     person.address_=(address)
-    person.socialProfile_=(user.person.socialProfile.copy(email = userData.email))
+    person.socialProfile_=(user.person.socialProfile)
     person
   }
 

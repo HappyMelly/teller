@@ -46,9 +46,6 @@ object SocialProfiles {
    * @param profileType Sets of which profile type mapping is
    */
   def profileMapping(profileType: ProfileType.Value) = mapping(
-    "email" -> {
-      if (profileType == ProfileType.Organisation) text else nonEmptyText
-    },
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(facebookProfileUrl),
     "linkedInUrl" -> optional(linkedInProfileUrl),
@@ -57,14 +54,14 @@ object SocialProfiles {
     "phone" -> optional(nonEmptyText),
     "contactForm" -> optional(webUrl))(
       {
-        (email, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
+        (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl, skype,
         phone, contactForm) ⇒
-          SocialProfile(0, profileType, email, twitterHandle,
+          SocialProfile(0, profileType, twitterHandle,
             facebookUrl, linkedInUrl, googlePlusUrl, skype, phone, contactForm)
       })(
         {
           (s: SocialProfile) ⇒
-            Some(s.email, s.twitterHandle, s.facebookUrl,
+            Some(s.twitterHandle, s.facebookUrl,
               s.linkedInUrl, s.googlePlusUrl, s.skype, s.phone, s.contactForm)
         })
 }

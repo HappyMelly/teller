@@ -68,7 +68,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val id = 1L
   val person = PersonHelper.one()
-  person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+//  person.socialProfile_=(new SocialProfile(email = "test@test.com"))
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
@@ -162,7 +162,6 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e17 = new MockContext {
     truncateTables()
     val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     (personService.find(_: Long)) expects id returning Some(person)
     val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
@@ -173,7 +172,6 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e18 = new MockContext {
     truncateTables()
     val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
       renewal = false)
     person.member_=(member)

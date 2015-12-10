@@ -76,7 +76,7 @@ trait PeopleApi extends Controller with ApiAuthentication with Services {
         "unique_name" -> person.uniqueName,
         "first_name" -> person.firstName,
         "last_name" -> person.lastName,
-        "email_address" -> person.socialProfile.email,
+        "email_address" -> person.email,
         "photo" -> person.photo.url,
         "address" -> person.address,
         "bio" -> person.bio,

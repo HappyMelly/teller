@@ -36,7 +36,7 @@ class PersonMemberSpec extends Specification {
 
   class TestPerson(id: Option[Long],
     firstName: String,
-    lastName: String) extends Person(id, firstName, lastName, None,
+    lastName: String) extends Person(id, firstName, lastName, "test@test.com", None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
       with FakeServices {
@@ -71,7 +71,7 @@ class PersonMemberSpec extends Specification {
 
   class AnotherTestPerson(id: Option[Long],
     firstName: String,
-    lastName: String) extends Person(id, firstName, lastName, None,
+    lastName: String) extends Person(id, firstName, lastName, "test@test.com", None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
       with FakeServices {

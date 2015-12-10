@@ -35,7 +35,7 @@ import org.specs2.matcher.DataTables
 
 class MemberServiceSpec extends PlayAppSpec with DataTables {
 
-  val profile = SocialProfile(0, ProfileType.Organisation, "")
+  val profile = SocialProfile(0, ProfileType.Organisation)
 
   "Method findAll" should {
     "return 6 members" in {

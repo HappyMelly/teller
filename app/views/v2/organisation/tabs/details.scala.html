@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-    view: OrgView,
+    org: Organisation,
     members: List[Person],
     otherPeople: List[Person])(implicit request: Request[Any],
     flash: Flash,
@@ -16,12 +16,12 @@
   <div class="block">
     <h4>On The Web</h4>
     <p><i class="fa fa-envelope fa-fw fa-lg"></i>
-      <a href="mailto:@view.profile.email">@view.profile.email</a>
+      <a href="mailto:@org.contactEmail">@org.contactEmail</a>
     </p>
-    @view.org.webSite.map { url =>
+    @org.webSite.map { url =>
       <p><i class="fa fa-globe fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
     }
-    @view.org.blog.map { url =>
+    @org.blog.map { url =>
       <p><i class="fa fa-rss-square fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
     }
   </div>
@@ -30,36 +30,36 @@
     <dt>Address:</dt>
     <dd>
       <address>
-      @view.org.street1.map { addressLine =>
+      @org.street1.map { addressLine =>
         @addressLine,
       }
-      @view.org.street2.map { addressLine =>
+      @org.street2.map { addressLine =>
         @addressLine
       }
       <br>
-      @view.org.city.map { addressLine =>
+      @org.city.map { addressLine =>
         @addressLine,
       }
-      @view.org.province.map { addressLine =>
+      @org.province.map { addressLine =>
         @addressLine
       }
-      @view.org.postCode.map { addressLine =>
+      @org.postCode.map { addressLine =>
         @addressLine
       }
       <br>
-      @Messages("country." + view.org.countryCode)
+      @Messages("country." + org.countryCode)
     </address>
   </dd>
-  @view.org.vatNumber.map { number =>
+  @org.vatNumber.map { number =>
     <dt>VAT number:</dt>
     <dd>@number</dd>
   }
-  @view.org.registrationNumber.map { number =>
+  @org.registrationNumber.map { number =>
     <dt>Registration:</dt>
     <dd>@number</dd>
   }
 </div>
-@view.org.about.map { text =>
+@org.about.map { text =>
   <div class="block">
     <h4>About</h4>
     <p>@text.markdown</p>
@@ -87,7 +87,7 @@
           </td>
           <td>
           @restrict(handler, List(as(Admin.toString))) {
-            <a href="@routes.People.deleteRelationship("organisation", person.id.get, view.org.id.get)" class="font-sm">Delete relation</a>
+            <a href="@routes.People.deleteRelationship("organisation", person.id.get, org.id.get)" class="font-sm">Delete relation</a>
           }
           </td>
         </tr>
@@ -97,7 +97,7 @@
   @restrict(handler, List(as(Admin.toString))) {
     <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship)">
       <input type="hidden" name="page" value="organisation">
-      <input type="hidden" name="organisationId" value="@view.org.id.get">
+      <input type="hidden" name="organisationId" value="@org.id.get">
       <select class="form-control input-sm" name="personId">
       @for(person <- otherPeople) {
         <option value="@person.id">@person.fullName</option>

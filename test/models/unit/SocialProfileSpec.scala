@@ -28,7 +28,7 @@ import org.specs2.mutable._
 
 class SocialProfileSpec extends Specification {
 
-  val profile = SocialProfile(email = "test@test.com")
+  val profile = SocialProfile()
 
   "Social profile should be defined" >> {
     "when only twitter is set" in {

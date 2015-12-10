@@ -217,7 +217,7 @@ trait FakeSecurity extends Security {
       case _ ⇒ raw.copy(registered = true)
     }
     val person = _activeUser getOrElse PersonHelper.one()
-    ActiveUser(identity.profile.userId, account, person)
+    ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 }
 

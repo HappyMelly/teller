@@ -48,7 +48,7 @@ class MailChimp(apiUrl: String, apiToken: String) {
     val url = apiUrl + "lists/subscribe.json"
     val request = Json.obj("apikey" -> apiToken,
       "id" -> listId,
-      "email" -> Json.obj("email" -> person.socialProfile.email),
+      "email" -> Json.obj("email" -> person.email),
       "merge_vars" -> Json.obj("FNAME" -> person.firstName,
         "LNAME" -> person.lastName,
         "groupings" -> Json.arr(

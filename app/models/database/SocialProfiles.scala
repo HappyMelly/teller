@@ -38,7 +38,6 @@ private[models] class SocialProfiles(tag: Tag)
 
   def objectId = column[Long]("OBJECT_ID")
   def objectType = column[ProfileType.Value]("OBJECT_TYPE")
-  def email = column[String]("EMAIL")
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
   def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
@@ -47,7 +46,7 @@ private[models] class SocialProfiles(tag: Tag)
   def phone = column[Option[String]]("PHONE")
   def contactForm = column[Option[String]]("CONTACT_FORM")
 
-  def * = (objectId, objectType, email, twitterHandle, facebookUrl,
+  def * = (objectId, objectType, twitterHandle, facebookUrl,
     linkedInUrl, googlePlusUrl, skype, phone,
     contactForm) <> (SocialProfile.tupled, SocialProfile.unapply)
 

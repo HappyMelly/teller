@@ -105,7 +105,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       if (user.account.email.isEmpty) {
         Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       } else {
-        Ok(views.html.v2.userAccount.account(user, user.person.socialProfile.email, changeEmailForm, changePasswordForm))
+        Ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
       }
     }
   }
@@ -136,13 +136,11 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
         if (token.isExpired) {
           Redirect(routes.Dashboard.index()).flashing("error" -> "The confirmation link has expired")
         } else {
-          val profile = socialProfileService.find(token.userId, ProfileType.Person)
-          identityService.findByEmail(profile.email) map { identity =>
+          identityService.findByEmail(token.email) map { identity =>
             userAccountService.findByPerson(token.userId) map { account =>
               identityService.delete(identity.email)
               identityService.insert(identity.copy(email = token.email))
               userAccountService.update(account.copy(email = Some(token.email)))
-              socialProfileService.update(profile.copy(email = token.email), ProfileType.Person)
               emailToken.delete(tokenId)
               val msg = "Your email was successfully updated. Please log in with your new email"
               Redirect(routes.LoginPage.logout(success = Some(msg)))
@@ -167,9 +165,9 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       newPasswordForm.bindFromRequest().fold(
         errors => Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))),
         password => {
-          if (identityService.checkEmail(user.person.socialProfile.email)) {
+          if (identityService.checkEmail(user.person.email)) {
             val account = createPasswordInfo(user, env.currentHasher.hash(password))
-            env.mailer.sendEmail("New password", user.person.socialProfile.email,
+            env.mailer.sendEmail("New password", user.person.email,
               (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
             env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
               _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.person.member))
@@ -193,7 +191,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
       val form = changeEmailForm.bindFromRequest()
       form.fold(
         errors => Future.successful(
-          BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, errors, changePasswordForm))
+          BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
         ),
         info => {
           val response = for (
@@ -208,7 +206,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
                 (None, Some(mail.templates.password.html.confirmEmail(
                   user.person.firstName,
                   fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
-                  user.person.socialProfile.email)))
+                  user.person.email)))
               )
               val msg = "Confirmation email was sent to your new email address"
               Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> msg))
@@ -216,7 +214,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
           response getOrElse {
             val errors = form.withError("password", "Wrong password")
             Future.successful(
-              BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, errors, changePasswordForm))
+              BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
             )
           }
         }
@@ -230,7 +228,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
         errors => Future.successful(
-          BadRequest(views.html.v2.userAccount.account(user, user.person.socialProfile.email, changeEmailForm, errors))),
+          BadRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors))),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
           Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
@@ -258,7 +256,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     * @param info the password info
     */
   protected def createPasswordInfo(user: ActiveUser, info: PasswordInfo): UserAccount = {
-    val email = user.person.socialProfile.email
+    val email = user.person.email
     val identity = PasswordIdentity(user.person.id, email, info.password, Some(user.person.firstName),
       Some(user.person.lastName), info.hasher)
     identityService.findByEmail(email) map { existingIdentity =>

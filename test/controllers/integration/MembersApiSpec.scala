@@ -70,7 +70,7 @@ class MembersApiSpec extends PlayAppSpec {
       val orgService = mock[OrganisationService]
       controller.orgService_=(orgService)
       (memberService.find(_: Long)) expects 2L returning Some(memberTwo)
-      val profile = SocialProfile(0, ProfileType.Organisation, "")
+      val profile = SocialProfile(0, ProfileType.Organisation)
       val view = OrgView(OrganisationHelper.one, profile)
       (orgService.findWithProfile _) expects 2L returning Some(view)
       val res = controller.member("2").apply(FakeRequest())

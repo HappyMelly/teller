@@ -236,17 +236,17 @@ class People(environment: RuntimeEnvironment[ActiveUser])
               checkDuplication(person, id, user.name) map { form ⇒
                 Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), form)))
               } getOrElse {
-                val updatedPerson = person
+                val modified = person
                   .copy(id = Some(id), active = oldPerson.active)
                   .copy(photo = oldPerson.photo, customerId = oldPerson.customerId)
                   .copy(addressId = oldPerson.addressId)
                 personService.member(id) foreach { x ⇒
                   val msg = connectMeMessage(oldPerson.socialProfile,
-                    updatedPerson.socialProfile)
-                  msg foreach { x => slack.send(updateMsg(updatedPerson.fullName, x)) }
+                    modified.socialProfile)
+                  msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                 }
-                updatedPerson.update
-                val log = activity(updatedPerson, user.person).updated.insert()
+                modified.update
+                val log = activity(modified, user.person).updated.insert()
                 Future.successful(
                   Redirect(routes.People.details(id)).flashing("success" -> log.toString))
               }
@@ -428,8 +428,7 @@ object People {
     "linkedInUrl" -> optional(linkedInProfileUrl),
     "googlePlusUrl" -> optional(googlePlusProfileUrl))({
       (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-        SocialProfile(0, ProfileType.Person, "", twitterHandle, facebookUrl,
-          linkedInUrl, googlePlusUrl)
+        SocialProfile(0, ProfileType.Person, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
     })({
       (s: SocialProfile) ⇒
         Some(s.twitterHandle, s.facebookUrl,
@@ -462,17 +461,17 @@ object People {
         { (id, firstName, lastName, emailAddress, birthday, signature,
           address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
           {
-            val person = Person(id, firstName, lastName, birthday, Photo.empty,
+            val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
               signature, address.id.getOrElse(0), bio, interests,
               webSite, blog, customerId = None, virtual = false, active, dateStamp)
-            person.socialProfile_=(profile.copy(email = emailAddress))
             person.address_=(address)
+            person.socialProfile_=(profile)
             person
           }
         })(
           { (p: Person) ⇒
             Some(
-              (p.id, p.firstName, p.lastName, p.socialProfile.email, p.birthday,
+              (p.id, p.firstName, p.lastName, p.email, p.birthday,
                 p.signature, p.address, p.bio, p.interests,
                 p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
           }))

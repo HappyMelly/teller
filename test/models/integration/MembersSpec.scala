@@ -61,7 +61,7 @@ class MembersSpec extends PlayAppSpec {
   val controller = new TestMembers()
   val person = PersonHelper.one
   val org = OrganisationHelper.one
-  val profile = SocialProfile(0, ProfileType.Organisation, "")
+  val profile = SocialProfile(0, ProfileType.Organisation)
 
   trait WithStubs extends MockContext {
     val personService = mock[PersonService]

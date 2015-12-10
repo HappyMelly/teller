@@ -109,7 +109,7 @@ trait BrandsApi extends Controller with ApiAuthentication {
           controllers.routes.Brands.picture(view.brand.code).url),
         "coordinator" -> view.coordinator,
         "contact_info" -> Json.obj(
-          "email" -> view.brand.socialProfile.email,
+          "email" -> view.brand.contactEmail,
           "skype" -> view.brand.socialProfile.skype,
           "phone" -> view.brand.socialProfile.phone,
           "form" -> view.brand.socialProfile.contactForm),

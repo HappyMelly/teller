@@ -1,12 +1,17 @@
-@(form: Form[Person])
+@(form: Form[Person], disabledEmail: Boolean = false)
 
 @import views.Countries
 @import views.ViewHelpersV2._
 
 @v2.html.block("Personal") {
-  @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
-  @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
-  @v2.html.date(form("birthday"), '_label -> "Birthday")
+    @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
+    @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
+    @if(disabledEmail) {
+        <input type="hidden" value="@form("emailAddress").value" name="emailAddress"/>
+    } else {
+        @v2.html.email(form("emailAddress"), '_label -> "Email", '_help -> "", '_required -> true)
+    }
+    @v2.html.date(form("birthday"), '_label -> "Birthday")
 }
 @v2.html.block("Address", Some("grey")) {
   @v2.html.text(form("address.street1"), '_label -> "Address line 1")
@@ -28,7 +33,6 @@
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
 @v2.html.block("Social Profiles", Some("grey")) {
-  @v2.html.email(form("emailAddress"), '_label -> "Email", '_help -> "", '_required -> true)
   @defining(form("profile.twitterHandle")) { field =>
     <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
       <label for="@field.id" class="col-md-2 control-label">Twitter username</label>

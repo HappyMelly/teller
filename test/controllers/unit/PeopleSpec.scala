@@ -51,10 +51,10 @@ class PeopleSpec extends Specification {
   }
 
   val controller = new TestPeople
-  val left = SocialProfile(email = "left@profile.com")
-  val right = SocialProfile(email = "right@profile.com")
-  val person = PersonHelper.one
-  val updatedPerson = PersonHelper.one
+  val left = SocialProfile()
+  val right = SocialProfile()
+  val person = PersonHelper.one()
+  val updatedPerson = PersonHelper.one()
 
   "Method 'compareSocialProfiles'" should {
     "return an error if twitterHandles are equal" in {

@@ -56,10 +56,8 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.personService_=(personService)
 
   val person = PersonHelper.one()
-  val profile = new SocialProfile(email = "test@test.com")
 
   trait DefaultPerson extends MockContext {
-    person.socialProfile_=(profile)
     (personService.find(_: Long)) expects 1L returning Some(person)
   }
 
