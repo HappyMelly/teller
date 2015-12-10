@@ -33,6 +33,7 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.mvc.{ Cookie, Result }
 import play.api.test.FakeRequest
+import play.filters.csrf.CSRF
 import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
 import stubs.services.FakeIntegrations
 
@@ -77,7 +78,8 @@ class RegistrationSpec extends PlayAppSpec {
     }
     "discard cookie 'registration' if org parameter is false" in {
       val cookie = Cookie(controller.REGISTRATION_COOKIE, "org")
-      val res = controller.step1(org = false).apply(FakeRequest().withCookies(cookie))
+      val request = FakeRequest().withCookies(cookie).withSession("csrfToken" -> CSRF.SignedTokenProvider.generateToken)
+      val res = controller.step1(org = false).apply(request)
       cookies(res).get("registration") map { _.maxAge.get must beLessThan(-1) } getOrElse ko
     }
   }

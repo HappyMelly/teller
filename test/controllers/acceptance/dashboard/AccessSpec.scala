@@ -57,9 +57,10 @@ class AccessSpec extends PlayAppSpec {
   }
 
   "Method 'index'" should {
-    "have Viewer access rights" in {
+    "have Viewer and Unregistered access rights" in {
       controller.index.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Viewer)
+      controller.checkedRoles.contains(Role.Viewer) must_== true
+      controller.checkedRoles.contains(Role.Unregistered) must_== true
     }
   }
 

@@ -12,7 +12,7 @@
     <div class="form">
       @v2.html.block("") { <h1>@title</h1> }
       @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
-        @v2.person.blocks.form(form, id == user.person.id)
+        @v2.person.blocks.form(form, id == user.person.id && user.account.emailAuthentication)
         @if(form.hasErrors) {
           @v2.html.block("") {
             <div class="errors">

@@ -41,7 +41,7 @@ import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 class People(environment: RuntimeEnvironment[ActiveUser])
@@ -229,23 +229,27 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { oldPerson ⇒
-          People.personForm(user.name).bindFromRequest.fold(
+          People.personForm(user.name, Some(id)).bindFromRequest.fold(
             formWithErrors ⇒
               Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors))),
             person ⇒ {
               checkDuplication(person, id, user.name) map { form ⇒
                 Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), form)))
               } getOrElse {
-                val modified = person
-                  .copy(id = Some(id), active = oldPerson.active)
-                  .copy(photo = oldPerson.photo, customerId = oldPerson.customerId)
-                  .copy(addressId = oldPerson.addressId)
+                val modified = resetReadOnlyAttributes(person, oldPerson)
+
                 personService.member(id) foreach { x ⇒
                   val msg = connectMeMessage(oldPerson.socialProfile,
                     modified.socialProfile)
                   msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                 }
                 modified.update
+                if (modified.email != oldPerson.email) {
+                  identityService.findByEmail(oldPerson.email) map { identity =>
+                    identityService.delete(oldPerson.email)
+                    identityService.insert(identity.copy(email = modified.email))
+                  }
+                }
                 val log = activity(modified, user.person).updated.insert()
                 Future.successful(
                   Redirect(routes.People.details(id)).flashing("success" -> log.toString))
@@ -343,13 +347,13 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Returns form with erros if a person with identical social networks exists
+   * Returns form with errors if a person with identical social networks exists
    *
    * @param person Person object with incomplete social profile
    * @param id Identifier of a person which is updated
    * @param editorName Name of a user who adds changes
    */
-  protected def checkDuplication(person: Person, id: Long, editorName: String): Option[Form[Person]] = {
+  protected def checkDuplication(person: Person, id: Long, editorName: String)(implicit user: ActiveUser): Option[Form[Person]] = {
     val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
     socialProfileService.findDuplicate(base) map { duplicate ⇒
       var form = People.personForm(editorName).fill(person)
@@ -400,12 +404,30 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     }
   }
 
+  /**
+    * Updates the attributes of a person that shouldn't be changed on update
+    * @param updated Updated object
+    * @param existing Existing object
+    * @param user Current active user
+    */
+  protected def resetReadOnlyAttributes(updated: Person, existing: Person)(implicit user: ActiveUser): Person = {
+    val modified = updated
+      .copy(id = existing.id, active = existing.active)
+      .copy(photo = existing.photo, customerId = existing.customerId)
+      .copy(addressId = existing.addressId)
+    val modifiedWithEmail = if (user.person.identifier == existing.identifier && user.account.emailAuthentication)
+      modified.copy(email = existing.email)
+    else
+      modified
+    modifiedWithEmail
+  }
+
   protected def updateMsg(name: String, msg: String): String = {
     "%s updated her/his social profile. %s".format(name, msg)
   }
 }
 
-object People {
+object People extends Services {
 
   /**
    * HTML form mapping for a person’s address.
@@ -438,12 +460,15 @@ object People {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(editorName: String) = {
+  def personForm(editorName: String, userId: Option[Long] = None)(implicit user: ActiveUser) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
-      "emailAddress" -> play.api.data.Forms.email,
+      "emailAddress" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
+        import scala.concurrent.duration._
+        Await.result(Future.successful(identityService.checkEmail(suppliedEmail, userId)), 10.seconds)
+      }),
       "birthday" -> optional(jodaLocalDate),
       "signature" -> boolean,
       "address" -> addressMapping,

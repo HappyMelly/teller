@@ -214,17 +214,15 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
   protected def createFacilitatorAccount(person: Person, brand: String)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
       userAccountService.findByPerson(person.identifier) map { account =>
-        if (account.email.isEmpty) {
-          userAccountService.update(account.copy(email = Some(person.email), facilitator = true))
+        if (!account.byEmail) {
+          userAccountService.update(account.copy(byEmail = true, facilitator = true))
           setupLoginByEmailEnvironment(person, token)
           sendFacilitatorWelcomeEmail(person, brand, token.uuid)
         } else {
           userAccountService.update(account.copy(facilitator = true))
         }
       } getOrElse {
-        val account = UserAccount.empty(person.identifier).copy(
-          email = Some(person.email),
-          facilitator = true, registered = true)
+        val account = UserAccount.empty(person.identifier).copy(byEmail = true, facilitator = true, registered = true)
         userAccountService.insert(account)
         setupLoginByEmailEnvironment(person, token)
         sendFacilitatorWelcomeEmail(person, brand, token.uuid)

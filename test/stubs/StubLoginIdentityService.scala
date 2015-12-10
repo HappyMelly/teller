@@ -42,7 +42,7 @@ class StubLoginIdentityService extends LoginIdentityService {
   override def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
     val identity = new FakeSocialIdentity(Some(123213L), ("123", "twitter"),
       "Sergey", "kotlov", "Sergey Kotlov", None)
-    val account = UserAccount(Some(1L), 1L, None, None, None, None, None)
+    val account = UserAccount(Some(1L), 1L, false, None, None, None, None)
     val person = PersonHelper.one()
     Future.successful(ActiveUser(identity.profile.userId, identity.profile.providerId, account, person))
   }

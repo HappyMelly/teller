@@ -42,12 +42,20 @@ class IdentityService {
   /**
     * Returns true if the given email doesn't exist in the set of registered emails
     * @param email Email to check
+    * @param userId User identifier we exclude from an email check
     */
-  def checkEmail(email: String): Boolean = DB.withSession { implicit session =>
-    val query = for {
-      (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
-        p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email
-    } yield (identity, registering.userId.?)
+  def checkEmail(email: String, userId: Option[Long] = None): Boolean = DB.withSession { implicit session =>
+    val query = if (userId.nonEmpty) {
+      for {
+        (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
+          p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email && identity.userId =!= userId
+      } yield (identity, registering.userId.?)
+    } else {
+      for {
+        (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
+          p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email
+      } yield (identity, registering.userId.?)
+    }
     query.firstOption.map { result =>
       result._2.isDefined
     } getOrElse true

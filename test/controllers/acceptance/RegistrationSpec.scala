@@ -28,6 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.{ OrgData, UserData, Registration }
 import play.api.mvc.{ Cookie, Result }
 import play.api.test.FakeRequest
+import play.filters.csrf.CSRF
 import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
 import play.api.cache.Cache
 import play.api.Play.current
@@ -76,12 +77,12 @@ class RegistrationSpec extends PlayAppSpec {
   val controller = new TestRegistration()
 
   def e2 = {
-    val result = controller.step1().apply(FakeRequest())
+    val result = controller.step1().apply(FakeRequest().withSession("csrfToken" -> CSRF.SignedTokenProvider.generateToken))
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Log in with Twitter")
-    contentAsString(result) must contain("Log in with Facebook")
-    contentAsString(result) must contain("Log in with Google")
-    contentAsString(result) must contain("Log in with Linkedin")
+    contentAsString(result) must contain("Sign Up with Twitter")
+    contentAsString(result) must contain("Sign Up with Facebook")
+    contentAsString(result) must contain("Sign Up with Google")
+    contentAsString(result) must contain("Sign Up with LinkedIn")
   }
 
   def e4 = {
@@ -94,9 +95,8 @@ class RegistrationSpec extends PlayAppSpec {
     controller.identity_=(FakeSocialIdentity.unregistered)
     val result = controller.step2().apply(fakeGetRequest())
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Sergey")
-    contentAsString(result) must contain("Kotlov")
-    contentAsString(result) must contain("Invalid e-mail address")
+    contentAsString(result) must contain("First")
+    contentAsString(result) must contain("Tester")
   }
 
   def e8 = {
@@ -113,9 +113,7 @@ class RegistrationSpec extends PlayAppSpec {
         ("lastName", ""), ("email", "ttt.ru"), ("country", "WWW"))
     val result = controller.savePerson().apply(req)
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Required value missing")
-    contentAsString(result) must contain("Invalid e-mail address")
-    contentAsString(result) must contain("Please choose a country")
+    contentAsString(result) must contain("has-error")
   }
 
   def e12 = {
@@ -151,8 +149,7 @@ class RegistrationSpec extends PlayAppSpec {
       withFormUrlEncodedBody(("name", ""), ("country", "WWW"))
     val result = controller.saveOrg().apply(req)
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Required value missing")
-    contentAsString(result) must contain("Please choose a country")
+    contentAsString(result) must contain("has-error")
   }
 
   def e19 = {

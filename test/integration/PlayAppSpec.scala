@@ -46,7 +46,8 @@ trait PlayAppSpec extends PlaySpecification with BeforeAllAfterAll {
       "logger.application" -> "ERROR",
       "ehcacheplugin" -> "enabled",
       "stripe.public_key" -> "none",
-      "mailchimp.listId" -> "testId")
+      "mailchimp.listId" -> "testId",
+      "smtp.host" -> "smtp.sendgrid.net")
     val withoutPlugins = List("com.github.mumoshu.play2.memcached.MemcachedPlugin")
     FakeApplication(
       additionalConfiguration = conf,
@@ -149,7 +150,6 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `FACILITATOR_COUNTRY`").execute
     Q.updateNA("TRUNCATE `FACILITATOR_LANGUAGE`").execute
     Q.updateNA("TRUNCATE `LICENSE`").execute
-    Q.updateNA("TRUNCATE `LOGIN_IDENTITY`").execute
     Q.updateNA("TRUNCATE `MEMBER`").execute
     Q.updateNA("TRUNCATE `ORGANISATION`").execute
     Q.updateNA("TRUNCATE `ORGANISATION_MEMBERSHIPS`").execute
@@ -158,6 +158,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `PERSON`").execute
     Q.updateNA("TRUNCATE `PRODUCT`").execute
     Q.updateNA("TRUNCATE `PRODUCT_BRAND_ASSOCIATION`").execute
+    Q.updateNA("TRUNCATE `SOCIAL_IDENTITY`").execute
     Q.updateNA("TRUNCATE `SOCIAL_PROFILE`").execute
     Q.updateNA("TRUNCATE `TRANSACTION_TYPE`").execute
     Q.updateNA("TRUNCATE `USER_ACCOUNT`").execute

@@ -335,7 +335,6 @@ class PersonService extends Services {
     socialQuery.update(person.socialProfile.copy(objectId = person.id.get))
 
     val people = TableQuery[People]
-    // Skip the id, created, createdBy and active fields.
     val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,
       person.webSite, person.blog, person.customerId, person.virtual,

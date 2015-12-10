@@ -47,8 +47,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     }
     "return None if person data are not available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, None, Some("tester"),
-        None, None, None)
+      val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
       service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
 
@@ -57,8 +56,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     }
     "return identity with Twitter if all data are available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, None, Some("tester"),
-        None, None, None)
+      val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
       service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert
@@ -73,8 +71,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with Facebook if all data are available" in {
       truncateTables()
       val providerId = "facebook"
-      val account = new UserAccount(None, 1L, None, None,
-        Some("tester"), None, None)
+      val account = new UserAccount(None, 1L, false, None, Some("tester"), None, None)
       service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert
@@ -90,8 +87,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val providerId = "google"
       val url = "https://plus.google.com/tester"
-      val account = new UserAccount(None, 1L, None, None,
-        None, None, Some(url))
+      val account = new UserAccount(None, 1L, false, None, None, None, Some(url))
       service.insert(user(userId, providerId, url))
       accountService.insert(account)
       PersonHelper.one().insert
@@ -106,8 +102,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with LinkedIn if all data are available" in {
       truncateTables()
       val providerId = "linkedin"
-      val account = new UserAccount(None, 1L, None, None,
-        None, Some("tester"), None)
+      val account = new UserAccount(None, 1L, false, None, None, Some("tester"), None)
       service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert

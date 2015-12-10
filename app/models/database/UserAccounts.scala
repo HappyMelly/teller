@@ -35,7 +35,7 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def personId = column[Long]("PERSON_ID")
 
-  def email = column[Option[String]]("EMAIL")
+  def byEmail = column[Boolean]("BY_EMAIL")
 
   def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
   def facebookUrl = column[Option[String]]("FACEBOOK_URL")
@@ -53,13 +53,13 @@ private[models] class UserAccounts(tag: Tag) extends Table[UserAccount](tag, "US
 
   def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
-  def * = (id.?, personId, email, twitterHandle, facebookUrl, linkedInUrl,
+  def * = (id.?, personId, byEmail, twitterHandle, facebookUrl, linkedInUrl,
     googlePlusUrl, coordinator, facilitator, admin, member, registered,
     activeRole) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 
   def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
 
-  def uniqueEmail = index("IDX_EMAIL_HANDLE", email, unique = true)
+  def uniqueEmail = index("IDX_EMAIL_HANDLE", byEmail, unique = true)
   def uniqueTwitter = index("IDX_TWITTER_HANDLE", twitterHandle, unique = true)
   def uniqueFacebook = index("IDX_FACEBOOK_URL", facebookUrl, unique = true)
   def uniqueGooglePlus = index("IDX_GOOGLE_PLUS_URL", googlePlusUrl, unique = true)

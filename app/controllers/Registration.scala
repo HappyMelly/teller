@@ -367,7 +367,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                                  person: Person,
                                  member: Member)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get,
-      Some(person.email),
+      true,
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,

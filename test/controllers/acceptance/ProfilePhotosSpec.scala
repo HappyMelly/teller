@@ -84,7 +84,7 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
     withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
 
   private def personWithGravatar = {
-    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
+    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/cbc4c5829ca103f23a20b31dbf953d05?s=300"))
     val updatedPerson = person.copy(photo = photo)
     updatedPerson
   }

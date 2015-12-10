@@ -36,7 +36,7 @@ import scala.collection.mutable.ListBuffer
  */
 case class UserAccount(id: Option[Long],
                        personId: Long,
-                       email: Option[String],
+                       byEmail: Boolean,
                        twitterHandle: Option[String],
                        facebookUrl: Option[String],
                        linkedInUrl: Option[String],
@@ -47,6 +47,11 @@ case class UserAccount(id: Option[Long],
                        member: Boolean = false,
                        registered: Boolean = false,
                        activeRole: Boolean = false) extends Subject with Services {
+
+  /**
+    * Returns true if this account has an email authentication
+    */
+  def emailAuthentication: Boolean = byEmail
 
   /**
    * Returns a string list of role names, for the Subject interface.
@@ -80,5 +85,5 @@ object UserAccount {
     * Returns an empty user account for the given person
     * @param personId Person identifier
     */
-  def empty(personId: Long): UserAccount = UserAccount(None, personId, None, None, None, None, None)
+  def empty(personId: Long): UserAccount = UserAccount(None, personId, false, None, None, None, None)
 }

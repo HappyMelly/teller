@@ -102,7 +102,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     */
   def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user => Future.successful {
-      if (user.account.email.isEmpty) {
+      if (user.account.byEmail) {
         Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       } else {
         Ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
@@ -137,16 +137,11 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
           Redirect(routes.Dashboard.index()).flashing("error" -> "The confirmation link has expired")
         } else {
           identityService.findByEmail(token.email) map { identity =>
-            userAccountService.findByPerson(token.userId) map { account =>
-              identityService.delete(identity.email)
-              identityService.insert(identity.copy(email = token.email))
-              userAccountService.update(account.copy(email = Some(token.email)))
-              emailToken.delete(tokenId)
-              val msg = "Your email was successfully updated. Please log in with your new email"
-              Redirect(routes.LoginPage.logout(success = Some(msg)))
-            } getOrElse {
-              Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
-            }
+            identityService.delete(identity.email)
+            identityService.insert(identity.copy(email = token.email))
+            emailToken.delete(tokenId)
+            val msg = "Your email was successfully updated. Please log in with your new email"
+            Redirect(routes.LoginPage.logout(success = Some(msg)))
           } getOrElse {
             Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
           }
@@ -265,7 +260,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
     } getOrElse {
       identityService.insert(identity)
     }
-    userAccountService.update(user.account.copy(email = Some(email)))
+    userAccountService.update(user.account.copy(byEmail = true))
   }
 
 }
