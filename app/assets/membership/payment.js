@@ -142,9 +142,26 @@ var updateAmount = function(objectId) {
     var taxPercent = parseFloat($('#fee').data('tax'));
     var tax = (amount * taxPercent) / 100;
     var amountWithTax = amount + tax;
-    $('div.amount > span').text(amountWithTax);
-    $('#amount > span').text(tax);
+    $('[type="submit"] > span').text(amountWithTax);
+    $('#tax').text(tax);
+    $('#amount').text(amount);
 };
+
+function switchSupportersFundersFees(supporters) {
+    var $supporters = $('#supporters');
+    var $funders = $('#funders');
+    if (supporters) {
+        $supporters.addClass('deactivated');
+        $funders.removeClass('deactivated');
+        $('.supporters').show();
+        $('.funders').hide();
+    } else {
+        $supporters.removeClass('deactivated');
+        $funders.addClass('deactivated');
+        $('.supporters').hide();
+        $('.funders').show();
+    }
+}
 
 jQuery(function($) {
     $('.alert').hide();
@@ -171,4 +188,11 @@ jQuery(function($) {
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');
     updateAmount('#fee');
+    $('#supporters').on('click', function(e) {
+        switchSupportersFundersFees(true)
+    });
+    $('#funders').on('click', function(e) {
+        switchSupportersFundersFees(false)
+    });
+    switchSupportersFundersFees(true);
 });

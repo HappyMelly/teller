@@ -43,9 +43,7 @@ class MailChimpSpec extends Specification {
     val listId = sys.env.getOrElse("MAILCHIMP_LIST_ID", "")
     "add a new subscriber to 'Funder' group" in {
       val mailChimp = new MailChimp(apiUrl, apiToken)
-      val p = SocialProfile(email = "3234213fosurenotexist@gmail.com")
-      val person = PersonHelper.one()
-      person.socialProfile_=(p)
+      val person = PersonHelper.one().copy(email = "3234213fosurenotexist@gmail.com")
       mailChimp.subscribe(listId, person, funder = true) must_== true
 
       val listUrl = apiUrl + "lists/members.json"
@@ -57,7 +55,7 @@ class MailChimpSpec extends Specification {
       val deleteUrl = apiUrl + "lists/unsubscribe.json"
       val deleteData = Json.obj("apikey" -> apiToken,
         "id" -> listId,
-        "email" -> Json.obj("email" -> person.socialProfile.email),
+        "email" -> Json.obj("email" -> person.email),
         "delete_member" -> true,
         "send_goodbye" -> false,
         "send_notify" -> false).toString()

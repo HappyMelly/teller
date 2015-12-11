@@ -57,7 +57,7 @@ trait LicensesApi extends Controller with ApiAuthentication with Services {
         "first_name" -> view.licensee.firstName,
         "last_name" -> view.licensee.lastName,
         "country" -> view.licensee.address.countryCode,
-        "email_address" -> view.licensee.socialProfile.email,
+        "email_address" -> view.licensee.email,
         "twitter_handle" -> view.licensee.socialProfile.twitterHandle,
         "facebook_url" -> view.licensee.socialProfile.facebookUrl,
         "linkedin_url" -> view.licensee.socialProfile.linkedInUrl,

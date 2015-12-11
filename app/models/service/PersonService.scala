@@ -63,6 +63,7 @@ class PersonService extends Services {
       TableQuery[ProfileStrengths].
         filter(_.objectId === person.id.get).
         filter(_.org === false).delete
+      TableQuery[PasswordIdentities].filter(_.userId === id).delete
     }
   }
 
@@ -126,7 +127,6 @@ class PersonService extends Services {
 
   /**
    * Inserts new person object into database
-   * @TEST
    * @param person Person object
    * @return Returns saved person
    */
@@ -335,8 +335,7 @@ class PersonService extends Services {
     socialQuery.update(person.socialProfile.copy(objectId = person.id.get))
 
     val people = TableQuery[People]
-    // Skip the id, created, createdBy and active fields.
-    val personUpdateTuple = (person.firstName, person.lastName, person.birthday,
+    val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,
       person.webSite, person.blog, person.customerId, person.virtual,
       person.active, person.dateStamp.updated, person.dateStamp.updatedBy)

@@ -38,9 +38,9 @@ import play.filters.csrf._
 import play.libs.Akka
 import securesocial.controllers.ViewTemplates
 import securesocial.core._
-import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
+import securesocial.core.providers._
 import securesocial.core.services.RoutesService
-import templates.SecureSocialTemplates
+import templates.{MailTemplates, SecureSocialTemplates}
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -50,12 +50,14 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   object TellerRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
     override lazy val routes: RoutesService = new TellerRoutesService()
     override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this)
+    override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
     override lazy val userService: LoginIdentityService = new LoginIdentityService
     override lazy val providers = ListMap(
       include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),
       include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
       include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
-      include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn)))
+      include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
+      include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
     )
   }
 
@@ -110,10 +112,11 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     }
 
     val api = """/api/v""".r findPrefixOf request.path
-    if (api.isEmpty) {
-      (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
-    } else {
+    val userpass = """/authenticate/userpass""".r findPrefixOf request.path
+    if (api.nonEmpty || userpass.nonEmpty) {
       (routedRequest, handler)
+    } else {
+      (routedRequest, doFilter(rh ⇒ handler)(routedRequest))
     }
   }
 

@@ -5,7 +5,7 @@
 @import views.ViewHelpers.dateInterval
 
 <div class="block evaluations">
-  <h3>Evaluations to act on (<span class="evaluation-number">@evaluations.length</span>)</h3>
+  <h4>Evaluations to act on (<span class="evaluation-number">@evaluations.length</span>)</h4>
   <div class="list-group-container">
     <div class="list-group">
       @for(((event, person, evaluation), brand) <- evaluations) {

@@ -50,8 +50,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         personService.find(id) map { person ⇒
           val active = person.photo.id getOrElse "nophoto"
-          Ok(views.html.v2.person.photoSelection(id,
-            Photo.gravatarUrl(person.socialProfile.email),
+          Ok(views.html.v2.person.photoSelection(id, Photo.gravatarUrl(person.email),
             routes.ProfilePhotos.photo(id).url, active))
         } getOrElse NotFound
   }
@@ -93,10 +92,9 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
           {
             case photoType ⇒
               personService.find(id) map { person ⇒
-                val profile = person.socialProfile
-                var photo = photoType match {
+                val photo = photoType match {
                   case "nophoto" ⇒ Photo.empty
-                  case "gravatar" ⇒ Photo(photoType, profile)
+                  case "gravatar" ⇒ Photo(photoType, person.email)
                   case _ ⇒ Photo(Some(photoType),
                     Some(fullUrl(routes.ProfilePhotos.photo(id).url)))
                 }

@@ -77,7 +77,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   val paymentService = mock[PaymentRecordService]
   val org = OrganisationHelper.one
   val id = 1L
-  val profile = SocialProfile(0, ProfileType.Organisation, "")
+  val profile = SocialProfile(0, ProfileType.Organisation)
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
@@ -118,7 +118,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -138,7 +138,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
       Record("remote2", 1L, 1L, person = false, "One Year Membership Fee 2", Money.parse("EUR 200")))
     (paymentService.findByOrganisation _) expects id returning payments
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -156,7 +156,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -175,7 +175,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)
@@ -224,7 +224,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     truncateTables()
     (orgService.find(_: Long)) expects id returning None
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(NOT_FOUND)
@@ -235,7 +235,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     val org = OrganisationHelper.one
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
@@ -250,7 +250,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     (orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
@@ -283,7 +283,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org.member_=(member)
     org.people_=(List())
     val controller = fakedController()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(org.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(OK)

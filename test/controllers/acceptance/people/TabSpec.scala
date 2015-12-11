@@ -105,7 +105,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     (paymentService.findByPerson _) expects 1L returning payments
     (personService.find(_: Long)) expects 1L returning Some(person)
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
     val strings = Seq("One Year Membership Fee", "<td>100.00</td>",
       "One Year Membership Fee 2", "<td>200.00</td>")
@@ -117,7 +117,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     (paymentService.findByPerson _) expects 1L returning payments
     (personService.find(_: Long)) expects 1L returning Some(person)
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must contain("One Year Membership Fee")
@@ -127,7 +127,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e4 = {
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest("/1"))
 
     contentAsString(res) must contain("stop automatic renewal")
@@ -142,7 +142,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     person.member_=(member)
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must not contain "stop automatic renewal"
@@ -157,7 +157,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     person.member_=(member)
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must not contain "stop automatic renewal"
@@ -194,7 +194,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e10 = {
     (personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must contain("Edit Membership")

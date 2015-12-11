@@ -22,25 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-/**
- * Updates a state of a button depending on a chosen organisation
- */
-function updateButtonState() {
-    var orgId = $('#org').find(':selected').val();
-    if (orgId == "" || orgId == "0") {
-        $('#orgSupporter').attr('disabled', 'disabled');
-    } else {
-        $('#orgSupporter').removeAttr('disabled');
-    }
-}
-
 jQuery(function($) {
-    updateButtonState();
-    $('#org').on('change', updateButtonState);
-    $('#orgSupporter').on('click', function() {
-        var href = $(this).attr('href');
-        var orgId = $('#org').find(':selected').val();
-        window.location = href + '?orgId=' + orgId;
-        return false;
+    $('input[type=radio][name=supporterType]').change(function () {
+        var url = '';
+        if (this.value == 'person') {
+            url = jsRoutes.controllers.Registration.step1(false).url;
+        } else {
+            url = jsRoutes.controllers.Registration.step1(true).url;
+        }
+        $('#registrationButton').attr('href', url);
     });
 });

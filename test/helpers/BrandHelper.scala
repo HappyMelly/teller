@@ -30,11 +30,11 @@ object BrandHelper {
 
   def make(code: String, id: Option[Long] = None): Brand = {
     val brandUniqueName = code.toLowerCase + ".brand"
-    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
+    val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
     var brand = new Brand(id, code, brandUniqueName,
       code + " Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
       DateTime.now(), "Sergey Kotlov")
     brand.socialProfile_=(socialProfile)
     brand
@@ -43,11 +43,11 @@ object BrandHelper {
   def one: Brand = {
     val brandCode = "TEST"
     val brandUniqueName = "test.brand"
-    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
+    val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
     var brand = new Brand(Some(1L), brandCode, brandUniqueName,
       "Test Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
       DateTime.now(), "Sergey Kotlov")
     brand.socialProfile_=(socialProfile)
 
@@ -57,11 +57,11 @@ object BrandHelper {
   def two: Brand = {
     val brandCode = "TEST2"
     val brandUniqueName = "test2.brand"
-    val socialProfile = new SocialProfile(0, ProfileType.Brand, "test@happymelly.com")
+    val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
     var brand = new Brand(Some(2L), brandCode, brandUniqueName,
       "Test Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, None, true, DateTime.now(), "Sergey Kotlov",
+      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
       DateTime.now(), "Sergey Kotlov")
     brand.socialProfile_=(socialProfile)
 

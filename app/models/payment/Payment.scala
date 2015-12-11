@@ -51,8 +51,7 @@ case class Payment(key: String) {
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
     val customerId = org map { _.id.get } getOrElse { person.id.get }
-    val email = person.socialProfile.email
-    val customer = gateway.customer(customerName, customerId, email, plan, token)
+    val customer = gateway.customer(customerName, customerId, person.email, plan, token)
     val fee = Money.of(EUR, amount)
     val invoices = gateway.invoices(customer)
     if (invoices.length != 1) {

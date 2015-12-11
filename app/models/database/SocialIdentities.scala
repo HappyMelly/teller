@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.UserIdentity
+import models.SocialIdentity
 import play.api.db.slick.Config.driver.simple._
 import scala.language.implicitConversions
 import securesocial.core.{ BasicProfile, OAuth2Info, OAuth1Info, AuthenticationMethod }
@@ -32,7 +32,7 @@ import securesocial.core.{ BasicProfile, OAuth2Info, OAuth1Info, AuthenticationM
 /**
  * `LoginIdentity` database table mapping.
  */
-private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, "LOGIN_IDENTITY") {
+private[models] class SocialIdentities(tag: Tag) extends Table[SocialIdentity](tag, "SOCIAL_IDENTITY") {
 
   implicit def string2AuthenticationMethod = MappedColumnType.base[AuthenticationMethod, String](
     authenticationMethod ⇒ authenticationMethod.method,
@@ -62,10 +62,7 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
   def expiresIn = column[Option[Int]]("EXPIRES_IN")
   def refreshToken = column[Option[String]]("REFRESH_TOKEN")
   def apiToken = column[String]("API_TOKEN")
-  def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
-  def facebookUrl = column[Option[String]]("FACEBOOK_URL")
-  def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
-  def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
+  def profileUrl = column[Option[String]]("PROFILE_URL")
 
   // oAuth 1
   def token = column[Option[String]]("TOKEN")
@@ -73,7 +70,9 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
   // oAuth 2
   def accessToken = column[Option[String]]("ACCESS_TOKEN")
 
-  type UserIdentityFields = (Option[Long], String, String, Option[String], Option[String], Option[String], Option[String], Option[String], AuthenticationMethod, Option[String], Option[String], Option[String], Option[String], Option[Int], Option[String], String, Option[String], Option[String], Option[String], Option[String])
+  type SocialIdentitiesFields = (Option[Long], String, String, Option[String], Option[String],
+    Option[String], Option[String], Option[String], AuthenticationMethod, Option[String], Option[String],
+    Option[String], Option[String], Option[Int], Option[String], String, Option[String])
 
   def * = (uid.?,
     userId, providerId,
@@ -86,11 +85,11 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
     token, secret,
     accessToken, tokenType, expiresIn, refreshToken,
     apiToken,
-    twitterHandle, facebookUrl, googlePlusUrl, linkedInUrl) <> (
-      (u: UserIdentityFields) ⇒ UserIdentity(u._1, BasicProfile(u._2, u._3, u._4, u._5,
+    profileUrl) <> (
+      (u: SocialIdentitiesFields) ⇒ SocialIdentity(u._1, BasicProfile(u._2, u._3, u._4, u._5,
         u._6, u._7, u._8, u._9, (u._10, u._11), (u._12, u._13, u._14, u._15),
-        None), u._16, u._17, u._18, u._19, u._20),
-      (u: UserIdentity) ⇒ {
+        None), u._16, u._17),
+      (u: SocialIdentity) ⇒ {
         Some((u.uid, u.profile.userId, u.profile.providerId, u.profile.firstName,
           u.profile.lastName, u.profile.fullName, u.profile.email,
           u.profile.avatarUrl, u.profile.authMethod,
@@ -98,8 +97,7 @@ private[models] class UserIdentities(tag: Tag) extends Table[UserIdentity](tag, 
           u.profile.oAuth2Info.map(_.accessToken), u.profile.oAuth2Info.flatMap(_.tokenType),
           u.profile.oAuth2Info.flatMap(_.expiresIn),
           u.profile.oAuth2Info.flatMap(_.refreshToken),
-          u.apiToken, u.twitterHandle, u.facebookUrl, u.googlePlusUrl,
-          u.linkedInUrl))
+          u.apiToken, u.profileUrl))
       })
 
 }

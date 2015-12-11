@@ -29,7 +29,7 @@
           @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head)
           <div class="header-block">
             <div class="row">
-              <div class="col-md-12"><h1>@view.event.title</h1></div>
+              <div class="col-md-12"><h2>@view.event.title</h2></div>
               <div class="col-md-6">
                 @dateInterval(view.event.schedule.start, view.event.schedule.end)
                 @if(view.event.location.online) {

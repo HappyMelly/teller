@@ -46,6 +46,7 @@ private[models] class Brands(tag: Tag) extends Table[Brand](tag, "BRAND") {
   def tagLine = column[Option[String]]("TAGLINE")
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
+  def contactEmail = column[String]("CONTACT_EMAIL")
   def evaluationHookUrl = column[Option[String]]("EVALUATION_HOOK_URL")
   def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
@@ -56,11 +57,11 @@ private[models] class Brands(tag: Tag) extends Table[Brand](tag, "BRAND") {
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, TableQuery[People])(_.id)
 
   def * = (id.?, code, uniqueName, name, coordinatorId, description, picture,
-    generateCert, tagLine, webSite, blog, evaluationHookUrl, active,
+    generateCert, tagLine, webSite, blog, contactEmail, evaluationHookUrl, active,
     created, createdBy, updated, updatedBy) <> ((Brand.apply _).tupled, Brand.unapply)
 
   def forUpdate = (code, uniqueName, name, coordinatorId, description,
-    picture, tagLine, webSite, blog, evaluationHookUrl, updated, updatedBy)
+    picture, tagLine, webSite, blog, contactEmail, evaluationHookUrl, updated, updatedBy)
 
   def uniqueCodeIndex = index("IDX_CODE", code, unique = true)
   def uniqueNameIndex = index("IDX_UNIQUE_NAME", uniqueName, unique = true)

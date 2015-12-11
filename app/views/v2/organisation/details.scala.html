@@ -101,7 +101,7 @@
             This organization is <strong>deactivated</strong></div>
         }
         <div class="tab-pane active" id="details">
-          @views.html.v2.organisation.tabs.details(user, view, members, otherPeople)
+          @views.html.v2.organisation.tabs.details(user, view.org, members, otherPeople)
         </div>
         <div class="tab-pane" id="contributions">
           @v2.element.contributions("organisation", contributions)

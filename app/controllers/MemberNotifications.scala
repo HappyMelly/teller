@@ -23,7 +23,7 @@
  */
 package controllers
 
-import models.{SocialProfile, Member, Person}
+import models.{Member, SocialProfile}
 
 /**
  * Contains methods for notifying members about changes of other members

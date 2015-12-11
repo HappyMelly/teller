@@ -26,7 +26,7 @@ package controllers.acceptance
 import controllers.Urls
 import integration.PlayAppSpec
 import play.api.libs.json.JsObject
-import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
 
 class UrlsSpec extends PlayAppSpec {
 

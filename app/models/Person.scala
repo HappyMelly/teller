@@ -39,6 +39,7 @@ case class Person(
   id: Option[Long],
   firstName: String,
   lastName: String,
+  email: String,
   birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
@@ -64,6 +65,7 @@ case class Person(
   def copy(id: Option[Long] = id,
     firstName: String = firstName,
     lastName: String = lastName,
+    email: String = email,
     birthday: Option[LocalDate] = birthday,
     photo: Photo = photo,
     signature: Boolean = signature,
@@ -76,7 +78,7 @@ case class Person(
     virtual: Boolean = virtual,
     active: Boolean = active,
     dateStamp: DateStamp = dateStamp): Person = {
-    val person = Person(id, firstName, lastName, birthday, photo,
+    val person = Person(id, firstName, lastName, email, birthday, photo,
       signature, addressId, bio, interests, webSite, blog,
       customerId, virtual, active, dateStamp)
     this._socialProfile foreach { p ⇒
@@ -311,9 +313,9 @@ case class PersonSummary(id: Long, firstName: String, lastName: String, active: 
 
 object Person {
 
-  def apply(firstName: String, lastName: String): Person = {
+  def apply(firstName: String, lastName: String, email: String): Person = {
     val creator = firstName + " " + lastName
-    Person(None, firstName, lastName, None, Photo.empty, signature = false,
+    Person(None, firstName, lastName, email, None, Photo.empty, signature = false,
       addressId = 0, bio = None, interests = None, webSite = None, blog = None,
       dateStamp = DateStamp(DateTime.now(), creator, DateTime.now(), creator))
   }

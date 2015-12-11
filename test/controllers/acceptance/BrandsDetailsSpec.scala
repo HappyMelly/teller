@@ -31,7 +31,7 @@ import models.brand.{BrandCoordinator, CertificateTemplate, EventType}
 import models.service.brand.{CertificateTemplateService, EventTypeService}
 import models.service.{BrandService, ProductService}
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeServices, FakeUserIdentity}
+import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeServices, FakeSocialIdentity}
 
 /**
  * Tests Brands controller methods, rendering Details page
@@ -116,7 +116,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
       ProductHelper.make("Two", Some(2L)),
       ProductHelper.make("Three", Some(3L)))
     (productService.findByBrand _).expects(1L).returning(products)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "products").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("One")
@@ -161,7 +161,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
       (PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)),
       (PersonHelper.two(), BrandCoordinator(Some(2L), 1L, 2L)))
     (brandService.coordinators _).expects(1L).returning(team)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
 
     contentAsString(res) must contain("First Tester")

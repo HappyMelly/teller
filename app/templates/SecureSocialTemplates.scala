@@ -39,7 +39,7 @@ class SecureSocialTemplates(env: RuntimeEnvironment[_]) extends ViewTemplates {
 
   override def getLoginPage(form: Form[(String, String)],
     msg: Option[String] = None)(implicit request: RequestHeader, lang: Lang) = {
-    views.html.secure.login(form, msg)
+    views.html.v2.unauthorized.login(form, msg)
   }
 
   override def getNotAuthorizedPage(implicit request: RequestHeader, lang: Lang) = {

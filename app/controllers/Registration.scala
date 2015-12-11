@@ -21,7 +21,6 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import models.UserRole.Role._
@@ -39,8 +38,18 @@ import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
-import securesocial.core.{RuntimeEnvironment, SecureSocial}
+import securesocial.controllers.BaseRegistration
+import securesocial.controllers.BaseRegistration._
+import securesocial.core.authenticator.CookieAuthenticator
+import securesocial.core.providers.UsernamePasswordProvider
+import securesocial.core.providers.utils.PasswordValidator
+import securesocial.core.services.SaveMode
+import securesocial.core.utils._
+import securesocial.core.{AuthenticationMethod, BasicProfile, RuntimeEnvironment, SecureSocial}
 import views.Countries
+
+import scala.concurrent.{Await, Future}
+
 
 /**
  * Contains registration data required to create a person object
@@ -62,6 +71,8 @@ case class UserData(firstName: String,
  * @param country Country where the organization is registered
  */
 case class OrgData(name: String, country: String)
+
+case class AuthenticationInfo(email: String, password: String)
 
 /**
  * -v
@@ -95,6 +106,20 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       "error.unknown_country",
       (value: String) ⇒ Countries.all.exists(_._1 == value)))(OrgData.apply)(OrgData.unapply))
 
+  private def passwordForm = Form[AuthenticationInfo](
+    mapping(
+      "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
+        import scala.concurrent.duration._
+        Await.result(Future.successful(identityService.checkEmail(suppliedEmail)), 10.seconds)
+      }),
+      "password" ->
+        tuple(
+          "password1" -> nonEmptyText.verifying(PasswordValidator.constraint),
+          "password2" -> nonEmptyText
+        ).verifying(Messages(BaseRegistration.PasswordsDoNotMatch), passwords => passwords._1 == passwords._2)
+
+    )((email, password) => AuthenticationInfo(email, password._1))((info: AuthenticationInfo) => Some((info.email, ("", "")))))
+
   /**
    * The authentication flow for all providers starts here.
    *
@@ -108,11 +133,40 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     Redirect(route).withSession(session)
   }
 
+  def authenticateByEmail() = Action.async { implicit request =>
+    passwordForm.bindFromRequest().fold(
+      errors => Future.successful(BadRequest(views.html.v2.registration.step1(errors))),
+      info => {
+        val newUser = BasicProfile(
+          UsernamePasswordProvider.UsernamePassword,
+          info.email,
+          None,
+          None,
+          None,
+          Some(info.email),
+          None,
+          AuthenticationMethod.UserPassword,
+          passwordInfo = Some(env.currentHasher.hash(info.password))
+        )
+        env.userService.save(newUser, SaveMode.SignUp).map { user =>
+          env.authenticatorService.find(CookieAuthenticator.Id).map {
+            _.fromUser(user).flatMap { authenticator =>
+              Redirect(routes.Registration.step2().url).startingAuthenticator(authenticator)
+            }
+          } getOrElse {
+            Logger.error(s"[securesocial] There isn't CookieAuthenticator registered in the RuntimeEnvironment")
+            Future.successful(Redirect(routes.LoginPage.login()).flashing("error" -> Messages("There was an error signing you up")))
+          }
+        }.flatMap(f => f)
+      }
+    )
+  }
+
   /**
    * Renders welcome page for new users
    */
   def welcome = Action { implicit request ⇒
-    Ok(views.html.registration.welcome())
+    Ok(views.html.v2.registration.welcome())
   }
 
   /**
@@ -124,9 +178,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     val cookie = Cookie(REGISTRATION_COOKIE, "org")
     val discardingCookie = DiscardingCookie(REGISTRATION_COOKIE)
     if (org)
-      Ok(views.html.registration.step1()).withCookies(cookie)
+      Ok(views.html.v2.registration.step1(passwordForm)).withCookies(cookie)
     else
-      Ok(views.html.registration.step1()).discardingCookies(discardingCookie)
+      Ok(views.html.v2.registration.step1(passwordForm)).discardingCookies(discardingCookie)
   }
 
   /**
@@ -136,11 +190,10 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        val (firstName, lastName) = userNames(user.identity)
-        val form = userForm.bind(Map(("firstName", firstName),
-          ("lastName", lastName),
-          ("email", user.identity.profile.email.getOrElse(""))))
-        Ok(views.html.registration.step2(user, form))
+        val form = userForm.bind(Map(("firstName", user.person.firstName),
+          ("lastName", user.person.lastName),
+          ("email", user.person.email)))
+        Ok(views.html.v2.registration.step2(user, form))
       }
   }
 
@@ -150,7 +203,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   def step3 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        Ok(views.html.registration.step3(user, orgForm))
+        Ok(views.html.v2.registration.step3(user, orgForm))
       }
   }
 
@@ -161,9 +214,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
         userForm.bindFromRequest.fold(
-          errForm ⇒ BadRequest(views.html.registration.step2(user, errForm)),
+          errForm ⇒ BadRequest(views.html.v2.registration.step2(user, errForm)),
           data ⇒ {
-            val id = personCacheId(user.identity.profile.userId)
+            val id = personCacheId(user.id)
             Cache.set(id, data, 900)
             val paymentUrl = routes.Registration.payment().url
             val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
@@ -185,9 +238,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       redirectViewer {
         checkPersonData { implicit userData ⇒
           orgForm.bindFromRequest.fold(
-            errForm ⇒ BadRequest(views.html.registration.step3(user, errForm)),
+            errForm ⇒ BadRequest(views.html.v2.registration.step3(user, errForm)),
             data ⇒ {
-              val id = personCacheId(user.identity.profile.userId)
+              val id = personCacheId(user.id)
               Cache.set(id, userData.copy(org = true, orgData = data), 900)
               Redirect(routes.Registration.payment())
             })
@@ -203,14 +256,14 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       redirectViewer {
         checkPersonData { implicit userData ⇒
           val publicKey = Play.configuration.getString("stripe.public_key").get
-          val person = unregisteredPerson(userData, user.identity)
+          val person = unregisteredPerson(userData, user)
           val country = if (userData.org) userData.orgData.country else userData.country
           val org = if (userData.org)
             Some(Organisation(userData.orgData.name, userData.orgData.country))
           else
             None
           val fee = Payment.countryBasedFees(country)
-          Ok(views.html.registration.payment(paymentForm, person, publicKey, fee, org))
+          Ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, org))
         }
       }
   }
@@ -221,10 +274,10 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   def charge = SecuredRestrictedAction(Unregistered) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       redirectViewer {
-        Cache.getAs[UserData](personCacheId(user.identity.profile.userId)) map { userData ⇒
-          val person = unregisteredPerson(userData, user.identity).insert
+        Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
+          val person = unregisteredPerson(userData, user).insert
           val org = if (userData.org) {
-            val profile = SocialProfile(0, ProfileType.Organisation, userData.email)
+            val profile = SocialProfile(0, ProfileType.Organisation)
             val view = orgService.insert(OrgView(unregisteredOrg(userData), profile))
             Some(view.org)
           } else {
@@ -253,7 +306,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                 } getOrElse {
                   person.becomeMember(funder = false, fee)
                 }
-                updateActiveUser(user.identity, person, member)
+                updateActiveUser(user.id, user.providerId, person, member)
                 notify(person, org, member)
                 subscribe(person, member)
 
@@ -294,9 +347,9 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
     orgId map { id ⇒
-      Ok(views.html.registration.congratulations(routes.Organisations.details(id).url, true))
+      Ok(views.html.v2.registration.congratulations(routes.Organisations.details(id).url, true))
     } getOrElse {
-      Ok(views.html.registration.congratulations(routes.Dashboard.profile().url, false))
+      Ok(views.html.v2.registration.congratulations(routes.Dashboard.profile().url, false))
     }
   }
 
@@ -306,21 +359,34 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * By updating cached object we give the user a full access to the system
    *  without relogging
    *
-   * @param identity Identity object
+   * @param id Identity object
    * @param person Person
    */
-  protected def updateActiveUser(identity: UserIdentity,
-    person: Person,
-    member: Member)(implicit request: RequestHeader) = {
+  protected def updateActiveUser(id: String,
+                                 providerId: String,
+                                 person: Person,
+                                 member: Member)(implicit request: RequestHeader) = {
     val account = UserAccount(None, person.id.get,
+      true,
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,
       person.socialProfile.googlePlusUrl,
       member = true, registered = true)
     val inserted = userAccountService.insert(account)
-    env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-      _.updateUser(ActiveUser(identity, inserted, person, Some(member)))
+    if (providerId == UsernamePasswordProvider.UsernamePassword) {
+      registeringUserService.delete(id, providerId)
+      identityService.findByEmail(id) map { identity =>
+        identityService.update(identity.copy(userId = person.id,
+          firstName = Some(person.firstName),
+          lastName = Some(person.lastName)))
+      } getOrElse {
+        Logger.error(s"$id wasn't found in PasswordIdentity table on the final stage of registration")
+        throw new RuntimeException("Internal error. Please contact support")
+      }
+    }
+    env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
+      _.updateUser(ActiveUser(id, providerId, inserted, person, Some(member)))
     })
   }
 
@@ -348,7 +414,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   protected def checkPersonData(f: UserData ⇒ Result)(implicit request: Request[Any],
     handler: AuthorisationHandler,
     user: ActiveUser): Result = {
-    Cache.getAs[UserData](personCacheId(user.identity.profile.userId)) map { userData ⇒
+    Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
       f(userData)
     } getOrElse {
       Redirect(routes.Registration.step2()).
@@ -357,42 +423,20 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Returns first and last names of the given user
-   * @param user User object
-   */
-  protected def userNames(user: UserIdentity): (String, String) = {
-    if (user.profile.firstName.exists(_.trim.isEmpty)) {
-      val tokens: Array[String] = user.name.split(" ")
-      tokens.length match {
-        case 0 ⇒ ("", "")
-        case 1 ⇒ (tokens(0), "")
-        case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
-      }
-    } else
-      (user.profile.firstName.getOrElse(""),
-        user.profile.lastName.getOrElse(""))
-  }
-
-  /**
    * Returns a person created from registration data
    * @param userData User data
-   * @param user Social identity
+   * @param user ActiveUser
    */
-  private def unregisteredPerson(userData: UserData, user: UserIdentity): Person = {
+  private def unregisteredPerson(userData: UserData, user: ActiveUser): Person = {
     val photo = new Photo(None, None)
     val fullName = userData.firstName + " " + userData.lastName
     val dateStamp = new DateStamp(DateTime.now(), fullName, DateTime.now(), fullName)
-    val person = new Person(None, userData.firstName, userData.lastName, None, photo,
+    val person = new Person(None, userData.firstName, userData.lastName, userData.email, None, photo,
       false, 0, None, None, webSite = None, blog = None, active = false,
       dateStamp = dateStamp)
     val address = new Address(countryCode = userData.country)
     person.address_=(address)
-    val socialProfile = new SocialProfile(email = userData.email,
-      twitterHandle = user.twitterHandle,
-      facebookUrl = user.facebookUrl,
-      googlePlusUrl = user.googlePlusUrl,
-      linkedInUrl = user.linkedInUrl)
-    person.socialProfile_=(socialProfile)
+    person.socialProfile_=(user.person.socialProfile)
     person
   }
 

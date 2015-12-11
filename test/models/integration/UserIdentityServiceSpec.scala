@@ -26,49 +26,43 @@ package models.integration
 
 import _root_.integration.PlayAppSpec
 import helpers.PersonHelper
-import models.service.{UserAccountService, UserIdentityService}
-import models.{UserAccount, UserIdentity}
+import models.service.{UserAccountService, IdentityService}
+import models.{UserAccount, SocialIdentity}
 import securesocial.core.{AuthenticationMethod, BasicProfile}
 
 class UserIdentityServiceSpec extends PlayAppSpec {
 
   val userId = "1"
   val providerId = "twitter"
-  val service = new UserIdentityService
+  val service = new IdentityService
   val accountService = new UserAccountService
 
   "Method findActiveUser" should {
     "return None if account data are not available" in {
       truncateTables()
-      service.insert(user(userId, providerId, twitter = Some("tester")))
+      service.insert(user(userId, providerId, "tester"))
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result must_== None
     }
     "return None if person data are not available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, Some("tester"),
-        None, None, None)
-      service.insert(user(userId, providerId, twitter = Some("tester")))
+      val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
+      service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result must_== None
     }
     "return identity with Twitter if all data are available" in {
       truncateTables()
-      val account = new UserAccount(None, 1L, Some("tester"),
-        None, None, None)
-      service.insert(user(userId, providerId, twitter = Some("tester")))
+      val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
+      service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
-        i.identity.profile.firstName must_== Some("First")
-        i.identity.profile.lastName must_== Some("Tester")
-        i.identity.profile.email must_!= None
-        i.identity.profile.email.get must_== "t@t.com"
         i.account.twitterHandle must_== Some("tester")
         i.person.fullName must_== "First Tester"
       } getOrElse ko
@@ -77,18 +71,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with Facebook if all data are available" in {
       truncateTables()
       val providerId = "facebook"
-      val account = new UserAccount(None, 1L, None,
-        Some("tester"), None, None)
-      service.insert(user(userId, providerId, facebook = Some("tester")))
+      val account = new UserAccount(None, 1L, false, None, Some("tester"), None, None)
+      service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
-        i.identity.profile.firstName must_== Some("First")
-        i.identity.profile.lastName must_== Some("Tester")
-        i.identity.profile.email must_!= None
-        i.identity.profile.email.get must_== "t@t.com"
         i.account.facebookUrl must_== Some("tester")
         i.person.fullName must_== "First Tester"
       } getOrElse ko
@@ -98,18 +87,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val providerId = "google"
       val url = "https://plus.google.com/tester"
-      val account = new UserAccount(None, 1L, None,
-        None, None, Some(url))
-      service.insert(user(userId, providerId, google = Some(url)))
+      val account = new UserAccount(None, 1L, false, None, None, None, Some(url))
+      service.insert(user(userId, providerId, url))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
-        i.identity.profile.firstName must_== Some("First")
-        i.identity.profile.lastName must_== Some("Tester")
-        i.identity.profile.email must_!= None
-        i.identity.profile.email.get must_== "t@t.com"
         i.account.googlePlusUrl must_== Some(url)
         i.person.fullName must_== "First Tester"
       } getOrElse ko
@@ -118,18 +102,13 @@ class UserIdentityServiceSpec extends PlayAppSpec {
     "return identity with LinkedIn if all data are available" in {
       truncateTables()
       val providerId = "linkedin"
-      val account = new UserAccount(None, 1L, None,
-        None, Some("tester"), None)
-      service.insert(user(userId, providerId, linkedin = Some("tester")))
+      val account = new UserAccount(None, 1L, false, None, None, Some("tester"), None)
+      service.insert(user(userId, providerId, "tester"))
       accountService.insert(account)
       PersonHelper.one().insert
 
-      val result = UserIdentityService.get.findActiveUser(userId, providerId)
+      val result = IdentityService.get.findActiveUser(userId, providerId)
       result map { i ⇒
-        i.identity.profile.firstName must_== Some("First")
-        i.identity.profile.lastName must_== Some("Tester")
-        i.identity.profile.email must_!= None
-        i.identity.profile.email.get must_== "t@t.com"
         i.account.linkedInUrl must_== Some("tester")
         i.person.fullName must_== "First Tester"
       } getOrElse ko
@@ -138,13 +117,9 @@ class UserIdentityServiceSpec extends PlayAppSpec {
 
   private def user(userId: String,
     providerId: String,
-    twitter: Option[String] = None,
-    facebook: Option[String] = None,
-    google: Option[String] = None,
-    linkedin: Option[String] = None): UserIdentity = {
-    new UserIdentity(None, BasicProfile(providerId, userId, Some("First"),
+    profileUrl: String): SocialIdentity = {
+    new SocialIdentity(None, BasicProfile(providerId, userId, Some("First"),
       Some("Tester"), Some("First Tester"), Some("t@t.com"), None,
-      AuthenticationMethod.OAuth2, None, None, None), "token123",
-      twitter, facebook, google, linkedin)
+      AuthenticationMethod.OAuth2, None, None, None), "token123", Some(profileUrl))
   }
 }

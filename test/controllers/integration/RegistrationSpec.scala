@@ -33,7 +33,8 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.mvc.{ Cookie, Result }
 import play.api.test.FakeRequest
-import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeSecurity }
+import play.filters.csrf.CSRF
+import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
 import stubs.services.FakeIntegrations
 
 import scala.concurrent.Future
@@ -77,13 +78,14 @@ class RegistrationSpec extends PlayAppSpec {
     }
     "discard cookie 'registration' if org parameter is false" in {
       val cookie = Cookie(controller.REGISTRATION_COOKIE, "org")
-      val res = controller.step1(org = false).apply(FakeRequest().withCookies(cookie))
+      val request = FakeRequest().withCookies(cookie).withSession("csrfToken" -> CSRF.SignedTokenProvider.generateToken)
+      val res = controller.step1(org = false).apply(request)
       cookies(res).get("registration") map { _.maxAge.get must beLessThan(-1) } getOrElse ko
     }
   }
   "While saving a person the system" should {
     "put the person's data to cache" in {
-      val identity = FakeUserIdentity.unregistered
+      val identity = FakeSocialIdentity.unregistered
       controller.identity_=(identity)
       val req = fakePostRequest().
         withFormUrlEncodedBody(("firstName", "First"),
@@ -103,7 +105,7 @@ class RegistrationSpec extends PlayAppSpec {
 
   "While saving an org the system" should {
     "redirect to Step 2 if a user data are not in the cache" in {
-      val identity = FakeUserIdentity.unregistered
+      val identity = FakeSocialIdentity.unregistered
       controller.identity_=(identity)
       val req = fakePostRequest().
         withFormUrlEncodedBody(("name", "One"), ("country", "RU"))
@@ -113,7 +115,7 @@ class RegistrationSpec extends PlayAppSpec {
       headers(result).get("Location").get must contain("/registration/step2")
     }
     "put the org's data to cache" in {
-      val identity = FakeUserIdentity.unregistered
+      val identity = FakeSocialIdentity.unregistered
       controller.identity_=(identity)
       val req = fakePostRequest().
         withFormUrlEncodedBody(("name", "One"), ("country", "RU"))
@@ -131,7 +133,7 @@ class RegistrationSpec extends PlayAppSpec {
     }
   }
   "On charging the system" should {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     controller.identity_=(identity)
     val cacheId = controller.callPersonCacheId(identity._1)
     val userData = UserData("First", "Member", "t@ttt.ru", "RU")

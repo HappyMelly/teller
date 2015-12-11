@@ -208,7 +208,7 @@ class OrganisationService extends Services {
       val updateTuple = (org.id, org.name, org.street1,
         org.street2, org.city, org.province, org.postCode,
         org.countryCode, org.vatNumber, org.registrationNumber,
-        org.webSite, org.blog, org.customerId, org.about,
+        org.webSite, org.blog, org.contactEmail, org.customerId, org.about,
         org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
       query.update(updateTuple)
       org

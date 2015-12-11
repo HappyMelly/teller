@@ -38,7 +38,6 @@ object ProfileType extends Enumeration {
 case class SocialProfile(
     objectId: Long = 0,
     objectType: ProfileType.Value = ProfileType.Person,
-    email: String,
     twitterHandle: Option[String] = None,
     facebookUrl: Option[String] = None,
     linkedInUrl: Option[String] = None,

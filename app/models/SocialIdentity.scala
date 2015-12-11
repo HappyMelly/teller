@@ -21,76 +21,102 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
-import models.service.{ PersonService, UserAccountService, UserIdentityService }
-import play.api.Play.current
-import play.api.cache.Cache
 import play.api.libs.Crypto
-import securesocial.core.providers.{ FacebookProvider, GoogleProvider, LinkedInProvider, TwitterProvider }
-import securesocial.core.{ OAuth1Info, OAuth2Info, PasswordInfo, _ }
+import securesocial.core.providers._
+import securesocial.core.{PasswordInfo, _}
 
 import scala.Predef._
 import scala.util.Random
 
-case class ActiveUser(identity: UserIdentity,
-    account: UserAccount,
-    person: Person,
-    member: Option[Member] = None) {
+case class ActiveUser(id: String,
+                      providerId: String,
+                      account: UserAccount,
+                      person: Person,
+                      member: Option[Member] = None) {
 
   val name: String = person.fullName
 }
 
 /**
- * Contains profile and authentication info for a SecureSocial Identity
+ * Contains profile and authentication info when a user authenticates using a social network
  */
-case class UserIdentity(uid: Option[Long],
-    profile: BasicProfile,
-    apiToken: String,
-    twitterHandle: Option[String],
-    facebookUrl: Option[String],
-    googlePlusUrl: Option[String],
-    linkedInUrl: Option[String]) {
+case class SocialIdentity(uid: Option[Long],
+                          profile: BasicProfile,
+                          apiToken: String,
+                          profileUrl: Option[String]) {
 
   def name: String = profile.fullName getOrElse {
     profile.firstName.getOrElse("") + " " + profile.lastName.getOrElse("")
   }
 }
 
-object UserIdentity {
+/**
+  * Contains profile and authentication info when a user authenticates using email
+  */
+case class PasswordIdentity(userId: Option[Long],
+  email: String,
+  password: String,
+  firstName: Option[String],
+  lastName: Option[String],
+  hasher: String) {
+
+  def profile: BasicProfile = BasicProfile(UsernamePasswordProvider.UsernamePassword, email,
+    firstName, lastName, Some(fullName), Some(email),
+    None, AuthenticationMethod.UserPassword, None, None, Some(PasswordInfo(hasher, password)))
+
+  def fullName: String = if (firstName.nonEmpty && lastName.nonEmpty) {
+    firstName.get + " " + lastName.get
+  } else ""
+}
+
+object PasswordIdentity {
+
+  /**
+    * Returns new identity based on the given profile
+    * @param profile Profile
+    */
+  def fromProfile(profile: BasicProfile): PasswordIdentity = profile.passwordInfo.map { info =>
+    PasswordIdentity(None, profile.userId, info.password, profile.firstName, profile.lastName, info.hasher)
+  }.getOrElse {
+    PasswordIdentity(None, profile.userId, "", profile.firstName, profile.lastName, "")
+  }
+}
+
+object SocialIdentity {
 
   /**
    * Factory method to return a Twitter login identity.
    */
-  def forTwitterHandle(i: GenericProfile, twitterHandle: String): UserIdentity = UserIdentity(None,
+  def forTwitterHandle(i: GenericProfile, twitterHandle: String): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
       i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), Some(twitterHandle), None, None, None)
+    generateApiToken(i.userId), Some(twitterHandle))
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forFacebookUrl(i: GenericProfile, facebookUrl: String): UserIdentity = UserIdentity(None,
+  def forFacebookUrl(i: GenericProfile, facebookUrl: String): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
       i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), None, Some(facebookUrl), None, None)
+    generateApiToken(i.userId), Some(facebookUrl))
 
   /**
    * Factory method to return a Facebook login identity.
    */
-  def forGooglePlusUrl(i: GenericProfile, googlePlusUrl: String): UserIdentity = UserIdentity(None,
+  def forGooglePlusUrl(i: GenericProfile, googlePlusUrl: String): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
       i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), None, None, Some(googlePlusUrl), None)
+    generateApiToken(i.userId), Some(googlePlusUrl))
 
   /**
    * Factory method to return a LinkedIn login identity.
    */
-  def forLinkedInUrl(i: GenericProfile, linkedInUrl: String): UserIdentity = UserIdentity(None,
+  def forLinkedInUrl(i: GenericProfile, linkedInUrl: String): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
       i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), None, None, None, Some(linkedInUrl))
+    generateApiToken(i.userId), Some(linkedInUrl))
 
   private def generateApiToken(userId: String) = {
     Crypto.sign("%s-%s".format(userId, Random.nextInt()))

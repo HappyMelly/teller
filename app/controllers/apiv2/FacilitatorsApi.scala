@@ -104,7 +104,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "unique_name" -> view.person.uniqueName,
         "first_name" -> view.person.firstName,
         "last_name" -> view.person.lastName,
-        "email_address" -> view.person.socialProfile.email,
+        "email_address" -> view.person.email,
         "image" -> view.person.photo.url,
         "address" -> view.person.address,
         "bio" -> view.person.bio,

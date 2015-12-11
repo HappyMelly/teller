@@ -36,7 +36,7 @@ import securesocial.core.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Future, Await}
 
 /**
  * Used by SecureSocial to look up and save authentication data.
@@ -49,10 +49,11 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param userId User identifier from a social network
    * @return
    */
-  def find(providerId: String, userId: String): Future[Option[BasicProfile]] = {
-    userIdentityService.findByUserId(userId, providerId) map { identity ⇒
-      Future.successful(Some(identity.profile))
-    } getOrElse Future.successful(None)
+  def find(providerId: String, userId: String): Future[Option[BasicProfile]] = Future.successful {
+    if (providerId == UsernamePasswordProvider.UsernamePassword)
+      identityService.findByEmail(userId) map { identity => Some(identity.profile) } getOrElse None
+    else
+      identityService.findByUserId(userId, providerId) map { identity ⇒ Some(identity.profile) } getOrElse None
   }
 
   /**
@@ -66,16 +67,50 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     val user = mode match {
       case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
       case SaveMode.SignUp ⇒ createUser(profile)
+      case SaveMode.PasswordChange => updatePassword(profile)
     }
     Future.successful(user)
   }
 
-  // Since we're not using username/password login, we don't need the methods below
-  def findByEmailAndProvider(email: String, providerId: String) = ???
-  def saveToken(token: MailToken): Future[MailToken] = ???
-  def findToken(token: String) = ???
-  def deleteToken(uuid: String): Future[Option[MailToken]] = ???
-  def deleteExpiredTokens() {}
+  /**
+    * Returns user's profile for the given email if exists. ProviderId is not checked
+    * @param email Email
+    * @param providerId Provider identifier is not checked
+    */
+  def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] = Future.successful {
+    identityService.findByEmail(email) map { identity => Some(identity.profile) } getOrElse None
+  }
+
+  /**
+    * Saves a mail token.  This is needed for users that
+    * are creating an account in the system or trying to reset a password
+    *
+    * @param token The token to save
+    */
+  def saveToken(token: MailToken): Future[MailToken] = Future.successful {
+    mailTokenService.insert(token)
+  }
+
+  /**
+    * Finds a token
+    *
+    * @param token the token id
+    */
+  def findToken(token: String): Future[Option[MailToken]] = Future.successful(mailTokenService.find(token))
+
+  /**
+    * Deletes a token
+    *
+    * @param uuid the token id
+    */
+  def deleteToken(uuid: String): Future[Option[MailToken]] = Future.successful {
+    mailTokenService.delete(uuid)
+    None
+  }
+
+  def deleteExpiredTokens(): Unit = {
+    mailTokenService.deleteExpiredTokens()
+  }
 
   /**
    * Links the current user to another profile
@@ -92,8 +127,11 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param user a user instance
    * @return returns an optional PasswordInfo
    */
-  def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] =
-    Future.successful(None)
+  def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] = Future.successful {
+    identityService.findByEmail(user.person.email) map { identity =>
+      Some(PasswordInfo(identity.hasher, identity.password))
+    } getOrElse None
+  }
 
   /**
    * Updates the PasswordInfo for a given user
@@ -102,8 +140,12 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param info the password info
    * @return
    */
-  def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] =
-    Future.successful(None)
+  def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
+    identityService.findByEmail(user.person.email) map { identity =>
+      identityService.update(identity.copy(password = info.password, hasher = info.hasher))
+      Future.successful(None)
+    } getOrElse Future.successful(None)
+  }
 
   /**
    * Creates new user and adds its data to database
@@ -111,22 +153,32 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @return Created user
    */
   protected def createUser(profile: BasicProfile): ActiveUser = {
-    val identity = identityFromProfile(profile)
-    userIdentityService.findActiveUserData(identity) map { userData ⇒
-      userIdentityService.insert(identity)
-      ActiveUser(identity, userData._1, userData._2)
-    } getOrElse unregisteredActiveUser(identity)
+    if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
+      val identity = identityService.findByEmail(profile.userId).map { identity =>
+        identityService.update(PasswordIdentity.fromProfile(profile))
+      }.getOrElse {
+        registeringUserService.insert(profile.userId, profile.providerId)
+        identityService.insert(PasswordIdentity.fromProfile(profile))
+      }
+      user(identity)
+    } else {
+      val identity = identityFromProfile(profile)
+      identityService.findActiveUserData(identity) map { userData ⇒
+        identityService.insert(identity)
+        ActiveUser(identity.profile.userId, identity.profile.providerId, userData._1, userData._2)
+      } getOrElse unregisteredActiveUser(identity)
+    }
   }
 
   /**
    * Returns newly created identity for the given profile
    * @param profile User profile
    */
-  protected def identityFromProfile(profile: BasicProfile): UserIdentity = profile.providerId match {
-    case FacebookProvider.Facebook ⇒ UserIdentity.forFacebookUrl(profile, findFacebookUrl(profile))
-    case GoogleProvider.Google ⇒ UserIdentity.forGooglePlusUrl(profile, findGooglePlusUrl(profile))
-    case LinkedInProvider.LinkedIn ⇒ UserIdentity.forLinkedInUrl(profile, findLinkedInUrl(profile))
-    case TwitterProvider.Twitter ⇒ UserIdentity.forTwitterHandle(profile, findTwitterHandle(profile))
+  protected def identityFromProfile(profile: BasicProfile): SocialIdentity = profile.providerId match {
+    case FacebookProvider.Facebook ⇒ SocialIdentity.forFacebookUrl(profile, findFacebookUrl(profile))
+    case GoogleProvider.Google ⇒ SocialIdentity.forGooglePlusUrl(profile, findGooglePlusUrl(profile))
+    case LinkedInProvider.LinkedIn ⇒ SocialIdentity.forLinkedInUrl(profile, findLinkedInUrl(profile))
+    case TwitterProvider.Twitter ⇒ SocialIdentity.forTwitterHandle(profile, findTwitterHandle(profile))
   }
 
   /**
@@ -135,20 +187,71 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @throws AuthenticationException
    */
   protected def retrieveLoggedInUser(profile: BasicProfile): ActiveUser = {
-    userIdentityService.findActiveUser(profile.userId, profile.providerId) getOrElse {
+    if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
+      identityService.findActiveUserByEmail(profile.userId) getOrElse {
+        if (registeringUserService.exists(profile.userId, profile.providerId)) {
+          identityService.findByEmail(profile.userId).map { identity =>
+            user(identity)
+          } getOrElse {
+            throw new AuthenticationException
+          }
+        } else {
+          throw new AuthenticationException
+        }
+      }
+    } else {
+      identityService.findActiveUser(profile.userId, profile.providerId) getOrElse {
+        throw new AuthenticationException
+      }
+    }
+  }
+
+  protected def updatePassword(profile: BasicProfile): ActiveUser = {
+    identityService.findByEmail(profile.userId) map { identity =>
+      identityService.update(identity.copy(password = profile.passwordInfo.get.password,
+        hasher = profile.passwordInfo.get.hasher))
+    } getOrElse {
       throw new AuthenticationException
     }
+    identityService.findActiveUserByEmail(profile.userId) map(user => user) getOrElse {
+      throw new AuthenticationException
+    }
+  }
+
+  protected def user(identity: PasswordIdentity): ActiveUser = {
+    val account = UserAccount.empty(0)
+    val person = Person("", "", identity.email)
+    person.socialProfile_=(SocialProfile())
+    ActiveUser(identity.email, UsernamePasswordProvider.UsernamePassword, account, person)
   }
 
   /**
    * Returns active user with unregistered role for the given identity
    * @param identity User identity
    */
-  protected def unregisteredActiveUser(identity: UserIdentity): ActiveUser = {
-    val account = new UserAccount(None, 0, None, None, None, None)
-    val person = Person(identity.profile.firstName.getOrElse(""),
-      identity.profile.lastName.getOrElse(""))
-    ActiveUser(identity, account, person)
+  protected def unregisteredActiveUser(identity: SocialIdentity): ActiveUser = {
+    val account = UserAccount.empty(0)
+    val (firstName, lastName) = userNames(identity)
+    val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
+    person.socialProfile_=(SocialProfile())
+    ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
+  }
+
+  /**
+    * Returns first and last names of the given user
+    * @param user User object
+    */
+  protected def userNames(user: SocialIdentity): (String, String) = {
+    if (user.profile.firstName.exists(_.trim.isEmpty)) {
+      val tokens: Array[String] = user.name.split(" ")
+      tokens.length match {
+        case 0 ⇒ ("", "")
+        case 1 ⇒ (tokens(0), "")
+        case _ ⇒ (tokens(0), tokens.slice(1, tokens.length).mkString(" "))
+      }
+    } else
+      (user.profile.firstName.getOrElse(""),
+        user.profile.lastName.getOrElse(""))
   }
 
   /**

@@ -43,6 +43,8 @@ trait Services {
 
   def contributionService: ContributionService = ContributionService.get
 
+  def emailToken: EmailTokenService = EmailTokenService.get
+
   def evaluationService: EvaluationService = EvaluationService.get
 
   def eventService: EventService = EventService.get
@@ -61,6 +63,8 @@ trait Services {
 
   def feeService: BrandFeeService = BrandFeeService.get
 
+  def mailTokenService: PasswordTokenService = PasswordTokenService.get
+
   def memberService: MemberService = MemberService.get
 
   def licenseService: LicenseService = LicenseService.get
@@ -77,9 +81,11 @@ trait Services {
 
   def profileStrengthService: ProfileStrengthService = ProfileStrengthService.get
 
+  def registeringUserService: RegisteringUserService = RegisteringUserService.get
+
   def socialProfileService: SocialProfileService = SocialProfileService.get
 
   def userAccountService: UserAccountService = UserAccountService.get
 
-  def userIdentityService: UserIdentityService = UserIdentityService.get
+  def identityService: IdentityService = IdentityService.get
 }

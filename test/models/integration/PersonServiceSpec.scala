@@ -140,7 +140,7 @@ class PersonServiceSpec extends PlayAppSpec {
         funder = false).insert
       Record("123", id, id, person = true, "desc", Money.parse("EUR 100")).insert
       Record("234", id, id, person = true, "desc", Money.parse("EUR 200")).insert
-      UserAccountService.get.insert(UserAccount(None, id, Some("test"), None, None, None))
+      UserAccountService.get.insert(UserAccount(None, id, false, Some("test"), None, None, None))
       //test
       val addressId = person.address.id.get
       service.delete(id)

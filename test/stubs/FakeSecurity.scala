@@ -134,7 +134,7 @@ trait FakeSecurity extends Security {
 
   /** Used to replace user object which is passed to action */
   private var _activeUser: Option[Person] = None
-  private var _identity: (String, String) = FakeUserIdentity.viewer
+  private var _identity: (String, String) = FakeSocialIdentity.viewer
 
   def activeUser_=(user: Person) = _activeUser = Some(user)
   def identity_=(identity: (String, String)) = _identity = identity
@@ -206,22 +206,18 @@ trait FakeSecurity extends Security {
   }
 
   private def user: ActiveUser = {
-    val identity = new FakeUserIdentity(Some(123213L),
+    val identity = new FakeSocialIdentity(Some(123213L),
       _identity, "Sergey", "Kotlov", "Sergey Kotlov", None)
+    val raw = UserAccount.empty(1L).copy(id = Some(1L))
     val account = _identity match {
-      case FakeUserIdentity.unregistered ⇒
-        UserAccount(Some(1L), 1L, None, None, None, None)
-      case FakeUserIdentity.admin ⇒
-        UserAccount(Some(1L), 1L, None, None, None, None, admin = true, registered = true)
-      case FakeUserIdentity.coordinator ⇒
-        UserAccount(Some(1L), 1L, None, None, None, None, coordinator = true, registered = true, activeRole = true)
-      case FakeUserIdentity.facilitator ⇒
-        UserAccount(Some(1L), 1L, None, None, None, None, facilitator = true, registered = true)
-      case _ ⇒
-        UserAccount(Some(1L), 1L, None, None, None, None, registered = true)
+      case FakeSocialIdentity.unregistered ⇒ raw
+      case FakeSocialIdentity.admin ⇒ raw.copy(admin = true, registered = true)
+      case FakeSocialIdentity.coordinator ⇒ raw.copy(coordinator = true, registered = true, activeRole = true)
+      case FakeSocialIdentity.facilitator ⇒ raw.copy(facilitator = true, registered = true)
+      case _ ⇒ raw.copy(registered = true)
     }
     val person = _activeUser getOrElse PersonHelper.one()
-    ActiveUser(identity, account, person)
+    ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 }
 

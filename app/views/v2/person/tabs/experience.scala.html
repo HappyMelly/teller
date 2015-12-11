@@ -26,12 +26,12 @@
    }
   </div>
   <div class="block">
-    <h3>Studies, Posts and Video Materials</h3>
+    <h4>Studies, Posts and Video Materials</h4>
     <p>Promote yourself on <a href="http://management30.com/facilitator"
       target="_blank">management30.com</a> and other brand websites by adding links to your case studies, articles or video materials.</p>
   </div>
   <div class="block">
-    <h4>Personal Materials</h4>
+    <h5>Personal Materials</h5>
     <p>Links from this section are shown on any website and not related to a particular brand</p>
     <table id="materials_0" class="materials table">
       <thead>
@@ -72,7 +72,7 @@
   </div>
   @for(brandData <- experiencePerBrand) {
     <div class="block">
-      <h4>Materials related to @brandData._2</h4>
+      <h5>Materials related to @brandData._2</h5>
       <table id="materials_@brandData._1.brandId" class="materials table">
         <thead>
           <tr>
@@ -112,7 +112,7 @@
     </div>
   }
   <div class="block">
-    <h3>Endorsements</h3>
+    <h4>Endorsements</h4>
     <p>
       If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
       <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a>

@@ -1,0 +1,38 @@
+@(user: ActiveUser,
+    form: Form[UserData])(implicit request: Request[Any], flash: Flash)
+
+@import helper.CSRF
+@import views.Countries
+@import views.ViewHelpersV2._
+
+@v2.layout.unauthorized("Add Personal Data") {
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <div class="registration-menu">
+        <span>Join Happy Melly</span>
+        <span>Create account</span>
+        <span>Personal Data</span>
+        <span class="inactive">Organisation Data</span>
+        <span class="inactive">Payment</span>
+        <span class="inactive">Congratulations</span>
+        <span><a class="stop-registration" href="@routes.LoginPage.logout()">Back to login</a></span>
+    </div>
+    <div class="action-block registration">
+        <h3>Add Personal Data</h3>
+        <div class="action-area col-md-11 col-md-offset-1">
+        @v2.html.form(action = CSRF(routes.Registration.savePerson())) {
+            @v2.html.text(form("firstName"), '_label -> "First name", '_help -> "")(narrow, implicitly[Lang])
+            @v2.html.text(form("lastName"), '_label -> "Last name", '_help -> "")(narrow, implicitly[Lang])
+            @v2.html.email(form("email"), '_label -> "Email", '_help -> "")(narrow, implicitly[Lang])
+            @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country",
+                '_help -> "")(narrow, implicitly[Lang])
+
+            <div class="form-group">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-6">
+                    <button class="btn btn-primary btn-block" type="submit">Continue</button>
+                </div>
+            </div>
+        }
+        </div>
+    </div>
+}

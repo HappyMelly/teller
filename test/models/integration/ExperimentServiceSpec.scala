@@ -28,6 +28,7 @@ import helpers.MemberHelper
 import integration.PlayAppSpec
 import models._
 import models.service._
+import org.joda.time.DateTime
 
 class ExperimentServiceSpec extends PlayAppSpec {
 
@@ -43,7 +44,8 @@ class ExperimentServiceSpec extends PlayAppSpec {
       (2, "Exp 4", "Desc", "Url 4"),
       (2, "Exp 5", "Desc", "Url 5")).foreach {
         case (memberId, name, desciption, url) ⇒ {
-          val experiment = Experiment(None, memberId, name, desciption, false, Some(url))
+          val recordInfo = DateStamp(createdBy = "Tester", updated = DateTime.now(), updatedBy = "Tester")
+          val experiment = Experiment(None, memberId, name, desciption, false, Some(url), recordInfo)
           service.insert(experiment)
         }
       }

@@ -279,7 +279,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         if (person.virtual) {
           participantService.find(personId, eventId) map { participant =>
             val data = ParticipantData(person.id, eventId, person.firstName,
-              person.lastName, person.birthday, person.socialProfile.email,
+              person.lastName, person.birthday, person.email,
               person.address, participant.organisation, None, participant.role,
               person.dateStamp.created, person.dateStamp.createdBy,
               person.dateStamp.updated, person.dateStamp.updatedBy)
@@ -437,10 +437,9 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 BadRequest(views.html.v2.participant.editForm(user, personId, eventId, errors))
               ),
               data => {
-                val updated = person.copy(firstName = data.firstName,
-                  lastName = data.lastName, birthday = data.birthday)
+                val updated = person.copy(firstName = data.firstName, lastName = data.lastName,
+                  email = data.emailAddress, birthday = data.birthday)
                 updated.address_=(data.address)
-                updated.socialProfile_=(updated.socialProfile.copy(email = data.emailAddress))
                 personService.update(updated)
                 Future.successful(
                   Redirect(routes.Participants.person(eventId, personId)).flashing("success" -> "Participant was successfully updated"))

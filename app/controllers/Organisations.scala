@@ -320,6 +320,7 @@ object Organisations {
     "profile" -> SocialProfiles.profileMapping(ProfileType.Organisation),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
+    "email" -> optional(play.api.data.Forms.email),
     "customerId" -> optional(text),
     "about" -> optional(text),
     "logo" -> ignored(false),
@@ -330,12 +331,12 @@ object Organisations {
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(user.name))(DateStamp.apply)(DateStamp.unapply))({
       (id, name, address, vatNumber,
-      registrationNumber, profile, webSite, blog, customerId, about,
+      registrationNumber, profile, webSite, blog, email, customerId, about,
       logo, active, dateStamp) ⇒
         val org = Organisation(id, name, address.street1, address.street2,
           address.city, address.province, address.postCode, address.countryCode,
           vatNumber, registrationNumber, webSite,
-          blog, customerId, about, logo, active, dateStamp)
+          blog, email, customerId, about, logo, active, dateStamp)
         OrgView(org, profile)
     })({
       (v: OrgView) ⇒
@@ -343,7 +344,7 @@ object Organisations {
           v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
         Some((v.org.id, v.org.name, address, v.org.vatNumber,
           v.org.registrationNumber, v.profile, v.org.webSite,
-          v.org.blog, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+          v.org.blog, v.org.contactEmail, v.org.customerId, v.org.about, v.org.logo, v.org.active,
           v.org.dateStamp))
     }))
 }

@@ -398,7 +398,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       (service.find(_: Long)).expects(*).returning(Some(person))
       (service.findNonMembers _).expects().returning(List())
       controller.personService_=(service)
-      controller.identity_=(FakeUserIdentity.editor)
+      controller.identity_=(FakeSocialIdentity.editor)
       val request = fakePostRequest("/1").withFormUrlEncodedBody(("id", "1"))
       val result = controller.updateExistingPerson().apply(request)
 

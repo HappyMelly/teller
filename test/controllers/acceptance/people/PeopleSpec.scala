@@ -68,7 +68,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   val id = 1L
   val person = PersonHelper.one()
-  person.socialProfile_=(new SocialProfile(email = "test@test.com"))
+//  person.socialProfile_=(new SocialProfile(email = "test@test.com"))
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
@@ -84,7 +84,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.admin)
+    controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Financial account"
@@ -95,7 +95,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = false)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("supporter")
@@ -108,7 +108,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("funder")
@@ -118,7 +118,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.coordinator)
+    controller.identity_=(FakeSocialIdentity.coordinator)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must contain("Make a Facilitator")
@@ -134,7 +134,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
       Money.parse("EUR 10"), None)
     val licenses = List(LicenseView(BrandHelper.one, license))
     licenseService.licenses _ expects id returning licenses
-    controller.identity_=(FakeUserIdentity.editor)
+    controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "Make a Facilitator"
@@ -144,7 +144,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     person.insert
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true)
     person.member_=(member)
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
     contentAsString(result) must not contain "/person/1/licenses/new"
@@ -162,7 +162,6 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e17 = new MockContext {
     truncateTables()
     val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     (personService.find(_: Long)) expects id returning Some(person)
     val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
@@ -173,7 +172,6 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e18 = new MockContext {
     truncateTables()
     val person = PersonHelper.one()
-    person.socialProfile_=(new SocialProfile(email = "test@test.com"))
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
       renewal = false)
     person.member_=(member)

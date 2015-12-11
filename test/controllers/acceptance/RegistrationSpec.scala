@@ -28,7 +28,8 @@ import _root_.integration.PlayAppSpec
 import controllers.{ OrgData, UserData, Registration }
 import play.api.mvc.{ Cookie, Result }
 import play.api.test.FakeRequest
-import stubs.{ FakeRuntimeEnvironment, FakeUserIdentity, FakeSecurity }
+import play.filters.csrf.CSRF
+import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
 import play.api.cache.Cache
 import play.api.Play.current
 
@@ -76,50 +77,47 @@ class RegistrationSpec extends PlayAppSpec {
   val controller = new TestRegistration()
 
   def e2 = {
-    val result = controller.step1().apply(FakeRequest())
+    val result = controller.step1().apply(FakeRequest().withSession("csrfToken" -> CSRF.SignedTokenProvider.generateToken))
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Log in with Twitter")
-    contentAsString(result) must contain("Log in with Facebook")
-    contentAsString(result) must contain("Log in with Google")
-    contentAsString(result) must contain("Log in with Linkedin")
+    contentAsString(result) must contain("Sign Up with Twitter")
+    contentAsString(result) must contain("Sign Up with Facebook")
+    contentAsString(result) must contain("Sign Up with Google")
+    contentAsString(result) must contain("Sign Up with LinkedIn")
   }
 
   def e4 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.step2().apply(fakeGetRequest())
     headers(result).get("Location").get must_== "/"
   }
 
   def e6 = {
-    controller.identity_=(FakeUserIdentity.unregistered)
+    controller.identity_=(FakeSocialIdentity.unregistered)
     val result = controller.step2().apply(fakeGetRequest())
     status(result) must equalTo(OK)
-    contentAsString(result) must contain("Sergey")
-    contentAsString(result) must contain("Kotlov")
-    contentAsString(result) must contain("Invalid e-mail address")
+    contentAsString(result) must contain("First")
+    contentAsString(result) must contain("Tester")
   }
 
   def e8 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.savePerson().apply(fakePostRequest())
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").get must_== "/"
   }
 
   def e10 = {
-    controller.identity_=(FakeUserIdentity.unregistered)
+    controller.identity_=(FakeSocialIdentity.unregistered)
     val req = fakePostRequest().
       withFormUrlEncodedBody(("firstName", ""),
         ("lastName", ""), ("email", "ttt.ru"), ("country", "WWW"))
     val result = controller.savePerson().apply(req)
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Required value missing")
-    contentAsString(result) must contain("Invalid e-mail address")
-    contentAsString(result) must contain("Please choose a country")
+    contentAsString(result) must contain("has-error")
   }
 
   def e12 = {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     val cookie = Cookie(controller.REGISTRATION_COOKIE, "org")
 
     val req = fakePostRequest().
@@ -132,38 +130,37 @@ class RegistrationSpec extends PlayAppSpec {
   }
 
   def e14 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.step3().apply(fakeGetRequest())
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").get must_== "/"
   }
 
   def e17 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.saveOrg().apply(fakePostRequest())
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").get must_== "/"
   }
 
   def e18 = {
-    controller.identity_=(FakeUserIdentity.unregistered)
+    controller.identity_=(FakeSocialIdentity.unregistered)
     val req = fakePostRequest().
       withFormUrlEncodedBody(("name", ""), ("country", "WWW"))
     val result = controller.saveOrg().apply(req)
     status(result) must equalTo(BAD_REQUEST)
-    contentAsString(result) must contain("Required value missing")
-    contentAsString(result) must contain("Please choose a country")
+    contentAsString(result) must contain("has-error")
   }
 
   def e19 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.payment().apply(fakeGetRequest())
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").get must_== "/"
   }
 
   def e20 = {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     controller.identity_=(identity)
     val cacheId = controller.callPersonCacheId(identity._1)
     Cache.remove(cacheId)
@@ -173,7 +170,7 @@ class RegistrationSpec extends PlayAppSpec {
   }
 
   def e21 = {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     controller.identity_=(identity)
     val cacheId = controller.callPersonCacheId(identity._1)
     val userData = UserData("First", "Tester", "t@ttt.ru", "RU")
@@ -184,7 +181,7 @@ class RegistrationSpec extends PlayAppSpec {
   }
 
   def e22 = {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     controller.identity_=(identity)
     val cacheId = controller.callPersonCacheId(identity._1)
     val userData = UserData("First", "Tester", "t@ttt.ru", "RU", true, OrgData("One", "DE"))
@@ -195,14 +192,14 @@ class RegistrationSpec extends PlayAppSpec {
   }
 
   def e23 = {
-    controller.identity_=(FakeUserIdentity.viewer)
+    controller.identity_=(FakeSocialIdentity.viewer)
     val result = controller.charge().apply(fakePostRequest())
     status(result) must equalTo(SEE_OTHER)
     headers(result).get("Location").get must_== "/"
   }
 
   def e24 = {
-    val identity = FakeUserIdentity.unregistered
+    val identity = FakeSocialIdentity.unregistered
     controller.identity_=(identity)
     val cacheId = controller.callPersonCacheId(identity._1)
     Cache.remove(cacheId)

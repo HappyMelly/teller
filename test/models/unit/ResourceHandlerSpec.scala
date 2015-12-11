@@ -29,7 +29,7 @@ import models._
 import models.service.{MemberService, OrganisationService}
 import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import org.specs2.mutable.Specification
-import stubs.{FakeServices, FakeUserIdentity}
+import stubs.{FakeServices, FakeSocialIdentity}
 
 class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
@@ -42,13 +42,13 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
   }
 
-  val viewer = UserAccount(None, 1L, None, None, None, None)
+  val viewer = UserAccount.empty(1L)
   val admin = viewer.copy(admin = true)
   val person = PersonHelper.one()
   person.member_=(MemberHelper.make(Some(1L), 1L, person = true, funder = false))
-  val identity = new FakeUserIdentity(Some(123213L), FakeUserIdentity.viewer,
+  val identity = new FakeSocialIdentity(Some(123213L), FakeSocialIdentity.viewer,
     "Sergey", "Kotlov", "Sergey Kotlov", None)
-  val activeUser = ActiveUser(identity, viewer, person)
+  val activeUser = ActiveUser(identity.profile.userId, identity.profile.providerId, viewer, person)
 
   val handler = new TestResourceHandler(activeUser)
   val memberService = mock[MemberService]
@@ -64,7 +64,7 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
   "When member permissions are checked" >> {
     "and the user is an admin then permission should be granted" in {
-      val user = ActiveUser(identity, admin, person)
+      val user = ActiveUser(identity.profile.userId, identity.profile.providerId, admin, person)
       handler.callCheckMemberPermission(user, 2L) must_== true
     }
     "and the user is a member and checks his own profile then permission should be granted" in {

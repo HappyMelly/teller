@@ -37,7 +37,7 @@
           @html.text(form("blog"), '_label -> "Blog")
           <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value.exists(_.toBoolean)">
 
-          @html.email(form("profile.email"), '_label -> "E-mail address")
+          @html.email(form("email"), '_label -> "E-mail address")
           <legend>Social Profile</legend>
           @defining(form("profile.twitterHandle")) { field =>
             <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">

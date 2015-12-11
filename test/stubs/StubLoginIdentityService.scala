@@ -34,17 +34,17 @@ import scala.concurrent.Future
 class StubLoginIdentityService extends LoginIdentityService {
 
   override def find(providerId: String, userId: String) = {
-    val identity = new FakeUserIdentity(Some(123213L), (providerId, userId),
+    val identity = new FakeSocialIdentity(Some(123213L), (providerId, userId),
       "Sergey", "Kotlov", "Sergey Kotlov", None)
     Future.successful(Some(identity.profile))
   }
 
   override def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
-    val identity = new FakeUserIdentity(Some(123213L), ("123", "twitter"),
+    val identity = new FakeSocialIdentity(Some(123213L), ("123", "twitter"),
       "Sergey", "kotlov", "Sergey Kotlov", None)
-    val account = UserAccount(Some(1L), 1L, None, None, None, None)
+    val account = UserAccount(Some(1L), 1L, false, None, None, None, None)
     val person = PersonHelper.one()
-    Future.successful(ActiveUser(identity, account, person))
+    Future.successful(ActiveUser(identity.profile.userId, identity.profile.providerId, account, person))
   }
 
 }

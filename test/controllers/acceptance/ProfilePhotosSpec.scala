@@ -56,10 +56,8 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.personService_=(personService)
 
   val person = PersonHelper.one()
-  val profile = new SocialProfile(email = "test@test.com")
 
   trait DefaultPerson extends MockContext {
-    person.socialProfile_=(profile)
     (personService.find(_: Long)) expects 1L returning Some(person)
   }
 
@@ -86,7 +84,7 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
     withFormUrlEncodedBody(("type" -> "gravatar"), ("name" -> ""))
 
   private def personWithGravatar = {
-    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/b642b4217b34b1e8d3bd915fc65c4452?s=300"))
+    val photo = Photo(Some("gravatar"), Some("https://secure.gravatar.com/avatar/cbc4c5829ca103f23a20b31dbf953d05?s=300"))
     val updatedPerson = person.copy(photo = photo)
     updatedPerson
   }

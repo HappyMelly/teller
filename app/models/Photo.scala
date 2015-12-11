@@ -32,7 +32,6 @@ object Photo {
 
   def parse(url: Option[String]): Photo = {
     url map {
-      case s if s.contains("facebook") ⇒ Photo(Some("facebook"), url)
       case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
       case s if s.contains("photo") ⇒ Photo(Some("custom"), url)
       case _ ⇒ Photo.empty
@@ -52,12 +51,12 @@ object Photo {
   /**
    * Returns photo object based on the given type
    *
-   * @param photoType One of three possible types: facebool, gravatar, nophoto
-   * @param profile Social profile containing data for building photo url
+   * @param photoType One of two possible types: gravatar or nophoto
+   * @param email Email address for the gravatar
    */
-  def apply(photoType: String, profile: SocialProfile): Photo = {
+  def apply(photoType: String, email: String): Photo = {
     photoType match {
-      case "gravatar" ⇒ Photo(Some("gravatar"), Some(gravatarUrl(profile.email)))
+      case "gravatar" ⇒ Photo(Some("gravatar"), Some(gravatarUrl(email)))
       case _ ⇒ Photo.empty
     }
   }

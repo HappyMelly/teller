@@ -184,7 +184,7 @@ class GatewayWrapper(apiKey: String) {
       "currency" -> "eur",
       "card" -> token.getOrElse(""),
       "description" -> Payment.DESC,
-      "receipt_email" -> payer.socialProfile.email)
+      "receipt_email" -> payer.email)
     try {
       Stripe.apiKey = apiKey
       Charge.create(params)

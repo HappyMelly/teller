@@ -1,0 +1,63 @@
+@(form: Form[AuthenticationInfo])(implicit request: Request[Any])
+
+@import helper.CSRF
+
+@v2.layout.unauthorized("Create account") {
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <div class="registration-menu">
+        <span>Join Happy Melly</span>
+        <span>Create account</span>
+        <span class="inactive">Personal Data</span>
+        <span class="inactive">Organisation Data</span>
+        <span class="inactive">Payment</span>
+        <span class="inactive">Congratulations</span>
+        <span><a class="stop-registration" href="@routes.LoginPage.logout()">Back to login</a></span>
+    </div>
+    <div class="action-block registration">
+        <h3>Create Account</h3>
+        <div class="action-area">
+            <div class="column">
+                <div class="social">
+                    <a class="btn btn-twitter btn-login btn-block" href="@routes.Registration.authenticate("twitter")">
+                        <i class="fa fa-twitter"></i>  Sign Up with Twitter
+                    </a>
+                    <a class="btn btn-facebook btn-login btn-block" href="@routes.Registration.authenticate("facebook")">
+                        <i class="fa fa-facebook-square"></i>  Sign Up with Facebook
+                    </a>
+                    <a class="btn btn-linkedin btn-login btn-block" href="@routes.Registration.authenticate("linkedin")">
+                        <i class="fa fa-linkedin"></i>  Sign Up with LinkedIn
+                    </a>
+                    <a class="btn btn-google btn-login btn-block" href="@routes.Registration.authenticate("google")">
+                        <i class="fa fa-google-plus"></i>  Sign Up with Google
+                    </a>
+                </div>
+            </div>
+            <div class="middle-column">
+                <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
+            </div>
+            <div class="column">
+                @if(form.hasErrors) {
+                    <div class="errors text-left">
+                    @for((error, index) <- form.errors.zipWithIndex) {
+                        @play.api.i18n.Messages(error.message)<br/>
+                    }
+                    </div>
+                }
+                <form method="post" action="@CSRF(routes.Registration.authenticateByEmail())">
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="email" placeholder="Email"/>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="password" name="password.password1" placeholder="Password"/>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="password" name="password.password2" placeholder="Retype Password"/>
+                    </div>
+                    <div class="form-group">
+                        <button class="form-control btn btn-block btn-primary" type="submit">Sign Up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

@@ -25,20 +25,20 @@ package stubs
 
 import securesocial.core.{AuthenticationMethod, BasicProfile}
 
-class FakeUserIdentity(
+class FakeSocialIdentity(
   override val uid: Option[Long],
   identity: (String, String),
   firstName: String,
   lastName: String,
   fullName: String,
-  email: Option[String]) extends models.UserIdentity(uid,
+  email: Option[String]) extends models.SocialIdentity(uid,
   BasicProfile(identity._2, identity._1, Some(firstName), Some(lastName),
     Some(fullName), email, None, AuthenticationMethod.OAuth2, None,
-    None, None), "api_token", None, None, None, None) {
+    None, None), "api_token", None) {
 
 }
 
-object FakeUserIdentity {
+object FakeSocialIdentity {
   val unregistered: (String, String) = ("unregistered", "twitter")
   val viewer: (String, String) = ("viewer", "twitter")
   val coordinator: (String, String) = ("coordinator", "twitter")

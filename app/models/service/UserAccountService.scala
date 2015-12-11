@@ -25,7 +25,7 @@
 package models.service
 
 import models.database.UserAccounts
-import models.{Person, UserAccount, UserIdentity}
+import models.{Person, UserAccount, SocialIdentity}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -57,18 +57,18 @@ class UserAccountService {
    * @param identity User Identity object
    * @return
    */
-  def findByIdentity(identity: UserIdentity): UserAccount = DB.withSession {
+  def findByIdentity(identity: SocialIdentity): UserAccount = DB.withSession {
     implicit session ⇒
       val accounts = TableQuery[UserAccounts]
       val query = identity.profile.providerId match {
         case TwitterProvider.Twitter ⇒
-          accounts.filter(_.twitterHandle === identity.twitterHandle)
+          accounts.filter(_.twitterHandle === identity.profileUrl)
         case FacebookProvider.Facebook ⇒
-          accounts.filter(_.facebookUrl like "https?".r.replaceFirstIn(identity.facebookUrl.getOrElse(""), "%"))
+          accounts.filter(_.facebookUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
         case GoogleProvider.Google ⇒
-          accounts.filter(_.googlePlusUrl === identity.googlePlusUrl)
+          accounts.filter(_.googlePlusUrl === identity.profileUrl)
         case LinkedInProvider.LinkedIn ⇒
-          accounts.filter(_.linkedInUrl like "https?".r.replaceFirstIn(identity.linkedInUrl.getOrElse(""), "%"))
+          accounts.filter(_.linkedInUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
       }
       query.first
   }
@@ -90,6 +90,7 @@ class UserAccountService {
     */
   def update(account: UserAccount) = DB.withSession { implicit session =>
     TableQuery[UserAccounts].filter(_.id === account.id).update(account)
+    account
   }
 
   /**
@@ -104,7 +105,6 @@ class UserAccountService {
   /**
    * Updates the social network authentication provider identifiers, used when these may have been edited for a person,
    * so that an existing account can be able to log in on a new provider or for a provider with a edited identifier.
-   * @TEST
    */
   def updateSocialNetworkProfiles(person: Person): Unit = DB.withSession {
     implicit session ⇒
