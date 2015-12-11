@@ -98,7 +98,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         val people = personService.find(evaluations.map(_.personId).distinct)
         val content = evaluations.sortBy(_.impression).reverse.map { x =>
           (x,
-            people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse(""),
+            people.find(_.identifier == x.personId).map(_.fullName).getOrElse(""),
             events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
         }
         Ok(views.html.v2.endorsement.selectForm(user, personId, content))
@@ -174,7 +174,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           val people = personService.find(evaluations.map(_.personId).distinct)
           val maxPosition = maxEndorsementPosition(endorsements)
           val newEndorsements = evaluations.map { x =>
-            val name = people.find(_._1.id.get == x.personId).map(_._1.fullName).getOrElse("")
+            val name = people.find(_.identifier == x.personId).map(_.fullName).getOrElse("")
             val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
             Endorsement(None, personId, brandId, x.facilitatorReview, name,
               evaluationId = x.id.get, rating = Some(x.impression))

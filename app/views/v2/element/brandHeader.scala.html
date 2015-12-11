@@ -33,6 +33,9 @@
         @if(tab == "statistics") { <span>Statistics</span> } else {
           <span><a href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a></span>
         }
+        @if(tab == "facilitators") { <span>Facilitators</span> } else {
+          <span><a href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a></span>
+        }
         @if(!facilitator) {
           <span><a href="@routes.Brands.details(activeBrand.identifier).url">
             Settings</a></span>

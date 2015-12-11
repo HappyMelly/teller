@@ -203,16 +203,8 @@ class PersonService extends Services {
    *
    * @param ids List of people identifiers
    */
-  def find(ids: List[Long]): List[(Person, SocialProfile)] = DB.withSession {
-    implicit session =>
-      import models.database.SocialProfilesStatic._
-
-      val query = for {
-        person <- people if person.id inSet ids
-        profile <- TableQuery[SocialProfiles] if profile.objectType === ProfileType.Person &&
-          profile.objectId === person.id
-      } yield (person, profile)
-      query.list
+  def find(ids: List[Long]): List[Person] = DB.withSession { implicit session =>
+    people.filter(_.id inSet ids).list
   }
 
   /**

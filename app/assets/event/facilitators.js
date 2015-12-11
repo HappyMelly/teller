@@ -51,7 +51,7 @@ function isChosenOne(user, chosenFacilitators) {
  */
 function getFacilitators(brandId, chosenFacilitators) {
     $.ajax({
-        url: '/brand/' + brandId + '/facilitators',
+        url: jsRoutes.controllers.Facilitators.list(brandId).url,
         dataType: "json"
     }).done(function(data) {
         for(var i = 0; i < data.length; i++) {

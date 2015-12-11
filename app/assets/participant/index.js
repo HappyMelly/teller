@@ -43,7 +43,6 @@ function filterByStatus(oSettings, aData, iDataIndex) {
     if (filter == 'all') {
         return true;
     }
-    console.log(aData[index]);
     return aData[index] == filter;
 }
 

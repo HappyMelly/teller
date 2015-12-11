@@ -36,7 +36,7 @@ trait ExperimentsApi extends Controller with ApiAuthentication with Utilities {
           val memberId = (experiment \ "memberId").as[Long]
           val member = members.find(_.identifier == memberId).get
           val memberName = if (member.person) {
-            people.find(_._1.identifier == member.objectId).get._1.fullName
+            people.find(_.identifier == member.objectId).get.fullName
           } else {
             orgs.find(_.identifier == member.objectId).get.name
           }

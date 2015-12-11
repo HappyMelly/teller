@@ -49,6 +49,15 @@ case class License(
 
   def active: Boolean = new Interval(start.toDateTimeAtStartOfDay, end.toDateTimeAtStartOfDay).containsNow
 
+  /** Returns true if the license is expired */
+  def expired: Boolean = !active
+
+  /** Returns true if the license is expiring this month */
+  def expiring: Boolean = {
+    val now = LocalDate.now()
+    end.getYear == now.getYear && end.getMonthOfYear == now.getMonthOfYear
+  }
+
   /**
     * Returns identifier of the object
     */

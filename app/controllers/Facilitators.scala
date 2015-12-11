@@ -26,14 +26,17 @@ package controllers
 
 import models._
 import models.service.Services
+import models.UserRole.Role
+import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc.Controller
-import models.UserRole.Role._
+import scala.concurrent.Future
 import securesocial.core.RuntimeEnvironment
 import views.Languages
+
 
 /**
  * Facilitators pages
@@ -41,7 +44,8 @@ import views.Languages
 class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     extends Controller
     with Security
-    with Services {
+    with Services
+    with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -64,16 +68,35 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Returns a list of facilitators for the given brand on today,
-   * including the coordinator of the brand
-   */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val facilitators = Brand.findFacilitators(brandId)
-      if (facilitators.nonEmpty) {
-        PeopleCollection.organisations(facilitators)
-      }
-      Ok(Json.toJson(facilitators))
+    * Add a new country to a facilitator
+    *
+    * @param id Person identifier
+    */
+  def addCountry(id: Long) = SecuredProfileAction(id) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+
+        val membershipForm = Form(single("country" -> nonEmptyText))
+
+        membershipForm.bindFromRequest.fold(
+          errors ⇒ BadRequest("Country is not chosen"),
+          {
+            case (country) ⇒
+              personService.find(id).map { person ⇒
+                if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
+                  FacilitatorCountry(id, country).insert
+                }
+                val desc = Messages("activity.relationship.create",
+                  Messages("country." + country),
+                  person.fullName)
+                val activity = Activity.insert(user.person,
+                  Activity.Predicate.Created,
+                  desc)
+
+                Redirect(routes.People.details(id).url + "#facilitation").
+                  flashing("success" -> activity.toString)
+              }.getOrElse(NotFound)
+          })
   }
 
   /**
@@ -110,6 +133,32 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+    * Remove a country from a facilitator
+    *
+    * @param id Person identifier
+    * @param country Two-letters country identifier
+    */
+  def deleteCountry(id: Long, country: String) = SecuredProfileAction(id) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒
+
+        personService.find(id).map { person ⇒
+          if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
+            FacilitatorCountry(id, country).delete()
+          }
+          val desc = Messages("activity.relationship.delete",
+            Messages("country." + country),
+            person.fullName)
+          val activity = Activity.insert(user.person,
+            Activity.Predicate.Deleted,
+            desc)
+
+          Redirect(routes.People.details(id).url + "#facilitation").
+            flashing("success" -> activity.toString)
+        }.getOrElse(NotFound)
+  }
+
+  /**
    * Remove a language from a facilitator
    *
    * @param id Person identifier
@@ -139,60 +188,50 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Add a new country to a facilitator
-   *
-   * @param id Person identifier
-   */
-  def addCountry(id: Long) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        val membershipForm = Form(single("country" -> nonEmptyText))
-
-        membershipForm.bindFromRequest.fold(
-          errors ⇒ BadRequest("Country is not chosen"),
-          {
-            case (country) ⇒
-              personService.find(id).map { person ⇒
-                if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
-                  FacilitatorCountry(id, country).insert
-                }
-                val desc = Messages("activity.relationship.create",
-                  Messages("country." + country),
-                  person.fullName)
-                val activity = Activity.insert(user.person,
-                  Activity.Predicate.Created,
-                  desc)
-
-                Redirect(routes.People.details(id).url + "#facilitation").
-                  flashing("success" -> activity.toString)
-              }.getOrElse(NotFound)
-          })
+    * Returns list of facilitators for the given brand
+    * @param brandId Brand identifier
+    */
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
+    implicit request => implicit handler => implicit user =>
+      val licenses = licenseService.findByBrand(brandId)
+      val facilitatorData = facilitatorService.findByBrand(brandId)
+      val people = personService.find(licenses.map(_.licenseeId))
+      PeopleCollection.addresses(people)
+      val facilitators = licenses.map { license =>
+        val person = people.find(_.identifier == license.licenseeId).get
+        val lastMonth = LocalDate.now().minusMonths(1)
+        val joinedLastMonth = equalMonths(license.start, lastMonth)
+        val leftLastMonth = equalMonths(license.end, lastMonth)
+        val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
+          Facilitator(None, license.licenseeId, brandId)
+        }
+        (license, person, data, joinedLastMonth, leftLastMonth)
+      }
+      Future.successful {
+        roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+          Ok(views.html.v2.facilitator.index(user, brand, brands, facilitators))
+        } { (brand, brands) =>
+          Ok("")
+        } {
+          Redirect(routes.Dashboard.index())
+        }
+      }
   }
 
   /**
-   * Remove a country from a facilitator
-   *
-   * @param id Person identifier
-   * @param country Two-letters country identifier
-   */
-  def deleteCountry(id: Long, country: String) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+    * Returns a list of facilitators for the given brand on today,
+    * including the coordinator of the brand
+    */
+  def list(brandId: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val facilitators = Brand.findFacilitators(brandId)
+      if (facilitators.nonEmpty) {
+        PeopleCollection.organisations(facilitators)
+      }
+      Ok(Json.toJson(facilitators))
+  }
 
-        personService.find(id).map { person ⇒
-          if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
-            FacilitatorCountry(id, country).delete()
-          }
-          val desc = Messages("activity.relationship.delete",
-            Messages("country." + country),
-            person.fullName)
-          val activity = Activity.insert(user.person,
-            Activity.Predicate.Deleted,
-            desc)
-
-          Redirect(routes.People.details(id).url + "#facilitation").
-            flashing("success" -> activity.toString)
-        }.getOrElse(NotFound)
+  protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {
+    left.getYear == right.getYear && left.getMonthOfYear == right.getMonthOfYear
   }
 }
