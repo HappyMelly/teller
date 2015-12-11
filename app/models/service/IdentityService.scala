@@ -86,6 +86,14 @@ class IdentityService {
       identities.filter(_.apiToken === token).list.headOption
   }
 
+  /**
+    * Returns a password identity for the given user if exists
+    * @param userId User identifier
+    */
+  def findByUserId(userId: Long): Option[PasswordIdentity] = DB.withSession { implicit session =>
+    passwordIdentities.filter(_.userId === userId).firstOption
+  }
+
   def findByUserId(userId: String, providerId: String): Option[SocialIdentity] =
     DB.withSession { implicit session ⇒
       identities.

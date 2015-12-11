@@ -136,12 +136,17 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
         if (token.isExpired) {
           Redirect(routes.Dashboard.index()).flashing("error" -> "The confirmation link has expired")
         } else {
-          identityService.findByEmail(token.email) map { identity =>
-            identityService.delete(identity.email)
-            identityService.insert(identity.copy(email = token.email))
-            emailToken.delete(tokenId)
-            val msg = "Your email was successfully updated. Please log in with your new email"
-            Redirect(routes.LoginPage.logout(success = Some(msg)))
+          identityService.findByUserId(token.userId) map { identity =>
+            personService.find(token.userId) map { person =>
+              identityService.delete(identity.email)
+              identityService.insert(identity.copy(email = token.email))
+              emailToken.delete(tokenId)
+              personService.update(person.copy(email = token.email))
+              val msg = "Your email was successfully updated. Please log in with your new email"
+              Redirect(routes.LoginPage.logout(success = Some(msg)))
+            } getOrElse {
+              Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
+            }
           } getOrElse {
             Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
           }
@@ -190,7 +195,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
         ),
         info => {
           val response = for (
-              identity <- identityService.findByEmail(info._1);
+              identity <- identityService.findByEmail(user.person.email);
               pinfo <- identity.profile.passwordInfo;
               hasher <- env.passwordHashers.get(identity.hasher) if hasher.matches(pinfo, info._2)
             ) yield {
