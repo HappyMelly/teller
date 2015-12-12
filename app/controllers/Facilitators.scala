@@ -197,21 +197,30 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
       val facilitatorData = facilitatorService.findByBrand(brandId)
       val people = personService.find(licenses.map(_.licenseeId))
       PeopleCollection.addresses(people)
-      val facilitators = licenses.map { license =>
-        val person = people.find(_.identifier == license.licenseeId).get
-        val lastMonth = LocalDate.now().minusMonths(1)
-        val joinedLastMonth = equalMonths(license.start, lastMonth)
-        val leftLastMonth = equalMonths(license.end, lastMonth)
-        val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
-          Facilitator(None, license.licenseeId, brandId)
-        }
-        (license, person, data, joinedLastMonth, leftLastMonth)
-      }
       Future.successful {
         roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-          Ok(views.html.v2.facilitator.index(user, brand, brands, facilitators))
+          val facilitators = licenses.map { license =>
+            val person = people.find(_.identifier == license.licenseeId).get
+            val lastMonth = LocalDate.now().minusMonths(1)
+            val joinedLastMonth = equalMonths(license.start, lastMonth)
+            val leftLastMonth = equalMonths(license.end, lastMonth)
+            val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
+              Facilitator(None, license.licenseeId, brandId)
+            }
+            (license, person, data, joinedLastMonth, leftLastMonth)
+          }
+          Ok(views.html.v2.facilitator.forBrandCoordinators(user, brand, brands, facilitators))
         } { (brand, brands) =>
-          Ok("")
+          val facilitators = licenses.map { license =>
+            val person = people.find(_.identifier == license.licenseeId).get
+            val sameCountry = person.address.countryCode == user.person.address.countryCode
+            val isNew = license.start.isAfter(LocalDate.now.minusMonths(3))
+            val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
+              Facilitator(None, license.licenseeId, brandId)
+            }
+            (license, person, data, sameCountry, isNew)
+          }
+          Ok(views.html.v2.facilitator.forFacilitators(user, brand.get, brands, facilitators))
         } {
           Redirect(routes.Dashboard.index())
         }

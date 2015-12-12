@@ -23,7 +23,7 @@
  */
 
 /**
- * Filter evaluations by an event
+ * Filter facilitators by license
  */
 function filterByLicense(oSettings, aData, iDataIndex) {
     var type = $('.filter > a.active').data('type');
