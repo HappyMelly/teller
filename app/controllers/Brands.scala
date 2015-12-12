@@ -79,25 +79,27 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
     "blog" -> optional(webUrl),
     "email" -> play.api.data.Forms.email,
     "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
+    "evaluationUrl" -> optional(webUrl),
     "evaluationHookUrl" -> optional(webUrl),
-    "created" -> ignored(DateTime.now()),
-    "createdBy" -> ignored(userName),
-    "updated" -> ignored(DateTime.now()),
-    "updatedBy" -> ignored(userName))({
+    "recordInfo" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(userName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))({
       (id, code, uniqueName, name, ownerId, description, picture,
-      generateCert, tagLine, webSite, blog, email, profile, evaluationHookUrl,
-      created, createdBy, updated, updatedBy) ⇒
+      generateCert, tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
+      recordInfo) ⇒
         {
           val brand = Brand(id, code, uniqueName, name, ownerId,
-            description, picture, generateCert, tagLine, webSite, blog, email,
-            evaluationHookUrl, true, created, createdBy, updated, updatedBy)
+            description, picture, generateCert, tagLine, webSite, blog, email, evaluationUrl,
+            evaluationHookUrl, true, recordInfo)
           brand.socialProfile_=(profile)
           brand
         }
     })({ (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description,
-        b.picture, b.generateCert, b.tagLine, b.webSite, b.blog, b.contactEmail, b.socialProfile,
-        b.evaluationHookUrl, b.created, b.createdBy, b.updated, b.updatedBy))
+      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture, b.generateCert,
+        b.tagLine, b.webSite, b.blog, b.contactEmail, b.socialProfile, b.evaluationUrl, b.evaluationHookUrl,
+        b.recordInfo))
     }))
 
   /** Shows all brands **/

@@ -51,12 +51,10 @@ case class Brand(id: Option[Long],
     webSite: Option[String],
     blog: Option[String],
     contactEmail: String,
+    evaluationUrl: Option[String] = None,
     evaluationHookUrl: Option[String] = None,
     active: Boolean = true,
-    created: DateTime,
-    createdBy: String,
-    updated: DateTime,
-    updatedBy: String) extends ActivityRecorder with Services {
+    recordInfo: DateStamp) extends ActivityRecorder with Services {
 
   private var _socialProfile: Option[SocialProfile] = None
 

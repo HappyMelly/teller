@@ -261,7 +261,7 @@ class BrandService extends Services {
 
       val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
         u.description, u.picture, u.tagLine, u.webSite, u.blog, u.contactEmail,
-        u.evaluationHookUrl, u.updated, u.updatedBy)
+        u.evaluationUrl, u.evaluationHookUrl, u.recordInfo.updated, u.recordInfo.updatedBy)
       brands.filter(_.id === u.id).map(_.forUpdate).update(updateTuple)
 
       if (old.ownerId != updated.ownerId &&

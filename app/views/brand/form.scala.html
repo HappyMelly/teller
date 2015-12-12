@@ -69,6 +69,9 @@
           @html.text(form("profile.phone"), '_label -> "Phone", '_help -> "")
           @html.text(form("profile.contactForm"), '_label -> "Link to contact form ", '_help -> "")
           <legend>Hooks</legend>
+          @html.text(form("evaluationUrl"), '_label -> "Evaluation Url",
+            'placeholder -> "http://yourwebsite.com/evaluation",
+            '_help -> "")
           @html.text(form("evaluationHookUrl"), '_label -> "Evaluation Hook",
             'placeholder -> "http://yourwebsite.com/evaluation/confirm",
             '_help -> "")

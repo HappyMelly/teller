@@ -61,7 +61,8 @@ private[models] class People(tag: Tag) extends Table[Person](tag, "PERSON") {
   def address = foreignKey("ADDRESS_FK", addressId, TableQuery[Addresses])(_.id)
 
   type PeopleFields = (Option[Long], String, String, String,
-    Option[LocalDate], Option[String], Boolean, Long, Option[String], Option[String], Option[String], Option[String], Option[String], Boolean, Boolean, DateTime, String, DateTime, String)
+    Option[LocalDate], Option[String], Boolean, Long, Option[String], Option[String], Option[String],
+    Option[String], Option[String], Boolean, Boolean, DateTime, String, DateTime, String)
 
   def * = (id.?, firstName, lastName, email, birthday, photo, signature, addressId,
     bio, interests, webSite, blog, customerId, virtual, active,

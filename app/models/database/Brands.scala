@@ -25,7 +25,7 @@
 package models.database
 
 import models.database.PortableJodaSupport._
-import models.Brand
+import models.{DateStamp, Brand}
 import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 
@@ -47,7 +47,10 @@ private[models] class Brands(tag: Tag) extends Table[Brand](tag, "BRAND") {
   def webSite = column[Option[String]]("WEB_SITE")
   def blog = column[Option[String]]("BLOG")
   def contactEmail = column[String]("CONTACT_EMAIL")
+
+  def evaluationUrl = column[Option[String]]("EVALUATION_URL")
   def evaluationHookUrl = column[Option[String]]("EVALUATION_HOOK_URL")
+
   def active = column[Boolean]("ACTIVE")
   def created = column[DateTime]("CREATED")
   def createdBy = column[String]("CREATED_BY")
@@ -56,12 +59,24 @@ private[models] class Brands(tag: Tag) extends Table[Brand](tag, "BRAND") {
 
   def coordinator = foreignKey("COORDINATOR_FK", coordinatorId, TableQuery[People])(_.id)
 
+  type BrandFields = (Option[Long], String, String, String, Long,
+    Option[String], Option[String], Boolean, Option[String], Option[String], Option[String], String,
+    Option[String], Option[String],
+    Boolean, DateTime, String, DateTime, String)
+
   def * = (id.?, code, uniqueName, name, coordinatorId, description, picture,
-    generateCert, tagLine, webSite, blog, contactEmail, evaluationHookUrl, active,
-    created, createdBy, updated, updatedBy) <> ((Brand.apply _).tupled, Brand.unapply)
+    generateCert, tagLine, webSite, blog, contactEmail, evaluationUrl, evaluationHookUrl, active,
+    created, createdBy, updated, updatedBy) <> (
+      (b: BrandFields) =>
+        Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7,
+          b._8, b._9, b._10, b._11, b._12, b._13, b._14, b._15,
+          DateStamp(b._16, b._17, b._18, b._19)),
+      (b: Brand) => Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture,
+        b.generateCert, b.tagLine, b.webSite, b.blog, b.contactEmail, b.evaluationUrl, b.evaluationHookUrl,
+        b.active, b.recordInfo.created, b.recordInfo.createdBy, b.recordInfo.updated, b.recordInfo.updatedBy)))
 
   def forUpdate = (code, uniqueName, name, coordinatorId, description,
-    picture, tagLine, webSite, blog, contactEmail, evaluationHookUrl, updated, updatedBy)
+    picture, tagLine, webSite, blog, contactEmail, evaluationUrl, evaluationHookUrl, updated, updatedBy)
 
   def uniqueCodeIndex = index("IDX_CODE", code, unique = true)
   def uniqueNameIndex = index("IDX_UNIQUE_NAME", uniqueName, unique = true)

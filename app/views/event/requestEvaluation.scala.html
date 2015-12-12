@@ -1,4 +1,4 @@
-@(event: Event, facilitatorId: Long)(implicit token: play.filters.csrf.CSRF.Token)
+@(event: Event, facilitatorId: Long, evaluationUrl: Option[String])(implicit token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 
@@ -27,7 +27,7 @@
                         Your letter should contain a link to an evaluation form.
                     </div>
 
-                    <textarea name="body" class="form-control" rows="5">@mail.templates.evaluation.html.requestBody("###Hi PARTICIPANT_NAME_TOKEN,###", event, facilitatorId)
+                    <textarea name="body" class="form-control" rows="5">@mail.templates.evaluation.html.requestBody("###Hi PARTICIPANT_NAME_TOKEN,###", event, facilitatorId, evaluationUrl)
 </textarea>
                     <span class="help-block">The letter will have "The [brand] team" in its footer</span>
                 </form>

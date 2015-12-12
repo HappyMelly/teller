@@ -16,25 +16,27 @@ object EvaluationReminder extends Services with Integrations {
    * on the first, the thirds and the sevenths days after the event
    */
   def sendToParticipants(): Unit = brandService.findAll.foreach { brand ⇒
-    val today = LocalDate.now().toDate.getTime
-    val events = eventService.
-      findByParameters(brandId = brand.id, future = Some(false)).
-      filter(_.followUp).
-      filter { event =>
-        val duration = (new Duration(event.schedule.end.toDate.getTime, today)).getStandardDays
-        duration == 1 || duration == 3 || duration == 7
-      }.map(_.id.get)
-    val participants = Participant.findEvaluationsByEvents(events)
-    participants.filter(view => view.status.isEmpty).foreach { view =>
-      val welcomeMsg = s"Hi ${view.person.firstName},"
-      val facilitatorId = view.event.facilitatorIds.head
-      val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId).toString()
-      sendEvaluationRequest(view.person, brand, body)
-    }
-    participants.filter(_.status.exists(_ == EvaluationStatus.Unconfirmed)).foreach { view =>
-      val defaultHook = routes.Evaluations.confirm("").url
-      view.confirmationToken.foreach { token =>
-        sendConfirmRequest(view.person, brand, defaultHook, token)
+    if (brand.evaluationUrl.isDefined) {
+      val today = LocalDate.now().toDate.getTime
+      val events = eventService.
+        findByParameters(brandId = brand.id, future = Some(false)).
+        filter(_.followUp).
+        filter { event =>
+          val duration = (new Duration(event.schedule.end.toDate.getTime, today)).getStandardDays
+          duration == 1 || duration == 3 || duration == 7
+        }.map(_.id.get)
+      val participants = Participant.findEvaluationsByEvents(events)
+      participants.filter(view => view.status.isEmpty).foreach { view =>
+        val welcomeMsg = s"Hi ${view.person.firstName},"
+        val facilitatorId = view.event.facilitatorIds.head
+        val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
+        sendEvaluationRequest(view.person, brand, body)
+      }
+      participants.filter(_.status.exists(_ == EvaluationStatus.Unconfirmed)).foreach { view =>
+        val defaultHook = routes.Evaluations.confirm("").url
+        view.confirmationToken.foreach { token =>
+          sendConfirmRequest(view.person, brand, defaultHook, token)
+        }
       }
     }
   }

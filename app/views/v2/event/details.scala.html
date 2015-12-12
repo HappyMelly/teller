@@ -26,7 +26,7 @@
     <div class="container">
       <div class="row event-details  content-block">
         <div class="col-md-9">
-          @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head)
+          @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head, brand.evaluationUrl)
           <div class="header-block">
             <div class="row">
               <div class="col-md-12"><h2>@view.event.title</h2></div>
@@ -192,8 +192,13 @@
               <a tabindex="-1"
               href="@routes.Participants.add(view.event.identifier)" title="Add Participant">
                 Add Participant</a>
-              <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
-                Send Evaluation Request</a>
+              @if(brand.evaluationUrl.isDefined) {
+                  <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                      Send Evaluation Request</a>
+              } else {
+                  <span data-toggle="tooltip" data-placement="top"
+                    title="Ask your brand coordinator to set an evaluation url to send evaluation requests">Send Evaluation Request</span>
+              }
               <a id="exportLink" href="" title="Only evaluations, currently visible in the table, will be exported">
                 Export to XLSX</a>
             </div>
