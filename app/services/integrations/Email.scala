@@ -23,12 +23,13 @@
  */
 package services.integrations
 
-import akka.actor.{ Actor, Props }
+import akka.actor.{Actor, Props}
+import com.typesafe.plugin._
 import models.Person
-import org.apache.commons._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import play.api.{ Logger, Play }
+import play.api.libs.mailer.AttachmentFile
+import play.api.{Logger, Play}
 import services.integrations.EmailService.EmailMessage
 
 import scala.util.Try
@@ -83,39 +84,30 @@ object EmailService {
     def receive = {
       case message: EmailMessage ⇒ {
 
-        val commonsMail: mail.Email = if (message.attachment.isDefined) {
-          val attachment = new mail.EmailAttachment()
-          attachment.setPath(message.attachment.get._1)
-          attachment.setDisposition(mail.EmailAttachment.ATTACHMENT)
-          attachment.setName(message.attachment.get._2)
-          new mail.HtmlEmail().attach(attachment).setMsg(message.body.trim)
-        } else if (message.richMessage) {
-          new mail.HtmlEmail().setHtmlMsg(message.body.trim)
-        } else {
-          new mail.SimpleEmail().setMsg(message.body.trim)
-        }
+        import java.io.File
 
-        message.to.foreach(commonsMail.addTo(_))
-        message.cc.foreach(commonsMail.addCc(_))
-        message.bcc.foreach(commonsMail.addBcc(_))
+        import play.api.libs.mailer
 
-        val preparedMail = commonsMail.
-          setFrom(message.from).
-          setSubject(message.subject)
-        preparedMail.setCharset("UTF-8")
+        val mail = use[MailerPlugin].email
+
+        val emptyMail = mailer.Email(message.subject, message.from, charset = Some("UTF-8"),
+          to = message.to, cc = message.cc, bcc = message.bcc)
+        val withAttachments = message.attachment.map { attachment =>
+          emptyMail.copy(attachments = Seq(
+            AttachmentFile(attachment._2, new File(attachment._1))
+          ))
+        } getOrElse emptyMail
+        val withBody = if (message.richMessage)
+          withAttachments.copy(bodyHtml = Some(message.body.trim))
+        else
+          withAttachments.copy(bodyText = Some(message.body.trim))
 
         Logger.debug(s"Sending e-mail with subject: ${message.subject}")
 
         if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
           Logger.debug(s"${message.body}")
         } else {
-          preparedMail.setSSLOnConnect(true)
-          preparedMail.setHostName(Play.configuration.getString("smtp.host").get)
-          preparedMail.setAuthenticator(new mail.DefaultAuthenticator(
-            Play.configuration.getString("smtp.user").get,
-            Play.configuration.getString("smtp.password").get))
-          // Send the email and check for exceptions
-          Try(preparedMail.send).isSuccess
+          Try(mailer.MailerPlugin.send(withBody)).isSuccess
         }
       }
     }
