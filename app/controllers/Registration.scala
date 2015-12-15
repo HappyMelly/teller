@@ -375,6 +375,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       member = true, registered = true)
     val inserted = userAccountService.insert(account)
     if (providerId == UsernamePasswordProvider.UsernamePassword) {
+      Logger.info(s"End of registration of a user with ${id} id")
       registeringUserService.delete(id, providerId)
       identityService.findByEmail(id) map { identity =>
         identityService.update(identity.copy(userId = person.id,

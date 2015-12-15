@@ -24,12 +24,11 @@
 
 package controllers
 
-import models.service.Services
-import org.joda.time.LocalDate
-import play.api.i18n.Messages
-import play.api.mvc._
 import models.UserRole.Role._
 import models._
+import models.service.Services
+import org.joda.time.LocalDate
+import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 
 class Dashboard(environment: RuntimeEnvironment[ActiveUser])
@@ -84,10 +83,10 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
             pastEvents(events, brands),
             unhandledEvaluations(events, brands)))
         } {
-          Ok(views.html.v2.dashboard.index(user))
+          Ok(views.html.v2.dashboard.forMembers(user))
         }
       } else {
-        Redirect(routes.Registration.step2())
+        Redirect(routes.LoginPage.logout(error = Some("You are not registered in the system")))
       }
   }
 

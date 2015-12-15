@@ -157,6 +157,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
       val identity = identityService.findByEmail(profile.userId).map { identity =>
         identityService.update(PasswordIdentity.fromProfile(profile))
       }.getOrElse {
+        Logger.info(s"Start of registration of a user with ${profile.userId} id")
         registeringUserService.insert(profile.userId, profile.providerId)
         identityService.insert(PasswordIdentity.fromProfile(profile))
       }

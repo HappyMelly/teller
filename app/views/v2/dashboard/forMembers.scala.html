@@ -1,0 +1,31 @@
+@(user: ActiveUser)(implicit flash: Flash,
+    request: Request[Any],
+    handler: AuthorisationHandler)
+
+@v2.main("Home", "", user) {
+    <div class="row page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-1 content-block">
+                    <div class="row block">
+                        <div class="col-md-12">
+                            <p>
+                                Thanks for joining the Happy Melly network. Please add your interests and offerings to <a href="@routes.Dashboard.profile()">your profile</a> so other Supporters can find you.
+                            </p>
+                            <p>
+                                We will soon be sending you an invitation to Slack, the private social network for Happy Melly. Please introduce yourself! We'd love to learn more about you.
+                            </p>
+                            <p>
+                                As for ways you can help, one thing we’re always looking for are good stories about happiness at work: personal stories, great articles, experiments companies have tried (with success or failure).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="panel panel-success notification-widget" id="completionWidget">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

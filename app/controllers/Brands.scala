@@ -283,7 +283,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
               val coordinator = BrandCoordinator(None, id, personId)
               brandCoordinatorService.insert(coordinator)
               userAccountService.findByPerson(personId) map { account =>
-                userAccountService.update(account.copy(coordinator = true))
+                userAccountService.update(account.copy(coordinator = true, activeRole = true))
               } getOrElse {
                 val account = UserAccount.empty(personId).copy(coordinator = true, registered = true)
                 userAccountService.insert(account)
