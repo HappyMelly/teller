@@ -261,18 +261,20 @@ GET           /brand/:brandId/statistics                                     @co
 GET           /brand/:brandId/statistics/type/facilitators/                  @controllers.Statistics.byFacilitators(brandId: Long)
 GET           /brand/:brandId/statistics/type/events/                        @controllers.Statistics.byEvents(brandId: Long)
 GET           /brand/:brandId/statistics/type/countries/                     @controllers.Statistics.byCountries(brandId: Long)
-GET           /brand/:brandId/statistics/type/participants/                  @controllers.Statistics.byParticipants(brandId: Long)
+GET         /brand/:brandId/statistics/type/participants/        @controllers.Statistics.byParticipants(brandId: Long)
 
-GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)
+GET         /template/:id                                        @controllers.CertificateTemplates.template(id: Long, single: Boolean)
+GET         /template/:id/delete                                 @controllers.CertificateTemplates.delete(id: Long)
 
-POST          /url/:url/validate                                             @controllers.Urls.validate(url)
+POST        /url/:url/validate                                   @controllers.Urls.validate(url)
 
-GET           /user/account                                                  @controllers.UserAccounts.account
-POST          /user/newPassword                                              @controllers.UserAccounts.handleNewPassword
-POST          /user/password                                                 @controllers.UserAccounts.changePassword
-GET           /user/switch                                                   @controllers.UserAccounts.switchRole
-POST          /user/email                                                    @controllers.UserAccounts.changeEmail
+GET         /usage                                               @controllers.admin.Usage.index
+
+GET         /user/account                                        @controllers.UserAccounts.account
+POST        /user/newPassword                                    @controllers.UserAccounts.handleNewPassword
+POST        /user/password                                       @controllers.UserAccounts.changePassword
+GET         /user/switch                                         @controllers.UserAccounts.switchRole
+POST        /user/email                                          @controllers.UserAccounts.changeEmail
 GET           /user/email/:token                                             @controllers.UserAccounts.handleEmailChange(token: String)
 
 # API (v1)
