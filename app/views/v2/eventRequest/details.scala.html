@@ -1,0 +1,6 @@
+@(request: models.event.EventRequest)
+<div class="row-details">
+    @request.comment.map { comment =>
+        <strong>Message: </strong> @comment
+    }
+</div>

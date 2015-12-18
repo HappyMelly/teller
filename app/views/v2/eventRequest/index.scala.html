@@ -1,0 +1,82 @@
+@(user: ActiveUser,
+        brand: Brand,
+        brands: List[Brand],
+        requests: List[models.event.EventRequest])(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler)
+
+@import views.Countries
+@import views.ViewHelpersV2._
+
+@v2.main("Events Requests", "requests", user) {
+    @v2.element.brandHeader(brand, brands, "requests", facilitator = user.account.isFacilitatorNow, small = true) {
+    }
+    <div class="row">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 content-block">
+                    <div id="filter-container">
+                        <div class="table-filters pull-left">
+                            <span>Filter by participants: </span>
+                            <div class="filter">
+                                <a href="#" data-type="all">All</a>&nbsp;<span class="counter">@requests.length</span>
+                            </div>
+                            <div class="filter">
+                                <a href="#" class="active" data-type="group">
+                                    More than one</a>&nbsp;<span class="counter">@requests.count(_.participantsNumber > 1)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <table id="requests" class="datatables table">
+                        <thead>
+                            <tr>
+                                <th width="10%">Status</th>
+                                <th width="13%">Location</th>
+                                <th width="10%">Language</th>
+                                <th width="15%" class="date" >When</th>
+                                <th width="15%" class="number">Participants number</th>
+                                <th width="10%" class="date">Created</th>
+                                <th width="20%" align="center">Request from</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for( request <- requests) {
+                            <tr data-id="@request.id" data-brand="@request.brandId">
+                                <td></td>
+                                <td>@request.city.map { city =>
+                                    @city, @Countries.name(request.countryCode)
+                                }.getOrElse {
+                                    @Countries.name(request.countryCode)
+                                }
+                                </td>
+                                <td>@request.language</td>
+                                <td>@request.start.map { start =>
+                                    @request.end.map { end =>
+                                        @dateInterval(start, end)
+                                    }.getOrElse {
+                                        @dateInterval(start, start)
+                                    }
+                                }.getOrElse {
+                                    @request.end.map { end => @dateInterval(end, end) }
+                                }
+                                </td>
+                                <td>@request.participants</td>
+                                <td>@request.recordInfo.created.toString("d MMM yyyy")</td>
+                                <td>@request.name <br> <a href="mailto:@request.email">@request.email</a></td>
+                                <td>@if(request.comment.isDefined) {
+                                    <div class="circle-show-more">
+                                        <span class="glyphicon glyphicon-chevron-down"></span></div>
+                                }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <link rel="stylesheet" href="@routes.Assets.at("css/event-request.min.css")">
+    <script src="@routes.Assets.at("eventRequest/index.js")" type="text/javascript"></script>
+}

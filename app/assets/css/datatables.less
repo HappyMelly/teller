@@ -26,7 +26,7 @@
 table.dataTable > thead > tr > th {
   position: relative;
   background-image: none !important;
-  padding-left: 0.7em;
+  padding-left: 0;
 
   &.sorting:after, &.sorting_asc:after, &.sorting_desc:after {
     position: absolute;
@@ -93,4 +93,9 @@ table.dataTable > thead > tr > th {
     content: "\f163";
     color: black;
   }
+}
+
+.row-details {
+  padding: 10px;
+  background-color: @light-blue;
 }

@@ -14,6 +14,14 @@ class EventRequestService {
   private val requests = TableQuery[EventRequests]
 
   /**
+    * Returns event request if exists
+    * @param requestId Request id
+    */
+  def find(requestId: Long): Option[EventRequest] = DB.withSession { implicit session =>
+    requests.filter(_.id === requestId).firstOption
+  }
+
+  /**
    * Returns list of event requests belonged the given brand
    *
    * @param brandId Brand identifier

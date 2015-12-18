@@ -37,6 +37,11 @@
           <span><a href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a></span>
         }
         @if(!facilitator) {
+          @if(tab == "requests") {
+            <span>Requests</span>
+          } else {
+            <span><a href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a></span>
+          }
           <span><a href="@routes.Brands.details(activeBrand.identifier).url">
             Settings</a></span>
         }
