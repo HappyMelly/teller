@@ -54,6 +54,8 @@ GET           /brand/:id/facilitators/list                                   @co
 GET           /brand/:id/facilitators                                        @controllers.Facilitators.index(id: Long)
 POST          /brand/:id/coordinator/:personId/type/:notification/off        @controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
+GET           /brand/:id/eventrequests                                       @controllers.EventRequests.index(id: Long)
+GET           /brand/:id/eventrequest/:requestId                             @controllers.EventRequests.details(id: Long, requestId: Long)
 
 POST          /brand/:brandId/link                                           @controllers.BrandLinks.create(brandId: Long)
 DELETE        /brand/:brandId/link/:id                                       @controllers.BrandLinks.remove(brandId: Long, id: Long)

@@ -23,65 +23,60 @@
  */
 
 /**
- * Filter facilitators by country
+ * Renders event request details
+ * @param row DataTable row object
  */
-function filterByRegion(oSettings, aData, iDataIndex) {
-    var type = $('.region > .filter > a.active').data('type');
-    switch(type) {
-        case 'country':
-            return aData[5] == 'true';
-        default:
-            return true;
-    }
+function loadDetails(row) {
+    var requestId = $(row.node()).data('id');
+    var brandId = $(row.node()).data('brand');
+    var url = jsRoutes.controllers.EventRequests.details(brandId, requestId).url;
+    $.get(url).done(function (content) {
+        row.child(content, 'active').show();
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        //show error
+    });
 }
 
 /**
- * Filter facilitators by license
+ * Filter requests by participants
  */
-function filterByLicense(oSettings, aData, iDataIndex) {
-    var type = $('.license > .filter > a.active').data('type');
-    switch(type) {
-        case 'new':
-            return aData[6] == 'true';
+function filterByParticipants(oSettings, aData, iDataIndex) {
+    var type = $('.filter > a.active').data('type');
+    switch (type) {
+        case 'group':
+            return aData[4] != '1';
         default:
             return true;
     }
 }
 
+$(document).ready(function () {
+    $.fn.dataTableExt.afnFiltering.push(filterByParticipants);
 
-$(document).ready( function() {
-    $.fn.dataTable.moment('d MMM yyyy');
-    $.fn.dataTableExt.afnFiltering.push(filterByRegion);
-    $.fn.dataTableExt.afnFiltering.push(filterByLicense);
-
-    var facilitators = $('#facilitators')
+    var requests = $('#requests')
         .dataTable({
             "sDom": '<"toolbar">rtip',
             "iDisplayLength": 25,
-            "asStripeClasses":[],
+            "asStripeClasses": [],
+            "aaSorting": [],
             "bLengthChange": false,
-            "order": [[ 0, "asc" ]],
+            "order": [[5, "desc"]],
             "columnDefs": [{
-                "visible": false,
-                "targets": [5, 6]
+                "targets": 7,
+                "bSortable": false
             }]
         });
+    $("div.toolbar").html($('#filter-container').html());
+    $('#filter-container').empty();
 
-    $("div.toolbar").html($('#filter-containter').html());
-    $('#filter-containter').empty();
-
-    facilitators.fnDraw();
-
-    $('.license > .filter > a').on('click', function(e) {
+    $('.filter > a').on('click', function (e) {
         e.preventDefault();
-        $('.license > .filter > a').removeClass('active');
+        $('.filter > a').removeClass('active');
         $(this).addClass('active');
-        facilitators.fnDraw();
+        requests.fnDraw();
     });
-    $('.region > .filter > a').on('click', function(e) {
-        e.preventDefault();
-        $('.region > .filter > a').removeClass('active');
-        $(this).addClass('active');
-        facilitators.fnDraw();
-    });
+
+    (new TableWithDetails(requests, 'requests', loadDetails));
+
 });
+

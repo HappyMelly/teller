@@ -30,4 +30,11 @@ case class EventRequest(id: Option[Long],
   name: String,
   email: String,
   recordInfo: DateStamp) {
+
+  def participants: String = participantsNumber match {
+    case 1 => "1"
+    case 4 => "2-4"
+    case 9 => "5-9"
+    case 10 => "10+"
+  }
 }

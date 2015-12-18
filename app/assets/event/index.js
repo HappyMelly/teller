@@ -71,6 +71,19 @@ function makeRequestUrl() {
     return request;
 }
 
+
+/**
+ *   Writes the html for events details.
+ *   @param row {object} DataTable row object
+ */
+function format(row) {
+    var url = jsRoutes.controllers.Events.detailsButtons(row.data().event.id).url;
+    $.get(url).done(function (content) {
+        row.child(content, 'active').show();
+    });
+}
+
+
 $(document).ready( function() {
 
     var events = $('#events')
@@ -153,30 +166,7 @@ $(document).ready( function() {
           $("body").css("cursor", "default");
       });
 
-      $('#events tbody').on('click', 'td.details-control', function(){
-          var tr = $(this).closest('tr');
-          var row = events.api().row(tr);
-          var chevronCol = tr.children('.details-control').children('.circle-show-more');
-          var chevron = tr.children('.details-control').children('.circle-show-more').children('span');
-
-          if(row.child.isShown()){
-            row.child.hide();
-            chevron.removeClass('glyphicon-chevron-up');
-            chevron.addClass('glyphicon-chevron-down');
-            chevronCol.removeClass('active');
-            tr.removeClass('shown active');
-
-          } else {
-            // Open this row
-            var details = row.child;
-            details('').show();
-            format(details, row.data());
-            chevron.removeClass('glyphicon-chevron-down');
-            chevron.addClass('glyphicon-chevron-up');
-            chevronCol.addClass('active');
-            tr.addClass('shown active');
-        }
-      });
+    (new TableWithDetails(events, 'events', format));
 
     $("body").css("cursor", "progress");
     $("div.toolbar").html($('#filter-containter').html());
