@@ -1,4 +1,4 @@
-@(id: Long,
+@(brandId: Long,
     templates: List[models.brand.CertificateTemplate])(implicit request: Request[Any],
     handler: AuthorisationHandler)
 
@@ -36,9 +36,9 @@ for English language. It means you need to upload at least one certificate for E
         @for(file <- templates) {
             <tr>
                 <td>@Languages.all.get(file.language)</td>
-                <td><a href="@routes.CertificateTemplates.template(file.id.get, true)" target="_blank">View file</a></td>
-                <td><a href="@routes.CertificateTemplates.template(file.id.get, false)" target="_blank">View file</a></td>
-                <td><a href="@routes.CertificateTemplates.delete(file.id.get)" class="delete" text="template">
+                <td><a href="@routes.CertificateTemplates.template(file.identifier, true)" target="_blank">View file</a></td>
+                <td><a href="@routes.CertificateTemplates.template(file.identifier, false)" target="_blank">View file</a></td>
+                <td><a href="@routes.CertificateTemplates.delete(brandId, file.identifier)" class="delete" text="template">
                     <i class="glyphicon glyphicon-trash input-sm"></i>Delete</a></td>
             </tr>
         }
@@ -46,7 +46,7 @@ for English language. It means you need to upload at least one certificate for E
     </table>
 }
 @restrict(handler, List(as(Admin.toString))) {
-    <a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(id)">
+    <a class="btn btn-success btn-sm pull-right" href="@routes.CertificateTemplates.add(brandId)">
         <i class="glyphicon glyphicon-plus"></i> Add Certificate Template
     </a>
 }
