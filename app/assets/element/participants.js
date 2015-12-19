@@ -73,13 +73,15 @@ $(document).ready(function(){
 		// ajax call to send batch confirmation requests.
 		$.post(url, {'evalIds[]': actualIds})
 		.done(function(data){
-			success(JSON.parse(date));
+			var response = JSON.parse(data);
+			success(response.message);
 		})
 		.fail(function(data){
-			fail(JSON.parse(data));
+			var response = JSON.parse(data);
+			fail(response.message);
 		});
 
-		$('#' + dialog).modal('show');
-		$('#confirmEmail').modal('show');
+		$('#' + dialog).modal('hide');
+		$('#confirmEmail').modal('hide');
 	});
 });

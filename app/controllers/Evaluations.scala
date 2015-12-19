@@ -299,9 +299,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒ {
       val optFormData = request.body.asFormUrlEncoded
       val Some(evaluationIds) = optFormData.get.get("evalIds[]")
-
-      //      evaluationIds.map(_.toLong).toSet.foreach(println)
-
       val setIds = evaluationIds.map(_.toLong).toSet
 
       val completed = evaluationService.find(setIds).foldLeft(0) { case (counter, evaluation) =>
@@ -309,7 +306,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
         evaluation.sendConfirmationRequest(hook)
         (counter + 1)
       }
-      println(s"$completed == ${setIds.size} ")
+
       if (completed == setIds.size) {
         jsonSuccess("Confirmation requests were sent")
       } else jsonNotFound("Some or all evaluation(s) not found")
