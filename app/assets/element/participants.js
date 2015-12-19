@@ -63,27 +63,23 @@ $(document).ready(function(){
         attr('aria-hidden', 'true').append(html));
 
 	$('#confirmLink').on('click', function(e){
-		var ids = $.data(this, 'ids');
-		var queue = $.Deferred().resolve();
-		var pass = 0;
-		$.each(ids, function(index, value){
-			var evaluationId = value;
-			queue = queue.then(function(){
-				var url = jsRoutes.controllers.Evaluations.sendConfirmationRequest(evaluationId).url;
-				return $.post(url, {}, function(data) {
-			        pass = pass + 1;
-			        if(pass == ids.length) {
-			        	success(JSON.parse(data).message);
-			        	window.setTimeout(function(){
-				        	$('#' +  dialog).modal('hide');
-				        	$('#confirmEmail').modal('hide');
-			        	}, delay);
-			        }
-			    }).fail(function(jqXHR) {
-			        var msg = JSON.parse(jqXHR.responseText);
-			        error(msg.message)
-			    });
-			});
+		var evaluationIds = $.data(this, 'ids');
+		var url = jsRoutes.controllers.Evaluations.sendBatchConfirmationRequest().url;
+		var actualIds = [];
+		$.each(evaluationIds, function(index, value){
+			actualIds.push(value);
 		});
+
+		// ajax call to send batch confirmation requests.
+		$.post(url, {'evalIds[]': actualIds})
+		.done(function(data){
+			success(JSON.parse(date));
+		})
+		.fail(function(data){
+			fail(JSON.parse(data));
+		});
+
+		$('#' + dialog).modal('show');
+		$('#confirmEmail').modal('show');
 	});
 });

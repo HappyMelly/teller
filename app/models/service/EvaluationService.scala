@@ -55,6 +55,14 @@ class EvaluationService extends Services{
   }
 
   /**
+   * Returns the requested evaluations based on the list of id
+   * @param ids - set of Evaluation id
+   */
+  def find(ids: Set[Long]) = DB.withSession { implicit session =>
+    TableQuery[Evaluations].filter(_.id inSet ids).list
+  }
+
+  /**
    * Returns evaluation with related event if exists; otherwise, None
    * @param id Evaluation id
    * @return
