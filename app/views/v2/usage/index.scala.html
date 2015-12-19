@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-        brands: Iterable[(Long, String, List[(String, Float)])])(implicit flash: Flash,
+        brands: Iterable[(Long, String, List[(String, Float, Float)])])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler)
 
@@ -25,12 +25,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @for( (name, fee) <- stats) {
+                            @for( (name, eventFee, facilitatorFee) <- stats) {
                                 <tr>
                                     <td><strong>@name</strong></td>
-                                    <td>@fee</td>
-                                    <td>0.0</td>
-                                    <td>@fee</td>
+                                    <td>@{
+                                        "%.2f".format(eventFee)
+                                    }</td>
+                                    <td>@{
+                                        "%.2f".format(facilitatorFee)
+                                    }</td>
+                                    <td>@{
+                                        "%.2f".format(eventFee + facilitatorFee)
+                                    }</td>
                                 </tr>
                             }
                             </tbody>
