@@ -75,7 +75,6 @@ object Facilitator extends Services {
     }
 
     def initialCalculation() = {
-      println("test")
       facilitatorService.findAll.foreach { x =>
         val events = eventService.findByFacilitator(x.personId, Some(x.brandId)).map(_.id.get)
         val evaluations = evaluationService.findByEventsWithParticipants(events).filter(_._3.approved)

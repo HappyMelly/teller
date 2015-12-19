@@ -39,8 +39,8 @@
                     <table id="facilitators" class="datatables table">
                         <thead>
                             <tr>
-                                <th width="20%">Facilitator</th>
-                                <th width="20%">Country</th>
+                                <th width="15%">Facilitator</th>
+                                <th width="15%">Country</th>
                                 <th width="15%" class="number">Public events
                                     @if(brand.code == "MGT30") {
                                         <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
@@ -53,6 +53,7 @@
                                         data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
                                     }
                                 </th>
+                                <th width="10%" class="number"># of events</th>
                                 <th width="15%" class="date">Joined on</th>
                                 <th></th>
                                 <th></th>
@@ -65,6 +66,7 @@
                                 <td>@Countries.name(person.address.countryCode)</td>
                                 <td>@data.publicRating</td>
                                 <td>@data.privateRating</td>
+                                <td>@data.numberOfEvents</td>
                                 <td>@dateInterval(license.start, license.start)</td>
                                 <td>@sameCountry</td>
                                 <td>@isNew</td>
