@@ -84,4 +84,6 @@ $(document).ready( function() {
         $(this).addClass('active');
         facilitators.fnDraw();
     });
+    $('[data-toggle="tooltip"]').tooltip();
+
 });

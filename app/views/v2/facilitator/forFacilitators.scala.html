@@ -41,8 +41,18 @@
                             <tr>
                                 <th width="20%">Facilitator</th>
                                 <th width="20%">Country</th>
-                                <th width="15%" class="number">Public events</th>
-                                <th width="15%" class="number">Private events</th>
+                                <th width="15%" class="number">Public events
+                                    @if(brand.code == "MGT30") {
+                                        <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                                        data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
+                                    }
+                                </th>
+                                <th width="15%" class="number">Private events
+                                    @if(brand.code == "MGT30") {
+                                        <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                                        data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
+                                    }
+                                </th>
                                 <th width="15%" class="date">Joined on</th>
                                 <th></th>
                                 <th></th>
