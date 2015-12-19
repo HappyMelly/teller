@@ -68,16 +68,14 @@ class Usage(environment: RuntimeEnvironment[ActiveUser]) extends Controller
     * @param code Country code
     */
   protected def countryBasedEventFees(code: String): Float = {
-    Countries.gdp.get(code) map { index ⇒
-      if (index <= 10)
-        3.25f
-      else if (index <= 25)
-        2.75f
-      else if (index <= 50)
-        2.00f
-      else if (index <= 100)
-        1.25f
-      else 0.75f
+    Countries.gdp.get(code) map { category ⇒
+      category match {
+        case 1 => 3.25f
+        case 2 => 2.75f
+        case 3 => 2.00f
+        case 4 => 1.25f
+        case _ => 0.75f
+      }
     } getOrElse 0.75f
   }
 
@@ -87,16 +85,14 @@ class Usage(environment: RuntimeEnvironment[ActiveUser]) extends Controller
     * @param code Country code
     */
   protected def countryBasedFacilitatorFees(code: String): Float = {
-    Countries.gdp.get(code) map { index ⇒
-      if (index <= 10)
-        3.45f
-      else if (index <= 25)
-        2.95f
-      else if (index <= 50)
-        2.45f
-      else if (index <= 100)
-        1.45f
-      else 0.95f
+    Countries.gdp.get(code) map { category ⇒
+      category match {
+        case 1 => 3.45f
+        case 2 => 2.95f
+        case 3 => 2.45f
+        case 4 => 1.45f
+        case _ => 0.95f
+      }
     } getOrElse 0.95f
   }
 
