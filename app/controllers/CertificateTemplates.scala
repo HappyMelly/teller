@@ -152,9 +152,10 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Deletes a certificate template
    *
+   * @param brandId Brand identifier
    * @param id Unique template identifier
    */
-  def delete(id: Long) = SecuredBrandAction(id) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       CertificateTemplate.find(id).map { tpl ⇒

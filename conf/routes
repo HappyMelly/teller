@@ -264,9 +264,11 @@ GET           /brand/:brandId/statistics/type/countries/                     @co
 GET           /brand/:brandId/statistics/type/participants/                  @controllers.Statistics.byParticipants(brandId: Long)
 
 GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET           /template/:id/delete                                           @controllers.CertificateTemplates.delete(id: Long)
+GET           /template/:brandId/:id/delete                                  @controllers.CertificateTemplates.delete(brandId: Long, id: Long)
 
 POST          /url/:url/validate                                             @controllers.Urls.validate(url)
+
+GET           /usage                                                         @controllers.admin.Usage.index
 
 GET           /user/account                                                  @controllers.UserAccounts.account
 POST          /user/newPassword                                              @controllers.UserAccounts.handleNewPassword

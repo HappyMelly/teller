@@ -408,26 +408,7 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
       .sortBy(_.start.toString)
       .map(x ⇒ x.copy(start = x.start.withDayOfMonth(1), end = x.end.withDayOfMonth(1).plusMonths(1)))
 
-    val start = licenses.head.start
-    val ends = licenses
-      .groupBy(_.end)
-      .filter(_._1.compareTo(LocalDate.now().withDayOfMonth(1)) <= 0)
-      .map(x ⇒ x._1 -> x._2.length)
-    val perMonthStart = licenses
-      .groupBy(_.start)
-      .map(x ⇒ x._1 -> (x._2.length, ends.getOrElse(x._1, 0)))
-    val perMonthEnd = ends
-      .filter(x ⇒ ends.keys.toSet.diff(perMonthStart.keys.toSet).contains(x._1))
-      .map(x ⇒ x._1 -> (0, x._2))
-    val perMonth = perMonthStart ++ perMonthEnd
-
-    lazy val data: Stream[(LocalDate, Int)] = {
-      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
-        (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(x ⇒ num + x._1 - x._2).getOrElse(num))
-      loop(start, perMonth.get(start).map(_._1).getOrElse(0))
-    }
-    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
-    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
+    val rawStats = License.numberPerMonth(licenses)
 
     rawStats.head :: rawStats.slice(1, rawStats.length - 1).filter(_._1.getMonthOfYear % 3 == 0) ++ List(rawStats.last)
   }

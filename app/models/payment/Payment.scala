@@ -86,16 +86,14 @@ object Payment {
    * @param code Country code
    */
   def countryBasedFees(code: String): (Int, Int, Int) = {
-    Countries.gdp.get(code) map { index ⇒
-      if (index <= 10)
-        (25, 50, 100)
-      else if (index <= 25)
-        (20, 40, 80)
-      else if (index <= 50)
-        (15, 30, 60)
-      else if (index <= 100)
-        (10, 20, 40)
-      else (5, 10, 20)
+    Countries.gdp.get(code) map { category ⇒
+      category match {
+        case 1 => (25, 50, 100)
+        case 2 => (20, 40, 80)
+        case 3 => (15, 30, 60)
+        case 4 => (10, 20, 40)
+        case _ => (5, 10, 20)
+      }
     } getOrElse (5, 10, 20)
   }
 }

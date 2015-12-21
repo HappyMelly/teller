@@ -6,10 +6,6 @@
     flash: Flash,
     handler: AuthorisationHandler)
 
-@import be.objectify.deadbolt.core.utils.TemplateUtils.as
-@import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.Role._
-
 <!DOCTYPE html>
 <html>
   <head>
@@ -26,50 +22,8 @@
           <div class="container">
               <a class="navbar-brand" href="/">Happy Melly</a>
               <div class="navbar-collapse collapse">
-                  <ul class="nav navbar-nav">
-                      <li @if(menu == "members") {
-                          class="active" }
-                      ><a href="@routes.Members.index()">Members</a></li>
-                      @restrict(handler, List(as(Admin.toString))) {
-                          <li @if(menu == "orgs") {
-                              class="active"}><a href="@routes.Organisations.index()">
-                              Organizations</a></li>
-                      }
-                      <li @if(menu == "brands") {
-                          class="active"}><a href="@routes.Brands.index()">Brands</a></li>
-                      <li @if(menu == "products") {
-                          class="active"}><a href="@routes.Products.index()">Products</a></li>
-                      <li @if(menu == "people") {
-                          class="active"}><a href="@routes.People.index()">People</a></li>
-                  </ul>
-                  <ul class="nav navbar-nav navbar-right">
-                    @views.html.v2.element.roleSwitcher(user.account)
-                    <li class="dropdown">
-                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                              @user.person.fullName
-                          <b class="caret"></b>
-                          </a>
-                          <ul class="dropdown-menu">
-                              <li><a href="@routes.Dashboard.profile()">
-                                  <i class="glyphicon glyphicon-user"></i>&nbsp;&nbsp;&nbsp;Profile</a></li>
-                              <li><a href="@routes.UserAccounts.account()">
-                                  <i class="glyphicon glyphicon-pencil"></i> &nbsp;&nbsp;Manage account</a>
-                              </li>
-                              <li class="divider"></li>
-                              @restrict(handler, List(as(Admin.toString))) {
-                                  <li><a href="@routes.Dashboard.about()">About</a></li>
-                                  <li><a href="@routes.Dashboard.api()"> API (v1)</a></li>
-                                  <li><a href="@controllers.admin.routes.Administration.settings()">
-                                      Settings</a></li>
-                              }
-                              <li><a href="@routes.Dashboard.apiv2()"> API (v2)</a></li>
-                              <li class="divider"></li>
-                              <li>
-                                  <a href="@routes.LoginPage.logout()">
-                                      <i class="glyphicon glyphicon-off"></i>&nbsp;&nbsp;&nbsp;Sign out</a></li>
-                          </ul>
-                      </li>
-                  </ul>
+                @views.html.v2.layout.leftMenu(user, menu)
+                  @views.html.v2.layout.rightMenu(user)
               </div> <!--/.navbar-collapse -->
           </div>
       </div>

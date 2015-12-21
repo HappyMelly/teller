@@ -1,0 +1,23 @@
+@(user: ActiveUser,
+        menu: String)(implicit request: Request[Any],
+        handler: AuthorisationHandler)
+
+@import be.objectify.deadbolt.core.utils.TemplateUtils.as
+@import be.objectify.deadbolt.scala.views.html._
+@import models.UserRole.Role._
+
+<ul class="nav navbar-nav">
+    <li @if(menu == "members") {
+        class="active" }
+    ><a href="@routes.Members.index()">Members</a></li>
+    @restrict(handler, List(as(Admin.toString))) {
+        <li @if(menu == "orgs") {
+            class="active"}><a href="@routes.Organisations.index()">Organizations</a></li>
+    }
+    <li @if(menu == "brands") {
+        class="active"}><a href="@routes.Brands.index()">Brands</a></li>
+    <li @if(menu == "products") {
+        class="active"}><a href="@routes.Products.index()">Products</a></li>
+    <li @if(menu == "people") {
+        class="active"}><a href="@routes.People.index()">People</a></li>
+</ul>

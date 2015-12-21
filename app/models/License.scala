@@ -27,10 +27,11 @@ package models
 import models.database.PortableJodaSupport._
 import models.database.Licenses
 import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.{Duration, Interval, LocalDate}
+import org.joda.time.{Months, Duration, Interval, LocalDate}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
+import scala.language.postfixOps
 
 /**
  * A content license - a person’s agreement with Happy Melly to use a `Brand`.
@@ -146,6 +147,35 @@ object License {
         licensee ← license.licensee
       } yield licensee
       query.sortBy(_.lastName.toLowerCase).list
+  }
+
+  /**
+    * Calculates number of licenses per month from the given set of licenses
+    * @param licenses Licenses to process
+    */
+  def numberPerMonth(licenses: List[License]): List[(LocalDate, Int)] = {
+    val start = licenses.head.start
+    val ends = licenses
+      .groupBy(_.end)
+      .filter(_._1.isBefore(LocalDate.now().withDayOfMonth(1)))
+      .map(x ⇒ x._1 -> x._2.length)
+    val perMonthStart = licenses
+      .groupBy(_.start)
+      .map(x ⇒ x._1 ->(x._2.length, ends.getOrElse(x._1, 0)))
+    val perMonthEnd = ends
+      .filter(x ⇒ ends.keys.toSet.diff(perMonthStart.keys.toSet).contains(x._1))
+      .map(x ⇒ x._1 ->(0, x._2))
+    val perMonth = perMonthStart ++ perMonthEnd
+
+    lazy val data: Stream[(LocalDate, Int)] = {
+      def loop(d: LocalDate, num: Int): Stream[(LocalDate, Int)] =
+        (d, num) #:: loop(d.plusMonths(1), perMonth.get(d.plusMonths(1)).map(x ⇒ num + x._1 - x._2).getOrElse(num))
+      loop(start, perMonth.get(start).map(_._1).getOrElse(0))
+    }
+    val numberOfMonths = Months.monthsBetween(start, LocalDate.now()).getMonths + 1
+    val rawStats: List[(LocalDate, Int)] = data take numberOfMonths toList
+
+    rawStats
   }
 
 }

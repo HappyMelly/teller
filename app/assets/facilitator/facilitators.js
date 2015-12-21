@@ -29,7 +29,7 @@ function filterByRegion(oSettings, aData, iDataIndex) {
     var type = $('.region > .filter > a.active').data('type');
     switch(type) {
         case 'country':
-            return aData[5] == 'true';
+            return aData[6] == 'true';
         default:
             return true;
     }
@@ -42,7 +42,7 @@ function filterByLicense(oSettings, aData, iDataIndex) {
     var type = $('.license > .filter > a.active').data('type');
     switch(type) {
         case 'new':
-            return aData[6] == 'true';
+            return aData[7] == 'true';
         default:
             return true;
     }
@@ -63,7 +63,7 @@ $(document).ready( function() {
             "order": [[ 0, "asc" ]],
             "columnDefs": [{
                 "visible": false,
-                "targets": [5, 6]
+                "targets": [6, 7]
             }]
         });
 
@@ -84,4 +84,6 @@ $(document).ready( function() {
         $(this).addClass('active');
         facilitators.fnDraw();
     });
+    $('[data-toggle="tooltip"]').tooltip();
+
 });
