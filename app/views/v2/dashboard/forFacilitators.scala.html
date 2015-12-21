@@ -35,10 +35,16 @@
           <div class="panel panel-success notification-widget" id="completionWidget">
           </div>
           <div class="notification-widget info-board">
-            <div class="title">Info board</div>
-            <p><span class="upcoming-number">@future.length</span> upcoming events</p>
-            <p>@past.length past events</p>
-            <p><span class="evaluation-number">@evaluations.length</span> evaluations to act on</p>
+            <div class="info-board__title">Info board</div>
+            <div class="info-board__part">
+                <span class="upcoming-number">@future.length</span> upcoming events
+            </div>
+            <div class="info-board__part">
+              @past.length past events
+            </div>
+            <div class="info-board__part">
+              <span class="evaluation-number">@evaluations.length</span> evaluations to act on
+            </div>
           </div>
         </div>
       </div>

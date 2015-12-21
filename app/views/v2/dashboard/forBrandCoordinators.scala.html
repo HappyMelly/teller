@@ -23,9 +23,17 @@
         <div class="col-md-3">
           <div class="panel panel-success notification-widget" id="completionWidget"></div>
           <div class="notification-widget info-board">
-            <div class="title">Info board</div>
-            <p><span class="licenses-number">@licenses.length</span> expiring licenses</p>
-            <p>@events.length events without invoice</p>
+            <div class="info-board__title">Info board</div>
+            <div class="info-board__part">
+              <a href="javascript: void(0)" class="link-black js-link-target" data-target="brand-main-licenses">
+                <span class="licenses-number">@licenses.length</span> expiring licenses
+              </a>
+            </div>
+            <div class="info-board__part">
+              <a href="javascript: void(0)" class="link-black js-link-target" data-target="brand-main-events">
+                @events.length events without invoice
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -48,3 +48,95 @@
 @grey3: #333333;
 @duck-egg-blue: #e9f2fc;
 @pinkish-grey: #cccccc;
+
+
+
+/* mixins */
+
+.gradient (@startColor: #eee, @endColor: white) {
+  background-color: @startColor;
+  background: -webkit-gradient(linear, left top, left bottom, from(@startColor), to(@endColor));
+  background: -webkit-linear-gradient(top, @startColor, @endColor);
+  background: -moz-linear-gradient(top, @startColor, @endColor);
+  background: -ms-linear-gradient(top, @startColor, @endColor);
+  background: -o-linear-gradient(top, @startColor, @endColor);
+}
+
+.box-sizing(...){
+  -webkit-box-sizing: @arguments;
+  -moz-box-sizing: @arguments;
+  box-sizing: @arguments;
+}
+
+.transition(...){
+  -webkit-transition: @arguments;
+  -moz-transition: @arguments;
+  -o-transition: @arguments;
+  transition: @arguments;
+}
+
+.animation(...){
+  -webkit-animation: @arguments;
+  -moz-animation: @arguments;
+  -o-animation: @arguments;
+  animation: @arguments;
+}
+
+.transform(...) {
+  -webkit-transform: @arguments;
+  -moz-transform: @arguments;
+  -ms-transform: @arguments;
+  -o-transform: @arguments;
+  transform: @arguments;
+}
+
+.clearfix() {
+  display: block;
+  zoom: 1;
+
+  &:after {
+    content: " ";
+    display: block;
+    font-size: 0;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+  }
+}
+
+.t-ellps() {
+  white-space: nowrap;
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+}
+
+.triangle(@width, @height, @color, @direction) {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  & when (@direction = 'up') {
+    border-top: none;
+    border-left: @width/2 solid transparent !important;
+    border-right: @width/2 solid transparent !important;
+    border-bottom: @height solid @color;
+  }
+  & when (@direction = 'down') {
+    border-bottom: none;
+    border-left: @width/2 solid transparent !important;
+    border-right: @width/2 solid transparent !important;
+    border-top: @height solid @color;
+  }
+  & when (@direction = 'left') {
+    border-top: @height/2 solid transparent !important;
+    border-left: none;
+    border-right: @width solid @color;
+    border-bottom: @height/2 solid transparent !important;
+  }
+  & when (@direction = 'right') {
+    border-top: @height/2 solid transparent !important;
+    border-right: none;
+    border-left: @width solid @color;
+    border-bottom: @height/2 solid transparent !important;
+  }
+}

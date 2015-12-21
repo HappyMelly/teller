@@ -76,10 +76,45 @@ function initializeFileUploadField() {
     }).change();
 }
 
+var DashboardPage = (function(){
+
+    return {
+        init: function(){
+            this.assignEvents();
+
+        },
+        assignEvents: function(){
+            var self = this;
+
+            $('body')
+                .on('click', '.js-link-target', function(e){
+                    var $this = $(this),
+                        target = $this.data('target');
+
+                    self.scrollToTarget('#' + target);
+                    e.preventDefault();
+                })
+        },
+        scrollToTarget: function(target){
+            var $target = $(target);
+
+            if (!$target.length) return false;
+
+            $('html, body').animate({
+                scrollTop: $target.offset().top
+            }, 400);
+        }
+    };
+})();
+
 $(document).ready(function() {
+
+
     $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
     if ($('#completionWidget').length > 0) {
         reloadCompletionWidget();
     }
     initializeFileUploadField();
+
+    DashboardPage.init();
 });
