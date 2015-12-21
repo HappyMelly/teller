@@ -9,6 +9,7 @@
 @import helper.CSRF
 @import models.UserRole.DynamicRole
 
+<h4>Coordinators</h4>
 <p>Brand coordinators help a brand owner to run brand-related activities. They have
   the same access rights as the owner: managing events, facilitators and
 licenses.</p>
@@ -17,7 +18,7 @@ to receive from the system.</p>
 <br/>
 <div id="teamNotification">
 </div>
-<table id="members" class="table table-bordered">
+<table id="members" class="table">
   <thead>
     <tr>
       <th>Name</th>
@@ -41,8 +42,8 @@ to receive from the system.</p>
         <td><input type="checkbox" value="evaluation" @if(data.notification.evaluation) {checked}/></td>
         <td><input type="checkbox" value="certificate" @if(data.notification.certificate) {checked}/></td>
         @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
-          <td><a class="remove" data-href="@routes.Brands.removeCoordinator(brandId, member.id.get)"
-          href="#" data-name="@member.fullName" data-id="@member.id.get"><i class="glyphicon glyphicon-trash"></i></a></td>
+          <td><a class="remove font-sm" data-href="@routes.Brands.removeCoordinator(brandId, member.id.get)"
+          href="#" data-name="@member.fullName" data-id="@member.id.get">Remove</a></td>
         }
       </tr>
     }
@@ -55,6 +56,6 @@ to receive from the system.</p>
       <option value="@person.id">@person.fullName</option>
     }
     </select>
-    <button class="btn btn-success btn-sm"><i class="glyphicon glyphicon-plus"></i> Add Coordinator</button>
+    <button class="btn btn-primary">Add Coordinator</button>
   </form>
 }

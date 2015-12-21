@@ -1,0 +1,105 @@
+@(brand: Brand,
+    coordinator: Option[Person],
+    links: List[models.brand.BrandLink])(implicit request: Request[Any],
+    handler: AuthorisationHandler)
+
+@import _root_.templates.Formatters._
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import models.UserRole.DynamicRole
+
+<div id="deactivatedStatus" class="alert alert-warning">
+    <i class="glyphicon glyphicon-info-sign"></i> This brand is <strong>deactivated</strong>.
+</div>
+
+<div class="block">
+    <div class="block">
+        <h4>General</h4>
+        <dl class="dl-horizontal">
+            <dt>Brand code</dt>
+            <dd>@brand.code</dd>
+            <dt>Unique Name</dt>
+            <dd>@brand.uniqueName</dd>
+        @coordinator.map { x =>
+            <dt>Owner</dt>
+            <dd><a href="@routes.People.details(x.id.get)">@x.fullName</a></dd>
+        }
+        @brand.tagLine.map { value =>
+            <dt>Tagline</dt>
+            <dd>@value</dd>
+        }
+        </dl>
+    </div>
+    <div class="block">
+        <h4>On the Web</h4>
+        <dl class="dl-horizontal">
+            <p><i class="fa fa-envelope fa-fw fa-lg"></i>
+                <a href="mailto:@brand.contactEmail" target="_blank">@brand.contactEmail</a>
+            </p>
+            @brand.webSite.map { url =>
+                <p><i class="fa fa-globe fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
+            }
+            @brand.blog.map { url =>
+                <p><i class="fa fa-rss-square fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
+            }
+            @brand.socialProfile.skype.map { skype =>
+                <p><i class="fa fa-skype fa-fw fa-lg"></i>  <a href="skype:@skype" target="_blank">skype</a>
+            }
+            @brand.socialProfile.contactForm.map { url =>
+                <p><i class="fa fa-globe fa-fw fa-lg"></i> <a href="@url" target="_blank">Contact form</a>
+            }
+            @brand.socialProfile.phone.map { phone =>
+                <p><i class="fa fa-phone fa-fw fa-lg"></i> @phone</p>
+            }
+        </dl>
+    </div>
+    @brand.description.map { text =>
+        <div class="block">
+            <h4>Description</h4>
+            <p>@text.markdown</p>
+        </div>
+    }
+    <div class="block">
+        <h4>Links</h4>
+        @if(links.nonEmpty) {
+            <table id="links" class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Link</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(link <- links) {
+                    <tr data-id="@link.id.get" data-brandid="@link.brandId">
+                        <td>@link.linkType.capitalize</td>
+                        <td><a href="@link.link" target="_blank">@link.link</td>
+                        <td>
+                        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                            <a data-id="@link.id.get" href="#" class="font-sm remove"
+                            data-href="@routes.BrandLinks.remove(brand.id.get, link.id.get)">Remove</a>
+                        }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        <div id="brandLinkNotification"></div>
+        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+            <form id="addLinkForm" class="form-inline pull-right" method="POST"
+            action="@CSRF(routes.BrandLinks.create(brand.id.get))">
+                <select name="type" id="linkType" class="form-control input-sm">
+                    <option value="blog">Blog</option>
+                    <option value="photo">Photo</option>
+                    <option value="video">Video</option>
+                    <option value="website">Website</option>
+                    <option value="other">Other</option>
+                </select>
+                <input name="url" class="form-control input-sm" style="width: 300px">
+                <button class="btn btn-primary btn-sm">Add Link</button>
+            </form>
+        }
+    </div>
+</div>

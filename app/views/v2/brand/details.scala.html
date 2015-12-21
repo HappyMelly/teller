@@ -1,0 +1,119 @@
+@(user: ActiveUser,
+    brand: Brand,
+    coordinator: Option[Person],
+    links: List[models.brand.BrandLink])(implicit request: Request[Any],
+    flash: Flash,
+    handler: AuthorisationHandler,
+    token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import models.UserRole.DynamicRole
+
+
+@v2.main(brand.code + " - Brand", "brands", user) {
+    <div class="row profile-header">
+      <div class="container">
+          <div class="content-block">
+              <h2>@brand.name</h2>
+              @views.html.element.profiles(brand.socialProfile, None)
+              <div class="actions pull-right">
+                  @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                      <div class="button">
+                          <a class="btn btn-primary" href="@routes.Brands.edit(brand.id.get)">Edit</a>
+                      </div>
+                      @brand.picture.map { picture =>
+                          <div class="button">
+                              <form class="delete form-inline" method="post" text="image"
+                              action="@CSRF(routes.Brands.deletePicture(brand.id.get))">
+                                  <button class="btn btn-warning" type="submit">Delete Picture</button>
+                              </form>
+                          </div>
+                      }
+                      <div class="button">
+                      @if(brand.active) {
+                          <button id="activate" class="btn btn-warning" data-id="@brand.id.get" type="submit">Deactivate
+                          </button>
+                      } else {
+                          <button id="activate" class="btn btn-success" data-id="@brand.id.get" type="submit">Activate
+                          </button>
+                      }
+                      </div>
+                      <div class="button">
+                          <form class="delete form-inline" method="post" text="brand"
+                          action="@CSRF(routes.Brands.delete(brand.id.get))">
+                              <button class="btn btn-default" type="submit"
+                                  @if(!brand.deletable) {
+                                      disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
+                              >Delete</button>
+                          </form>
+                      </div>
+                  }
+              </div>
+          </div>
+      </div>
+    </div>
+    <div class="row">
+        <div class="container">
+            <div class="left">
+                <div class="photo-block @if(brand.picture.isDefined) { real }">
+                    @brand.picture.map { picture =>
+                        <img width="200" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
+                    }.getOrElse {
+                        <img width="200" class="img-rounded photo"
+                        src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+                    }
+                </div>
+                <div class="sidemenu">
+                    <ul class="nav nav-stacked" role="tablist" id="sidemenu">
+                        <li class="subgroup">Network
+                            <ul class="nav">
+                                <li class="active"><a href="#general" role="tab">General</a></li>
+                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "testimonials")"
+                                    href="#testimonials" role="tab" data-toggle="tab">Testimonials</a>
+                                </li>
+                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "products")" href="#products"
+                                    role="tab" data-toggle="tab">Products</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="subgroup">Settings
+                            <ul class="nav">
+                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
+                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
+                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
+                                    Certificate Templates</a></li>
+                                <li><a href="#integration" role="tab" data-toggle="tab">
+                                    Integration</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="center tab-content">
+                <div class="tab-pane active" id="general">
+                    @views.html.v2.brand.tabs.general(brand, coordinator, links)
+                </div>
+                <div class="tab-pane" id="testimonials"></div>
+                <div class="tab-pane" id="team"></div>
+                <div class="tab-pane" id="products"></div>
+                <div class="tab-pane" id="types"></div>
+                <div class="tab-pane" id="templates"></div>
+                <div class="tab-pane" id="integration">
+                    <h4>Evaluations</h4>
+                    <dl>
+                        <dt>Evaluation Url</dt>
+                        <dd>@brand.evaluationUrl.getOrElse("none")</dd>
+                        <dt>Evaluation Hook</dt>
+                        <dd>@brand.evaluationHookUrl.getOrElse("none")</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="right pull-right">
+                <div class="panel panel-success" id="completionWidget"></div>
+            </div>
+        </div>
+    </div>
+    <script src="@routes.Assets.at("brand/details.js")" type="text/javascript"></script>
+}
