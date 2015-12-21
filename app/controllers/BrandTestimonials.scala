@@ -64,7 +64,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
-          Ok(views.html.testimonial.form(user, brandId, form))
+          Ok(views.html.v2.testimonial.form(user, brandId, form))
         } getOrElse NotFound(Messages("error.brand.notFound"))
   }
 
@@ -75,7 +75,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
           brandService.findTestimonial(id) map { testimonial ⇒
             val formData = TestimonialFormData(testimonial.content,
               testimonial.name, testimonial.company)
-            Ok(views.html.testimonial.form(user, brandId, form.fill(formData), Some(id)))
+            Ok(views.html.v2.testimonial.form(user, brandId, form.fill(formData), Some(id)))
           } getOrElse NotFound("Testimonial is not found")
         } getOrElse NotFound(Messages("error.brand.notFound"))
   }
@@ -90,7 +90,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
           form.bindFromRequest.fold(
-            error ⇒ BadRequest(views.html.testimonial.form(user, brandId, error)),
+            error ⇒ BadRequest(views.html.v2.testimonial.form(user, brandId, error)),
             testimonialData ⇒ {
               val testimonial = BrandTestimonial(None, brandId,
                 testimonialData.content, testimonialData.name,
@@ -128,7 +128,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.testimonial.form(user, brandId, error)),
+          error ⇒ BadRequest(views.html.v2.testimonial.form(user, brandId, error)),
           testimonialData ⇒ {
             val testimonial = BrandTestimonial(Some(id), brandId,
               testimonialData.content, testimonialData.name,

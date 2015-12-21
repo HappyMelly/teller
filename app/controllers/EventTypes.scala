@@ -71,7 +71,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.find(brandId) map { brand ⇒
-          Ok(views.html.eventtype.form(user, brand, eventTypeForm))
+          Ok(views.html.v2.eventtype.form(user, brand, eventTypeForm))
         } getOrElse Redirect(routes.Brands.index()).
           flashing("error" -> Messages("error.brand.notFound"))
   }
@@ -88,12 +88,11 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
         brandService.find(brandId) map { brand ⇒
           form.fold(
             withErrors ⇒
-              BadRequest(views.html.eventtype.form(user, brand, withErrors)),
+              BadRequest(views.html.v2.eventtype.form(user, brand, withErrors)),
             received ⇒ validateEventType(brandId, received) map { x ⇒
               val withErrors = form.withError(x._1, x._2)
-              BadRequest(views.html.eventtype.form(user, brand, withErrors))
+              BadRequest(views.html.v2.eventtype.form(user, brand, withErrors))
             } getOrElse {
-              println(received)
               val inserted = eventTypeService.insert(received.copy(brandId = brandId))
               val log = activity(inserted, user.person, Some(brand)).connected.insert()
               val route = routes.Brands.details(brandId).url + "#types"

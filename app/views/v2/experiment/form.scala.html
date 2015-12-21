@@ -1,7 +1,7 @@
 @(user: ActiveUser,
   memberId: Long,
   form: Form[Experiment],
-  testimonialId: Option[Long] = None)(implicit flash: Flash,
+  experimentId: Option[Long] = None)(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
@@ -12,7 +12,7 @@
 @v2.main("Experiment", "brand", user, withMelly = true) {
   <div class="form">
     @v2.html.block("") { <h1>Add Experiment</h1> }
-    @v2.html.form(action = testimonialId.map { id =>
+    @v2.html.form(action = experimentId.map { id =>
       CSRF(routes.Experiments.update(memberId, id))
     }.getOrElse {
       CSRF(routes.Experiments.create(memberId))

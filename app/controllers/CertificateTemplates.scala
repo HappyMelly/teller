@@ -70,7 +70,7 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
       brandService.find(brandId) map { brand ⇒
         val templates = certificateService.findByBrand(brandId)
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        Ok(views.html.certificateTemplate.form(user, brand, languages, certificateFileForm))
+        Ok(views.html.v2.certificateTemplate.form(user, brand, languages, certificateFileForm))
       } getOrElse NotFound
   }
 
@@ -86,13 +86,13 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
         val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
         val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.certificateTemplate.form(user,
+          formWithErrors ⇒ BadRequest(views.html.v2.certificateTemplate.form(user,
             brand,
             languages,
             formWithErrors)),
           data ⇒ {
             templates.find(_.language == data.language).map { v ⇒
-              BadRequest(views.html.certificateTemplate.form(user,
+              BadRequest(views.html.v2.certificateTemplate.form(user,
                 brand,
                 languages,
                 form.withError("language", "error.template.exist")))
@@ -103,7 +103,7 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
               if (template.isEmpty || templateOneFacilitator.isEmpty
                 || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
                 || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
-                BadRequest(views.html.certificateTemplate.form(user,
+                BadRequest(views.html.v2.certificateTemplate.form(user,
                   brand,
                   languages,
                   form.withError(
