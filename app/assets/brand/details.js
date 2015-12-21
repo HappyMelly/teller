@@ -29,12 +29,10 @@
  */
 function switchState(active) {
     if (active) {
-        $('#activate').removeClass('btn-success').addClass('btn-warning');
-        $('#activate').html('<i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate');
+        $('#activate').html('Deactivate');
         $('#deactivatedStatus').hide();
     } else {
-        $('#activate').addClass('btn-success').removeClass('btn-warning');
-        $('#activate').html('<i class="glyphicon-off glyphicon glyphicon-white"></i> Activate');
+        $('#activate').html('Activate');
         $('#deactivatedStatus').show();
     }
 }
@@ -363,13 +361,13 @@ $(document).ready( function() {
     showTab($('#sidemenu a[href="#' + hash + '"]'));
     initializeActions();
 
-    if ($('#activate').hasClass('btn-warning')) {
+    if ($('#activate').text().trim() == 'Deactivate') {
         $('#deactivatedStatus').hide();
     }
     $('#activate').on('click', function(e) {
         e.preventDefault();
         var url = jsRoutes.controllers.Brands.activation($(this).data('id')).url;
-        var active = $(this).hasClass('btn-success');
+        var active = $(this).text().trim() == 'Deactivate';
         $.post(url, {active: active}, function(data, textStatus, xhr) {
             switchState(active);
         });

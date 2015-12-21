@@ -143,7 +143,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = personService.findActive
-      Ok(views.html.brand.form(user, None, people, brandsForm(user.name)))
+      Ok(views.html.v2.brand.form(user, None, people, brandsForm(user.name)))
   }
 
   /**
@@ -156,13 +156,13 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       val people = personService.findActive
       form.fold(
         formWithErrors ⇒ Future.successful(
-          BadRequest(views.html.brand.form(user, None, people, formWithErrors))),
+          BadRequest(views.html.v2.brand.form(user, None, people, formWithErrors))),
         brand ⇒ {
           if (Brand.exists(brand.code))
-            Future.successful(BadRequest(views.html.brand.form(user, None, people,
+            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
               form.withError("code", "constraint.brand.code.exists", brand.code))))
           else if (Brand.nameExists(brand.uniqueName))
-            Future.successful(BadRequest(views.html.brand.form(user, None, people,
+            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
               form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -355,7 +355,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       brandService.find(id) map { brand ⇒
         val filledForm = brandsForm(user.name).fill(brand)
         val people = personService.findActive
-        Ok(views.html.brand.form(user, Some(id), people, filledForm))
+        Ok(views.html.v2.brand.form(user, Some(id), people, filledForm))
       } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
@@ -371,13 +371,13 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
         val people = personService.findActive
         val form: Form[Brand] = brandsForm(user.name).bindFromRequest
         form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.brand.form(user, Some(id), people, form))),
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people, form))),
           brand ⇒ {
             if (Brand.exists(brand.code, x.id))
-              Future.successful(BadRequest(views.html.brand.form(user, Some(id), people,
+              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("code", "constraint.brand.code.exists", brand.code))))
             else if (Brand.nameExists(brand.uniqueName, x.id))
-              Future.successful(BadRequest(views.html.brand.form(user, Some(id), people,
+              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
             else {
               request.body.asMultipartFormData.get.file("picture").map { picture ⇒
