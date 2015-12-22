@@ -116,7 +116,7 @@ class EventTypes(environment: RuntimeEnvironment[ActiveUser])
         val events = eventService.findByParameters(
           brandId = None,
           eventType = Some(eventType.id.get))
-        if (events.length > 0) {
+        if (events.nonEmpty) {
           Redirect(route).flashing("error" -> Messages("error.eventType.tooManyEvents"))
         } else {
           eventTypeService.delete(id)

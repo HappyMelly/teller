@@ -18,8 +18,9 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
   for 25 hours of this type. The facilitator will be charged for only 16 hours. Additional
   9 hours are free.</p>
 @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
-    <a href="@routes.EventTypes.add(brandId)">+ Add Event Type</a>
+    <a class="btn btn-primary btn-sm pull-right" href="@routes.EventTypes.add(brandId)">+ Add Event Type</a>
 }
+<br/>
 <br/>
 <br/>
 <div id="notification">

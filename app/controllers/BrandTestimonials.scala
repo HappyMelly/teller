@@ -115,7 +115,7 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         brandService.deleteTestimonial(brandId, id)
-        jsonSuccess("ok")
+        jsonSuccess("Testimonial was successfully removed")
   }
 
   /**

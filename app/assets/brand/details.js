@@ -38,33 +38,6 @@ function switchState(active) {
 }
 
 /**
- * Show notification message
- * @param target jQuery identifier of html element
- * @param message {string}
- * @param type {string} 'success/danger'
- */
-function notify(target, message, type) {
-    $(target).html("");
-    $(target).append(
-        $('<div class="alert alert-' + type + '">')
-            .text(message)
-            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-    );
-}
-
-function showEventTypeNotification(message, type) {
-    notify('#notification', message, type)
-}
-
-function showBrandLinkNotification(message, type) {
-    notify('#brandLinkNotification', message, type)
-}
-
-function showTeamNotification(message, type) {
-    notify('#teamNotification', message, type);
-}
-
-/**
  * Returns data to update event type retrieved from a event type row
  *
  * @param element {object} jQuery table row representation
@@ -99,17 +72,17 @@ function updateEventType(object, value) {
         url: jsRoutes.controllers.EventTypes.update(brandId, id).url,
         data: data
     }).done(function(data) {
-        showEventTypeNotification("You successfully updated the event type", 'success');
+        success("You successfully updated the event type");
         if (value != null) {
             $(object).text(value);
         }
-    }).fail(function(jqXHR, status, error) {
+    }).fail(function(jqXHR, status, errorCode) {
         if (status == "error") {
-            var error = JSON.parse(jqXHR.responseText);
-            showEventTypeNotification(error.message, 'danger');
+            var response = JSON.parse(jqXHR.responseText);
+            error(response.message);
         } else {
             var msg = "Unexpected error. Please contact the support team.";
-            showEventTypeNotification(msg, 'danger');
+            error(msg);
         }
     }).complete(function() {
         $("body").css("cursor", "default");
@@ -151,8 +124,8 @@ function addMember(personId, name, brandId) {
             .append('<td><input type="checkbox" value="certificate"/></td>')
             .append($('<td>')
                 .append($('<a>')
-                    .append('<i class="glyphicon glyphicon-trash"></i>')
-                    .addClass('remove')
+                    .append('Remove')
+                    .addClass('remove font-sm')
                     .attr('href', '#')
                     .attr('data-id', personId)
                     .attr('data-name', name)
@@ -201,8 +174,8 @@ function addLink(linkId, brandId, linkType, link) {
                     .attr('href', link)
                     .append(link)))
             .append($('<td>')
-                .append($('<a>')
-                    .append('<i class="glyphicon glyphicon-trash"></i> Remove')
+                .append($('<a class="font-sm">')
+                    .append('Remove')
                     .addClass('remove')
                     .attr('href', '#')
                     .attr('data-id', linkId)
@@ -222,13 +195,13 @@ function initializeLinksActions() {
     $('#addLinkForm').submit(function(e) {
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
             addLink(data.id, data.brandId, data.linkType, data.link);
-        }).fail(function(jqXHR, status, error) {
+        }).fail(function(jqXHR, status, errorCode) {
             if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showBrandLinkNotification(error.message, 'danger');
+                var errorCode = JSON.parse(jqXHR.responseText);
+                error(errorCode.message);
             } else {
                 var msg = "Internal error. Please try again or contant the support team.";
-                showBrandLinkNotification(msg, 'danger');
+                error(msg);
             }
         });
         // Prevent the form from submitting with the default action
@@ -242,13 +215,13 @@ function initializeLinksActions() {
             dataType: "json"
         }).done(function(data) {
             removeLink(linkId, name);
-        }).fail(function(jqXHR, status, error) {
+        }).fail(function(jqXHR, status, errorCode) {
             if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showBrandLinkNotification(error.message, 'danger');
+                var response = JSON.parse(jqXHR.responseText);
+                error(response.message);
             } else {
                 var msg = "Internal error. Please try again or contant the support team.";
-                showBrandLinkNotification(msg, 'danger');
+                error(msg);
             }
         });
         return false;
@@ -259,14 +232,14 @@ function initializeTeamActions() {
     $('#addMemberForm').submit(function(e) {
         $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
             addMember(data.data.personId, data.data.name, data.data.brandId);
-            showTeamNotification(data.message, 'success');
-        }).fail(function(jqXHR, status, error) {
+            success(data.message);
+        }).fail(function(jqXHR, status, errorCode) {
             if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showTeamNotification(error.message, 'danger');
+                var response = JSON.parse(jqXHR.responseText);
+                error(response.message);
             } else {
                 var msg = "Internal error. Please try again or contant the support team.";
-                showTeamNotification(msg, 'danger');
+                error(msg);
             }
         });
         // Prevent the form from submitting with the default action
@@ -281,14 +254,14 @@ function initializeTeamActions() {
             dataType: "json"
         }).done(function(data) {
             removeMember(personId, name);
-            showTeamNotification(data.message, 'success');
-        }).fail(function(jqXHR, status, error) {
+            success(data.message);
+        }).fail(function(jqXHR, status, errorCode) {
             if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showTeamNotification(error.message, 'danger');
+                var response = JSON.parse(jqXHR.responseText);
+                error(response.message);
             } else {
                 var msg = "Internal error. Please try again or contant the support team.";
-                showTeamNotification(msg, 'danger');
+                error(msg);
             }
         });
         return false;
@@ -303,14 +276,14 @@ function initializeTeamActions() {
         }
         var that = $(this);
         $.post(url, {}, null, "json").done(function(data) {
-            showTeamNotification(data.message, 'success');
-        }).fail(function(jqXHR, status, error) {
+            success(data.message);
+        }).fail(function(jqXHR, status, errorCode) {
             if (status == "error") {
-                var error = JSON.parse(jqXHR.responseText);
-                showTeamNotification(error.message, 'danger');
+                var response = JSON.parse(jqXHR.responseText);
+                error(response.message);
             } else {
                 var msg = "Internal error. Please try again or contant the support team.";
-                showTeamNotification(msg, 'danger');
+                error(msg);
             }
             that.attr('checked', false);
         });
@@ -318,10 +291,34 @@ function initializeTeamActions() {
     $('#members .glyphicon-info-sign').tooltip();
 }
 
+function initializeTestimonialActions() {
+    $('#testimonialList').on('click', 'a.remove', function(e) {
+        var testimonialId = $(this).data('id');
+        e.preventDefault();
+        $.ajax({
+            type: "DELETE",
+            url: $(this).data('href'),
+            dataType: "json"
+        }).done(function(data) {
+            $('div[data-id="' + testimonialId + '"]').remove();
+            success(data.message);
+        }).fail(function(jqXHR, status, errorCode) {
+            if (status == "error") {
+                var response = JSON.parse(jqXHR.responseText);
+                error(response.message);
+            } else {
+                var msg = "Internal error. Please try again or contant the support team.";
+                error(msg);
+            }
+        });
+    });
+}
+
 function initializeActions() {
     initializeEventTypesActions();
     initializeTeamActions();
     initializeLinksActions();
+    initializeTestimonialActions();
 }
 
 /**
