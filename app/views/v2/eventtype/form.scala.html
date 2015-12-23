@@ -1,0 +1,45 @@
+@(user: ActiveUser,
+  brand: Brand,
+  form: Form[models.brand.EventType])(implicit flash: Flash,
+        request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Event type", "brand", user, withMelly = true) {
+    <div class="form">
+        @v2.html.block("") { <h1>Add Event Type</h1> }
+        @v2.html.form(action = CSRF(routes.EventTypes.create(brand.id.get))) {
+            <input type="hidden" name="brandId" value="@brand.id.get"/>
+            @v2.html.block("") {
+                @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
+                @v2.html.text(form("title"), '_label -> "Default title", '_required -> true, '_help -> "",
+                    '_placeholder -> "Ex: Regular Management 3.0 event")
+                @v2.html.number(form("maxHours"), '_label -> "Maximum chargeable hours", '_required -> true, '_help -> "")
+                @v2.html.checkbox(form("free"), '_label -> "Facilitators are able to create free events of this type")
+            }
+            @if(form.hasErrors) {
+                @v2.html.block("") {
+                    <div class="errors">
+                    @for(error <- form.errors) {
+                        @play.api.i18n.Messages(error.message)<br/>
+                    }
+                    </div>
+                }
+            }
+            @v2.html.block("") {
+                <div class="row">
+                    <div class="col-md-5">
+                        <button class="btn btn-primary btn-block btn-lg" type="submit">
+                            Save</button>
+                    </div>
+                    <div class="col-md-3 cancel">
+                        <a href="javascript:history.back()">Cancel changes</a></div>
+                </div>
+            }
+
+        }
+  </div>
+}

@@ -143,7 +143,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = personService.findActive
-      Ok(views.html.brand.form(user, None, people, brandsForm(user.name)))
+      Ok(views.html.v2.brand.form(user, None, people, brandsForm(user.name)))
   }
 
   /**
@@ -156,13 +156,13 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       val people = personService.findActive
       form.fold(
         formWithErrors ⇒ Future.successful(
-          BadRequest(views.html.brand.form(user, None, people, formWithErrors))),
+          BadRequest(views.html.v2.brand.form(user, None, people, formWithErrors))),
         brand ⇒ {
           if (Brand.exists(brand.code))
-            Future.successful(BadRequest(views.html.brand.form(user, None, people,
+            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
               form.withError("code", "constraint.brand.code.exists", brand.code))))
           else if (Brand.nameExists(brand.uniqueName))
-            Future.successful(BadRequest(views.html.brand.form(user, None, people,
+            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
               form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
           else {
             request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -228,14 +228,12 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Brand identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(id) map { brand ⇒
-          val links = brandService.links(id)
-          val coordinator = personService.find(brand.ownerId)
-          Ok(views.html.brand.details(user, brand, coordinator, links))
-        } getOrElse NotFound(views.html.notFoundPage(request.path))
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) map { brand ⇒
+      val links = brandService.links(id)
+      val coordinator = personService.find(brand.ownerId)
+      Ok(views.html.v2.brand.details(user, brand, coordinator, links))
+    } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
   /**
@@ -250,19 +248,19 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
           case "team" ⇒
             val members = brandService.coordinators(id).sortBy(_._1.fullName)
             val people = personService.findActive.filterNot(x ⇒ members.contains(x))
-            Ok(views.html.brand.tabs.team(id, members, people))
+            Ok(views.html.v2.brand.tabs.team(id, members, people))
           case "templates" ⇒
             val templates = certificateService.findByBrand(id)
-            Ok(views.html.brand.tabs.templates(id, templates))
+            Ok(views.html.v2.brand.tabs.templates(id, templates))
           case "testimonials" ⇒
             val testimonials = brandService.testimonials(id)
-            Ok(views.html.brand.tabs.testimonials(id, testimonials))
+            Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
           case "types" ⇒
             val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
-            Ok(views.html.brand.tabs.eventTypes(id, eventTypes))
+            Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
           case _ ⇒
             val products = productService.findByBrand(id)
-            Ok(views.html.product.table(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
+            Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
         }
   }
 
@@ -357,7 +355,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       brandService.find(id) map { brand ⇒
         val filledForm = brandsForm(user.name).fill(brand)
         val people = personService.findActive
-        Ok(views.html.brand.form(user, Some(id), people, filledForm))
+        Ok(views.html.v2.brand.form(user, Some(id), people, filledForm))
       } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
@@ -373,13 +371,13 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
         val people = personService.findActive
         val form: Form[Brand] = brandsForm(user.name).bindFromRequest
         form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.brand.form(user, Some(id), people, form))),
+          formWithErrors ⇒ Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people, form))),
           brand ⇒ {
             if (Brand.exists(brand.code, x.id))
-              Future.successful(BadRequest(views.html.brand.form(user, Some(id), people,
+              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("code", "constraint.brand.code.exists", brand.code))))
             else if (Brand.nameExists(brand.uniqueName, x.id))
-              Future.successful(BadRequest(views.html.brand.form(user, Some(id), people,
+              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
             else {
               request.body.asMultipartFormData.get.file("picture").map { picture ⇒
