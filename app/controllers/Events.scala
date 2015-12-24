@@ -276,7 +276,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       Future.successful {
         eventService.findWithInvoice(id) map { x ⇒
-          roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
+          roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
             val orgs = user.person.organisations
             val eventType = eventTypeService.find(x.event.eventTypeId).get
             val fees = feeService.findByBrand(x.event.brandId)
@@ -286,9 +286,9 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
               Event.withFee(x.event, y.fee, eventType.maxHours)
             } getOrElse x.event
-            Ok(views.html.v2.event.details(user, brand, brands, orgs,
+            Ok(views.html.v2.event.details(user, view.brand, brands, orgs,
               EventView(event, x.invoice), eventType.name, printableFees))
-          } { (brand, brands) =>
+          } { (view, brands) =>
             val eventType = eventTypeService.find(x.event.eventTypeId).get
             val fees = feeService.findByBrand(x.event.brandId)
             val printableFees = fees.
@@ -297,7 +297,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
               Event.withFee(x.event, y.fee, eventType.maxHours)
             } getOrElse x.event
-            Ok(views.html.v2.event.details(user, brand.get, brands, List(),
+            Ok(views.html.v2.event.details(user, view.get.brand, brands, List(),
               EventView(event, x.invoice), eventType.name, printableFees))
           } {
             Redirect(routes.Dashboard.index())
@@ -333,12 +333,11 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-        val facilitators = License.allLicensees(brand.identifier).
-          map(l ⇒ (l.identifier, l.fullName)).sortBy(_._2)
-        Ok(views.html.v2.event.index(user, brand, brands, facilitators))
-      } { (brand, brands) =>
-        Ok(views.html.v2.event.index(user, brand.get, brands, List()))
+      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+        val facilitators = License.allLicensees(brandId).map(l ⇒ (l.identifier, l.fullName)).sortBy(_._2)
+        Ok(views.html.v2.event.index(user, view.brand, brands, facilitators))
+      } { (view, brands) =>
+        Ok(views.html.v2.event.index(user, view.get.brand, brands, List()))
       } { Redirect(routes.Dashboard.index()) }
   }
 

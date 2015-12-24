@@ -69,16 +69,16 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
   def index = SecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
-        roleDiffirentiator(user.account) { (brand, brands) =>
-          val licenses = licenseService.expiring(List(brand.identifier))
-          val events = unbilledEvents(brand)
-          Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+        roleDiffirentiator(user.account) { (view, brands) =>
+          val licenses = licenseService.expiring(List(view.brand.identifier))
+          val events = unbilledEvents(view.brand)
+          Ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
             licenses, events))
-        } { (brand, brands) =>
+        } { (view, brands) =>
           val events = eventService.findByFacilitator(
             user.account.personId,
             brandId = None)
-          Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
+          Ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
             upcomingEvents(events, brands),
             pastEvents(events, brands),
             unhandledEvaluations(events, brands)))
@@ -96,16 +96,16 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
    */
   def overview(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(id)) { (brand, brands) =>
-        val licenses = licenseService.expiring(List(brand.identifier))
-        val events = unbilledEvents(brand)
-        Ok(views.html.v2.dashboard.forBrandCoordinators(user, brand, brands,
+      roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
+        val licenses = licenseService.expiring(List(view.brand.identifier))
+        val events = unbilledEvents(view.brand)
+        Ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
           licenses, events))
-      } { (brand, brands) =>
+      } { (view, brands) =>
         val events = eventService.findByFacilitator(
           user.account.personId,
           brandId = Some(id))
-        Ok(views.html.v2.dashboard.forFacilitators(user, brand, brands,
+        Ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
           upcomingEvents(events, brands),
           pastEvents(events, brands),
           unhandledEvaluations(events, brands)))

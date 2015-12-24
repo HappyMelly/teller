@@ -23,7 +23,7 @@
  */
 package controllers
 
-import models.{Brand, UserAccount}
+import models.{BrandWithSettings, Brand, UserAccount}
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
@@ -40,32 +40,31 @@ trait Utilities extends Controller with Services {
   }
   
   protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
-                                  (coordinator: (Brand, List[Brand]) => Result)
-                                  (facilitator: (Option[Brand], List[Brand]) => Result)
+                                  (coordinator: (BrandWithSettings, List[Brand]) => Result)
+                                  (facilitator: (Option[BrandWithSettings], List[Brand]) => Result)
                                   (ordinaryUser: Result): Result = {
     if (account.isCoordinatorNow) {
-      val brands = brandService.findByCoordinator(account.personId).sortBy(_.name)
+      val brands = brandService.findByCoordinator(account.personId).sortBy(_.brand.name)
       brandId map { identifier =>
-        brands.find(_.identifier == identifier) map { brand =>
-          coordinator(brand, brands)
+        brands.find(_.brand.identifier == identifier) map { view =>
+          coordinator(view, brands.map(_.brand))
         } getOrElse Redirect(routes.Dashboard.index())    
       } getOrElse {
         if (brands.nonEmpty) {
-          coordinator(brands.head, brands)
+          coordinator(brands.head, brands.map(_.brand))
         } else Redirect(routes.Dashboard.index())
       }
     } else if (account.isFacilitatorNow) {
-      val licenses = licenseService.licenses(account.personId)
-      val brands = licenses.map(_.brand)
+      val brands = brandService.findByLicense(account.personId)
       brandId map { identifier =>
-        brands.find(_.identifier == identifier) map { brand =>
-          facilitator(Some(brand), brands)
+        brands.find(_.brand.identifier == identifier) map { view =>
+          facilitator(Some(view), brands.map(_.brand))
         } getOrElse Redirect(routes.Dashboard.index())
       } getOrElse {
         brands.length match {
-          case 1 => facilitator(Some(brands.head), brands)
+          case 1 => facilitator(Some(brands.head), brands.map(_.brand))
           case 0 => Redirect(routes.Dashboard.index())
-          case _ => facilitator(None, brands)
+          case _ => facilitator(None, brands.map(_.brand))
         }
       }
     } else ordinaryUser

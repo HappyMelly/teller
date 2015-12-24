@@ -73,7 +73,6 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
     "ownerId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
     "description" -> optional(text),
     "picture" -> optional(text),
-    "generateCert" -> boolean,
     "tagLine" -> optional(text),
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
@@ -87,17 +86,17 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))({
       (id, code, uniqueName, name, ownerId, description, picture,
-      generateCert, tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
+      tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
       recordInfo) ⇒
         {
           val brand = Brand(id, code, uniqueName, name, ownerId,
-            description, picture, generateCert, tagLine, webSite, blog, email, evaluationUrl,
+            description, picture, tagLine, webSite, blog, email, evaluationUrl,
             evaluationHookUrl, true, recordInfo)
           brand.socialProfile_=(profile)
           brand
         }
     })({ (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture, b.generateCert,
+      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture,
         b.tagLine, b.webSite, b.blog, b.contactEmail, b.socialProfile, b.evaluationUrl, b.evaluationHookUrl,
         b.recordInfo))
     }))

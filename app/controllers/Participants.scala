@@ -27,6 +27,7 @@ package controllers
 import models.UserRole.Role
 import models.UserRole.Role._
 import models._
+import models.brand.Settings
 import models.service.{EventService, PersonService, Services}
 import org.joda.time.DateTime
 import play.api.data.Forms._
@@ -35,7 +36,6 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import securesocial.core.RuntimeEnvironment
 import views.Countries
-import views.ViewHelpers.dateInterval
 
 import scala.concurrent.Future
 
@@ -298,10 +298,10 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-        Ok(views.html.v2.participant.index(user, brand, brands))
-      } { (brand, brands) =>
-        Ok(views.html.v2.participant.index(user, brand.get, brands))
+      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+        Ok(views.html.v2.participant.index(user, view.brand, brands))
+      } { (view, brands) =>
+        Ok(views.html.v2.participant.index(user, view.get.brand, brands))
       } { Redirect(routes.Dashboard.index()) }
   }
 
@@ -336,10 +336,10 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
    */
   def participantsByBrand(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.findWithCoordinators(brandId) map { x ⇒
-        val brand = x.brand
+      brandService.findWithCoordinators(brandId) map { view ⇒
+        val withSettings = brandService.findWithSettings(brandId).get
         val account = user.account
-        val coordinator = x.coordinators.exists(_._1.id == Some(account.personId))
+        val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -358,21 +358,21 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "person" -> data.person.identifier,
                 "event" -> data.event.identifier,
                 "certificate" -> Json.obj(
-                  "show" -> showCertificate(brand, data.event, data.status),
+                  "show" -> showCertificate(withSettings.settings, data.event, data.status),
                   "number" -> data.certificate)))
           }
         }
         val personId = account.personId
         val participants =
           if (coordinator & user.account.isCoordinatorNow) {
-            Participant.findByBrand(brand.id)
-          } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
-            val events = eventService.findByFacilitator(personId, brand.id).map(_.id.get)
+            Participant.findByBrand(withSettings.brand.id)
+          } else if (License.licensedSince(personId, brandId).nonEmpty) {
+            val events = eventService.findByFacilitator(personId, withSettings.brand.id).map(_.id.get)
             Participant.findEvaluationsByEvents(events)
           } else {
             List[ParticipantView]()
           }
-        Ok(Json.toJson(participants)).withSession("brandId" -> brand.id.get.toString)
+        Ok(Json.toJson(participants)).withSession("brandId" -> brandId.toString)
       } getOrElse Ok(Json.toJson(List[String]()))
   }
 
@@ -382,10 +382,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventService.find(eventId).map { event ⇒
-        val account = user.account
-        val x = brandService.findWithCoordinators(event.brandId).get
-        val brand = x.brand
-        val coordinator = x.coordinators.exists(_._1.id == Some(account.personId))
+        val view = brandService.findWithSettings(event.brandId).get
         implicit val participantViewWrites = new Writes[ParticipantView] {
           def writes(data: ParticipantView): JsValue = {
             Json.obj(
@@ -398,7 +395,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "person" -> data.person.identifier,
                 "event" -> data.event.identifier,
                 "certificate" -> Json.obj(
-                  "show" -> showCertificate(brand, data.event, data.status),
+                  "show" -> showCertificate(view.settings, data.event, data.status),
                   "number" -> data.certificate)))
           }
         }
@@ -457,12 +454,12 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Returns true if a link to certificate should be shown
-   * @param brand Brand
+   * @param settings Brand settings
    * @param event Event
    * @param status Evaluation status
    */
-  protected def showCertificate(brand: Brand, event: Event, status: Option[EvaluationStatus.Value]): Boolean = {
-    brand.generateCert && !event.free &&
+  protected def showCertificate(settings: Settings, event: Event, status: Option[EvaluationStatus.Value]): Boolean = {
+    settings.certificates && !event.free &&
       (status.isEmpty || status.exists(_ == EvaluationStatus.Pending) || status.exists(_ == EvaluationStatus.Approved))
   }
 

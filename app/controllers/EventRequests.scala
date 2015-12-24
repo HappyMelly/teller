@@ -36,8 +36,8 @@ with Utilities {
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user => Future.successful {
       val requests = eventRequestService.findByBrand(brandId)
-      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-        Ok(views.html.v2.eventRequest.index(user, brand, brands, requests))
+      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+        Ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
       } { (brand, brands) =>
         Redirect(routes.Dashboard.index())
       } {
