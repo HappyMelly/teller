@@ -36,13 +36,15 @@ import play.api.mvc.Action
 import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
 
+import scala.Option
+
 class Evaluations(environment: RuntimeEnvironment[ActiveUser])
-    extends EvaluationsController
-    with Security
-    with Integrations
-    with Services
-    with Activities
-    with Utilities {
+  extends EvaluationsController
+  with Security
+  with Integrations
+  with Services
+  with Activities
+  with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -72,7 +74,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       "createdBy" -> ignored(userName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))(
-      Evaluation.apply)(Evaluation.unapply))
+    Evaluation.apply)(Evaluation.unapply))
 
   /**
    * Show add page
@@ -99,22 +101,22 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       evaluationService.find(id).map { eval ⇒
         if (eval.approvable) {
           val evaluation = eval.approve
-            // recalculate ratings
-            Event.ratingActor ! evaluation.eventId
-            Facilitator.ratingActor ! evaluation.eventId
+          // recalculate ratings
+          Event.ratingActor ! evaluation.eventId
+          Facilitator.ratingActor ! evaluation.eventId
 
-            val log = activity(evaluation, user.person).approved.insert()
+          val log = activity(evaluation, user.person).approved.insert()
           sendApprovalConfirmation(user.person, evaluation, event)
 
-            jsonOk(Json.obj("date" -> evaluation.handled))
-          } else {
+          jsonOk(Json.obj("date" -> evaluation.handled))
+        } else {
           val error = eval.status match {
-              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
-              case _ ⇒ "error.evaluation.approve.approved"
-            }
-            jsonBadRequest(Messages(error))
+            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
+            case _ ⇒ "error.evaluation.approve.approved"
           }
-        }.getOrElse(NotFound)
+          jsonBadRequest(Messages(error))
+        }
+      }.getOrElse(NotFound)
   }
 
   /**
@@ -222,7 +224,9 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
             brand.get.generateCert,
             facilitator,
             endorsement))
-        } { Redirect(routes.Dashboard.index()) }
+        } {
+          Redirect(routes.Dashboard.index())
+        }
       } getOrElse NotFound
 
   }
@@ -288,6 +292,28 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Sends a batch request to all participants for a given list of evaluations.
+   * @@param evalIds[] - parameter that is passed as a form data
+   */
+  def sendBatchConfirmationRequest = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒ {
+      val optFormData = request.body.asFormUrlEncoded
+      val Some(evaluationIds) = optFormData.get.get("evalIds[]")
+      val setIds = evaluationIds.map(_.toLong).toSet
+
+      val completed = evaluationService.find(setIds).foldLeft(0) { case (counter, evaluation) =>
+        val hook = request.host + routes.Evaluations.confirm("").url
+        evaluation.sendConfirmationRequest(hook)
+        (counter + 1)
+      }
+
+      if (completed == setIds.size) {
+        jsonSuccess("Confirmation requests were sent")
+      } else jsonNotFound("Some or all evaluation(s) not found")
+    }
+  }
+
+  /**
    * Update an evaluation
    *
    * @param id Unique evaluation identifier
@@ -331,8 +357,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param event Related event
    */
   protected def sendApprovalConfirmation(approver: Person,
-    ev: Evaluation,
-    event: Event) = {
+                                         ev: Evaluation,
+                                         event: Event) = {
     brandService.findWithCoordinators(event.brandId) foreach { x ⇒
       participantService.find(ev.personId, ev.eventId) foreach { data ⇒
         val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
@@ -362,8 +388,8 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    * @param event Related event
    */
   protected def sendRejectionConfirmation(rejector: Person,
-    participant: Person,
-    event: Event) = {
+                                          participant: Person,
+                                          event: Event) = {
     brandService.findWithCoordinators(event.brandId) foreach { x ⇒
       val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
       val subject = s"Your ${x.brand.name} certificate"

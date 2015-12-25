@@ -35,28 +35,56 @@ function filterByEvent(oSettings, aData, iDataIndex) {
 }
 
 /**
+ * Filter evaluations by time
+ */
+function filterByTime(oSettings, aData, iDataIndex){
+    var index = 11; 
+    var filter = $('#past-future').find(':selected').val();
+    if(filter == 'all'){
+        return true;
+    } else if(filter == 'future'){
+        var date = new Date(aData[index].start);
+        return date > new Date();
+    } else {
+        var date = new Date(aData[index].end);
+        return date <= new Date();
+    }
+    return aData[index] == filter;
+}
+
+
+/**
  * Filter evaluations checking if they are pending, approved or rejected
  */
 function filterByStatus(oSettings, aData, iDataIndex) {
     var index = 10;
     var filter = $('#status').find(':selected').val();
-    if (filter == 'all') {
-        return true;
+    if(filter == 3){ //unconfirmed status
+      $('.resend').removeClass('hidden');
+    } else {
+        $('.resend').addClass('hidden');
+        if (filter == 'all') {
+            return true;
+        }
     }
     return aData[index] == filter;
 }
 
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 $.fn.dataTableExt.afnFiltering.push(filterByEvent);
+$.fn.dataTableExt.afnFiltering.push(filterByTime);
 
+/**
+ * Events to show in the filter dropdown.=
+ */
 function loadEventList(events) {
-    $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
+    $('#events').empty().append($("<option></option>").attr("value", "").text("Specific"));
     for(var i = 0; i < events.length; i++) {
         var event = events[i];
         $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
     }
+    $('#events').selectpicker('refresh');
 }
-
 
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
@@ -69,7 +97,8 @@ $(document).ready( function() {
         "bLengthChange": false,
         "ajax": {
             "url" : "participants/brand/" + currentBrand,
-            "dataSrc": ""
+            "dataSrc": "",
+            "deferRender": true
         },
         "order": [[ 6, "desc" ]],
         "columns": [
@@ -83,7 +112,9 @@ $(document).ready( function() {
             { "data": "participant" },
             { "data": "event" },
             { "data": "participant"},
-            { "data": "evaluation.status" }
+            { "data": "evaluation.status" },
+            { "data": "schedule" },
+            { "data": "evaluation"}
         ],
         "columnDefs": [{
                 "render": function(data) {
@@ -98,12 +129,13 @@ $(document).ready( function() {
                     }
                     return '<a href="' + data.url + '">' + data.title + '</a>';
                 },
-                "targets": 1,
-                "orderable": false
+                "targets": 1
             }, {
-                "targets": 2,
-                "orderable": false
+                "targets": 2
             }, {
+               "render" : function(data){ return data.formatted; },
+                "targets": 3
+            },{
                 "className": "evaluation-field",
                 "targets": [4, 5, 6, 7]
             },{
@@ -113,7 +145,6 @@ $(document).ready( function() {
             }, {
                 "render": function(data) { return drawCertificate(data); },
                 "targets": 7,
-                "orderable": false,
                 "className": "certificate"
             }, {
                 "render": function(data) { return data.id; },
@@ -138,14 +169,26 @@ $(document).ready( function() {
                 },
                 "visible": false,
                 "targets": 10
+            },{
+                "render": function(data){ return data; },
+                "visible": false,
+                "targets": 11
+            },{
+                "render": function(data){ 
+                    // evaluation data
+                    return data; },
+                "visible": false,
+                "targets": 12
             }
         ]
     });
+
     participantTable
         .api()
         .on('init.dt', function (e, settings, data) {
             loadEventList(events);
             initializeParticipantActions("table");
+            participantTable.fnDraw();
         });
 
     $("div.toolbar").html($('#filter-containter').html());
@@ -153,7 +196,12 @@ $(document).ready( function() {
     $('#status').on('change', function() {
         participantTable.fnDraw();
     });
+
     $("#events").on('change', function() {
+        participantTable.fnDraw();
+    });
+
+    $("#past-future").on('change', function(){
         participantTable.fnDraw();
     });
 
@@ -161,8 +209,15 @@ $(document).ready( function() {
         calculateAverageImpression(participantTable);
         initializeParticipantActions("table");
     });
+
     $('#exportLink').on('click', function() {
         buildExportLink(false)
     });
 
+    $('.resend').on('click',function(){
+       var distincts = participantTable._('tr',{"filter":"applied"}).map(function(object){
+            return object.evaluation.id;
+        });
+        resendEmailsToAll(distincts);
+    });
 });

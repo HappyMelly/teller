@@ -89,6 +89,7 @@ POST          /person/:personId/endorsements/add                             @co
 POST          /event/:eventId/endorsement/evaluation/:evaluationId           @controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
 POST          /evaluation/                                                   @controllers.Evaluations.create
+POST          /evaluation/confirmrequests/                                   @controllers.Evaluations.sendBatchConfirmationRequest
 GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 POST          /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long)
 POST          /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long)

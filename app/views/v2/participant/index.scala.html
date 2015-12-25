@@ -21,20 +21,30 @@
         <div class="row">
           <div class="col-md-12 content-block">
             <div id="filter-containter">
-              <div class="table-filters pull-right">
-                <div class="btn-group">
-                  <select id="events" class="input-sm form-control">
-                      <option value="">Select an event</option>
-                  </select>
+              <div class="table-filters pull-left">
+                <span>Sort by events:</span>
+                <div class="btn-group" style="width=auto">
+                    <select id="past-future" class="selectpicker" data-style="btn-details" data-width="auto">
+                      <option value="all">All</option>
+                      <option value="future" selected>Future</option>
+                      <option value="past">Past</option>
+                    </select>
                 </div>
                 <div class="btn-group">
-                  <select id="status" class="input-sm form-control">
-                      <option value="all"></option>
-                      <option value="3">Unconfirmed</option>
-                      <option value="0">Pending</option>
-                      <option value="1">Approved</option>
-                      <option value="2">Rejected</option>
+                  <select id="events" class="selectpicker" data-style="btn-details" data-live-search="true"></select>
+                </div>
+              </div>
+              <div class="table-filters pull-right">
+                <span>By handled status:</span>
+                <div class="btn-group" style="width=auto">
+                  <select id="status" class="selectpicker" data-style="btn-details" data-width="auto" title="All">
+                      <option value="all">All</option>
+                      <option value="3" data-icon="fa fa-thumb-tack">Unconfirmed</option>
+                      <option value="0" data-icon="fa fa-hourglass">Pending</option>
+                      <option value="1" data-icon="fa fa-thumbs-up">Approved</option>
+                      <option value="2" data-icon="fa fa-thumbs-down">Rejected</option>
                   </select>
+                  <a id="bulkResend" class="resend hidden" href="#">Resend emails to all</a>
                 </div>
               </div>
             </div>
@@ -44,11 +54,11 @@
                   <th width="10%">Participant</th>
                   <th width="15%">Event</th>
                   <th width="5%">Location</th>
-                  <th>Dates</th>
-                  <th width="5%" align="center" id="impression"></th>
-                  <th>Evaluation Date</th>
-                  <th>Handled Date</th>
-                  <th>Certificate</th>
+                  <th id="date">Dates</th>
+                  <th id="impression" width="5%" align="center" id="impression"></th>
+                  <th id="evaluation" >Evaluation Date</th>
+                  <th id="handled" >Handled Date</th>
+                  <th id="cert">Certificate</th>
                   <th>Event id </th>
                   <th></th>
                   <th></th>
@@ -62,4 +72,5 @@
 
     <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("participant/index.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("element/participants.js")" type="text/javascript"></script>
 }

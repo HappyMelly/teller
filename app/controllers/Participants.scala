@@ -35,16 +35,15 @@ import play.api.i18n.Messages
 import play.api.libs.json._
 import securesocial.core.RuntimeEnvironment
 import views.Countries
-import views.ViewHelpers.dateInterval
 
 import scala.concurrent.Future
 
 class Participants(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Activities
-    with Utilities {
+  extends JsonController
+  with Security
+  with Services
+  with Activities
+  with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -61,19 +60,19 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       "role" -> optional(text))({
       (firstName, lastName, birthday, email, city, country, role) ⇒
         ParticipantData(None, eventId, firstName, lastName, birthday, email,
-            Address(None, None, None, Some(city), None, None, country),
-            organisation = None, comment = None, role,
-            DateTime.now(), userName, DateTime.now(), userName)
-      })({
-        (p: ParticipantData) ⇒
-          Some((p.firstName, p.lastName, p.birthday, p.emailAddress,
-            p.address.city.getOrElse(""), p.address.countryCode, p.role))
-      }))
+          Address(None, None, None, Some(city), None, None, country),
+          organisation = None, comment = None, role,
+          DateTime.now(), userName, DateTime.now(), userName)
+    })({
+      (p: ParticipantData) ⇒
+        Some((p.firstName, p.lastName, p.birthday, p.emailAddress,
+          p.address.city.getOrElse(""), p.address.countryCode, p.role))
+    }))
   }
 
   /**
-    * HTML form mapping for creating and editing.
-    */
+   * HTML form mapping for creating and editing.
+   */
   def personForm(eventId: Long, editorName: String) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
@@ -103,21 +102,21 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       "role" -> optional(text))({
       (participantId, evaluationId, role) ⇒
         Participant(None, eventId, participantId, evaluationId,
-            certificate = None, issued = None, organisation = None,
-            comment = None, role = role)
-      })({
+          certificate = None, issued = None, organisation = None,
+          comment = None, role = role)
+    })({
       (p: Participant) ⇒ Some(p.personId, p.evaluationId, p.role)
-      }))
+    }))
   }
 
   /**
-    * Render a Create page
-    *
-    * @param eventId An identifier of the event to add participant to
-    */
+   * Render a Create page
+   *
+   * @param eventId An identifier of the event to add participant to
+   */
   def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
         val people = personService.findActive
         Future.successful(
           Ok(views.html.v2.participant.form(user, eventId, people,
@@ -126,86 +125,88 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Adds a new participant to the event from a list of people inside the Teller
-    *
-    * @param eventId Event identifier
-    */
+   * Adds a new participant to the event from a list of people inside the Teller
+   *
+   * @param eventId Event identifier
+   */
   def create(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      val form: Form[Participant] = existingPersonForm(eventId).bindFromRequest
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
+        val form: Form[Participant] = existingPersonForm(eventId).bindFromRequest
 
-      form.fold(
-        formWithErrors ⇒ {
-          val people = personService.findActive
-          Future.successful(
-            BadRequest(views.html.v2.participant.form(user, eventId, people,
-              newPersonForm(eventId, user.name), formWithErrors,
-              showExistingPersonForm = true)))
-        },
-        participant ⇒ {
-          participantService.find(participant.personId, eventId) match {
-            case Some(p) ⇒
-              val people = personService.findActive
-              Future.successful(
-                BadRequest(views.html.v2.participant.form(user, eventId, people,
-                  newPersonForm(eventId, user.name), form.withError("participantId", "error.participant.exist"),
-                  showExistingPersonForm = true)))
-            case _ ⇒
-              Participant.insert(participant)
-              val activityObject = Messages("activity.participant.create",
-                participant.person.get.fullName,
-                event.title)
-              val activity = Activity.create(user.name,
-                Activity.Predicate.Created,
-                activityObject)
-              val route = routes.Events.details(eventId).url
-              Future.successful(
-                Redirect(route).flashing("success" -> activity.toString))
-          }
-        })
+        form.fold(
+          formWithErrors ⇒ {
+            val people = personService.findActive
+            Future.successful(
+              BadRequest(views.html.v2.participant.form(user, eventId, people,
+                newPersonForm(eventId, user.name), formWithErrors,
+                showExistingPersonForm = true)))
+          },
+          participant ⇒ {
+            participantService.find(participant.personId, eventId) match {
+              case Some(p) ⇒
+                val people = personService.findActive
+                Future.successful(
+                  BadRequest(views.html.v2.participant.form(user, eventId, people,
+                    newPersonForm(eventId, user.name), form.withError("participantId", "error.participant.exist"),
+                    showExistingPersonForm = true)))
+              case _ ⇒
+                Participant.insert(participant)
+                val activityObject = Messages("activity.participant.create",
+                  participant.person.get.fullName,
+                  event.title)
+                val activity = Activity.create(user.name,
+                  Activity.Predicate.Created,
+                  activityObject)
+                val route = routes.Events.details(eventId).url
+                Future.successful(
+                  Redirect(route).flashing("success" -> activity.toString))
+            }
+          })
   }
 
   /**
-    * Adds a new person to the system and a new participant to the given event
-    *
-    * @param eventId Event identifier
-    */
+   * Adds a new person to the system and a new participant to the given event
+   *
+   * @param eventId Event identifier
+   */
   def createParticipantAndPerson(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
 
-      newPersonForm(eventId, user.name).bindFromRequest.fold(
-        formWithErrors ⇒ {
-          val people = personService.findActive
-          Future.successful(
-            BadRequest(views.html.v2.participant.form(user, eventId, people,
-              formWithErrors, existingPersonForm(eventId),
-              showExistingPersonForm = false)))
-        },
-        data ⇒ {
-          Participant.create(data)
-          val activityObject = Messages("activity.participant.create",
-            data.firstName + " " + data.lastName,
-            data.event.get.title)
-          val activity = Activity.create(user.name,
-            Activity.Predicate.Created,
-            activityObject)
-          val route = routes.Events.details(eventId).url
-          Future.successful(
-            Redirect(route).flashing("success" -> activity.toString))
-        })
+        newPersonForm(eventId, user.name).bindFromRequest.fold(
+          formWithErrors ⇒ {
+            val people = personService.findActive
+            Future.successful(
+              BadRequest(views.html.v2.participant.form(user, eventId, people,
+                formWithErrors, existingPersonForm(eventId),
+                showExistingPersonForm = false)))
+          },
+          data ⇒ {
+            Participant.create(data)
+            val activityObject = Messages("activity.participant.create",
+              data.firstName + " " + data.lastName,
+              data.event.get.title)
+            val activity = Activity.create(user.name,
+              Activity.Predicate.Created,
+              activityObject)
+            val route = routes.Events.details(eventId).url
+            Future.successful(
+              Redirect(route).flashing("success" -> activity.toString))
+          })
   }
 
   /**
-    * Delete a participant from the event
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    * @param ref An identifier of a page where a user should be redirected
-    * @return
-    */
+   * Delete a participant from the event
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   * @param ref An identifier of a page where a user should be redirected
+   * @return
+   */
   def delete(eventId: Long, personId: Long, ref: Option[String]) =
     AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
       implicit request ⇒
-        implicit handler ⇒ implicit user ⇒ implicit event =>
+        implicit handler ⇒ implicit user ⇒ implicit event ⇒
           participantService.find(personId, eventId).map { value ⇒
 
             val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
@@ -222,57 +223,31 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
     }
 
   /**
-    * Deletes the person who is a participant. Only virtual people could be
-    * deleted by this method
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
+   * Deletes the person who is a participant. Only virtual people could be
+   * deleted by this method
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   */
   def deletePerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      personService.find(personId) map { person ⇒
-        if (person.virtual) {
-          personService.delete(personId)
-          val log = activity(person, user.person).deleted.insert()
-          Future.successful(jsonOk(Json.obj("redirect" -> routes.Events.details(eventId).url)))
-        } else {
-          Future.successful(Forbidden("You are not allowed to delete this person"))
-        }
-      } getOrElse Future.successful(jsonNotFound("Unknown person"))
-
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
+        personService.find(personId) map { person ⇒
+          if (person.virtual) {
+            personService.delete(personId)
+            val log = activity(person, user.person).deleted.insert()
+            Future.successful(jsonOk(Json.obj("redirect" -> routes.Events.details(eventId).url)))
+          } else {
+            Future.successful(Forbidden("You are not allowed to delete this person"))
+          }
+        } getOrElse Future.successful(jsonNotFound("Unknown person"))
   }
 
   /**
-    * Returns the details of the given participant
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
-  def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request => implicit handler => implicit user => implicit event =>
-      participantService.find(personId, eventId) map { participant =>
-        val evaluation = participant.evaluationId map { evaluationId =>
-          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
-        } getOrElse None
-        val identical = evaluation.map { x =>
-          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
-            x.identical()
-          } else
-            None
-        } getOrElse None
-        val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
-        Future.successful(Ok(views.html.v2.participant.details(participant,
-          evaluation,
-          virtual,
-          user.account.isCoordinatorNow,
-          identical)))
-      } getOrElse Future.successful(BadRequest("Participant does not exist"))
-  }
-
-  /**
-    * Renders edit form for the person who is also a participant. Only virtual
-    * people could be edited through this form
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
+   * Renders edit form for the person who is also a participant. Only virtual
+   * people could be edited through this form
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   */
   def edit(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       personService.findComplete(personId) map { person ⇒
@@ -293,24 +268,53 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+   * Returns the details of the given participant
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   */
+  def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
+        participantService.find(personId, eventId) map { participant ⇒
+          val evaluation = participant.evaluationId map { evaluationId ⇒
+            evaluationService.findWithEvent(evaluationId).flatMap(x ⇒ Some(x.eval))
+          } getOrElse None
+          val identical = evaluation.map { x ⇒
+            if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
+              x.identical()
+            } else
+              None
+          } getOrElse None
+          val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
+          Future.successful(Ok(views.html.v2.participant.details(participant,
+            evaluation,
+            virtual,
+            user.account.isCoordinatorNow,
+            identical)))
+        } getOrElse Future.successful(BadRequest("Participant does not exist"))
+  }
+
+  /**
    * Renders list of participants
    * @param brandId Brand identifier
    */
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) ⇒
         Ok(views.html.v2.participant.index(user, brand, brands))
-      } { (brand, brands) =>
+      } { (brand, brands) ⇒
         Ok(views.html.v2.participant.index(user, brand.get, brands))
-      } { Redirect(routes.Dashboard.index()) }
+      } {
+        Redirect(routes.Dashboard.index())
+      }
   }
 
   /**
-    * Returns a list of participants without evaluations for a particular event
-    *
-    * @param eventId Event identifier
-    * @return
-    */
+   * Returns a list of participants without evaluations for a particular event
+   *
+   * @param eventId Event identifier
+   * @return
+   */
   def participants(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit val personWrites = new Writes[Person] {
       def writes(person: Person): JsValue = {
@@ -352,7 +356,11 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
                 "title" -> data.event.title,
                 "longTitle" -> data.event.longTitle),
               "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
-              "schedule" -> data.event.schedule.formatted,
+              "schedule" -> Json.obj(
+                "start" -> data.event.schedule.start,
+                "end" -> data.event.schedule.end,
+                "formatted" -> data.event.schedule.formatted
+              ),
               "evaluation" -> evaluation(data),
               "participant" -> Json.obj(
                 "person" -> data.person.identifier,
@@ -374,6 +382,40 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
           }
         Ok(Json.toJson(participants)).withSession("brandId" -> brand.id.get.toString)
       } getOrElse Ok(Json.toJson(List[String]()))
+  }
+
+  /**
+   * Updates the given person who is also a participant of the given event.
+   * Only virtual people could be updated this way.
+   * @param eventId Event identifier
+   * @param personId Person identifier
+   */
+  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request => implicit handler => implicit user => implicit event =>
+      personService.findComplete(personId) map { person ⇒
+        if (person.virtual) {
+          participantService.find(personId, eventId) map { participant =>
+            personForm(eventId, user.name).bindFromRequest.fold(
+              errors => Future.successful(
+                BadRequest(views.html.v2.participant.editForm(user, personId, eventId, errors))
+              ),
+              data => {
+                val updated = person.copy(firstName = data.firstName, lastName = data.lastName,
+                  email = data.emailAddress, birthday = data.birthday)
+                updated.address_=(data.address)
+                personService.update(updated)
+                Future.successful(
+                  Redirect(routes.Participants.person(eventId, personId)).flashing("success" -> "Participant was successfully updated"))
+              }
+            )
+          } getOrElse Future.successful(
+            Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown participant"))
+        } else {
+          Future.successful(
+            Redirect(routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this person"))
+        }
+      } getOrElse Future.successful(
+        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
   }
 
   /**
@@ -408,51 +450,18 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Renders the profile of the person who is a participant
+   * Renders the profile of the person who is a participant
    * @param eventId Event identifier
    * @param personId Person identifier
    */
   def person(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request => implicit handler => implicit user => implicit event =>
-      participantService.find(personId, eventId) map { participant =>
-        personService.find(participant.personId) map { person =>
-          Future.successful(Ok(views.html.v2.participant.personDetails(user, person, eventId)))
-        } getOrElse Future.successful(NotFound("Unknown person"))
-      } getOrElse Future.successful(NotFound("Unknown participant"))
-  }
-
-  /**
-    * Updates the given person who is also a participant of the given event.
-    * Only virtual people could be updated this way.
-   * @param eventId Event identifier
-    * @param personId Person identifier
-   */
-  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request => implicit handler => implicit user => implicit event =>
-      personService.findComplete(personId) map { person ⇒
-        if (person.virtual) {
-          participantService.find(personId, eventId) map { participant =>
-            personForm(eventId, user.name).bindFromRequest.fold(
-              errors => Future.successful(
-                BadRequest(views.html.v2.participant.editForm(user, personId, eventId, errors))
-              ),
-              data => {
-                val updated = person.copy(firstName = data.firstName, lastName = data.lastName,
-                  email = data.emailAddress, birthday = data.birthday)
-                updated.address_=(data.address)
-                personService.update(updated)
-                Future.successful(
-                  Redirect(routes.Participants.person(eventId, personId)).flashing("success" -> "Participant was successfully updated"))
-              }
-            )
-          } getOrElse Future.successful(
-            Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown participant"))
-        } else {
-          Future.successful(
-            Redirect(routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this person"))
-        }
-      } getOrElse Future.successful(
-        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
+    implicit request ⇒
+      implicit handler ⇒ implicit user ⇒ implicit event ⇒
+        participantService.find(personId, eventId) map { participant ⇒
+          personService.find(participant.personId) map { person ⇒
+            Future.successful(Ok(views.html.v2.participant.personDetails(user, person, eventId)))
+          } getOrElse Future.successful(NotFound("Unknown person"))
+        } getOrElse Future.successful(NotFound("Unknown participant"))
   }
 
   /**
@@ -467,10 +476,10 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Returns url to a profile of the person who is the participant
-    * @param person Person
-    * @param eventId Event identifier
-    */
+   * Returns url to a profile of the person who is the participant
+   * @param person Person
+   * @param eventId Event identifier
+   */
   private def personDetailsUrl(person: Person, eventId: Long): String = if (person.virtual)
     routes.Participants.person(eventId, person.identifier).url
   else
@@ -489,7 +498,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         Json.obj(
           "label" -> Messages("models.EvaluationStatus." + status),
           "value" -> status.id)),
-      "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.handled.map(_.toString))
+      "creation" -> data.formattedEvaluationDate,
+      "handled" -> data.formattedHandledDate)
   }
 }

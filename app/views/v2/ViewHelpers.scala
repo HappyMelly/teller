@@ -28,10 +28,15 @@ import org.joda.time.LocalDate
 import views.html.helper.FieldConstructor
 
 object ViewHelpersV2 {
-
   implicit val fields = FieldConstructor(views.html.v2.html.fieldConstructor.f)
   val asIs = FieldConstructor(views.html.v2.html.asIsConstructor.f)
   val narrow = FieldConstructor(views.html.v2.html.narrowFieldConstructor.f)
+
+  /**
+    */
+  def formatted(date: LocalDate): String = {
+    dateInterval(date, date)
+  }
 
   /**
    * Returns well-formatted date interval
@@ -43,10 +48,10 @@ object ViewHelpersV2 {
       start.toString("d MMM yyyy")
     else if (start.year() == end.year())
       if (start.monthOfYear() == end.monthOfYear())
-        start.toString("d — ") + end.toString("d MMM yyyy")
+        start.toString("d - ") + end.toString("d MMM yyyy")
       else
-        start.toString("d MMM — ") + end.toString("d MMM yyyy")
+        start.toString("d MMM - ") + end.toString("d MMM yyyy")
     else
-      start.toString("d MMM yyyy — ") + end.toString("d MMM yyyy")
+      start.toString("d MMM yyyy - ") + end.toString("d MMM yyyy")
   }
 }
