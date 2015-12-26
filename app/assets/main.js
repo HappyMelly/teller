@@ -21,6 +21,19 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+
+var DashboradPage = (function($){
+
+    return {
+        init: function(){
+            $('.js-link-target').scrollToEl();
+        }
+    }
+})(jQuery);
+
+
+
+
 function getPersonId() {
     return $('#personId').val();
 }
@@ -78,38 +91,10 @@ function initializeFileUploadField() {
     });
 }
 
-var DashboardPage = (function(){
-
-    return {
-        init: function(){
-            this.assignEvents();
-
-        },
-        assignEvents: function(){
-            var self = this;
-
-            $('body')
-                .on('click', '.js-link-target', function(e){
-                    var $this = $(this),
-                        target = $this.data('target');
-
-                    self.scrollToTarget('#' + target);
-                    e.preventDefault();
-                })
-        },
-        scrollToTarget: function(target){
-            var $target = $(target);
-
-            if (!$target.length) return false;
-
-            $('html, body').animate({
-                scrollTop: $target.offset().top
-            }, 400);
-        }
-    };
-})();
 
 $(document).ready(function() {
+
+    DashboradPage.init();
 
 
     $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
@@ -118,5 +103,5 @@ $(document).ready(function() {
     }
     initializeFileUploadField();
 
-    DashboardPage.init();
+
 });

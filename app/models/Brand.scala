@@ -26,15 +26,18 @@ package models
 
 import java.text.Collator
 import java.util.Locale
-import models.brand.CertificateTemplate
+import models.brand.Settings
 import models.database._
 import models.service._
-import org.joda.time.{ LocalDate, DateTime }
+import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.Crypto
+
 import scala.util.Random
+
+case class BrandWithSettings(brand: Brand, settings: Settings)
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -46,7 +49,6 @@ case class Brand(id: Option[Long],
     ownerId: Long,
     description: Option[String],
     picture: Option[String],
-    generateCert: Boolean = false,
     tagLine: Option[String],
     webSite: Option[String],
     blog: Option[String],
@@ -154,25 +156,15 @@ object Brand {
   }
 
   /**
-   * Returns true if and only if a user is allowed to manage this brand.
-   * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
-   *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
-   *  license holders.
-   */
-  def canManage(brandId: Long, user: UserAccount): Boolean = DB.withSession {
-    implicit session ⇒
-      findByUser(user).exists(_.id == Some(brandId))
-  }
-
-  /**
    * Returns a list of all brands for a specified user which he could facilitate
    * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
    *  license holders.
+   *  @deprecated
    */
   def findByUser(user: UserAccount): List[Brand] = DB.withSession { implicit session ⇒
     val facilitatedBrands = LicenseService.get.activeLicenses(user.personId).map(_.brand)
-    BrandService.get.findByCoordinator(user.personId).union(facilitatedBrands).distinct.sortBy(_.name)
+    BrandService.get.findByCoordinator(user.personId).map(_.brand).union(facilitatedBrands).distinct.sortBy(_.name)
   }
 
   def find(code: String): Option[BrandView] = DB.withSession { implicit session ⇒

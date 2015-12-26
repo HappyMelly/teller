@@ -68,10 +68,10 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def index(brandId: Long) = SecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
-        Ok(views.html.v2.statistics.index(user, brand, brands))
-      } { (brand, brands) =>
-        Ok(views.html.v2.statistics.index(user, brand.get, brands))
+      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+        Ok(views.html.v2.statistics.index(user, view.brand, brands))
+      } { (view, brands) =>
+        Ok(views.html.v2.statistics.index(user, view.get.brand, brands))
       } { Redirect(routes.Dashboard.index()) }
   }
 

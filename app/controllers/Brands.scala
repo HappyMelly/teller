@@ -25,7 +25,7 @@
 package controllers
 
 import controllers.Forms._
-import fly.play.s3.{ BucketFile, S3Exception }
+import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
@@ -38,7 +38,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Json, Writes }
+import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 import services._
@@ -47,74 +47,26 @@ import scala.concurrent.Future
 import scala.io.Source
 
 class Brands(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Activities {
+  extends JsonController
+  with Security
+  with Services
+  with Activities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 
-  /** HTML form mapping for creating and editing. */
-  def brandsForm(userName: String) = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "code" -> nonEmptyText.verifying(
-      pattern("[A-Z0-9]*".r,
-        "constraint.brand.code",
-        "constraint.brand.code.error"),
-      maxLength(5)),
-    "uniqueName" -> nonEmptyText.verifying(
-      pattern("[A-Za-z0-9._]*".r,
-        "constraint.brand.code",
-        "constraint.brand.uniqueName.error"),
-      maxLength(25)),
-    "name" -> nonEmptyText,
-    "ownerId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
-    "description" -> optional(text),
-    "picture" -> optional(text),
-    "generateCert" -> boolean,
-    "tagLine" -> optional(text),
-    "webSite" -> optional(webUrl),
-    "blog" -> optional(webUrl),
-    "email" -> play.api.data.Forms.email,
-    "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
-    "evaluationUrl" -> optional(webUrl),
-    "evaluationHookUrl" -> optional(webUrl),
-    "recordInfo" -> mapping(
-      "created" -> ignored(DateTime.now()),
-      "createdBy" -> ignored(userName),
-      "updated" -> ignored(DateTime.now()),
-      "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))({
-      (id, code, uniqueName, name, ownerId, description, picture,
-      generateCert, tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
-      recordInfo) ⇒
-        {
-          val brand = Brand(id, code, uniqueName, name, ownerId,
-            description, picture, generateCert, tagLine, webSite, blog, email, evaluationUrl,
-            evaluationHookUrl, true, recordInfo)
-          brand.socialProfile_=(profile)
-          brand
-        }
-    })({ (b: Brand) ⇒
-      Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture, b.generateCert,
-        b.tagLine, b.webSite, b.blog, b.contactEmail, b.socialProfile, b.evaluationUrl, b.evaluationHookUrl,
-        b.recordInfo))
-    }))
-
   /** Shows all brands **/
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val brands = models.Brand.findAllWithCoordinator
-      Ok(views.html.brand.index(user, brands))
+  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val brands = models.Brand.findAllWithCoordinator
+    Ok(views.html.v2.brand.index(user, brands))
   }
 
   /**
-   * Activates/deactivates the given brand
-   *
-   * @param id Product id
-   */
+    * Activates/deactivates the given brand
+    *
+    * @param id Product id
+    */
   def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
@@ -136,10 +88,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Render an add form
-   *
-   * @return
-   */
+    * Render an add form
+    *
+    * @return
+    */
   def add = SecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val people = personService.findActive
@@ -147,8 +99,8 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Create a new brand
-   */
+    * Create a new brand
+    */
   def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
@@ -175,7 +127,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
                 val log = activity(brand, user.person).created.insert()
                 Redirect(routes.Brands.index()).flashing("success" -> log.toString)
               }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.brand.form(user, None, people,
+                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.v2.brand.form(user, None, people,
                   form.withError("picture", "Image cannot be temporary saved")))
               }
             }.getOrElse {
@@ -188,10 +140,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Deletes the given brand
-   *
-   * @param id Brand identifier
-   */
+    * Deletes the given brand
+    *
+    * @param id Brand identifier
+    */
   def delete(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { brand ⇒
@@ -206,10 +158,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Deletes picture in the given brand
-   *
-   * @param id Brand string identifier
-   */
+    * Deletes picture in the given brand
+    *
+    * @param id Brand string identifier
+    */
   def deletePicture(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id).map { brand ⇒
@@ -224,10 +176,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders a brand page of the given brand
-   *
-   * @param id Brand identifier
-   */
+    * Renders a brand page of the given brand
+    *
+    * @param id Brand identifier
+    */
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     brandService.find(id) map { brand ⇒
       val links = brandService.links(id)
@@ -237,37 +189,53 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders tab for the given brand
-   * @param id Brand identifier
-   * @param tab Tab identifier
-   */
-  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        tab match {
-          case "team" ⇒
-            val members = brandService.coordinators(id).sortBy(_._1.fullName)
-            val people = personService.findActive.filterNot(x ⇒ members.contains(x))
-            Ok(views.html.v2.brand.tabs.team(id, members, people))
-          case "templates" ⇒
-            val templates = certificateService.findByBrand(id)
-            Ok(views.html.v2.brand.tabs.templates(id, templates))
-          case "testimonials" ⇒
-            val testimonials = brandService.testimonials(id)
-            Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
-          case "types" ⇒
-            val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
-            Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
-          case _ ⇒
-            val products = productService.findByBrand(id)
-            Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
-        }
+    * Renders tab for the given brand
+    * @param id Brand identifier
+    * @param tab Tab identifier
+    */
+  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      tab match {
+        case "testimonials" ⇒
+          val testimonials = brandService.testimonials(id)
+          Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
+        case _ ⇒
+          val products = productService.findByBrand(id)
+          Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
+      }
   }
 
   /**
-   * Adds new coordinator to the given brand
-   * @param id Brand identifier
-   */
+    * Renders coordinator tab for the given brand
+    * @param id Brand identifier
+    * @param tab Tab identifier
+    */
+  def renderCoordinatorTabs(id: Long, tab: String)  = SecuredBrandAction(id) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      tab match {
+        case "team" ⇒
+          val members = brandService.coordinators(id).sortBy(_._1.fullName)
+          val people = personService.findActive.filterNot(x ⇒ members.contains(x))
+          Ok(views.html.v2.brand.tabs.team(id, members, people))
+        case "templates" ⇒
+          val templates = certificateService.findByBrand(id)
+          Ok(views.html.v2.brand.tabs.templates(id, templates))
+        case "types" ⇒
+          val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
+          Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
+        case _ =>
+          brandService.findWithSettings(id).map { view =>
+            Ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
+          }.getOrElse {
+            Ok("Unknown brand")
+          }
+      }
+  }
+
+  /**
+    * Adds new coordinator to the given brand
+    * @param id Brand identifier
+    */
   def addCoordinator(id: Long) = SecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val data = Form(single("personId" -> longNumber(min = 1)))
     data.bindFromRequest.fold(
@@ -294,10 +262,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Removes the given coordinator from the given brand
-   * @param id Brand id
-   * @param personId Person id
-   */
+    * Removes the given coordinator from the given brand
+    * @param id Brand id
+    * @param personId Person id
+    */
   def removeCoordinator(id: Long, personId: Long) = AsyncSecuredBrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { x ⇒
@@ -316,11 +284,11 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Turns on a notification of the given type
-   * @param id Brand id
-   * @param personId Person id
-   * @param notification Notification type
-   */
+    * Turns on a notification of the given type
+    * @param id Brand id
+    * @param personId Person id
+    * @param notification Notification type
+    */
   def turnNotificationOff(id: Long,
                           personId: Long,
                           notification: String) = SecuredBrandAction(id) {
@@ -331,11 +299,11 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Turns off a notification of the given type
-   * @param id Brand id
-   * @param personId Person id
-   * @param notification Notification type
-   */
+    * Turns off a notification of the given type
+    * @param id Brand id
+    * @param personId Person id
+    * @param notification Notification type
+    */
   def turnNotificationOn(id: Long,
                          personId: Long,
                          notification: String) = SecuredBrandAction(id) {
@@ -346,10 +314,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders a Brand edit page
-   *
-   * @param id Brand identifier
-   */
+    * Renders a Brand edit page
+    *
+    * @param id Brand identifier
+    */
   def edit(id: Long) = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       brandService.find(id) map { brand ⇒
@@ -359,11 +327,55 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
       } getOrElse NotFound(views.html.notFoundPage(request.path))
   }
 
+  /** HTML form mapping for creating and editing. */
+  def brandsForm(userName: String) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "code" -> nonEmptyText.verifying(
+      pattern("[A-Z0-9]*".r,
+        "constraint.brand.code",
+        "constraint.brand.code.error"),
+      maxLength(5)),
+    "uniqueName" -> nonEmptyText.verifying(
+      pattern("[A-Za-z0-9._]*".r,
+        "constraint.brand.code",
+        "constraint.brand.uniqueName.error"),
+      maxLength(25)),
+    "name" -> nonEmptyText,
+    "ownerId" -> nonEmptyText.transform(_.toLong, (l: Long) ⇒ l.toString),
+    "description" -> optional(text),
+    "picture" -> optional(text),
+    "tagLine" -> optional(text),
+    "webSite" -> optional(webUrl),
+    "blog" -> optional(webUrl),
+    "email" -> play.api.data.Forms.email,
+    "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
+    "evaluationUrl" -> optional(webUrl),
+    "evaluationHookUrl" -> optional(webUrl),
+    "recordInfo" -> mapping(
+      "created" -> ignored(DateTime.now()),
+      "createdBy" -> ignored(userName),
+      "updated" -> ignored(DateTime.now()),
+      "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))({
+    (id, code, uniqueName, name, ownerId, description, picture,
+     tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
+     recordInfo) ⇒ {
+      val brand = Brand(id, code, uniqueName, name, ownerId,
+        description, picture, tagLine, webSite, blog, email, evaluationUrl,
+        evaluationHookUrl, true, recordInfo)
+      brand.socialProfile_=(profile)
+      brand
+    }
+  })({ (b: Brand) ⇒
+    Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture,
+      b.tagLine, b.webSite, b.blog, b.contactEmail, b.socialProfile, b.evaluationUrl, b.evaluationHookUrl,
+      b.recordInfo))
+  }))
+
   /**
-   * Updates the given brand
-   *
-   * @param id Brand identifier
-   */
+    * Updates the given brand
+    *
+    * @param id Brand identifier
+    */
   def update(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
@@ -399,7 +411,7 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
                     "success" -> log.toString)
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒
-                    BadRequest(views.html.brand.form(user, Some(id), people,
+                    BadRequest(views.html.v2.brand.form(user, Some(id), people,
                       form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                 }
               }.getOrElse {
@@ -414,10 +426,10 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Retrieves and caches an image of the given brand
-   *
-   * @param code Brand string identifier
-   */
+    * Retrieves and caches an image of the given brand
+    *
+    * @param code Brand string identifier
+    */
   def picture(code: String) = Action.async {
     val cached = Cache.getAs[Array[Byte]](Brand.cacheId(code))
     if (cached.isDefined) {
@@ -443,13 +455,13 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Returns a list of managed events for the given brand and current user
-   *
-   * @param brandId Brand id
-   * @param future If true, returns only future events; if false, only past
-   */
+    * Returns a list of managed events for the given brand and current user
+    *
+    * @param brandId Brand id
+    * @param future If true, returns only future events; if false, only past
+    */
   def events(brandId: Long,
-    future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) {
+             future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) {
     implicit request ⇒
       implicit handler ⇒ implicit user ⇒
         implicit val eventWrites = new Writes[Event] {

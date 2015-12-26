@@ -198,7 +198,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
       val people = personService.find(licenses.map(_.licenseeId))
       PeopleCollection.addresses(people)
       Future.successful {
-        roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
+        roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get
             val lastMonth = LocalDate.now().minusMonths(1)
@@ -209,8 +209,8 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             }
             (license, person, data, joinedLastMonth, leftLastMonth)
           }
-          Ok(views.html.v2.facilitator.forBrandCoordinators(user, brand, brands, facilitators))
-        } { (brand, brands) =>
+          Ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
+        } { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get
             val sameCountry = person.address.countryCode == user.person.address.countryCode
@@ -220,7 +220,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             }
             (license, person, data, sameCountry, isNew)
           }
-          Ok(views.html.v2.facilitator.forFacilitators(user, brand.get, brands, facilitators))
+          Ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
           Redirect(routes.Dashboard.index())
         }

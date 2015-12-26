@@ -25,7 +25,7 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
-import mail.reminder.{ExperimentReminder, EvaluationReminder, ProfileStrengthReminder, EventReminder}
+import mail.reminder._
 import services.{TellerRoutesService, LoginIdentityService}
 import models.{Facilitator, ActiveUser}
 import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
@@ -145,6 +145,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
         if (now.getDayOfMonth == 1) {
           ProfileStrengthReminder.sendToFacilitators()
           ExperimentReminder.sendStatus()
+          BrandReminder.sendLicenseExpirationReminder()
         }
       }
   }

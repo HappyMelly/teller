@@ -1,0 +1,59 @@
+@(user: ActiveUser, brands: List[BrandView])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+
+@import models.UserRole.Role._
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@v2.main("Brands", "brands", user) {
+    <div class="row page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 content-block">
+                    @v2.html.indexPageHeader("Brands") {
+                        @restrict(handler, List(as(Admin.toString))) {
+                            <a class="btn btn-primary pull-right" href="@routes.Brands.add()"> Add Brand</a>
+                        }
+                    }
+                    <div id="filter-container">
+                        <div class="table-filters">
+                            <span>Filter by status: </span>
+                            <div class="filter">
+                                <a href="#" data-type="all">All</a>&nbsp;<span class="counter">@brands.length</span>
+                            </div>
+                            <div class="filter">
+                                <a href="#" class="active" data-type="active">Active</a>&nbsp;<span class="counter">@brands.count(_.brand.active)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <table id="brands" class="datatables table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Owner</th>
+                                @restrict(handler, List(as(Admin.toString))) {
+                                    <th></th>
+                                }
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for(brand <- brands) {
+                            <tr @if(!brand.brand.active) { class="inactive" title="Deactivated" }>
+                                <td><a href="@routes.Brands.details(brand.brand.id.get)">@brand.brand.name</a></td>
+                                <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
+                                @restrict(handler, List(as(Admin.toString))) {
+                                    <td><a href="@routes.Brands.edit(brand.brand.id.get)" class="font-sm"> Edit</a></td>
+                                }
+                                <td>@brand.brand.active</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="@routes.Assets.at("css/brand.min.css")">
+    <script src="@routes.Assets.at("brand/index.js")" type="text/javascript"></script>
+}

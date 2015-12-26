@@ -26,7 +26,7 @@ package controllers
 
 import models.UserRole._
 import models._
-import models.service.{EventService, Services}
+import models.service.{BrandWithCoordinators, EventService, Services}
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
@@ -210,16 +210,16 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
           (true, personService.findEndorsementByEvaluation(id, personId))
         else
           (false, None)
-        roleDiffirentiator(user.account, Some(x.event.brandId)) { (brand, brands) =>
-          Ok(views.html.v2.evaluation.details(user, brand, brands, x,
+        roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
+          Ok(views.html.v2.evaluation.details(user, view.brand, brands, x,
             participant.fullName,
-            brand.generateCert,
+            view.settings.certificates,
             facilitator,
             endorsement))
-        } { (brand, brands) =>
-          Ok(views.html.v2.evaluation.details(user, brand.get, brands, x,
+        } { (view, brands) =>
+          Ok(views.html.v2.evaluation.details(user, view.get.brand, brands, x,
             participant.fullName,
-            brand.get.generateCert,
+            view.get.settings.certificates,
             facilitator,
             endorsement))
         } { Redirect(routes.Dashboard.index()) }
@@ -333,23 +333,24 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   protected def sendApprovalConfirmation(approver: Person,
     ev: Evaluation,
     event: Event) = {
-    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
+    brandService.findWithSettings(event.brandId) foreach { view =>
+      val coordinators = brandService.coordinators(event.brandId)
       participantService.find(ev.personId, ev.eventId) foreach { data ⇒
-        val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
-        if (data.certificate.isEmpty && x.brand.generateCert && !event.free) {
+        val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
+        if (data.certificate.isEmpty && view.settings.certificates && !event.free) {
           val cert = new Certificate(ev.handled, event, ev.participant)
-          cert.generateAndSend(x, approver)
+          cert.generateAndSend(BrandWithCoordinators(view.brand, coordinators), approver)
           data.copy(certificate = Some(cert.id), issued = cert.issued).update
         } else if (data.certificate.isEmpty) {
-          val body = mail.templates.evaluation.html.approvedNoCert(x.brand, ev.participant, approver).toString()
-          val subject = s"Your ${x.brand.name} event's evaluation approval"
+          val body = mail.templates.evaluation.html.approvedNoCert(view.brand, ev.participant, approver).toString()
+          val subject = s"Your ${view.brand.name} event's evaluation approval"
           email.send(Set(ev.participant),
             Some(event.facilitators.toSet),
             Some(bcc.toSet),
-            subject, body, from = x.brand.name, richMessage = true, None)
+            subject, body, from = view.brand.name, richMessage = true, None)
         } else {
           val cert = new Certificate(ev.handled, event, ev.participant, renew = true)
-          cert.send(x, approver)
+          cert.send(BrandWithCoordinators(view.brand, coordinators), approver)
         }
       }
     }
@@ -386,7 +387,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       val events = EventService.get.findByParameters(
         brandId = None,
         archived = Some(false))
-      events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
+      events.filter(e ⇒ brands.exists(_.brand.id == Some(e.brandId)))
     } else {
       List[Event]()
     }

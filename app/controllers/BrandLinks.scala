@@ -24,13 +24,12 @@
 package controllers
 
 import models.ActiveUser
-import models.UserRole.DynamicRole
 import models.brand.BrandLink
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
+import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
 
 class BrandLinks(environment: RuntimeEnvironment[ActiveUser])

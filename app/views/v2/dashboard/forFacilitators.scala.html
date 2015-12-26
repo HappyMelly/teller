@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-  activeBrand: Option[Brand],
+  activeBrand: Option[BrandWithSettings],
   brands: List[Brand],
   future: List[(Event, Option[Brand])],
   past: List[(Event, Option[Brand])],
@@ -8,8 +8,8 @@
   handler: AuthorisationHandler)
 
 @v2.main("Home", "", user) {
-  @activeBrand.map { brand =>
-    @v2.element.brandHeader(brand, brands, facilitator = true){
+  @activeBrand.map { view =>
+    @v2.element.brandHeader(view.brand, brands, facilitator = true){
       <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
     }
   }.getOrElse {

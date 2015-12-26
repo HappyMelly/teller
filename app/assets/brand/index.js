@@ -22,17 +22,50 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+/**
+ * Filter brands by status
+ */
+function filterByStatus(oSettings, aData, iDataIndex) {
+    var type = $('.filter > a.active').data('type');
+    switch(type) {
+        case 'active':
+            return aData[3] == 'true';
+        default:
+            return true;
+    }
+}
+
 $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
-    $('.datatables').each(function() {
-        $(this).dataTable( {
-            "iDisplayLength": 25,
-            "asStripeClasses":[],
-            "aaSorting": [],
-            "bLengthChange": false,
-            "order": [[ 0, "asc" ]]
-        });
+    $.fn.dataTableExt.afnFiltering.push(filterByStatus);
+
+    var brands = $('#brands').dataTable({
+        "sDom": '<"toolbar">rtip',
+        "iDisplayLength": 25,
+        "asStripeClasses":[],
+        "aaSorting": [],
+        "bLengthChange": false,
+        "order": [[ 0, "asc" ]],
+        "columnDefs": [{
+            "targets": 2,
+            "bSortable": false
+        }, {
+            "targets": 3,
+            "visible": false
+        }]
     });
+
+    $("div.toolbar").html($('#filter-container').html());
+    $('#filter-container').empty();
+
+    $('.filter > a').on('click', function(e) {
+        e.preventDefault();
+        $('.filter > a').removeClass('active');
+        $(this).addClass('active');
+        brands.fnDraw();
+    });
+    brands.fnDraw();
+
 });

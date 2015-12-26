@@ -69,7 +69,6 @@ class LicenseService extends Services {
   /**
    * Returns active license for the given person and brand if it exists
    *
-   * @TODO: add tests
    * @param brandId Brand identifier
    * @param personId Person identifier
    */
@@ -160,7 +159,15 @@ class LicenseService extends Services {
    * Returns a list of content licenses for the given person
    * @param personId Person identifier
    */
-  def licenses(personId: Long): List[LicenseView] = DB.withSession {
+  def licenses(personId: Long): List[License] = DB.withSession { implicit session ⇒
+    licenses.filter(_.licenseeId === personId).list
+  }
+
+  /**
+    * Returns a list of content licenses for the given person
+    * @param personId Person identifier
+    */
+  def licensesWithBrands(personId: Long): List[LicenseView] = DB.withSession {
     implicit session ⇒
       val query = for {
         license ← licenses if license.licenseeId === personId
@@ -176,19 +183,17 @@ class LicenseService extends Services {
    * Returns a list of people who are licensed for the given brand on the given
    * date, usually today
    *
-   * @TODO add tests
    * @param brandId Brand id
    * @param date Date of interest
    */
-  def licensees(brandId: Long, date: LocalDate = LocalDate.now()): List[Person] =
-    DB.withSession {
-      implicit session: Session ⇒
-        val query = for {
-          license ← licenses if license.start <= date && license.end >= date && license.brandId === brandId
-          licensee ← license.licensee if licensee.active === true
-        } yield licensee
-        query.sortBy(_.lastName.toLowerCase).list
-    }
+  def licensees(brandId: Long, date: LocalDate = LocalDate.now()): List[Person] = DB.withSession {
+    implicit session: Session ⇒
+      val query = for {
+        license ← licenses if license.start <= date && license.end >= date && license.brandId === brandId
+        licensee ← license.licensee if licensee.active === true
+      } yield licensee
+      query.sortBy(_.lastName.toLowerCase).list
+  }
 
   /**
    * Updates the given license in the database.

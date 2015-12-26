@@ -202,7 +202,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
     * @param coordinatorId Coordinator identifier
     */
   protected def coordinatedBrands(coordinatorId: Long): List[(Long, String)] =
-    brandService.findByCoordinator(coordinatorId).map(x => (x.identifier, x.name))
+    brandService.findByCoordinator(coordinatorId).map(x => (x.brand.identifier, x.brand.name))
 
   /**
     * Creates an account with facilitator access
