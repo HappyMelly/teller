@@ -28,7 +28,7 @@
     <td>
       <p>A JSON array of product objects, with properties:</p>
       <ul>
-        <li><code>href</code> - URL of the <a href="#product">product details</a> resource, excluding protocol/host and starting with <code>/api</code></li>
+        <li><code>id</code></li>
         <li><code>title</code></li>
         <li><code>subtitle</code></li>
         <li><code>image</code> - URL of a product's image, excluding protocol/host</li>
@@ -54,6 +54,7 @@
      <th>Example response</th>
     <td><pre>
 [ {
+  "id" : 15,
   "title" : "#Workout",
   "subtitle" : "Engage People, Improve Work, Delight Clients",
   "image" : "/product/15/picture",
@@ -64,12 +65,14 @@
   } ],
   "category" : "Books"
 }, {
+  "id" : 17,
   "title" : "Collaboration Superpowers",
   "subtitle" : "Stories of remote teams doing great things",
   "image" : "/product/17/picture",
   "brands" : [ ],
   "category" : "Books"
 }, {
+  "id" : 12,
   "title" : "Dare Devils",
   "subtitle" : null,
   "image" : "/product/12/picture",
@@ -80,6 +83,7 @@
   } ],
   "category" : "Conferences"
 }, {
+  "id": 11,
   "title" : "Dare Festival",
   "subtitle" : "More Happy Workers!",
   "image" : "/product/11/picture",

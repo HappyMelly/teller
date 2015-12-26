@@ -41,6 +41,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
   implicit val productWithBrandsWrites = new Writes[ProductView] {
     def writes(obj: ProductView): JsValue = {
       Json.obj(
+        "id" -> obj.product.id,
         "title" -> obj.product.title,
         "subtitle" -> obj.product.subtitle,
         "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
