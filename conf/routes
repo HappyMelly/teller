@@ -56,6 +56,8 @@ POST          /brand/:id/coordinator/:personId/type/:notification/off        @co
 POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 GET           /brand/:id/eventrequests                                       @controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             @controllers.EventRequests.details(id: Long, requestId: Long)
+POST          /brand/:id/settings/licensereminder/off                        @controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
+POST          /brand/:id/settings/licensereminder/on                         @controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 
 POST          /brand/:brandId/link                                           @controllers.BrandLinks.create(brandId: Long)
 DELETE        /brand/:brandId/link/:id                                       @controllers.BrandLinks.remove(brandId: Long, id: Long)

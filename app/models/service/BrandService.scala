@@ -313,6 +313,14 @@ class BrandService extends Services {
   }
 
   /**
+    * Update brand settings in database
+    * @param value Brand settings
+    */
+  def updateSettings(value: Settings): Unit = DB.withSession { implicit session =>
+    settings.filter(_.brandId === value.brandId).update(value)
+  }
+
+  /**
    * Updates brand testimonial in database
    *
    * @param testimonial Testimonital to update

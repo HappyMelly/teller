@@ -77,17 +77,23 @@
                                 </li>
                             </ul>
                         </li>
-                        <li class="subgroup">Settings
-                            <ul class="nav">
-                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
-                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
-                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
-                                    Certificate Templates</a></li>
-                                <li><a href="#integration" role="tab" data-toggle="tab">
-                                    Integration</a>
-                                </li>
-                            </ul>
-                        </li>
+                        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                            <li class="subgroup">Settings
+                                <ul class="nav">
+                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
+                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
+                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
+                                        Certificate Templates</a></li>
+                                    <li><a href="#integration" role="tab" data-toggle="tab">
+                                        Integration</a>
+                                    </li>
+                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "licenseExpiration")"
+                                        href="#licenseExpiration" role="tab" data-toggle="tab">
+                                            License Expiration Reminder</a> </li>
+                                </ul>
+                            </li>
+                        }
+
                     </ul>
                 </div>
             </div>
@@ -109,11 +115,13 @@
                         <dd>@brand.evaluationHookUrl.getOrElse("none")</dd>
                     </dl>
                 </div>
+                <div class="tab-pane" id="licenseExpiration"></div>
             </div>
             <div class="right pull-right">
                 <div class="panel panel-success" id="completionWidget"></div>
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="@routes.Assets.at("css/brand.min.css")">
     <script src="@routes.Assets.at("brand/details.js")" type="text/javascript"></script>
 }
