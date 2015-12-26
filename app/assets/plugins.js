@@ -19,13 +19,33 @@
     ScrollToEl.prototype.assignEvents = function (e) {
         var self = this;
 
-        self.$el.on('click', function(e){
-                var $this = $(this),
-                    target = $this.data('target');
+        self.$el.on('click', function (e) {
+            var $this = $(this),
+                target = $this.data('target');
 
-                self.scrollToTarget('#' + target);
-                e.preventDefault();
-            })
+            if (!self.isTargetValid(target)){
+                return false;
+            }
+
+            self.scrollToTarget('#' + target);
+            e.preventDefault();
+        })
+    };
+
+    ScrollToEl.prototype.isTargetValid = function(target){
+        var valid = true;
+
+        if (!target) {
+            console.log('There is no data-target attribute with id-name for this link');
+            valid = false;
+        }
+
+        if (!$('#' + target).length) {
+            console.log('There is no element with such id name');
+            valid = false;
+        }
+
+        return valid;
     };
 
     ScrollToEl.prototype.scrollToTarget = function (target) {
