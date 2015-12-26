@@ -148,6 +148,17 @@ class BrandService extends Services {
   }
 
   /**
+    * Returns list of all brands with settings
+    */
+  def findAllWithSettings: List[BrandWithSettings] = DB.withSession { implicit session ⇒
+    val query = for {
+      brand <- brands
+      settings <- settings if settings.brandId === brand.id
+    } yield (brand, settings)
+    query.list.map(view => BrandWithSettings(view._1, view._2))
+  }
+
+  /**
    * Returns list of brands belonging to one coordinator
    * @param coordinatorId Coordinator identifier
    */
