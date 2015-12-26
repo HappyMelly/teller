@@ -36,6 +36,7 @@ GET           /brands                                                        @co
 GET           /brand/new                                                     @controllers.Brands.add
 POST          /brand/new                                                     @controllers.Brands.create
 GET           /brand/:id                                                     @controllers.Brands.details(id: Long)
+GET           /brand/:id/tabs/coordinator                                    @controllers.Brands.renderCoordinatorTabs(id: Long, tab: String)
 GET           /brand/:id/tabs                                                @controllers.Brands.renderTabs(id: Long, tab: String)
 POST          /brand/:id/member                                              @controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    @controllers.Brands.removeCoordinator(id: Long, personId: Long)

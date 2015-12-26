@@ -193,7 +193,24 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
     * @param id Brand identifier
     * @param tab Tab identifier
     */
-  def renderTabs(id: Long, tab: String) = SecuredBrandAction(id) { implicit request ⇒
+  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      tab match {
+        case "testimonials" ⇒
+          val testimonials = brandService.testimonials(id)
+          Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
+        case _ ⇒
+          val products = productService.findByBrand(id)
+          Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
+      }
+  }
+
+  /**
+    * Renders coordinator tab for the given brand
+    * @param id Brand identifier
+    * @param tab Tab identifier
+    */
+  def renderCoordinatorTabs(id: Long, tab: String)  = SecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "team" ⇒
@@ -203,21 +220,15 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
         case "templates" ⇒
           val templates = certificateService.findByBrand(id)
           Ok(views.html.v2.brand.tabs.templates(id, templates))
-        case "testimonials" ⇒
-          val testimonials = brandService.testimonials(id)
-          Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
         case "types" ⇒
           val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
           Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
-        case "licenseExpiration" =>
+        case _ =>
           brandService.findWithSettings(id).map { view =>
             Ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
           }.getOrElse {
             Ok("Unknown brand")
           }
-        case _ ⇒
-          val products = productService.findByBrand(id)
-          Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
       }
   }
 

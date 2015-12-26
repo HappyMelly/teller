@@ -34,5 +34,5 @@ package models.brand
 case class Settings(brandId: Long,
                    certificates: Boolean = false,
                    licenseExpirationEmail: Boolean = false,
-                   licenseExpirationEmailBody: Option[String]) {
+                   licenseExpirationEmailBody: Option[String] = None) {
 }

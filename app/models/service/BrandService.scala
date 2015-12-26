@@ -236,9 +236,9 @@ class BrandService extends Services {
     implicit session ⇒
       val id = (brands returning brands.map(_.id)) += brand
       socialProfileService._insert(brand.socialProfile.copy(objectId = id))
-      val owner = BrandCoordinator(None, id, brand.ownerId,
-        BrandNotifications(true, true, true))
+      val owner = BrandCoordinator(None, id, brand.ownerId, BrandNotifications(true, true, true))
       brandCoordinatorService._insert(owner)
+      settings += Settings(id)
       brand.copy(id = Some(id))
   }
 
@@ -247,8 +247,7 @@ class BrandService extends Services {
    *
    * @param link Brand link
    */
-  def insertLink(link: BrandLink): BrandLink = DB.withSession {
-    implicit session ⇒
+  def insertLink(link: BrandLink): BrandLink = DB.withSession { implicit session ⇒
       val links = TableQuery[BrandLinks]
       val id = (links returning links.map(_.id)) += link
       link.copy(id = Some(id))

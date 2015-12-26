@@ -31,128 +31,11 @@ function switchState(active) {
     if (active) {
         $('#activate').html('Deactivate');
         $('#deactivatedStatus').hide();
+        $('#brandState').data('value', true);
     } else {
         $('#activate').html('Activate');
         $('#deactivatedStatus').show();
-    }
-}
-
-/**
- * Returns data to update event type retrieved from a event type row
- *
- * @param element {object} jQuery table row representation
- */
-function collectEventTypePostData(element) {
-    var data = [];
-    data[0] = { name: 'brandId', value: $(element).data('brandid') };
-    var i = 1;
-    $(element).children('td').each(function() {
-        data[i] = { name: $(this).data('name'), value: $(this).text() };
-        i += 1;
-    });
-    var free = $(element).find('[type="checkbox"]').prop('checked');
-    data[i] = { name: 'free', value: free };
-    return data;
-}
-
-/**
- * Updates event type
- *
- * @param object Changed field
- * @param value New parameter value
- */
-function updateEventType(object, value) {
-    $('#notification').html("");
-    var id = $(object).parent().data('id');
-    var brandId = $(object).parent().data('brandid');
-    var data = collectEventTypePostData($(object).parent());
-    $("body").css("cursor", "progress");
-    $.ajax({
-        type: "POST",
-        url: jsRoutes.controllers.EventTypes.update(brandId, id).url,
-        data: data
-    }).done(function(data) {
-        success("You successfully updated the event type");
-        if (value != null) {
-            $(object).text(value);
-        }
-    }).fail(function(jqXHR, status, errorCode) {
-        if (status == "error") {
-            var response = JSON.parse(jqXHR.responseText);
-            error(response.message);
-        } else {
-            var msg = "Unexpected error. Please contact the support team.";
-            error(msg);
-        }
-    }).complete(function() {
-        $("body").css("cursor", "default");
-    });
-    return true;
-}
-
-function initializeEventTypesActions() {
-    $('#eventTypes').editableTableWidget();
-    $('#eventTypes td').on('validate', function(evt, newValue) {
-        if (newValue == "") {
-            return false; // mark cell as invalid
-        }
-    }).on('change', function(evt, newValue) {
-        return updateEventType($(this), newValue);
-    });
-    $('#eventTypes input').on('change', function(e) {
-        return updateEventType($(this).parent(), null);
-    });
-}
-
-/**
- * Updates the view after the person was added as a team member
- * @param personId {int} Person id
- * @param name {string} Person name
- * @param brandId {int} Brand id
- */
-function addMember(personId, name, brandId) {
-    $('#members').append(
-        $('<tr>')
-            .attr('data-id', personId)
-            .attr('data-brandid', brandId)
-            .append($('<td>')
-                .append($('<a>')
-                    .attr('href', jsRoutes.controllers.People.details(personId).url)
-                    .append(name)))
-            .append('<td><input type="checkbox" value="event"/></td>')
-            .append('<td><input type="checkbox" value="evaluation"/></td>')
-            .append('<td><input type="checkbox" value="certificate"/></td>')
-            .append($('<td>')
-                .append($('<a>')
-                    .append('Remove')
-                    .addClass('remove font-sm')
-                    .attr('href', '#')
-                    .attr('data-id', personId)
-                    .attr('data-name', name)
-                    .attr('data-href',
-                    jsRoutes.controllers.Brands.removeCoordinator(brandId, personId).url)))
-    );
-    $('select[name="personId"]').children('option[value=' + personId + ']').remove();
-}
-
-/**
- * Updates the view after the person was deleted from the team
- * @param personId {int} Person id
- * @param name {string} Person full name
- */
-function removeMember(personId, name) {
-    $('tr[data-id="' + personId + '"]').remove();
-    var people = [];
-    var select = 'select[name="personId"]';
-    $(select).children('option').each(function() {
-        people.push({ id: $(this).val(), name: $(this).text()});
-    });
-    people.push({ id: personId, name: name });
-    people.sort(function(left, right) { return left.name.localeCompare(right.name); });
-    $(select).empty();
-    for(var i = 0; i < people.length; i++) {
-        var data = people[i];
-        $(select).append($('<option>').append(data.name).attr('value', data.id));
+        $('#brandState').data('value', false);
     }
 }
 
@@ -228,68 +111,6 @@ function initializeLinksActions() {
     });
 }
 
-function initializeTeamActions() {
-    $('#addMemberForm').submit(function(e) {
-        $.post($(this).attr("action"), $(this).serialize(), null, "json").done(function(data) {
-            addMember(data.data.personId, data.data.name, data.data.brandId);
-            success(data.message);
-        }).fail(function(jqXHR, status, errorCode) {
-            if (status == "error") {
-                var response = JSON.parse(jqXHR.responseText);
-                error(response.message);
-            } else {
-                var msg = "Internal error. Please try again or contant the support team.";
-                error(msg);
-            }
-        });
-        // Prevent the form from submitting with the default action
-        return false;
-    });
-    $('#members').on('click', 'a.remove', function(e) {
-        var personId = $(this).data('id'),
-            name = $(this).data('name');
-        $.ajax({
-            type: "DELETE",
-            url: $(this).data('href'),
-            dataType: "json"
-        }).done(function(data) {
-            removeMember(personId, name);
-            success(data.message);
-        }).fail(function(jqXHR, status, errorCode) {
-            if (status == "error") {
-                var response = JSON.parse(jqXHR.responseText);
-                error(response.message);
-            } else {
-                var msg = "Internal error. Please try again or contant the support team.";
-                error(msg);
-            }
-        });
-        return false;
-    });
-    $('#members').on('change', 'input', function(e) {
-        var brandId = $(this).parents('tr').data('brandid');
-        var personId = $(this).parents('tr').data('id');
-        var type = $(this).val();
-        var url = jsRoutes.controllers.Brands.turnNotificationOff(brandId, personId, type).url;
-        if (this.checked) {
-            url = jsRoutes.controllers.Brands.turnNotificationOn(brandId, personId, type).url;
-        }
-        var that = $(this);
-        $.post(url, {}, null, "json").done(function(data) {
-            success(data.message);
-        }).fail(function(jqXHR, status, errorCode) {
-            if (status == "error") {
-                var response = JSON.parse(jqXHR.responseText);
-                error(response.message);
-            } else {
-                var msg = "Internal error. Please try again or contant the support team.";
-                error(msg);
-            }
-            that.attr('checked', false);
-        });
-    });
-    $('#members .glyphicon-info-sign').tooltip();
-}
 
 function initializeTestimonialActions() {
     $('#testimonialList').on('click', 'a.remove', function(e) {
@@ -315,8 +136,6 @@ function initializeTestimonialActions() {
 }
 
 function initializeActions() {
-    initializeEventTypesActions();
-    initializeTeamActions();
     initializeLinksActions();
     initializeTestimonialActions();
 }
@@ -358,13 +177,13 @@ $(document).ready( function() {
     showTab($('#sidemenu a[href="#' + hash + '"]'));
     initializeActions();
 
-    if ($('#activate').text().trim() == 'Deactivate') {
+    if ($('#brandState').data('value')) {
         $('#deactivatedStatus').hide();
     }
     $('#activate').on('click', function(e) {
         e.preventDefault();
         var url = jsRoutes.controllers.Brands.activation($(this).data('id')).url;
-        var active = $(this).text().trim() == 'Deactivate';
+        var active = !($('#brandState').data('value'));
         $.post(url, {active: active}, function(data, textStatus, xhr) {
             switchState(active);
         });

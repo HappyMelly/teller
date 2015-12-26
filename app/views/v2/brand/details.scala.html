@@ -56,6 +56,7 @@
     <div class="row">
         <div class="container">
             <div class="left">
+                <div id="brandState" data-value="@brand.active"></div>
                 <div class="photo-block @if(brand.picture.isDefined) { real }">
                     @brand.picture.map { picture =>
                         <img width="200" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
@@ -80,14 +81,14 @@
                         @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
                             <li class="subgroup">Settings
                                 <ul class="nav">
-                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
-                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
-                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
+                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
+                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
+                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
                                         Certificate Templates</a></li>
                                     <li><a href="#integration" role="tab" data-toggle="tab">
                                         Integration</a>
                                     </li>
-                                    <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "licenseExpiration")"
+                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
                                         href="#licenseExpiration" role="tab" data-toggle="tab">
                                             License Expiration Reminder</a> </li>
                                 </ul>
