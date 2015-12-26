@@ -41,7 +41,7 @@ function getPersonId() {
 function reloadCompletionWidget() {
     var userId = $("#activeUserId").val();
     if (userId == getPersonId()) {
-        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, true).url
+        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, true).url;
         $.get(url, function(data) {
             $('#completionWidget').html(data);
             $('#addPhotoLink').on('click', function(e) {
@@ -49,7 +49,7 @@ function reloadCompletionWidget() {
             });
         });
     } else {
-        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, false).url
+        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, false).url;
         $.get(url, function(data) {
             $('#completionWidget').html(data);
         });
@@ -57,36 +57,38 @@ function reloadCompletionWidget() {
 }
 
 function initializeFileUploadField() {
-    var wrapper = $(".file-upload"),
-        input = wrapper.find("input"),
-        button = wrapper.find("button"),
-        label = wrapper.find("div");
-    button.focus(function(){
-        input.focus()
-    });
-    // Crutches for the :focus style:
-    input.focus(function(){
-        wrapper.addClass("focus");
-    }).blur(function(){
-        wrapper.removeClass("focus");
-    });
-    var fileAPI = (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
-    input.change(function(){
-        var filename;
-        if(fileAPI && input[ 0 ].files[ 0 ])
-            filename = input[ 0 ].files[ 0 ].name;
-        else
-            filename = input.val();
-        if (!filename.length)
-            return;
+    $('.file-upload').each(function(e) {
+        var wrapper = $(this),
+            input = wrapper.find("input"),
+            button = wrapper.find("button"),
+            label = wrapper.find("div");
+        button.focus(function(){
+            input.focus()
+        });
+        // Crutches for the :focus style:
+        input.focus(function(){
+            wrapper.addClass("focus");
+        }).blur(function(){
+            wrapper.removeClass("focus");
+        });
+        var fileAPI = (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
+        input.change(function(){
+            var filename;
+            if(fileAPI && input[ 0 ].files[ 0 ])
+                filename = input[ 0 ].files[ 0 ].name;
+            else
+                filename = input.val();
+            if (!filename.length)
+                return;
 
-        if (label.is(":visible")) {
-            label.text(filename);
-            button.text("Choose File");
-        } else {
-            button.text(filename);
-        }
-    }).change();
+            if (label.is(":visible")) {
+                label.text(filename);
+                button.text("Choose File");
+            } else {
+                button.text(filename);
+            }
+        }).change();
+    });
 }
 
 

@@ -7,6 +7,7 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.DynamicRole
 
+<h4>Event Types</h4>
 <p>Event Types help you to categories your events. The brand should have at least
   1 event type to be able to have events. </p>
 <p><strong>Default Title</strong> parameter helps you to add events faster. When you
@@ -16,11 +17,16 @@ to the default value.</p>
 per event. For example, <code>max hours = 16</code> and a facilitator creates an event
   for 25 hours of this type. The facilitator will be charged for only 16 hours. Additional
   9 hours are free.</p>
+@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
+    <a class="btn btn-primary btn-sm pull-right" href="@routes.EventTypes.add(brandId)">+ Add Event Type</a>
+}
+<br/>
+<br/>
 <br/>
 <div id="notification">
 </div>
 @if(eventTypes.nonEmpty) {
-  <table id="eventTypes" class="datatables table table-bordered">
+  <table id="eventTypes" class="table">
     <thead>
       <tr>
         <th>Name</th>
@@ -39,8 +45,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
         @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
-          <a href="@routes.EventTypes.delete(eventType.brandId, eventType.id.get)">
-            <i class="glyphicon glyphicon-trash"></i> Remove</a>
+          <a class="font-sm" href="@routes.EventTypes.delete(eventType.brandId, eventType.id.get)">Remove</a>
         }
         </th>
       </tr>
@@ -48,9 +53,4 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
     </tbody>
   </table>
 }
-@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
-  <a class="btn btn-success btn-sm pull-right"
-    href="@routes.EventTypes.add(brandId)">
-    <i class="glyphicon glyphicon-plus"></i>Add Event Type
-  </a>
-}
+
