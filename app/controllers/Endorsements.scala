@@ -275,7 +275,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    */
   protected def brands(personId: Long): List[Brand] =
-    licenseService.licenses(personId).map(_.brand)
+    brandService.findByLicense(personId).map(_.brand)
 
   /**
    * Returns maximum position of endorsements from the given list

@@ -36,6 +36,7 @@ GET           /brands                                                        @co
 GET           /brand/new                                                     @controllers.Brands.add
 POST          /brand/new                                                     @controllers.Brands.create
 GET           /brand/:id                                                     @controllers.Brands.details(id: Long)
+GET           /brand/:id/tabs/coordinator                                    @controllers.Brands.renderCoordinatorTabs(id: Long, tab: String)
 GET           /brand/:id/tabs                                                @controllers.Brands.renderTabs(id: Long, tab: String)
 POST          /brand/:id/member                                              @controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    @controllers.Brands.removeCoordinator(id: Long, personId: Long)
@@ -56,6 +57,8 @@ POST          /brand/:id/coordinator/:personId/type/:notification/off        @co
 POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 GET           /brand/:id/eventrequests                                       @controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             @controllers.EventRequests.details(id: Long, requestId: Long)
+POST          /brand/:id/settings/licensereminder/off                        @controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
+POST          /brand/:id/settings/licensereminder/on                         @controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 
 POST          /brand/:brandId/link                                           @controllers.BrandLinks.create(brandId: Long)
 DELETE        /brand/:brandId/link/:id                                       @controllers.BrandLinks.remove(brandId: Long, id: Long)
