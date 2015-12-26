@@ -234,7 +234,13 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
     val account = UserAccount.empty(0)
     val (firstName, lastName) = userNames(identity)
     val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
-    person.socialProfile_=(SocialProfile())
+    val profile = identity.profile.providerId match {
+      case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = identity.profileUrl)
+      case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = identity.profileUrl)
+      case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = identity.profileUrl)
+      case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = identity.profileUrl)
+    }
+    person.socialProfile_=(profile)
     ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 

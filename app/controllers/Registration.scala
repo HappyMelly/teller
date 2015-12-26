@@ -187,14 +187,13 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * Renders step 2 page of the registration process
    * @return
    */
-  def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      redirectViewer {
-        val form = userForm.bind(Map(("firstName", user.person.firstName),
-          ("lastName", user.person.lastName),
-          ("email", user.person.email)))
-        Ok(views.html.v2.registration.step2(user, form))
-      }
+  def step2 = SecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    redirectViewer {
+      val form = userForm.bind(Map(("firstName", user.person.firstName),
+        ("lastName", user.person.lastName),
+        ("email", user.person.email)))
+      Ok(views.html.v2.registration.step2(user, form))
+    }
   }
 
   /**
@@ -366,15 +365,16 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                                  providerId: String,
                                  person: Person,
                                  member: Member)(implicit request: RequestHeader) = {
+    val byEmail = providerId == UsernamePasswordProvider.UsernamePassword
     val account = UserAccount(None, person.id.get,
-      true,
+      byEmail,
       person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.linkedInUrl,
       person.socialProfile.googlePlusUrl,
       member = true, registered = true)
     val inserted = userAccountService.insert(account)
-    if (providerId == UsernamePasswordProvider.UsernamePassword) {
+    if (byEmail) {
       Logger.info(s"End of registration of a user with ${id} id")
       registeringUserService.delete(id, providerId)
       identityService.findByEmail(id) map { identity =>
