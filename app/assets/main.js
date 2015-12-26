@@ -22,8 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-var DashboradPage = (function($){
-
+var DashboardPage = (function($){
     return {
         init: function(){
             $('.js-link-target').scrollToEl();
@@ -94,8 +93,7 @@ function initializeFileUploadField() {
 
 $(document).ready(function() {
 
-    DashboradPage.init();
-
+    DashboardPage.init();
 
     $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
     if ($('#completionWidget').length > 0) {
