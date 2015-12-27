@@ -299,14 +299,14 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
         uploadFile(Organisation.logo(id), "logo") map { _ ⇒
           orgService.updateLogo(id, true)
           val route = routes.Organisations.details(id).url
-          jsonOk(Json.obj("link" -> routes.Organisations.logo(id).url))
+          jsonOk(Json.obj("link" -> Organisations.logoUrl(id)))
         } recover {
           case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
         }
   }
 }
 
-object Organisations {
+object Organisations extends Utilities {
 
   /**
    * HTML form mapping for creating and editing.
@@ -347,4 +347,13 @@ object Organisations {
           v.org.blog, v.org.contactEmail, v.org.customerId, v.org.about, v.org.logo, v.org.active,
           v.org.dateStamp))
     }))
+
+  /**
+    * Returns url to an organisation's logo
+    * @param orgId Organisation identifier
+    */
+  def logoUrl(orgId: Long): Option[String] = {
+    val logo = Organisation.logo(orgId)
+    cdnUrl(logo.name).orElse(Some(fullUrl(controllers.routes.Organisations.logo(orgId).url)))
+  }
 }

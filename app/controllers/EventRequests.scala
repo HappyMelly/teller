@@ -10,9 +10,9 @@ import scala.concurrent.Future
   * Contains methods for managing event requests UI
   */
 class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonController
-with Security
-with Services
-with Utilities {
+  with Security
+  with Services
+  with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 

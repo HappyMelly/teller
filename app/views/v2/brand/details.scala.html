@@ -59,7 +59,7 @@
                 <div id="brandState" data-value="@brand.active"></div>
                 <div class="photo-block @if(brand.picture.isDefined) { real }">
                     @brand.picture.map { picture =>
-                        <img width="200" src="@routes.Brands.picture(brand.code).url" class="img-rounded" align="baseline">
+                        <img width="200" src="@Brands.pictureUrl(brand)" class="img-rounded" align="baseline">
                     }.getOrElse {
                         <img width="200" class="img-rounded photo"
                         src="@routes.Assets.at("images/happymelly-face-white.png")"/>

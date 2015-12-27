@@ -24,6 +24,7 @@
 
 package controllers.api
 
+import controllers.Products
 import models.service.Services
 import models.{ Product, ProductView }
 import models.service.ProductsCollection
@@ -44,7 +45,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
         "href" -> obj.product.id.map(id ⇒ routes.ProductsApi.product(id).url),
         "title" -> obj.product.title,
         "subtitle" -> obj.product.subtitle,
-        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "image" -> Products.pictureUrl(obj.product),
         "brands" -> obj.brands,
         "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
@@ -55,7 +56,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
       Json.obj(
         "title" -> obj.title,
         "subtitle" -> obj.subtitle,
-        "image" -> obj.picture.map(picture ⇒ controllers.routes.Products.picture(obj.id.get).url),
+        "image" -> Products.pictureUrl(obj),
         "category" -> obj.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
     }
   }
@@ -71,7 +72,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
         "description" -> obj.product.description,
         "cta_url" -> obj.product.callToActionUrl,
         "cta_text" -> obj.product.callToActionText,
-        "image" -> obj.product.picture.map(picture ⇒ controllers.routes.Products.picture(obj.product.id.get).url),
+        "image" -> Products.pictureUrl(obj.product),
         "brands" -> obj.brands,
         "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
         "parent" -> obj.product.parentId.map(parentId ⇒ routes.ProductsApi.product(parentId).url),

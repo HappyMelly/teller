@@ -11,7 +11,7 @@
     @if(org.logo) {
       <div id="real">
         <img width="@width" class="img-rounded"
-        src="@routes.Organisations.logo(org.id.getOrElse(0))"/>
+        src="@Organisations.logoUrl(org.identifier)"/>
       </div>
     } else {
       <div id="real" style="display:none;">
@@ -32,7 +32,7 @@
   } {
     @if(org.logo) {
       <img id="photo" width="@width" class="img-rounded"
-      src="@routes.Organisations.logo(org.identifier)"/>
+      src="@Organisations.logoUrl(org.identifier)"/>
     } else {
       <img id="photo" width="@width" class="img-rounded"
         src="@routes.Assets.at("images/add-logo.png")"/>
@@ -48,7 +48,7 @@
           <div class="option" id="custom">
             @if(org.logo) {
               <img width="250" id="logo"
-              src="@routes.Organisations.logo(org.identifier)"/>
+              src="@Organisations.logoUrl(org.identifier)"/>
             } else {
               <img width="250" id="logo"
                 src="@routes.Assets.at("images/happymelly-face-white.png")"/>

@@ -79,8 +79,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   override def onHandlerNotFound(request: RequestHeader): Future[Result] = {
-    Future.successful(NotFound(
-      views.html.notFoundPage(request.path)))
+    Future.successful(NotFound(views.html.notFoundPage(request.path)))
   }
 
   /**

@@ -95,8 +95,7 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
                 val photo = photoType match {
                   case "nophoto" ⇒ Photo.empty
                   case "gravatar" ⇒ Photo(photoType, person.email)
-                  case _ ⇒ Photo(Some(photoType),
-                    Some(fullUrl(routes.ProfilePhotos.photo(id).url)))
+                  case _ ⇒ Photo(Some(photoType), photoUrl(id))
                 }
                 personService.update(person.copy(photo = photo))
                 jsonSuccess("ok")
@@ -118,5 +117,14 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
         } recover {
           case e ⇒ jsonBadRequest(e.getMessage)
         }
+  }
+
+  /**
+    * Returns url to a person's photo
+    * @param id Person identifier
+    */
+  protected def photoUrl(id: Long): Option[String] = {
+    val photo = Person.photo(id)
+    cdnUrl(photo.name).orElse(Some(fullUrl(routes.ProfilePhotos.photo(id).url)))
   }
 }

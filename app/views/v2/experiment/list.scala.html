@@ -29,7 +29,7 @@ website.</i></p>
       }
       <p>@experiment.description.markdown</p>
       @if(experiment.picture) {
-        <img class="picture" src="@routes.Experiments.picture(experiment.id.get)"/>
+        <img class="picture" src="@Experiments.pictureUrl(experiment)"/>
       }
       @dynamic(handler, DynamicRole.Member, memberId.toString) {
         <div class="actions font-sm">

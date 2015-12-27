@@ -351,3 +351,16 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
 
 }
 
+object Products extends Utilities {
+
+  /**
+    * Returns url to a product's picture
+    * @param product Product
+    */
+  def pictureUrl(product: Product): Option[String] = {
+    product.picture.map { path =>
+      cdnUrl(path).orElse(Some(routes.Products.picture(product.id.get).url))
+    } getOrElse None
+  }
+}
+

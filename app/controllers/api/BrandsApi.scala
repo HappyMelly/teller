@@ -23,6 +23,7 @@
  */
 package controllers.api
 
+import controllers.Brands
 import models.{ Brand, BrandView }
 import play.api.libs.json._
 import play.mvc.Controller
@@ -47,8 +48,7 @@ object BrandsApi extends Controller with ApiAuthentication {
         "href" -> routes.BrandsApi.brand(brandView.brand.code).url,
         "unique_name" -> brandView.brand.uniqueName,
         "name" -> brandView.brand.name,
-        "image" -> brandView.brand.picture.map(picture ⇒
-          controllers.routes.Brands.picture(brandView.brand.code).url),
+        "image" -> Brands.pictureUrl(brandView.brand),
         "tagline" -> brandView.brand.tagLine,
         "products" -> brandView.brand.products.length)
     }
@@ -65,8 +65,7 @@ object BrandsApi extends Controller with ApiAuthentication {
         "name" -> brandView.brand.name,
         "tagline" -> brandView.brand.tagLine,
         "description" -> brandView.brand.description,
-        "image" -> brandView.brand.picture.map(picture ⇒
-          controllers.routes.Brands.picture(brandView.brand.code).url),
+        "image" -> Brands.pictureUrl(brandView.brand),
         "coordinator" -> brandView.coordinator,
         "contact_info" -> Json.obj(
           "email" -> brandView.brand.contactEmail,

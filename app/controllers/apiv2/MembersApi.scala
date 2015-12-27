@@ -26,7 +26,7 @@ package controllers.apiv2
 
 import java.net.URLDecoder
 
-import controllers.Utilities
+import controllers.{Organisations, Experiments, Utilities}
 import ContributionsApi.contributionWrites
 import controllers.apiv2.PeopleApi._
 import models._
@@ -67,7 +67,7 @@ trait MembersApi extends Controller
         "name" -> experiment.name,
         "description" -> experiment.description,
         "url" -> experiment.url,
-        "image" -> experimentImageUrl(experiment))
+        "image" -> Experiments.pictureUrl(experiment))
     }
   }
 
@@ -210,18 +210,6 @@ trait MembersApi extends Controller
       }
     }    
   }
-  
-  /**
-   * Returns image url for the given experiment
-   *
-   * @param experiment Experiment
-   */
-  protected def experimentImageUrl(experiment: Experiment): Option[String] = {
-    if (experiment.picture)
-      Some(fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url))
-    else
-      None
-  }
 
   /**
    * Returns image url for the given member depending on its type
@@ -232,7 +220,7 @@ trait MembersApi extends Controller
     if (member.person)
       member.image
     else if (member.memberObj._2.get.logo)
-      Some(fullUrl(controllers.routes.Organisations.logo(member.objectId).url))
+      Organisations.logoUrl(member.objectId)
     else
       None
   }
@@ -244,7 +232,7 @@ trait MembersApi extends Controller
    */
   protected def orgImageUrl(org: Organisation): Option[String] = {
     if (org.logo)
-      Some(fullUrl(controllers.routes.Organisations.logo(org.id.get).url))
+      Organisations.logoUrl(org.identifier)
     else
       None
   }

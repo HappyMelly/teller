@@ -487,5 +487,17 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
           Ok(Json.toJson(events))
         } getOrElse NotFound("Unknown brand")
   }
+}
 
+object Brands extends Utilities {
+
+  /**
+    * Returns url to a brand's picture
+    * @param brand Brand
+    */
+  def pictureUrl(brand: Brand): Option[String] = {
+    brand.picture.map { path =>
+      cdnUrl(path).orElse(Some(routes.Brands.picture(brand.code).url))
+    } getOrElse None
+  }
 }

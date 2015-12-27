@@ -11,7 +11,7 @@
       <div class="brand-image">
         <a href="@routes.Dashboard.overview(activeBrand.identifier)">
           @activeBrand.picture.map { picture =>
-            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@routes.Brands.picture(activeBrand.code)"/>
+            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@Brands.pictureUrl(activeBrand)"/>
           }.getOrElse {
             <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@routes.Assets.at("images/happymelly-face-white.png")"/>
           }

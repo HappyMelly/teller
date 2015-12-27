@@ -18,8 +18,8 @@
     <div class="page-header">
         <h1>
             @view.product.picture.map { picture =>
-                <a href="@routes.Products.picture(view.product.id.get).url">
-                    <img width="64" class="img-rounded" src="@routes.Products.picture(view.product.id.get).url"/></a>
+                <a href="@Products.pictureUrl(view.product)">
+                    <img width="64" class="img-rounded" src="@Products.pictureUrl(view.product)"/></a>
             }
             @view.product.title
             <div class="actions pull-right">

@@ -233,3 +233,19 @@ Check it here %s. You may find it useful :wink:
     }
   }
 }
+
+object Experiments extends Utilities {
+
+  /**
+    * Returns url to an experiment's picture
+    * @param experiment Experiment
+    */
+  def pictureUrl(experiment: Experiment): Option[String] = {
+    if (experiment.picture) {
+      val picture = Experiment.picture(experiment.id.get)
+      cdnUrl(picture.name).orElse(Some(fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url)))
+    } else {
+      None
+    }
+  }
+}

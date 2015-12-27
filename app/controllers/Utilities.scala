@@ -32,6 +32,14 @@ import play.api.mvc._
 trait Utilities extends Controller with Services {
 
   /**
+    * Returns CDN url to image if CDN is set
+    * @param path Path to image in Amazon S3 bucket
+    */
+  protected def cdnUrl(path: String): Option[String] = {
+    Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
+  }
+
+  /**
    * Returns an url with domain
    * @param url Domain-less part of url
    */
