@@ -32,22 +32,18 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.mvc.{Controller, RequestHeader}
-import securesocial.controllers.BasePasswordReset
+import play.api.mvc.RequestHeader
 import securesocial.core.RuntimeEnvironment
-import securesocial.core.providers.MailToken
 
 import scala.concurrent.Future
-import scala.util.Random
 
 /**
  * Content license pages and API.
  */
-class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePasswordReset[ActiveUser]
+class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIdentities
   with Security
   with Services
-  with Activities
-  with Controller {
+  with Activities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
@@ -205,6 +201,14 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
     brandService.findByCoordinator(coordinatorId).map(x => (x.brand.identifier, x.brand.name))
 
   /**
+    * Returns true if another registered user account with the same email exist
+    * @param person User
+    */
+  protected def checkOtherAccountEmail(person: Person): Boolean =
+    identityService.findByEmail(person.email).exists(_.userId != person.id)
+
+
+  /**
     * Creates an account with facilitator access
     * It also sends an email to the user inviting to create new password
     *
@@ -231,30 +235,6 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
   }
 
   /**
-    * Returns true if another registered user account with the same email exist
-    * @param person User
-    */
-  protected def checkOtherAccountEmail(person: Person): Boolean =
-    identityService.findByEmail(person.email).exists(_.userId != person.id)
-
-  /**
-    * Creates dummy password and adds all required records to resetting password for newly created
-    *  facilitator account
-    * @param person Person
-    * @param token Token
-    */
-  protected def setupLoginByEmailEnvironment(person: Person, token: MailToken): Unit = {
-    val dummyPassword = env.currentHasher.hash(Random.nextFloat().toString)
-    val identity = PasswordIdentity(person.id,
-      person.email,
-      dummyPassword.password,
-      Some(person.firstName),
-      Some(person.lastName), dummyPassword.hasher)
-    identityService.insert(identity)
-    env.userService.saveToken(token)
-  }
-
-  /**
     * Sends a welcome email to a new facilitator
     * @param person Person
     * @param brand Brand name
@@ -266,4 +246,5 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends BasePassword
       (None, Some(mail.templates.password.html.facilitator(person.firstName, token, brand)))
     )
   }
+
 }

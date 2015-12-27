@@ -34,7 +34,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
-import securesocial.controllers.{BaseRegistration, ChangeInfo}
+import securesocial.controllers.{BasePasswordReset, BaseRegistration, ChangeInfo}
 import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.providers.utils.PasswordValidator
 import securesocial.core.{PasswordInfo, RuntimeEnvironment}
@@ -250,7 +250,7 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Creates new password identity record for a given user
+    * Creates new password identity record for the given user
     *
     * @param user a user instance
     * @param info the password info
@@ -269,3 +269,4 @@ class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
   }
 
 }
+

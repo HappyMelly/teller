@@ -79,7 +79,8 @@ case class AuthenticationInfo(email: String, password: String)
  * Contains actions for a registration process
  */
 class Registration(environment: RuntimeEnvironment[ActiveUser])
-    extends Enrollment
+    extends PasswordIdentities
+    with Enrollment
     with Security
     with Activities
     with Services {
@@ -93,7 +94,10 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   private def userForm = Form(mapping(
     "firstName" -> nonEmptyText,
     "lastName" -> nonEmptyText,
-    "email" -> play.api.data.Forms.email,
+    "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
+      import scala.concurrent.duration._
+      Await.result(Future.successful(identityService.checkEmail(suppliedEmail)), 10.seconds)
+    }),
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
       (value: String) ⇒ Countries.all.exists(_._1 == value)),
@@ -305,7 +309,7 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
                 } getOrElse {
                   person.becomeMember(funder = false, fee)
                 }
-                updateActiveUser(user.id, user.providerId, person, member)
+                createUserAccount(user.id, user.providerId, person, member)
                 notify(person, org, member)
                 subscribe(person, member)
 
@@ -353,6 +357,18 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+    * Returns new user account for the given person
+    * @param person Person
+    */
+  protected def account(person: Person): UserAccount =
+    UserAccount(None, person.identifier, true,
+      person.socialProfile.twitterHandle,
+      person.socialProfile.facebookUrl,
+      person.socialProfile.linkedInUrl,
+      person.socialProfile.googlePlusUrl,
+      member = true, registered = true)
+
+  /**
     * Adds new person as a member and updates cached object
    *
    * By updating cached object we give the user a full access to the system
@@ -361,20 +377,12 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
    * @param id Identity object
    * @param person Person
    */
-  protected def updateActiveUser(id: String,
-                                 providerId: String,
-                                 person: Person,
-                                 member: Member)(implicit request: RequestHeader) = {
-    val byEmail = providerId == UsernamePasswordProvider.UsernamePassword
-    val account = UserAccount(None, person.id.get,
-      byEmail,
-      person.socialProfile.twitterHandle,
-      person.socialProfile.facebookUrl,
-      person.socialProfile.linkedInUrl,
-      person.socialProfile.googlePlusUrl,
-      member = true, registered = true)
-    val inserted = userAccountService.insert(account)
-    if (byEmail) {
+  protected def createUserAccount(id: String,
+                                  providerId: String,
+                                  person: Person,
+                                  member: Member)(implicit request: RequestHeader) = {
+    val inserted = userAccountService.insert(account(person))
+    if (providerId == UsernamePasswordProvider.UsernamePassword) {
       Logger.info(s"End of registration of a user with ${id} id")
       registeringUserService.delete(id, providerId)
       identityService.findByEmail(id) map { identity =>
@@ -384,6 +392,11 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       } getOrElse {
         Logger.error(s"$id wasn't found in PasswordIdentity table on the final stage of registration")
         throw new RuntimeException("Internal error. Please contact support")
+      }
+    } else {
+      createToken(person.email, isSignUp = false).map { token =>
+        setupLoginByEmailEnvironment(person, token)
+        sendPasswordEmail(person, token.uuid)
       }
     }
     env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
@@ -421,6 +434,18 @@ class Registration(environment: RuntimeEnvironment[ActiveUser])
       Redirect(routes.Registration.step2()).
         flashing("error" -> Messages("login.noUserData"))
     }
+  }
+
+  /**
+    * Sends a create new password email
+    * @param person Person
+    * @param token Unique token for password creation
+    */
+  protected def sendPasswordEmail(person: Person, token: String)(implicit request: RequestHeader) = {
+    env.mailer.sendEmail(s"Your Happy Melly Account",
+      person.email,
+      (None, Some(mail.templates.password.html.member(person.firstName, token)))
+    )
   }
 
   /**
