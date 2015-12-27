@@ -95,28 +95,28 @@ class PeopleSpec extends Specification {
       val updated = left.copy(twitterHandle = Some("skotlov"))
       val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("Let's show him/her some love by linking on  <http://twitter.com/skotlov|Twitter>")
+        x must contain("Let's show them some love by linking on  <http://twitter.com/skotlov|Twitter>")
       } getOrElse ko
     }
     "add Facebook info to notification if Facebook has been added" in {
       val updated = left.copy(facebookUrl = Some("https://facebook.com/skotlov"))
       val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("Let's show him/her some love by linking on  <https://facebook.com/skotlov|Facebook>")
+        x must contain("Let's show them some love by linking on  <https://facebook.com/skotlov|Facebook>")
       } getOrElse ko
     }
     "add Google info to notification if Google has been added" in {
       val updated = left.copy(googlePlusUrl = Some("https://plus.google.com/+SergeyKotlov"))
       val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("Let's show him/her some love by linking on  <https://plus.google.com/+SergeyKotlov|G+>")
+        x must contain("Let's show them some love by linking on  <https://plus.google.com/+SergeyKotlov|G+>")
       } getOrElse ko
     }
     "add LinkedIn info to notification if LinkedIn has been added" in {
       val updated = left.copy(linkedInUrl = Some("https://www.linkedin.com/in/skotlov"))
       val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("Let's show him/her some love by linking on  <https://www.linkedin.com/in/skotlov|LinkedIn>")
+        x must contain("Let's show them some love by linking on  <https://www.linkedin.com/in/skotlov|LinkedIn>")
       } getOrElse ko
     }
 
@@ -124,7 +124,7 @@ class PeopleSpec extends Specification {
       val updated = left.copy(twitterHandle = Some("skotlov"), facebookUrl = Some("https://facebook.com/skotlov"))
       val msg = controller.callComposeSocialNotification(left, updated)
       msg map { x ⇒
-        x must contain("Let's show him/her some love by linking on  <http://twitter.com/skotlov|Twitter>")
+        x must contain("Let's show them some love by linking on  <http://twitter.com/skotlov|Twitter>")
         x must contain(", <https://facebook.com/skotlov|Facebook>")
       } getOrElse ko
     }

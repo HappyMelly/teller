@@ -57,7 +57,7 @@ trait MemberNotifications extends Utilities {
       fieldMessage("linkedin", existing.linkedInUrl, updated.linkedInUrl))
     val nonEmptyMessages = messages.filterNot(_.isEmpty)
     nonEmptyMessages.headOption map { first ⇒
-      val prefix = "Let's show him/her some love by linking on "
+      val prefix = "Let's show them some love by linking on "
       val msg = nonEmptyMessages.tail.foldLeft(first.get)(_ + ", " + _.get)
       Some(prefix + " " + msg)
     } getOrElse None
