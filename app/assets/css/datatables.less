@@ -98,6 +98,35 @@ table.dataTable > tbody > tr > td:first-child {
   padding-left: 10px;
 }
 
+.table-filters {
+  margin-top: 10px;
+  margin-right: 40px;
+  margin-bottom: 10px;
+  float: left;
+  .filter {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 15px 0 10px;
+    .counter {
+      color: @grey;
+    }
+    a.active {
+      color: black;
+      &:hover, &:visited, &:focus {
+        text-decoration: none;
+      }
+    }
+  }
+}
+.dataTables_filter {
+  padding-top: 15px;
+  input {
+    margin-left: 5px;
+  }
+}
+
+
 .row-details {
   padding: 10px;
   background-color: @light-blue;
