@@ -48,14 +48,6 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * API documentation page.
-   */
-  def api = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.api.index(user))
-  }
-
-  /**
    * API v2 documentation page.
    */
   def apiv2 = SecuredRestrictedAction(Viewer) { implicit request ⇒

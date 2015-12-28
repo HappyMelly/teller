@@ -243,31 +243,6 @@ object Event {
   }
 
   /**
-   * Returns true if and only if a user is allowed to manage this event.
-   * @deprecated
-   */
-  def canManage(eventId: Long, user: UserAccount): Boolean = DB.withSession { implicit session: Session ⇒
-    if (EventService.get.find(eventId).isEmpty)
-      false
-    else
-      findByUser(user).exists(_.id.get == eventId)
-  }
-
-  /**
-   * Returns a list of all events for a specified user which he could manage
-   * @deprecated
-   */
-  def findByUser(user: UserAccount): List[Event] = DB.withSession { implicit session: Session ⇒
-    val brands = Brand.findByUser(user)
-    if (brands.nonEmpty) {
-      val events = TableQuery[Events].filter(_.archived === false).sortBy(_.start).list
-      events.filter(e ⇒ brands.exists(_.id == Some(e.brandId)))
-    } else {
-      List[Event]()
-    }
-  }
-
-  /**
    * Updates event rating
    */
   class RatingCalculatorActor extends Actor with Services {

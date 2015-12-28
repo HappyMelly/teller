@@ -89,7 +89,7 @@ $(document).ready( function() {
 
     var facilitators = $('#facilitators')
         .dataTable({
-            "sDom": '<"toolbar">rtip',
+            "sDom": '<"toolbar">frtip',
             "iDisplayLength": 25,
             "asStripeClasses":[],
             "bLengthChange": false,

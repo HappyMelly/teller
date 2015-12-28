@@ -51,29 +51,6 @@ class UserAccountService {
   }
 
   /**
-   * Returns user account related to the given identity if exists
-   *
-   * @deprecated
-   * @param identity User Identity object
-   * @return
-   */
-  def findByIdentity(identity: SocialIdentity): UserAccount = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val query = identity.profile.providerId match {
-        case TwitterProvider.Twitter ⇒
-          accounts.filter(_.twitterHandle === identity.profileUrl)
-        case FacebookProvider.Facebook ⇒
-          accounts.filter(_.facebookUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
-        case GoogleProvider.Google ⇒
-          accounts.filter(_.googlePlusUrl === identity.profileUrl)
-        case LinkedInProvider.LinkedIn ⇒
-          accounts.filter(_.linkedInUrl like "https?".r.replaceFirstIn(identity.profileUrl.getOrElse(""), "%"))
-      }
-      query.first
-  }
-
-  /**
    * Inserts the given account to database
    * @param account Account object
    * @return The given account with updated id
