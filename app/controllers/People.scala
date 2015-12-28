@@ -246,8 +246,10 @@ class People(environment: RuntimeEnvironment[ActiveUser])
                 modified.update
                 if (modified.email != oldPerson.email) {
                   identityService.findByEmail(oldPerson.email) map { identity =>
-                    identityService.delete(oldPerson.email)
-                    identityService.insert(identity.copy(email = modified.email))
+                    if (identity.userId.exists(_ == id)) {
+                      identityService.delete(oldPerson.email)
+                      identityService.insert(identity.copy(email = modified.email))
+                    }
                   }
                 }
                 val log = activity(modified, user.person).updated.insert()

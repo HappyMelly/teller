@@ -60,7 +60,8 @@ private[models] class Facilitators(tag: Tag) extends Table[Facilitator](tag, "FA
         f._12, f._13, f._14.map(x => x.split(",").map(_.toLong).toList).getOrElse(List[Long]())),
       (f: Facilitator) => Some((f.id, f.personId, f.brandId, f.yearsOfExperience, f.numberOfEvents, f.publicRating,
         f.privateRating, f.publicMedian, f.privateMedian, f.publicNps, f.privateNps, f.numberOfPublicEvaluations,
-        f.numberOfPublicEvaluations, Option[String](f.badges.mkString(","))))
+        f.numberOfPublicEvaluations,
+        if (f.badges.isEmpty) None else Option[String](f.badges.mkString(","))))
     )
 
   def forUpdate = (publicRating, privateRating, publicMedian, privateMedian,
