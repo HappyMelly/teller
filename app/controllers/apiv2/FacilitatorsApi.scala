@@ -41,6 +41,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "id" -> value._1.id.get,
         "first_name" -> value._1.firstName,
         "last_name" -> value._1.lastName,
+        "unique_name" -> value._1.uniqueName,
         "photo" -> value._1.photo.url,
         "country" -> value._1.address.countryCode,
         "languages" -> value._1.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
