@@ -1,15 +1,30 @@
 @import "../settings";
 
 /* links */
-.link-black{
+.link-simple{
   display: inline-block;
   line-height: 1;
   text-decoration: none !important;
   .transition(all .15s ease);
-  color: #333333 !important;
   border-bottom:1px solid transparent;
+}
+
+
+.link-black{
+  .link-simple;
+  color: #333333 !important;
 
   &:hover{
     border-bottom-color: #333;
+  }
+}
+
+.link-blue{
+  .link-simple;
+  color: #4a90e2 !important;
+
+  &:hover{
+    color: #4a90e2 !important;
+    border-bottom-color: #4a90e2;
   }
 }

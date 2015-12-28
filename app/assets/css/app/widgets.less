@@ -29,7 +29,7 @@
 }
 
 
-/* info widget*/
+/*== Info widget ==*/
 .info-board {
   border-top: 2px solid @light-grey;
   border-bottom: 2px solid @light-grey;
@@ -51,6 +51,54 @@
   }
 }
 
+/*== Navigation for list ==*/
+.tabs-bl__nav {
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+  border-bottom: 1px solid #ddd;
+  .clearfix();
+
+  li{
+    display: block;
+    margin: 0 56px 10px 0;
+    float: left;
+  }
+}
+
+.tabs-bl__link{
+  display: block;
+  height: 20px;
+  text-decoration: none !important;
+  font-size: 14px;
+  color: #4a90e2;
+  line-height: 20px;
+
+  &:hover{
+    color: #333;
+  }
+
+  .active > &{
+    color: #333;
+    cursor: default;
+    font-weight: bold;
+    text-decoration: none !important;
+  }
+}
+
+.tabs-bl__content{
+
+  & > .active{
+    display: block;
+  }
+}
+
+.tabs-bl__pane{
+  display: none;
+}
+
+
+// other styles
 
 
 .grey-widget {
