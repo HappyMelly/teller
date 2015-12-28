@@ -223,6 +223,9 @@ class Brands(environment: RuntimeEnvironment[ActiveUser])
         case "types" ⇒
           val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
           Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
+        case "badges" ⇒
+          val badges = brandBadgeService.findByBrand(id).sortBy(_.name)
+          Ok(views.html.v2.brand.tabs.badges(id, badges))
         case _ =>
           brandService.findWithSettings(id).map { view =>
             Ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))

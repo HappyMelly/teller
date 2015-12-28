@@ -21,19 +21,17 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
+@import "settings";
 
-case class Experiment(id: Option[Long],
-                 memberId: Long,
-                 name: String,
-                 description: String,
-                 picture: Boolean,
-                 url: Option[String],
-                 recordInfo: DateStamp)
-
-object Experiment {
-
-  def picture(id: Long): Image =
-    Image(s"experiments/$id", s"experiments.$id")
-
+.badges {
+  border-top: 1px solid @light-grey;
+  h4 {
+    font-weight: normal;
+  }
+  .actions {
+    padding-top: 15px;
+    a {
+      padding-right: 15px;
+    }
+  }
 }

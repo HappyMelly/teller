@@ -31,6 +31,8 @@ GET           /booking/:bookingNumber/attachment                             @co
 GET           /booking/:bookingNumber/attachment                             @controllers.BookingEntries.s3Callback(bookingNumber: Int)
 POST          /booking/:bookingNumber/attachment/delete                      @controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
+GET           /badge/:hash/picture                                           @controllers.brand.Badges.picture(hash: String, size: String ?= "")
+
 POST          /brand/:id/activation                                          @controllers.Brands.activation(id: Long)
 GET           /brands                                                        @controllers.Brands.index
 GET           /brand/new                                                     @controllers.Brands.add
@@ -57,6 +59,13 @@ POST          /brand/:id/coordinator/:personId/type/:notification/off        @co
 POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 GET           /brand/:id/eventrequests                                       @controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             @controllers.EventRequests.details(id: Long, requestId: Long)
+
+GET           /brand/:id/badge                                               @controllers.brand.Badges.add(id: Long)
+POST          /brand/:id/badge                                               @controllers.brand.Badges.create(id: Long)
+DELETE        /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.delete(id: Long, badgeId: Long)
+GET           /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.edit(id: Long, badgeId: Long)
+POST          /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.update(id: Long, badgeId: Long)
+
 POST          /brand/:id/settings/licensereminder/off                        @controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
 POST          /brand/:id/settings/licensereminder/on                         @controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 

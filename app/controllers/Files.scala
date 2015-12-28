@@ -54,6 +54,16 @@ trait Files extends Controller {
   }
 
   /**
+    * Remove image files from Amazon cloud
+    * @param image Image object
+    */
+  protected def removeImage(image: Image) = {
+    image.files.foreach { file =>
+      S3Bucket.remove(file.file.name)
+    }
+  }
+
+  /**
    * Uploads file to Amazon cloud
    *
    * @param file File object
@@ -106,7 +116,7 @@ trait Files extends Controller {
         }.recover {
           case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))
         }
-      } getOrElse Future.failed(new FileNotExist("File field does not exist"))
-    } getOrElse Future.failed(new RuntimeException("Please choose a file"))
+      } getOrElse Future.failed(new FileNotExist("Please choose a file"))
+    } getOrElse Future.failed(new FileNotExist("Please choose a file"))
   }
 }

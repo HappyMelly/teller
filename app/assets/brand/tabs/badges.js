@@ -21,19 +21,32 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
 
-case class Experiment(id: Option[Long],
-                 memberId: Long,
-                 name: String,
-                 description: String,
-                 picture: Boolean,
-                 url: Option[String],
-                 recordInfo: DateStamp)
-
-object Experiment {
-
-  def picture(id: Long): Image =
-    Image(s"experiments/$id", s"experiments.$id")
-
+/**
+ * Deletes badge
+ * @param {int} badgeId
+ * @param {string} url
+ */
+function deleteBadge(badgeId, url) {
+    $.ajax({
+        type: "DELETE",
+        url:url,
+        dataType: "json"
+    }).done(function(data) {
+        $('div[data-id="' + badgeId + '"]').remove();
+        success("Badge is deleted")
+    }).fail(function(jqXHR, status, error) {
+        //empty
+    });
+    return false;
 }
+
+$(document).ready( function() {
+    $('#badgeList').on('click', 'a.remove', function(e) {
+        var result = confirm("Remove this badge? You cannot undo this action");
+        if (result == true) {
+            return deleteBadge($(this).data('id'), $(this).data('href'));
+        }
+        return false;
+    });
+});

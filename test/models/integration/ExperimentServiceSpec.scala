@@ -45,7 +45,7 @@ class ExperimentServiceSpec extends PlayAppSpec {
       (2, "Exp 5", "Desc", "Url 5")).foreach {
         case (memberId, name, desciption, url) ⇒ {
           val recordInfo = DateStamp(createdBy = "Tester", updated = DateTime.now(), updatedBy = "Tester")
-          val experiment = Experiment(None, memberId, name, desciption, false, Some(url), recordInfo)
+          val experiment = Badge(None, memberId, name, desciption, false, Some(url), recordInfo)
           service.insert(experiment)
         }
       }

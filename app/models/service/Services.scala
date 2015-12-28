@@ -37,6 +37,8 @@ trait Services {
 
   def brandService: BrandService = BrandService.get
 
+  def brandBadgeService: BadgeService = BadgeService.get
+
   def brandCoordinatorService: BrandCoordinatorService = BrandCoordinatorService.get
 
   def certificateService: CertificateTemplateService = CertificateTemplateService.get

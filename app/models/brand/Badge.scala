@@ -17,23 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
+package models.brand
 
-case class Experiment(id: Option[Long],
-                 memberId: Long,
-                 name: String,
-                 description: String,
-                 picture: Boolean,
-                 url: Option[String],
-                 recordInfo: DateStamp)
+import models.{DateStamp, Image}
 
-object Experiment {
+/**
+  * Represents badges for facilitators
+  * @param id Identifier
+  * @param brandId Related brand
+  * @param name Name of the badge
+  * @param file Hashed filename
+  * @param recordInfo Date and author of the record
+  */
+case class Badge(id: Option[Long], brandId: Long, name: String, file: String, recordInfo: DateStamp)
 
-  def picture(id: Long): Image =
-    Image(s"experiments/$id", s"experiments.$id")
+object Badge {
 
+  def picture(hash: String): Image = Image(s"badges/$hash", s"badges.$hash")
 }
