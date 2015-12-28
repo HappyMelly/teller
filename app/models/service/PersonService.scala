@@ -190,7 +190,7 @@ class PersonService extends Services {
    * @param name Person Identifier
    */
   def find(name: String): Option[Person] = DB.withSession { implicit session ⇒
-    val transformed = name.replace(".", " ")
+    val transformed = name.replace(".", " ").replace("_", ".")
     val query = for {
       person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
     } yield person

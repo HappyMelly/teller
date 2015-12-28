@@ -159,7 +159,7 @@ case class Person(
 
   def fullName: String = firstName + " " + lastName
 
-  def uniqueName: String = fullName.toLowerCase.replace(" ", ".")
+  def uniqueName: String = fullName.toLowerCase.replace(".", "_").replace(" ", ".")
 
   def name = fullName
 
