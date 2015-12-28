@@ -14,6 +14,7 @@ case class Image(name: String, cacheKey: String) {
   val fileType = "image/jpeg"
 
   val files = List(
+    ScaledImageCopy(File(fileType, name + "_icone", cacheKey + "_icon"), 64),
     ScaledImageCopy(File(fileType, name + "_thumbnail", cacheKey + "_thumbnail"), 160),
     ScaledImageCopy(File(fileType, name + "_small", cacheKey + "_small"), 300),
     ScaledImageCopy(File(fileType, name, cacheKey), 500),

@@ -42,10 +42,9 @@ class FacilitatorService {
    * @param facilitator Facilitator
    * @return Returns the updated facilitator with a valid id
    */
-  def insert(facilitator: Facilitator): Facilitator = DB.withSession {
-    implicit session ⇒
-      val id = (facilitators returning facilitators.map(_.id)) += facilitator
-      facilitator.copy(id = Some(id))
+  def insert(facilitator: Facilitator): Facilitator = DB.withSession { implicit session ⇒
+    val id = (facilitators returning facilitators.map(_.id)) += facilitator
+    facilitator.copy(id = id)
   }
 
   /**
@@ -99,7 +98,7 @@ class FacilitatorService {
           facilitator.publicMedian, facilitator.privateMedian,
           facilitator.publicNps, facilitator.privateNps,
           facilitator.numberOfPublicEvaluations,
-          facilitator.numberOfPrivateEvaluations))
+          facilitator.numberOfPrivateEvaluations, Option[String](facilitator.badges.mkString(","))))
       facilitator
   }
 

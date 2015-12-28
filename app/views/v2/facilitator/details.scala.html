@@ -1,0 +1,14 @@
+@(badges: List[models.brand.Badge], facilitator: Facilitator)
+
+@import controllers.brand.Badges
+
+<div class="row-details">
+    @for(badge <- badges) {
+        <div class="col-md-4">
+            <input type="checkbox" @if(facilitator.badges.contains(badge.id.get)) { checked } class="badge-switcher"
+                data-id="@badge.id.get" data-brand="@badge.brandId" data-person="@facilitator.personId">
+            <img src="@Badges.pictureUrl(badge, "icon")"/>
+            @badge.name
+        </div>
+    }
+</div>

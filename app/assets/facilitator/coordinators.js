@@ -41,6 +41,47 @@ function filterByLicense(oSettings, aData, iDataIndex) {
     }
 }
 
+/**
+ * Adds/removes badge to/from facilitator
+ * @param obj Checkbox object
+ */
+function toggleBadge(obj) {
+    var badgeId = $(obj).data('id');
+    var brandId = $(obj).data('brand');
+    var personId = $(obj).data('person');
+    if (obj.checked) {
+        var url = jsRoutes.controllers.Facilitators.addBadge(personId, brandId, badgeId).url;
+        $.post(url, {}, function(data) {
+            success(data.message)
+        }, "json");
+    } else {
+        $.ajax({
+            type: "DELETE",
+            url: jsRoutes.controllers.Facilitators.deleteBadge(personId, brandId, badgeId).url,
+            data: {},
+            dataType: "json"
+        }).done(function(data) {
+            success(data.message);
+        })
+    }
+}
+
+/**
+ *   Writes the html for facilitator details.
+ *   @param row {object} DataTable row object
+ */
+function renderDetails(row) {
+    var facilitatorId = $(row.node()).data('id');
+    var brandId = $(row.node()).data('brand');
+    var url = jsRoutes.controllers.Facilitators.details(facilitatorId, brandId).url;
+    $.get(url).done(function (content) {
+        row.child(content, 'active').show();
+        $('.badge-switcher').on('click', function(e) {
+            toggleBadge(this);
+        });
+    });
+}
+
 $.fn.dataTableExt.afnFiltering.push(filterByLicense);
 
 $(document).ready( function() {
@@ -56,8 +97,13 @@ $(document).ready( function() {
             "columnDefs": [{
                 "visible": false,
                 "targets": [6, 7, 8, 9]
+            }, {
+                "bSortable": false,
+                "targets": 10
             }]
         });
+
+    (new TableWithDetails(facilitators, 'facilitators', renderDetails));
 
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();

@@ -42,7 +42,7 @@ import views.Languages
  * Facilitators pages
  */
 class Facilitators(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
+    extends JsonController
     with Security
     with Services
     with Utilities {
@@ -64,6 +64,29 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
         "last_name" -> data.lastName,
         "id" -> data.id.get,
         "memberships" -> data.organisations)
+    }
+  }
+
+  /**
+    * Adds new badge to the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    * @param badgeId Badge identifier
+    */
+  def addBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+    implicit handler => implicit user => Future.successful {
+      brandBadgeService.find(badgeId) map { badge =>
+        if (badge.brandId == brandId) {
+          facilitatorService.find(brandId, personId) map { facilitator =>
+            if (!facilitator.badges.contains(badgeId)) {
+              facilitatorService.update(facilitator.copy(badges = facilitator.badges :+ badgeId))
+            }
+            jsonSuccess("Badge was added")
+          } getOrElse jsonBadRequest("Impossible to add badge to a person without license")
+        } else {
+          jsonNotFound("Badge not found")
+        }
+      } getOrElse jsonNotFound("Badge not found")
     }
   }
 
@@ -133,6 +156,29 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
+    * Deletes badge from the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    * @param badgeId Badge identifier
+    */
+  def deleteBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+    implicit handler => implicit user => Future.successful {
+      brandBadgeService.find(badgeId) map { badge =>
+        if (badge.brandId == brandId) {
+          facilitatorService.find(brandId, personId) map { facilitator =>
+            if (facilitator.badges.contains(badgeId)) {
+              facilitatorService.update(facilitator.copy(badges = facilitator.badges.filterNot(_ == badgeId)))
+            }
+            jsonSuccess("Badge was removed")
+          } getOrElse jsonBadRequest("Impossible to remove badge to a person without license")
+        } else {
+          jsonNotFound("Badge not found")
+        }
+      } getOrElse jsonNotFound("Badge not found")
+    }
+  }
+
+  /**
     * Remove a country from a facilitator
     *
     * @param id Person identifier
@@ -185,6 +231,15 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
           Redirect(routes.People.details(id).url + "#facilitation").
             flashing("success" -> activity.toString)
         }.getOrElse(NotFound)
+  }
+
+  def details(id: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒ Future.successful {
+      facilitatorService.find(brandId, id) map { facilitator =>
+        val badges = brandBadgeService.findByBrand(brandId)
+        Ok(views.html.v2.facilitator.details(badges, facilitator))
+      } getOrElse BadRequest("Unknown facilitator")
+    }
   }
 
   /**

@@ -138,7 +138,7 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
               val hash = generatedName
               uploadImage(Badge.picture(hash), "file") map { _ ⇒
                 brandBadgeService.update(badge.copy(id = Some(id), file = hash))
-                removeImage(Badge.picture(existing.file))
+                Badge.picture(existing.file).remove()
                 Redirect(controllers.routes.Brands.details(brandId) + "#badges")
               } recover {
                 case e: RuntimeException ⇒
@@ -161,8 +161,8 @@ object Badges extends Utilities {
     * Returns url to an badge's picture
     * @param badge Badge
     */
-  def pictureUrl(badge: Badge): Option[String] = {
-    val picture = Badge.picture(badge.file)
+  def pictureUrl(badge: Badge, size: String = ""): Option[String] = {
+    val picture = Badge.picture(badge.file).file(size)
     cdnUrl(picture.name).orElse(Some(fullUrl(routes.Badges.picture(badge.file).url)))
   }
 }

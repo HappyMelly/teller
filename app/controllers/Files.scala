@@ -54,16 +54,6 @@ trait Files extends Controller {
   }
 
   /**
-    * Remove image files from Amazon cloud
-    * @param image Image object
-    */
-  protected def removeImage(image: Image) = {
-    image.files.foreach { file =>
-      S3Bucket.remove(file.file.name)
-    }
-  }
-
-  /**
    * Uploads file to Amazon cloud
    *
    * @param file File object

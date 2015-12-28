@@ -24,6 +24,7 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
+import controllers.brand.Badges
 import models._
 import play.api.libs.json._
 import play.mvc.Controller
@@ -90,12 +91,22 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
     }
   }
 
+  implicit val badgeUrlWrites = new Writes[BadgeUrl] {
+    def writes(badge: BadgeUrl) = {
+      Json.obj(
+        "name" -> badge.name,
+        "url" -> badge.url)
+    }
+  }
+
   case class BrandStatistics(eventsNumber: Int, yearsOfExperience: Int, rating: Float)
+  case class BadgeUrl(name: String, url: Option[String])
 
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
     materials: List[Material],
-    facilitator: Facilitator)
+    facilitator: Facilitator,
+    badges: List[BadgeUrl])
 
   implicit val facilitatorDetailsWrites = new Writes[FacilitatorView] {
     def writes(view: FacilitatorView) = {
@@ -132,7 +143,8 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
           "private_nps" -> view.facilitator.privateNps,
           "number_of_public_evaluations" -> view.facilitator.numberOfPublicEvaluations,
           "number_of_private_evaluations" -> view.facilitator.numberOfPrivateEvaluations
-        ))
+        ),
+        "badges" -> view.badges)
     }
   }
 
@@ -152,17 +164,18 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         person map { person =>
           val brand = code map (x => brandService.find(x)) getOrElse None
           val filterList = brand map (x => List(0, x.id.get)) getOrElse List(0)
-          val endorsements = personService.
-            endorsements(person.id.get).
-            filter(x => filterList.contains(x.brandId))
-          val materials = personService.
-            materials(person.id.get).
-            filter(x => filterList.contains(x.brandId))
+          val endorsements = personService.endorsements(person.id.get).filter(x => filterList.contains(x.brandId))
+          val materials = personService.materials(person.id.get).filter(x => filterList.contains(x.brandId))
           val facilitator = brand map {
             retrieveFacilitatorStat(_, person.id.get)
           } getOrElse Facilitator(None, 0, 0)
+          val badgeUrls = brand map { x =>
+            brandBadgeService.findByBrand(x.identifier).
+              filter(badge => facilitator.badges.contains(badge.id.get)).
+              map(badge => BadgeUrl(badge.name, Badges.pictureUrl(badge)))
+          } getOrElse List()
 
-          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, facilitator)))
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, facilitator, badgeUrls)))
         } getOrElse NotFound
   }
 

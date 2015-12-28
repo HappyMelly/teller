@@ -49,11 +49,13 @@
                                 <th></th>
                                 <th></th>
                                 <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                         @for((license, person, data, joined, left) <- facilitators) {
-                            <tr @if(license.expired) { class="inactive" } >
+                            <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
+                                data-brand="@brand.identifier">
                                 <td><a href="@routes.People.details(person.identifier)">@person.fullName</a></td>
                                 <td>@Countries.name(person.address.countryCode)</td>
                                 <td>@data.publicRating</td>
@@ -64,6 +66,8 @@
                                 <td>@joined</td>
                                 <td>@left</td>
                                 <td>@license.expiring</td>
+                                <td><div class="circle-show-more">
+                                    <span class="glyphicon glyphicon-chevron-down"></span></div></td>
                             </tr>
                         }
                         </tbody>

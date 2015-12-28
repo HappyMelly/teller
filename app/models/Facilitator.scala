@@ -44,7 +44,8 @@ case class Facilitator(id: Option[Long] = None,
   publicNps: Float = 0.0f,
   privateNps: Float = 0.0f,
   numberOfPublicEvaluations: Int = 0,
-  numberOfPrivateEvaluations: Int = 0)
+  numberOfPrivateEvaluations: Int = 0,
+  badges: List[Long] = List())
 
 object Facilitator extends Services {
   val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
