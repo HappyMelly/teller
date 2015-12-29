@@ -26,7 +26,7 @@
   @v2.html.textarea(form("bio"), '_label -> "Bio", 'rows -> "5", 'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
 }
 @v2.html.block("Interests") {
-  @v2.html.textarea(form("interests"), '_label -> "Interests", 'rows -> "5", '_type -> views.html.v2.element.markdownHelp())
+  @v2.html.textarea(form("interests"), '_label -> "Interests", 'rows -> "5", 'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
 }
 
 <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
