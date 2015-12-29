@@ -20,7 +20,7 @@
       @v2.html.block("") {
         @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
         @v2.html.textarea(form("description"), '_label -> "Description",
-          'rows -> "5", '_type -> views.html.v2.element.markdownHelp())
+          'rows -> "5",'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
         @v2.html.file(form("file"), '_label -> "Picture")
         @v2.html.text(form("url"), '_label -> "URL",
           'placeholder -> "http://experiment.com", '_showConstraints -> false)
