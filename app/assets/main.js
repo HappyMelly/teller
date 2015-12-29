@@ -27,6 +27,7 @@ var DashboradPage = (function($){
     return {
         init: function(){
             $('.js-link-target').scrollToEl();
+            $('[markdownpreview]').previewMarkdown();
         }
     }
 })(jQuery);
