@@ -1,0 +1,125 @@
+@import "./../../settings";
+
+.p-endors{
+
+}
+
+// block with buttons
+@heightButtonsBlock: 120px;
+
+.p-endors__buttons-con{
+  height: @heightButtonsBlock;
+  position: relative;
+}
+
+.p-endors__buttons{
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  height: @heightButtonsBlock;
+  padding-top: 35px;
+  .box-sizing(border-box);
+}
+
+.p-endors__btn-select{
+  display: inline-block;
+  min-width: 240px;
+  margin-right: 40px;
+}
+
+.p-endors__btn-cancel{
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+
+/*== States for page ==*/
+.show-fixed-buttons{
+  .p-endors__buttons{
+    position: fixed;
+    z-index: 100;
+    background-color: #e7e7e7;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+  }
+}
+
+
+.endorsement-form {
+  h1{
+    margin-bottom: 28px;
+  }
+
+  .selected {
+    background-color: #e9f2fc;
+  }
+
+  .strip {
+    width: 50%;
+
+    ul.sorting {
+      padding: 0;
+      list-style: none;
+
+      li {
+        padding: 2em 4em 0.7em 0;
+        display: initial;
+
+        &.active {
+          a,
+          a:hover,
+          a:focus {
+            color: @grey3;
+            cursor: default;
+            background-color: #fff;
+            border: 0;
+            font-weight: bold;
+            text-decoration: none;
+          }
+        }
+      }
+    }
+
+    .list-group {
+      border-top: solid 1px @light-grey;
+    }
+
+    .list-group-item {
+      border: none;
+      padding: 1.3em 0.5em 1px;
+    }
+
+    .evaluation-block {
+      &:before,
+      &:after {
+        display: table;
+        content: " ";
+      }
+
+      &:after {
+        clear: both;
+      }
+
+      .evaluation-selector {
+        width: 8%;
+        float: left;
+      }
+
+      .evaluation {
+        width: 91%;
+        float: left;
+        padding-bottom: 1.5em;
+        border-bottom: solid 1px @light-grey;
+
+        .content {
+          padding-bottom: 1em;
+        }
+
+        span {
+          padding-right: 2em;
+        }
+      }
+    }
+  }
+}
+

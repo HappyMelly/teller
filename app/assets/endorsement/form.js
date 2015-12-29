@@ -22,18 +22,70 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+
+var EndorsementPage = (function($){
+
+    /**
+     * Assign events on the page
+     *
+     */
+    function assignEvents(){
+        $('body')
+            .on('click', '.js-evaluation-checkbox', function(){
+                showFixedButtons(true);
+            });
+
+        $(window)
+            .scroll(function (e) {
+                var $window = $(window),
+                    isFixedButtons = $('.p-endors__buttons-con').offset().top > ($window.scrollTop() + $window.height());
+
+                showFixedButtons(isFixedButtons);
+            })
+    }
+
+    /**
+     * Show fixed block of buttons in the bottom of the page
+     *
+     * @param condition Boolean value for showing fixed block
+     */
+    function showFixedButtons(condition){
+        var toggleClass = 'show-fixed-buttons',
+            $body = $('body'),
+            $checkboxes = $('.js-evaluation-checkbox').filter(':checked');
+
+        if (condition && $checkboxes.length){
+            $body.addClass(toggleClass);
+        } else {
+            $body.removeClass(toggleClass);
+        }
+    }
+
+
+    return {
+        init: function(){
+            assignEvents();
+        }
+    }
+})(jQuery);
+
 /**
  * Updates the order of evaluations and renders updated evaluations
  *
  * @param order Ascending/Descending
  */
 function reorderEvaluations(order) {
-    var container = $('.strip').find('.list-group');
-    var children = $(container).children('.list-group-item');
-    children.sort(function(left, right) {
-        return sortEvaluations(left, right, order);
-    });
-    children.detach().appendTo(container);
+    var container = $('.strip').find('.list-group'),
+        children = $(container).children('.list-group-item');
+
+    children.sort(
+        function (left, right) {
+            return sortEvaluations(left, right, order);
+        }
+    );
+
+    children.detach()
+        .appendTo(container);
 }
 
 /**
@@ -47,10 +99,10 @@ function sortEvaluations(left, right, order) {
     var leftRating = $(left).data('rating'),
         rightRating = $(right).data('rating');
 
-    if(leftRating > rightRating) {
+    if (leftRating > rightRating) {
         return order;
     }
-    if(leftRating < rightRating) {
+    if (leftRating < rightRating) {
         return -order;
     }
     return 0;
@@ -61,12 +113,14 @@ function sortEvaluations(left, right, order) {
  */
 function updateButtonState() {
     var submitBtn = $('#submit');
+
     if ($('#addForm').hasClass('active')) {
         submitBtn.prop('disabled', false);
         submitBtn.text('Save');
         $('form').off('submit');
     } else {
         var evaluations = $('input:checked').length;
+
         if (evaluations == 0) {
             submitBtn.text('Select evaluations');
             submitBtn.prop('disabled', true);
@@ -128,5 +182,8 @@ $(document).ready(function() {
         $(this).tab('show');
         updateButtonState();
     });
+
+
+    EndorsementPage.init();
 
 });

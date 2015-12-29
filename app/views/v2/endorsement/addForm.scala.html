@@ -11,17 +11,21 @@
 
 @v2.main("Endorsement", "person", user, withMelly = true) {
   <input type="hidden" disabled id="personId" value="@personId"/>
-  <div class="form endorsement-form">
+  <div class="form endorsement-form tabs-bl">
     @v2.html.block("") {
       <h1>Add Endorsement</h1>
-      <ul class="nav nav-tabs" role="tablist" id="switcher">
-        <li role="presentation" ><a href="#addForm" aria-controls="addForm" role="tab">Create new</a></li>
-        <li class="active" role="presentation"><a href="#selectForm" aria-controls="selectForm" role="tab">Select from your evaluations</a></li>
+      <ul class="tabs-bl__nav" role="tablist" id="switcher">
+        <li role="presentation" >
+          <a class="tabs-bl__link" href="#addForm" aria-controls="addForm" role="tab">Create new</a>
+        </li>
+        <li class="active" role="presentation">
+          <a class="tabs-bl__link" href="#selectForm" aria-controls="selectForm" role="tab">Select from your evaluations</a>
+        </li>
       </ul>
     }
       @html.form(action = CSRF(routes.Endorsements.create(personId))) {
-        <div class="tab-content">
-          <div id="addForm" role="tabpanel" class="tab-pane">
+        <div class="tabs-bl__content">
+          <div id="addForm" role="tabpanel" class="tabs-bl__pane">
             @v2.html.block("") {
               @v2.html.textarea(form("content"), '_label -> "Endorsement", '_help -> "", '_required -> true)
               @v2.html.text(form("name"), '_label -> "Name", '_help -> "", '_required -> true)
@@ -40,19 +44,20 @@
               }
             }
           </div>
-          <div id="selectForm" role="tabpanel" class="tab-pane active" data-url="@routes.Endorsements.renderSelectForm(personId).url">
+          <div id="selectForm" role="tabpanel" class="tabs-bl__pane active" data-url="@routes.Endorsements.renderSelectForm(personId).url">
           </div>
         </div>
-        @v2.html.block("") {
-          <div class="row">
-            <div class="col-md-5">
-              <button class="btn btn-primary btn-block btn-lg" id="submit" type="submit">
-                Save</button>
+
+        <div class="p-endors__buttons-con">
+          <div class="p-endors__buttons">
+            <div class="container">
+              <button class="btn btn-primary btn-lg p-endors__btn-select" id="submit" type="submit">
+                Save
+              </button>
+              <a class="link-blue p-endors__btn-cancel" href="javascript:history.back()">Cancel changes</a>
             </div>
-            <div class="col-md-3 cancel">
-              <a href="javascript:history.back()">Cancel changes</a></div>
           </div>
-        }
+        </div>
       }
   </div>
   <script type="text/javascript" src="@routes.Assets.at("endorsement/form.js")"></script>
