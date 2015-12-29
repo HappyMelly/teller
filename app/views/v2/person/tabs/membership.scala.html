@@ -15,7 +15,7 @@
       "The reason I joined the network...",
       action = None,
       actionId = Some("saveReason")) {
-      <textarea class="form-control" rows="15" id="reason">@m.reason.getOrElse("")</textarea>
+      <textarea class="form-control" rows="15" id="reason" markdownpreview >@m.reason.getOrElse("")</textarea>
       <span class="help-block font-sm">
         @views.html.v2.element.markdownHelp(horizontal = true)
       </span>

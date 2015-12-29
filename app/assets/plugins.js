@@ -128,7 +128,7 @@
                 self.setContent(compiledContent);
                 self.showPopover();
             })
-            .on('keypress', function (e) {
+            .on('keydown', function (e) {
                 var $this = $(this),
                     compiledContent = self.compileMarkdown($this.val());
 
@@ -141,7 +141,9 @@
             });
 
         $(window).resize(function(){
-            self.$popover.css({
+            var $popover = self.$popover;
+
+            $popover && $popover.css({
                 left: self.$el.offset().left + self.$el.outerWidth()
             })
         })
