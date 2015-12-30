@@ -359,7 +359,7 @@ object Products extends Utilities {
     */
   def pictureUrl(product: Product): Option[String] = {
     product.picture.map { path =>
-      cdnUrl(path).orElse(Some(routes.Products.picture(product.id.get).url))
+      cdnUrl(path).orElse(Some(fullUrl(routes.Products.picture(product.id.get).url)))
     } getOrElse None
   }
 }

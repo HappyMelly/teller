@@ -500,7 +500,7 @@ object Brands extends Utilities {
     */
   def pictureUrl(brand: Brand): Option[String] = {
     brand.picture.map { path =>
-      cdnUrl(path).orElse(Some(routes.Brands.picture(brand.code).url))
+      cdnUrl(path).orElse(Some(fullUrl(routes.Brands.picture(brand.code).url)))
     } getOrElse None
   }
 }
