@@ -58,7 +58,7 @@ function updatePhoto() {
         $('#real').find('img').attr('src', src);
         $('#real').show();
         $('.photo-block').addClass('real');
-        App.events.trigger('hmtReloadCompletionWidgethmt.');
+        App.events.trigger('hmtReloadCompletionWidgethmt');
     }).fail(function(jqXHR, status, error) {
     });
 }
