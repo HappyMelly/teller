@@ -31,8 +31,9 @@
     function CompletionWidget(selector){
         var self = this;
 
-        this.selector = selector;
-        this.$el = $(selector);
+        self.selector = selector;
+        self.$el = $(selector);
+        self.currentUserId = $("#activeUserId").val();
 
         self.assignEvents();
         self.reload();
@@ -47,7 +48,13 @@
             });
 
         self.$el
-            .on('click', '.js-show-tab', function (e) {
+            .on('click', '.js-completion-tab', function (e) {
+                if (!self.isProfilePage()) {
+                    window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
+                    return false;
+                }
+
+                App.events.trigger('hmtShowTab', $(this).data('href'));
                 e.preventDefault();
             })
             .on('click', '#addPhotoLink', function (e) {
@@ -60,8 +67,7 @@
 
     CompletionWidget.prototype.reload = function(){
         var self = this,
-            currentUserId = $("#activeUserId").val(),
-            url = jsRoutes.controllers.ProfileStrengths.personWidget(currentUserId, true).url;
+            url = jsRoutes.controllers.ProfileStrengths.personWidget(self.currentUserId, true).url;
 
         $.get(url, function(data){
             self.$el.html(data);
@@ -69,10 +75,9 @@
     };
 
     CompletionWidget.prototype.isProfilePage = function(){
-        var currentUserId = $("#activeUserId").val(),
-            personId = $('#personId').val();
+        var personId = $('#personId').val();
 
-        return (currentUserId == personId);
+        return (this.currentUserId == personId);
     };
 
 
