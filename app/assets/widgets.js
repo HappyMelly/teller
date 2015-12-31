@@ -49,12 +49,20 @@
 
         self.$el
             .on('click', '.js-completion-tab', function (e) {
+                var $this = $(this),
+                    sidebarTab = $this.data('tab'),
+                    popupSelector = $this.data('popup');
+
                 if (!self.isProfilePage()) {
+                    App.history.add('hmtShowTab', [sidebarTab]);
+                    App.history.add('hmtShowProfileDialog', [popupSelector]);
+
                     window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
                     return false;
                 }
 
-                App.events.trigger('hmtShowTab', $(this).data('href'));
+                App.events.trigger('hmtShowTab', [sidebarTab]);
+                App.events.trigger('hmtShowProfileDialog', [popupSelector]);
                 e.preventDefault();
             })
             .on('click', '#addPhotoLink', function (e) {
@@ -80,7 +88,11 @@
         return (this.currentUserId == personId);
     };
 
-
     App.widgets.CompletionWidget = CompletionWidget;
 
 })(jQuery, App);
+
+
+
+
+

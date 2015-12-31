@@ -140,6 +140,13 @@ App.events.on('hmtShowTab', function(e, elem){
     showTab(elem);
 });
 
+App.events.on('hmtShowProfileDialog', function(e, name){
+    setTimeout(function(){
+        $(name).modal('show');
+    }, 0);
+
+});
+
 /**
  * Deletes experiment
  * @param {int} experimentId

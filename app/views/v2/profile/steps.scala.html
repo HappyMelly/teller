@@ -15,17 +15,30 @@
         <a class="b-completion__link link-mblue" href="@routes.People.edit(personId)">2 social networks</a>
       }
       @if(step.name == "reason") {
-        <a class="b-completion__link link-mblue js-completion-tab" href="javascript: void(0)" data-href="#sidemenu a[href='#membership']" data-toggle="modal" data-target="#reasonDialog">
-          sharing why you joined the network</a>
+        <a class="b-completion__link link-mblue js-completion-tab"
+            href="javascript: void(0)"
+            data-tab="#sidemenu a[href='#membership']"
+            data-popup="#reasonDialog">
+
+          sharing why you joined the network
+        </a>
       }
       @if(step.name == "member") {
         <a class="b-completion__link link-mblue" href="@routes.Membership.welcome()">becoming a member</a>
       }
       @if(step.name == "signature") {
-        <a class="b-completion__link link-mblue js-completion-tab" href="javascript: void(0)" data-href="#sidemenu a[href='#facilitation']">signature</a>
+        <a class="b-completion__link link-mblue js-completion-tab"
+            href="javascript: void(0)"
+            data-tab="#sidemenu a[href='#facilitation']">
+          signature
+        </a>
       }
       @if(step.name == "language") {
-        <a class="b-completion__link link-mblue js-completion-tab" href="javascript: void(0)" data-href="#sidemenu a[href='#facilitation']">at least 1 language</a>
+        <a class="b-completion__link link-mblue js-completion-tab"
+            href="javascript: void(0)"
+            data-tab="#sidemenu a[href='#facilitation']">
+          at least 1 language
+        </a>
       }
     </li>
   }
