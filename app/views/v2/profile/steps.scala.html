@@ -1,31 +1,31 @@
 @(personId: Long,
   steps: List[CompletionStep])
 
-<ul class="list-unstyled">
+<ul class="b-completion__list">
   @for(step <- steps) {
     <li>
       Get <strong>@(step.weight)%</strong> for
       @if(step.name == "photo") {
-        <a href="#" id="addPhotoLink" data-toggle="modal" data-target="#photoDialog">photo</a>
+        <a class="b-completion__link link-mblue" href="javascript: void(0)" id="addPhotoLink" data-toggle="modal" data-target="#photoDialog">photo</a>
       }
       @if(step.name == "about") {
-        <a href="@routes.People.edit(personId)">description</a>
+        <a class="b-completion__link link-mblue" href="@routes.People.edit(personId)">description</a>
       }
       @if(step.name == "social") {
-        <a href="@routes.People.edit(personId)">2 social networks</a>
+        <a class="b-completion__link link-mblue" href="@routes.People.edit(personId)">2 social networks</a>
       }
       @if(step.name == "reason") {
-        <a href="#" onclick="showTab($('#sidemenu a[href=\'#membership\']')); return true;" data-toggle="modal" data-target="#reasonDialog">
+        <a class="b-completion__link link-mblue" href="javascript: void(0)" onclick="showTab($('#sidemenu a[href=\'#membership\']')); return true;" data-toggle="modal" data-target="#reasonDialog">
           sharing why you joined the network</a>
       }
       @if(step.name == "member") {
-        <a href="@routes.Membership.welcome()">becoming a member</a>
+        <a class="b-completion__link link-mblue" href="@routes.Membership.welcome()">becoming a member</a>
       }
       @if(step.name == "signature") {
-        <a href="#" onclick="showTab($('#sidemenu a[href=\'#facilitation\']')); return false;">signature</a>
+        <a class="b-completion__link link-mblue" href="javascript: void(0)" onclick="showTab($('#sidemenu a[href=\'#facilitation\']')); return false;">signature</a>
       }
       @if(step.name == "language") {
-        <a href="#" onclick="showTab($('#sidemenu a[href=\'#facilitation\']')); return false;">at least 1 language</a>
+        <a class="b-completion__link link-mblue" href="javascript: void(0)" onclick="showTab($('#sidemenu a[href=\'#facilitation\']')); return false;">at least 1 language</a>
       }
     </li>
   }

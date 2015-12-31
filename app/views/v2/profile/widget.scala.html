@@ -2,27 +2,29 @@
   strength: ProfileStrength,
   steps: Boolean)
 
-<div class="panel-body profile-strength grey-widget">
-  <h5>Your Profile Strength</h5>
-  <div class="text-center strength-value">@(strength.progress)%</div>
-  <div class="progress">
-    <div class="progress-bar" role="progressbar"
+<div class="b-completion">
+  <h5 class="b-completion__title">Your Profile Strength</h5>
+  <div class="b-completion__value">@(strength.progress)%</div>
+  <div class="b-progress b-completion__progress">
+    <div class="b-progress__bar" role="progressbar"
       aria-valuemin="0" aria-valuemax="100" style="width: @(strength.progress)%;">
     </div>
   </div>
   @if(strength.progress == 100) {
-    <div class="steps">
+    <div class="b-completion__steps">
       <p><strong>You are awesome ;)</strong></p>
       <p>Now relax and enjoy <a href="https://www.youtube.com/watch?v=StTqXEQ2l-Y" target="_blank">this video</a></p>
     </div>
   } else {
     @if(steps) {
-      <div class="steps">
+      <div class="b-completion__steps">
         @views.html.v2.profile.steps(personId, strength.incompleteSteps)
       </div>
-      <div class="inspiration"><a href="/person/22">Get inspired by Jurgen's profile</a></div>
+      <div class="b-completion__inspiration">
+        <a class="link-blue" href="/person/22">Get inspired by Jurgen's profile</a>
+      </div>
     } else {
-      <div class="steps">
+      <div class="b-completion__steps">
         <a href="@routes.People.details(personId)" class="btn btn-primary btn-block"
           onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
           >Improve your profile</a>
