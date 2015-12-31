@@ -16,19 +16,12 @@
       <p>Now relax and enjoy <a href="https://www.youtube.com/watch?v=StTqXEQ2l-Y" target="_blank">this video</a></p>
     </div>
   } else {
-    @if(steps) {
       <div class="b-completion__steps">
         @views.html.v2.profile.steps(personId, strength.incompleteSteps)
       </div>
       <div class="b-completion__inspiration">
         <a class="link-blue" href="/person/22">Get inspired by Jurgen's profile</a>
       </div>
-    } else {
-      <div class="b-completion__steps">
-        <a href="@routes.People.details(personId)" class="btn btn-primary btn-block"
-          onclick="ga('send', 'event', 'network', 'click', 'profile'); return true;"
-          >Improve your profile</a>
-      </div>
-    }
+
   }
 </div>
