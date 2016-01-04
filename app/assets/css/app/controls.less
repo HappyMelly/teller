@@ -9,7 +9,7 @@
   border-bottom:1px solid transparent;
 }
 
-
+// one line links
 .link-black{
   .link-simple;
   color: #333333 !important;
@@ -21,6 +21,34 @@
 
 .link-blue{
   .link-simple;
+  color: #4a90e2 !important;
+
+  &:hover{
+    color: #4a90e2 !important;
+    border-bottom-color: #4a90e2;
+  }
+}
+
+
+// multiline links
+.link-m{
+  display: inline;
+  text-decoration: none !important;
+  .transition(all .15s ease);
+  border-bottom:1px solid transparent;
+}
+
+.link-mblack{
+  .link-m;
+  color: #333333 !important;
+
+  &:hover{
+    border-bottom-color: #333;
+  }
+}
+
+.link-mblue{
+  .link-m;
   color: #4a90e2 !important;
 
   &:hover{
