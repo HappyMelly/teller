@@ -26,9 +26,12 @@
 table.dataTable > thead > tr > th {
   position: relative;
   background-image: none !important;
-  padding-left: 0;
+  padding-left: 10px;
+  padding-right: 35px;
 
-  &.sorting:after, &.sorting_asc:after, &.sorting_desc:after {
+  &.sorting:after,
+  &.sorting_asc:after,
+  &.sorting_desc:after {
     position: absolute;
     top: 1.5em;
     right: 8px;
@@ -38,10 +41,13 @@ table.dataTable > thead > tr > th {
     font-weight: 100;
     font-family: FontAwesome;
   }
-  &.sorting:before, &.sorting_asc:before, &.sorting_desc:before {
+
+  &.sorting:before,
+  &.sorting_asc:before,
+  &.sorting_desc:before {
     position: absolute;
     top: 1.5em;
-    left: -14px;
+    right: 22px;
     color: @pinkish-grey;
     display: block;
     font-size: 0.7em;
@@ -94,6 +100,7 @@ table.dataTable > thead > tr > th {
     color: black;
   }
 }
+
 table.dataTable > tbody > tr > td:first-child {
   padding-left: 10px;
 }
@@ -103,29 +110,31 @@ table.dataTable > tbody > tr > td:first-child {
   margin-right: 40px;
   margin-bottom: 10px;
   float: left;
+
   .filter {
     position: relative;
     display: inline-block;
     vertical-align: middle;
     margin: 0 15px 0 10px;
+
     .counter {
       color: @grey;
     }
+
     a.active {
       color: black;
-      &:hover, &:visited, &:focus {
-        text-decoration: none;
-      }
+      text-decoration: none !important;
     }
   }
 }
+
 .dataTables_filter {
   padding-top: 15px;
+
   input {
     margin-left: 5px;
   }
 }
-
 
 .row-details {
   padding: 10px;
