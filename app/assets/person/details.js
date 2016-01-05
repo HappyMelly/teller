@@ -35,7 +35,7 @@ function updateReason() {
         $('#reasonDialog').modal('hide');
         $('#reasonToJoin').html(data.message);
         console.log('update reason');
-        App.events.trigger('hmtReloadCompletionWidget');
+        App.events.pub('hmtReloadCompletionWidget');
     }).fail(function(jqXHR, status, error) {
     });
 }
@@ -58,7 +58,7 @@ function updatePhoto() {
         $('#real').find('img').attr('src', src);
         $('#real').show();
         $('.photo-block').addClass('real');
-        App.events.trigger('hmtReloadCompletionWidgethmt');
+        App.events.pub('hmtReloadCompletionWidgethmt');
     }).fail(function(jqXHR, status, error) {
     });
 }
@@ -77,8 +77,12 @@ function showSelectPhotoForm() {
     });
 }
 
-App.events.on('hmtShowSelectPhotoForm', function(e){
+App.events.sub('hmtShowSelectPhotoForm', function(arr){
     showSelectPhotoForm();
+
+    setTimeout(function(){
+        $(arr[0]).modal('show');
+    }, 200);
     e.preventDefault();
 });
 
@@ -136,16 +140,22 @@ function showTab(elem) {
     return false;
 }
 
-App.events.on('hmtShowTab', function(e, elem){
-    showTab(elem);
+App.events.sub('hmtShowTabAndDialog', function(arr){
+    if (arr[0]){
+        showTab(arr[0]);
+    }
+
+    if (arr[1]){
+        setTimeout(function(){
+            $(arr[1]).modal('show');
+        }, 200)
+    }
+
 });
 
-App.events.on('hmtShowProfileDialog', function(e, name){
-    setTimeout(function(){
-        $(name).modal('show');
-    }, 0);
 
-});
+
+
 
 /**
  * Deletes experiment
@@ -438,7 +448,7 @@ $(document).ready( function() {
             $('.photo-block').removeClass('real');
             $('#real').hide();
             $('#stub').show();
-            App.events.trigger('hmtReloadCompletionWidget');
+            App.events.pub('hmtReloadCompletionWidget');
         });
         return false;
     });

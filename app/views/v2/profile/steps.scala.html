@@ -6,25 +6,38 @@
     <li>
       Get <strong>@(step.weight)%</strong> for
       @if(step.name == "photo") {
-        <a class="b-completion__link link-mblue" href="javascript: void(0)" id="addPhotoLink" data-toggle="modal" data-target="#photoDialog">photo</a>
+        <a class="b-completion__link link-mblue js-completion-photo"
+          href="javascript: void(0)"
+          data-tab=""
+          data-popup="#photoDialog">
+          photo
+        </a>
       }
       @if(step.name == "about") {
-        <a class="b-completion__link link-mblue" href="@routes.People.edit(personId)">description</a>
+        <a class="b-completion__link link-mblue"
+          href="@routes.People.edit(personId)">
+            description
+        </a>
       }
       @if(step.name == "social") {
-        <a class="b-completion__link link-mblue" href="@routes.People.edit(personId)">2 social networks</a>
+        <a class="b-completion__link link-mblue"
+          href="@routes.People.edit(personId)">
+            2 social networks
+        </a>
       }
       @if(step.name == "reason") {
         <a class="b-completion__link link-mblue js-completion-tab"
             href="javascript: void(0)"
             data-tab="#sidemenu a[href='#membership']"
             data-popup="#reasonDialog">
-
           sharing why you joined the network
         </a>
       }
       @if(step.name == "member") {
-        <a class="b-completion__link link-mblue" href="@routes.Membership.welcome()">becoming a member</a>
+        <a class="b-completion__link link-mblue"
+          href="@routes.Membership.welcome()">
+          becoming a member
+        </a>
       }
       @if(step.name == "signature") {
         <a class="b-completion__link link-mblue js-completion-tab"

@@ -43,32 +43,40 @@
         var self = this;
 
         App.events
-            .on('hmtReloadCompletionWidget', function () {
+            .sub('hmtReloadCompletionWidget', function () {
                 self.reload();
             });
 
         self.$el
+            // show tab in profile page and dialog
             .on('click', '.js-completion-tab', function (e) {
                 var $this = $(this),
-                    sidebarTab = $this.data('tab'),
-                    popupSelector = $this.data('popup');
+                    menuTab = $this.data('tab'),
+                    modalDialog = $this.data('popup');
 
                 if (!self.isProfilePage()) {
-                    App.history.add('hmtShowTab', [sidebarTab]);
-                    App.history.add('hmtShowProfileDialog', [popupSelector]);
+                    App.history.add('hmtShowTabAndDialog', [menuTab, modalDialog]);
 
                     window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
                     return false;
                 }
 
-                App.events.trigger('hmtShowTab', [sidebarTab]);
-                App.events.trigger('hmtShowProfileDialog', [popupSelector]);
+                App.events.pub('hmtShowTabAndDialog', [menuTab, modalDialog]);
                 e.preventDefault();
             })
-            .on('click', '#addPhotoLink', function (e) {
-                if (!self.isProfilePage()) return false;
+            // show profile page and photo upload dialog
+            .on('click', '.js-completion-photo', function (e) {
+                var $this = $(this),
+                    modalDialog = $this.data('popup');
 
-                App.events.trigger('hmtShowSelectPhotoForm');
+                if (!self.isProfilePage()) {
+                    App.history.add('hmtShowSelectPhotoForm', [modalDialog]);
+
+                    window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
+                    return false;
+                }
+
+                App.events.pub('hmtShowSelectPhotoForm', [modalDialog]);
                 e.preventDefault();
             });
     };

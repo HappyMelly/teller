@@ -41,8 +41,9 @@
         obj = JSON.parse(events);
 
         for (var eventsName in obj){
-            App.events.trigger(eventsName, obj[eventsName]);
+            App.events.pub(eventsName, obj[eventsName]);
         }
+
         this.cleanLocalEvents();
     };
 
