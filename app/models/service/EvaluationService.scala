@@ -24,8 +24,10 @@
  */
 package models.service
 
+import models.database.event.Attendees
 import models.database.{Evaluations, Events, Participants, People}
 import models._
+import models.event.AttendeeView
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -134,6 +136,29 @@ class EvaluationService extends Services{
       } else {
         List()
       }
+  }
+
+  /**
+    * Returns participants and their evaluations for a set of events
+    *
+    * @param events Event identifiers
+    */
+  def findEvaluationsByEvents(events: List[Long]): List[AttendeeView] = DB.withSession { implicit session ⇒
+    import models.database.PortableJodaSupport._
+    import models.database.Evaluations.evaluationStatusTypeMapper
+
+    val baseQuery = for {
+      ((part, e), ev) ← TableQuery[Attendees] innerJoin
+        TableQuery[Events] on (_.eventId === _.id) leftJoin
+        TableQuery[Evaluations] on (_._1.evaluationId === _.id)
+    } yield (part, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, ev.confirmationId)
+
+    val eventQuery = baseQuery.filter(_._2.id inSet events)
+    val rawList = eventQuery.mapResult(AttendeeView.tupled).list
+    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+      map(obj ⇒ AttendeeView(obj.attendee, obj.event, None, None, None, None, None, None))
+    withEvaluation.union(withoutEvaluation.distinct)
   }
 
   /**

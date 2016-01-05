@@ -219,11 +219,11 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIden
     createToken(person.email, isSignUp = false).map { token =>
       userAccountService.findByPerson(person.identifier) map { account =>
         if (!account.byEmail) {
-          userAccountService.update(account.copy(byEmail = true, facilitator = true))
+          userAccountService.update(account.copy(byEmail = true, facilitator = true, registered = true))
           setupLoginByEmailEnvironment(person, token)
           sendFacilitatorWelcomeEmail(person, brand, token.uuid)
         } else {
-          userAccountService.update(account.copy(facilitator = true))
+          userAccountService.update(account.copy(facilitator = true, registered = true))
         }
       } getOrElse {
         val account = UserAccount.empty(person.identifier).copy(byEmail = true, facilitator = true, registered = true)

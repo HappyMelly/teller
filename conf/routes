@@ -42,6 +42,7 @@ GET           /brand/:id/tabs                                                @co
 POST          /brand/:id/member                                              @controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    @controllers.Brands.removeCoordinator(id: Long, personId: Long)
 POST          /brand/:id                                                     @controllers.Brands.update(id: Long)
+GET           /brand/:id/attendees                                           @controllers.event.Attendees.list(id: Long)
 GET           /brand/:id/events                                              @controllers.Brands.events(id: Long, future: Option[Boolean])
 GET           /brand/:id/edit                                                @controllers.Brands.edit(id: Long)
 POST          /brand/:id/delete                                              @controllers.Brands.delete(id: Long)

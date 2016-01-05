@@ -61,6 +61,7 @@ function loadEventList(events) {
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
     var events = [];
+    var url = jsRoutes.controllers.event.Attendees.list(currentBrand).url;
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
@@ -68,7 +69,7 @@ $(document).ready( function() {
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "participants/brand/" + currentBrand,
+            "url" : url,
             "dataSrc": ""
         },
         "order": [[ 6, "desc" ]],
