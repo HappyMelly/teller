@@ -98,7 +98,8 @@ class FacilitatorService {
           facilitator.publicMedian, facilitator.privateMedian,
           facilitator.publicNps, facilitator.privateNps,
           facilitator.numberOfPublicEvaluations,
-          facilitator.numberOfPrivateEvaluations, Option[String](facilitator.badges.mkString(","))))
+          facilitator.numberOfPrivateEvaluations,
+          if (facilitator.badges.isEmpty) None else Option[String](facilitator.badges.mkString(","))))
       facilitator
   }
 
