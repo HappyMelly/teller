@@ -9,11 +9,8 @@
     <strong class="text-muted">Manage Attendee:</strong>&nbsp;
       @if(attendee.personId.isEmpty) {
         <a href="@controllers.event.routes.Attendees.edit(attendee.eventId, attendee.identifier)">Edit</a>
-        <a class="delete-person" href="#" data-id="@attendee.id" data-event="@attendee.eventId">Delete</a>
-      } else {
-        <a data-event="@attendee.eventId" data-person="@attendee.id"
-        class="remove-participation" href="#">Remove Participation</a>
       }
+      <a class="delete-person" href="#" data-id="@attendee.id" data-event="@attendee.eventId">Delete</a>
       @if(coordinator && evaluation.isEmpty) {
         <a href="@routes.Evaluations.add(Some(attendee.eventId), attendee.personId)">Add Evaluation</a>
       }

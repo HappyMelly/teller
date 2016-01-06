@@ -177,16 +177,16 @@ function deleteEvaluation(object, container) {
 function deletePerson(object, callback) {
     var personId = $(object).data('id');
     var eventId = $(object).data('event');
-    var result = confirm("Remove this person? You cannot undo this action.");
+    var result = confirm("Remove this attendee? You cannot undo this action.");
     if (result == true) {
         $.ajax({
             type: "DELETE",
-            url: jsRoutes.controllers.Participants.deletePerson(eventId, personId).url,
+            url: jsRoutes.controllers.event.Attendees.delete(eventId, personId).url,
             data: {},
             dataType: "json"
         }).done(function(data) {
             callback(data);
-            var caption = "Person was successfully deleted";
+            var caption = "Attendee was successfully deleted";
             success(caption);
         });
     }
@@ -260,26 +260,6 @@ function initializeParticipantActions(container) {
  * @param container {string} Type of container (table or link)
  */
 function initializeParticipantActionsInDetails(container) {
-    $('.remove-participation').on('click', function(e) {
-        e.preventDefault();
-        var object = $(this);
-        var result = confirm("Remove this participant? You cannot undo this action.");
-        if (result == true) {
-            var eventId = $(this).data('event');
-            var personId = $(this).data('person');
-            var url = jsRoutes.controllers.Participants.delete(eventId, personId).url;
-            $.get(url, {}, function() {
-                if (container == "table") {
-                    removeParticipant();
-                } else {
-                    removeParticipantFromList();
-                }
-                noty({text: 'Participant was successfully removed', layout: 'bottom',
-                    theme: 'relax', timeout: 2000 , type: 'success'});
-            });
-        }
-        return false;
-    });
     $('.approve').on('click', function(e) {
         e.preventDefault();
         var that = this;

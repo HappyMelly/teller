@@ -40,7 +40,7 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
-  def personId = column[Long]("PERSON_ID")
+  def personId = column[Long]("ATTENDEE_ID")
   def reasonToRegister = column[String]("REASON_TO_REGISTER")
   def actionItems = column[String]("ACTION_ITEMS")
   def changesToContent = column[String]("CHANGES_TO_CONTENT")

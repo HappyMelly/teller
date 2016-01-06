@@ -53,6 +53,20 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
     }))
 
   /**
+    * Deletes the given attendee
+    * @param eventId Event identifier
+    * @param attendeeId Attendee identifier
+    */
+  def delete(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        attendeeService.delete(attendeeId, eventId)
+        Future.successful(jsonSuccess("Attendee was successfully deleted"))
+      } getOrElse Future.successful(jsonNotFound("Unknown attendee"))
+
+  }
+
+  /**
     * Returns the details of the given participant
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier

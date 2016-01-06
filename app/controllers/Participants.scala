@@ -196,52 +196,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Delete a participant from the event
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    * @param ref An identifier of a page where a user should be redirected
-    * @return
-    */
-  def delete(eventId: Long, personId: Long, ref: Option[String]) =
-    AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-      implicit request ⇒
-        implicit handler ⇒ implicit user ⇒ implicit event =>
-          participantService.find(personId, eventId).map { value ⇒
-
-            val activityObject = Messages("activity.participant.delete", value.person.get.fullName, value.event.get.title)
-            value.delete()
-            val activity = Activity.create(user.name,
-              Activity.Predicate.Deleted,
-              activityObject)
-            val route = ref match {
-              case Some("event") ⇒ routes.Events.details(eventId).url + "#participant"
-              case _ ⇒ routes.Dashboard.index().url
-            }
-            Future.successful(Redirect(route).flashing("success" -> activity.toString))
-          } getOrElse Future.successful(NotFound)
-    }
-
-  /**
-    * Deletes the person who is a participant. Only virtual people could be
-    * deleted by this method
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
-  def deletePerson(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      personService.find(personId) map { person ⇒
-        if (person.virtual) {
-          personService.delete(personId)
-          val log = activity(person, user.person).deleted.insert()
-          Future.successful(jsonOk(Json.obj("redirect" -> routes.Events.details(eventId).url)))
-        } else {
-          Future.successful(Forbidden("You are not allowed to delete this person"))
-        }
-      } getOrElse Future.successful(jsonNotFound("Unknown person"))
-
-  }
-
-  /**
     * Returns a list of participants without evaluations for a particular event
     *
     * @param eventId Event identifier

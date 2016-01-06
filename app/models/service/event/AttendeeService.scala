@@ -18,6 +18,15 @@ class AttendeeService extends Services {
   private val attendees = TableQuery[Attendees]
 
   /**
+    * Deletes the given attendee from the database
+    * @param attendeeId Attendee identifier
+    * @param eventId Event identifier
+    */
+  def delete(attendeeId: Long, eventId: Long): Unit = DB.withSession { implicit session ⇒
+    attendees.filter(_.id === attendeeId).filter(_.eventId === eventId).mutate(_.delete())
+  }
+
+  /**
     * Returns the given attendee if exists
     * @param attendeeId Attendee identifier
     * @param eventId Event identifier
