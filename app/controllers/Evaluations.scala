@@ -146,55 +146,15 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    */
   def delete(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      evaluationService.find(id).map { x ⇒
-        x.delete()
+      evaluationService.find(id).map { evaluation ⇒
+        evaluationService.delete(evaluation)
         // recalculate ratings
-        Event.ratingActor ! x.eventId
-        Facilitator.ratingActor ! x.eventId
-        val log = activity(x, user.person).deleted.insert()
-        val route = routes.Events.details(x.eventId).url
-        Redirect(route).flashing("success" -> log.toString)
+        Event.ratingActor ! evaluation.eventId
+        Facilitator.ratingActor ! evaluation.eventId
+        activity(evaluation, user.person).deleted.insert()
+        val msg = "Evaluation was successfully deleted"
+        Redirect(routes.Events.details(evaluation.eventId).url).flashing("success" -> msg)
       }.getOrElse(NotFound)
-  }
-
-  /**
-   * Move an evaluation to another event
-   * @param id Unique evaluation identifier
-   */
-  def move(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
-
-        evaluationService.find(id).map { evaluation ⇒
-          val form = Form(single(
-            "eventId" -> longNumber))
-          val (eventId) = form.bindFromRequest
-          form.bindFromRequest.fold(
-            f ⇒ BadRequest(Json.obj("error" -> "Event is not chosen")),
-            eventId ⇒ {
-              if (eventId == evaluation.eventId) {
-                val log = activity(evaluation, user.person).updated.insert()
-                Ok(Json.obj("success" -> log.toString))
-              } else {
-                eventService.find(eventId).map { event ⇒
-                  participantService.find(evaluation.attendeeId, evaluation.eventId).map { oldParticipant ⇒
-                    // first we need to check if this event has already the participant
-                    participantService.find(evaluation.attendeeId, eventId).map { participant ⇒
-                      // if yes, we reassign an evaluation
-                      participant.copy(evaluationId = Some(id)).update
-                      oldParticipant.copy(evaluationId = None).update
-                    }.getOrElse {
-                      // if no, we move a participant
-                      oldParticipant.copy(eventId = eventId).update
-                    }
-                    evaluation.copy(eventId = eventId).update
-                    val log = activity(evaluation, user.person).updated.insert()
-                    Ok(Json.obj("success" -> log.toString))
-                  }.getOrElse(NotFound)
-                }.getOrElse(NotFound)
-              }
-            })
-        }.getOrElse(NotFound)
   }
 
   /**

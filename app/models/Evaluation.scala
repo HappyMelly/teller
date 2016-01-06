@@ -143,15 +143,6 @@ case class Evaluation(
     }
 
   /**
-   * @TEST
-   */
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    TableQuery[Evaluations].filter(_.id === id).delete
-    val participant = participantService.find(attendeeId, eventId).get
-    participant.copy(evaluationId = None).update
-  }
-
-  /**
    * Updates the evaluation
    */
   def update(): Evaluation = evaluationService.update(this)

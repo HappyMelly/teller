@@ -69,16 +69,6 @@ case class Participant(
     updateQuery.update(updateTuple)
     this
   }
-
-  /**
-   * Delete a participant and related evaluation
-   */
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    Evaluation.findByEventAndPerson(this.personId, this.eventId).foreach { value ⇒
-      value.delete()
-    }
-    TableQuery[Participants].filter(_.id === this.id).delete
-  }
 }
 
 /**

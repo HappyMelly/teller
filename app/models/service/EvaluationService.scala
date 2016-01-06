@@ -32,7 +32,7 @@ import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-class EvaluationService extends Services{
+class EvaluationService extends Services {
 
   private val evaluations = TableQuery[Evaluations]
 
@@ -46,6 +46,15 @@ class EvaluationService extends Services{
     val participant = participantService.find(eval.attendeeId, eval.eventId).get
     participant.copy(evaluationId = Some(id)).update
     eval.copy(id = Some(id))
+  }
+
+  /**
+    * Deletes the given evaluation from database
+    * @param evaluation Evaluation
+    */
+  def delete(evaluation: Evaluation): Unit = DB.withSession { implicit session =>
+    attendeeService.updateEvaluation(evaluation.attendeeId, None)
+    evaluations.filter(_.id === evaluation.id).delete
   }
 
   /**
@@ -188,15 +197,14 @@ class EvaluationService extends Services{
    * @param eval Evaluation
    * @return Returns the given evaluation
    */
-  def update(eval: Evaluation): Evaluation = DB.withSession {
-    implicit session ⇒
-      val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
-        eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
-        eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
-        eval.contentImpression, eval.hostImpression, eval.status,
-        eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
-      evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
-      eval
+  def update(eval: Evaluation): Evaluation = DB.withSession { implicit session ⇒
+    val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
+      eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
+      eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
+      eval.contentImpression, eval.hostImpression, eval.status,
+      eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
+    evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
+    eval
   }
 
 }

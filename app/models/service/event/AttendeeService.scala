@@ -75,6 +75,15 @@ class AttendeeService extends Services {
     val forUpdate = (attendee.certificate, attendee.issued)
     attendees.filter(_.id === attendee.id).map(x => (x.certificate, x.issued)).update(forUpdate)
   }
+
+  /**
+    * Updates evaluation for the given attendee
+    * @param attendeeId Attendee identifier
+    * @param evaluationId Evaluation identifier
+    */
+  def updateEvaluation(attendeeId: Long, evaluationId: Option[Long]) = DB.withSession { implicit session =>
+    attendees.filter(_.id === attendeeId).map(_.evaluationId).update(evaluationId)
+  }
 }
 
 object AttendeeService {
