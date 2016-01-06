@@ -5,33 +5,41 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.DynamicRole
 
-<div class="photo-block @if(person.photo.url.nonEmpty) { real }">
+<div class="b-avatar @if(person.photo.url.nonEmpty) { b-avatar_stat_real }">
 @dynamicOr(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
     @person.photo.url.map { photo =>
       <div id="real">
-        <img width="@width" class="img-rounded" src="@photo"/>
+        <img width="@width" class="b-avatar__img" src="@photo"/>
       </div>
     }.getOrElse {
       <div id="real" style="display:none;">
-        <img width="@width" class="img-rounded" src=""/>
+        <img width="@width" class="b-avatar__img" src=""/>
       </div>
     }
+
     <div id="stub" @if(person.photo.url.nonEmpty) { style="display:none;" }>
       <a href="#" class="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
-        <img width="@width"
+        <img class="b-avatar__img" width="@width"
           src="@routes.Assets.at("images/add-photo.png")"/></a>
     </div>
-    <div class="photo-action">
-      <a href="#" class="choosePhotoLink" data-toggle="modal"
-        data-target="#photoDialog">Edit</a>
-      <a href="#" id="btnPhotoDelete"
-        data-href="@routes.ProfilePhotos.delete(person.id.get)">Delete</a>
+
+    <div class="b-avatar__action">
+      <a href="#" class="link-white choosePhotoLink"
+        data-toggle="modal"
+        data-target="#photoDialog">
+          Edit
+      </a>
+      <a href="#" class="link-white"
+        id="btnPhotoDelete"
+        data-href="@routes.ProfilePhotos.delete(person.id.get)">
+          Delete
+      </a>
     </div>
   }{
     @person.photo.url.map { photo =>
-      <img width="@width" class="img-rounded photo" src="@photo"/>
+      <img width="@width" class="photo b-avatar__img" src="@photo"/>
     }.getOrElse {
-      <img width="@width"
+      <img class="b-avatar__img" width="@width"
         src="@routes.Assets.at("images/add-photo.png")"/>
     }
   }

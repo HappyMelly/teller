@@ -1,0 +1,118 @@
+@import "./../../settings";
+
+/* == Avatar image ==*/
+.b-avatar{
+  position: relative;
+  margin-top: -145px;
+}
+
+.b-avatar__img{
+  min-height: 135px;
+  border-radius: 6px;
+}
+
+.b-avatar__action{
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #4a90e2;
+  opacity: 0.9;
+  text-align: center;
+  padding-top: 15px;
+  height: 54px;
+  border-radius: 0 0 6px 6px;
+
+  .link-white{
+    margin: 0 15px;
+  }
+}
+
+// state
+.b-avatar_stat_real:hover {
+  .b-avatar__action {
+    display: block;
+  }
+}
+
+
+/*== Photo modal dialog ==*/
+.b-photoupload{
+
+}
+
+.b-photoupload__item {
+  display: table;
+  cursor: pointer;
+  border: 2px solid @light-grey;
+  margin-bottom: 10px;
+  min-height: 160px;
+  width: 100%;
+
+  &:hover {
+    border: 2px solid @dark-sky-blue;
+  }
+
+  &.type_active {
+    border: 2px solid @dark-sky-blue;
+  }
+}
+
+.b-photoupload__desc{
+  padding: 0 15px 0 171px;
+}
+
+// upload
+.b-photoupload__img{
+  cursor: pointer;
+  float: left;
+  width: 156px;
+
+  &.type_photo{
+    &:hover{
+      border: 10px solid #5cb85c;
+    }
+
+    &.active {
+      border: 10px solid #5cb85c;
+    }
+  }
+}
+
+.b-fileupload{
+  position: relative;
+  overflow: hidden;
+  border: 1px solid @light-grey;
+  border-radius: 3px;
+
+  &.focus{
+    box-shadow: 0 0 5px rgba(0,30,255,0.4);
+  }
+}
+
+.b-fileupload__btn{
+  float: right;
+  width: 8em;
+}
+
+.b-fileupload__label{
+  padding-left: 1em;
+  padding-top: 8px;
+}
+
+.b-fileupload__ctr{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: scale(20);
+  letter-spacing: 10em;     /* IE 9 fix */
+  -ms-transform: scale(20); /* IE 9 fix */
+  opacity: 0;
+  cursor: pointer
+}
+
+
+
