@@ -57,7 +57,7 @@ function updatePhoto() {
         $('#stub').hide();
         $('#real').find('img').attr('src', src);
         $('#real').show();
-        $('.photo-block').addClass('real');
+        $('.b-avatar').addClass('b-avatar_stat_real');
         App.events.pub('hmtReloadCompletionWidgethmt');
     }).fail(function(jqXHR, status, error) {
     });
@@ -135,8 +135,9 @@ function showTab(elem) {
         });
         loadedTabs[loadedTabs.length] = target;
     }
-    $('.sidemenu').find('li').removeClass('active');
+    $('#sidemenu').find('a').removeClass('active');
     $(elem).tab('show');
+    $(elem).addClass('active')
     return false;
 }
 

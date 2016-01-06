@@ -38,7 +38,7 @@ function setupLogoActions() {
             $('#stub').hide();
             $('#real').find('img').attr('src', data.result.link);
             $('#real').show();
-            $('.photo-block').addClass('real');
+            $('.b-avatar').addClass('b-avatar_stat_real');
             $(btnLogoUpload).prop('disabled', true);
         }
     }).bind('fileuploadadd', function (e, data) {
@@ -81,8 +81,9 @@ function showTab(elem) {
         });
         loadedTabs[loadedTabs.length] = target;
     }
-    $('.sidemenu').find('li').removeClass('active');
+    $('#sidemenu').find('a').removeClass('active');
     $(elem).tab('show');
+    $(elem).addClass('active');
     return false;
 }
 

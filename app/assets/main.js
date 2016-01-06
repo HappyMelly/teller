@@ -67,7 +67,7 @@ function getPersonId() {
 }
 
 function initializeFileUploadField() {
-    $('.file-upload').each(function(e) {
+    $('.js-fileupload').each(function(e) {
         var wrapper = $(this),
             input = wrapper.find("input"),
             button = wrapper.find("button"),

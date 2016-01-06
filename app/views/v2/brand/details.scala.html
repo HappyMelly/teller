@@ -65,39 +65,72 @@
                         src="@routes.Assets.at("images/happymelly-face-white.png")"/>
                     }
                 </div>
-                <div class="sidemenu">
-                    <ul class="nav nav-stacked" role="tablist" id="sidemenu">
-                        <li class="subgroup">Network
-                            <ul class="nav">
-                                <li class="active"><a href="#general" role="tab">General</a></li>
-                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "testimonials")"
-                                    href="#testimonials" role="tab" data-toggle="tab">Testimonials</a>
-                                </li>
-                                <li><a data-href="@routes.Brands.renderTabs(brand.id.get, "products")" href="#products"
-                                    role="tab" data-toggle="tab">Products</a>
-                                </li>
-                            </ul>
-                        </li>
-                        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
-                            <li class="subgroup">Settings
-                                <ul class="nav">
-                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "team")" href="#team" role="tab" data-toggle="tab">Team</a></li>
-                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "types")" href="#types" role="tab" data-toggle="tab">Event Types</a></li>
-                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "templates")" href="#templates" role="tab" data-toggle="tab">
-                                        Certificate Templates</a></li>
-                                    <li><a href="#integration" role="tab" data-toggle="tab">
-                                        Integration</a>
-                                    </li>
-                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
-                                        href="#licenseExpiration" role="tab" data-toggle="tab">
-                                            License Expiration Reminder</a> </li>
-                                    <li><a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "badges")"
-                                        href="#badges" role="tab" data-toggle="tab">Badges</a> </li>
-                                </ul>
-                            </li>
-                        }
+                <div class="b-sidemenu" id="sidemenu">
+                    <div class="b-sidemenu__group">
+                        <div class="b-sidemenu__head">
+                            Network
+                        </div>
+                        <a href="#general"
+                            class="b-sidemenu__link"
+                            role="tab">
+                            General
+                        </a>
+                        <a data-href="@routes.Brands.renderTabs(brand.id.get, "testimonials")"
+                            href="#testimonials"
+                            class="b-sidemenu__link"
+                            role="tab"
+                            data-toggle="tab">
+                            Testimonials
+                        </a>
+                        <a data-href="@routes.Brands.renderTabs(brand.id.get, "products")"
+                            href="#products"
+                            class="b-sidemenu__link"
+                            role="tab"
+                            data-toggle="tab">
+                            Products
+                        </a>
+                    </div>
 
-                    </ul>
+                    @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                        <div class="b-sidemenu__group">
+                            <div class="b-sidemenu__head">
+                                Settings
+                            </div>
+                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "team")"
+                                href="#team"
+                                role="tab"
+                                data-toggle="tab">
+                                Team
+                            </a>
+                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "types")"
+                                href="#types" role="tab"
+                                data-toggle="tab">
+                                Event Types
+                            </a>
+                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "templates")"
+                                href="#templates"
+                                role="tab"
+                                data-toggle="tab">
+                                Certificate Templates
+                            </a>
+                            <a href="#integration" role="tab"
+                                data-toggle="tab">
+                                Integration
+                            </a>
+                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
+                                href="#licenseExpiration"
+                                role="tab"
+                                data-toggle="tab">
+                                License Expiration Reminder
+                            </a>
+                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "badges")"
+                                href="#badges"
+                                role="tab"
+                                data-toggle="tab">
+                                Badges
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
             <div class="center tab-content">

@@ -13,10 +13,13 @@
 @(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
 
 @helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
-  <div class="file-upload">
-    <button type="button" class="btn btn-primary">Choose File</button>
-    <div>No file chosen</div>
-    <input type="file" id="@id" value="@value" class="form-control"
+  <div class="b-fileupload js-fileupload">
+    <button type="button" class="btn btn-primary b-fileupload__btn">Choose File</button>
+    <div class="b-fileupload__label">No file chosen</div>
+    <input type="file"
+        id="@id"
+        value="@value"
+        class="b-fileupload__ctr"
       name="@name" @toHtmlArgs(htmlArgs)/>
   </div>
 }(handler, lang)
