@@ -66,6 +66,15 @@ class AttendeeService extends Services {
       attendee.recordInfo.updated, attendee.recordInfo.updatedBy)
     attendees.filter(_.id === attendee.id).map(_.forUpdate).update(forUpdate)
   }
+
+  /**
+    * Updates certificates data for the given attendee
+    * @param attendee Attendee
+    */
+  def updateCertificate(attendee: Attendee) = DB.withSession { implicit session =>
+    val forUpdate = (attendee.certificate, attendee.issued)
+    attendees.filter(_.id === attendee.id).map(x => (x.certificate, x.issued)).update(forUpdate)
+  }
 }
 
 object AttendeeService {

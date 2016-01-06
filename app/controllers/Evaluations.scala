@@ -334,23 +334,21 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   protected def sendApprovalConfirmation(approver: Person, view: EvaluationAttendeeView, event: Event) = {
     brandService.findWithSettings(event.brandId) foreach { withSettings =>
       val coordinators = brandService.coordinators(event.brandId)
-      participantService.find(view.evaluation.attendeeId, view.evaluation.eventId) foreach { data ⇒
-        val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-        if (data.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
-          val cert = new Certificate(view.evaluation.handled, event, view.attendee)
-          cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver)
-          data.copy(certificate = Some(cert.id), issued = cert.issued).update
-        } else if (data.certificate.isEmpty) {
-          val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, view.attendee, approver).toString()
-          val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
-          email.send(Set(view.attendee),
-            Some(event.facilitators.toSet),
-            Some(bcc.toSet),
-            subject, body, from = withSettings.brand.name, richMessage = true, None)
-        } else {
-          val cert = new Certificate(view.evaluation.handled, event, view.attendee, renew = true)
-          cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver)
-        }
+      val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
+      if (view.attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
+        val cert = new Certificate(view.evaluation.handled, event, view.attendee)
+        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver)
+        attendeeService.updateCertificate(view.attendee.copy(certificate = Some(cert.id), issued = cert.issued))
+      } else if (view.attendee.certificate.isEmpty) {
+        val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, view.attendee, approver).toString()
+        val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
+        email.send(Set(view.attendee),
+          Some(event.facilitators.toSet),
+          Some(bcc.toSet),
+          subject, body, from = withSettings.brand.name, richMessage = true, None)
+      } else {
+        val cert = new Certificate(view.evaluation.handled, event, view.attendee, renew = true)
+        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver)
       }
     }
   }
