@@ -1,15 +1,18 @@
 package controllers.event
 
 import controllers._
+import models.UserRole.Role
 import models.UserRole.Role._
 import models._
 import models.brand.Settings
 import models.event.{Attendee, AttendeeView}
 import models.service.Services
 import play.api.i18n.Messages
-import play.api.libs.json.{Json, JsValue, Writes}
+import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
 import views.Countries
+
+import scala.concurrent.Future
 
 /**
   * Created by sery0ga on 04/01/16.
@@ -22,6 +25,41 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
   with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+
+  /**
+    * Returns the details of the given participant
+    * @param eventId Event identifier
+    * @param attendeeId Attendee identifier
+    */
+  def details(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request => implicit handler => implicit user => implicit event =>
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        val evaluation = attendee.evaluationId map { evaluationId =>
+          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
+        } getOrElse None
+        val identical = evaluation.map { x =>
+          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
+            x.identical()
+          } else
+            None
+        } getOrElse None
+        Future.successful(Ok(views.html.v2.attendee.details(attendee, evaluation, user.account.isCoordinatorNow,
+          identical)))
+      } getOrElse Future.successful(BadRequest("Attendee does not exist"))
+  }
+
+  /**
+    * Renders list of attendees
+    * @param brandId Brand identifier
+    */
+  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+        Ok(views.html.v2.attendee.index(user, view.brand, brands))
+      } { (view, brands) =>
+        Ok(views.html.v2.attendee.index(user, view.get.brand, brands))
+      } { Redirect(controllers.routes.Dashboard.index()) }
+  }
 
   /**
     * Returns JSON data about participants together with their evaluations
@@ -48,7 +86,7 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
               "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
               "schedule" -> data.event.schedule.formatted,
               "evaluation" -> evaluation(data),
-              "participant" -> Json.obj(
+              "attendee" -> Json.obj(
                 "person" -> data.attendee.identifier,
                 "event" -> data.event.identifier,
                 "certificate" -> Json.obj(
@@ -86,10 +124,8 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
     * @param attendee Person
     * @param eventId Event identifier
     */
-  private def attendeeDetailsUrl(attendee: Attendee, eventId: Long): String = attendee.personId.map { personId =>
+  private def attendeeDetailsUrl(attendee: Attendee, eventId: Long): Option[String] = attendee.personId.map { personId =>
     controllers.routes.People.details(personId).url
-  } getOrElse {
-    controllers.routes.Participants.person(eventId, attendee.identifier).url
   }
 
   /**

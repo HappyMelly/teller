@@ -1,21 +1,21 @@
-@(participant: Participant,
+@(attendee: models.event.Attendee,
     evaluation: Option[Evaluation],
-    virtual: Boolean,
     coordinator: Boolean,
     identicalEvaluation: Option[Evaluation])(implicit request: Request[Any],
     token: play.filters.csrf.CSRF.Token)
 
 <table class="table table-rowed">
   <tr><td class="person-actions">
-    <strong class="text-muted">Manage Person:</strong>&nbsp;
-      @if(virtual) {
-        <a href="@routes.Participants.edit(participant.eventId, participant.personId)">Edit</a>
-        <a class="delete-person" href="#" data-id="@participant.personId" data-event="@participant.eventId">Delete</a>
-      }
-      <a data-event="@participant.eventId" data-person="@participant.personId"
+    <strong class="text-muted">Manage Attendee:</strong>&nbsp;
+      @if(attendee.personId.isEmpty) {
+        <a href="@routes.Participants.edit(attendee.eventId, attendee.identifier)">Edit</a>
+        <a class="delete-person" href="#" data-id="@attendee.id" data-event="@attendee.eventId">Delete</a>
+      } else {
+        <a data-event="@attendee.eventId" data-person="@attendee.id"
         class="remove-participation" href="#">Remove Participation</a>
+      }
       @if(coordinator && evaluation.isEmpty) {
-        <a href="@routes.Evaluations.add(Some(participant.eventId), Some(participant.personId))">Add Evaluation</a>
+        <a href="@routes.Evaluations.add(Some(attendee.eventId), attendee.personId)">Add Evaluation</a>
       }
   </td></tr>
   @evaluation.map { eval =>

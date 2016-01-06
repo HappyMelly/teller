@@ -61,7 +61,7 @@ function removeParticipantFromList() {
  * @param container {string} Type of container (table or link)
  */
 function showParticipantDetails(object, container) {
-    var url = jsRoutes.controllers.Participants.details($(object).data('event'), $(object).data('person')).url;
+    var url = jsRoutes.controllers.event.Attendees.details($(object).data('event'), $(object).data('person')).url;
     $.get(url, {}, function(data) {
         if (container == "table") {
             addParticipantDetailsToTable(object, data);

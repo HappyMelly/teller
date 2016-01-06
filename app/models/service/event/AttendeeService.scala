@@ -4,7 +4,7 @@ import models.database.Evaluations.evaluationStatusTypeMapper
 import models.database.PortableJodaSupport._
 import models.database.event.Attendees
 import models.database.{Evaluations, Events}
-import models.event.AttendeeView
+import models.event.{Attendee, AttendeeView}
 import models.service.Services
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -16,6 +16,16 @@ import play.api.db.slick.DB
 class AttendeeService extends Services {
 
   private val attendees = TableQuery[Attendees]
+
+  /**
+    * Returns the given attendee if exists
+    * @param attendeeId Attendee identifier
+    * @param eventId Event identifier
+    * @return
+    */
+  def find(attendeeId: Long, eventId: Long): Option[Attendee] = DB.withSession { implicit session ⇒
+    attendees.filter(_.id === attendeeId).filter(_.eventId === eventId).firstOption
+  }
 
   /**
     * Find all participants for all events of the specified brand

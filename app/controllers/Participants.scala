@@ -242,32 +242,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Returns the details of the given participant
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
-  def details(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request => implicit handler => implicit user => implicit event =>
-      participantService.find(personId, eventId) map { participant =>
-        val evaluation = participant.evaluationId map { evaluationId =>
-          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
-        } getOrElse None
-        val identical = evaluation.map { x =>
-          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
-            x.identical()
-          } else
-            None
-        } getOrElse None
-        val virtual = personService.find(personId).map(_.virtual).getOrElse(true)
-        Future.successful(Ok(views.html.v2.participant.details(participant,
-          evaluation,
-          virtual,
-          user.account.isCoordinatorNow,
-          identical)))
-      } getOrElse Future.successful(BadRequest("Participant does not exist"))
-  }
-
-  /**
     * Renders edit form for the person who is also a participant. Only virtual
     * people could be edited through this form
     * @param eventId Event identifier
@@ -293,19 +267,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders list of participants
-   * @param brandId Brand identifier
-   */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        Ok(views.html.v2.participant.index(user, view.brand, brands))
-      } { (view, brands) =>
-        Ok(views.html.v2.participant.index(user, view.get.brand, brands))
-      } { Redirect(routes.Dashboard.index()) }
-  }
-
-  /**
     * Returns a list of participants without evaluations for a particular event
     *
     * @param eventId Event identifier
@@ -326,54 +287,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val evaluations = evaluationService.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
-  }
-
-  /**
-   * Returns JSON data about participants together with their evaluations
-   * and events
-   *
-   * @param brandId Brand identifier
-   */
-  def participantsByBrand(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      brandService.findWithCoordinators(brandId) map { view ⇒
-        val withSettings = brandService.findWithSettings(brandId).get
-        val account = user.account
-        val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
-        implicit val participantViewWrites = new Writes[ParticipantView] {
-          def writes(data: ParticipantView): JsValue = {
-            Json.obj(
-              "person" -> Json.obj(
-                "url" -> personDetailsUrl(data.person, data.event.identifier),
-                "name" -> data.person.fullName),
-              "event" -> Json.obj(
-                "id" -> data.event.id,
-                "url" -> routes.Events.details(data.event.id.get).url,
-                "title" -> data.event.title,
-                "longTitle" -> data.event.longTitle),
-              "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
-              "schedule" -> data.event.schedule.formatted,
-              "evaluation" -> evaluation(data),
-              "participant" -> Json.obj(
-                "person" -> data.person.identifier,
-                "event" -> data.event.identifier,
-                "certificate" -> Json.obj(
-                  "show" -> showCertificate(withSettings.settings, data.event, data.status),
-                  "number" -> data.certificate)))
-          }
-        }
-        val personId = account.personId
-        val participants =
-          if (coordinator & user.account.isCoordinatorNow) {
-            Participant.findByBrand(withSettings.brand.id)
-          } else if (License.licensedSince(personId, brandId).nonEmpty) {
-            val events = eventService.findByFacilitator(personId, withSettings.brand.id).map(_.id.get)
-            Participant.findEvaluationsByEvents(events)
-          } else {
-            List[ParticipantView]()
-          }
-        Ok(Json.toJson(participants)).withSession("brandId" -> brandId.toString)
-      } getOrElse Ok(Json.toJson(List[String]()))
   }
 
   /**

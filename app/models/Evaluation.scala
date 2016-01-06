@@ -177,8 +177,7 @@ case class Evaluation(
    * a participant of the same name
    */
   def identical(): Option[Evaluation] = {
-    val evaluations = evaluationService.
-      findByEventsWithParticipants(List(this.eventId))
+    val evaluations = evaluationService.findByEventsWithParticipants(List(this.eventId))
     evaluations.find(_._3.identifier == this.identifier).map { view =>
       evaluations.
         filter(x => x._3.approved || x._3.rejected).

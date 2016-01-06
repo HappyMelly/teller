@@ -81,14 +81,18 @@ $(document).ready( function() {
             { "data": "evaluation.impression" },
             { "data": "evaluation.creation" },
             { "data": "evaluation" },
-            { "data": "participant" },
+            { "data": "attendee" },
             { "data": "event" },
-            { "data": "participant"},
+            { "data": "attendee"},
             { "data": "evaluation.status" }
         ],
         "columnDefs": [{
                 "render": function(data) {
-                    return '<a href="' + data.url + '">' + data.name + '</a>';
+                    if (data.url == null) {
+                        return data.name;
+                    } else {
+                        return '<a href="' + data.url + '">' + data.name + '</a>';
+                    }
                 },
                 "targets": 0
             }, {
