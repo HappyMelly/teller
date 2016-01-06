@@ -34,7 +34,8 @@ function updateReason() {
     $.post(url, {reason: $('#reason').val()}, null, "json").done(function(data) {
         $('#reasonDialog').modal('hide');
         $('#reasonToJoin').html(data.message);
-        reloadCompletionWidget();
+        console.log('update reason');
+        App.events.pub('hmtReloadCompletionWidget');
     }).fail(function(jqXHR, status, error) {
     });
 }
@@ -57,10 +58,12 @@ function updatePhoto() {
         $('#real').find('img').attr('src', src);
         $('#real').show();
         $('.photo-block').addClass('real');
-        reloadCompletionWidget();
+        App.events.pub('hmtReloadCompletionWidgethmt');
     }).fail(function(jqXHR, status, error) {
     });
 }
+
+
 
 function showSelectPhotoForm() {
     $.get(jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url, function(data) {
@@ -73,6 +76,15 @@ function showSelectPhotoForm() {
         initializeFileUploadField();
     });
 }
+
+App.events.sub('hmtShowSelectPhotoForm', function(arr){
+    showSelectPhotoForm();
+
+    setTimeout(function(){
+        $(arr[0]).modal('show');
+    }, 200);
+    e.preventDefault();
+});
 
 function setupCustomPhotoActions() {
     $('#photoUpload').fileupload({
@@ -127,6 +139,23 @@ function showTab(elem) {
     $(elem).tab('show');
     return false;
 }
+
+App.events.sub('hmtShowTabAndDialog', function(arr){
+    if (arr[0]){
+        showTab(arr[0]);
+    }
+
+    if (arr[1]){
+        setTimeout(function(){
+            $(arr[1]).modal('show');
+        }, 200)
+    }
+
+});
+
+
+
+
 
 /**
  * Deletes experiment
@@ -419,7 +448,7 @@ $(document).ready( function() {
             $('.photo-block').removeClass('real');
             $('#real').hide();
             $('#stub').show();
-            reloadCompletionWidget();
+            App.events.pub('hmtReloadCompletionWidget');
         });
         return false;
     });

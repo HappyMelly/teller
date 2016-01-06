@@ -1,0 +1,69 @@
+@import "../../settings";
+
+// progressbar
+.b-progress{
+  height: 5px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px #bebebe;
+}
+
+.b-progress__bar{
+  background-color: #ee929f;
+  width: 0;
+  height: 5px;
+  color: #fff;
+  text-align: center;
+  .transition(all 6s ease);
+}
+
+
+// styles for widget
+.b-completion{
+  margin: 20px 0;
+  background-color: #eee;
+  border-radius: 4px;
+  box-shadow: 0 1px 8px rgba(0,0,0, .25);
+  padding: 15px 20px;
+}
+
+.b-completion__title{
+  font-size: 14px;
+  margin: 5px 0 10px 0;
+  font-weight: bold;
+}
+
+.b-completion__value{
+  font-size: 60px;
+  font-family: Days, Arial, sans-serif;
+  color: #ee929f;
+  text-align: center;
+}
+
+.b-completion__progress{
+  margin-bottom: 20px;
+}
+
+.b-completion__steps{
+  color: #777;
+}
+
+.b-completion__list{
+  padding-left: 0;
+  margin-bottom: 10px;
+  list-style: none;
+
+  li{
+    display: block;
+    padding-bottom: 11px;
+  }
+}
+
+.b-completion__link{
+  .transition(all .15s ease);
+}
+
+.b-completion__inspiration{
+  font-size: 12px;
+}

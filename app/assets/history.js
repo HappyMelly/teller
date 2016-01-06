@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,29 +21,47 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-@import "../settings";
 
-@import "widgets/info-widget";
-@import "widgets/tabs";
-@import "widgets/completion-widget";
-@import "widgets/popover";
+/**
+ *  History plugin
+ */
+(function ($, App) {
+    'use strict';
 
+    var History = function () {
+        this.events = {};
+        this.localKey = 'hmtEvents';
+    };
 
+    History.prototype.run = function(){
+        var events = localStorage.getItem(this.localKey),
+            obj;
 
-// other styles
-.notification-widget {
-  margin-left: 50px;
-  margin-bottom: 55px;
-}
+        if (!events) return;
+        obj = JSON.parse(events);
 
-.grey-widget {
-  background-color: #eeeeee;
-  box-shadow: 0 7px 4px 10px #eeeeee;
+        for (var eventsName in obj){
+            App.events.pub(eventsName, obj[eventsName]);
+        }
 
-  .strength-value {
-    font-size: 24px;
-    font-family: Days;
-    padding-bottom: 1em;
-    color: @pig-pink;
-  }
-}
+        this.cleanLocalEvents();
+    };
+
+    History.prototype.cleanLocalEvents = function(){
+        localStorage.setItem(this.localKey, '');
+    };
+
+    History.prototype.add = function(eventName, param){
+        if (!param) return;
+
+        this.events[eventName] = param;
+        localStorage.setItem(this.localKey, JSON.stringify(this.events));
+    };
+
+    App.history = new History();
+
+    $(function(){
+        App.history.run();
+    })
+
+})(jQuery, App);

@@ -22,11 +22,39 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-var DashboardPage = (function($){
+var Common = (function($){
+
+    function initPlugins(){
+        var $scroll = $('.js-link-target');
+        if ($scroll.length){
+            $scroll.scrollToEl();
+        }
+
+        var $markdown = $('[markdownpreview]');
+        if ($markdown.length) {
+            $markdown.previewMarkdown();
+        }
+
+        var $dataField = $('[data-type="date"]');
+        if ($dataField.length){
+            $dataField.datetimepicker({
+                useCurrent: false,
+                pickTime: false
+            });
+        }
+    }
+
+    function initWidgets(){
+        var $completionWidget = $('.js-completion-widget');
+        if ($completionWidget.length){
+            new App.widgets.CompletionWidget('.js-completion-widget');
+        }
+    }
+
     return {
         init: function(){
-            $('.js-link-target').scrollToEl();
-            $('[markdownpreview]').previewMarkdown();
+            initPlugins();
+            initWidgets();
         }
     }
 })(jQuery);
@@ -36,24 +64,6 @@ var DashboardPage = (function($){
 
 function getPersonId() {
     return $('#personId').val();
-}
-
-function reloadCompletionWidget() {
-    var userId = $("#activeUserId").val();
-    if (userId == getPersonId()) {
-        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, true).url;
-        $.get(url, function(data) {
-            $('#completionWidget').html(data);
-            $('#addPhotoLink').on('click', function(e) {
-                showSelectPhotoForm();
-            });
-        });
-    } else {
-        var url = jsRoutes.controllers.ProfileStrengths.personWidget(userId, false).url;
-        $.get(url, function(data) {
-            $('#completionWidget').html(data);
-        });
-    }
 }
 
 function initializeFileUploadField() {
@@ -94,13 +104,7 @@ function initializeFileUploadField() {
 
 $(document).ready(function() {
 
-    DashboardPage.init();
+    Common.init();
 
-    $('[data-type="date"]').datetimepicker({useCurrent: false, pickTime: false});
-    if ($('#completionWidget').length > 0) {
-        reloadCompletionWidget();
-    }
     initializeFileUploadField();
-
-
 });
