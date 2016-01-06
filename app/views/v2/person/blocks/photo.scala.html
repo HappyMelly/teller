@@ -11,10 +11,6 @@
       <div id="real">
         <img width="@width" class="b-avatar__img" src="@photo"/>
       </div>
-    }.getOrElse {
-      <div id="real" style="display:none;">
-        <img width="@width" class="b-avatar__img" src=""/>
-      </div>
     }
 
     <div id="stub" @if(person.photo.url.nonEmpty) { style="display:none;" }>
@@ -45,6 +41,5 @@
   }
 </div>
 <div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" id="choosePhotoContent">
-  </div>
+  <div id="choosePhotoContent"></div>
 </div>
