@@ -43,7 +43,7 @@ class EvaluationService extends Services{
    */
   def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
     val id = (evaluations returning evaluations.map(_.id)) += eval
-    val participant = participantService.find(eval.personId, eval.eventId).get
+    val participant = participantService.find(eval.attendeeId, eval.eventId).get
     participant.copy(evaluationId = Some(id)).update
     eval.copy(id = Some(id))
   }
@@ -54,6 +54,19 @@ class EvaluationService extends Services{
    */
   def find(id: Long) = DB.withSession { implicit session ⇒
     TableQuery[Evaluations].filter(_.id === id).firstOption
+  }
+
+  /**
+    * Returns evaluation with the related attendee if exists; otherwise, None
+    * @param id Evaluation id
+    */
+  def findWithAttendee(id: Long): Option[EvaluationAttendeeView] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← evaluations if x.id === id
+        y ← TableQuery[Attendees] if y.id === x.attendeeId
+      } yield (x, y)
+      query.firstOption.map(EvaluationAttendeeView.tupled)
   }
 
   /**
@@ -68,19 +81,6 @@ class EvaluationService extends Services{
         y ← TableQuery[Events] if y.id === x.eventId
       } yield (x, y)
       query.firstOption.map(EvaluationEventView.tupled)
-  }
-
-  /**
-    * Returns evaluation with the related participant if exists; otherwise, None
-    * @param id Evaluation id
-    */
-  def findWithParticipant(id: Long): Option[EvaluationParticipantView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        x ← evaluations if x.id === id
-        y ← TableQuery[People] if y.id === x.personId
-      } yield (x, y)
-      query.firstOption.map(EvaluationParticipantView.tupled)
   }
 
   /**
@@ -190,7 +190,7 @@ class EvaluationService extends Services{
    */
   def update(eval: Evaluation): Evaluation = DB.withSession {
     implicit session ⇒
-      val updateTuple = (eval.eventId, eval.personId, eval.reasonToRegister,
+      val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
         eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
         eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
         eval.contentImpression, eval.hostImpression, eval.status,

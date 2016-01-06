@@ -214,7 +214,7 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
       EventService.get.find(eventId).map { event ⇒
         val participants = event.participants
         val evaluations = evaluationService.findByEvent(eventId)
-        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.personId) == p.id))))
+        Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.attendeeId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
   }
 

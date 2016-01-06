@@ -142,31 +142,6 @@ object Participant {
 
 
   /**
-   * Find all participants for all events of the specified brand
-   * @param brandId Brand id
-   * @return
-   */
-  def findByBrand(brandId: Option[Long]): List[ParticipantView] = DB.withSession {
-    implicit session ⇒
-
-      val baseQuery = for {
-        (((part, p), e), ev) ← TableQuery[Participants] innerJoin
-          TableQuery[People] on (_.personId === _.id) innerJoin
-          TableQuery[Events] on (_._1.eventId === _.id) leftJoin
-          TableQuery[Evaluations] on (_._1._1.evaluationId === _.id)
-      } yield (p, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, part.certificate, ev.confirmationId)
-
-      val brandQuery = brandId.map { value ⇒
-        baseQuery.filter(_._2.brandId === value)
-      }.getOrElse(baseQuery)
-      val rawList = brandQuery.mapResult(ParticipantView.tupled).list
-      val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
-      val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-        map(obj ⇒ ParticipantView(obj.person, obj.event, None, None, None, None, None, obj.certificate, None))
-      withEvaluation.union(withoutEvaluation.distinct)
-  }
-
-  /**
    * Returns participants and their evaluations for a set of events
    *
    * @param events Event identifiers

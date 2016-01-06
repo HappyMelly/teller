@@ -7,6 +7,7 @@ import models._
 import models.brand.Settings
 import models.event.{Attendee, AttendeeView}
 import models.service.Services
+import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
@@ -43,13 +44,18 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
       "province" -> optional(text),
       "postCode" -> optional(text),
       "country" -> optional(nonEmptyText),
-      "role" -> optional(text))({
-      (id, firstName, lastName, email, dateOfBirth, street1, street2, city, province, postCode, country, role) ⇒
+      "role" -> optional(text),
+      "recordInfo" -> mapping(
+        "created" -> ignored(DateTime.now()),
+        "createdBy" -> ignored(editorName),
+        "updated" -> ignored(DateTime.now()),
+        "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))({
+      (id, firstName, lastName, email, dateOfBirth, street1, street2, city, province, postCode, country, role, recordInfo) ⇒
         Attendee(id, eventId, None, firstName, lastName, email, dateOfBirth, country, city, street1, street2, province,
-          postCode, None, None, None, None, None, role)
+          postCode, None, None, None, None, None, role, recordInfo)
     })({
       (p: Attendee) ⇒ Some((p.id, p.firstName, p.lastName, p.email, p.dateOfBirth, p.street_1, p.street_2, p.city,
-        p.province, p.postcode, p.countryCode, p.role))
+        p.province, p.postcode, p.countryCode, p.role, p.recordInfo))
     }))
 
   /**
@@ -177,10 +183,7 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
           editForm(eventId, user.name).bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.v2.attendee.editForm(user, attendeeId, eventId, errors))),
             data => {
-              val updated = data.copy(id = attendee.id, evaluationId = attendee.evaluationId,
-                certificate = attendee.certificate, issued = attendee.issued, organisation = attendee.organisation,
-                comment = attendee.comment)
-              attendeeService.update(updated)
+              attendeeService.update(data.copy(id = attendee.id))
               Future.successful(
                 Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully updated"))
             }

@@ -25,7 +25,7 @@ package services.integrations
 
 import akka.actor.{Actor, Props}
 import com.typesafe.plugin._
-import models.Person
+import models.{Recipient, Person}
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.mailer.AttachmentFile
@@ -42,14 +42,14 @@ class Email {
   /**
    * Sends an e-mail message asynchronously using an actor.
    */
-  def send(to: Set[Person],
-    cc: Option[Set[Person]] = None,
-    bcc: Option[Set[Person]] = None,
-    subject: String,
-    body: String,
-    from: String = "Happy Melly",
-    richMessage: Boolean = false,
-    attachment: Option[(String, String)] = None): Unit = {
+  def send(to: Set[_ <: Recipient],
+           cc: Option[Set[_ <: Recipient]] = None,
+           bcc: Option[Set[_ <: Recipient]] = None,
+           subject: String,
+           body: String,
+           from: String = "Happy Melly",
+           richMessage: Boolean = false,
+           attachment: Option[(String, String)] = None): Unit = {
     val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.email}>")
     val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))
     val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))

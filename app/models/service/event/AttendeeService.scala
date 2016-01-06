@@ -61,7 +61,10 @@ class AttendeeService extends Services {
     * @param attendee Attendee
     */
   def update(attendee: Attendee) = DB.withSession { implicit session =>
-    attendees.filter(_.id === attendee.id).update(attendee)
+    val forUpdate = (attendee.firstName, attendee.lastName, attendee.email, attendee.dateOfBirth, attendee.countryCode,
+      attendee.city, attendee.street_1, attendee.street_2, attendee.province, attendee.postcode, attendee.role,
+      attendee.recordInfo.updated, attendee.recordInfo.updatedBy)
+    attendees.filter(_.id === attendee.id).map(_.forUpdate).update(forUpdate)
   }
 }
 

@@ -1,10 +1,10 @@
 package models.event
 
-import models.{Activity, ActivityRecorder, EvaluationStatus, Event}
+import models._
 import org.joda.time.{DateTime, LocalDate}
 
 /**
-  * Created by sery0ga on 04/01/16.
+  * Represents an attendee of event
   */
 case class Attendee(
   id: Option[Long],
@@ -12,7 +12,7 @@ case class Attendee(
   personId: Option[Long],
   firstName: String,
   lastName: String,
-  email: String,
+  override val email: String,
   dateOfBirth: Option[LocalDate],
   countryCode: Option[String],
   city: Option[String],
@@ -25,7 +25,8 @@ case class Attendee(
   issued: Option[LocalDate],
   organisation: Option[String],
   comment: Option[String],
-  role: Option[String]) extends ActivityRecorder {
+  role: Option[String],
+  recordInfo: DateStamp) extends Recipient with ActivityRecorder {
 
   def fullName: String = firstName + " " + lastName
 

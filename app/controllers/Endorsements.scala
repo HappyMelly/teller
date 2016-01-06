@@ -95,10 +95,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           findByEvents(events.map(_._1.id.get)).
           filterNot(x => evaluationIds.contains(x.id.get))
 
-        val people = personService.find(evaluations.map(_.personId).distinct)
+        val people = personService.find(evaluations.map(_.attendeeId).distinct)
         val content = evaluations.sortBy(_.impression).reverse.map { x =>
           (x,
-            people.find(_.identifier == x.personId).map(_.fullName).getOrElse(""),
+            people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
             events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
         }
         Ok(views.html.v2.endorsement.selectForm(user, personId, content))
@@ -171,10 +171,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
             findByEvents(events.map(_._1.id.get)).
             filter(x => receivedIds.contains(x.id.get)).
             filterNot(x => evaluationIds.contains(x.id.get))
-          val people = personService.find(evaluations.map(_.personId).distinct)
+          val people = personService.find(evaluations.map(_.attendeeId).distinct)
           val maxPosition = maxEndorsementPosition(endorsements)
           val newEndorsements = evaluations.map { x =>
-            val name = people.find(_.identifier == x.personId).map(_.fullName).getOrElse("")
+            val name = people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse("")
             val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
             Endorsement(None, personId, brandId, x.facilitatorReview, name,
               evaluationId = x.id.get, rating = Some(x.impression))
@@ -196,11 +196,11 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds.contains(personId)) {
-          evaluationService.findWithParticipant(evaluationId) map { view =>
+          evaluationService.findWithAttendee(evaluationId) map { view =>
             val endorsements = personService.endorsements(personId)
             val maxPosition = maxEndorsementPosition(endorsements)
             val endorsement = Endorsement(None, personId,
-              event.brandId, view.evaluation.facilitatorReview, view.person.fullName,
+              event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
               position = maxPosition + 1, evaluationId = view.evaluation.id.get,
               rating = Some(view.evaluation.impression))
             val id = personService.insertEndorsement(endorsement).id.get

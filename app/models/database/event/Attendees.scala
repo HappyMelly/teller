@@ -24,11 +24,14 @@
 
 package models.database.event
 
+import models.DateStamp
 import models.database.Events
 import models.database.PortableJodaSupport._
 import models.event.Attendee
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import play.api.db.slick.Config.driver.simple._
+import scala.slick.collection.heterogenous._
+import scala.slick.collection.heterogenous.syntax._
 
 /**
   * `Attendee` database table mapping.
@@ -54,11 +57,39 @@ private[models] class Attendees(tag: Tag) extends Table[Attendee](tag, "EVENT_AT
   def organisation = column[Option[String]]("ORGANISATION")
   def comment = column[Option[String]]("COMMENT")
   def role = column[Option[String]]("ROLE")
+  def created = column[DateTime]("CREATED")
+  def createdBy = column[String]("CREATED_BY")
+  def updated = column[DateTime]("UPDATED")
+  def updatedBy = column[String]("UPDATED_BY")
+
+  type AttendeeFields = Option[Long] :: Long :: Option[Long] :: String :: String :: String :: Option[LocalDate] ::
+    Option[String] :: Option[String] :: Option[String] :: Option[String] :: Option[String] :: Option[String] ::
+    Option[Long] :: Option[String] :: Option[LocalDate] :: Option[String] :: Option[String] :: Option[String] ::
+    DateTime :: String :: DateTime :: String :: HNil
 
   def event = foreignKey("EVENT_FK", eventId, TableQuery[Events])(_.id)
 
-  def * = (id.?, eventId, personId, firstName, lastName, email, dateOfBirth, countryCode, city, street_1,
-    street_2, province, postcode, evaluationId, certificate, issued, organisation, comment, role) <> (
-    (Attendee.apply _).tupled, Attendee.unapply)
+  def * = (id.? :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth ::
+    countryCode :: city :: street_1 :: street_2 :: province :: postcode ::
+    evaluationId :: certificate :: issued :: organisation :: comment :: role ::
+    created :: createdBy :: updated :: updatedBy :: HNil) <> (createAttendee, extractAttendee)
+
+  def forUpdate = (firstName, lastName, email, dateOfBirth, countryCode, city, street_1, street_2, province, postcode,
+    role, updated, updatedBy)
+
+  def createAttendee(a: AttendeeFields): Attendee = a match {
+    case id :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth :: countryCode :: city :: street_1 ::
+      street_2 :: province :: postcode :: evaluationId :: certificate :: issued :: organisation :: comment :: role ::
+      created :: createdBy :: updated :: updatedBy :: HNil =>
+        Attendee(id, eventId, personId, firstName, lastName, email, dateOfBirth, countryCode, city, street_1,
+          street_2, province, postcode, evaluationId, certificate, issued, organisation, comment, role,
+          DateStamp(created, createdBy, updated, updatedBy))
+  }
+
+  def extractAttendee(a: Attendee): Option[AttendeeFields] =
+    Some(a.id :: a.eventId :: a.personId :: a.firstName :: a.lastName :: a.email :: a.dateOfBirth :: a.countryCode ::
+      a.city :: a.street_1 :: a.street_2 :: a.province :: a.postcode :: a.evaluationId :: a.certificate :: a.issued ::
+      a.organisation :: a.comment :: a.role :: a.recordInfo.created :: a.recordInfo.createdBy ::
+      a.recordInfo.updated :: a.recordInfo.updatedBy :: HNil)
 
 }

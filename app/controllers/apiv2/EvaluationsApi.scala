@@ -60,7 +60,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
           DateStamp(DateTime.now, appName, DateTime.now, appName))
     })({
       (e: Evaluation) ⇒
-        Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent,
+        Some(e.id, e.eventId, e.attendeeId, e.reasonToRegister, e.actionItems, e.changesToContent,
           e.facilitatorReview, e.changesToHost, e.facilitatorImpression, e.recommendationScore, e.changesToEvent)
     }))
 
@@ -92,7 +92,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
         DateStamp(DateTime.now, appName, DateTime.now, appName))
   })({
     (e: Evaluation) ⇒
-      Some(e.id, e.eventId, e.personId, e.reasonToRegister, e.actionItems, e.changesToContent,
+      Some(e.id, e.eventId, e.attendeeId, e.reasonToRegister, e.actionItems, e.changesToContent,
         e.facilitatorReview, e.changesToHost, e.facilitatorImpression,
         e.recommendationScore, e.changesToEvent, e.contentImpression,
         e.hostImpression)
@@ -117,18 +117,21 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
           BadRequest(Json.prettyPrint(json))
         },
         evaluation ⇒ {
-          if (Evaluation.findByEventAndPerson(evaluation.personId, evaluation.eventId).isDefined) {
+          if (Evaluation.findByEventAndPerson(evaluation.attendeeId, evaluation.eventId).isDefined) {
             val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
-            Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.personId} already exists")
+            Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.attendeeId} already exists")
             BadRequest(Json.prettyPrint(json))
-          } else if (eventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.personId).isEmpty) {
+          } else if (eventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.attendeeId).isEmpty) {
             val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
             Logger.info(s"Participant for event ${evaluation.eventId} does not exist")
             BadRequest(Json.prettyPrint(json))
           } else {
             val url = request.host + controllers.routes.Evaluations.confirm("").url
             val createdEvaluation = evaluation.add(url, withConfirmation = true)
-            val message = "new evaluation for " + createdEvaluation.participant.fullName
+            val fullName = attendeeService.find(evaluation.attendeeId, evaluation.eventId) map { attendee =>
+              attendee.fullName
+            } getOrElse ""
+            val message = "new evaluation for " + fullName
             Activity.insert(name, Activity.Predicate.Created, message)
             jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
           }
@@ -144,7 +147,7 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
       implicit token ⇒
         evaluationService.findByConfirmationId(confirmationId) map { x ⇒
           x.confirm()
-          val msg = "participant %s confirmed evaluation %s".format(x.personId, x.eventId)
+          val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
           Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
 
           jsonOk(Json.obj("success" -> "The evaluation is confirmed"))

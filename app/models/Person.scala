@@ -40,7 +40,7 @@ case class Person(
   id: Option[Long],
   firstName: String,
   lastName: String,
-  email: String,
+  override val email: String,
   birthday: Option[LocalDate],
   photo: Photo,
   signature: Boolean,
@@ -52,7 +52,8 @@ case class Person(
   customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends AccountHolder
+  dateStamp: DateStamp) extends Recipient
+    with AccountHolder
     with ActivityRecorder
     with Services {
 
