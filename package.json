@@ -1,0 +1,25 @@
+{
+  "name": "teller",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "gulp serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HappyMelly/teller.git"
+  },
+  "author": "Happy Melly Teller",
+  "license": "GNU General Public License v.3",
+  "bugs": {
+    "url": "https://github.com/HappyMelly/teller/issues"
+  },
+  "homepage": "https://github.com/HappyMelly/teller#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jscs": "^3.0.2",
+    "gulp-jshint": "^2.0.0",
+    "gulp-load-plugins": "^1.2.0",
+    "jshint": "^2.8.0"
+  }
+}
