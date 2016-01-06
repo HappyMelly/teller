@@ -8,7 +8,7 @@
   <tr><td class="person-actions">
     <strong class="text-muted">Manage Attendee:</strong>&nbsp;
       @if(attendee.personId.isEmpty) {
-        <a href="@routes.Participants.edit(attendee.eventId, attendee.identifier)">Edit</a>
+        <a href="@controllers.event.routes.Attendees.edit(attendee.eventId, attendee.identifier)">Edit</a>
         <a class="delete-person" href="#" data-id="@attendee.id" data-event="@attendee.eventId">Delete</a>
       } else {
         <a data-event="@attendee.eventId" data-person="@attendee.id"

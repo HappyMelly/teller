@@ -242,31 +242,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Renders edit form for the person who is also a participant. Only virtual
-    * people could be edited through this form
-    * @param eventId Event identifier
-    * @param personId Person identifier
-    */
-  def edit(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      personService.findComplete(personId) map { person ⇒
-        if (person.virtual) {
-          participantService.find(personId, eventId) map { participant =>
-            val data = ParticipantData(person.id, eventId, person.firstName,
-              person.lastName, person.birthday, person.email,
-              person.address, participant.organisation, None, participant.role,
-              person.dateStamp.created, person.dateStamp.createdBy,
-              person.dateStamp.updated, person.dateStamp.updatedBy)
-            val form = personForm(eventId, user.name).fill(data)
-            Future.successful(Ok(views.html.v2.participant.editForm(user, personId, eventId, form)))
-          } getOrElse Future.successful(NotFound("Unknown participant"))
-        } else {
-          Future.successful(Forbidden("You are not allowed to edit this person"))
-        }
-      } getOrElse Future.successful(NotFound("Unknown person"))
-  }
-
-  /**
     * Returns a list of participants without evaluations for a particular event
     *
     * @param eventId Event identifier
@@ -329,40 +304,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
           Future.successful(Ok(views.html.v2.participant.personDetails(user, person, eventId)))
         } getOrElse Future.successful(NotFound("Unknown person"))
       } getOrElse Future.successful(NotFound("Unknown participant"))
-  }
-
-  /**
-    * Updates the given person who is also a participant of the given event.
-    * Only virtual people could be updated this way.
-   * @param eventId Event identifier
-    * @param personId Person identifier
-   */
-  def update(eventId: Long, personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request => implicit handler => implicit user => implicit event =>
-      personService.findComplete(personId) map { person ⇒
-        if (person.virtual) {
-          participantService.find(personId, eventId) map { participant =>
-            personForm(eventId, user.name).bindFromRequest.fold(
-              errors => Future.successful(
-                BadRequest(views.html.v2.participant.editForm(user, personId, eventId, errors))
-              ),
-              data => {
-                val updated = person.copy(firstName = data.firstName, lastName = data.lastName,
-                  email = data.emailAddress, birthday = data.birthday)
-                updated.address_=(data.address)
-                personService.update(updated)
-                Future.successful(
-                  Redirect(routes.Participants.person(eventId, personId)).flashing("success" -> "Participant was successfully updated"))
-              }
-            )
-          } getOrElse Future.successful(
-            Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown participant"))
-        } else {
-          Future.successful(
-            Redirect(routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this person"))
-        }
-      } getOrElse Future.successful(
-        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
   }
 
   /**

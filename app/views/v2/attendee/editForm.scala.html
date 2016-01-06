@@ -1,7 +1,7 @@
 @(user: ActiveUser,
-        personId: Long,
-        eventId: Long,
-        form: Form[ParticipantData])(implicit flash: Flash,
+    attendeeId: Long,
+    eventId: Long,
+    form: Form[models.event.Attendee])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token)
@@ -13,23 +13,23 @@
 @v2.main("Person", "people", user, withMelly = true) {
     <div class="form">
         @v2.html.block("") {
-            <h1>Edit Participant</h1>
+            <h1>Edit Attendee</h1>
         }
-        @html.form(action = CSRF(routes.Participants.update(eventId, personId))) {
+        @html.form(action = CSRF(controllers.event.routes.Attendees.update(eventId, attendeeId))) {
             @v2.html.block("Personal") {
                 @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
                 @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
-                @v2.html.email(form("emailAddress"), '_label -> "E-mail address", '_required -> true, '_help -> "")
-                @v2.html.date(form("birthday"), '_label -> "Birthday")
+                @v2.html.email(form("email"), '_label -> "E-mail address", '_required -> true, '_help -> "")
+                @v2.html.date(form("birthday"), '_label -> "Date of birth")
             }
             @v2.html.block("Address", Some("grey")) {
-                @v2.html.text(form("address.street1"), '_label -> "Address line 1")
-                @v2.html.text(form("address.street2"), '_label -> "Address line 2")
-                @v2.html.text(form("address.postCode"), '_label -> "Post code")
-                @v2.html.text(form("address.city"), '_label -> "City")
-                @v2.html.text(form("address.province"), '_label -> "Province or state")
-                @v2.html.select(form("address.country"), ("", "Choose a country") :: Countries.all,
-                    '_label -> "Country", '_required -> true, '_help -> "")
+                @v2.html.text(form("street1"), '_label -> "Address line 1")
+                @v2.html.text(form("street2"), '_label -> "Address line 2")
+                @v2.html.text(form("postCode"), '_label -> "Post code")
+                @v2.html.text(form("city"), '_label -> "City")
+                @v2.html.text(form("province"), '_label -> "Province or state")
+                @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all,
+                    '_label -> "Country", '_help -> "")
             }
             @v2.html.block("Role", Some("yellow")) {
                 @v2.html.select(form("role"),

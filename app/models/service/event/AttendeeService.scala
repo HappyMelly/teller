@@ -47,6 +47,13 @@ class AttendeeService extends Services {
     withEvaluation.union(withoutEvaluation.distinct)
   }
 
+  /**
+    * Updates the given attendee in database
+    * @param attendee Attendee
+    */
+  def update(attendee: Attendee) = DB.withSession { implicit session =>
+    attendees.filter(_.id === attendee.id).update(attendee)
+  }
 }
 
 object AttendeeService {

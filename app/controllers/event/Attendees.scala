@@ -7,6 +7,8 @@ import models._
 import models.brand.Settings
 import models.event.{Attendee, AttendeeView}
 import models.service.Services
+import play.api.data.Forms._
+import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
@@ -25,6 +27,30 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
   with Utilities {
 
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+
+  /**
+    * HTML form mapping for creating and editing.
+    */
+  def editForm(eventId: Long, editorName: String) = Form(mapping(
+      "id" -> ignored(Option.empty[Long]),
+      "firstName" -> nonEmptyText,
+      "lastName" -> nonEmptyText,
+      "email" -> play.api.data.Forms.email,
+      "dateOfBirth" -> optional(jodaLocalDate),
+      "street1" -> optional(text),
+      "street2" -> optional(text),
+      "city" -> optional(text),
+      "province" -> optional(text),
+      "postCode" -> optional(text),
+      "country" -> optional(nonEmptyText),
+      "role" -> optional(text))({
+      (id, firstName, lastName, email, dateOfBirth, street1, street2, city, province, postCode, country, role) ⇒
+        Attendee(id, eventId, None, firstName, lastName, email, dateOfBirth, country, city, street1, street2, province,
+          postCode, None, None, None, None, None, role)
+    })({
+      (p: Attendee) ⇒ Some((p.id, p.firstName, p.lastName, p.email, p.dateOfBirth, p.street_1, p.street_2, p.city,
+        p.province, p.postcode, p.countryCode, p.role))
+    }))
 
   /**
     * Returns the details of the given participant
@@ -46,6 +72,23 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
         Future.successful(Ok(views.html.v2.attendee.details(attendee, evaluation, user.account.isCoordinatorNow,
           identical)))
       } getOrElse Future.successful(BadRequest("Attendee does not exist"))
+  }
+
+  /**
+    * Renders edit form for attendee
+    * @param eventId Event identifier
+    * @param attendeeId Attendee identifier
+    */
+  def edit(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      attendeeService.find(attendeeId, eventId).map { attendee =>
+        if (attendee.personId.isEmpty) {
+            val form = editForm(eventId, user.name).fill(attendee)
+            Future.successful(Ok(views.html.v2.attendee.editForm(user, attendeeId, eventId, form)))
+        } else {
+          Future.successful(Forbidden("You are not allowed to edit this attendee"))
+        }
+      } getOrElse Future.successful(NotFound("Unknown attendee"))
   }
 
   /**
@@ -107,6 +150,36 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
         Ok(Json.toJson(attendees)).withSession("brandId" -> brandId.toString)
       } getOrElse Ok(Json.toJson(List[String]()))
   }
+
+  /**
+    * Updates the given attendee
+    * @param eventId Event identifier
+    * @param attendeeId Attendee identifier
+    */
+  def update(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request => implicit handler => implicit user => implicit event =>
+      attendeeService.find(attendeeId, eventId).map { attendee =>
+        if (attendee.personId.isEmpty) {
+          editForm(eventId, user.name).bindFromRequest.fold(
+            errors => Future.successful(BadRequest(views.html.v2.attendee.editForm(user, attendeeId, eventId, errors))),
+            data => {
+              val updated = data.copy(id = attendee.id, evaluationId = attendee.evaluationId,
+                certificate = attendee.certificate, issued = attendee.issued, organisation = attendee.organisation,
+                comment = attendee.comment)
+              attendeeService.update(updated)
+              Future.successful(
+                Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully updated"))
+            }
+          )
+        } else {
+          Future.successful(
+            Redirect(controllers.routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this attendee"))
+        }
+      } getOrElse Future.successful(
+        Redirect(controllers.routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
+
+  }
+
 
   /**
     * Returns true if a link to certificate should be shown
