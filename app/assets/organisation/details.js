@@ -58,7 +58,7 @@ function setupLogoActions() {
             url: $(this).data('href'),
             dataType: "json"
         }).done(function(data) {
-            $('.photo-block').removeClass('real');
+            $('.b-avatar').removeClass('b-avatar_stat_real');
             $('#real').hide();
             $('#stub').show();
         });

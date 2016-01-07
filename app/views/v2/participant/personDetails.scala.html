@@ -31,20 +31,22 @@
     <div class="row">
         <div class="container">
             <div class="left">
-                <div class="photo-block">
-                    <img width="199px" class="img-rounded" src="@routes.Assets.at("images/hm-face.jpg")"/>
+                <div class="b-avatar">
+                    <img width="199px" class="b-avatar__img" src="@routes.Assets.at("images/hm-face.jpg")"/>
                 </div>
-                <div class="sidemenu">
-                    <ul class="nav nav-stacked" role="tablist" id="sidemenu">
-                        <li class="subgroup">Personal
-                            <ul class="nav">
-                                <li class="active"><a href="#personal-details" role="tab">
-                                    Details</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <br/>
-                </div>
+                <div class="b-sidemenu" id="sidemenu">
+                    <div class="b-sidemenu__group">
+                        <div class="b-sidemenu__head">
+                            Personal
+                        </div>
+                        <a href="#personal-details"
+                            class="active b-sidemenu__link"
+                            role="tab">
+                            Details
+                        </a>
+                    </div>
+                 </div>
+
             </div>
 
             <div class="center tab-content">

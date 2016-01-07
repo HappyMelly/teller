@@ -1,0 +1,61 @@
+@(person: Person,
+        showFacilitationTab: Boolean)(implicit request: Request[Any],
+        handler: AuthorisationHandler)
+
+
+<div class="b-sidemenu" id="sidemenu">
+    <div class="b-sidemenu__group">
+        <div class="b-sidemenu__head">
+            Personal
+        </div>
+        <a href="#personal-details" role="tab"
+            class="b-sidemenu__link active">
+            Details
+        </a>
+        <a  data-href="@routes.People.renderTabs(person.id.get, "contributions")"
+            class="b-sidemenu__link"
+            href="#contributions" role="tab">
+            Contributions
+        </a>
+    </div>
+
+    @if(showFacilitationTab) {
+        <div class="b-sidemenu__group">
+            <div class="b-sidemenu__head">
+                Facilitation
+            </div>
+            <a  data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
+                href="#facilitation"
+                class="b-sidemenu__link"
+                role="tab">
+                Settings
+            </a>
+            <a  data-href="@routes.People.renderTabs(person.id.get, "experience")"
+                href="#experience"
+                class="b-sidemenu__link"
+                role="tab">
+                Experience
+            </a>
+        </div>
+    }
+    @person.member.map { member =>
+        <div class="b-sidemenu__group">
+            <div class="b-sidemenu__head">
+                Membership
+            </div>
+            <a data-href="@routes.People.renderTabs(person.id.get, "membership")"
+                href="#membership"
+                class="b-sidemenu__link"
+                role="tab">
+                Membership
+            </a>
+            <a  data-href="@routes.Experiments.experiments(member.id.get)"
+                href="#experiments"
+                class="b-sidemenu__link"
+                role="tab">
+                Experiments
+            </a>
+        </div>
+    }
+</div>
+

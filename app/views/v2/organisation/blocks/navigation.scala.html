@@ -1,0 +1,37 @@
+@(view: OrgView)(implicit request: Request[Any],
+        handler: AuthorisationHandler)
+
+<div class="b-sidemenu" id="sidemenu">
+    <div class="b-sidemenu__group">
+        <div class="b-sidemenu__head">
+              Information
+        </div>
+        <a href="#details" role="tab"
+            class="active b-sidemenu__link">
+              Details
+        </a>
+        <a href="#contributions"
+            role="tab"
+            class="b-sidemenu__link">
+              Contributions
+        </a>
+    </div>
+
+    @view.org.member.map { member =>
+        <div class="b-sidemenu__group">
+            <div class="b-sidemenu__head">
+                Membership
+            </div>
+            <a href="#membership" role="tab"
+                class="b-sidemenu__link">
+                Membership
+            </a>
+            <a data-href="@routes.Experiments.experiments(member.id.get)"
+                href="#experiments"
+                class="b-sidemenu__link"
+                role="tab">
+                Experiments
+            </a>
+        </div>
+    }
+</div>
