@@ -92,6 +92,14 @@ class EvaluationService extends Services {
   }
 
   /**
+    * Returns evaluation for the given attendee if exists
+    * @param attendeeId Attendee identifier
+    */
+  def findByAttendee(attendeeId: Long): Option[Evaluation] = DB.withSession { implicit session =>
+    evaluations.filter(_.attendeeId === attendeeId).firstOption
+  }
+
+  /**
    * Returns evaluation if it exists; otherwise, None
    * @param confirmationId Confirmation unique id
    */
@@ -113,37 +121,34 @@ class EvaluationService extends Services {
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession {
-    implicit session ⇒
-      if (eventIds.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet eventIds
-          part ← TableQuery[Participants] if part.eventId === e.id
-          ev ← evaluations if ev.id === part.evaluationId
-        } yield ev
-        baseQuery.list
-      } else {
-        List()
-      }
+  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession { implicit session ⇒
+    if (eventIds.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet eventIds
+        part ← TableQuery[Participants] if part.eventId === e.id
+        ev ← evaluations if ev.id === part.evaluationId
+      } yield ev
+      baseQuery.list
+    } else {
+      List()
+    }
   }
   
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEventsWithParticipants(eventIds: List[Long]) = DB.withSession {
-    implicit session ⇒
-      if (eventIds.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet eventIds
-          part ← TableQuery[Participants] if part.eventId === e.id
-          p ← TableQuery[People] if p.id === part.personId
-          ev ← evaluations if ev.id === part.evaluationId
-        } yield (e, p, ev)
-        baseQuery.list
-      } else {
-        List()
-      }
+  def findByEventsWithAttendees(eventIds: List[Long]) = DB.withSession { implicit session ⇒
+    if (eventIds.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet eventIds
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId
+      } yield (e, a, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
   }
 
   /**

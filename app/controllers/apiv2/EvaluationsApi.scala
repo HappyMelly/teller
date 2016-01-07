@@ -23,7 +23,6 @@
  */
 package controllers.apiv2
 
-import controllers.EvaluationsController
 import models._
 import org.joda.time.DateTime
 import play.api.Logger
@@ -34,16 +33,13 @@ import play.api.libs.json._
 /**
  * Evaluations API
  */
-trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
+trait EvaluationsApi extends ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "event_id" -> longNumber.verifying(
-      "error.event.notExist", (eventId: Long) ⇒ eventService.find(eventId).isDefined),
-    "participant_id" -> longNumber.verifying(
-      "error.person.notExist",
-      (participantId: Long) ⇒ personService.find(participantId).isDefined),
+    "event_id" -> longNumber,
+    "participant_id" -> longNumber,
     "question1" -> nonEmptyText,
     "question2" -> nonEmptyText,
     "question3" -> nonEmptyText,
@@ -67,11 +63,8 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
   /** HTML form mapping for creating and editing. */
   def updatedEvaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "event_id" -> longNumber.verifying(
-      "error.event.notExist", (eventId: Long) ⇒ eventService.find(eventId).isDefined),
-    "participant_id" -> longNumber.verifying(
-      "error.person.notExist",
-      (participantId: Long) ⇒ personService.find(participantId).isDefined),
+    "event_id" -> longNumber,
+    "participant_id" -> longNumber,
     "reason_to_register" -> nonEmptyText,
     "action_items" -> nonEmptyText,
     "changes_to_content" -> nonEmptyText,
@@ -101,57 +94,53 @@ trait EvaluationsApi extends EvaluationsController with ApiAuthentication {
   /**
    * Create an evaluation through API call
    */
-  def create = TokenSecuredAction(readWrite = true) { implicit request ⇒
-    implicit token ⇒
+  def create = TokenSecuredAction(readWrite = true) { implicit request => implicit token ⇒
 
-      val name = token.appName
-      val updatedForm = request.body.toString.contains("reason_to_register")
-      val form: Form[Evaluation] = if (updatedForm)
-        updatedEvaluationForm(name).bindFromRequest()
-      else
-        evaluationForm(name).bindFromRequest()
-      form.fold(
-        formWithErrors ⇒ {
-          val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-          Logger.info(formWithErrors.errors.toString())
+    val name = token.appName
+    val updatedForm = request.body.toString.contains("reason_to_register")
+    val form: Form[Evaluation] = if (updatedForm)
+      updatedEvaluationForm(name).bindFromRequest()
+    else
+      evaluationForm(name).bindFromRequest()
+    form.fold(
+      formWithErrors ⇒ {
+        val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+        Logger.info(formWithErrors.errors.toString())
+        BadRequest(Json.prettyPrint(json))
+      },
+      evaluation ⇒ {
+        if (evaluationService.findByAttendee(evaluation.attendeeId).isDefined) {
+          val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
+          Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.attendeeId} already exists")
           BadRequest(Json.prettyPrint(json))
-        },
-        evaluation ⇒ {
-          if (Evaluation.findByEventAndPerson(evaluation.attendeeId, evaluation.eventId).isDefined) {
-            val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
-            Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.attendeeId} already exists")
-            BadRequest(Json.prettyPrint(json))
-          } else if (eventService.find(evaluation.eventId).get.participants.find(_.id.get == evaluation.attendeeId).isEmpty) {
-            val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
-            Logger.info(s"Participant for event ${evaluation.eventId} does not exist")
-            BadRequest(Json.prettyPrint(json))
-          } else {
+        } else {
+          attendeeService.find(evaluation.attendeeId, evaluation.eventId) map { attendee =>
             val url = request.host + controllers.routes.Evaluations.confirm("").url
             val createdEvaluation = evaluation.add(url, withConfirmation = true)
-            val fullName = attendeeService.find(evaluation.attendeeId, evaluation.eventId) map { attendee =>
-              attendee.fullName
-            } getOrElse ""
-            val message = "new evaluation for " + fullName
+            val message = "new evaluation for " + attendee.fullName
             Activity.insert(name, Activity.Predicate.Created, message)
             jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
+          } getOrElse {
+            val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
+            Logger.info(s"Attendee for event ${evaluation.eventId} does not exist")
+            BadRequest(Json.prettyPrint(json))
           }
-        })
+        }
+      })
   }
 
   /**
    * Confirms the given evaluation if exists
    * @param confirmationId Confirmation unique id
    */
-  def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) {
-    implicit request ⇒
-      implicit token ⇒
-        evaluationService.findByConfirmationId(confirmationId) map { x ⇒
-          x.confirm()
-          val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
-          Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
+  def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
+    evaluationService.findByConfirmationId(confirmationId) map { x ⇒
+      x.confirm()
+      val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
+      Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
 
-          jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
-        } getOrElse jsonNotFound("Unknown evaluation")
+      jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
+    } getOrElse jsonNotFound("Unknown evaluation")
   }
 }
 

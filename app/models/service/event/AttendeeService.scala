@@ -3,7 +3,7 @@ package models.service.event
 import models.database.Evaluations.evaluationStatusTypeMapper
 import models.database.PortableJodaSupport._
 import models.database.event.Attendees
-import models.database.{Evaluations, Events}
+import models.database.{People, Participants, Evaluations, Events}
 import models.event.{Attendee, AttendeeView}
 import models.service.Services
 import play.api.Play.current
@@ -54,6 +54,18 @@ class AttendeeService extends Services {
     val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
       map(obj ⇒ AttendeeView(obj.attendee, obj.event, None, None, None, None, None, None))
     withEvaluation.union(withoutEvaluation.distinct)
+  }
+
+  /**
+    * Returns attendees for the given set of events
+    * @param eventIds a list of event ids
+    */
+  def findByEvents(eventIds: List[Long]) = DB.withSession { implicit session ⇒
+    val baseQuery = for {
+      e ← TableQuery[Events] if e.id inSet eventIds
+      a ← attendees if a.eventId === e.id
+    } yield (e, a)
+    baseQuery.list
   }
 
   /**

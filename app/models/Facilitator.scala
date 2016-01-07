@@ -25,6 +25,7 @@
 package models
 
 import akka.actor.{ Actor, Props }
+import models.event.Attendee
 import models.service.Services
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
@@ -64,7 +65,7 @@ object Facilitator extends Services {
         eventService.find(eventId) foreach { x ⇒
           x.facilitatorIds.foreach { id ⇒
             val events = eventService.findByFacilitator(id, Some(x.brandId)).map(_.id.get)
-            val evaluations = evaluationService.findByEventsWithParticipants(events).filter(_._3.approved)
+            val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
             val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
               OldEvaluation.findByFacilitator(id)
             else 
@@ -78,7 +79,7 @@ object Facilitator extends Services {
     def initialCalculation() = {
       facilitatorService.findAll.foreach { x =>
         val events = eventService.findByFacilitator(x.personId, Some(x.brandId)).map(_.id.get)
-        val evaluations = evaluationService.findByEventsWithParticipants(events).filter(_._3.approved)
+        val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
         val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
           OldEvaluation.findByFacilitator(x.personId)
         else
@@ -94,7 +95,7 @@ object Facilitator extends Services {
      * @param oldEvaluations Evaluations added to old Management 3.0 system
      * @return Returns facilitator object with calculated ratings
      */
-    protected def calculateRatings(evaluations: List[(Event, Person, Evaluation)],
+    protected def calculateRatings(evaluations: List[(Event, Attendee, Evaluation)],
                                    oldEvaluations: List[OldEvaluation]): Facilitator = {
       val publicImpressions = evaluations.filterNot(_._1.notPublic).map(_._3.impression) :::
         oldEvaluations.filterNot(_.notPublic).map(_.impression)

@@ -92,36 +92,35 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   /**
    * Create a participant through API call
    */
-  def create = TokenSecuredAction(readWrite = true) { implicit request ⇒
-    implicit token ⇒
-      val name = token.appName
+  def create = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
+    val name = token.appName
 
-      val testFrom = existingPersonForm.bindFromRequest()(request)
-      if (testFrom.data.contains("person_id")) {
-        val form: Form[Participant] = existingPersonForm.bindFromRequest()(request)
-        form.fold(
-          formWithErrors ⇒ {
-            val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-            jsonBadRequest(Json.prettyPrint(json))
-          },
-          participant ⇒ {
-            val createdParticipant = participantService.
-              find(participant.personId, participant.eventId).
-              map { p ⇒ p } getOrElse { Participant.insert(participant) }
-            jsonOk(Json.obj("participant_id" -> createdParticipant.personId))
-          })
-      } else {
-        val form: Form[ParticipantData] = participantForm(name).bindFromRequest()(request)
-        form.fold(
-          formWithErrors ⇒ {
-            val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-            BadRequest(Json.prettyPrint(json))
-          },
-          data ⇒ {
-            val participant = Participant.create(data)
-            jsonOk(Json.obj("participant_id" -> participant.personId))
-          })
-      }
+    val testFrom = existingPersonForm.bindFromRequest()(request)
+    if (testFrom.data.contains("person_id")) {
+      val form: Form[Participant] = existingPersonForm.bindFromRequest()(request)
+      form.fold(
+        formWithErrors ⇒ {
+          val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+          jsonBadRequest(Json.prettyPrint(json))
+        },
+        participant ⇒ {
+          val createdParticipant = participantService.
+            find(participant.personId, participant.eventId).
+            map { p ⇒ p } getOrElse { Participant.insert(participant) }
+          jsonOk(Json.obj("participant_id" -> createdParticipant.personId))
+        })
+    } else {
+      val form: Form[ParticipantData] = participantForm(name).bindFromRequest()(request)
+      form.fold(
+        formWithErrors ⇒ {
+          val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+          BadRequest(Json.prettyPrint(json))
+        },
+        data ⇒ {
+          val participant = Participant.create(data)
+          jsonOk(Json.obj("participant_id" -> participant.personId))
+        })
+    }
   }
 
   import PeopleApi.personWrites
@@ -131,10 +130,8 @@ trait ParticipantsApi extends ApiAuthentication with Services {
    *
    * @param eventId Event identifier
    */
-  def participants(eventId: Long) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        jsonOk(Json.toJson(Participant.findByEvent(eventId).map(_.person)))
+  def participants(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    jsonOk(Json.toJson(Participant.findByEvent(eventId).map(_.person)))
   }
 
 }

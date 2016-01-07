@@ -40,7 +40,7 @@ import services.integrations.Integrations
 import scala.concurrent.Future
 
 class Evaluations(environment: RuntimeEnvironment[ActiveUser])
-    extends EvaluationsController
+    extends JsonController
     with Security
     with Integrations
     with Services

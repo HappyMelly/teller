@@ -167,7 +167,7 @@ case class Evaluation(
    * a participant of the same name
    */
   def identical(): Option[Evaluation] = {
-    val evaluations = evaluationService.findByEventsWithParticipants(List(this.eventId))
+    val evaluations = evaluationService.findByEventsWithAttendees(List(this.eventId))
     evaluations.find(_._3.identifier == this.identifier).map { view =>
       evaluations.
         filter(x => x._3.approved || x._3.rejected).
@@ -217,7 +217,6 @@ case class Evaluation(
 
 object Evaluation extends Services {
 
-
   /**
    * Returns true if the evaluation can be approved
    * @param status Status of the evaluation
@@ -231,19 +230,6 @@ object Evaluation extends Services {
    */
   def rejectable(status: EvaluationStatus.Value): Boolean =
     status == EvaluationStatus.Pending || status == EvaluationStatus.Approved
-
-  /**
-   * @TEST
-   * @param personId
-   * @param eventId
-   * @return
-   */
-  def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
-    implicit session ⇒
-      TableQuery[Evaluations].
-        filter(_.attendeeId === personId).
-        filter(_.eventId === eventId).firstOption
-  }
 
   def findAll: List[Evaluation] = DB.withSession { implicit session ⇒
     TableQuery[Evaluations].sortBy(_.created).list
