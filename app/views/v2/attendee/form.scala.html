@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-    attendeeId: Long,
+    attendeeId: Option[Long],
     eventId: Long,
     form: Form[models.event.Attendee])(implicit flash: Flash,
         request: Request[Any],
@@ -13,9 +13,17 @@
 @v2.main("Person", "people", user, withMelly = true) {
     <div class="form">
         @v2.html.block("") {
-            <h1>Edit Attendee</h1>
+            @if(attendeeId.isEmpty) {
+                <h1>Add Attendee</h1>
+            } else {
+                <h1>Edit Attendee</h1>
+            }
         }
-        @html.form(action = CSRF(controllers.event.routes.Attendees.update(eventId, attendeeId))) {
+        @html.form(action = CSRF(attendeeId.map { value =>
+            controllers.event.routes.Attendees.update(eventId, value)
+        }.getOrElse {
+            controllers.event.routes.Attendees.create(eventId)
+        })) {
             @v2.html.block("Personal") {
                 @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
                 @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")

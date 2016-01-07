@@ -57,6 +57,14 @@ class AttendeeService extends Services {
   }
 
   /**
+    * Inserts new attendee to database
+    * @param attendee Attendee
+    */
+  def insert(attendee: Attendee) = DB.withSession { implicit session =>
+    attendees.insert(attendee)
+  }
+
+  /**
     * Updates the given attendee in database
     * @param attendee Attendee
     */

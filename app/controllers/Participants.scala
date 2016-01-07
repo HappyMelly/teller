@@ -111,91 +111,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Render a Create page
-    *
-    * @param eventId An identifier of the event to add participant to
-    */
-  def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒ implicit event =>
-        val people = personService.findActive
-        Future.successful(
-          Ok(views.html.v2.participant.form(user, eventId, people,
-            newPersonForm(eventId, user.name), existingPersonForm(eventId),
-            showExistingPersonForm = true)))
-  }
-
-  /**
-    * Adds a new participant to the event from a list of people inside the Teller
-    *
-    * @param eventId Event identifier
-    */
-  def create(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      val form: Form[Participant] = existingPersonForm(eventId).bindFromRequest
-
-      form.fold(
-        formWithErrors ⇒ {
-          val people = personService.findActive
-          Future.successful(
-            BadRequest(views.html.v2.participant.form(user, eventId, people,
-              newPersonForm(eventId, user.name), formWithErrors,
-              showExistingPersonForm = true)))
-        },
-        participant ⇒ {
-          participantService.find(participant.personId, eventId) match {
-            case Some(p) ⇒
-              val people = personService.findActive
-              Future.successful(
-                BadRequest(views.html.v2.participant.form(user, eventId, people,
-                  newPersonForm(eventId, user.name), form.withError("participantId", "error.participant.exist"),
-                  showExistingPersonForm = true)))
-            case _ ⇒
-              Participant.insert(participant)
-              val activityObject = Messages("activity.participant.create",
-                participant.person.get.fullName,
-                event.title)
-              val activity = Activity.create(user.name,
-                Activity.Predicate.Created,
-                activityObject)
-              val route = routes.Events.details(eventId).url
-              Future.successful(
-                Redirect(route).flashing("success" -> activity.toString))
-          }
-        })
-  }
-
-  /**
-    * Adds a new person to the system and a new participant to the given event
-    *
-    * @param eventId Event identifier
-    */
-  def createParticipantAndPerson(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-
-      newPersonForm(eventId, user.name).bindFromRequest.fold(
-        formWithErrors ⇒ {
-          val people = personService.findActive
-          Future.successful(
-            BadRequest(views.html.v2.participant.form(user, eventId, people,
-              formWithErrors, existingPersonForm(eventId),
-              showExistingPersonForm = false)))
-        },
-        data ⇒ {
-          Participant.create(data)
-          val activityObject = Messages("activity.participant.create",
-            data.firstName + " " + data.lastName,
-            data.event.get.title)
-          val activity = Activity.create(user.name,
-            Activity.Predicate.Created,
-            activityObject)
-          val route = routes.Events.details(eventId).url
-          Future.successful(
-            Redirect(route).flashing("success" -> activity.toString))
-        })
-  }
-
-  /**
     * Returns a list of participants without evaluations for a particular event
     *
     * @param eventId Event identifier
@@ -216,34 +131,6 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
         val evaluations = evaluationService.findByEvent(eventId)
         Ok(Json.toJson(participants.filterNot(p ⇒ evaluations.exists(e ⇒ Some(e.attendeeId) == p.id))))
       }.getOrElse(NotFound("Unknown event"))
-  }
-
-  /**
-   * Returns JSON data about participants together with their evaluations
-   */
-  def participantsByEvent(eventId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      eventService.find(eventId).map { event ⇒
-        val view = brandService.findWithSettings(event.brandId).get
-        implicit val participantViewWrites = new Writes[ParticipantView] {
-          def writes(data: ParticipantView): JsValue = {
-            Json.obj(
-              "person" -> Json.obj(
-                "url" -> personDetailsUrl(data.person, data.event.identifier),
-                "name" -> data.person.fullName,
-                "id" -> data.person.id.get),
-              "evaluation" -> evaluation(data),
-              "participant" -> Json.obj(
-                "person" -> data.person.identifier,
-                "event" -> data.event.identifier,
-                "certificate" -> Json.obj(
-                  "show" -> showCertificate(view.settings, data.event, data.status),
-                  "number" -> data.certificate)))
-          }
-        }
-        val participants = Participant.findByEvent(eventId)
-        Ok(Json.toJson(participants))
-      }.getOrElse(NotFound("Unknown brand"))
   }
 
   /**

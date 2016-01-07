@@ -32,7 +32,7 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
   /**
     * HTML form mapping for creating and editing.
     */
-  def editForm(eventId: Long, editorName: String) = Form(mapping(
+  def form(eventId: Long, editorName: String) = Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
@@ -57,6 +57,33 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
       (p: Attendee) ⇒ Some((p.id, p.firstName, p.lastName, p.email, p.dateOfBirth, p.street_1, p.street_2, p.city,
         p.province, p.postcode, p.countryCode, p.role, p.recordInfo))
     }))
+
+  /**
+    * Render a Create page
+    *
+    * @param eventId An identifier of the event to add participant to
+    */
+  def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      Future.successful(Ok(views.html.v2.attendee.form(user, None, eventId, form(eventId, user.person.fullName))))
+  }
+
+  /**
+    * Adds a new participant to the event from a list of people inside the Teller
+    *
+    * @param eventId Event identifier
+    */
+  def create(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      form(eventId, user.name).bindFromRequest.fold(
+        errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
+        data => {
+          attendeeService.insert(data)
+          Future.successful(
+            Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully added"))
+        }
+      )
+  }
 
   /**
     * Deletes the given attendee
@@ -103,8 +130,8 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       attendeeService.find(attendeeId, eventId).map { attendee =>
         if (attendee.personId.isEmpty) {
-            val form = editForm(eventId, user.name).fill(attendee)
-            Future.successful(Ok(views.html.v2.attendee.editForm(user, attendeeId, eventId, form)))
+            val filledForm = form(eventId, user.name).fill(attendee)
+            Future.successful(Ok(views.html.v2.attendee.form(user, Some(attendeeId), eventId, filledForm)))
         } else {
           Future.successful(Forbidden("You are not allowed to edit this attendee"))
         }
@@ -171,6 +198,33 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
       } getOrElse Ok(Json.toJson(List[String]()))
   }
 
+
+  /**
+    * Returns JSON data about participants together with their evaluations
+    */
+  def listByEvent(eventId: Long) = AsyncSecuredEventAction(List(Role.Coordinator, Role.Facilitator), eventId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒ implicit event =>
+      val view = brandService.findWithSettings(event.brandId).get
+      implicit val participantViewWrites = new Writes[AttendeeView] {
+        def writes(data: AttendeeView): JsValue = {
+          Json.obj(
+            "person" -> Json.obj(
+              "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
+              "name" -> data.attendee.fullName,
+              "id" -> data.attendee.identifier),
+            "evaluation" -> evaluation(data),
+            "participant" -> Json.obj(
+              "person" -> data.attendee.identifier,
+              "event" -> data.event.identifier,
+              "certificate" -> Json.obj(
+                "show" -> showCertificate(view.settings, data.event, data.status),
+                "number" -> data.attendee.certificate)))
+        }
+      }
+      val participants = evaluationService.findEvaluationsByEvents(List(eventId))
+      Future.successful(Ok(Json.toJson(participants)))
+  }
+
   /**
     * Updates the given attendee
     * @param eventId Event identifier
@@ -180,8 +234,9 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
     implicit request => implicit handler => implicit user => implicit event =>
       attendeeService.find(attendeeId, eventId).map { attendee =>
         if (attendee.personId.isEmpty) {
-          editForm(eventId, user.name).bindFromRequest.fold(
-            errors => Future.successful(BadRequest(views.html.v2.attendee.editForm(user, attendeeId, eventId, errors))),
+          form(eventId, user.name).bindFromRequest.fold(
+            errors => Future.successful(
+              BadRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors))),
             data => {
               attendeeService.update(data.copy(id = attendee.id))
               Future.successful(

@@ -135,16 +135,15 @@ POST          /event/:id/confirm                                           @cont
 POST          /event/:id/cancel                                            @controllers.Events.cancel(id: Long)
 POST          /event/:id/invoice                                           @controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                              @controllers.Events.sendRequest(id: Long)
+GET           /event/:id/attendee                                          @controllers.event.Attendees.add(id: Long)
+POST          /event/:id/attendee                                          @controllers.event.Attendees.create(id: Long)
 GET           /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.details(id: Long, attendeeId: Long)
 GET           /event/:id/attendee/:attendeeId/edit                         @controllers.event.Attendees.edit(id: Long, attendeeId: Long)
 POST          /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.update(id: Long, attendeeId: Long)
 DELETE        /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.delete(id: Long, attendeeId: Long)
 GET           /event/:id/participants                                      @controllers.Participants.participants(id: Long)
-GET           /event/:id/participant/new/                                  @controllers.Participants.add(id: Long)
 GET           /event/:id/participant/:personId/person                      @controllers.Participants.person(id: Long, personId: Long)
-POST          /event/:id/participant/person                                @controllers.Participants.createParticipantAndPerson(id: Long)
-POST          /event/:id/participant                                       @controllers.Participants.create(id: Long)
-
+GET           /event/:id/attendees                                         @controllers.event.Attendees.listByEvent(id: Long)
 
 GET           /exchangerate                                                controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
@@ -207,9 +206,6 @@ GET           /organization/:id/name                                         @co
 POST          /organization/:id                                              @controllers.Organisations.update(id: Long)
 GET           /organizations/search                                          @controllers.Organisations.search(query: Option[String])
 POST          /organization/:id/logo                                         @controllers.Organisations.uploadLogo(id: Long)
-
-
-GET           /participants/event/:eventId                                   @controllers.Participants.participantsByEvent(eventId: Long)
 
 GET           /people                                                        @controllers.People.index
 
