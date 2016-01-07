@@ -72,26 +72,7 @@
     <div class="container">
       <div class="left">
         @views.html.v2.organisation.blocks.logo(view.org, "199")
-        <div class="sidemenu">
-          <ul class="nav nav-stacked" role="tablist" id="sidemenu">
-            <li class="subgroup">Information
-              <ul class="nav">
-                <li class="active"><a href="#details" role="tab">Details</a></li>
-                <li><a href="#contributions" role="tab">Contributions</a></li>
-              </ul>
-            </li>
-            @view.org.member.map { member =>
-              <li class="subgroup">Membership
-                <ul class="nav">
-                  <li><a href="#membership" role="tab">Membership</a></li>
-                  <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-                    href="#experiments" role="tab">
-                    Experiments</a></li>
-                </ul>
-              </li>
-            }
-          </ul>
-        </div>
+        @views.html.v2.organisation.blocks.navigation(view)
       </div>
       <div class="center tab-content">
         @if(!view.org.active) {
