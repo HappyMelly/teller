@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -27,7 +27,7 @@ package controllers
 import models.UserRole._
 import models._
 import models.event.Attendee
-import models.service.{BrandWithCoordinators, EventService, Services}
+import models.service.{BrandWithCoordinators, Services}
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
@@ -36,6 +36,8 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import securesocial.core.RuntimeEnvironment
 import services.integrations.Integrations
+
+import scala.concurrent.Future
 
 class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     extends EvaluationsController
@@ -48,13 +50,10 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
-  def evaluationForm(userName: String, edit: Boolean = false) = Form(mapping(
+  def evaluationForm(userName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
-    "eventId" -> longNumber.verifying(
-      "An event doesn't exist", (eventId: Long) ⇒ EventService.get.find(eventId).isDefined),
-    "participantId" -> {
-      if (edit) of(participantIdOnEditFormatter) else of(participantIdFormatter)
-    },
+    "eventId" -> ignored(0L),
+    "attendeeId" -> ignored(0L),
     "reasonToRegister" -> nonEmptyText,
     "actionItems" -> nonEmptyText,
     "changesToContent" -> nonEmptyText,
@@ -65,7 +64,7 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
     "changesToEvent" -> nonEmptyText,
     "contentImpression" -> optional(number),
     "hostImpression" -> optional(number),
-    "status" -> statusMapping,
+    "status" -> ignored(EvaluationStatus.Pending),
     "handled" -> optional(jodaLocalDate),
     "validationId" -> optional(ignored("")),
     "recordInfo" -> mapping(
@@ -76,18 +75,18 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
       Evaluation.apply)(Evaluation.unapply))
 
   /**
-   * Show add page
+   * Renders evaluation add form
    *
-   * @param eventId Optional unique event identifier to create evaluation for
-   * @param participantId Optional unique person identifier to create evaluation for
-   * @return
+   * @param eventId Event identifier to create evaluation for
+   * @param attendeeId Attendee identifier to create evaluation for
    */
-  def add(eventId: Option[Long], participantId: Option[Long]) = SecuredRestrictedAction(Role.Coordinator) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val account = user.account
-        val events = findEvents(account)
-        Ok(views.html.evaluation.form(user, None, evaluationForm(user.name), events, eventId, participantId))
+  def add(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        Future.successful(Ok(views.html.v2.evaluation.form(user, evaluationForm(user.name), attendee)))
+      } getOrElse Future.successful(
+        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown attendee")
+      )
   }
 
   /**
@@ -120,24 +119,24 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Add form submits to this action
-   * @return
+   * @param eventId Event identifier to create evaluation for
+   * @param attendeeId Attendee identifier to create evaluation for
    */
-  def create = SecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
-      form.fold(
-        formWithErrors ⇒ {
-          val account = user.account
-          val events = findEvents(account)
-          BadRequest(views.html.evaluation.form(user, None, formWithErrors, events, None, None))
-        },
-        evaluation ⇒ {
-          val defaultHook = request.host + routes.Evaluations.confirm("").url
-          val eval = evaluation.add(defaultHook, withConfirmation = true)
-          val log = activity(eval, user.person).created.insert()
-          Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
-        })
+  def create(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
+        form.fold(
+          errors ⇒ Future.successful(BadRequest(views.html.v2.evaluation.form(user, errors, attendee))),
+          evaluation ⇒ {
+            val defaultHook = request.host + routes.Evaluations.confirm("").url
+            val eval = evaluation.copy(eventId = eventId, attendeeId = attendeeId).add(defaultHook)
+            val log = activity(eval, user.person).created.insert()
+            Future.successful(Redirect(routes.Events.details(eventId)).flashing("success" -> log.toString))
+          })
+      } getOrElse Future.successful(
+        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown attendee")
+      )
   }
 
   /**
@@ -189,24 +188,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-   * Renders an Edit page
-   *
-   * @param id Unique evaluation identifier
-   */
-  def edit(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-
-      evaluationService.find(id).map { evaluation ⇒
-        val account = user.account
-        val events = findEvents(account)
-
-        Ok(views.html.evaluation.form(user, Some(evaluation),
-          evaluationForm(user.name).fill(evaluation), events, None, None))
-      }.getOrElse(NotFound)
-
-  }
-
-  /**
    * Reject form submits to this action
    *
    * @param id Evaluation identifier
@@ -246,32 +227,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
         evaluation.sendConfirmationRequest(defaultHook)
         jsonSuccess("Confirmation request was sent")
       } getOrElse jsonNotFound("Evaluation not found")
-  }
-
-  /**
-   * Update an evaluation
-   *
-   * @param id Unique evaluation identifier
-   * @return
-   */
-  def update(id: Long) = SecuredEvaluationAction(List(Role.Coordinator), id) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-
-      evaluationService.find(id).map { existingEvaluation ⇒
-        val form: Form[Evaluation] = evaluationForm(user.name, edit = true).bindFromRequest
-        form.fold(
-          formWithErrors ⇒ {
-            val account = user.account
-            val events = findEvents(account)
-
-            BadRequest(views.html.evaluation.form(user, Some(existingEvaluation), form, events, None, None))
-          },
-          evaluation ⇒ {
-            val eval = evaluation.copy(id = Some(id)).update()
-            val log = activity(eval, user.person).updated.insert()
-            Redirect(routes.Events.details(evaluation.eventId)).flashing("success" -> log.toString)
-          })
-      }.getOrElse(NotFound)
   }
 
   /**
@@ -328,23 +283,6 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
         Some(bcc.toSet), subject,
         mail.templates.evaluation.html.rejected(x.brand, attendee, rejector).toString(),
         richMessage = true)
-    }
-  }
-
-  /**
-   * Retrieve active events which a user is able to see
-   *
-   * @param account User object
-   */
-  private def findEvents(account: UserAccount): List[Event] = {
-    val brands = brandService.findByCoordinator(account.personId)
-    if (brands.nonEmpty) {
-      val events = EventService.get.findByParameters(
-        brandId = None,
-        archived = Some(false))
-      events.filter(e ⇒ brands.exists(_.brand.id == Some(e.brandId)))
-    } else {
-      List[Event]()
     }
   }
 }

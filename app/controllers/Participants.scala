@@ -32,7 +32,6 @@ import models.service.{EventService, PersonService, Services}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
 import play.api.libs.json._
 import securesocial.core.RuntimeEnvironment
 import views.Countries
@@ -156,32 +155,5 @@ class Participants(environment: RuntimeEnvironment[ActiveUser])
   protected def showCertificate(settings: Settings, event: Event, status: Option[EvaluationStatus.Value]): Boolean = {
     settings.certificates && !event.free &&
       (status.isEmpty || status.exists(_ == EvaluationStatus.Pending) || status.exists(_ == EvaluationStatus.Approved))
-  }
-
-  /**
-    * Returns url to a profile of the person who is the participant
-    * @param person Person
-    * @param eventId Event identifier
-    */
-  private def personDetailsUrl(person: Person, eventId: Long): String = if (person.virtual)
-    routes.Participants.person(eventId, person.identifier).url
-  else
-    routes.People.details(person.identifier).url
-
-  /**
-   * Get JSON with evaluation data
-   * @param data Data to convert to JSON
-   * @return
-   */
-  private def evaluation(data: ParticipantView): JsValue = {
-    Json.obj(
-      "id" -> data.evaluationId,
-      "impression" -> data.impression,
-      "status" -> data.status.map(status ⇒
-        Json.obj(
-          "label" -> Messages("models.EvaluationStatus." + status),
-          "value" -> status.id)),
-      "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.handled.map(_.toString))
   }
 }

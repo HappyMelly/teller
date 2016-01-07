@@ -101,14 +101,10 @@ POST          /person/:personId/endorsements/positions                       @co
 POST          /person/:personId/endorsements/add                             @controllers.Endorsements.createFromSelected(personId: Long)
 POST          /event/:eventId/endorsement/evaluation/:evaluationId           @controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
-POST          /evaluation/                                                   @controllers.Evaluations.create
-GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 POST          /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long)
 POST          /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long)
 POST          /evaluation/:id/confirmrequest                                 @controllers.Evaluations.sendConfirmationRequest(id: Long)
-GET           /evaluation/:id/edit                                           @controllers.Evaluations.edit(id: Long)
 GET           /evaluation/:id                                              @controllers.Evaluations.details(id: Long)
-POST          /evaluation/:id                                              @controllers.Evaluations.update(id: Long)
 DELETE        /evaluation/:id                                              @controllers.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                          @controllers.Evaluations.confirm(confirmationId: String)
@@ -137,6 +133,8 @@ POST          /event/:id/invoice                                           @cont
 POST          /event/:id/send                                              @controllers.Events.sendRequest(id: Long)
 GET           /event/:id/attendee                                          @controllers.event.Attendees.add(id: Long)
 POST          /event/:id/attendee                                          @controllers.event.Attendees.create(id: Long)
+GET           /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.add(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.create(id: Long, attendeeId: Long)
 GET           /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.details(id: Long, attendeeId: Long)
 GET           /event/:id/attendee/:attendeeId/edit                         @controllers.event.Attendees.edit(id: Long, attendeeId: Long)
 POST          /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.update(id: Long, attendeeId: Long)

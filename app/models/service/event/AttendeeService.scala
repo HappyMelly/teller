@@ -89,9 +89,8 @@ class AttendeeService extends Services {
     * @param attendeeId Attendee identifier
     * @param evaluationId Evaluation identifier
     */
-  def updateEvaluation(attendeeId: Long, evaluationId: Option[Long]) = DB.withSession { implicit session =>
+  def _updateEvaluation(attendeeId: Long, evaluationId: Option[Long])(implicit session: Session) =
     attendees.filter(_.id === attendeeId).map(_.evaluationId).update(evaluationId)
-  }
 }
 
 object AttendeeService {

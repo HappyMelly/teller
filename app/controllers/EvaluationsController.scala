@@ -51,66 +51,6 @@ trait EvaluationsController extends JsonController with Services {
     def unbind(key: String, value: EvaluationStatus.Value) = Map(key -> value.toString)
   }
 
-  val participantIdFormatter = new Formatter[Long] {
-    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
-      // "data" lets you access all form data values
-      if (data.get("eventId").isEmpty || data.get(key).isEmpty) {
-        Left(List(FormError(key, "error.required")))
-      } else {
-        try {
-          val eventId = data.get("eventId").get.toLong
-          val personId = data.get(key).get.toLong
-          if (personService.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.notExist")))
-          } else {
-            if (Evaluation.findByEventAndPerson(personId, eventId).isDefined) {
-              Left(List(FormError(key, "error.evaluation.exist")))
-            } else if (eventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
-              Left(List(FormError(key, "error.participant.notExist")))
-            } else {
-              Right(personId)
-            }
-          }
-        } catch {
-          case e: NumberFormatException ⇒ Left(List(FormError(key, "Numeric value expected")))
-        }
-      }
-    }
-
-    override def unbind(key: String, value: Long): Map[String, String] = {
-      Map(key -> value.toString)
-    }
-  }
-
-  val participantIdOnEditFormatter = new Formatter[Long] {
-    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], Long] = {
-      // "data" lets you access all form data values
-      if (data.get("eventId").isEmpty || data.get(key).isEmpty) {
-        Left(List(FormError(key, "error.required")))
-      } else {
-        try {
-          val eventId = data.get("eventId").get.toLong
-          val personId = data.get(key).get.toLong
-          if (personService.find(personId).isEmpty) {
-            Left(List(FormError(key, "error.person.notExist")))
-          } else {
-            if (eventService.find(eventId).get.participants.find(_.id.get == personId).isEmpty) {
-              Left(List(FormError(key, "error.participant.notExist")))
-            } else {
-              Right(personId)
-            }
-          }
-        } catch {
-          case e: NumberFormatException ⇒ Left(List(FormError(key, "Numeric value expected")))
-        }
-      }
-    }
-
-    override def unbind(key: String, value: Long): Map[String, String] = {
-      Map(key -> value.toString)
-    }
-  }
-
   val statusMapping = of[EvaluationStatus.Value]
 
 }

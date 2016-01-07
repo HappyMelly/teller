@@ -12,15 +12,12 @@
       }
       <a class="delete-person" href="#" data-id="@attendee.id" data-event="@attendee.eventId">Delete</a>
       @if(coordinator && evaluation.isEmpty) {
-        <a href="@routes.Evaluations.add(Some(attendee.eventId), attendee.personId)">Add Evaluation</a>
+        <a href="@routes.Evaluations.add(attendee.eventId, attendee.identifier)">Add Evaluation</a>
       }
   </td></tr>
   @evaluation.map { eval =>
     <tr><td class="evaluation-actions">
       <strong class="text-muted">Manage Evaluation:</strong>
-      @if(coordinator && evaluation.nonEmpty) {
-        <a href="@routes.Evaluations.edit(evaluation.get.identifier)">Edit</a>
-      }
       @views.html.v2.evaluation.body(eval, identicalEvaluation)
     </td></tr>
   }

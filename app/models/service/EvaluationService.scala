@@ -43,8 +43,7 @@ class EvaluationService extends Services {
    */
   def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
     val id = (evaluations returning evaluations.map(_.id)) += eval
-    val participant = participantService.find(eval.attendeeId, eval.eventId).get
-    participant.copy(evaluationId = Some(id)).update
+    attendeeService._updateEvaluation(eval.attendeeId, Some(id))
     eval.copy(id = Some(id))
   }
 
@@ -52,8 +51,8 @@ class EvaluationService extends Services {
     * Deletes the given evaluation from database
     * @param evaluation Evaluation
     */
-  def delete(evaluation: Evaluation): Unit = DB.withSession { implicit session =>
-    attendeeService.updateEvaluation(evaluation.attendeeId, None)
+  def delete(evaluation: Evaluation): Unit = DB.withTransaction { implicit session =>
+    attendeeService._updateEvaluation(evaluation.attendeeId, None)
     evaluations.filter(_.id === evaluation.id).delete
   }
 

@@ -7,10 +7,6 @@
 
 @v2.main("Attendees", "attendees", user) {
     @v2.element.brandHeader(brand, brands, "attendees", facilitator = user.account.isFacilitatorNow) {
-        @if(user.account.isCoordinatorNow) {
-          <a class="btn btn-default" href="@routes.Evaluations.add(None, None)">
-            Add Evaluation</a>
-        }
         <a id="exportLink" class="btn btn-default" href="" title="Only evaluations, currently visible in the table, will be exported">
           Export to XLSX</a>
     }
