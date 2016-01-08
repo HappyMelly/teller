@@ -5,28 +5,26 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.DynamicRole
 
-<div class="b-avatar @if(person.photo.url.nonEmpty) { b-avatar_stat_real }">
+<div class="b-avatar @if(person.photo.url.nonEmpty) { b-avatar_stat_real } js-person-photo">
 @dynamicOr(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
     @person.photo.url.map { photo =>
-      <div id="real">
+      <div class="b-avatar__real">
         <img width="@width" class="b-avatar__img" src="@photo"/>
       </div>
     }
 
-    <div id="stub" @if(person.photo.url.nonEmpty) { style="display:none;" }>
-      <a href="#" class="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
+    <div class="b-avatar__fake" @if(person.photo.url.nonEmpty) { style="display:none;" }>
+      <a href="#" class="js-choose-link">
         <img class="b-avatar__img" width="@width"
           src="@routes.Assets.at("images/add-photo.png")"/></a>
     </div>
 
     <div class="b-avatar__action">
-      <a href="#" class="link-white choosePhotoLink"
-        data-toggle="modal"
-        data-target="#photoDialog">
+      <a href="#" class="link-white js-choose-link">
           Edit
       </a>
       <a href="#" class="link-white"
-        id="btnPhotoDelete"
+        id="uploadBtnDelete"
         data-href="@routes.ProfilePhotos.delete(person.id.get)">
           Delete
       </a>
@@ -39,7 +37,9 @@
         src="@routes.Assets.at("images/add-photo.png")"/>
     }
   }
+
+  <div id="uploadPhotoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div id="uploadPhotoContent"></div>
+  </div>
 </div>
-<div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-  <div id="choosePhotoContent"></div>
-</div>
+

@@ -54,8 +54,16 @@
 }
 
 // state
-.b-avatar_stat_real:hover {
-  .b-avatar__action {
+.b-avatar_stat_real{
+  .b-avatar__real{
+    display: block;
+  }
+
+  .b-avatar__fake{
+    display: none;
+  }
+
+  &:hover .b-avatar__action {
     display: block;
   }
 }
