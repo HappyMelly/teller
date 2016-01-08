@@ -224,8 +224,8 @@
         if (self.urlPersonUpdate){
             self.updatePersonField(type, srcImg);
         } else {
-            self.locals.$modalDialog.modal('hide');
             self.setPhotoOnPage(srcImg);
+            self.locals.$modalDialog.modal('hide');
         }
     };
 
@@ -238,8 +238,8 @@
             null,
             "json"
         ).done( function(data){
-            self.locals.$modalDialog.modal('hide');
             self.setPhotoOnPage(srcImage);
+            self.locals.$modalDialog.modal('hide');
         })
     }
 
