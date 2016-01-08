@@ -7,7 +7,7 @@
 @v2.html.dialog("photoSelection",
   "Use photo from gravatar or upload your own",
   action = None,
-  actionId = Some("saveLink")) {
+  actionId = Some("uploadBtnSave")) {
     <div class="b-photoupload">
       <div class="b-photoupload__item @if(active=="gravatar"){ type_active}" id="gravatar">
         <img class="b-photoupload__img" src="@gravatarUrl">
@@ -18,11 +18,11 @@
           many websites.</p>
         </div>
       </div>
-      <div class="b-photoupload__item @if(active=="custom"){ type_active}" id="custom">
+      <div class="b-photoupload__item @if(active=="custom"){ type_active }" id="custom">
         @if(active == "custom") {
-          <img class="photo b-photoupload__img type_photo" id="customPhoto" src="@customUrl"/>
+          <img class="b-photoupload__img" id="uploadCustomPhoto" src="@customUrl"/>
         } else {
-          <img id="customPhoto" class="b-photoupload__img" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+          <img id="uploadCustomPhoto" class="b-photoupload__img" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
         }
         <div class="b-photoupload__desc">
           <h4>Custom</h4>

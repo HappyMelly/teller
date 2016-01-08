@@ -35,6 +35,10 @@
   border-radius: 6px;
 }
 
+.b-avatar__img-real{
+  display: none;
+}
+
 .b-avatar__action{
   display: none;
   position: absolute;
@@ -54,8 +58,16 @@
 }
 
 // state
-.b-avatar_stat_real:hover {
-  .b-avatar__action {
+.b-avatar_stat_real{
+  .b-avatar__img-real{
+    display: block;
+  }
+
+  .b-avatar__img-fake{
+    display: none;
+  }
+
+  &:hover .b-avatar__action {
     display: block;
   }
 }

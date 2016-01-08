@@ -22,12 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-var uploadedPhoto = null;
-
-function switchActivePhoto(object) {
-    $('#choosePhotoContent').find('.option').removeClass('active');
-    $(object).addClass('active');
-}
 
 function updateReason() {
     var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url;
@@ -40,71 +34,7 @@ function updateReason() {
     });
 }
 
-/**
- * Uploads custom photo and updates photo
- */
-function updatePhoto() {
-    var url = jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url;
-    var object = $('#choosePhotoContent').find('.active');
-    var type = $(object).attr('id');
-    var src = $(object).find('img').attr('src');
-    if (type == "custom" && uploadedPhoto != null) {
-        $('#saveLink').text('Uploading...');
-        uploadedPhoto.submit();
-    }
-    $.post(url, { type: type }, null, "json").done(function(data) {
-        $('#photoDialog').modal('hide');
-        $('#stub').hide();
-        $('#real').find('img').attr('src', src);
-        $('#real').show();
-        $('.b-avatar').addClass('b-avatar_stat_real');
-        App.events.pub('hmtReloadCompletionWidgethmt');
-    }).fail(function(jqXHR, status, error) {
-    });
-}
 
-
-
-function showSelectPhotoForm() {
-    $.get(jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url, function(data) {
-        $('#choosePhotoContent').html(data);
-        $('#choosePhotoContent .option').on('click', function(e) {
-            switchActivePhoto($(this));
-        });
-        $('#saveLink').on('click', updatePhoto);
-        setupCustomPhotoActions();
-        initializeFileUploadField();
-    });
-}
-
-App.events.sub('hmtShowSelectPhotoForm', function(arr){
-    showSelectPhotoForm();
-
-    setTimeout(function(){
-        $(arr[0]).modal('show');
-    }, 200);
-    e.preventDefault();
-});
-
-function setupCustomPhotoActions() {
-    $('#photoUpload').fileupload({
-        dataType: 'json',
-        disableImageResize: false,
-        imageMaxWidth: 300,
-        imageMaxHeight: 300,
-        imageCrop: false,
-        autoUpload: false,
-        replaceFileInput: false,
-        done: function (e, data) {
-            $('#customPhoto').attr('src', data.result.link);
-            switchActivePhoto($('#customPhoto').parent());
-        }
-    }).bind('fileuploadadd', function (e, data) {
-        uploadedPhoto = data;
-        $('#customPhoto').attr('src', URL.createObjectURL(data.files[0]));
-        $('#customPhoto').addClass('photo');
-    });
-}
 
 /**
  * Shows a table with links if the table has at least one record and hides
@@ -153,9 +83,6 @@ App.events.sub('hmtShowTabAndDialog', function(arr){
     }
 
 });
-
-
-
 
 
 /**
@@ -436,22 +363,12 @@ $(document).ready( function() {
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 
-    $('.choosePhotoLink').on('click', function(e) {
-        showSelectPhotoForm();
-    });
 
-    $('#btnPhotoDelete').on('click', function(e) {
-        $.ajax({
-            type: "DELETE",
-            url: $(this).data('href'),
-            dataType: "json"
-        }).done(function(data) {
-            $('.b-avatar').removeClass('b-avatar_stat_real');
-            $('#real').hide();
-            $('#stub').show();
-            App.events.pub('hmtReloadCompletionWidget');
-        });
-        return false;
-    });
+    new App.widgets.UploadPhotoWidget({
+        selector: '.js-person-photo',
+        urlPersonUpdate: jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url,
+        urlDelete: jsRoutes.controllers.ProfilePhotos.delete(getPersonId()).url,
+        urlContent: jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url
+    })
 });
 
