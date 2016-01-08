@@ -27,7 +27,8 @@ package controllers.acceptance
 import controllers.Brands
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
-import models.brand.{ BrandCoordinator, BrandNotifications }
+import models.BrandWithSettings
+import models.brand.{Settings, BrandCoordinator, BrandNotifications}
 import models.service.{ BrandService, PersonService }
 import models.service.brand.BrandCoordinatorService
 import org.scalamock.specs2.IsolatedMockFactory
@@ -148,7 +149,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     val brand = BrandHelper.one
     (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (brandService.findByCoordinator _) expects 2L returning List(BrandHelper.two)
+    (brandService.findByCoordinator _) expects 2L returning List(BrandWithSettings(BrandHelper.two, Settings(2L)))
     (brandTeamMemberService.delete(_, _)) expects (1L, 2L)
     val res = controller.removeCoordinator(1L, 2L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)

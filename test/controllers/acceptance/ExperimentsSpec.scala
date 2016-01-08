@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import helpers.MemberHelper
-import models.{DateStamp, Badge$, Member}
+import models.{DateStamp, Experiment, Member}
 import models.service.{ ExperimentService, MemberService }
 import org.joda.time.DateTime
 import org.scalamock.specs2.IsolatedMockFactory
@@ -97,7 +97,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
       with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles {
 
     override def notifyMembers(member: Member,
-                               experiment: Badge,
+                               experiment: Experiment,
                                url: String) {}
   }
 
@@ -125,8 +125,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e3 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
     (memberService.find(_: Long)) expects 1L returning Some(member)
-    val experiment = Badge(None, 1L, "Test", "Test", false, None, recordInfo)
-    (experimentService.insert _) expects(where { (ex: Badge) =>
+    val experiment = Experiment(None, 1L, "Test", "Test", false, None, recordInfo)
+    (experimentService.insert _) expects(where { (ex: Experiment) =>
       equal(ex, experiment)
     }) returning experiment.copy(id = Some(1L))
     (experimentService.update _) expects experiment.copy(id = Some(1L), picture = true)
@@ -138,8 +138,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e4 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
     (memberService.find(_: Long)) expects 1L returning Some(member)
-    val experiment = Badge(None, 1L, "Test", "Test", false, None, recordInfo)
-    (experimentService.insert _) expects(where { (ex: Badge) =>
+    val experiment = Experiment(None, 1L, "Test", "Test", false, None, recordInfo)
+    (experimentService.insert _) expects(where { (ex: Experiment) =>
       equal(ex, experiment)
     }) returning experiment.copy(id = Some(1L))
     controller._uploadValue = false
@@ -165,9 +165,9 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e7 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
     (memberService.find(_: Long)) expects 1L returning Some(member)
-    val experiment = Badge(Some(1L), 1L, "T", "T", false, None, recordInfo)
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
     (experimentService.find _) expects 1L returning Some(experiment)
-    (experimentService.update _) expects(where { (ex: Badge) =>
+    (experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1), memberId = 1, name = "Test", description = "Test", picture = true))
     })
     val result = controller.update(1L, 1L).apply(postReq)
@@ -178,9 +178,9 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e8 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
     (memberService.find(_: Long)) expects 1L returning Some(member)
-    val experiment = Badge(Some(1L), 1L, "T", "T", false, None, recordInfo)
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
     (experimentService.find _) expects 1L returning Some(experiment)
-    (experimentService.update _) expects(where { (ex: Badge) =>
+    (experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1), memberId = 1, name = "Test", description = "Test", picture = true))
     })
     val result = controller.update(1L, 1L).apply(postReq)
@@ -189,7 +189,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e9 = {
-    val experiment = Badge(Some(1L), 1L, "T", "T", false, None, recordInfo)
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
     (experimentService.find _) expects 1L returning Some(experiment)
     (memberService.find(_: Long)) expects 5L returning None
     val result = controller.update(5L, 1L).apply(postReq)
@@ -205,11 +205,11 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e11 = {
-    val experiment = Badge(Some(1L), 1L, "T", "T", false, None, recordInfo)
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
     (experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = true, funder = false)
     (memberService.find(_: Long)) expects 5L returning Some(member)
-    (experimentService.update _) expects(where { (ex: Badge) =>
+    (experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1L), name = "Test", description = "Test", memberId = 5L, picture = true))
     })
     val result = controller.update(5L, 1L).apply(postReq)
@@ -217,11 +217,11 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e12 = {
-    val experiment = Badge(Some(1L), 1L, "T", "T", false, None, recordInfo)
+    val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
     (experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = false, funder = false)
     (memberService.find(_: Long)) expects 5L returning Some(member)
-    (experimentService.update _) expects(where { (ex: Badge) =>
+    (experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1L), name = "Test", description = "Test", memberId = 5L))
     }) returning * once
     val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",
@@ -236,13 +236,13 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
     * @param left Experiment
     * @param right Experiment
     */
-  private def equal(left: Badge, right: Badge): Boolean =
+  private def equal(left: Experiment, right: Experiment): Boolean =
     left.id == right.id && left.name == right.name && left.memberId == right.memberId &&
       left.description == right.description && left.picture == right.picture && left.url == right.url
 
-  private def experiments: List[Badge] = {
-    List(Badge(Some(1L), 1L, "Exp 1", "Desc", true, None, recordInfo),
-      Badge(Some(2L), 1L, "Exp 2", "Desc", true, Some("http://test2.ru"), recordInfo))
+  private def experiments: List[Experiment] = {
+    List(Experiment(Some(1L), 1L, "Exp 1", "Desc", true, None, recordInfo),
+      Experiment(Some(2L), 1L, "Exp 2", "Desc", true, Some("http://test2.ru"), recordInfo))
   }
 
   private def postReq = fakePostRequest().withFormUrlEncodedBody(

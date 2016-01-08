@@ -85,7 +85,7 @@ class EnrollmentSpec extends PlayAppSpec {
       controller.slack.message must contain("Hooray!! We have *new Supporter*")
       controller.slack.message must contain("First Tester")
       controller.slack.message must contain("/person/1")
-      controller.email.to.exists(_.lastName == "Tester") must_== true
+      controller.email.to.exists(_.fullName == "First Tester") must_== true
       controller.email.cc must_== None
       controller.email.bcc must_== None
       controller.email.subject must_== "Welcome to Happy Melly network"
@@ -102,7 +102,7 @@ class EnrollmentSpec extends PlayAppSpec {
       controller.slack.message must contain("Hooray!! We have *new Funder*")
       controller.slack.message must contain("Two")
       controller.slack.message must contain("/organization/2")
-      controller.email.to.exists(_.lastName == "Tester") must_== true
+      controller.email.to.exists(_.fullName == "First Tester") must_== true
       controller.email.cc must_== None
       controller.email.bcc must_== None
       controller.email.subject must_== "Welcome to Happy Melly network"

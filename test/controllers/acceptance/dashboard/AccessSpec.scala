@@ -42,13 +42,6 @@ class AccessSpec extends PlayAppSpec {
     }
   }
 
-  "Method 'api'" should {
-    "have Admin access rights" in {
-      controller.api.apply(fakeGetRequest())
-      controller.checkedRole must_== Some(Role.Admin)
-    }
-  }
-
   "Method 'apiv2'" should {
     "have Admin access rights" in {
       controller.apiv2.apply(fakeGetRequest())

@@ -46,15 +46,15 @@ class FakeSlack
  * Stub class for Email service
  */
 class FakeEmail extends Email {
-  var to: Set[Person] = Set()
-  var cc: Option[Set[Person]] = None
-  var bcc: Option[Set[Person]] = None
+  var to: Set[_ <: models.Recipient] = Set()
+  var cc: Option[Set[_ <: models.Recipient]] = None
+  var bcc: Option[Set[_ <: models.Recipient]] = None
   var subject: String = ""
   var body: String = ""
 
-  override def send(to: Set[Person],
-    cc: Option[Set[Person]] = None,
-    bcc: Option[Set[Person]] = None,
+  override def send(to: Set[_ <: models.Recipient],
+    cc: Option[Set[_ <: models.Recipient]] = None,
+    bcc: Option[Set[_ <: models.Recipient]] = None,
     subject: String,
     body: String,
     from: String = "Happy Melly",

@@ -85,11 +85,11 @@ class BrandServiceSpec extends PlayAppSpec {
     "return 2 brands for coordinator 1" in {
       val res = service.findByCoordinator(1L)
       res.length must_== 2
-      res.exists(_.id == Some(1))
-      res.exists(_.id == Some(2))
+      res.exists(_.brand.id == Some(1))
+      res.exists(_.brand.id == Some(2))
     }
     "return 1 brand for coordinator 2" in {
-      service.findByCoordinator(2L).exists(_.id == Some(1))
+      service.findByCoordinator(2L).exists(_.brand.id == Some(1))
     }
     "return 0 brand for coordinator 3" in {
       service.findByCoordinator(3L).length must_== 0

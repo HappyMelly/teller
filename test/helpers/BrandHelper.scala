@@ -23,7 +23,7 @@
  */
 package helpers
 
-import models.{ SocialProfile, Brand, ProfileType }
+import models.{DateStamp, SocialProfile, Brand, ProfileType}
 import org.joda.time.DateTime
 
 object BrandHelper {
@@ -32,10 +32,9 @@ object BrandHelper {
     val brandUniqueName = code.toLowerCase + ".brand"
     val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
-    var brand = new Brand(id, code, brandUniqueName,
-      code + " Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
-      DateTime.now(), "Sergey Kotlov")
+    var brand = new Brand(id, code, brandUniqueName, code + " Brand", ownerId = 1,
+      None, None, None, None, None, "test@happymelly.com", None, None, true,
+      DateStamp(DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov"))
     brand.socialProfile_=(socialProfile)
     brand
   }
@@ -45,10 +44,9 @@ object BrandHelper {
     val brandUniqueName = "test.brand"
     val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
-    var brand = new Brand(Some(1L), brandCode, brandUniqueName,
-      "Test Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
-      DateTime.now(), "Sergey Kotlov")
+    var brand = new Brand(Some(1L), brandCode, brandUniqueName, "Test Brand", ownerId = 1,
+      None, None, None, None, None, "test@happymelly.com", None, None, true,
+      DateStamp(DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov"))
     brand.socialProfile_=(socialProfile)
 
     brand
@@ -59,10 +57,9 @@ object BrandHelper {
     val brandUniqueName = "test2.brand"
     val socialProfile = new SocialProfile(0, ProfileType.Brand)
 
-    var brand = new Brand(Some(2L), brandCode, brandUniqueName,
-      "Test Brand", ownerId = 1, None, None, generateCert = false, None,
-      None, None, "test@happymelly.com", None, true, DateTime.now(), "Sergey Kotlov",
-      DateTime.now(), "Sergey Kotlov")
+    var brand = new Brand(Some(2L), brandCode, brandUniqueName, "Test Brand", ownerId = 1,
+      None, None, None, None, None, "test@happymelly.com", None, None, true,
+      DateStamp(DateTime.now(), "Sergey Kotlov", DateTime.now(), "Sergey Kotlov"))
     brand.socialProfile_=(socialProfile)
 
     brand
