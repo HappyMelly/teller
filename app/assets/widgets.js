@@ -173,7 +173,7 @@
     };
 
     UploadPhotoWidget.prototype.switchActivePhoto = function($object){
-        self.locals.$el
+        this.locals.$el
             .find('.b-photoupload__item').removeClass('type_active');
         $object.addClass('type_active');
     };
@@ -224,7 +224,8 @@
         if (self.urlPersonUpdate){
             self.updatePersonField(type, srcImg);
         } else {
-            self.updateSuccess(srcImg);
+            self.locals.$modalDialog.modal('hide');
+            self.setPhotoOnPage(srcImg);
         }
     };
 
@@ -237,14 +238,14 @@
             null,
             "json"
         ).done( function(data){
-            self.updateSuccess(srcImage);
+            self.locals.$modalDialog.modal('hide');
+            self.setPhotoOnPage(srcImage);
         })
     }
 
-    UploadPhotoWidget.prototype.updateSuccess = function(src){
+    UploadPhotoWidget.prototype.setPhotoOnPage = function(src){
         var self = this;
 
-        self.locals.$modalDialog.modal('hide');
         $('.b-avatar__img-real').attr('src', src);
         self.$el.addClass('b-avatar_stat_real');
 
