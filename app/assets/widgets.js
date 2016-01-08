@@ -141,10 +141,8 @@
 
                 e.preventDefault();
             })
-            .on('click', '.b-photoupload__item', function (e) {
-                var $this = $(this);
-
-                self.switchActivePhoto($this);
+            .on('click', '.b-photoupload__item', function () {
+                self.switchActivePhoto($(this));
             })
             .on('click', '#uploadBtnSave', function (e) {
                 self.updatePhoto();
@@ -157,8 +155,7 @@
 
         App.events.sub('hmtShowSelectPhotoForm', function(){
             self.getModalContent();
-
-            $('#uploadPhotoDialog').modal('show');
+            self.locals.$modalDialog.modal('show');
         });
     };
 
@@ -168,7 +165,6 @@
         if (self.urlContent){
             $.get( self.urlContent, function(data) {
                 self.locals.$modalContent.html(data);
-
                 self.setupCustomPhotoUpload();
             });
         } else {
@@ -177,16 +173,13 @@
     };
 
     UploadPhotoWidget.prototype.switchActivePhoto = function($object){
-        var self = this;
-
-        self.locals.$el.find('.b-photoupload__item').removeClass('type_active');
+        self.locals.$el
+            .find('.b-photoupload__item').removeClass('type_active');
         $object.addClass('type_active');
-    }
-
+    };
 
     UploadPhotoWidget.prototype.setupCustomPhotoUpload = function(){
-       var self = this;
-
+        var self = this;
         self.src = '';
 
         $('#photoUpload').fileupload({
@@ -205,13 +198,11 @@
 
     UploadPhotoWidget.prototype.setCustomImage = function(srcImage){
         this.isSetCustomImage = true;
-
         $('#uploadCustomPhoto').attr('src', srcImage)
     }
 
     UploadPhotoWidget.prototype.deleteCustomImage = function(){
         this.isSetCustomImage = false;
-
         $('#uploadCustomPhoto').attr('src', '/assets/images/happymelly-face-white.png')
     }
 
