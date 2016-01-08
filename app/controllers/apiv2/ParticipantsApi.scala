@@ -24,6 +24,7 @@
 package controllers.apiv2
 
 import models._
+import models.event.Attendee
 import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
@@ -36,102 +37,71 @@ import views.Countries
  */
 trait ParticipantsApi extends ApiAuthentication with Services {
 
-  def participantForm(appName: String) = {
-
-    Form(mapping(
-      "id" -> ignored(Option.empty[Long]),
-      "event_id" -> longNumber(min = 1),
-      "first_name" -> nonEmptyText,
-      "last_name" -> nonEmptyText,
-      "birthday" -> optional(jodaLocalDate),
-      "email" -> email,
-      "city" -> nonEmptyText,
-      "country" -> nonEmptyText.verifying(
-        "error.unknown_country",
-        (country: String) ⇒ Countries.all.exists(_._1 == country)),
-      "street_1" -> optional(nonEmptyText),
-      "street_2" -> optional(nonEmptyText),
-      "postcode" -> optional(nonEmptyText),
-      "province" -> optional(nonEmptyText),
-      "organisation" -> optional(nonEmptyText),
-      "comment" -> optional(nonEmptyText),
-      "role" -> optional(nonEmptyText))({
-        (id, event_id, first_name, last_name, birthday, email, city, country,
-         street_1, street_2, postcode, province, organisation, comment,
-          role) ⇒
-          ParticipantData(id, event_id, first_name, last_name, birthday, email,
-            Address(None, street_1, street_2, Some(city), province, postcode, country),
-            organisation, comment, role,
-            DateTime.now(), appName, DateTime.now(), appName)
-      })({
-        (p: ParticipantData) ⇒
-          Some((p.id, p.eventId, p.firstName, p.lastName, p.birthday, p.emailAddress,
-            p.address.city.getOrElse(""), p.address.countryCode, p.address.street1,
-            p.address.street2, p.address.postCode, p.address.province,
-            p.organisation, p.comment, p.role))
-      }))
-  }
-
-  def existingPersonForm = {
-    Form(mapping(
-      "id" -> ignored(Option.empty[Long]),
-      "event_id" -> longNumber(min = 1),
-      "person_id" -> longNumber.verifying(
-        "error.person.notExist",
-        (personId: Long) ⇒ personService.find(personId).nonEmpty),
-      "role" -> optional(nonEmptyText))({
-        (id, event_id, person_id, role) ⇒
-          Participant(id = None, event_id, person_id, certificate = None,
-            issued = None, evaluationId = None, organisation = None, comment = None,
-            role = role)
-      })({
-        (p: Participant) ⇒ Some(p.id, p.eventId, p.personId, p.role)
-      }))
-  }
+  def attendeeForm(appName: String) = Form(mapping(
+    "id" -> ignored(Option.empty[Long]),
+    "event_id" -> longNumber(min = 1),
+    "first_name" -> nonEmptyText,
+    "last_name" -> nonEmptyText,
+    "birthday" -> optional(jodaLocalDate),
+    "email" -> email,
+    "city" -> nonEmptyText,
+    "country" -> nonEmptyText.verifying(
+      "error.unknown_country",
+      (country: String) ⇒ Countries.all.exists(_._1 == country)),
+    "street_1" -> optional(nonEmptyText),
+    "street_2" -> optional(nonEmptyText),
+    "postcode" -> optional(nonEmptyText),
+    "province" -> optional(nonEmptyText),
+    "organisation" -> optional(nonEmptyText),
+    "comment" -> optional(nonEmptyText),
+    "role" -> optional(nonEmptyText))({
+      (id, event_id, first_name, last_name, birthday, email, city, country,
+       street_1, street_2, postcode, province, organisation, comment, role) ⇒
+        Attendee(id, event_id, None, first_name, last_name, email, birthday, Some(country), Some(city),
+          street_1, street_2, province, postcode, None, None, None, organisation, comment, role,
+          DateStamp(DateTime.now(), appName, DateTime.now(), appName))
+    })({
+      (a: Attendee) ⇒
+        Some((a.id, a.eventId, a.firstName, a.lastName, a.dateOfBirth, a.email, a.countryCode.getOrElse(""),
+          a.city.getOrElse(""), a.street_1, a.street_2, a.province, a.postcode, a.organisation, a.comment, a.role))
+    }))
 
   /**
-   * Create a participant through API call
+   * Create an attendee through API call
    */
   def create = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
-    val name = token.appName
 
-    val testFrom = existingPersonForm.bindFromRequest()(request)
-    if (testFrom.data.contains("person_id")) {
-      val form: Form[Participant] = existingPersonForm.bindFromRequest()(request)
-      form.fold(
-        formWithErrors ⇒ {
-          val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-          jsonBadRequest(Json.prettyPrint(json))
-        },
-        participant ⇒ {
-          val createdParticipant = participantService.
-            find(participant.personId, participant.eventId).
-            map { p ⇒ p } getOrElse { Participant.insert(participant) }
-          jsonOk(Json.obj("participant_id" -> createdParticipant.personId))
-        })
-    } else {
-      val form: Form[ParticipantData] = participantForm(name).bindFromRequest()(request)
-      form.fold(
-        formWithErrors ⇒ {
-          val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-          BadRequest(Json.prettyPrint(json))
-        },
-        data ⇒ {
-          val participant = Participant.create(data)
-          jsonOk(Json.obj("participant_id" -> participant.personId))
-        })
+    val form: Form[Attendee] = attendeeForm(token.appName).bindFromRequest()(request)
+    form.fold(
+      formWithErrors ⇒ {
+        val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
+        BadRequest(Json.prettyPrint(json))
+      },
+      data ⇒ {
+        val attendee = attendeeService.insert(data)
+        jsonOk(Json.obj("participant_id" -> attendee.identifier))
+      })
+  }
+
+  implicit val attendeeWrites = new Writes[Attendee] {
+    def writes(attendee: Attendee): JsValue = {
+      Json.obj(
+        "id" -> attendee.identifier,
+        "first_name" -> attendee.firstName,
+        "last_name" -> attendee.lastName,
+        "photo" -> None.asInstanceOf[Option[String]],
+        "country" -> attendee.countryCode)
     }
   }
 
-  import PeopleApi.personWrites
-
   /**
-   * Returns list of participants for the given event
+   * Returns list of attendees for the given event
    *
    * @param eventId Event identifier
    */
-  def participants(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    jsonOk(Json.toJson(Participant.findByEvent(eventId).map(_.person)))
+  def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    val attendees = attendeeService.findByEvents(List(eventId)).map(_._2)
+    jsonOk(Json.toJson(attendees))
   }
 
 }

@@ -139,7 +139,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
         EventReminder.sendPostFactumConfirmation()
-        EvaluationReminder.sendToParticipants()
+        EvaluationReminder.sendToAttendees()
         Facilitator.updateFacilitatorExperience()
         if (now.getDayOfMonth == 1) {
           ProfileStrengthReminder.sendToFacilitators()

@@ -194,9 +194,10 @@ case class Evaluation(
    */
   def sendConfirmationRequest(defaultHook: String) = {
     val brand = brandService.find(event.brandId).get
-    val participant = personService.find(this.attendeeId).get
-    val token = this.confirmationId getOrElse ""
-    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
+    attendeeService.find(this.attendeeId, this.eventId) foreach { attendee =>
+      val token = this.confirmationId getOrElse ""
+      EvaluationReminder.sendConfirmRequest(attendee, brand, defaultHook, token)
+    }
     this
   }
 

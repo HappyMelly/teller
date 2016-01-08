@@ -47,7 +47,7 @@
           </tr>
           <tr>
             <td width="150"><strong>Location</strong></td>
-            <td>@attendee.city.map { value => @value + "," } @Messages("country." + attendee.countryCode)</td>
+            <td>@attendee.city.map { value => @value + "," } @Messages("country." + attendee.countryCode.get)</td>
           </tr>
           <tr>
             <td width="150"><strong>Organisation</strong></td>

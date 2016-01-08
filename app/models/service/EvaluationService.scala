@@ -179,21 +179,19 @@ class EvaluationService extends Services {
    *  events
    * @param events List of events
    */
-  def findUnhandled(events: List[Event]) = DB.withSession {
-    implicit session =>
-      import models.database.Evaluations._
+  def findUnhandled(events: List[Event]) = DB.withSession { implicit session =>
+    import models.database.Evaluations._
 
-      if (events.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
-          part ← TableQuery[Participants] if part.eventId === e.id
-          p ← TableQuery[People] if p.id === part.personId
-          ev ← evaluations if ev.id === part.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
-        } yield (e, p, ev)
-        baseQuery.list
-      } else {
-        List()
-      }
+    if (events.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
+      } yield (e, a, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
   }
 
   /**

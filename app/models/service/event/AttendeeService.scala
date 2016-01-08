@@ -73,7 +73,8 @@ class AttendeeService extends Services {
     * @param attendee Attendee
     */
   def insert(attendee: Attendee) = DB.withSession { implicit session =>
-    attendees.insert(attendee)
+    val id = (attendees returning attendees.map(_.id)) += attendee
+    attendee.copy(id = Some(id))
   }
 
   /**

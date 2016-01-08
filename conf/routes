@@ -139,8 +139,6 @@ GET           /event/:id/attendee/:attendeeId                              @cont
 GET           /event/:id/attendee/:attendeeId/edit                         @controllers.event.Attendees.edit(id: Long, attendeeId: Long)
 POST          /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.update(id: Long, attendeeId: Long)
 DELETE        /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.delete(id: Long, attendeeId: Long)
-GET           /event/:id/participants                                      @controllers.Participants.participants(id: Long)
-GET           /event/:id/participant/:personId/person                      @controllers.Participants.person(id: Long, personId: Long)
 GET           /event/:id/attendees                                         @controllers.event.Attendees.listByEvent(id: Long)
 
 GET           /exchangerate                                                controllers.ExchangeRates.rate
@@ -296,7 +294,7 @@ POST          /api/v2/evaluation                                             con
 POST          /api/v2/evaluation/:id/confirm                                 controllers.apiv2.EvaluationsApi.confirm(id: String)
 
 GET           /api/v2/event/:id                                              controllers.apiv2.EventsApi.event(id: Long)
-GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.participants(id: Long)
+GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.attendees(id: Long)
 
 POST          /api/v2/eventrequest/brand/:code                               controllers.apiv2.EventRequestsApi.create(code: String)
 
