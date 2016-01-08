@@ -22,9 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-var uploadedPhoto = null;
-
-
 
 function updateReason() {
     var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url;
@@ -86,9 +83,6 @@ App.events.sub('hmtShowTabAndDialog', function(arr){
     }
 
 });
-
-
-
 
 
 /**
@@ -370,11 +364,10 @@ $(document).ready( function() {
     $('#saveReason').on('click', updateReason);
 
 
-
-
     new App.widgets.UploadPhotoWidget({
         selector: '.js-person-photo',
-        urlUpdate: jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url,
+        urlPersonUpdate: jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url,
+        urlDelete: jsRoutes.controllers.ProfilePhotos.delete(getPersonId()).url,
         urlContent: jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url
     })
 });

@@ -113,7 +113,8 @@
         self.$el = $(options.selector);
 
         self.defaults = {
-            urlUpdate: '',
+            urlPersonUpdate: '',
+            urlDelete: '',
             urlContent: '',
             uploadedPhoto: null
         }
@@ -122,15 +123,12 @@
             selector: options.selector,
             $el: $(options.selector),
             $modalContent: self.$el.find('#uploadPhotoContent'),
-            $modal: self.$el.find('#uploadPhotoDialog'),
-            $uploadSaveBtn: self.$el.find('#uploadBtnSave'),
-            $uploadCustomPhoto: self.$el.find('#uploadCustomPhoto')
+            $modalDialog: self.$el.find('#uploadPhotoDialog')
         };
 
         $.extend(this, self.defaults, options);
 
         self.assignEvents();
-        self.setupCustomPhotoActions();
     }
 
     UploadPhotoWidget.prototype.assignEvents = function(){
@@ -138,8 +136,8 @@
 
         self.locals.$el
             .on('click', '.js-choose-link', function(e){
-                self.showSelectPhotoForm();
-                self.locals.$modal.modal('show');
+                self.getModalContent();
+                self.locals.$modalDialog.modal('show');
 
                 e.preventDefault();
             })
@@ -147,7 +145,6 @@
                 var $this = $(this);
 
                 self.switchActivePhoto($this);
-                e.preventDefault();
             })
             .on('click', '#uploadBtnSave', function (e) {
                 self.updatePhoto();
@@ -157,32 +154,26 @@
                 self.deletePhoto();
                 e.preventDefault();
             })
-            .on('fileuploadadd', '#photoUpload', function (e, data) {
-                self.uploadedPhoto = data;
-                self.locals.$uploadCustomPhoto
-                    .attr('src', URL.createObjectURL(data.files[0]))
-                    .addClass('photo');
-            })
 
+        App.events.sub('hmtShowSelectPhotoForm', function(){
+            self.getModalContent();
 
-        App.events.sub('hmtShowSelectPhotoForm', function(arr){
-            self.showSelectPhotoForm();
-
-            setTimeout(function(){
-                $(arr[0]).modal('show');
-            }, 200);
-            e.preventDefault();
+            $('#uploadPhotoDialog').modal('show');
         });
     };
 
-    UploadPhotoWidget.prototype.showSelectPhotoForm = function(){
+    UploadPhotoWidget.prototype.getModalContent = function(){
         var self = this;
 
-        $.get( self.urlContent, function(data) {
-            self.locals.$modalContent.html(data);
+        if (self.urlContent){
+            $.get( self.urlContent, function(data) {
+                self.locals.$modalContent.html(data);
 
-            self.setupCustomPhotoActions();
-        });
+                self.setupCustomPhotoUpload();
+            });
+        } else {
+            self.setupCustomPhotoUpload();
+        }
     };
 
     UploadPhotoWidget.prototype.switchActivePhoto = function($object){
@@ -196,9 +187,10 @@
     }
 
 
-    UploadPhotoWidget.prototype.setupCustomPhotoActions = function(){
+    UploadPhotoWidget.prototype.setupCustomPhotoUpload = function(){
        var self = this;
 
+        self.src = '';
 
         $('#photoUpload').fileupload({
             dataType: 'json',
@@ -207,49 +199,74 @@
             imageMaxHeight: 300,
             imageCrop: false,
             autoUpload: false,
-            replaceFileInput: false,
-            done: function (e, data) {
-                self.locals.$uploadCustomPhoto
-                    .attr('src', data.result.link);
-
-                self.switchActivePhoto(
-                    self.locals.$uploadCustomPhoto.closest('.b-photoupload__item')
-                );
-            }
+            replaceFileInput: false
+        }).on('fileuploadadd', function (e, data) {
+            self.uploadedPhoto = data;
+            self.setCustomImage(URL.createObjectURL(data.files[0]));
         })
+    }
 
-        initializeFileUploadField();
+    UploadPhotoWidget.prototype.setCustomImage = function(srcImage){
+        var self = this;
 
+        self.isSetCustomImage = true;
+
+        $('#uploadCustomPhoto')
+            .attr('src', srcImage)
+            .addClass('type_custom-photo');
+    }
+
+    UploadPhotoWidget.prototype.deleteCustomImage = function(){
+        var self = this;
+
+        self.isSetCustomImage = false;
+
+        $('#uploadCustomPhoto')
+            .attr('src', '/assets/images/happymelly-face-white.png')
+            .removeClass('type_custom-photo');
     }
 
     UploadPhotoWidget.prototype.updatePhoto = function(){
         var self = this,
-            $currentItem = self.locals.$modalContent.find('.type-active'),
+            $currentItem = self.locals.$modalContent.find('.type_active'),
             type = $currentItem.attr('id'),
-            src = $currentItem.find('b-photoupload__img').attr('src');
+            srcImg = $currentItem.find('.b-photoupload__img').attr('src');
+
+        if (!self.isSetCustomImage && type != "gravatar"){
+            self.locals.$modalDialog.modal('hide');
+            return;
+        }
 
         if (type == "custom" && self.uploadedPhoto != null) {
-            self.locals.$uploadSaveBtn.text('Uploading...');
             self.uploadedPhoto.submit();
         }
 
+        if (self.urlPersonUpdate){
+            self.updatePersonField(type, srcImg);
+        } else {
+            self.updateSuccess(srcImg);
+        }
+    };
+
+    UploadPhotoWidget.prototype.updatePersonField = function(type, srcImage){
+        var self = this;
+
         $.post(
-            self.urlUpdate,
+            self.urlPersonUpdate,
             { type: type },
             null,
             "json"
-        ).done( self.updateSuccess)
-    };
+        ).done( function(data){
+            self.updateSuccess(srcImage);
+        })
+    }
 
-    UploadPhotoWidget.prototype.updateSuccess = function(data){
-        self.local.$modal.modal('hide');
+    UploadPhotoWidget.prototype.updateSuccess = function(src){
+        var self = this;
 
-        $('.b-avatar__real .b-photoupload__img')
-            .first()
-            .attr('src', src);
-
-        $('.b-avatar')
-            .addClass('b-avatar_stat_real');
+        self.locals.$modalDialog.modal('hide');
+        $('.b-avatar__img-real').attr('src', src);
+        self.$el.addClass('b-avatar_stat_real');
 
         App.events.pub('hmtReloadCompletionWidgethmt');
     }
@@ -259,15 +276,14 @@
 
         $.ajax({
             type: "DELETE",
-            url: $(this).data('href'),
+            url: self.urlDelete,
             dataType: "json"
         }).done(function() {
-            $('.b-avatar')
-                .removeClass('b-avatar_stat_real');
+            self.$el.removeClass('b-avatar_stat_real');
+            self.deleteCustomImage();
 
             App.events.pub('hmtReloadCompletionWidget');
         });
-
         return false;
     };
 

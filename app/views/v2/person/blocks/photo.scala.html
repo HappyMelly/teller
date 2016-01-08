@@ -8,24 +8,19 @@
 <div class="b-avatar @if(person.photo.url.nonEmpty) { b-avatar_stat_real } js-person-photo">
 @dynamicOr(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
     @person.photo.url.map { photo =>
-      <div class="b-avatar__real">
-        <img width="@width" class="b-avatar__img" src="@photo"/>
-      </div>
+        <img width="@width" class="b-avatar__img b-avatar__img-real " src="@photo"/>
     }
 
-    <div class="b-avatar__fake" @if(person.photo.url.nonEmpty) { style="display:none;" }>
       <a href="#" class="js-choose-link">
-        <img class="b-avatar__img" width="@width"
+        <img class="b-avatar__img b-avatar__img-fake" width="@width"
           src="@routes.Assets.at("images/add-photo.png")"/></a>
-    </div>
 
     <div class="b-avatar__action">
       <a href="#" class="link-white js-choose-link">
           Edit
       </a>
       <a href="#" class="link-white"
-        id="uploadBtnDelete"
-        data-href="@routes.ProfilePhotos.delete(person.id.get)">
+        id="uploadBtnDelete">
           Delete
       </a>
     </div>

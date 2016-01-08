@@ -20,7 +20,7 @@
       </div>
       <div class="b-photoupload__item @if(active=="custom"){ type_active }" id="custom">
         @if(active == "custom") {
-          <img class="photo b-photoupload__img type_photo" id="uploadCustomPhoto" src="@customUrl"/>
+          <img class="b-photoupload__img type_custom-photo" id="uploadCustomPhoto" src="@customUrl"/>
         } else {
           <img id="uploadCustomPhoto" class="b-photoupload__img" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
         }
