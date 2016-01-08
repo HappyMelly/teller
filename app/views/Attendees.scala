@@ -1,6 +1,6 @@
 package views
 
-object Participants {
+object Attendees {
 
   val roles = List(
     "CxO Level, VP or Director",

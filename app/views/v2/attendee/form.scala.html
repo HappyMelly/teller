@@ -7,7 +7,7 @@
         token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import views.{Countries, Participants}
+@import views.{Countries, Attendees}
 @import views.ViewHelpersV2._
 
 @v2.main("Person", "people", user, withMelly = true) {
@@ -41,7 +41,7 @@
             }
             @v2.html.block("Role", Some("yellow")) {
                 @v2.html.select(form("role"),
-                    ("", "I don't know") :: Participants.roles.map(x => (x, x)), '_label -> "Role", '_help -> "")
+                    ("", "I don't know") :: Attendees.roles.map(x => (x, x)), '_label -> "Role", '_help -> "")
             }
 
             @if(form.hasErrors) {

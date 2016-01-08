@@ -27,9 +27,9 @@ package controllers
 
 
 import models.UserRole.Role._
-import models.event.{Attendee, AttendeeView}
+import models.event.Attendee
 import models.service.Services
-import models.{ActiveUser, Event, License, Participant}
+import models.{ActiveUser, Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment

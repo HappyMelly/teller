@@ -24,9 +24,9 @@
  */
 package models.service
 
-import models.database.event.Attendees
-import models.database.{Evaluations, Events, Participants, People}
 import models._
+import models.database.event.Attendees
+import models.database.{Evaluations, Events}
 import models.event.AttendeeView
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
@@ -125,8 +125,8 @@ class EvaluationService extends Services {
     if (eventIds.nonEmpty) {
       val baseQuery = for {
         e ← TableQuery[Events] if e.id inSet eventIds
-        part ← TableQuery[Participants] if part.eventId === e.id
-        ev ← evaluations if ev.id === part.evaluationId
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId
       } yield ev
       baseQuery.list
     } else {
@@ -157,8 +157,8 @@ class EvaluationService extends Services {
     * @param events Event identifiers
     */
   def findEvaluationsByEvents(events: List[Long]): List[AttendeeView] = DB.withSession { implicit session ⇒
-    import models.database.PortableJodaSupport._
     import models.database.Evaluations.evaluationStatusTypeMapper
+    import models.database.PortableJodaSupport._
 
     val baseQuery = for {
       ((part, e), ev) ← TableQuery[Attendees] innerJoin

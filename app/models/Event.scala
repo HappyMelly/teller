@@ -24,12 +24,12 @@
 
 package models
 
-import akka.actor.{ Actor, Props }
-import models.database.{ EventFacilitators, Events, Participants }
-import models.event.EventCancellation
-import models.service.{ EventService, Services }
+import akka.actor.{Actor, Props}
+import models.database.EventFacilitators
+import models.event.{Attendee, EventCancellation}
+import models.service.Services
 import org.joda.money.Money
-import org.joda.time.{ Days, LocalDate }
+import org.joda.time.{Days, LocalDate}
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -50,7 +50,7 @@ case class Schedule(start: LocalDate,
     hoursPerDay: Int,
     totalHours: Int) {
 
-  lazy val formatted: String = views.ViewHelpersV2.dateInterval(start,end);
+  lazy val formatted: String = views.ViewHelpersV2.dateInterval(start,end)
 
   /**
    * Returns true if number of total hours is inside a threshold for an allowed
@@ -192,15 +192,9 @@ case class Event(
     List(Languages.all.getOrElse(language.spoken, ""),
       Languages.all.getOrElse(language.secondSpoken.get, ""))
 
-  lazy val participants: List[Person] = DB.withSession { implicit session ⇒
-    val query = for {
-      participation ← TableQuery[Participants] if participation.eventId === this.id
-      person ← participation.participant
-    } yield person
-    query.sortBy(_.lastName.toLowerCase).list
-  }
+  lazy val attendees: List[Attendee] = attendeeService.findByEvents(List(identifier)).map(_._2)
 
-  lazy val deletable: Boolean = participants.isEmpty
+  lazy val deletable: Boolean = attendees.isEmpty
 
   def isFacilitator(personId: Long): Boolean = facilitatorIds.contains(personId)
 
