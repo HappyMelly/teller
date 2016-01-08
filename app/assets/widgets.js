@@ -179,10 +179,7 @@
     UploadPhotoWidget.prototype.switchActivePhoto = function($object){
         var self = this;
 
-        if (!$object.length) return;
-
-        self.locals.$el
-            .find('.b-photoupload__item').removeClass('type_active');
+        self.locals.$el.find('.b-photoupload__item').removeClass('type_active');
         $object.addClass('type_active');
     }
 
@@ -207,37 +204,29 @@
     }
 
     UploadPhotoWidget.prototype.setCustomImage = function(srcImage){
-        var self = this;
+        this.isSetCustomImage = true;
 
-        self.isSetCustomImage = true;
-
-        $('#uploadCustomPhoto')
-            .attr('src', srcImage)
-            .addClass('type_custom-photo');
+        $('#uploadCustomPhoto').attr('src', srcImage)
     }
 
     UploadPhotoWidget.prototype.deleteCustomImage = function(){
-        var self = this;
+        this.isSetCustomImage = false;
 
-        self.isSetCustomImage = false;
-
-        $('#uploadCustomPhoto')
-            .attr('src', '/assets/images/happymelly-face-white.png')
-            .removeClass('type_custom-photo');
+        $('#uploadCustomPhoto').attr('src', '/assets/images/happymelly-face-white.png')
     }
 
     UploadPhotoWidget.prototype.updatePhoto = function(){
         var self = this,
-            $currentItem = self.locals.$modalContent.find('.type_active'),
-            type = $currentItem.attr('id'),
-            srcImg = $currentItem.find('.b-photoupload__img').attr('src');
+            $uploadType = self.locals.$modalContent.find('.type_active'),
+            type = $uploadType.attr('id'),
+            srcImg = $uploadType.find('.b-photoupload__img').attr('src');
 
         if (!self.isSetCustomImage && type != "gravatar"){
             self.locals.$modalDialog.modal('hide');
             return;
         }
 
-        if (type == "custom" && self.uploadedPhoto != null) {
+        if (type == "custom") {
             self.uploadedPhoto.submit();
         }
 
