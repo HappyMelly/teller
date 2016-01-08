@@ -488,7 +488,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             import scala.util.matching.Regex
             val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
             val brand = brandService.find(event.brandId).get
-            attendees.foreach { attendee ⇒
+            attendees.filter(a => requestData.attendeeIds.contains(a.identifier)).foreach { attendee ⇒
               val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
               EvaluationReminder.sendEvaluationRequest(attendee, brand, body)
             }

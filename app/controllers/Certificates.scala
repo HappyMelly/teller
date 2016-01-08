@@ -58,7 +58,7 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
           val issued = attendee.issued getOrElse LocalDate.now()
           val certificate = new Certificate(Some(issued), event, attendee, renew = true)
           certificate.generateAndSend(brand, user.person)
-          attendeeService.update(attendee.copy(certificate = Some(certificate.id), issued = Some(issued)))
+          attendeeService.updateCertificate(attendee.copy(certificate = Some(certificate.id), issued = Some(issued)))
           Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
         } getOrElse Future.successful(NotFound)
       }
