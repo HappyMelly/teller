@@ -3,7 +3,7 @@ package models.service.event
 import models.database.Evaluations.evaluationStatusTypeMapper
 import models.database.PortableJodaSupport._
 import models.database.event.Attendees
-import models.database.{People, Participants, Evaluations, Events}
+import models.database.{Evaluations, Events}
 import models.event.{Attendee, AttendeeView}
 import models.service.Services
 import play.api.Play.current
