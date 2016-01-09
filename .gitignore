@@ -24,3 +24,4 @@ keystore.jks
 TODO
 .sbtserver*
 .vagrant
+node_modules
