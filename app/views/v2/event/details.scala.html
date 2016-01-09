@@ -186,12 +186,12 @@
         <div class="col-md-12">
           <div class="table-title">
             <div class="pull-left">
-              <span class="name">Participants</span>
+              <span class="name">Attendees</span>
             </div>
             <div class="pull-right">
               <a tabindex="-1"
-              href="@routes.Participants.add(view.event.identifier)" title="Add Participant">
-                Add Participant</a>
+              href="@controllers.event.routes.Attendees.add(view.event.identifier)" title="Add Attendee">
+                Add Attendee</a>
               @if(brand.evaluationUrl.isDefined) {
                   <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                       Send Evaluation Request</a>
@@ -206,7 +206,7 @@
           <table id="participants" class="datatables table table-rowed">
             <thead>
               <tr>
-                <th>Participant</th>
+                <th>Attendee</th>
                 <th align="center" id="impression"></th>
                 <th>Evaluation Date</th>
                 <th>Handled Date</th>

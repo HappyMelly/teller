@@ -132,8 +132,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val license = new License(Some(1L), id, 1L, "1",
       LocalDate.now(), LocalDate.now(), LocalDate.now().plusYears(1), true,
       Money.parse("EUR 10"), None)
-    val licenses = List(LicenseView(BrandHelper.one, license))
-    licenseService.licenses _ expects id returning licenses
+    licenseService.licenses _ expects id returning List(license)
     controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 

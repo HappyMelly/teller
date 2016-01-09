@@ -27,8 +27,8 @@
         @if(tab == "events") { <span>Events</span> } else {
           <span><a href="@routes.Events.index(activeBrand.identifier)">Events</a></span>
         }
-        @if(tab == "participants") { <span>Participants</span> } else {
-          <span><a href="@routes.Participants.index(activeBrand.identifier).url">Participants</a></span>
+        @if(tab == "attendees") { <span>Attendees</span> } else {
+          <span><a href="@controllers.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a></span>
         }
         @if(tab == "statistics") { <span>Statistics</span> } else {
           <span><a href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a></span>

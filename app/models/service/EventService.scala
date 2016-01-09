@@ -24,11 +24,10 @@
  */
 package models.service
 
-import models.database.PortableJodaSupport._
 import models._
-import models.database.{ Evaluations, EventFacilitators, EventInvoices, Events, Participants }
+import models.database.PortableJodaSupport._
+import models.database.{Evaluations, EventFacilitators, EventInvoices, Events}
 import org.joda.time.LocalDate
-import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
@@ -188,27 +187,6 @@ class EventService extends Integrations with Services {
   def findAll: List[Event] = DB.withSession { implicit session ⇒
     findByParameters(brandId = None)
   }
-
-  /**
-   * Returns list of events ran by the given facilitator where the given person
-   *  participated
-   * @TEST
-   * @param personId Person identifier
-   * @param facilitatorId Facilitator identifier
-   */
-  def findByParticipation(personId: Long, facilitatorId: Long): List[Event] =
-    DB.withSession { implicit session ⇒
-      val query = for {
-        facilitation ← TableQuery[EventFacilitators] if facilitation.facilitatorId === facilitatorId
-        event ← TableQuery[Events] if facilitation.eventId === event.id
-        participation ← TableQuery[Participants] if participation.eventId === event.id
-      } yield (event, facilitation, participation)
-
-      query
-        .filter(_._3.personId === personId)
-        .mapResult(_._1)
-        .list
-    }
 
   /**
    * Adds event and related objects to database

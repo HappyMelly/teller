@@ -1,4 +1,4 @@
-@(evaluation: Evaluation, participant: Participant)
+@(evaluation: Evaluation, attendee: models.event.Attendee)
 
 @import play.api.Play
 @import play.api.Play.current
@@ -35,33 +35,33 @@
         <tbody>
           <tr>
             <td width="150"><strong>Date</strong></td>
-            <td>@evaluation.participant.dateStamp.created.toString("yyyy-MM-dd")</td>
+            <td>@attendee.recordInfo.created.toString("yyyy-MM-dd")</td>
           </tr>
           <tr>
             <td width="150"><strong>Name</strong></td>
-            <td>@evaluation.participant.firstName, @evaluation.participant.lastName </td>
+            <td>@attendee.firstName, @attendee.lastName </td>
           </tr>
           <tr>
             <td width="150"><strong>Birthday</strong></td>
-            <td>@evaluation.participant.birthday</td>
+            <td>@attendee.dateOfBirth</td>
           </tr>
           <tr>
             <td width="150"><strong>Location</strong></td>
-            <td>@evaluation.participant.address.city.map { value => @value + "," } @Messages("country." + evaluation.participant.address.countryCode)</td>
+            <td>@attendee.city.map { value => @value , } @Messages("country." + attendee.countryCode.get)</td>
           </tr>
           <tr>
             <td width="150"><strong>Organisation</strong></td>
-            <td>@participant.organisation</td>
+            <td>@attendee.organisation</td>
           </tr>
           <tr>
             <td width="150"><strong>E-mail</strong></td>
             <td>
-              <a href="mailto:@evaluation.participant.email" target="_blank">@evaluation.participant.email</a>
+              <a href="mailto:@attendee.email" target="_blank">@attendee.email</a>
             </td>
           </tr>
           <tr>
             <td width="150"><strong>Comment</strong></td>
-            <td>@participant.comment</td>
+            <td>@attendee.comment</td>
           </tr>
         </tbody>
       </table>

@@ -6,7 +6,7 @@
   <br/><br/>
   <span class="identical text-danger">
     Identical @if(value.approved) { approved } else { rejected } evaluation <a href="@routes.Evaluations.details(value.identifier)">exists</a>.
-    We recommend to <a class="delete-person" href="#" data-id="@evaluation.personId">delete</a> this participant and his/her evaluation.
+    We recommend to <a class="delete-person" href="#" data-id="@evaluation.attendeeId">delete</a> this participant and his/her evaluation.
   </span>
 }
 <br/><br/>
@@ -16,7 +16,7 @@
 <span class="text-muted">@Evaluations.Questions.facilitatorReview</span><br/>
 @evaluation.facilitatorReview<br/><br/>
 
-<strong>Event & Participant</strong><br/>
+<strong>Event & Attendee</strong><br/>
 <span class="text-muted">Recommendation</span><br/>
 @Evaluations.recommendation(evaluation.recommendationScore)<br/>
 <span class="text-muted">Reason to register</span><br/>

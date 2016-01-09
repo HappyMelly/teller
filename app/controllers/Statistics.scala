@@ -27,8 +27,9 @@ package controllers
 
 
 import models.UserRole.Role._
+import models.event.Attendee
 import models.service.Services
-import models.{ActiveUser, Event, License, Participant}
+import models.{ActiveUser, Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
@@ -203,16 +204,16 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
    */
   def byParticipants(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val participants = participantService.findByBrand(brandId)
+      val attendees = attendeeService.findByBrand(Some(brandId)).map(x => (x.attendee, x.event.schedule.start))
 
-      val statsByRoles = participants.
+      val statsByRoles = attendees.
         filter(_._1.role.exists(_.nonEmpty)).
         groupBy(_._1.role).map(x => (x._1.get, x._2.length)).toList
 
-      val stats = if (participants.isEmpty)
+      val stats = if (attendees.isEmpty)
         List[(LocalDate, Int)]()
       else
-        quarterStatsByParticipants(participants)
+        quarterStatsByParticipants(attendees)
 
       implicit val roleStats = new Writes[(String, Int)] {
         def writes(value: (String, Int)): JsValue = {
@@ -375,10 +376,10 @@ class Statistics(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Returns accumulated number of participants per quarter starting from the first event
-   * @param participants Participants
+   * @param attendees Attendees
    */
-  protected def quarterStatsByParticipants(participants: List[(Participant, LocalDate)]): List[(LocalDate, Int)] = {
-    val perMonth = participants
+  protected def quarterStatsByParticipants(attendees: List[(Attendee, LocalDate)]): List[(LocalDate, Int)] = {
+    val perMonth = attendees
       .map(x ⇒ (x._2.withDayOfMonth(1), 1))
       .groupBy(_._1)
       .map(x ⇒ (x._1, x._2.length))

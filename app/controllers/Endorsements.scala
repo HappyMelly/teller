@@ -95,10 +95,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           findByEvents(events.map(_._1.id.get)).
           filterNot(x => evaluationIds.contains(x.id.get))
 
-        val people = personService.find(evaluations.map(_.personId).distinct)
+        val people = personService.find(evaluations.map(_.attendeeId).distinct)
         val content = evaluations.sortBy(_.impression).reverse.map { x =>
           (x,
-            people.find(_.identifier == x.personId).map(_.fullName).getOrElse(""),
+            people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
             events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
         }
         Ok(views.html.v2.endorsement.selectForm(user, personId, content))
@@ -161,23 +161,19 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         error => jsonBadRequest("'evaluations' param is empty"),
         formData => {
           val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
-          val brands = brandService.findAll
-          val events = eventService.findByFacilitator(personId).map { x =>
-            (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
-          }
+          val events = eventService.findByFacilitator(personId)
           val endorsements = personService.endorsements(personId)
           val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
           val evaluations = evaluationService.
-            findByEvents(events.map(_._1.id.get)).
-            filter(x => receivedIds.contains(x.id.get)).
-            filterNot(x => evaluationIds.contains(x.id.get))
-          val people = personService.find(evaluations.map(_.personId).distinct)
+            findByEventsWithAttendees(events.map(_.identifier)).
+            filter(x => receivedIds.contains(x._3.identifier)).
+            filterNot(x => evaluationIds.contains(x._3.identifier))
           val maxPosition = maxEndorsementPosition(endorsements)
-          val newEndorsements = evaluations.map { x =>
-            val name = people.find(_.identifier == x.personId).map(_.fullName).getOrElse("")
-            val brandId = events.find(_._1.id.get == x.eventId).map(_._1.brandId).getOrElse(0L)
-            Endorsement(None, personId, brandId, x.facilitatorReview, name,
-              evaluationId = x.id.get, rating = Some(x.impression))
+          val newEndorsements = evaluations.map { view =>
+            val name = view._2.fullName
+            val brandId = view._1.brandId
+            Endorsement(None, personId, brandId, view._3.facilitatorReview, name,
+              evaluationId = view._3.identifier, rating = Some(view._3.impression))
           }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
           newEndorsements.foreach { x => personService.insertEndorsement(x) }
           val url = routes.People.details(personId).url + "#experience"
@@ -196,11 +192,11 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds.contains(personId)) {
-          evaluationService.findWithParticipant(evaluationId) map { view =>
+          evaluationService.findWithAttendee(evaluationId) map { view =>
             val endorsements = personService.endorsements(personId)
             val maxPosition = maxEndorsementPosition(endorsements)
             val endorsement = Endorsement(None, personId,
-              event.brandId, view.evaluation.facilitatorReview, view.person.fullName,
+              event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
               position = maxPosition + 1, evaluationId = view.evaluation.id.get,
               rating = Some(view.evaluation.impression))
             val id = personService.insertEndorsement(endorsement).id.get
@@ -211,26 +207,26 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
         }
   }
 
-        /**
+  /**
    * Updates positions of endorsements in bulk
    *
    * @param personId Person identifier
    */
-        def updatePositions(personId: Long) = SecuredProfileAction(personId) {
-          implicit request => implicit handler => implicit user =>
-        val form = Form(single("positions" -> nonEmptyText))
-        form.bindFromRequest.fold(
-          error => jsonBadRequest("Positions param is empty"),
-          formData => {
-            val positions = Json.parse(formData).as[JsArray]
-            positions.value.foreach { x =>
-              val id = (x \ "id").as[Long]
-              val position = (x \ "position").as[Int]
-              personService.updateEndorsementPosition(personId, id, position)
-            }
-            jsonSuccess("ok")
+  def updatePositions(personId: Long) = SecuredProfileAction(personId) {
+    implicit request => implicit handler => implicit user =>
+      val form = Form(single("positions" -> nonEmptyText))
+      form.bindFromRequest.fold(
+        error => jsonBadRequest("Positions param is empty"),
+        formData => {
+          val positions = Json.parse(formData).as[JsArray]
+          positions.value.foreach { x =>
+            val id = (x \ "id").as[Long]
+            val position = (x \ "position").as[Int]
+            personService.updateEndorsementPosition(personId, id, position)
           }
-        )
+          jsonSuccess("ok")
+        }
+      )
   }
 
   /**
