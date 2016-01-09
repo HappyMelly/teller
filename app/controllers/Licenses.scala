@@ -153,7 +153,7 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIden
         val brands = coordinatedBrands(user.account.personId).filter(_._1 == event.brandId)
         val form = licenseForm.bindFromRequest
         form.fold(
-          formWithErrors ⇒ BadRequest(views.html.v2.license.addForm(user, formWithErrors, brands, attendeeId)),
+          formWithErrors ⇒ BadRequest(views.html.v2.license.attendeeForm(user, formWithErrors, brands, attendee)),
           license ⇒ {
             brands.find(_._1 == license.brandId) map { brand =>
               if (identityService.findByEmail(attendee.email).isEmpty) {
