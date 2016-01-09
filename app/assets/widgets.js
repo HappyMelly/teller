@@ -203,7 +203,7 @@
 
     UploadPhotoWidget.prototype.deleteCustomImage = function(){
         this.isSetCustomImage = false;
-        $('#uploadCustomPhoto').attr('src', '/assets/images/happymelly-face-white.png')
+        $('#uploadCustomPhoto').attr('src', jsRoutes.controllers.Assets.at('images/happymelly-face-white.png'))
     }
 
     UploadPhotoWidget.prototype.updatePhoto = function(){
