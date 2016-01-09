@@ -45,32 +45,23 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
    * Generate new certificate
    *
    * @param eventId Event identifier
-   * @param personId Person identifier
+   * @param attendeeId Person identifier
    */
   def create(eventId: Long,
-             personId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+             attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-        participantService.find(personId, eventId) map { participant ⇒
-          val approver = user.person
-          val evaluation = if (participant.evaluationId.nonEmpty)
-            participant.evaluation
-          else
-            None
-          if (event.free) {
-            //TODO move higher
-            Future.successful(NotFound)
-          } else {
-            val brand = brandService.findWithCoordinators(event.brandId).get
-            val person = participant.person.get
-            val issued = participant.issued getOrElse LocalDate.now()
-            val certificate = new Certificate(Some(issued), event, person, renew = true)
-            certificate.generateAndSend(brand, approver)
-            participant.copy(
-              certificate = Some(certificate.id),
-              issued = Some(issued)).update
-            Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
-          }
+      if (event.free) {
+        Future.successful(NotFound)
+      } else {
+        attendeeService.find(attendeeId, eventId) map { attendee ⇒
+          val brand = brandService.findWithCoordinators(event.brandId).get
+          val issued = attendee.issued getOrElse LocalDate.now()
+          val certificate = new Certificate(Some(issued), event, attendee, renew = true)
+          certificate.generateAndSend(brand, user.person)
+          attendeeService.updateCertificate(attendee.copy(certificate = Some(certificate.id), issued = Some(issued)))
+          Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
         } getOrElse Future.successful(NotFound)
+      }
   }
 
   /**

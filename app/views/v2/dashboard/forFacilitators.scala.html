@@ -3,7 +3,7 @@
   brands: List[Brand],
   future: List[(Event, Option[Brand])],
   past: List[(Event, Option[Brand])],
-  evaluations: List[((Event, Person, Evaluation),Option[Brand])])(implicit flash: Flash,
+  evaluations: List[((Event, models.event.Attendee, Evaluation),Option[Brand])])(implicit flash: Flash,
   request: Request[Any],
   handler: AuthorisationHandler)
 

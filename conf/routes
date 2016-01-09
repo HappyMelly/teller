@@ -18,6 +18,10 @@ POST          /account/:id/deactivate                                        @co
 GET           /admin/settings                                                @controllers.admin.Administration.settings
 POST          /admin/transactiontype/new                                     @controllers.admin.Administration.createTransactionType
 POST          /admin/transactiontype/:id/delete                              @controllers.admin.Administration.deleteTransactionType(id: Long)
+
+GET           /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.addForAttendee(id: Long, eventId: Long)
+POST          /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
+
 GET           /bookings                                                      @controllers.BookingEntries.index
 GET           /booking/new                                                   @controllers.BookingEntries.add
 POST          /booking/new                                                   @controllers.BookingEntries.create
@@ -42,6 +46,8 @@ GET           /brand/:id/tabs                                                @co
 POST          /brand/:id/member                                              @controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    @controllers.Brands.removeCoordinator(id: Long, personId: Long)
 POST          /brand/:id                                                     @controllers.Brands.update(id: Long)
+GET           /brand/:id/attendees/list                                      @controllers.event.Attendees.list(id: Long)
+GET           /brand/:id/attendees                                           @controllers.event.Attendees.index(id: Long)
 GET           /brand/:id/events                                              @controllers.Brands.events(id: Long, future: Option[Boolean])
 GET           /brand/:id/edit                                                @controllers.Brands.edit(id: Long)
 POST          /brand/:id/delete                                              @controllers.Brands.delete(id: Long)
@@ -99,15 +105,10 @@ POST          /person/:personId/endorsements/positions                       @co
 POST          /person/:personId/endorsements/add                             @controllers.Endorsements.createFromSelected(personId: Long)
 POST          /event/:eventId/endorsement/evaluation/:evaluationId           @controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
-POST          /evaluation/                                                   @controllers.Evaluations.create
-GET           /evaluation/new/                                               @controllers.Evaluations.add(eventId: Option[Long], participantId: Option[Long])
 POST          /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long)
 POST          /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long)
-POST          /evaluation/:id/move                                           @controllers.Evaluations.move(id: Long)
 POST          /evaluation/:id/confirmrequest                                 @controllers.Evaluations.sendConfirmationRequest(id: Long)
-GET           /evaluation/:id/edit                                           @controllers.Evaluations.edit(id: Long)
 GET           /evaluation/:id                                              @controllers.Evaluations.details(id: Long)
-POST          /evaluation/:id                                              @controllers.Evaluations.update(id: Long)
 DELETE        /evaluation/:id                                              @controllers.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
 GET           /evaluation/confirm/:confirmationId                          @controllers.Evaluations.confirm(confirmationId: String)
@@ -134,15 +135,15 @@ POST          /event/:id/confirm                                           @cont
 POST          /event/:id/cancel                                            @controllers.Events.cancel(id: Long)
 POST          /event/:id/invoice                                           @controllers.Events.invoice(id: Long)
 POST          /event/:id/send                                              @controllers.Events.sendRequest(id: Long)
-GET           /event/:id/participants                                      @controllers.Participants.participants(id: Long)
-GET           /event/:id/participant/new/                                  @controllers.Participants.add(id: Long)
-GET           /event/:id/participant/:personId/person/edit                 @controllers.Participants.edit(id: Long, personId: Long)
-DELETE        /event/:id/participant/:personId/person                      @controllers.Participants.deletePerson(id: Long, personId: Long)
-GET           /event/:id/participant/:personId/person                      @controllers.Participants.person(id: Long, personId: Long)
-POST          /event/:id/participant/:personId/person                      @controllers.Participants.update(id: Long, personId: Long)
-POST          /event/:id/participant/person                                @controllers.Participants.createParticipantAndPerson(id: Long)
-POST          /event/:id/participant                                       @controllers.Participants.create(id: Long)
-
+GET           /event/:id/attendee                                          @controllers.event.Attendees.add(id: Long)
+POST          /event/:id/attendee                                          @controllers.event.Attendees.create(id: Long)
+GET           /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.add(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.create(id: Long, attendeeId: Long)
+GET           /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.details(id: Long, attendeeId: Long)
+GET           /event/:id/attendee/:attendeeId/edit                         @controllers.event.Attendees.edit(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.update(id: Long, attendeeId: Long)
+DELETE        /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.delete(id: Long, attendeeId: Long)
+GET           /event/:id/attendees                                         @controllers.event.Attendees.listByEvent(id: Long)
 
 GET           /exchangerate                                                controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
@@ -205,13 +206,6 @@ GET           /organization/:id/name                                         @co
 POST          /organization/:id                                              @controllers.Organisations.update(id: Long)
 GET           /organizations/search                                          @controllers.Organisations.search(query: Option[String])
 POST          /organization/:id/logo                                         @controllers.Organisations.uploadLogo(id: Long)
-
-
-GET           /participants                                                  @controllers.Participants.index(brandId: Long)
-GET           /participants/brand/:brandId                                   @controllers.Participants.participantsByBrand(brandId: Long)
-GET           /participants/event/:eventId                                   @controllers.Participants.participantsByEvent(eventId: Long)
-GET           /participant/:eventId/:personId/delete/                        @controllers.Participants.delete(eventId: Long, personId: Long, ref: Option[String])
-GET           /participant/event/:eventId/person/:personId                   @controllers.Participants.details(eventId: Long, personId: Long)
 
 GET           /people                                                        @controllers.People.index
 
@@ -304,7 +298,7 @@ POST          /api/v2/evaluation                                             con
 POST          /api/v2/evaluation/:id/confirm                                 controllers.apiv2.EvaluationsApi.confirm(id: String)
 
 GET           /api/v2/event/:id                                              controllers.apiv2.EventsApi.event(id: Long)
-GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.participants(id: Long)
+GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.attendees(id: Long)
 
 POST          /api/v2/eventrequest/brand/:code                               controllers.apiv2.EventRequestsApi.create(code: String)
 

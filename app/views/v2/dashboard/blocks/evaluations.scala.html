@@ -1,4 +1,4 @@
-@(evaluations: List[((Event, Person, Evaluation), Option[Brand])],
+@(evaluations: List[((Event, models.event.Attendee, Evaluation), Option[Brand])],
     withBrand: Boolean)
 
 @import views.Evaluations
@@ -8,18 +8,18 @@
   <h4>Evaluations to act on (<span class="evaluation-number">@evaluations.length</span>)</h4>
   <div class="list-group-container">
     <div class="list-group">
-      @for(((event, person, evaluation), brand) <- evaluations) {
+      @for(((event, attendee, evaluation), brand) <- evaluations) {
         <div class="list-group-item">
           <div class="list-group-item-body">
             <div class="row list-group-item-text">
               <div class="evaluation-overview col-md-10">
                 <p>
-                  @if(person.virtual) {
-                    <a href="@routes.Participants.person(event.identifier, person.identifier)">
+                  @if(attendee.personId.isEmpty) {
+                    @attendee.fullName
                     } else {
-                    <a href="@routes.People.details(person.identifier)">
+                    <a href="@routes.People.details(attendee.identifier)">@attendee.fullName</a>
                     }
-                    @person.fullName</a> rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
+                     rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
                 <div class="text-muted">
@@ -41,7 +41,7 @@
                   </div>
                 </div>
               </div>
-              <div class="circle-show-more" data-event="@evaluation.eventId" data-person="@person.identifier">
+              <div class="circle-show-more" data-event="@evaluation.eventId" data-person="@attendee.identifier">
                 <span class="glyphicon glyphicon-chevron-down"></span>
               </div>
             </div>

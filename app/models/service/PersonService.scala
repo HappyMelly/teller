@@ -26,6 +26,7 @@ package models.service
 
 import models._
 import models.database._
+import models.database.event.Attendees
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -46,7 +47,6 @@ class PersonService extends Services {
   /**
    * Deletes the person with the given ID and their account.
    *
-   * @TEST
    * @param id Person Identifier
    */
   def delete(id: Long): Unit = DB.withTransaction { implicit session ⇒
@@ -55,8 +55,7 @@ class PersonService extends Services {
       memberService.delete(id, person = true)
       paymentRecordService.delete(id, person = true)
       userAccountService.delete(id)
-      //TODO add evaluation removal
-      TableQuery[Participants].filter(_.personId === id).delete
+      TableQuery[Attendees].filter(_.personId === id).delete
       socialProfileService.delete(id, ProfileType.Person)
       TableQuery[People].filter(_.id === id).delete
       TableQuery[Addresses].filter(_.id === person.address.id.get).delete
@@ -359,13 +358,8 @@ class PersonService extends Services {
    * @param id Endorsement id
    * @param position Position
    */
-  def updateEndorsementPosition(personId: Long, id: Long, position: Int) =
-    DB.withSession {
-      implicit session =>
-        TableQuery[Endorsements].
-          filter(_.id === id).
-          filter(_.personId === personId).
-          map(_.position).update(position)
+  def updateEndorsementPosition(personId: Long, id: Long, position: Int) = DB.withSession { implicit session =>
+    TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).map(_.position).update(position)
   }
 
   /**

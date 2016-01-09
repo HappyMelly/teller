@@ -1,0 +1,53 @@
+@(user: ActiveUser,
+    form: Form[Evaluation],
+    attendee: models.event.Attendee)(implicit flash: Flash,
+    request: Request[Any],
+    token: play.filters.csrf.CSRF.Token,
+    handler: AuthorisationHandler)
+
+@import helper.CSRF
+@import views.Evaluations
+@import views.ViewHelpersV2._
+
+@v2.main("Evaluation", "attendees", user) {
+    <div class="form">
+    @v2.html.form(action = CSRF(routes.Evaluations.create(attendee.eventId, attendee.identifier))) {
+        @v2.html.block("") {
+            <h1>Add evaluation for @attendee.fullName</h1>
+        }
+        @v2.html.block("") {
+            @v2.html.textarea(form("reasonToRegister"), '_label -> Evaluations.Questions.reasonToRegister)
+            @v2.html.select(form("facilitatorImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.facilitatorImpression)
+            @v2.html.textarea(form("facilitatorReview"), '_label -> Evaluations.Questions.facilitatorReview)
+            @v2.html.textarea(form("changesToEvent"), '_label -> Evaluations.Questions.changesToEvent)
+            @v2.html.select(form("contentImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.contentImpression)
+            @v2.html.textarea(form("changesToContent"), '_label -> Evaluations.Questions.changesToContent)
+            @v2.html.select(form("hostImpression"), Evaluations.impressions, '_label -> Evaluations.Questions.hostImpression)
+            @v2.html.textarea(form("changesToHost"), '_label -> Evaluations.Questions.changesToHost)
+            @v2.html.textarea(form("actionItems"), '_label -> Evaluations.Questions.actionItems)
+            @v2.html.select(form("recommendationScore"), Evaluations.recommendations, '_label -> Evaluations.Questions.recommendationScore)
+            <input type="hidden" name="status" id="hiddenStatus" value="@form("status").value"/>
+            <input type="hidden" id="certificate" name="certificate" readonly="readonly" value="@form("certificate").value"/>
+        }
+        @if(form.hasErrors) {
+            @v2.html.block("") {
+                <div class="errors">
+                @for((error, index) <- form.errors.zipWithIndex) {
+                    @{index + 1}. @play.api.i18n.Messages(error.message)<br/>
+                }
+                </div>
+            }
+        }
+        @v2.html.block("") {
+            <div class="row">
+                <div class="col-md-5">
+                    <button class="btn btn-primary btn-block btn-lg" type="submit">
+                        Save</button>
+                </div>
+                <div class="col-md-3 cancel">
+                    <a href="javascript:history.back()">Cancel changes</a></div>
+            </div>
+        }
+    }
+    </div>
+}

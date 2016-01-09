@@ -114,6 +114,7 @@ $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
+    var url = jsRoutes.controllers.event.Attendees.listByEvent($("#eventId").val()).url;
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
@@ -121,7 +122,7 @@ $(document).ready( function() {
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "/participants/event/" + $("#eventId").val(),
+            "url" : url,
             "dataSrc": ""
         },
         "order": [[ 1, "asc" ]],
@@ -135,7 +136,11 @@ $(document).ready( function() {
         ],
         "columnDefs": [{
                 "render": function(data) {
-                    return '<a href="' + data.url + '">' + data.name + '</a>';
+                    if (data.url === null) {
+                        return data.name;
+                    } else {
+                        return '<a href="' + data.url + '">' + data.name + '</a>';
+                    }
                 },
                 "targets": 0
             }, {

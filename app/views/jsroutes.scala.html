@@ -1,6 +1,10 @@
 @()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
+    controllers.event.routes.javascript.Attendees.details,
+    controllers.event.routes.javascript.Attendees.delete,
+    controllers.event.routes.javascript.Attendees.list,
+    controllers.event.routes.javascript.Attendees.listByEvent,
     routes.javascript.Assets.at,
     routes.javascript.Brands.activation,
     routes.javascript.Brands.removeCoordinator,
@@ -15,7 +19,6 @@
     routes.javascript.Certificates.certificate,
     routes.javascript.Evaluations.approve,
     routes.javascript.Evaluations.delete,
-    routes.javascript.Evaluations.move,
     routes.javascript.Evaluations.reject,
     routes.javascript.Evaluations.sendConfirmationRequest,
     routes.javascript.Events.cancel,
@@ -41,10 +44,6 @@
     routes.javascript.Organisations.name,
     routes.javascript.Organisations.search,
     routes.javascript.Organisations.deleteLogo,
-    routes.javascript.Participants.details,
-    routes.javascript.Participants.delete,
-    routes.javascript.Participants.deletePerson,
-    routes.javascript.Participants.participants,
     routes.javascript.ProfilePhotos.choose,
     routes.javascript.ProfilePhotos.update,
     routes.javascript.ProfilePhotos.delete,

@@ -22,17 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-/**
- * Filter evaluations by an event
- */
-function filterByEvent(oSettings, aData, iDataIndex) {
-    var index = 8;
-    var filter = $('#events').find(':selected').val();
-    if (filter == '') {
-        return true;
-    }
-    return aData[index] == filter;
-}
 
 /**
  * Filter evaluations checking if they are pending, approved or rejected
@@ -47,47 +36,41 @@ function filterByStatus(oSettings, aData, iDataIndex) {
 }
 
 $.fn.dataTableExt.afnFiltering.push(filterByStatus);
-$.fn.dataTableExt.afnFiltering.push(filterByEvent);
-
-function loadEventList(events) {
-    $('#events').empty().append($("<option></option>").attr("value", "").text("Select an event"));
-    for(var i = 0; i < events.length; i++) {
-        var event = events[i];
-        $('#events').append( $('<option value="'+ event.id +'">' + event.longTitle +'</option>') );
-    }
-}
 
 
 $(document).ready( function() {
     var currentBrand = $('#activeBrandId').val();
     var events = [];
+    var url = jsRoutes.controllers.event.Attendees.list(currentBrand).url;
     var participantTable = $('#participants').dataTable({
-        "sDom": '<"toolbar">rtip',
+        "sDom": '<"toolbar">frtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
         "aaSorting": [],
         "bLengthChange": false,
         "ajax": {
-            "url" : "participants/brand/" + currentBrand,
+            "url" : url,
             "dataSrc": ""
         },
-        "order": [[ 6, "desc" ]],
+        "order": [[ 0, "asc" ]],
         "columns": [
             { "data": "person" },
             { "data": "event" },
             { "data": "location" },
             { "data": "schedule" },
             { "data": "evaluation.impression" },
-            { "data": "evaluation.creation" },
-            { "data": "evaluation" },
-            { "data": "participant" },
+            { "data": "attendee.license" },
             { "data": "event" },
-            { "data": "participant"},
+            { "data": "attendee"},
             { "data": "evaluation.status" }
         ],
         "columnDefs": [{
                 "render": function(data) {
-                    return '<a href="' + data.url + '">' + data.name + '</a>';
+                    if (data.url == null) {
+                        return data.name;
+                    } else {
+                        return '<a href="' + data.url + '">' + data.name + '</a>';
+                    }
                 },
                 "targets": 0
             }, {
@@ -105,20 +88,17 @@ $(document).ready( function() {
                 "orderable": false
             }, {
                 "className": "evaluation-field",
-                "targets": [4, 5, 6, 7]
+                "targets": [4]
             },{
-                "render": function(data) { return drawStatus(data); },
-                "targets": 6,
-                "className": "status"
-            }, {
-                "render": function(data) { return drawCertificate(data); },
-                "targets": 7,
-                "orderable": false,
-                "className": "certificate"
+                "render": function(data) {
+                    return "<a href='" + data + "'>Make a Facilitator</a>";
+                },
+                "targets": 5,
+                "orderable": false
             }, {
                 "render": function(data) { return data.id; },
                 "visible": false,
-                "targets": 8
+                "targets": 6
             }, {
                "render": function(data) {
                    var html = '<div class="circle-show-more" data-event="' + data.event + '"';
@@ -126,7 +106,7 @@ $(document).ready( function() {
                    html += '<span class="glyphicon glyphicon-chevron-down"></span></div>';
                    return html;
                },
-               "targets": 9,
+               "targets": 7,
                "bSortable": false
             }, {
                 "render": function(data) {
@@ -137,23 +117,19 @@ $(document).ready( function() {
                     }
                 },
                 "visible": false,
-                "targets": 10
+                "targets": 8
             }
         ]
     });
     participantTable
         .api()
         .on('init.dt', function (e, settings, data) {
-            loadEventList(events);
             initializeParticipantActions("table");
         });
 
     $("div.toolbar").html($('#filter-containter').html());
     $('#filter-containter').empty();
     $('#status').on('change', function() {
-        participantTable.fnDraw();
-    });
-    $("#events").on('change', function() {
         participantTable.fnDraw();
     });
 

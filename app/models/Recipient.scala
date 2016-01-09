@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,34 +22,12 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-function showError(message) {
-    $('#error').append(
-        $('<div class="alert alert-danger">')
-            .text(message)
-            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-    );
-}
+package models
 
-function showNewPersonForm() {
-  $('.newPerson').show();
-  $('.existingPerson').hide();
+/**
+  * Represents an email's recipient
+  */
+trait Recipient {
+  val email: String
+  def fullName: String
 }
-
-function showExistingPersonForm() {
-  $('.existingPerson').show();
-  $('.newPerson').hide();
-}
-
-$(document).ready(function() {
-    $('#existingPerson').on('change', function() {
-        showExistingPersonForm();
-    });
-    $('#newPerson').on('change', function() {
-        showNewPersonForm();
-    });
-    if ($('#newPerson').prop("checked")) {
-        showNewPersonForm();
-    } else {
-        showExistingPersonForm();
-    }
-});

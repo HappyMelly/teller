@@ -39,7 +39,6 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
 import securesocial.controllers.BaseRegistration
-import securesocial.controllers.BaseRegistration._
 import securesocial.core.authenticator.CookieAuthenticator
 import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.providers.utils.PasswordValidator

@@ -24,13 +24,15 @@
  */
 package models.service
 
-import models.database.{Evaluations, Events, Participants, People}
 import models._
+import models.database.event.Attendees
+import models.database.{Evaluations, Events}
+import models.event.AttendeeView
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 
-class EvaluationService extends Services{
+class EvaluationService extends Services {
 
   private val evaluations = TableQuery[Evaluations]
 
@@ -41,9 +43,17 @@ class EvaluationService extends Services{
    */
   def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
     val id = (evaluations returning evaluations.map(_.id)) += eval
-    val participant = participantService.find(eval.personId, eval.eventId).get
-    participant.copy(evaluationId = Some(id)).update
+    attendeeService._updateEvaluation(eval.attendeeId, Some(id))
     eval.copy(id = Some(id))
+  }
+
+  /**
+    * Deletes the given evaluation from database
+    * @param evaluation Evaluation
+    */
+  def delete(evaluation: Evaluation): Unit = DB.withTransaction { implicit session =>
+    attendeeService._updateEvaluation(evaluation.attendeeId, None)
+    evaluations.filter(_.id === evaluation.id).delete
   }
 
   /**
@@ -52,6 +62,19 @@ class EvaluationService extends Services{
    */
   def find(id: Long) = DB.withSession { implicit session ⇒
     TableQuery[Evaluations].filter(_.id === id).firstOption
+  }
+
+  /**
+    * Returns evaluation with the related attendee if exists; otherwise, None
+    * @param id Evaluation id
+    */
+  def findWithAttendee(id: Long): Option[EvaluationAttendeeView] = DB.withSession {
+    implicit session ⇒
+      val query = for {
+        x ← evaluations if x.id === id
+        y ← TableQuery[Attendees] if y.id === x.attendeeId
+      } yield (x, y)
+      query.firstOption.map(EvaluationAttendeeView.tupled)
   }
 
   /**
@@ -69,16 +92,11 @@ class EvaluationService extends Services{
   }
 
   /**
-    * Returns evaluation with the related participant if exists; otherwise, None
-    * @param id Evaluation id
+    * Returns evaluation for the given attendee if exists
+    * @param attendeeId Attendee identifier
     */
-  def findWithParticipant(id: Long): Option[EvaluationParticipantView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        x ← evaluations if x.id === id
-        y ← TableQuery[People] if y.id === x.personId
-      } yield (x, y)
-      query.firstOption.map(EvaluationParticipantView.tupled)
+  def findByAttendee(attendeeId: Long): Option[Evaluation] = DB.withSession { implicit session =>
+    evaluations.filter(_.attendeeId === attendeeId).firstOption
   }
 
   /**
@@ -103,37 +121,57 @@ class EvaluationService extends Services{
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession {
-    implicit session ⇒
-      if (eventIds.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet eventIds
-          part ← TableQuery[Participants] if part.eventId === e.id
-          ev ← evaluations if ev.id === part.evaluationId
-        } yield ev
-        baseQuery.list
-      } else {
-        List()
-      }
+  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession { implicit session ⇒
+    if (eventIds.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet eventIds
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId
+      } yield ev
+      baseQuery.list
+    } else {
+      List()
+    }
   }
   
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEventsWithParticipants(eventIds: List[Long]) = DB.withSession {
-    implicit session ⇒
-      if (eventIds.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet eventIds
-          part ← TableQuery[Participants] if part.eventId === e.id
-          p ← TableQuery[People] if p.id === part.personId
-          ev ← evaluations if ev.id === part.evaluationId
-        } yield (e, p, ev)
-        baseQuery.list
-      } else {
-        List()
-      }
+  def findByEventsWithAttendees(eventIds: List[Long]) = DB.withSession { implicit session ⇒
+    if (eventIds.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet eventIds
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId
+      } yield (e, a, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
+  }
+
+  /**
+    * Returns participants and their evaluations for a set of events
+    *
+    * @param events Event identifiers
+    */
+  def findEvaluationsByEvents(events: List[Long]): List[AttendeeView] = DB.withSession { implicit session ⇒
+    import models.database.Evaluations.evaluationStatusTypeMapper
+    import models.database.PortableJodaSupport._
+
+    val baseQuery = for {
+      ((part, e), ev) ← TableQuery[Attendees] innerJoin
+        TableQuery[Events] on (_.eventId === _.id) leftJoin
+        TableQuery[Evaluations] on (_._1.evaluationId === _.id)
+    } yield (part, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, ev.confirmationId)
+
+    val eventQuery = baseQuery.filter(_._2.id inSet events)
+    val rawList = eventQuery.mapResult(AttendeeView.tupled).list
+    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
+    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
+      map(obj ⇒ AttendeeView(obj.attendee, obj.event, None, None, None, None, None, None))
+    withEvaluation.union(withoutEvaluation.distinct)
   }
 
   /**
@@ -141,21 +179,19 @@ class EvaluationService extends Services{
    *  events
    * @param events List of events
    */
-  def findUnhandled(events: List[Event]) = DB.withSession {
-    implicit session =>
-      import models.database.Evaluations._
+  def findUnhandled(events: List[Event]) = DB.withSession { implicit session =>
+    import models.database.Evaluations._
 
-      if (events.nonEmpty) {
-        val baseQuery = for {
-          e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
-          part ← TableQuery[Participants] if part.eventId === e.id
-          p ← TableQuery[People] if p.id === part.personId
-          ev ← evaluations if ev.id === part.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
-        } yield (e, p, ev)
-        baseQuery.list
-      } else {
-        List()
-      }
+    if (events.nonEmpty) {
+      val baseQuery = for {
+        e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
+        a ← TableQuery[Attendees] if a.eventId === e.id
+        ev ← evaluations if ev.id === a.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
+      } yield (e, a, ev)
+      baseQuery.list
+    } else {
+      List()
+    }
   }
 
   /**
@@ -163,15 +199,14 @@ class EvaluationService extends Services{
    * @param eval Evaluation
    * @return Returns the given evaluation
    */
-  def update(eval: Evaluation): Evaluation = DB.withSession {
-    implicit session ⇒
-      val updateTuple = (eval.eventId, eval.personId, eval.reasonToRegister,
-        eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
-        eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
-        eval.contentImpression, eval.hostImpression, eval.status,
-        eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
-      evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
-      eval
+  def update(eval: Evaluation): Evaluation = DB.withSession { implicit session ⇒
+    val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
+      eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
+      eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
+      eval.contentImpression, eval.hostImpression, eval.status,
+      eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
+    evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
+    eval
   }
 
 }

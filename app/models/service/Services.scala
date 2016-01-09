@@ -35,6 +35,8 @@ trait Services {
 
   def apiTokenService: ApiTokenService = ApiTokenService.get
 
+  def attendeeService: AttendeeService = AttendeeService.get
+
   def brandService: BrandService = BrandService.get
 
   def brandBadgeService: BadgeService = BadgeService.get
@@ -72,8 +74,6 @@ trait Services {
   def licenseService: LicenseService = LicenseService.get
 
   def orgService: OrganisationService = OrganisationService.get
-
-  def participantService: ParticipantService = ParticipantService.get
 
   def paymentRecordService: PaymentRecordService = PaymentRecordService.get
 

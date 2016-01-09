@@ -26,6 +26,7 @@ package models
 
 import mail.reminder.EvaluationReminder
 import models.database.Evaluations
+import models.event.Attendee
 import models.service._
 import org.joda.time.LocalDate
 import play.api.Play.current
@@ -62,37 +63,35 @@ case class EvaluationEventView(eval: Evaluation, event: Event)
 /**
  * Represents an evaluation with the related participant
  * @param evaluation Evaluation
- * @param person Participant
+ * @param attendee Participant
  */
-case class EvaluationParticipantView(evaluation: Evaluation, person: Person)
+case class EvaluationAttendeeView(evaluation: Evaluation, attendee: Attendee)
 
 /**
  * An evaluation which a participant gives to an event
  */
 case class Evaluation(
-    id: Option[Long],
-    eventId: Long,
-    personId: Long,
-    reasonToRegister: String,
-    actionItems: String,
-    changesToContent: String,
-    facilitatorReview: String,
-    changesToHost: String,
-    facilitatorImpression: Int,
-    recommendationScore: Int,
-    changesToEvent: String,
-    contentImpression: Option[Int],
-    hostImpression: Option[Int],
-    status: EvaluationStatus.Value,
-    handled: Option[LocalDate],
-    confirmationId: Option[String],
-    recordInfo: DateStamp) extends ActivityRecorder with Integrations with Services {
+                       id: Option[Long],
+                       eventId: Long,
+                       attendeeId: Long,
+                       reasonToRegister: String,
+                       actionItems: String,
+                       changesToContent: String,
+                       facilitatorReview: String,
+                       changesToHost: String,
+                       facilitatorImpression: Int,
+                       recommendationScore: Int,
+                       changesToEvent: String,
+                       contentImpression: Option[Int],
+                       hostImpression: Option[Int],
+                       status: EvaluationStatus.Value,
+                       handled: Option[LocalDate],
+                       confirmationId: Option[String],
+                       recordInfo: DateStamp) extends ActivityRecorder with Integrations with Services {
 
   val impression: Int = facilitatorImpression
 
   lazy val event: Event = EventService.get.find(eventId).get
-
-  lazy val participant: Person = PersonService.get.find(personId).get
 
   /**
    * Returns identifier of the object
@@ -104,7 +103,7 @@ case class Evaluation(
    *
    * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
    */
-  def humanIdentifier: String = "to event (id = %s) for person (id = %s)".format(eventId, personId)
+  def humanIdentifier: String = "to event (id = %s) for person (id = %s)".format(eventId, attendeeId)
 
   /**
    * Returns type of this object
@@ -144,15 +143,6 @@ case class Evaluation(
     }
 
   /**
-   * @TEST
-   */
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    TableQuery[Evaluations].filter(_.id === id).delete
-    val participant = participantService.find(personId, eventId).get
-    participant.copy(evaluationId = None).update
-  }
-
-  /**
    * Updates the evaluation
    */
   def update(): Evaluation = evaluationService.update(this)
@@ -177,8 +167,7 @@ case class Evaluation(
    * a participant of the same name
    */
   def identical(): Option[Evaluation] = {
-    val evaluations = evaluationService.
-      findByEventsWithParticipants(List(this.eventId))
+    val evaluations = evaluationService.findByEventsWithAttendees(List(this.eventId))
     evaluations.find(_._3.identifier == this.identifier).map { view =>
       evaluations.
         filter(x => x._3.approved || x._3.rejected).
@@ -205,21 +194,22 @@ case class Evaluation(
    */
   def sendConfirmationRequest(defaultHook: String) = {
     val brand = brandService.find(event.brandId).get
-    val participant = personService.find(this.personId).get
-    val token = this.confirmationId getOrElse ""
-    EvaluationReminder.sendConfirmRequest(participant, brand, defaultHook, token)
+    attendeeService.find(this.attendeeId, this.eventId) foreach { attendee =>
+      val token = this.confirmationId getOrElse ""
+      EvaluationReminder.sendConfirmRequest(attendee, brand, defaultHook, token)
+    }
     this
   }
 
   protected def sendNewEvaluationNotification() = {
     val brand = brandService.findWithCoordinators(event.brandId).get
     val impression = views.Evaluations.impression(facilitatorImpression)
-    val participant = participantService.find(this.personId, this.eventId).get
+    val attendee = attendeeService.find(this.attendeeId, this.eventId).get
     val subject = s"New evaluation (General impression: $impression)"
     val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
       Some(cc.toSet), None, subject,
-      mail.templates.html.evaluation(this, participant).toString(), richMessage = true)
+      mail.templates.html.evaluation(this, attendee).toString(), richMessage = true)
 
     this
   }
@@ -227,7 +217,6 @@ case class Evaluation(
 }
 
 object Evaluation extends Services {
-
 
   /**
    * Returns true if the evaluation can be approved
@@ -242,19 +231,6 @@ object Evaluation extends Services {
    */
   def rejectable(status: EvaluationStatus.Value): Boolean =
     status == EvaluationStatus.Pending || status == EvaluationStatus.Approved
-
-  /**
-   * @TEST
-   * @param personId
-   * @param eventId
-   * @return
-   */
-  def findByEventAndPerson(personId: Long, eventId: Long) = DB.withSession {
-    implicit session ⇒
-      TableQuery[Evaluations].
-        filter(_.personId === personId).
-        filter(_.eventId === eventId).firstOption
-  }
 
   def findAll: List[Evaluation] = DB.withSession { implicit session ⇒
     TableQuery[Evaluations].sortBy(_.created).list

@@ -135,7 +135,6 @@ class EventServiceSpec extends PlayAppSpec {
   "Method findByEvaluation" should {
     "return an event connected to an evaluation 1" in {
       val eval = EvaluationHelper.make(Some(1L), 1L, 1L, EvaluationStatus.Approved, 10, DateTime.now())
-      Participant.insert(Participant(None, 1L, 1L, None, None, None, None, None, None))
       EvaluationService.get.add(eval)
       val event = service.findByEvaluation(1L)
       event map { x ⇒

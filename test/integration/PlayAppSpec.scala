@@ -130,6 +130,7 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `BRAND_FEE`").execute
     Q.updateNA("TRUNCATE `BRAND_COORDINATOR`").execute
     Q.updateNA("TRUNCATE `BRAND_LINK`").execute
+    Q.updateNA("TRUNCATE `BRAND_SETTINGS`").execute
     Q.updateNA("TRUNCATE `BRAND_TESTIMONIAL`").execute
     Q.updateNA("TRUNCATE `CERTIFICATE_TEMPLATE`").execute
     Q.updateNA("TRUNCATE `CONTRIBUTION`").execute
@@ -139,9 +140,9 @@ object PlayAppSpec {
     Q.updateNA("TRUNCATE `EVALUATION_QUESTION`").execute
     Q.updateNA("TRUNCATE `EVALUATION_RECOMMENDATION`").execute
     Q.updateNA("TRUNCATE `EVENT`").execute
+    Q.updateNA("TRUNCATE `EVENT_ATTENDEE`").execute
     Q.updateNA("TRUNCATE `EVENT_FACILITATOR`").execute
     Q.updateNA("TRUNCATE `EVENT_INVOICE`").execute
-    Q.updateNA("TRUNCATE `EVENT_PARTICIPANT`").execute
     Q.updateNA("TRUNCATE `EVENT_TYPE`").execute
     Q.updateNA("TRUNCATE `EXCHANGE_RATE`").execute
     Q.updateNA("TRUNCATE `MATERIAL`").execute

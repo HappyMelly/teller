@@ -40,7 +40,7 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
 
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
   def eventId = column[Long]("EVENT_ID")
-  def personId = column[Long]("PERSON_ID")
+  def attendeeId = column[Long]("ATTENDEE_ID")
   def reasonToRegister = column[String]("REASON_TO_REGISTER")
   def actionItems = column[String]("ACTION_ITEMS")
   def changesToContent = column[String]("CHANGES_TO_CONTENT")
@@ -66,21 +66,21 @@ private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVAL
     String, DateTime, String)
 
 
-  def * = (id.?, eventId, personId, reasonToRegister, actionItems, changesToContent,
+  def * = (id.?, eventId, attendeeId, reasonToRegister, actionItems, changesToContent,
     facilitatorReview, changesToHost, facilitatorImpression,
     recommendationScore, changesToEvent, contentImpression, hostImpression,
     status, handled, confirmationId, created, createdBy, updated,
     updatedBy) <> ((e: EvaluationFields) => Evaluation(e._1, e._2, e._3, e._4,
       e._5, e._6, e._7, e._8, e._9, e._10, e._11, e._12, e._13, e._14, e._15,
       e._16, DateStamp(e._17, e._18, e._19, e._20)),
-    (e: Evaluation) => Some((e.id, e.eventId, e.personId, e.reasonToRegister,
+    (e: Evaluation) => Some((e.id, e.eventId, e.attendeeId, e.reasonToRegister,
       e.actionItems, e.changesToContent, e.facilitatorReview, e.changesToHost,
       e.facilitatorImpression, e.recommendationScore, e.changesToEvent,
       e.contentImpression, e.hostImpression, e.status, e.handled, e.confirmationId,
       e.recordInfo.created, e.recordInfo.createdBy,
       e.recordInfo.updated, e.recordInfo.updatedBy)))
 
-  def forUpdate = (eventId, personId, reasonToRegister, actionItems, changesToContent,
+  def forUpdate = (eventId, attendeeId, reasonToRegister, actionItems, changesToContent,
     facilitatorReview, changesToHost, facilitatorImpression, recommendationScore,
     changesToEvent, contentImpression, hostImpression, status,
     handled, updated, updatedBy)

@@ -467,7 +467,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    */
   def sendRequest(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
-      case class EvaluationRequestData(participantIds: List[Long], body: String)
+      case class EvaluationRequestData(attendeeIds: List[Long], body: String)
       val form = Form(mapping(
         "participantIds" -> list(longNumber),
         "body" -> nonEmptyText.verifying(
@@ -483,15 +483,14 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
             Redirect(routes.Events.details(id)).flashing("error" -> "Provided data are wrong. Please, check a request form."))
         },
         requestData ⇒ {
-          val participantIds = event.participants.map(_.id.get)
-          if (requestData.participantIds.forall(p ⇒ participantIds.contains(p))) {
+          val attendees = attendeeService.findByEvents(List(event.identifier)).map(_._2)
+          if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
             import scala.util.matching.Regex
             val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
             val brand = brandService.find(event.brandId).get
-            requestData.participantIds.foreach { id ⇒
-              val participant = personService.find(id).get
-              val body = namePattern replaceAllIn(requestData.body, m ⇒ participant.fullName)
-              EvaluationReminder.sendEvaluationRequest(participant, brand, body)
+            attendees.filter(a => requestData.attendeeIds.contains(a.identifier)).foreach { attendee ⇒
+              val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
+              EvaluationReminder.sendEvaluationRequest(attendee, brand, body)
             }
 
             val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
@@ -499,7 +498,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
               Redirect(routes.Events.details(id)).flashing("success" -> activity.toString))
           } else {
             Future.successful(
-              Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not participants of the event."))
+              Redirect(routes.Events.details(id)).flashing("error" -> "Some people are not the attendees of the event"))
           }
         })
   }

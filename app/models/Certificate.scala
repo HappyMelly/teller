@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream
 import com.itextpdf.text._
 import com.itextpdf.text.pdf.{BaseFont, ColumnText, PdfWriter}
 import fly.play.s3.{BucketFile, S3Exception}
+import models.event.Attendee
 import models.service.BrandWithCoordinators
 import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
@@ -44,14 +45,12 @@ import scala.language.postfixOps
 /**
  * An certificate which a participant gets after an event
  */
-case class Certificate(
-                        issued: Option[LocalDate],
-                        event: Event,
-                        participant: Person,
-                        renew: Boolean = false) extends Integrations {
+case class Certificate(issued: Option[LocalDate],
+                       event: Event,
+                       attendee: Attendee,
+                       renew: Boolean = false) extends Integrations {
 
-  val id =
-    issued.map(_.toString("yyMM")).getOrElse("") + f"${participant.id.get}%03d"
+  val id = issued.map(_.toString("yyMM")).getOrElse("") + f"${attendee.id.get}%03d"
 
   /**
    * Creates and sends new certificate to a participant
@@ -61,9 +60,9 @@ case class Certificate(
   def generateAndSend(brand: BrandWithCoordinators, approver: Person) {
     val contentType = "application/pdf"
     val pdf = if (brand.brand.code == "LCM")
-      lcmCertificate(brand.brand.id.get, event, participant)
+      lcmCertificate(brand.brand.id.get, event, attendee)
     else
-      m30Certificate(issued, brand.brand.id.get, event, participant)
+      m30Certificate(issued, brand.brand.id.get, event, attendee)
     if (renew) {
       Certificate.file(id).remove()
     }
@@ -90,10 +89,10 @@ case class Certificate(
       case _ ⇒ ""
     }
     val name = "your-%scertificate-%s.pdf".format(brandName, LocalDate.now().toString)
-    val body = mail.templates.evaluation.html.approved(brand.brand, participant, approver).toString()
+    val body = mail.templates.evaluation.html.approved(brand.brand, attendee, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
     val bcc = brand.coordinators.filter(_._2.notification.certificate).map(_._1)
-    email.send(Set(participant),
+    email.send(Set(attendee),
       Some(event.facilitators.toSet),
       Some(bcc.toSet),
       subject,
@@ -108,11 +107,9 @@ case class Certificate(
    *
    * @param brandId Brand identifier
    * @param event Event
-   * @param participant Participant
+   * @param attendee Attendee
    */
-  private def lcmCertificate(brandId: Long,
-                             event: Event,
-                             participant: Person): Array[Byte] = {
+  private def lcmCertificate(brandId: Long, event: Event, attendee: Attendee): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
@@ -133,7 +130,7 @@ case class Certificate(
     val font = new Font(baseFont, 40)
     font.setColor(0, 0, 0)
 
-    val name = new Phrase(participant.fullName, font)
+    val name = new Phrase(attendee.fullName, font)
     val title = new Phrase(event.title, font)
     val dateString = if (event.schedule.start == event.schedule.end) {
       event.schedule.end.toString("MMMM d yyyy")
@@ -217,12 +214,10 @@ case class Certificate(
    * @param brandId Brand identifier
    * @param handledDate The date participant's evaluation was approved
    * @param event Event
-   * @param participant Participant
+   * @param attendee Attendee
    */
-  private def m30Certificate(handledDate: Option[LocalDate],
-                             brandId: Long,
-                             event: Event,
-                             participant: Person): Array[Byte] = {
+  private def m30Certificate(handledDate: Option[LocalDate], brandId: Long, event: Event,
+                             attendee: Attendee): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/DejaVuSerif.ttf",
@@ -241,7 +236,7 @@ case class Certificate(
     val font = new Font(baseFont, 20)
     font.setColor(0, 181, 228)
 
-    val name = new Phrase(participant.fullName, font)
+    val name = new Phrase(attendee.fullName, font)
     val title = new Phrase(event.title, font)
     val dateString = if (event.schedule.start == event.schedule.end) {
       event.schedule.end.toString("d MMMM yyyy")
