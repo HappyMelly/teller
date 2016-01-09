@@ -74,8 +74,8 @@ private[models] class Attendees(tag: Tag) extends Table[Attendee](tag, "EVENT_AT
     evaluationId :: certificate :: issued :: organisation :: comment :: role ::
     created :: createdBy :: updated :: updatedBy :: HNil) <> (createAttendee, extractAttendee)
 
-  def forUpdate = (firstName, lastName, email, dateOfBirth, countryCode, city, street_1, street_2, province, postcode,
-    role, updated, updatedBy)
+  def forUpdate = (personId, firstName, lastName, email, dateOfBirth, countryCode, city, street_1, street_2, province,
+    postcode, role, updated, updatedBy)
 
   def createAttendee(a: AttendeeFields): Attendee = a match {
     case id :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth :: countryCode :: city :: street_1 ::

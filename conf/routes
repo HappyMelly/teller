@@ -18,6 +18,10 @@ POST          /account/:id/deactivate                                        @co
 GET           /admin/settings                                                @controllers.admin.Administration.settings
 POST          /admin/transactiontype/new                                     @controllers.admin.Administration.createTransactionType
 POST          /admin/transactiontype/:id/delete                              @controllers.admin.Administration.deleteTransactionType(id: Long)
+
+GET           /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.addForAttendee(id: Long, eventId: Long)
+POST          /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
+
 GET           /bookings                                                      @controllers.BookingEntries.index
 GET           /booking/new                                                   @controllers.BookingEntries.add
 POST          /booking/new                                                   @controllers.BookingEntries.create

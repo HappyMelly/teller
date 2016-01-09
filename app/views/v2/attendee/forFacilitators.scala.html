@@ -1,0 +1,59 @@
+@(user: ActiveUser,
+    brand: Brand,
+    brands: List[Brand],
+    facilitator: Boolean = false)(implicit request: Request[Any],
+    request2flash: Flash,
+    handler: AuthorisationHandler)
+
+@v2.main("Attendees", "attendees", user) {
+    @v2.element.brandHeader(brand, brands, "attendees", facilitator = true) {
+        <a id="exportLink" class="btn btn-default" href="" title="Only evaluations, currently visible in the table, will be exported">
+          Export to XLSX</a>
+    }
+    <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
+    <div class="row">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 content-block">
+            <div id="filter-containter">
+              <div class="table-filters pull-right">
+                <div class="btn-group">
+                  <select id="events" class="input-sm form-control">
+                      <option value="">Select an event</option>
+                  </select>
+                </div>
+                <div class="btn-group">
+                  <select id="status" class="input-sm form-control">
+                      <option value="all"></option>
+                      <option value="3">Unconfirmed</option>
+                      <option value="0">Pending</option>
+                      <option value="1">Approved</option>
+                      <option value="2">Rejected</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <table id="participants" class="datatables table table-rowed" brandId="@brand.identifier">
+              <thead>
+                <tr>
+                  <th width="10%">Attendee</th>
+                  <th width="15%">Event</th>
+                  <th width="5%">Location</th>
+                  <th>Dates</th>
+                  <th width="5%" align="center" id="impression"></th>
+                  <th>Evaluation Date</th>
+                  <th>Handled Date</th>
+                  <th>Certificate</th>
+                  <th>Event id </th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="@routes.Assets.at("participant.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("attendee/facilitator.js")" type="text/javascript"></script>
+}

@@ -145,9 +145,9 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
   def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        Ok(views.html.v2.attendee.index(user, view.brand, brands))
+        Ok(views.html.v2.attendee.forBrandCoordinators(user, view.brand, brands))
       } { (view, brands) =>
-        Ok(views.html.v2.attendee.index(user, view.get.brand, brands))
+        Ok(views.html.v2.attendee.forFacilitators(user, view.get.brand, brands))
       } { Redirect(controllers.routes.Dashboard.index()) }
   }
 
@@ -158,46 +158,51 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
     * @param brandId Brand identifier
     */
   def list(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      brandService.findWithCoordinators(brandId) map { view ⇒
-        val withSettings = brandService.findWithSettings(brandId).get
-        val account = user.account
-        val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
-        implicit val participantViewWrites = new Writes[AttendeeView] {
-          def writes(data: AttendeeView): JsValue = {
-            Json.obj(
-              "person" -> Json.obj(
-                "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
-                "name" -> data.attendee.fullName),
-              "event" -> Json.obj(
-                "id" -> data.event.id,
-                "url" -> controllers.routes.Events.details(data.event.id.get).url,
-                "title" -> data.event.title,
-                "longTitle" -> data.event.longTitle),
-              "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
-              "schedule" -> data.event.schedule.formatted,
-              "evaluation" -> evaluation(data),
-              "attendee" -> Json.obj(
-                "person" -> data.attendee.identifier,
-                "event" -> data.event.identifier,
-                "certificate" -> Json.obj(
-                  "show" -> showCertificate(withSettings.settings, data.event, data.status),
-                  "number" -> data.attendee.certificate)))
+    brandService.findWithCoordinators(brandId) map { view ⇒
+      val withSettings = brandService.findWithSettings(brandId).get
+      val account = user.account
+      val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
+      implicit val participantViewWrites = new Writes[AttendeeView] {
+        def writes(data: AttendeeView): JsValue = {
+          val url: String = data.attendee.personId map { personId =>
+            controllers.routes.People.details(personId).url
+          } getOrElse {
+            controllers.routes.Licenses.addForAttendee(data.attendee.identifier, data.attendee.eventId).url
           }
+          Json.obj(
+            "person" -> Json.obj(
+              "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
+              "name" -> data.attendee.fullName),
+            "event" -> Json.obj(
+              "id" -> data.event.id,
+              "url" -> controllers.routes.Events.details(data.event.id.get).url,
+              "title" -> data.event.title,
+              "longTitle" -> data.event.longTitle),
+            "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
+            "schedule" -> data.event.schedule.formatted,
+            "evaluation" -> evaluation(data),
+            "attendee" -> Json.obj(
+              "person" -> data.attendee.identifier,
+              "event" -> data.event.identifier,
+              "license" -> url,
+              "certificate" -> Json.obj(
+                "show" -> showCertificate(withSettings.settings, data.event, data.status),
+                "number" -> data.attendee.certificate)))
         }
-        val personId = account.personId
-        val attendees =
-          if (coordinator & user.account.isCoordinatorNow) {
-            attendeeService.findByBrand(withSettings.brand.id)
-          } else if (License.licensedSince(personId, brandId).nonEmpty) {
-            val events = eventService.findByFacilitator(personId, withSettings.brand.id).map(_.id.get)
-            evaluationService.findEvaluationsByEvents(events)
-          } else {
-            List[AttendeeView]()
-          }
-        Ok(Json.toJson(attendees)).withSession("brandId" -> brandId.toString)
-      } getOrElse Ok(Json.toJson(List[String]()))
+      }
+      val personId = account.personId
+      val attendees =
+        if (coordinator & user.account.isCoordinatorNow) {
+          attendeeService.findByBrand(withSettings.brand.id)
+        } else if (License.licensedSince(personId, brandId).nonEmpty) {
+          val events = eventService.findByFacilitator(personId, withSettings.brand.id).map(_.id.get)
+          evaluationService.findEvaluationsByEvents(events)
+        } else {
+          List[AttendeeView]()
+        }
+      Ok(Json.toJson(attendees)).withSession("brandId" -> brandId.toString)
+    } getOrElse Ok(Json.toJson(List[String]()))
   }
-
 
   /**
     * Returns JSON data about participants together with their evaluations
@@ -238,7 +243,7 @@ class Attendees(environment: RuntimeEnvironment[ActiveUser])
             errors => Future.successful(
               BadRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors))),
             data => {
-              attendeeService.update(data.copy(id = attendee.id))
+              attendeeService.update(data.copy(id = attendee.id, personId = attendee.personId))
               Future.successful(
                 Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully updated"))
             }

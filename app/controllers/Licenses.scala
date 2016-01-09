@@ -27,6 +27,7 @@ package controllers
 import models.JodaMoney.jodaMoney
 import models.UserRole.Role._
 import models._
+import models.event.Attendee
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
@@ -85,6 +86,23 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIden
   }
 
   /**
+    * Renders add form for a new content license for attendee
+    *
+    * @param attendeeId Attendee identifier
+    * @param eventId Event identifier
+    */
+  def addForAttendee(attendeeId: Long, eventId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        val event = eventService.find(eventId).get
+        val form = licenseForm.fill(License.blank(attendeeId))
+        val brands = coordinatedBrands(user.account.personId).filter(_._1 == event.brandId)
+        Future.successful(
+          Ok(views.html.v2.license.attendeeForm(user, form, brands, attendee)))
+      } getOrElse Future.successful(NotFound("Unknown attendees"))
+  }
+
+  /**
     * Adds a new content license for the given person
    *
    * @param personId Person identifier
@@ -120,6 +138,47 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIden
           })
       } getOrElse {
         Redirect(routes.People.details(personId)).flashing("error" -> Messages("error.notFound", Messages("models.Person")))
+      }
+  }
+
+  /**
+    * Adds a new content license for the given attendee
+    *
+    * @param attendeeId Attendee identifier
+    */
+  def createFromAttendee(attendeeId: Long, eventId: Long) = SecuredRestrictedAction(Coordinator) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      attendeeService.find(attendeeId, eventId) map { attendee =>
+        val event = eventService.find(eventId).get
+        val brands = coordinatedBrands(user.account.personId).filter(_._1 == event.brandId)
+        val form = licenseForm.bindFromRequest
+        form.fold(
+          formWithErrors ⇒ BadRequest(views.html.v2.license.addForm(user, formWithErrors, brands, attendeeId)),
+          license ⇒ {
+            brands.find(_._1 == license.brandId) map { brand =>
+              if (identityService.findByEmail(attendee.email).isEmpty) {
+                val person = createPersonFromAttendee(attendee)
+                val addedLicense = licenseService.add(license.copy(licenseeId = person.identifier))
+                profileStrengthService.find(person.identifier, org = false) map { x ⇒
+                  profileStrengthService.update(ProfileStrength.forFacilitator(x))
+                }
+                createFacilitatorAccount(person, brand._2)
+                activity(addedLicense, user.person).created.insert()
+                val route = routes.People.details(person.identifier).url + "#facilitation"
+                Redirect(route).flashing("success" -> "License for brand %s was added".format(brand._2))
+              } else {
+                val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
+                  " by email. Please update the email first and then proceed."
+                val errors = form.withGlobalError(msg)
+                BadRequest(views.html.v2.license.attendeeForm(user, errors, brands, attendee))
+              }
+            } getOrElse {
+              val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")
+              BadRequest(views.html.v2.license.attendeeForm(user, formWithError, brands, attendee))
+            }
+          })
+      } getOrElse {
+        Redirect(routes.Dashboard.index()).flashing("error" -> "Unknown attendee")
       }
   }
 
@@ -207,6 +266,19 @@ class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIden
   protected def checkOtherAccountEmail(person: Person): Boolean =
     identityService.findByEmail(person.email).exists(_.userId != person.id)
 
+  /**
+    * Returns person object for the given attendee
+    * @param attendee Attendee
+    */
+  protected def createPersonFromAttendee(attendee: Attendee): Person = {
+    val person = Person(attendee.firstName, attendee.lastName, attendee.email).copy(birthday = attendee.dateOfBirth)
+    person.address_=(Address(None, attendee.street_1, attendee.street_2, attendee.city, attendee.province,
+      attendee.postcode, attendee.countryCode.getOrElse("XX")))
+    person.socialProfile_=(SocialProfile(objectType = ProfileType.Person))
+    val inserted = personService.insert(person)
+    attendeeService.update(attendee.copy(personId = inserted.id))
+    inserted
+  }
 
   /**
     * Creates an account with facilitator access
