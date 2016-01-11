@@ -83,7 +83,6 @@ function format(row) {
     });
 }
 
-
 $(document).ready( function() {
 
     var events = $('#events')
@@ -111,7 +110,8 @@ $(document).ready( function() {
             { "data": "actions",
               "className": 'details-control',
               "orderable": false
-           }
+            },
+            { "data": "schedule" }
         ],
         "columnDefs": [{
             "render": function(data) {
@@ -136,6 +136,7 @@ $(document).ready( function() {
             "render": function(data) {
                 return data.formatted;
             },
+            "iDataSort": 9,
             "targets": 3
         },{
             "render": function(data) {
@@ -158,6 +159,12 @@ $(document).ready( function() {
             },
             "targets": 8,
             "bSortable": false
+        }, {
+            "render": function(data) {
+                return data.start;
+            },
+            "targets": 9,
+            "visible": false
         }]
     });
 
