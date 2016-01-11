@@ -6,67 +6,72 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.DynamicRole
 
-<div class="photo-block @if(org.logo) { real }">
-@dynamicOr(handler, DynamicRole.OrgMember, org.identifier.toString) {
-    @if(org.logo) {
-      <div id="real">
-        <img width="@width" class="img-rounded"
-        src="@Organisations.logoUrl(org.identifier)"/>
-      </div>
-    } else {
-      <div id="real" style="display:none;">
-        <img width="@width" class="img-rounded" src=""/>
-      </div>
-    }
-    <div id="stub" @if(org.logo) { style="display:none;" }>
-      <a href="#" class="choosePhotoLink" data-toggle="modal" data-target="#photoDialog">
-        <img width="@width"
-          src="@routes.Assets.at("images/add-logo.png")"/></a>
-    </div>
-    <div class="photo-action">
-      <a href="#" class="choosePhotoLink" data-toggle="modal"
-        data-target="#photoDialog">Edit</a>
-      <a href="#" id="btnLogoDelete"
-      data-href="@routes.Organisations.deleteLogo(org.identifier)">Delete</a>
+<div class="b-avatar js-organization-photo @if(org.logo) { b-avatar_stat_real } ">
+  <div style="display: none ;" id="org">@org.identifier</div>
+
+  @dynamicOr(handler, DynamicRole.OrgMember, org.identifier.toString) {
+    <img width="@width" class="b-avatar__img b-avatar__img-real" src="@Organisations.logoUrl(org.identifier)"/>
+
+    <a href="#" class="js-choose-link">
+        <img width="@width" class="b-avatar__img b-avatar__img-fake"
+        src="@routes.Assets.at("images/add-logo.png")"/>
+    </a>
+
+    <div class="b-avatar__action">
+      <a href="#"
+        class="link-white js-choose-link">
+        Edit
+      </a>
+      <a href="#"
+        class="link-white"
+        id="uploadBtnDelete">
+        Delete
+      </a>
     </div>
   } {
     @if(org.logo) {
-      <img id="photo" width="@width" class="img-rounded"
+      <img id="photo" width="@width" class="b-avatar__img"
       src="@Organisations.logoUrl(org.identifier)"/>
     } else {
-      <img id="photo" width="@width" class="img-rounded"
-        src="@routes.Assets.at("images/add-logo.png")"/>
+      <img id="photo" width="@width" class="b-avatar__img"
+      src="@routes.Assets.at("images/add-logo.png")"/>
     }
   }
-</div>
-@dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
-  <div id="photoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" id="choosePhotoContent">
-    @v2.html.alert("photoDialog",
-      "Update logo", small = false) {
-        <div class="photo-selector">
-          <div class="option" id="custom">
+
+  @dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
+    <div id="uploadPhotoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div id="uploadPhotoContent">
+      @v2.html.dialog("photoSelection",
+        "Update logo",
+        action = None,
+        actionId = Some("uploadBtnSave")) {
+        <div class="b-photoupload">
+          <div class="b-photoupload__item type_active" id="custom">
             @if(org.logo) {
-              <img width="250" id="logo"
-              src="@Organisations.logoUrl(org.identifier)"/>
+              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto" src="@Organisations.logoUrl(org.identifier)"/>
             } else {
-              <img width="250" id="logo"
-                src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
             }
-            <div class="description">
+            <div class="b-photoupload__desc">
               <br/>
-              <div class="file-upload">
-                <button type="button" class="btn btn-primary">Choose File</button>
-                <div>No file chosen</div>
-                <input type="file" id="logoUpload" class="form-control"
-                name="logo" data-url="@routes.Organisations.uploadLogo(org.identifier)"/>
+
+              <div class="b-fileupload">
+                <button type="button" class="btn btn-primary b-fileupload__btn">Choose File</button>
+                <div class="b-fileupload__label">No file chosen</div>
+                <input type="file"
+                  id="photoUpload"
+                  class="b-fileupload__ctr"
+                  name="logo"
+                  data-url="@routes.Organisations.uploadLogo(org.identifier)"/>
               </div>
-              <button class="btn btn-upload" id="btnLogoUpload">Upload</button>
-              <br/>
             </div>
           </div>
         </div>
       }
+      </div>
     </div>
-  </div>
-}
+  }
+
+</div>
+
+

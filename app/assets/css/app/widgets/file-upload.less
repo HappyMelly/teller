@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,41 +22,39 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-@import "settings";
+@import "./../../settings";
 
-.sidemenu {
-  margin-top: 42px;
-  ul.nav ul.nav {
-    margin-top: 11px;
+// upload file block
+.b-fileupload{
+  position: relative;
+  overflow: hidden;
+  border: 1px solid @light-grey;
+  border-radius: 3px;
+
+  &.focus{
+    box-shadow: 0 0 5px rgba(0,30,255,0.4);
   }
-  li {
-    &:hover {
-      background-color: #fff;
-    }
-    a {
-      color: @grey3;
-      &:hover, &:focus {
-        background-color: #fff;
-        color: @dark-sky-blue;
-      }
-    }
-    &.active a {
-      color: @dark-sky-blue;
-    }
-  }
-  li.subgroup {
-    text-transform: uppercase;
-    font-size: 12px;
-    color: #888888;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e7e7e7;
-    &:last-child {
-      border-bottom: 0;
-    }
-    & li {
-      font-size: 14px;
-      text-transform: none;
-    }
-  }
+}
+
+.b-fileupload__btn{
+  float: right;
+  width: 8em;
+}
+
+.b-fileupload__label{
+  padding-left: 1em;
+  padding-top: 8px;
+}
+
+.b-fileupload__ctr{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: scale(20);
+  letter-spacing: 10em;     /* IE 9 fix */
+  -ms-transform: scale(20); /* IE 9 fix */
+  opacity: 0;
+  cursor: pointer
 }

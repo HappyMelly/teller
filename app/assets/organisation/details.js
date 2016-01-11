@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,49 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-function setupLogoActions() {
-    var btnLogoUpload = '#btnLogoUpload';
-    var btnLogoDelete = '#btnLogoDelete';
-    $('#logoUpload').fileupload({
-        dataType: 'json',
-        disableImageResize: false,
-        imageMaxWidth: 300,
-        imageMaxHeight: 300,
-        imageCrop: false,
-        autoUpload: false,
-        replaceFileInput: false,
-        done: function (e, data) {
-            $('#photoDialog').modal('hide');
-            $('#stub').hide();
-            $('#real').find('img').attr('src', data.result.link);
-            $('#real').show();
-            $('.photo-block').addClass('real');
-            $(btnLogoUpload).prop('disabled', true);
-        }
-    }).bind('fileuploadadd', function (e, data) {
-        $(btnLogoUpload).prop('disabled', false);
-        $('#logo').attr('src', URL.createObjectURL(data.files[0]));
-        $(btnLogoUpload).off('click');
-        $(btnLogoUpload).on('click', function(e) {
-            $(btnLogoUpload).text('Uploading...');
-            data.submit();
-        });
-    });
-    $(btnLogoUpload).prop('disabled', true);
-
-    $(btnLogoDelete).on('click', function(e) {
-        $.ajax({
-            type: "DELETE",
-            url: $(this).data('href'),
-            dataType: "json"
-        }).done(function(data) {
-            $('.photo-block').removeClass('real');
-            $('#real').hide();
-            $('#stub').show();
-        });
-        return false;
-    });
-}
 
 /**
  * Loads tab content (if needed) and shows it to a user
@@ -81,8 +38,9 @@ function showTab(elem) {
         });
         loadedTabs[loadedTabs.length] = target;
     }
-    $('.sidemenu').find('li').removeClass('active');
+    $('#sidemenu').find('a').removeClass('active');
     $(elem).tab('show');
+    $(elem).addClass('active');
     return false;
 }
 
@@ -161,6 +119,14 @@ $(document).ready( function() {
     showTab($('#sidemenu a[href="#' + hash + '"]'));
 
     $('[data-toggle="tooltip"]').tooltip();
-    setupLogoActions();
+
+    function getOrganozationId(){
+        return $('#org').text();
+    }
+
+    new App.widgets.UploadPhotoWidget({
+        selector: '.js-organization-photo',
+        urlDelete: jsRoutes.controllers.Organisations.deleteLogo(getOrganozationId()).url
+    })
 });
 

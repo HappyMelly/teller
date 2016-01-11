@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,9 +22,8 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-var Common = (function($){
-
-    function initPlugins(){
+App.pages.Common = {
+    initPlugins: function(){
         var $scroll = $('.js-link-target');
         if ($scroll.length){
             $scroll.scrollToEl();
@@ -42,22 +41,14 @@ var Common = (function($){
                 pickTime: false
             });
         }
-    }
-
-    function initWidgets(){
+    },
+    initWidgets: function(){
         var $completionWidget = $('.js-completion-widget');
         if ($completionWidget.length){
             new App.widgets.CompletionWidget('.js-completion-widget');
         }
     }
-
-    return {
-        init: function(){
-            initPlugins();
-            initWidgets();
-        }
-    }
-})(jQuery);
+};
 
 
 
@@ -67,20 +58,23 @@ function getPersonId() {
 }
 
 function initializeFileUploadField() {
-    $('.file-upload').each(function(e) {
+    $('.js-fileupload').each(function(e) {
         var wrapper = $(this),
             input = wrapper.find("input"),
             button = wrapper.find("button"),
             label = wrapper.find("div");
+
         button.focus(function(){
             input.focus()
         });
+
         // Crutches for the :focus style:
         input.focus(function(){
             wrapper.addClass("focus");
         }).blur(function(){
             wrapper.removeClass("focus");
         });
+
         var fileAPI = (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
         input.change(function(){
             var filename;
@@ -103,8 +97,10 @@ function initializeFileUploadField() {
 
 
 $(document).ready(function() {
+    var common = App.pages.Common;
 
-    Common.init();
+    common.initPlugins();
+    common.initWidgets();
 
     initializeFileUploadField();
 });
