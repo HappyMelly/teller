@@ -51,6 +51,18 @@ case class Member(
     (since.isBefore(now) || since.isEqual(now)) && (until.isAfter(now) || until.isEqual(now))
   }
 
+  def countryCode: String = if (person && _memberObj._1.nonEmpty)
+    _memberObj._1.get.address.countryCode
+  else if (!person && _memberObj._2.nonEmpty)
+    _memberObj._2.get.countryCode
+  else ""
+
+  def city: Option[String] = if (person && _memberObj._1.nonEmpty)
+    _memberObj._1.get.address.city
+  else if (!person && _memberObj._2.nonEmpty)
+    _memberObj._2.get.city
+  else None
+
   /**
    * Returns a link to public profile on Happy Melly website
    */

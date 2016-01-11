@@ -25,28 +25,31 @@
 /**
  * Filter members by their type
  */
-function filterByType(oSettings, aData, iDataIndex) {
-    var index = 2;
-    var filter = $('#type').find(':selected').val();
-    if (filter == 'all') {
+function filterByMembership(oSettings, aData, iDataIndex) {
+    var type = $('.membership > .filter > a.active').data('type');
+    var index = 3;
+    if (type == 'all') {
         return true;
+    } else {
+        return aData[index] == type;
     }
-    return aData[index] == filter;
 }
 
 /**
  * Filter members by their object type
  */
-function filterByObjectType(oSettings, aData, iDataIndex) {
-    var index = 0;
-    var filter = $('#objectType').find(':selected').val();
-    if (filter == 'all') {
-        return true;
+function filterByType(oSettings, aData, iDataIndex) {
+    var type = $('.type > .filter > a.active').data('type');
+    var index = 6;
+    switch(type) {
+        case 'org': return aData[index] == 'false';
+        case 'person': return aData[index] == 'true';
+        default: return true;
     }
-    return aData[index].indexOf(filter) != -1;
 }
+
+$.fn.dataTableExt.afnFiltering.push(filterByMembership);
 $.fn.dataTableExt.afnFiltering.push(filterByType);
-$.fn.dataTableExt.afnFiltering.push(filterByObjectType);
 
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "url-text-pre": function ( a ) {
@@ -64,26 +67,37 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 } );
 
 $(document).ready( function() {
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
-    var memberTable = $('#people').dataTable({
+    var members = $('#people').dataTable({
         "dom": '<"toolbar pull-left">frtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
         //"aaSorting": [],
         "bLengthChange": false,
         "order": [[ 1, "asc" ]],
-        "columnDefs": [
-            { "type": "url-text", targets: 1 }
-        ]
+        "columnDefs": [{
+            bSortable: false,
+            targets: 0
+        }, {
+            type: "url-text",
+            targets: 1
+        }, {
+            visible: false,
+            targets: 6
+        }]
     });
     $('div.toolbar').html($('#filter-containter').html());
     $('#filter-containter').empty();
-    $('#type').on('change', function() {
-        memberTable.fnDraw();
+
+    $('.membership > .filter > a').on('click', function(e) {
+        e.preventDefault();
+        $('.membership > .filter > a').removeClass('active');
+        $(this).addClass('active');
+        members.fnDraw();
     });
-    $('#objectType').on('change', function() {
-        memberTable.fnDraw();
-    });
+    $('.type > .filter > a').on('click', function(e) {
+        e.preventDefault();
+        $('.type > .filter > a').removeClass('active');
+        $(this).addClass('active');
+        members.fnDraw();
+    })
 });

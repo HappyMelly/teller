@@ -130,15 +130,7 @@ trait MembersApi extends Controller
         val members = memberService.findAll.filter(_.active)
         val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
         } getOrElse members
-        val people = filteredMembers.filter(_.person).map(_.memberObj._1.get)
-        PeopleCollection.addresses(people)
-        val views = filteredMembers.map { member =>
-          val countryCode = if (member.person)
-            people.find(_.identifier == member.objectId).map(_.address.countryCode).getOrElse("")
-          else
-            member.memberObj._2.get.countryCode
-          MemberView(member, Countries.name(countryCode))
-        }
+        val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
         jsonOk(Json.toJson(views.sortBy(_.member.name)))
   }
 

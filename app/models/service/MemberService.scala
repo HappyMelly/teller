@@ -25,7 +25,7 @@
 package models.service
 
 import models._
-import models.database.{ People, Members, Organisations }
+import models.database.{Addresses, People, Members, Organisations}
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.Play.current
@@ -43,9 +43,13 @@ class MemberService {
     val peopleQuery = for {
       m ← members if m.person === true
       p ← TableQuery[People] if p.id === m.objectId
-    } yield (m, p)
+      a <- TableQuery[Addresses] if a.id === p.addressId
+    } yield (m, p, a)
     val result1 = peopleQuery.list
-    result1.foreach(d ⇒ d._1.memberObj_=(d._2))
+    result1.foreach { view ⇒
+      view._2.address_=(view._3)
+      view._1.memberObj_=(view._2)
+    }
 
     val orgQuery = for {
       m ← members if m.person === false

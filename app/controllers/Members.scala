@@ -94,7 +94,7 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
         m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
-      Ok(views.html.member.index(user, members, fee, totalFee))
+      Ok(views.html.v2.member.index(user, members, fee, totalFee))
   }
 
   /** Renders Add form */
