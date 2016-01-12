@@ -23,27 +23,6 @@
  */
 
 
-/**
- * Loads tab content (if needed) and shows it to a user
- * @param elem Tab button
- * @returns {boolean}
- */
-function showTab(elem) {
-    var url = $(elem).attr('data-href'),
-        target = $(elem).attr('href');
-    if ($.inArray(target, loadedTabs) < 0 && url) {
-        $.get(url, function(data) {
-            $(target).html(data);
-            initializeActions();
-        });
-        loadedTabs[loadedTabs.length] = target;
-    }
-    $('#sidemenu').find('a').removeClass('active');
-    $(elem).tab('show');
-    $(elem).addClass('active');
-    return false;
-}
-
 function initializeActions() {
     $('#experimentList').on('click', 'button.remove', function(e) {
         var experimentId = $(this).data('id');
@@ -75,7 +54,6 @@ function initializeActions() {
     });
 }
 
-var loadedTabs = [];
 
 $(document).ready( function() {
 
@@ -108,16 +86,6 @@ $(document).ready( function() {
         "bPaginate": false
     });
 
-    $('#sidemenu a').click(function (e) {
-        e.preventDefault();
-        showTab($(this));
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'details';
-    }
-    showTab($('#sidemenu a[href="#' + hash + '"]'));
-
     $('[data-toggle="tooltip"]').tooltip();
 
     function getOrganozationId(){
@@ -128,5 +96,10 @@ $(document).ready( function() {
         selector: '.js-organization-photo',
         urlDelete: jsRoutes.controllers.Organisations.deleteLogo(getOrganozationId()).url
     })
+
+    new App.widgets.Sidemenu('.js-organization-menu', {
+        hashDefault: 'details',
+        afterShowTab: initializeActions
+    });
 });
 
