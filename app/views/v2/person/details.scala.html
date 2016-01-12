@@ -25,6 +25,7 @@
         }
         </h2>
         @views.html.v2.element.profiles(person.socialProfile, person.member)
+
         <div class="actions pull-right">
           @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
@@ -74,50 +75,16 @@
     <div class="container">
       <div class="left">
         @views.html.v2.person.blocks.photo(person, "199")
-        <div class="sidemenu">
-          <ul class="nav nav-stacked" role="tablist" id="sidemenu">
-            <li class="subgroup">Personal
-              <ul class="nav">
-                <li class="active"><a href="#personal-details" role="tab">
-              Details</a></li>
-                <li><a data-href="@routes.People.renderTabs(person.id.get, "contributions")"
-              href="#contributions" role="tab">
-              Contributions</a></li>
-              </ul>
-            </li>
-            @if(showFacilitationTab) {
-              <li class="subgroup">Facilitation
-                <ul class="nav">
-                  <li><a data-href="@routes.People.renderTabs(person.id.get, "facilitation")"
-                    href="#facilitation" role="tab">
-                    Settings</a></li>
-                  <li><a data-href="@routes.People.renderTabs(person.id.get, "experience")"
-                    href="#experience" role="tab">
-                    Experience</a></li>
-                </ul>
-              </li>
-            }
-            @person.member.map { member =>
-              <li class="subgroup">Membership
-                <ul class="nav">
-                  <li><a data-href="@routes.People.renderTabs(person.id.get, "membership")"
-                    href="#membership" role="tab">
-                    Membership</a></li>
-                  <li><a data-href="@routes.Experiments.experiments(member.id.get)"
-                    href="#experiments" role="tab">
-                    Experiments</a></li>
-                </ul>
-              </li>
-            }
-          </ul>
-          @if(!showFacilitationTab && user.account.isCoordinatorNow) {
-            <a href="@routes.Licenses.add(person.id.getOrElse(0))"
+        @views.html.v2.person.blocks.navigation(person, showFacilitationTab)
+
+        @if(!showFacilitationTab && user.account.isCoordinatorNow) {
+          <a href="@routes.Licenses.add(person.id.getOrElse(0))"
             class="btn btn-upload btn-block">
-              Make a Facilitator</a>
-          }
-          <br/>
-          <br/>
-        </div>
+            Make a Facilitator
+          </a>
+        }
+        <br/>
+        <br/>
       </div>
 
       <div class="center tab-content">
