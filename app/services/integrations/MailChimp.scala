@@ -57,7 +57,6 @@ class MailChimp(apiUrl: String, apiToken: String) {
       "double_optin" -> false,
       "update_existing" -> true,
       "replace_interests" -> false).toString()
-    Logger.info(request)
     Try(WS.url(url).post(request)).isSuccess
   }
 }

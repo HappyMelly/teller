@@ -73,8 +73,8 @@ trait Enrollment extends Controller
    * @return Returns true if the person is successfully subscribed
    */
   protected def subscribe(person: Person, member: Member): Unit = {
-    val listIds = Play.configuration.getString("mailchimp.listIds").getOrElse("").split(",").toList
-    listIds.foreach( id => mailChimp.subscribe(id, person, member.funder))
+    val listIds = Play.configuration.getString("mailchimp.listIds").getOrElse("")
+    listIds.split(",").toList.foreach( id => mailChimp.subscribe(id.replace("\"", ""), person, member.funder))
   }
 
   /**
