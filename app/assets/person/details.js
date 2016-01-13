@@ -55,34 +55,9 @@ function showHideMaterialTables() {
  * @param elem Tab button
  * @returns {boolean}
  */
-function showTab(elem) {
-    var url = $(elem).attr('data-href'),
-        target = $(elem).attr('href');
-    if ($.inArray(target, loadedTabs) < 0 && url) {
-        $.get(url, function(data) {
-            $(target).html(data);
-            initializeActions();
-        });
-        loadedTabs[loadedTabs.length] = target;
-    }
-    $('#sidemenu').find('a').removeClass('active');
-    $(elem).tab('show');
-    $(elem).addClass('active')
-    return false;
-}
 
-App.events.sub('hmtShowTabAndDialog', function(arr){
-    if (arr[0]){
-        showTab(arr[0]);
-    }
 
-    if (arr[1]){
-        setTimeout(function(){
-            $(arr[1]).modal('show');
-        }, 200)
-    }
 
-});
 
 
 /**
@@ -327,7 +302,6 @@ function initializeActions() {
     initializeExperienceTabActions();
 }
 
-var loadedTabs = [];
 
 $(document).ready( function() {
 
@@ -349,17 +323,6 @@ $(document).ready( function() {
         "bPaginate": false
     });
 
-    $('#sidemenu a').click(function (e) {
-        e.preventDefault();
-        showTab($(this));
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'personal-details';
-    }
-    showTab($('#sidemenu a[href="#' + hash + '"]'));
-    initializeActions();
-
     $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 
@@ -369,6 +332,21 @@ $(document).ready( function() {
         urlPersonUpdate: jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url,
         urlDelete: jsRoutes.controllers.ProfilePhotos.delete(getPersonId()).url,
         urlContent: jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url
-    })
+    });
+
+    var Menu = new App.widgets.Sidemenu('.js-person-menu', {
+        hashDefault: 'personal-details',
+        afterShowTab: initializeActions
+    });
+
+    App.events.sub('hmtShowTabAndDialog', function(arr){
+        Menu.showTabByLink($(arr[0]));  // show tab
+
+        if (arr[1]){
+            setTimeout(function(){
+                $(arr[1]).modal('show');
+            }, 200)
+        }
+    });
 });
 
