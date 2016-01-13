@@ -338,6 +338,7 @@ $(document).ready( function() {
         hashDefault: 'personal-details',
         afterShowTab: initializeActions
     });
+    initializeActions();
 
     App.events.sub('hmtShowTabAndDialog', function(arr){
         Menu.showTabByLink($(arr[0]));  // show tab

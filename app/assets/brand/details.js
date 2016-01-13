@@ -165,5 +165,7 @@ $(document).ready( function() {
         afterShowTab: initializeActions
     });
 
+    initializeActions();
+
 });
 
