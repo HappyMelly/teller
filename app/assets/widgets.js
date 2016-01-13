@@ -271,3 +271,82 @@
     App.widgets.UploadPhotoWidget = UploadPhotoWidget;
 
 })(jQuery, App);
+
+
+/**
+ *  Widget for sidebar menu and tabs
+ */
+(function ($, App) {
+    'use strict';
+
+    function Sidemenu(selector, options){
+        var self = this,
+            hash = '',
+            hashSelector;
+
+        self.options = $.extend({
+            hashDefault: '',
+            afterShowTab: null
+        }, options)
+
+        self.selector = selector;
+        self.$el = $(selector);
+        self.loadedTabs = [];
+
+        // get the of active tab from url or use default hash
+        hash = window.location.hash.substring(1) || self.options.hashDefault;
+
+        if (hash){
+            hashSelector = '[href="#'+ hash +'"].b-sidemenu__link';
+            self.showTabByLink($(hashSelector));
+        }
+
+        self.assignEvents();
+    }
+
+    Sidemenu.prototype.assignEvents = function(){
+        var self = this;
+
+        self.$el
+            .on('click', '.b-sidemenu__link', function (e) {
+                var $this = $(this);
+
+                self.showTabByLink($this);
+                e.preventDefault();
+            })
+    };
+
+    Sidemenu.prototype.loadContentForTab = function(url, targetSelector, cb){
+        var self = this;
+
+        if ($.inArray(targetSelector, self.loadedTabs) < 0 && url) {
+            $.get(url, function(data) {
+                $(targetSelector).html(data);
+                self.loadedTabs.push(targetSelector);
+
+                cb && cb();
+            });
+        } else {
+            cb && cb();
+        }
+    };
+
+    Sidemenu.prototype.showTabByLink = function($selector){
+        var self = this,
+            $link = $selector,
+            url = $link.attr('data-href'),
+            target = $link.attr('href');
+
+        if ($link.hasClass('active')) return;
+
+        self.loadContentForTab(url, target, function(){
+            self.$el.find('.b-sidemenu__link').removeClass('active');
+            $link.addClass('active').tab('show');
+
+            self.options.afterShowTab && self.options.afterShowTab();
+        })
+    };
+
+    App.widgets.Sidemenu = Sidemenu;
+
+})(jQuery, App);

@@ -140,26 +140,6 @@ function initializeActions() {
     initializeTestimonialActions();
 }
 
-/**
- * Loads tab content (if needed) and shows it to a user
- * @param elem Tab button
- * @returns {boolean}
- */
-function showTab(elem) {
-    var url = $(elem).attr('data-href'),
-        target = $(elem).attr('href');
-    if ($.inArray(target, loadedTabs) < 0 && url) {
-        $.get(url, function(data) {
-            $(target).html(data);
-            initializeActions();
-        });
-        loadedTabs[loadedTabs.length] = target;
-    }
-    $(elem).tab('show');
-    return false;
-}
-
-var loadedTabs = [];
 
 $(document).ready( function() {
     // Delete links.
@@ -167,15 +147,6 @@ $(document).ready( function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
 
-    $('#sidemenu a').click(function (e) {
-        showTab($(this));
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'general';
-    }
-    showTab($('#sidemenu a[href="#' + hash + '"]'));
-    initializeActions();
 
     if ($('#brandState').data('value')) {
         $('#deactivatedStatus').hide();
@@ -188,6 +159,13 @@ $(document).ready( function() {
             switchState(active);
         });
     });
+
+    new App.widgets.Sidemenu('.js-brand-menu', {
+        hashDefault: 'general',
+        afterShowTab: initializeActions
+    });
+
+    initializeActions();
 
 });
 
