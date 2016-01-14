@@ -2,13 +2,16 @@
 
 @import controllers.brand.Badges
 
-<div class="row-details">
     @for(badge <- badges) {
-        <div class="col-md-4">
-            <input type="checkbox" @if(facilitator.badges.contains(badge.id.get)) { checked } class="badge-switcher"
-                data-id="@badge.id.get" data-brand="@badge.brandId" data-person="@facilitator.personId">
-            <img src="@Badges.pictureUrl(badge, "icon")"/>
+    <label class="b-badge @if(facilitator.badges.contains(badge.id.get)) { is-selected }">
+        <input type="checkbox" @if(facilitator.badges.contains(badge.id.get)) { checked } class="b-badge__input js-badge-switcher"
+            data-id="@badge.id.get" data-brand="@badge.brandId" data-person="@facilitator.personId" />
+
+        <div class="b-badge__img" style="background-image: url(@Badges.pictureUrl(badge, "icon")) ;"></div>
+        <div class="b-badge__con">
+            <h5 class="b-badge__title">
             @badge.name
+            </h5>
         </div>
+    </label>
     }
-</div>

@@ -26,7 +26,7 @@
  * Filter facilitators by license
  */
 function filterByLicense(oSettings, aData, iDataIndex) {
-    var type = $('.filter > a.active').data('type');
+    var type = $('.js-filter-link.active').data('type');
     switch(type) {
         case 'active':
             return aData[6] == 'true';
@@ -41,54 +41,11 @@ function filterByLicense(oSettings, aData, iDataIndex) {
     }
 }
 
-/**
- * Adds/removes badge to/from facilitator
- * @param obj Checkbox object
- */
-function toggleBadge(obj) {
-    var badgeId = $(obj).data('id');
-    var brandId = $(obj).data('brand');
-    var personId = $(obj).data('person');
-    if (obj.checked) {
-        var url = jsRoutes.controllers.Facilitators.addBadge(personId, brandId, badgeId).url;
-        $.post(url, {}, function(data) {
-            success(data.message)
-        }, "json");
-    } else {
-        $.ajax({
-            type: "DELETE",
-            url: jsRoutes.controllers.Facilitators.deleteBadge(personId, brandId, badgeId).url,
-            data: {},
-            dataType: "json"
-        }).done(function(data) {
-            success(data.message);
-        })
-    }
-}
-
-/**
- *   Writes the html for facilitator details.
- *   @param row {object} DataTable row object
- */
-function renderDetails(row) {
-    var facilitatorId = $(row.node()).data('id');
-    var brandId = $(row.node()).data('brand');
-    var url = jsRoutes.controllers.Facilitators.details(facilitatorId, brandId).url;
-    $.get(url).done(function (content) {
-        row.child(content, 'active').show();
-        $('.badge-switcher').on('click', function(e) {
-            toggleBadge(this);
-        });
-    });
-}
-
-$.fn.dataTableExt.afnFiltering.push(filterByLicense);
-
 $(document).ready( function() {
-    $.fn.dataTable.moment('d MMM yyyy');
 
-    var facilitators = $('#facilitators')
-        .dataTable({
+    new App.widgets.DataTable(
+        '.js-brandcoordinator-table',
+        {
             "sDom": '<"toolbar">frtip',
             "iDisplayLength": 25,
             "asStripeClasses":[],
@@ -101,19 +58,12 @@ $(document).ready( function() {
                 "bSortable": false,
                 "targets": 10
             }]
-        });
+        },
+        [filterByLicense]
+    );
 
-    (new TableWithDetails(facilitators, 'facilitators', renderDetails));
 
-    $("div.toolbar").html($('#filter-containter').html());
-    $('#filter-containter').empty();
-
-    facilitators.fnDraw();
-
-    $('.filter > a').on('click', function(e) {
-        e.preventDefault();
-        $('.filter > a').removeClass('active');
-        $(this).addClass('active');
-        facilitators.fnDraw();
-    });
+    $('#facilitators tr').each(function(index, el){
+        new App.widgets.TableRowWithBadges($(el));
+    })
 });
