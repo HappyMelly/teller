@@ -293,7 +293,7 @@
         self.$el = $(selector);
         self.loadedTabs = [];
 
-        // get the of active tab from url or use default hash
+        // get the id of active tab from url or use default id
         hash = window.location.hash.substring(1) || self.options.hashDefault;
 
         if (hash){
@@ -348,5 +348,62 @@
     };
 
     App.widgets.Sidemenu = Sidemenu;
+
+})(jQuery, App);
+
+/**
+ *  Widget for Datatable with filtering
+ */
+(function ($, App) {
+    'use strict';
+
+    function DataTable(selector, options, arrFuncFilters){
+        var self = this,
+            $el = $(selector);
+
+        self.el = selector;
+        self.$el = $el;
+        self.$table = $el.find('.js-table-list');
+        self.options = $.extend({}, options);
+        self.arrFuncFilters = arrFuncFilters;
+
+        self.assignEvents();
+        self.init();
+    }
+
+    DataTable.prototype.init = function(){
+        var self = this;
+
+        $.fn.dataTable.moment('d MMM yyyy');
+        Array.prototype.push.apply($.fn.dataTableExt.afnFiltering, self.arrFuncFilters);
+        self.dataPlugin = self.$table.dataTable(self.options);
+
+        self.dataPlugin.fnDraw();
+    }
+
+    DataTable.prototype.assignEvents = function(){
+        var self = this;
+
+        self.$el
+            .on('click', '.js-filter-link', function (e) {
+                var $this = $(this);
+
+                self.filterTableByLink($this);
+                e.preventDefault();
+            })
+    };
+
+    DataTable.prototype.filterTableByLink = function($link){
+        var self = this,
+            $filtersBlock = $link.closest('.table-filters');
+
+        if ($link.hasClass('active')) return;
+
+        $filtersBlock.find('.js-filter-link').removeClass('active');
+        $link.addClass('active');
+        self.dataPlugin.fnDraw();
+    };
+
+    App.widgets.DataTable = DataTable;
 
 })(jQuery, App);
