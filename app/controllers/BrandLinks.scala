@@ -23,21 +23,18 @@
  */
 package controllers
 
-import models.ActiveUser
 import models.brand.BrandLink
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
+class BrandLinks(override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {

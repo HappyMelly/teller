@@ -11,7 +11,7 @@ import scala.util.Random
 /**
   * Contains a set of methods for setting up new user account with access by email
   */
-trait PasswordIdentities extends BasePasswordReset[ActiveUser] with Services with Controller {
+trait PasswordIdentities extends BasePasswordReset with Services with Controller {
 
   /**
     * Creates dummy password and adds all required records to resetting password for newly created account

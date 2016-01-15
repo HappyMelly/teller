@@ -1,5 +1,5 @@
 @(user: securesocial.core.BasicProfile, mailToken: String)(implicit request: RequestHeader,
-    env: securesocial.core.RuntimeEnvironment[_])
+    env: securesocial.core.RuntimeEnvironment)
 
 @mail.templates.html.hmTmpl("Password Reset Request") {
     <h2>Hi @user.firstName,</h2>

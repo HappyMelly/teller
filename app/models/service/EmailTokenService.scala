@@ -24,52 +24,49 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.EmailToken
-import models.database.EmailTokens
-import models.database.PortableJodaSupport._
+import models.database.EmailTokenTable
 import org.joda.time.DateTime
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 /**
   * Contains methods for managing EmailToken records in database
   */
-class EmailTokenService extends Services {
+class EmailTokenService extends HasDatabaseConfig[JdbcProfile]
+  with EmailTokenTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val tokens = TableQuery[EmailTokens]
 
   /**
     * Deletes a token for the given token identifier
     * @param token Token identifier
     */
-  def delete(token: String): Unit = DB.withSession { implicit session =>
-    tokens.filter(_.token === token).delete
-  }
+  def delete(token: String): Unit = db.run(tokens.filter(_.token === token).delete)
 
   /**
     * Deletes all expired tokens
     */
-  def deleteExpiredTokens(): Unit = DB.withSession { implicit session =>
-    tokens.filter(_.expire < DateTime.now()).mutate(_.delete())
-  }
+  def deleteExpiredTokens(): Unit = db.run(tokens.filter(_.expire < DateTime.now()).delete)
 
   /**
     * Returns an email token if it exists
     * @param token Token identifier
     */
-  def find(token: String): Option[EmailToken] = DB.withSession { implicit session =>
-    tokens.filter(_.token === token).firstOption
-  }
+  def find(token: String): Future[Option[EmailToken]] =
+    db.run(tokens.filter(_.token === token).result).map(_.headOption)
 
   /**
     * Adds new token to the database
     * @param token Token
     */
-  def insert(token: EmailToken): EmailToken = DB.withSession { implicit session =>
-    tokens.insert(token)
-    token
-  }
+  def insert(token: EmailToken): Future[EmailToken] = db.run((tokens returning tokens) += token)
 }
 
 object EmailTokenService {

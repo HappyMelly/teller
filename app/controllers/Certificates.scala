@@ -24,22 +24,22 @@
 
 package controllers
 
+import javax.inject.Inject
+
+import models.Certificate
 import models.UserRole.Role
 import models.service.Services
-import models.{ActiveUser, Certificate}
 import org.joda.time.LocalDate
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Certificates(environment: RuntimeEnvironment[ActiveUser])
+class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Files {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Generate new certificate

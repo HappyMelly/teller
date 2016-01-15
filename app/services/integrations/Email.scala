@@ -24,11 +24,10 @@
 package services.integrations
 
 import akka.actor.{Actor, Props}
-import com.typesafe.plugin._
-import models.{Recipient, Person}
+import models.Recipient
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import play.api.libs.mailer.AttachmentFile
+import play.api.libs.mailer._
 import play.api.{Logger, Play}
 import services.integrations.EmailService.EmailMessage
 
@@ -87,8 +86,6 @@ object EmailService {
         import java.io.File
 
         import play.api.libs.mailer
-
-        val mail = use[MailerPlugin].email
 
         val emptyMail = mailer.Email(message.subject, message.from, charset = Some("UTF-8"),
           to = message.to, cc = message.cc, bcc = message.bcc)

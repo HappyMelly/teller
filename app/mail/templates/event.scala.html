@@ -1,6 +1,7 @@
 @(event: Event,
     brand: Brand,
-    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
+    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader,
+        messages: Messages)
 
 @import models.service.brand.EventTypeService
 @import laika.api._

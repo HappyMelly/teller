@@ -32,28 +32,25 @@ import models.BookingEntry.FieldChange
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.admin.TransactionType
-import models.{ AccountSummary, _ }
 import models.service.Services
-import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.{ DateTime, LocalDate }
+import models.{AccountSummary, _}
+import org.joda.money.{CurrencyUnit, Money}
+import org.joda.time.{DateTime, LocalDate}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
-import play.api.mvc.{ Result, _ }
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{I18nSupport, Messages}
+import play.api.mvc.{Result, _}
 import services.integrations.Integrations
-import services.{ CurrencyConverter, S3Bucket }
+import services.{CurrencyConverter, S3Bucket, TellerRuntimeEnvironment}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class BookingEntries(environment: RuntimeEnvironment[ActiveUser])
+class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Integrations
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Services
+    with I18nSupport {
 
   def bookingEntryForm(implicit user: ActiveUser) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),

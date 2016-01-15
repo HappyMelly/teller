@@ -31,22 +31,21 @@ import models.event.Attendee
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
 /**
  * Content license pages and API.
  */
-class Licenses(environment: RuntimeEnvironment[ActiveUser]) extends PasswordIdentities
+class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment) extends PasswordIdentities
   with Security
   with Services
-  with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+  with Activities
+  with I18nSupport {
 
   /**
    * HTML form mapping for creating and editing.

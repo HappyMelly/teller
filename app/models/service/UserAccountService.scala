@@ -24,78 +24,75 @@
  */
 package models.service
 
-import models.database.UserAccounts
-import models.{Person, UserAccount, SocialIdentity}
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import securesocial.core.providers._
+import models.database.UserAccountTable
+import models.{Person, UserAccount}
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class UserAccountService {
+import scala.concurrent.Future
+
+class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccountTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
+  private val accounts = TableQuery[UserAccounts]
 
   /**
    * @todo cover with tests
-   * @param personId
+   * @param personId Person identifier
    */
-  def delete(personId: Long) = DB.withSession { implicit session ⇒
-    val accounts = TableQuery[UserAccounts]
-    accounts.filter(_.personId === personId).delete
-  }
+  def delete(personId: Long) =
+    db.run(accounts.filter(_.personId === personId).delete)
 
   /**
     * Returns an account for the given person if exists
     * @param personId Person identifier
     */
-  def findByPerson(personId: Long): Option[UserAccount] = DB.withSession { implicit session =>
-    TableQuery[UserAccounts].filter(_.personId === personId).firstOption
-  }
+  def findByPerson(personId: Long): Future[Option[UserAccount]] =
+    db.run(accounts.filter(_.personId === personId).result).map(_.headOption)
 
   /**
    * Inserts the given account to database
    * @param account Account object
    * @return The given account with updated id
    */
-  def insert(account: UserAccount) = DB.withSession { implicit session ⇒
-    val accounts = TableQuery[UserAccounts]
-    val id = (accounts returning accounts.map(_.id)) += account
-    account.copy(id = Some(id))
+  def insert(account: UserAccount): Future[UserAccount] = {
+    val action = (accounts returning accounts.map(_.id) into ((a, id) => a.copy(id = Some(id)))) += account
+    db.run(action)
   }
 
   /**
     * Updates the given account in database
     * @param account User account
     */
-  def update(account: UserAccount) = DB.withSession { implicit session =>
-    TableQuery[UserAccounts].filter(_.id === account.id).update(account)
+  def update(account: UserAccount) = {
+    db.run(accounts.filter(_.id === account.id).update(account))
     account
   }
 
   /**
    * Updates active role for the given user
    */
-  def updateActiveRole(personId: Long, role: Boolean): Unit = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      accounts.filter(_.personId === personId).map(_.activeRole).update(role)
-  }
+  def updateActiveRole(personId: Long, role: Boolean): Unit =
+    db.run(accounts.filter(_.personId === personId).map(_.activeRole).update(role))
 
   /**
    * Updates the social network authentication provider identifiers, used when these may have been edited for a person,
    * so that an existing account can be able to log in on a new provider or for a provider with a edited identifier.
    */
-  def updateSocialNetworkProfiles(person: Person): Unit = DB.withSession {
-    implicit session ⇒
-      val accounts = TableQuery[UserAccounts]
-      val query = for {
-        account ← accounts if account.personId === person.id
-      } yield (account.twitterHandle,
-        account.facebookUrl,
-        account.googlePlusUrl,
-        account.linkedInUrl)
-      query.update(person.socialProfile.twitterHandle,
-        person.socialProfile.facebookUrl,
-        person.socialProfile.googlePlusUrl,
-        person.socialProfile.linkedInUrl)
+  def updateSocialNetworkProfiles(person: Person): Unit = {
+    val query = for {
+      account ← accounts if account.personId === person.id
+    } yield (account.twitterHandle,
+      account.facebookUrl,
+      account.googlePlusUrl,
+      account.linkedInUrl)
+    val action = query.update(person.socialProfile.twitterHandle,
+      person.socialProfile.facebookUrl,
+      person.socialProfile.googlePlusUrl,
+      person.socialProfile.linkedInUrl)
+    db.run(action)
   }
 
 }

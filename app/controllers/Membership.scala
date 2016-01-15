@@ -26,22 +26,20 @@ package controllers
 
 import models.UserRole.Role._
 import models._
-import models.payment.{ Payment, PaymentException, RequestException }
-import models.service.Services
+import models.payment.{Payment, PaymentException, RequestException}
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Play.current
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
-import play.api.{ Logger, Play }
-import securesocial.core.RuntimeEnvironment
+import play.api.{Logger, Play}
+import services.TellerRuntimeEnvironment
 
-class Membership(environment: RuntimeEnvironment[ActiveUser])
+class Membership @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Enrollment
     with Security
-    with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Activities
+    with I18nSupport {
 
   /**
    * Renders welcome screen for existing users with two options:

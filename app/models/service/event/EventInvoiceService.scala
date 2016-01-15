@@ -25,19 +25,20 @@
 package models.service.event
 
 import models.EventInvoice
-import models.database.EventInvoices
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.EventInvoiceTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class EventInvoiceService {
+class EventInvoiceService extends HasDatabaseConfig[JdbcProfile]
+  with EventInvoiceTable {
 
-  def update(invoice: EventInvoice): Unit = DB.withSession {
-    implicit session: Session ⇒
-      _update(invoice)
-  }
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
-  def _update(invoice: EventInvoice)(implicit session: Session): Unit =
+  def update(invoice: EventInvoice): Unit = db.run(updateAction(invoice))
+
+  def updateAction(invoice: EventInvoice) =
     TableQuery[EventInvoices].filter(_.id === invoice.id)
       .map(_.forUpdate)
       .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))

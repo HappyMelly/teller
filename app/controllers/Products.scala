@@ -24,7 +24,7 @@
 
 package controllers
 
-import fly.play.s3.{ BucketFile, S3Exception }
+import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.Role._
 import models._
 import models.service.Services
@@ -32,23 +32,21 @@ import org.joda.time._
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Forms._
-import play.api.data.{ FormError, _ }
 import play.api.data.format.Formatter
 import play.api.data.validation.Constraints._
-import play.api.i18n.Messages
+import play.api.data.{FormError, _}
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
 import services._
 
 import scala.concurrent.Future
 import scala.io.Source
 
-class Products(environment: RuntimeEnvironment[ActiveUser])
+class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Services
+    with I18nSupport {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"

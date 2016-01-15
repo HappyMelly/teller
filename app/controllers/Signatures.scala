@@ -24,24 +24,20 @@
 
 package controllers
 
-import models.{ ActiveUser, Person }
+import javax.inject.Inject
+
+import models.Person
 import models.service.Services
-import play.api.Play
-import play.api.Play.current
-import play.api.data.Form
-import play.api.data.Forms._
-import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
-class Signatures(environment: RuntimeEnvironment[ActiveUser])
+class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Files
     with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Delete signature form submits to this action

@@ -14,7 +14,7 @@
  *@
 @(left: Field, leftData: play.twirl.api.Html,
   right: Field, rightData: play.twirl.api.Html,
-  label: String, help: String = "Required")(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+  label: String, help: String = "Required")(implicit handler: helper.FieldConstructor, messages: Messages)
 
 @fieldErrors(fields: Field*) = {
   @if(fields.exists(_.hasErrors)) {

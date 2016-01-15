@@ -28,16 +28,18 @@ import models.UserRole.Role._
 import models._
 import models.service.Services
 import org.joda.time.LocalDate
+import play.api.i18n.I18nSupport
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 
-class Dashboard(environment: RuntimeEnvironment[ActiveUser])
+class Dashboard @javax.inject.Inject() (environment: RuntimeEnvironment)
     extends Controller
     with Security
     with Services
-    with Utilities {
+    with Utilities
+    with I18nSupport {
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+  override implicit val env: RuntimeEnvironment = environment
 
   /**
    * About page - credits.

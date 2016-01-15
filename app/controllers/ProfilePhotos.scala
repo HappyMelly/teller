@@ -24,21 +24,21 @@
 
 package controllers
 
-import models.{ ActiveUser, Photo, Person }
+import javax.inject.Inject
+
 import models.service.Services
+import models.{Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
+class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Files
     with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders a screen for selecting a profile's photo

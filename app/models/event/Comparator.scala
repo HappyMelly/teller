@@ -29,7 +29,7 @@ import laika.render.HTML
 import models.service.brand.EventTypeService
 import models.service.{ Services, OrganisationService, PersonService }
 import models.{ Brand, EventView }
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import views.Languages
 
 import scala.language.postfixOps
@@ -106,7 +106,7 @@ object Comparator extends Services {
    * @param was The event with ‘old’ values.
    * @param now The event with ‘new’ values.
    */
-  def compare(was: EventView, now: EventView): List[FieldChange] = {
+  def compare(was: EventView, now: EventView)(implicit messages: Messages): List[FieldChange] = {
     val changes = List(
       new BrandChange("Brand", was.event.brandId, now.event.brandId),
       new EventTypeChange("Event Type", was.event.eventTypeId, now.event.eventTypeId),

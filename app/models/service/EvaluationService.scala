@@ -25,15 +25,21 @@
 package models.service
 
 import models._
-import models.database.event.Attendees
-import models.database.{Evaluations, Events}
+import models.database.EvaluationTable
+import models.database.event.AttendeeTable
 import models.event.AttendeeView
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+import scala.concurrent.Future
 
-class EvaluationService extends Services {
+class EvaluationService extends HasDatabaseConfig[JdbcProfile]
+  with AttendeeTable
+  with EvaluationTable
+  with Services {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val evaluations = TableQuery[Evaluations]
 
   /**
@@ -41,40 +47,43 @@ class EvaluationService extends Services {
    * @param eval Evaluation
    * @return Return the updated evaluation with id
    */
-  def add(eval: Evaluation): Evaluation = DB.withTransaction { implicit session ⇒
-    val id = (evaluations returning evaluations.map(_.id)) += eval
-    attendeeService._updateEvaluation(eval.attendeeId, Some(id))
-    eval.copy(id = Some(id))
+  def add(eval: Evaluation): Future[Evaluation] = {
+    val query = evaluations returning evaluations.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val actions = (for {
+      evaluation <- query += eval
+      _ <- attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, evaluation.id)
+    } yield evaluation).transactionally
+    db.run(actions)
   }
 
   /**
     * Deletes the given evaluation from database
     * @param evaluation Evaluation
     */
-  def delete(evaluation: Evaluation): Unit = DB.withTransaction { implicit session =>
-    attendeeService._updateEvaluation(evaluation.attendeeId, None)
-    evaluations.filter(_.id === evaluation.id).delete
+  def delete(evaluation: Evaluation): Unit = {
+    val actions = (for {
+      _ <- attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, None)
+      _ <- evaluations.filter(_.id === evaluation.id).delete
+    } yield ()).transactionally
+    db.run(actions)
   }
 
   /**
    * Returns the requested evaluation
    * @param id Evaluation id
    */
-  def find(id: Long) = DB.withSession { implicit session ⇒
-    TableQuery[Evaluations].filter(_.id === id).firstOption
-  }
+  def find(id: Long) = db.run(evaluations.filter(_.id === id).result).map(_.headOption)
 
   /**
     * Returns evaluation with the related attendee if exists; otherwise, None
     * @param id Evaluation id
     */
-  def findWithAttendee(id: Long): Option[EvaluationAttendeeView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        x ← evaluations if x.id === id
-        y ← TableQuery[Attendees] if y.id === x.attendeeId
-      } yield (x, y)
-      query.firstOption.map(EvaluationAttendeeView.tupled)
+  def findWithAttendee(id: Long): Future[Option[EvaluationAttendeeView]] = {
+    val query = for {
+      x ← evaluations if x.id === id
+      y ← TableQuery[Attendees] if y.id === x.attendeeId
+    } yield (x, y)
+    db.run(query.result).map(_.headOption.map(EvaluationAttendeeView.tupled))
   }
 
   /**
@@ -82,55 +91,52 @@ class EvaluationService extends Services {
    * @param id Evaluation id
    * @return
    */
-  def findWithEvent(id: Long): Option[EvaluationEventView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        x ← evaluations if x.id === id
-        y ← TableQuery[Events] if y.id === x.eventId
-      } yield (x, y)
-      query.firstOption.map(EvaluationEventView.tupled)
+  def findWithEvent(id: Long): Future[Option[EvaluationEventView]] = {
+    val query = for {
+      x ← evaluations if x.id === id
+      y ← TableQuery[Events] if y.id === x.eventId
+    } yield (x, y)
+    db.run(query.result).map(_.headOption.map(EvaluationEventView.tupled))
   }
 
   /**
     * Returns evaluation for the given attendee if exists
     * @param attendeeId Attendee identifier
     */
-  def findByAttendee(attendeeId: Long): Option[Evaluation] = DB.withSession { implicit session =>
-    evaluations.filter(_.attendeeId === attendeeId).firstOption
+  def findByAttendee(attendeeId: Long): Future[Option[Evaluation]] = {
+    db.run(evaluations.filter(_.attendeeId === attendeeId).result).map(_.headOption)
   }
 
   /**
    * Returns evaluation if it exists; otherwise, None
    * @param confirmationId Confirmation unique id
    */
-  def findByConfirmationId(confirmationId: String): Option[Evaluation] = DB.withSession {
-    implicit session ⇒
-      evaluations.filter(_.confirmationId === confirmationId).firstOption
+  def findByConfirmationId(confirmationId: String): Future[Option[Evaluation]] = {
+    db.run(evaluations.filter(_.confirmationId === confirmationId).result).map(_.headOption)
   }
 
   /**
    * Returns list of evaluation for the given event
    * @param eventId Event id
    */
-  def findByEvent(eventId: Long): List[Evaluation] = DB.withSession {
-    implicit session ⇒
-      evaluations.filter(_.eventId === eventId).list
+  def findByEvent(eventId: Long): Future[List[Evaluation]] = {
+    db.run(evaluations.filter(_.eventId === eventId).result).map(_.toList)
   }
   
   /**
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEvents(eventIds: List[Long]): List[Evaluation] = DB.withSession { implicit session ⇒
+  def findByEvents(eventIds: List[Long]): Future[List[Evaluation]] = {
     if (eventIds.nonEmpty) {
-      val baseQuery = for {
+      val query = for {
         e ← TableQuery[Events] if e.id inSet eventIds
         a ← TableQuery[Attendees] if a.eventId === e.id
         ev ← evaluations if ev.id === a.evaluationId
       } yield ev
-      baseQuery.list
+      db.run(query.result).map(_.toList)
     } else {
-      List()
+      Future.successful(List())
     }
   }
   
@@ -138,16 +144,16 @@ class EvaluationService extends Services {
    * Returns a list of evaluations for the given events
    * @param eventIds a list of event ids
    */
-  def findByEventsWithAttendees(eventIds: List[Long]) = DB.withSession { implicit session ⇒
+  def findByEventsWithAttendees(eventIds: List[Long]) = {
     if (eventIds.nonEmpty) {
-      val baseQuery = for {
+      val query = for {
         e ← TableQuery[Events] if e.id inSet eventIds
         a ← TableQuery[Attendees] if a.eventId === e.id
         ev ← evaluations if ev.id === a.evaluationId
       } yield (e, a, ev)
-      baseQuery.list
+      db.run(query.result).map(_.toList)
     } else {
-      List()
+      Future.successful(List())
     }
   }
 
@@ -156,22 +162,21 @@ class EvaluationService extends Services {
     *
     * @param events Event identifiers
     */
-  def findEvaluationsByEvents(events: List[Long]): List[AttendeeView] = DB.withSession { implicit session ⇒
-    import models.database.Evaluations.evaluationStatusTypeMapper
-    import models.database.PortableJodaSupport._
+  def findEvaluationsByEvents(events: List[Long]): Future[List[AttendeeView]] = {
 
     val baseQuery = for {
-      ((part, e), ev) ← TableQuery[Attendees] innerJoin
-        TableQuery[Events] on (_.eventId === _.id) leftJoin
+      ((part, e), ev) ← TableQuery[Attendees] join
+        TableQuery[Events] on (_.eventId === _.id) joinLeft
         TableQuery[Evaluations] on (_._1.evaluationId === _.id)
-    } yield (part, e, ev.id.?, ev.facilitatorImpression.?, ev.status.?, ev.created.?, ev.handled, ev.confirmationId)
+    } yield (part, e, ev)
 
     val eventQuery = baseQuery.filter(_._2.id inSet events)
-    val rawList = eventQuery.mapResult(AttendeeView.tupled).list
-    val withEvaluation = rawList.filterNot(obj ⇒ obj.evaluationId.isEmpty).distinct
-    val withoutEvaluation = rawList.filter(obj ⇒ obj.evaluationId.isEmpty).
-      map(obj ⇒ AttendeeView(obj.attendee, obj.event, None, None, None, None, None, None))
-    withEvaluation.union(withoutEvaluation.distinct)
+    db.run(eventQuery.result).map(_.toList.map(AttendeeView.tupled)).flatMap { list =>
+      val withEvaluation = list.filterNot(obj ⇒ obj.evaluation.isEmpty).distinct
+      val withoutEvaluation = list.filter(obj ⇒ obj.evaluation.isEmpty).
+        map(obj ⇒ AttendeeView(obj.attendee, obj.event, None))
+      Future.successful(withEvaluation.union(withoutEvaluation.distinct))
+    }
   }
 
   /**
@@ -179,18 +184,16 @@ class EvaluationService extends Services {
    *  events
    * @param events List of events
    */
-  def findUnhandled(events: List[Event]) = DB.withSession { implicit session =>
-    import models.database.Evaluations._
-
+  def findUnhandled(events: List[Event]) = {
     if (events.nonEmpty) {
-      val baseQuery = for {
+      val query = for {
         e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
         a ← TableQuery[Attendees] if a.eventId === e.id
         ev ← evaluations if ev.id === a.evaluationId && (ev.status === EvaluationStatus.Unconfirmed || ev.status === EvaluationStatus.Pending)
       } yield (e, a, ev)
-      baseQuery.list
+      db.run(query.result).map(_.toList)
     } else {
-      List()
+      Future.successful(List())
     }
   }
 
@@ -199,14 +202,13 @@ class EvaluationService extends Services {
    * @param eval Evaluation
    * @return Returns the given evaluation
    */
-  def update(eval: Evaluation): Evaluation = DB.withSession { implicit session ⇒
+  def update(eval: Evaluation): Future[Evaluation] = {
     val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
       eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
       eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
       eval.contentImpression, eval.hostImpression, eval.status,
       eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
-    evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)
-    eval
+    db.run(evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple))
   }
 
 }

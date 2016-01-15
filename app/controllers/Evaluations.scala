@@ -24,6 +24,8 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import models.UserRole._
 import models._
 import models.event.Attendee
@@ -34,20 +36,18 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Action
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 
 import scala.concurrent.Future
 
-class Evaluations(environment: RuntimeEnvironment[ActiveUser])
+class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Integrations
     with Services
     with Activities
     with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String) = Form(mapping(

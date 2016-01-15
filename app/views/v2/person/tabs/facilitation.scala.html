@@ -1,8 +1,9 @@
 @(person: Person,
     facilitationData: List[(LicenseView, Float)])(implicit request: Request[Any],
-    flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 <div class="block">
   @views.html.v2.person.blocks.licenses(person, facilitationData)

@@ -24,24 +24,24 @@
 
 package controllers
 
-import play.api.mvc.Controller
-import models._
+import javax.inject.Inject
+
 import models.UserRole.Role._
-import org.joda.money.{ CurrencyUnit, Money }
+import models._
+import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.i18n.{I18nSupport, Messages}
+import play.api.mvc.Controller
 import services.CurrencyConverter.NoExchangeRateException
+import services.TellerRuntimeEnvironment
 
-class Accounts(environment: RuntimeEnvironment[ActiveUser])
+class Accounts @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
-    with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Activities
+    with I18nSupport {
 
   val currencyForm = Form(mapping("currency" -> text(3, 3))(CurrencyUnit.of)(t ⇒ Some(t.toString)))
 

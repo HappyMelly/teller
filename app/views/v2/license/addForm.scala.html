@@ -1,10 +1,11 @@
 @(user: ActiveUser,
-        form: Form[License],
-        brands: List[(Long, String)],
-        personId: Long)(implicit flash: Flash,
+    form: Form[License],
+    brands: List[(Long, String)],
+    personId: Long)(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import helper.CSRF
 

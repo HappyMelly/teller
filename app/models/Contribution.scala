@@ -24,11 +24,7 @@
 
 package models
 
-import models.database.{ Contributions, People, Organisations }
 import models.service.ProductService
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A contribution - an impact made by a person or an organisation to

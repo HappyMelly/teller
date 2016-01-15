@@ -1,35 +1,36 @@
 package models.service.event
 
-import models.database.event.EventRequests
+import models.database.event.EventRequestTable
 import models.event.EventRequest
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
+import scala.concurrent.Future
 /**
  * Contains a set of methods for retrieving/updating event requests in database
  */
-class EventRequestService {
+class EventRequestService extends HasDatabaseConfig[JdbcProfile]
+  with EventRequestTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val requests = TableQuery[EventRequests]
 
   /**
     * Returns event request if exists
     * @param requestId Request id
     */
-  def find(requestId: Long): Option[EventRequest] = DB.withSession { implicit session =>
-    requests.filter(_.id === requestId).firstOption
-  }
+  def find(requestId: Long): Future[Option[EventRequest]] =
+    db.run(requests.filter(_.id === requestId).result).map(_.headOption)
 
   /**
    * Returns list of event requests belonged the given brand
    *
    * @param brandId Brand identifier
    */
-  def findByBrand(brandId: Long): List[EventRequest] =
-    DB.withSession { implicit session ⇒
-      requests.filter(_.brandId === brandId).list
-    }
+  def findByBrand(brandId: Long): Future[List[EventRequest]] =
+    db.run(requests.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Inserts event request into database
@@ -37,10 +38,9 @@ class EventRequestService {
    * @param request EventRequest object
    * @return Updated object with id
    */
-  def insert(request: EventRequest): EventRequest = DB.withSession {
-    implicit session ⇒
-      val id = (requests returning requests.map(_.id)) += request
-      request.copy(id = Some(id))
+  def insert(request: EventRequest): Future[EventRequest] = {
+    val query = requests returning requests.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += request)
   }
 
 }

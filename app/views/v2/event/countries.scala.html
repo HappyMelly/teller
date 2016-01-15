@@ -13,7 +13,7 @@
  *@
 @(field: play.api.data.Field,
   options: Seq[(String,String)],
-  args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+  args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
 @helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
     @defining( if( htmlArgs.contains('multiple) ) "%s[]".format(name) else name ) { selectName =>
@@ -30,4 +30,4 @@
             </optgroup>
         </select>
     }}
-}(handler, lang)
+}(handler, messages)

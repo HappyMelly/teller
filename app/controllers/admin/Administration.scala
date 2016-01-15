@@ -25,22 +25,22 @@
 package controllers.admin
 
 import controllers.Security
-import models.{ ActiveUser, Activity }
+import models.Activity
 import models.UserRole.Role._
 import models.admin.TransactionType
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.Controller
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 /**
  * Pages for application configuration and administration.
  */
-class Administration(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
+  extends Controller
+  with Security
+  with I18nSupport {
 
   val transactionTypeForm = Form(single("name" -> nonEmptyText))
 

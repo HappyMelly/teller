@@ -2,10 +2,11 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-        showFacilitationTab: Boolean)(implicit request: Request[Any],
-    flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    showFacilitationTab: Boolean)(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import be.objectify.deadbolt.scala.views.html._

@@ -25,25 +25,29 @@
 package models.service.brand
 
 import models.brand.CertificateTemplate
-import models.database.brand.CertificateTemplates
-import play.api.db.slick.DB
-import play.api.db.slick.Config.driver.simple._
-import play.api.Play.current
+import models.database.brand.CertificateTemplateTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 /**
  * Contains a set of functions for managing templates in database
  */
-class CertificateTemplateService {
+class CertificateTemplateService extends HasDatabaseConfig[JdbcProfile]
+  with CertificateTemplateTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   /**
    * Returns list of certificate templates for the given brand
    *
    * @param brandId Unique brand identifier
    */
-  def findByBrand(brandId: Long): List[CertificateTemplate] = DB.withSession {
-    implicit session ⇒
-      TableQuery[CertificateTemplates].filter(_.brandId === brandId).sortBy(_.language).list
-  }
+  def findByBrand(brandId: Long): Future[List[CertificateTemplate]] =
+    db.run(TableQuery[CertificateTemplates].filter(_.brandId === brandId).sortBy(_.language).result).map(_.toList)
 }
 
 object CertificateTemplateService {

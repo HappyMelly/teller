@@ -25,7 +25,7 @@ package models
 
 import models.service.ActivityService
 import org.joda.time.DateTime
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 
 class InvalidActivityPredicate extends RuntimeException
 
@@ -64,7 +64,7 @@ abstract class BaseActivity {
  * @param predicate The action performed from the possible `Activity.Predicate` values
  * @param activityObject The name of the data the action was
  */
-case class Activity(id: Option[Long],
+case class Activity @javax.inject.Inject() (id: Option[Long],
     subjectId: Long,
     subject: String,
     predicate: String,
@@ -74,7 +74,7 @@ case class Activity(id: Option[Long],
     supportiveObjectType: Option[String] = None,
     supportiveObjectId: Option[Long] = None,
     supportiveObject: Option[String] = None,
-    timestamp: DateTime = DateTime.now()) extends BaseActivity {
+    timestamp: DateTime = DateTime.now()) extends BaseActivity with I18nSupport {
 
   // Full description including subject (current user’s name).
   override def description: String = {

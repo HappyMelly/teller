@@ -23,6 +23,7 @@
  */
 package controllers
 
+import javax.inject.Inject
 import models.ActiveUser
 import models.UserRole.DynamicRole
 import models.Material
@@ -32,13 +33,12 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{ JsValue, Writes, Json }
 import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class Materials(environment: RuntimeEnvironment[ActiveUser])
+class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val MaterialWrites = new Writes[Material] {
     def writes(link: Material): JsValue = {

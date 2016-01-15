@@ -23,14 +23,16 @@
  */
 package controllers
 
+import javax.inject.Inject
+
 import models.UserRole.Role
 import models.service.Services
-import models.{ActiveUser, Brand, Endorsement}
+import models.{Brand, Endorsement}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsArray, JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
@@ -39,12 +41,10 @@ case class EndorsementFormData(content: String,
   brandId: Long,
   company: Option[String])
 
-class Endorsements(environment: RuntimeEnvironment[ActiveUser])
+class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val EndorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement): JsValue = {

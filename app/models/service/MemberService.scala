@@ -25,13 +25,22 @@
 package models.service
 
 import models._
-import models.database.{Addresses, People, Members, Organisations}
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import models.database._
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 /** Provides operations with database related to members */
-class MemberService {
+class MemberService extends HasDatabaseConfig[JdbcProfile]
+  with AddressTable
+  with MemberTable
+  with OrganisationTable
+  with PersonTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   private val members = TableQuery[Members]
 
@@ -39,25 +48,35 @@ class MemberService {
    * Returns a list of people and organisations which have member profiles
    *  both active and inactive
    */
-  def findAll: List[Member] = DB.withSession { implicit session ⇒
+  def findAll: Future[List[Member]] = {
     val peopleQuery = for {
       m ← members if m.person === true
       p ← TableQuery[People] if p.id === m.objectId
       a <- TableQuery[Addresses] if a.id === p.addressId
     } yield (m, p, a)
-    val result1 = peopleQuery.list
-    result1.foreach { view ⇒
-      view._2.address_=(view._3)
-      view._1.memberObj_=(view._2)
-    }
 
     val orgQuery = for {
       m ← members if m.person === false
       o ← TableQuery[Organisations] if o.id === m.objectId
     } yield (m, o)
-    val result2 = orgQuery.list
-    result2.foreach(d ⇒ d._1.memberObj_=(d._2))
-    result1.map(_._1) ::: result2.map(_._1)
+
+    val actions = for {
+      people <- peopleQuery.result
+      orgs <- orgQuery.result
+    } yield (people, orgs)
+
+    db.run(actions).map { result =>
+      val people = result._1.map { view =>
+        view._2.address_=(view._3)
+        view._1.memberObj_=(view._2)
+        view._1
+      }
+      val orgs = result._2.map { view =>
+        view._1.memberObj_=(view._2)
+        view._1
+      }
+      people.toList ::: orgs.toList
+    }
   }
 
   /**
@@ -65,19 +84,20 @@ class MemberService {
    *
    * @param id Member identifier
    */
-  def find(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    val member = members.filter(_.id === id).firstOption
-    if (member.nonEmpty) {
-      val m = member.get
-      if (m.person) {
-        val person = TableQuery[People].filter(_.id === m.objectId).first
-        m.memberObj_=(person)
+  def find(id: Long): Future[Option[Member]] = {
+    db.run(members.filter(_.id === id).result).map(_.headOption.map { member =>
+      if (member.person) {
+        db.run(TableQuery[People].filter(_.id === member.objectId).result).map(_.head.map { person =>
+          member.memberObj_=(person)
+          Some(member)
+        })
       } else {
-        val org = TableQuery[Organisations].filter(_.id === m.objectId).first
-        m.memberObj_=(org)
+        db.run(TableQuery[Organisations].filter(_.id === member.objectId).result).map(_.head.map { org =>
+          member.memberObj_=(org)
+          Some(member)
+        })
       }
-    }
-    member
+    })
   }
 
   /**
@@ -85,24 +105,20 @@ class MemberService {
    *
    * @param ids List of identifiers
    */
-  def find(ids: List[Long]): List[Member] = DB.withSession { implicit session =>
-    if (ids.isEmpty)
-      List()
+  def find(ids: List[Long]): Future[List[Member]] = if (ids.isEmpty)
+      Future.successful(List())
     else
-      members.filter(_.id inSet ids).list
-  }
+      db.run(members.filter(_.id inSet ids).result).map(_.toList)
 
   /**
    * Returns list of members for the given ids
    *
    * @param objectIds List of identifiers
    */
-  def findByObjects(objectIds: List[Long]): List[Member] = DB.withSession { implicit session =>
-    if (objectIds.isEmpty)
-      List()
+  def findByObjects(objectIds: List[Long]): Future[List[Member]] = if (objectIds.isEmpty)
+      Future.successful(List())
     else
-      members.filter(_.objectId inSet objectIds).list
-  }
+      db.run(members.filter(_.objectId inSet objectIds).result).map(_.toList)
 
   /**
    * Returns member by related object, otherwise - None
@@ -110,9 +126,8 @@ class MemberService {
    * @param person Person if true, otherwise - organisation
    * @return
    */
-  def findByObject(objectId: Long, person: Boolean): Option[Member] = DB.withSession { implicit session =>
-    members.filter(_.objectId === objectId).filter(_.person === person).firstOption
-  }
+  def findByObject(objectId: Long, person: Boolean): Future[Option[Member]] =
+    db.run(members.filter(_.objectId === objectId).filter(_.person === person).result).map(_.headOption)
 
   /**
    * Inserts the given member to database
@@ -120,9 +135,9 @@ class MemberService {
    * @param m Object to insert
    * @return Returns member object with updated id
    */
-  def insert(m: Member): Member = DB.withSession { implicit session ⇒
-    val id = (members returning members.map(_.id)) += m
-    m.copy(id = Some(id))
+  def insert(m: Member): Future[Member] = {
+    val query = members returning members.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += m)
   }
 
   /**
@@ -130,20 +145,16 @@ class MemberService {
    * @param m Member to update
    * @return Updated member
    */
-  def update(m: Member): Member = DB.withSession { implicit session ⇒
-    members.filter(_.id === m.id).update(m)
-    m
-  }
+  def update(m: Member): Future[Member] =
+    db.run(members.filter(_.id === m.id).update(m)).map(_ => m)
 
   /**
    * Deletes a record from database
    * @param objectId Object id
    * @param person If true, object is a person, otherwise - org
    */
-  def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
-    implicit session ⇒
-      members.filter(_.objectId === objectId).filter(_.person === person).delete
-  }
+  def delete(objectId: Long, person: Boolean): Unit =
+    db.run(members.filter(_.objectId === objectId).filter(_.person === person).delete)
 }
 
 object MemberService {

@@ -32,25 +32,25 @@ import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
-import securesocial.controllers.{BasePasswordReset, BaseRegistration, ChangeInfo}
+import securesocial.controllers.{BaseRegistration, ChangeInfo}
+import securesocial.core.PasswordInfo
 import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.providers.utils.PasswordValidator
-import securesocial.core.{PasswordInfo, RuntimeEnvironment}
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.{Await, Future}
 
 /**
  * User administration controller.
  */
-class UserAccounts(environment: RuntimeEnvironment[ActiveUser])
+class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Utilities
+    with I18nSupport {
 
   val CurrentPassword = "currentPassword"
   val NewPassword = "newPassword"

@@ -25,7 +25,7 @@
 package templates
 
 import play.api.data.Form
-import play.api.i18n.Lang
+import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.RequestHeader
 import securesocial.controllers.{ ChangeInfo, RegistrationInfo, ViewTemplates }
 import securesocial.core.RuntimeEnvironment
@@ -34,7 +34,10 @@ import securesocial.core.RuntimeEnvironment
  * Renders templates for SecureSocial
  * @param env Environment
  */
-class SecureSocialTemplates(env: RuntimeEnvironment[_]) extends ViewTemplates {
+class SecureSocialTemplates @javax.inject.Inject() (env: RuntimeEnvironment)
+  extends ViewTemplates
+  with I18nSupport {
+
   implicit val implicitEnv = env
 
   override def getLoginPage(form: Form[(String, String)],

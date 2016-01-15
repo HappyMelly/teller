@@ -33,7 +33,7 @@ import models.event.Attendee
 import models.service.BrandWithCoordinators
 import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
 import services.integrations.Integrations
@@ -45,10 +45,10 @@ import scala.language.postfixOps
 /**
  * An certificate which a participant gets after an event
  */
-case class Certificate(issued: Option[LocalDate],
-                       event: Event,
-                       attendee: Attendee,
-                       renew: Boolean = false) extends Integrations {
+case class Certificate @javax.inject.Inject() (issued: Option[LocalDate],
+   event: Event,
+   attendee: Attendee,
+   renew: Boolean = false) extends Integrations with I18nSupport {
 
   val id = issued.map(_.toString("yyMM")).getOrElse("") + f"${attendee.id.get}%03d"
 

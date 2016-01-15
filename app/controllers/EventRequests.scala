@@ -1,20 +1,20 @@
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
 import models.UserRole.Role
 import models.service.Services
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
 /**
   * Contains methods for managing event requests UI
   */
-class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonController
+class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment) extends JsonController
   with Security
   with Services
   with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
     * Renders details info for the given request

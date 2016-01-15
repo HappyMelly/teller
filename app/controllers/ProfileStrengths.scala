@@ -23,19 +23,20 @@
  */
 package controllers
 
-import models.{ ActiveUser, ProfileStrength, Person }
-import models.service.{ ProfileStrengthService, Services }
+import javax.inject.Inject
+
 import models.UserRole.Role._
+import models.service.Services
+import models.{Person, ProfileStrength}
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
-class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
+class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Returns profile strength widget for a person

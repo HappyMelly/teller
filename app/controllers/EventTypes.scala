@@ -24,6 +24,7 @@
 
 package controllers
 
+import javax.inject.Inject
 import models.ActiveUser
 import models.UserRole.Role._
 import models.brand.EventType
@@ -33,14 +34,13 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
 import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class EventTypes(environment: RuntimeEnvironment[ActiveUser])
+class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(

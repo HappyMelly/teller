@@ -27,7 +27,7 @@ package controllers
 import be.objectify.deadbolt.core.models.Subject
 import be.objectify.deadbolt.scala.{ DeadboltHandler, DynamicResourceHandler }
 import models.{ ActiveUser, ResourceHandler }
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{ Request, Result }
 
@@ -36,7 +36,9 @@ import scala.concurrent.Future
 /**
  * Deadbolt authorisation handler.
  */
-class AuthorisationHandler(user: ActiveUser) extends DeadboltHandler {
+class AuthorisationHandler @javax.inject.Inject() (user: ActiveUser)
+  extends DeadboltHandler
+  with I18nSupport {
 
   /**
    * Invoked prior to a constraint's test.  If Option.None is returned, the constraint is applied. If

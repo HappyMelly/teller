@@ -64,12 +64,19 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param mode a mode that tells you why the save method was called
    */
   def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
-    val user = mode match {
-      case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
-      case SaveMode.SignUp ⇒ createUser(profile)
-      case SaveMode.PasswordChange => updatePassword(profile)
+    try {
+      val user = mode match {
+        case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
+        case SaveMode.SignUp ⇒ createUser(profile)
+        case SaveMode.PasswordChange => updatePassword(profile)
+      }
+      Future.successful(user)
+    } catch {
+      case _: AuthenticationException => {
+        println("Exception got caught")
+        Future.failed(new RuntimeException("Bla-bla-test"))
+      }
     }
-    Future.successful(user)
   }
 
   /**

@@ -3,8 +3,9 @@
     apiKey: String,
     fee: (Int, Int, Int),
     org: Option[Organisation] = None)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
-    flash: Flash)
+        handler: AuthorisationHandler,
+        flash: Flash,
+        messages: Messages)
 
 @v2.layout.unauthorized("Add Organisation Data") {
     <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">

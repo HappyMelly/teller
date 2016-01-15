@@ -24,13 +24,14 @@
 
 package controllers
 
+import play.api.i18n.I18nSupport
 import play.api.libs.json.{ Json, JsValue }
 import play.api.mvc._
 
 /**
  * Provides a set of functions for handling JSON
  */
-trait JsonController extends Controller {
+trait JsonController extends Controller with I18nSupport {
 
   protected def jsonUnauthorized = Unauthorized("Unauthorized")
 

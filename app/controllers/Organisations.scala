@@ -24,6 +24,8 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import controllers.Forms._
 import models.UserRole._
 import models._
@@ -36,18 +38,16 @@ import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.{Logger, Play}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Organisations(environment: RuntimeEnvironment[ActiveUser])
+class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Files
     with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Form target for toggling whether an organisation is active.

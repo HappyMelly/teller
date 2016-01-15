@@ -1,9 +1,10 @@
 @(user: ActiveUser,
     form: Form[Evaluation],
     attendee: models.event.Attendee)(implicit flash: Flash,
-    request: Request[Any],
-    token: play.filters.csrf.CSRF.Token,
-    handler: AuthorisationHandler)
+        request: Request[Any],
+        token: play.filters.csrf.CSRF.Token,
+        handler: AuthorisationHandler,
+        messages: Messages)
 
 @import helper.CSRF
 @import views.Evaluations
@@ -33,7 +34,7 @@
             @v2.html.block("") {
                 <div class="errors">
                 @for((error, index) <- form.errors.zipWithIndex) {
-                    @{index + 1}. @play.api.i18n.Messages(error.message)<br/>
+                    @{index + 1}. @Messages(error.message)<br/>
                 }
                 </div>
             }

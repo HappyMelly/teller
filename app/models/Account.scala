@@ -180,7 +180,7 @@ object Account {
    * Balances all of the accounts by inserting booking entries that adjust all of the counts, resetting the total to
    * zero (plus the surplus left after rounding). Each booking entry is from the Levy to
    */
-  def balanceAccounts(ownerId: Long): Future[List[BookingEntry]] = {
+  def balanceAccounts(ownerId: Long)(implicit messages: Messages): Future[List[BookingEntry]] = {
     val levy = find(Levy)
     assert(levy.id.isDefined, "Levy must have an ID")
     import scala.concurrent.duration.Duration
@@ -209,7 +209,11 @@ object Account {
    * @param adjustment The amount of money that the target account will be adjusted by, to balance accounts.
    * @param adjustmentConverted The adjustment amount converted to the target account’s currency.
    */
-  def adjustmentBookingEntry(ownerId: Long, accountId: Long, levy: Account, adjustment: Money, adjustmentConverted: Money): BookingEntry = {
+  def adjustmentBookingEntry(ownerId: Long,
+                             accountId: Long,
+                             levy: Account,
+                             adjustment: Money,
+                             adjustmentConverted: Money)(implicit messages: Messages): BookingEntry = {
     val today = LocalDate.now()
     val fromAmount = Money.zero(levy.currency)
     val summary = Messages("models.BookingEntry.summary.balance")

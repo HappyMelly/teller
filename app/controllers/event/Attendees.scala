@@ -12,7 +12,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import views.Countries
 
 import scala.concurrent.Future
@@ -20,14 +20,12 @@ import scala.concurrent.Future
 /**
   * Created by sery0ga on 04/01/16.
   */
-class Attendees(environment: RuntimeEnvironment[ActiveUser])
+class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
   extends JsonController
   with Security
   with Services
   with Activities
   with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
     * HTML form mapping for creating and editing.

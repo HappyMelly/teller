@@ -35,24 +35,23 @@ import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.Formatter
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 import views.Countries
 
 import scala.concurrent.Future
 
-class Events(environment: RuntimeEnvironment[ActiveUser])
+class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services
     with Integrations
     with Activities
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Utilities
+    with I18nSupport {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 

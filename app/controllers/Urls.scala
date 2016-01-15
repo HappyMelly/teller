@@ -23,22 +23,22 @@
  */
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
 import models.UserRole.Role._
 import play.api.Play.current
-import play.api.libs.ws.WS
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import play.api.libs.ws.WS
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-class Urls(environment: RuntimeEnvironment[ActiveUser])
+class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Validates the given url points to an existing page

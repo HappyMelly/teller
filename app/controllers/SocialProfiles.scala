@@ -30,12 +30,12 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import securesocial.core.RuntimeEnvironment
 
-class SocialProfiles(environment: RuntimeEnvironment[ActiveUser])
+class SocialProfiles(environment: RuntimeEnvironment)
     extends JsonController
     with Security
     with Services {
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+  override implicit val env: RuntimeEnvironment = environment
 }
 
 object SocialProfiles {

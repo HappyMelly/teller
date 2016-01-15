@@ -25,29 +25,33 @@
 package models.service.admin
 
 import models.admin.ApiToken
-import models.database.admin.ApiTokens
+import models.database.admin.{ApiTokenTable, ApiTokens}
+import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig, DB}
+import slick.driver.JdbcProfile
+import scala.concurrent.Future
 
-class ApiTokenService {
+class ApiTokenService extends HasDatabaseConfig[JdbcProfile]
+  with ApiTokenTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
+  private val tokens = TableQuery[ApiTokens]
 
   /**
    * Returns ApiToken if exists, None otherwise
    * @param id Token identifier
    */
-  def find(id: Long): Option[ApiToken] = DB.withSession { implicit session ⇒
-    TableQuery[ApiTokens].filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[ApiToken]] = db.run(tokens.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns ApiToken if exists, None otherwise
    * @param token Token
    */
-  def find(token: String): Option[ApiToken] = DB.withSession {
-    implicit session ⇒
-      TableQuery[ApiTokens].filter(_.token === token).firstOption
-  }
+  def find(token: String): Future[Option[ApiToken]] =
+    db.run(tokens.filter(_.token === token).result).map(_.headOption)
 }
 
 object ApiTokenService {

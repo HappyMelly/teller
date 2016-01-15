@@ -23,26 +23,24 @@
  */
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
 import models.brand.BrandTestimonial
 import models.service.Services
-import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
-import securesocial.core.RuntimeEnvironment
+import play.api.libs.json.{JsValue, Json, Writes}
+import services.TellerRuntimeEnvironment
 
 case class TestimonialFormData(content: String,
   name: String,
   company: Option[String])
 
-class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
+class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
     def writes(testimonial: BrandTestimonial): JsValue = {

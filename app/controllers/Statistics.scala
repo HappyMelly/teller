@@ -24,15 +24,15 @@
 
 package controllers
 
-
+import javax.inject.Inject
 
 import models.UserRole.Role._
 import models.event.Attendee
 import models.service.Services
-import models.{ActiveUser, Event, License}
+import models.{Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.libs.json.{JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import views.Countries
 
 import scala.language.postfixOps
@@ -41,13 +41,12 @@ import scala.util.Random
 /**
  * Contains a set of functions for handling brand statistics
  */
-class Statistics(environment: RuntimeEnvironment[ActiveUser])
+class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Utilities {
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   val TOP_LIMIT = 10
   val COLORS = Array(
     ("rgba(166,206,227,0.2)", "rgba(166,206,227,1)"),

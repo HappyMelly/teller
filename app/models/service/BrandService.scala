@@ -25,17 +25,31 @@
 package models.service
 
 import models.brand._
+import models.database._
 import models.database.brand._
-import models.database.{ Brands, People, SocialProfiles, Licenses }
-import models.{BrandWithSettings, Brand, Person, ProfileType}
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.{Brand, BrandWithSettings, Person, ProfileType}
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 case class BrandWithCoordinators(brand: Brand,
   coordinators: List[(Person, BrandCoordinator)])
 
-class BrandService extends Services {
+class BrandService extends Services
+  with HasDatabaseConfig[JdbcProfile]
+  with BrandTable
+  with BrandCoordinatorTable
+  with BrandLinkTable
+  with BrandSettingsTable
+  with BrandTestimonialTable
+  with LicenseTable
+  with PersonTable
+  with SocialProfileTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   private val brands = TableQuery[Brands]
   private val settings = TableQuery[BrandSettings]
@@ -51,13 +65,12 @@ class BrandService extends Services {
    * Returns list of coordinators for the given brand
    * @param brandId Brand identifier
    */
-  def coordinators(brandId: Long): List[(Person, BrandCoordinator)] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        t ← TableQuery[BrandCoordinators] if t.brandId === brandId
-        p ← TableQuery[People] if p.id === t.personId
-      } yield (p, t)
-      query.list
+  def coordinators(brandId: Long): Future[List[(Person, BrandCoordinator)]] = {
+    val query = for {
+      t ← TableQuery[BrandCoordinators] if t.brandId === brandId
+      p ← TableQuery[People] if p.id === t.personId
+    } yield (p, t)
+    db.run(query.result).map(_.toList)
   }
 
   /**
@@ -88,11 +101,9 @@ class BrandService extends Services {
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def deleteLink(brandId: Long, id: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandLinks].
-        filter(_.id === id).
-        filter(_.brandId === brandId).delete
+  def deleteLink(brandId: Long, id: Long): Unit = {
+    val action = TableQuery[BrandLinks].filter(_.id === id).filter(_.brandId === brandId).delete
+    db.run(action)
   }
 
   /**
@@ -105,84 +116,75 @@ class BrandService extends Services {
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def deleteTestimonial(brandId: Long, id: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandTestimonials].
-        filter(_.id === id).
-        filter(_.brandId === brandId).delete
+  def deleteTestimonial(brandId: Long, id: Long): Unit = {
+    val action = TableQuery[BrandTestimonials].filter(_.id === id).filter(_.brandId === brandId).delete
+    db.run(action)
   }
 
   /**
    * Returns brand if it exists, otherwise - None
    * @param id Brand identifier
    */
-  def find(id: Long) = DB.withSession { implicit session ⇒
-    brands.filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[Brand]] = db.run(brands.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns brand if it exists, otherwise - None
    * @param code Brand code
    */
-  def find(code: String): Option[Brand] = DB.withSession { implicit session ⇒
-    brands.filter(_.code === code).firstOption
-  }
+  def find(code: String): Future[Option[Brand]] = db.run(brands.filter(_.code === code).result).map(_.headOption)
 
   /**
     * Returns list of brands with settings for the given identifiers
     * @param ids Brand identifiers
     */
-  def find(ids: List[Long]): List[BrandWithSettings] = DB.withSession { implicit session =>
+  def find(ids: List[Long]): Future[List[BrandWithSettings]] = {
     val query = for {
       brand <- brands if brand.id inSet ids
       settings  <- settings if settings.brandId === brand.id
     } yield (brand, settings)
-    query.list.map(view => BrandWithSettings(view._1, view._2))
+    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
    * Returns a list of all brands
    */
-  def findAll: List[Brand] = DB.withSession { implicit session ⇒
-    brands.sortBy(_.name.toLowerCase).list
-  }
+  def findAll: Future[List[Brand]] = db.run(brands.sortBy(_.name.toLowerCase).result).map(_.toList)
 
   /**
     * Returns list of all brands with settings
     */
-  def findAllWithSettings: List[BrandWithSettings] = DB.withSession { implicit session ⇒
+  def findAllWithSettings: Future[List[BrandWithSettings]] = {
     val query = for {
       brand <- brands
       settings <- settings if settings.brandId === brand.id
     } yield (brand, settings)
-    query.list.map(view => BrandWithSettings(view._1, view._2))
+    db.run(query.result)map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
    * Returns list of brands belonging to one coordinator
    * @param coordinatorId Coordinator identifier
    */
-  def findByCoordinator(coordinatorId: Long): List[BrandWithSettings] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        coordinator ← TableQuery[BrandCoordinators] if coordinator.personId === coordinatorId
-        brand ← brands if brand.id === coordinator.brandId
-        settings <- settings if settings.brandId === brand.id
-      } yield (brand, settings)
-      query.list.map(view => BrandWithSettings(view._1, view._2))
+  def findByCoordinator(coordinatorId: Long): Future[List[BrandWithSettings]] = {
+    val query = for {
+      coordinator ← TableQuery[BrandCoordinators] if coordinator.personId === coordinatorId
+      brand ← brands if brand.id === coordinator.brandId
+      settings <- settings if settings.brandId === brand.id
+    } yield (brand, settings)
+    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
     * Returns list of brands with settings belonging to the given license holder
     * @param licenseeId License holder identifier
     */
-  def findByLicense(licenseeId: Long): List[BrandWithSettings] = DB.withSession { implicit session =>
+  def findByLicense(licenseeId: Long): Future[List[BrandWithSettings]] = {
     val query = for {
       license <- TableQuery[Licenses] if license.licenseeId === licenseeId
       brand <- brands if brand.id === license.brandId
       settings <- settings if settings.brandId === brand.id
     } yield (brand, settings)
-    query.list.map(view => BrandWithSettings(view._1, view._2))
+    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
@@ -190,28 +192,26 @@ class BrandService extends Services {
    *
    * @param testimonialId Testimonial identification
    */
-  def findTestimonial(testimonialId: Long): Option[BrandTestimonial] = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandTestimonials].filter(_.id === testimonialId).firstOption
-  }
+  def findTestimonial(testimonialId: Long): Future[Option[BrandTestimonial]] =
+    db.run(TableQuery[BrandTestimonials].filter(_.id === testimonialId).result).map(_.headOption)
 
   /**
    * Returns brand with its coordinators if exists; otherwise - None
    * @param id Brand id
    */
-  def findWithCoordinators(id: Long): Option[BrandWithCoordinators] =
+  def findWithCoordinators(id: Long): Future[Option[BrandWithCoordinators]] =
     find(id) flatMap { x ⇒ Some(BrandWithCoordinators(x, coordinators(id))) }
 
   /**
     * Returns brand with settings if exists
     * @param id Brand identifier
     */
-  def findWithSettings(id: Long): Option[BrandWithSettings] = DB.withSession { implicit session =>
+  def findWithSettings(id: Long): Future[Option[BrandWithSettings]] = {
     val query = for {
       brand <- brands if brand.id === id
       settings <- settings if settings.brandId === id
     } yield (brand, settings)
-    query.firstOption.map(view => BrandWithSettings(view._1, view._2))
+    db.run(query.result).map(_.headOption.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
@@ -219,12 +219,9 @@ class BrandService extends Services {
    * @param brandId Brand id
    * @param personId Person id
    */
-  def isCoordinator(brandId: Long, personId: Long): Boolean = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandCoordinators]
-        .filter(_.brandId === brandId)
-        .filter(_.personId === personId)
-        .exists.run
+  def isCoordinator(brandId: Long, personId: Long): Future[Boolean] = {
+    val query = TableQuery[BrandCoordinators].filter(_.brandId === brandId).filter(_.personId === personId).exists
+    db.run(query.result)
   }
 
   /**
@@ -232,14 +229,13 @@ class BrandService extends Services {
    * @param brand Brand object
    * @return Updated brand object with ID
    */
-  def insert(brand: Brand): Brand = DB.withTransaction {
-    implicit session ⇒
-      val id = (brands returning brands.map(_.id)) += brand
-      socialProfileService._insert(brand.socialProfile.copy(objectId = id))
-      val owner = BrandCoordinator(None, id, brand.ownerId, BrandNotifications(true, true, true))
-      brandCoordinatorService._insert(owner)
-      settings += Settings(id)
-      brand.copy(id = Some(id))
+  def insert(brand: Brand): Brand = {
+    val id = (brands returning brands.map(_.id)) += brand
+    socialProfileService._insert(brand.socialProfile.copy(objectId = id))
+    val owner = BrandCoordinator(None, id, brand.ownerId, BrandNotifications(true, true, true))
+    brandCoordinatorService.insertAction(owner)
+    settings += Settings(id)
+    brand.copy(id = Some(id))
   }
 
   /**
@@ -247,10 +243,10 @@ class BrandService extends Services {
    *
    * @param link Brand link
    */
-  def insertLink(link: BrandLink): BrandLink = DB.withSession { implicit session ⇒
-      val links = TableQuery[BrandLinks]
-      val id = (links returning links.map(_.id)) += link
-      link.copy(id = Some(id))
+  def insertLink(link: BrandLink): Future[BrandLink] = {
+    val links = TableQuery[BrandLinks]
+    val query = links returning links.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += link)
   }
 
   /**
@@ -258,33 +254,27 @@ class BrandService extends Services {
    *
    * @param testimonial Brand testimonial
    */
-  def insertTestimonial(testimonial: BrandTestimonial): BrandTestimonial =
-    DB.withSession {
-      implicit session ⇒
-        val testimonials = TableQuery[BrandTestimonials]
-        val id = (testimonials returning testimonials.map(_.id)) += testimonial
-        testimonial.copy(id = Some(id))
-    }
+  def insertTestimonial(testimonial: BrandTestimonial): Future[BrandTestimonial] = {
+    val testimonials = TableQuery[BrandTestimonials]
+    val query = testimonials returning testimonials.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += testimonial)
+  }
 
   /**
    * Return list of links for the given brand
    *
    * @param brandId Brand identifier
    */
-  def links(brandId: Long): List[BrandLink] = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandLinks].filter(_.brandId === brandId).list
-  }
+  def links(brandId: Long): Future[List[BrandLink]] =
+    db.run(TableQuery[BrandLinks].filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Return list of testimonials for the given brand
    *
    * @param brandId Brand identifier
    */
-  def testimonials(brandId: Long): List[BrandTestimonial] = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandTestimonials].filter(_.brandId === brandId).list
-  }
+  def testimonials(brandId: Long): Future[List[BrandTestimonial]] =
+    db.run(TableQuery[BrandTestimonials].filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Update brand
@@ -297,7 +287,6 @@ class BrandService extends Services {
     updated: Brand,
     picture: Option[String]): Brand = DB.withTransaction {
     implicit session: Session ⇒
-      import models.database.SocialProfilesStatic._
 
       val u = updated.copy(id = old.id).copy(picture = picture)
       u.socialProfile_=(updated.socialProfile)
@@ -326,21 +315,20 @@ class BrandService extends Services {
     * Update brand settings in database
     * @param value Brand settings
     */
-  def updateSettings(value: Settings): Unit = DB.withSession { implicit session =>
-    settings.filter(_.brandId === value.brandId).update(value)
-  }
+  def updateSettings(value: Settings): Unit =
+    db.run(settings.filter(_.brandId === value.brandId).update(value))
 
   /**
    * Updates brand testimonial in database
    *
    * @param testimonial Testimonital to update
    */
-  def updateTestimonial(testimonial: BrandTestimonial): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[BrandTestimonials].
+  def updateTestimonial(testimonial: BrandTestimonial): Unit = {
+    val action = TableQuery[BrandTestimonials].
         filter(_.id === testimonial.id.get).
         filter(_.brandId === testimonial.brand).
         update(testimonial)
+    db.run(action)
   }
 
   /**
@@ -349,10 +337,8 @@ class BrandService extends Services {
    * @param id Brand id
    * @param active If true, the brand is activated
    */
-  private def switchState(id: Long, active: Boolean): Unit = DB.withSession {
-    implicit session ⇒
-      brands.filter(_.id === id).map(_.active).update(active)
-  }
+  private def switchState(id: Long, active: Boolean): Unit =
+    db.run(brands.filter(_.id === id).map(_.active).update(active))
 
 }
 

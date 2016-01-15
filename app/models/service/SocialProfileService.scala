@@ -24,14 +24,19 @@
 
 package models.service
 
-import models.database.SocialProfiles
-import models.{ ProfileType, SocialProfile }
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.SocialProfileTable
+import models.{ProfileType, SocialProfile}
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class SocialProfileService {
+import scala.concurrent.Future
 
+class SocialProfileService extends HasDatabaseConfig[JdbcProfile]
+  with SocialProfileTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val profiles = TableQuery[SocialProfiles]
 
   /**
@@ -40,54 +45,43 @@ class SocialProfileService {
    * @param objectType
    * @return
    */
-  def find(objectId: Long, objectType: ProfileType.Value): SocialProfile =
-    DB.withSession { implicit session ⇒
-      import models.database.SocialProfilesStatic._
+  def find(objectId: Long, objectType: ProfileType.Value): Future[SocialProfile] = {
+    import SocialProfilesStatic._
 
-      profiles.
-        filter(_.objectId === objectId).
-        filter(_.objectType === objectType).first
-    }
+    db.run(profiles.filter(_.objectId === objectId).filter(_.objectType === objectType).result).map(_.head)
+  }
 
   /**
    * Find a profile associated with Twitter
    * @param twitterHandle Twitter name
    * @return
    */
-  def findByTwitter(twitterHandle: String): Option[SocialProfile] =
-    DB.withSession { implicit session ⇒
-      profiles.filter(_.twitterHandle === twitterHandle).firstOption
-    }
+  def findByTwitter(twitterHandle: String): Future[Option[SocialProfile]] =
+    db.run(profiles.filter(_.twitterHandle === twitterHandle).result).map(_.headOption)
 
   /**
    * Find a profile associated with Facebook
    * @param facebookUrl Facebook profile
    * @return
    */
-  def findByFacebook(facebookUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session ⇒
-      profiles.filter(_.facebookUrl === facebookUrl).firstOption
-    }
+  def findByFacebook(facebookUrl: String): Future[Option[SocialProfile]] =
+    db.run(profiles.filter(_.facebookUrl === facebookUrl).result).map(_.headOption)
 
   /**
    * Find a profile associated with LinkedIn
    * @param linkedInUrl LinkedIn profile
    * @return
    */
-  def findByLinkedin(linkedInUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session ⇒
-      profiles.filter(_.linkedInUrl === linkedInUrl).firstOption
-    }
+  def findByLinkedin(linkedInUrl: String): Future[Option[SocialProfile]] =
+    db.run(profiles.filter(_.linkedInUrl === linkedInUrl).result).map(_.headOption)
 
   /**
    * Find a profile associated with Google+
    * @param googlePlusUrl Google+ profile
    * @return
    */
-  def findByGooglePlus(googlePlusUrl: String): Option[SocialProfile] =
-    DB.withSession { implicit session ⇒
-      profiles.filter(_.googlePlusUrl === googlePlusUrl).firstOption
-    }
+  def findByGooglePlus(googlePlusUrl: String): Future[Option[SocialProfile]] =
+    db.run(profiles.filter(_.googlePlusUrl === googlePlusUrl).result).map(_.headOption)
 
   /**
    * Returns the social profile which has a duplicate social network
@@ -95,35 +89,30 @@ class SocialProfileService {
    *
    * @param profile Social profile object
    */
-  def findDuplicate(profile: SocialProfile): Option[SocialProfile] = DB.withSession {
-    implicit session ⇒
-      import models.database.SocialProfilesStatic._
+  def findDuplicate(profile: SocialProfile): Future[Option[SocialProfile]] = {
+    import SocialProfilesStatic._
 
-      val query = profiles.
-        filter(_.objectId =!= profile.objectId).
-        filter(_.objectType === profile.objectType).
-        filter { p ⇒
-          p.twitterHandle.toLowerCase === profile.twitterHandle.map(_.toLowerCase) ||
-            p.googlePlusUrl === profile.googlePlusUrl ||
-            (p.facebookUrl like "https?".r.replaceFirstIn(profile.facebookUrl.getOrElse(""), "%")) ||
-            (p.linkedInUrl like "https?".r.replaceFirstIn(profile.linkedInUrl.getOrElse(""), "%"))
-        }
-
-      query.firstOption
+    val query = profiles.
+      filter(_.objectId =!= profile.objectId).
+      filter(_.objectType === profile.objectType).
+      filter { p ⇒
+        p.twitterHandle.toLowerCase === profile.twitterHandle.map(_.toLowerCase) ||
+          p.googlePlusUrl === profile.googlePlusUrl ||
+          (p.facebookUrl like "https?".r.replaceFirstIn(profile.facebookUrl.getOrElse(""), "%")) ||
+          (p.linkedInUrl like "https?".r.replaceFirstIn(profile.linkedInUrl.getOrElse(""), "%"))
+      }
+    db.run(query.result).map(_.headOption)
   }
 
-  def insert(socialProfile: SocialProfile): SocialProfile = DB.withSession {
-    implicit session: Session ⇒ _insert(socialProfile)
+  def insert(socialProfile: SocialProfile): Future[SocialProfile] =
+    db.run(profiles += socialProfile).map(_ => socialProfile)
+
+  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = {
+    import SocialProfilesStatic._
+
+    val query = profiles.filter(_.objectId === socialProfile.objectId).filter(_.objectType === objectType)
+    db.run(query.update(socialProfile))
   }
-
-  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit =
-    DB.withSession { implicit session ⇒
-      import models.database.SocialProfilesStatic._
-
-      profiles
-        .filter(_.objectId === socialProfile.objectId)
-        .filter(_.objectType === objectType).update(socialProfile)
-    }
 
   /**
    * Delete a social profile
@@ -131,13 +120,10 @@ class SocialProfileService {
    * @param objectId Id of the object the social profile associated with
    * @param objectType Type of the object the social profile associated with
    */
-  def delete(objectId: Long, objectType: ProfileType.Value): Unit = DB.withSession {
-    implicit session ⇒
-      import models.database.SocialProfilesStatic._
+  def delete(objectId: Long, objectType: ProfileType.Value): Unit = {
+    import SocialProfilesStatic._
 
-      profiles.
-        filter(_.objectId === objectId).
-        filter(_.objectType === objectType).delete
+    db.run(profiles.filter(_.objectId === objectId).filter(_.objectType === objectType).delete)
   }
 
   /**

@@ -1,5 +1,5 @@
 @(user: ActiveUser,
-    form: Form[OrgData])(implicit request: Request[Any], flash: Flash)
+    form: Form[OrgData])(implicit request: Request[Any], flash: Flash, messages: Messages)
 
 @import helper.CSRF
 @import views.Countries
@@ -20,9 +20,9 @@
         <h3>Add Organisation Data</h3>
         <div class="action-area col-md-11 col-md-offset-1">
         @v2.html.form(action = CSRF(routes.Registration.saveOrg())) {
-            @v2.html.text(form("name"), '_label -> "Name", '_help -> "")(narrow, implicitly[Lang])
+            @v2.html.text(form("name"), '_label -> "Name", '_help -> "")(narrow, messages)
             @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country",
-                '_help -> "")(narrow, implicitly[Lang])
+                '_help -> "")(narrow, messages)
 
             <div class="form-group">
                 <div class="col-sm-3"></div>

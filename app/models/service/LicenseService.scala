@@ -24,16 +24,25 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
 import models.database.PortableJodaSupport._
-import models.database.{Licenses, People}
+import models.database.{LicenseTable, BrandTable, Licenses, People}
 import org.joda.time.LocalDate
+import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider, DB}
+import slick.driver.JdbcProfile
+import scala.concurrent.Future
 
-class LicenseService extends Services {
+class LicenseService extends HasDatabaseConfig[JdbcProfile]
+  with BrandTable
+  with LicenseTable
+  with PersonTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val licenses = TableQuery[Licenses]
 
   /**
@@ -54,16 +63,15 @@ class LicenseService extends Services {
    * Returns a list of active content licenses for the given person
    * @param personId Person identifier
    */
-  def activeLicenses(personId: Long): List[LicenseView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        license ← licenses if license.licenseeId === personId && license.end >= LocalDate.now
-        brand ← license.brand
-      } yield (license, brand)
+  def activeLicenses(personId: Long): Future[List[LicenseView]] = {
+    val query = for {
+      license ← licenses if license.licenseeId === personId && license.end >= LocalDate.now
+      brand ← license.brand
+    } yield (license, brand)
 
-      query.sortBy(_._2.name.toLowerCase).list.map {
-        case (license, brand) ⇒ LicenseView(brand, license)
-      }
+    db.run(query.sortBy(_._2.name.toLowerCase).result).map(_.toList.map {
+      case (license, brand) ⇒ LicenseView(brand, license)
+    })
   }
 
   /**
@@ -72,111 +80,92 @@ class LicenseService extends Services {
    * @param brandId Brand identifier
    * @param personId Person identifier
    */
-  def activeLicense(brandId: Long, personId: Long): Option[License] = DB.withSession {
-    implicit session ⇒
-      licenses
-        .filter(_.licenseeId === personId)
-        .filter(_.brandId === brandId)
-        .filter(_.start <= LocalDate.now())
-        .filter(_.end >= LocalDate.now())
-        .firstOption
+  def activeLicense(brandId: Long, personId: Long): Future[Option[License]] = {
+    val query = licenses
+      .filter(_.licenseeId === personId)
+      .filter(_.brandId === brandId)
+      .filter(_.start <= LocalDate.now())
+      .filter(_.end >= LocalDate.now())
+    db.run(query.result).map(_.headOption)
   }
 
   /**
     * Deletes the given license from database
     * @param id License identifier
     */
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    licenses.filter(_.id === id).delete
-  }
+  def delete(id: Long): Unit = db.run(licenses.filter(_.id === id).delete)
 
   /**
    * Returns list of licenses expiring this month for the given brands
    *
    * @param brands List of brands we want expiring license data from
    */
-  def expiring(brands: List[Long]): List[LicenseLicenseeView] = DB.withSession {
-    implicit session ⇒
-      val firstDay = LocalDate.now().withDayOfMonth(1)
-      val lowerLimit = firstDay.minusMonths(1)
-      val upperLimit = firstDay.plusMonths(1)
-      val query = for {
-        license ← licenses if license.end >= lowerLimit && license.end < upperLimit
-        person ← TableQuery[People] if person.id === license.licenseeId
-      } yield (license, person)
-      query.filter(_._1.brandId inSet brands).list
-        .map(v ⇒ LicenseLicenseeView(v._1, v._2))
-        .sortBy(_.licensee.fullName)
+  def expiring(brands: List[Long]): Future[List[LicenseLicenseeView]] = {
+    val firstDay = LocalDate.now().withDayOfMonth(1)
+    val lowerLimit = firstDay.minusMonths(1)
+    val upperLimit = firstDay.plusMonths(1)
+    val query = for {
+      license ← licenses if license.end >= lowerLimit && license.end < upperLimit
+      person ← TableQuery[People] if person.id === license.licenseeId
+    } yield (license, person)
+    db.run(query.filter(_._1.brandId inSet brands).result).map(_.toList.map {v ⇒
+      LicenseLicenseeView(v._1, v._2)
+    }.sortBy(_.licensee.fullName))
   }
 
   /**
    * Returns list of all licenses
    */
-  def findAll: List[License] = DB.withSession { implicit session ⇒
-    licenses.list
-  }
+  def findAll: Future[List[License]] = db.run(licenses.result).map(_.toList)
 
   /**
    * Returns list of active licenses
    */
-  def findActive: List[License] = DB.withSession {
-    implicit session ⇒
-      licenses
-        .filter(_.start <= LocalDate.now())
-        .filter(_.end >= LocalDate.now())
-        .list
-  }
+  def findActive: Future[List[License]] =
+    db.run(licenses.filter(_.start <= LocalDate.now()).filter(_.end >= LocalDate.now()).result).map(_.toList)
 
   /**
    * Returns list of licenses for the given brand
    * @param brandId Brand id
    */
-  def findByBrand(brandId: Long): List[License] = DB.withSession {
-    implicit session ⇒
-      licenses.filter(_.brandId === brandId).list
-  }
+  def findByBrand(brandId: Long): Future[List[License]] =
+    db.run(licenses.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Finds a license by ID, joined with brand and licensee
    *
    * @param id License id
    */
-  def findWithBrandAndLicensee(id: Long): Option[LicenseLicenseeBrandView] =
-    DB.withSession { implicit session ⇒
-      val query = for {
-        license ← licenses if license.id === id
-        brand ← license.brand
-        licensee ← license.licensee
-      } yield (license, brand, licensee)
-
-      query.mapResult {
-        case (license, brand, licensee) ⇒
-          LicenseLicenseeBrandView(license, brand, licensee)
-      }.firstOption
-    }
+  def findWithBrandAndLicensee(id: Long): Future[Option[LicenseLicenseeBrandView]] = {
+    val query = for {
+      license ← licenses if license.id === id
+      brand ← license.brand
+      licensee ← license.licensee
+    } yield (license, brand, licensee)
+    db.run(query.result).map(_.headOption.map { result =>
+      LicenseLicenseeBrandView(result._1, result._2, result._3)
+    })
+  }
 
   /**
    * Returns a list of content licenses for the given person
    * @param personId Person identifier
    */
-  def licenses(personId: Long): List[License] = DB.withSession { implicit session ⇒
-    licenses.filter(_.licenseeId === personId).list
-  }
+  def licenses(personId: Long): Future[List[License]] =
+    db.run(licenses.filter(_.licenseeId === personId).result).map(_.toList)
 
   /**
     * Returns a list of content licenses for the given person
     * @param personId Person identifier
     */
-  def licensesWithBrands(personId: Long): List[LicenseView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        license ← licenses if license.licenseeId === personId
-        brand ← license.brand
-      } yield (license, brand)
-
-      query.sortBy(_._2.name.toLowerCase).list.map {
-        case (license, brand) ⇒ LicenseView(brand, license)
-      }
+  def licensesWithBrands(personId: Long): Future[List[LicenseView]] = {
+    val query = for {
+      license ← licenses if license.licenseeId === personId
+      brand ← license.brand
+    } yield (license, brand)
+    db.run(query.sortBy(_._2.name.toLowerCase).result).map(_.toList.map { result =>
+      LicenseView(result._1, result._2)
+    })
   }
 
   /**
@@ -186,13 +175,12 @@ class LicenseService extends Services {
    * @param brandId Brand id
    * @param date Date of interest
    */
-  def licensees(brandId: Long, date: LocalDate = LocalDate.now()): List[Person] = DB.withSession {
-    implicit session: Session ⇒
-      val query = for {
-        license ← licenses if license.start <= date && license.end >= date && license.brandId === brandId
-        licensee ← license.licensee if licensee.active === true
-      } yield licensee
-      query.sortBy(_.lastName.toLowerCase).list
+  def licensees(brandId: Long, date: LocalDate = LocalDate.now()): Future[List[Person]] = {
+    val query = for {
+      license ← licenses if license.start <= date && license.end >= date && license.brandId === brandId
+      licensee ← license.licensee if licensee.active === true
+    } yield licensee
+    db.run(query.sortBy(_.lastName.toLowerCase).result).map(_.toList)
   }
 
   /**

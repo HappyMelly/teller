@@ -25,13 +25,18 @@
 package models.service
 
 import models.Experiment
-import models.database.Experiments
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.ExperimentTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class ExperimentService extends Services {
+import scala.concurrent.Future
 
+class ExperimentService extends HasDatabaseConfig[JdbcProfile]
+  with ExperimentTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val experiments = TableQuery[Experiments]
 
   /**
@@ -44,47 +49,38 @@ class ExperimentService extends Services {
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long): Unit = DB.withSession {
-    implicit session ⇒
-      experiments.filter(_.id === id).filter(_.memberId === memberId).delete
-  }
+  def delete(memberId: Long, id: Long): Unit =
+    db.run(experiments.filter(_.id === id).filter(_.memberId === memberId).delete)
 
   /**
    * Returns the requested experiments if it exists
    *
    * @param id Experiment id
    */
-  def find(id: Long): Option[Experiment] = DB.withSession { implicit session ⇒
-    experiments.filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[Experiment]] =
+    db.run(experiments.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns all experiments
    */
-  def findAll(): List[Experiment] = DB.withSession { implicit session ⇒
-    experiments.list
-  }
-
+  def findAll(): Future[List[Experiment]] = db.run(experiments.result).map(_.toList)
 
   /**
    * Returns list of experiments for the given member
    *
    * @param memberId Member identifier
    */
-  def findByMember(memberId: Long): List[Experiment] = DB.withSession {
-    implicit session ⇒
-      experiments.filter(_.memberId === memberId).list
-  }
+  def findByMember(memberId: Long): Future[List[Experiment]] =
+    db.run(experiments.filter(_.memberId === memberId).result).map(_.toList)
 
   /**
    * Inserts the given experiment to database
    *
    * @param experiment Experiment
    */
-  def insert(experiment: Experiment): Experiment = DB.withSession {
-    implicit session ⇒
-      val id = (experiments returning experiments.map(_.id)) += experiment
-      experiment.copy(id = Some(id))
+  def insert(experiment: Experiment): Future[Experiment] = {
+      val query = experiments returning experiments.map(_.id) into ((value, id) => value.copy(id = Some(id))
+      db.run(query += experiment)
   }
 
   /**
@@ -92,11 +88,11 @@ class ExperimentService extends Services {
    *
    * @param experiment Experiment
    */
-  def update(experiment: Experiment): Unit = DB.withSession { implicit session ⇒
+  def update(experiment: Experiment): Unit = {
     val fields = (experiment.name, experiment.description,
       experiment.picture, experiment.url, experiment.recordInfo.updated,
       experiment.recordInfo.updatedBy)
-    experiments.filter(_.id === experiment.id.get).map(_.forUpdate).update(fields)
+    db.run(experiments.filter(_.id === experiment.id.get).map(_.forUpdate).update(fields))
   }
 }
 

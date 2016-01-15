@@ -5,7 +5,11 @@
     brands: List[BrandView],
     contributors: List[ContributorView],
     people: List[PersonSummary],
-    organisations: List[Organisation])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+    organisations: List[Organisation])(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import helper.CSRF
 @import models.UserRole.Role._

@@ -24,21 +24,21 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import models.UserRole.Role._
 import models.service.Services
-import models.{ ActiveUser, ActivityRecorder, Contribution }
+import models.{ActivityRecorder, Contribution}
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class Contributions(environment: RuntimeEnvironment[ActiveUser])
+class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services
     with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /** HTML form mapping for creating and editing. */
   def contributionForm = Form(mapping(

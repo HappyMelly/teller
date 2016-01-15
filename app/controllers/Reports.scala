@@ -24,22 +24,22 @@
 
 package controllers
 
-import java.io.{ File, FileOutputStream }
-import models._
+import java.io.{File, FileOutputStream}
+import javax.inject.Inject
+
 import models.UserRole.Role._
+import models._
 import models.event.Attendee
-import models.service.{ Services, EventService }
+import models.service.Services
 import org.joda.time._
 import play.api.Play.current
 import play.mvc.Controller
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class Reports(environment: RuntimeEnvironment[ActiveUser])
+class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Generate a XLSX report with evaluations (if they're available)

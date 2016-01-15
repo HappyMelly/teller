@@ -36,9 +36,7 @@ import scala.concurrent.Future
 /**
  * Integrates SecureSocial authentication with Deadbolt.
  */
-trait Security extends SecureSocial[ActiveUser]
-with DeadboltActions
-with Services {
+trait Security extends SecureSocial with DeadboltActions with Services {
 
   /**
    * A redirect to the login page, used when authorisation fails due to

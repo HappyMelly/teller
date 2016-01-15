@@ -24,16 +24,20 @@
  */
 package models.service.event
 
-import models.database.event.EventCancellations
+import models.database.event.EventCancellationTable
 import models.event.EventCancellation
-import models.service.Services
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
+import scala.concurrent.Future
 import scala.language.postfixOps
 
-class EventCancellationService extends Services {
+class EventCancellationService extends HasDatabaseConfig[JdbcProfile]
+  with EventCancellationTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   private val cancellations = TableQuery[EventCancellations]
 
@@ -42,10 +46,8 @@ class EventCancellationService extends Services {
    *
    * @param brands List of brand identifiers
    */
-  def findByBrands(brands: List[Long]): List[EventCancellation] =
-    DB.withSession { implicit session ⇒
-      cancellations.filter(_.brandId inSet brands).list
-    }
+  def findByBrands(brands: List[Long]): Future[List[EventCancellation]] =
+    db.run(cancellations.filter(_.brandId inSet brands).result).map(_.toList)
 
   /**
    * Inserts event cancellation into database
@@ -53,10 +55,9 @@ class EventCancellationService extends Services {
    * @param cancellation EventCancellation object
    * @return Updated object object with id
    */
-  def insert(cancellation: EventCancellation): EventCancellation = DB.withSession {
-    implicit session ⇒
-      val id = (cancellations returning cancellations.map(_.id)) += cancellation
-      cancellation.copy(id = Some(id))
+  def insert(cancellation: EventCancellation): Future[EventCancellation] = {
+    val query = cancellations returning cancellations.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += cancellation)
   }
 
 }

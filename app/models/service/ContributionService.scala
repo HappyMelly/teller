@@ -25,29 +25,34 @@
 package models.service
 
 import models.ContributionView
-import models.database.Contributions
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import models.database.ContributionTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class ContributionService {
+import scala.concurrent.Future
+
+class ContributionService extends HasDatabaseConfig[JdbcProfile]
+  with ContributionTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   /**
    * Returns a list of all contributions for the given contributor
    * @param contributorId Contributor identifier
    * @param isPerson If true this contributor is a person, otherwise - company
    */
-  def contributions(contributorId: Long, isPerson: Boolean): List[ContributionView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        contribution ← TableQuery[Contributions] if contribution.contributorId === contributorId &&
-          contribution.isPerson === isPerson
-        product ← contribution.product
-      } yield (contribution, product)
+  def contributions(contributorId: Long, isPerson: Boolean): Future[List[ContributionView]] = {
+    val query = for {
+      contribution ← TableQuery[Contributions] if contribution.contributorId === contributorId &&
+        contribution.isPerson === isPerson
+      product ← contribution.product
+    } yield (contribution, product)
 
-      query.sortBy(_._2.title.toLowerCase).list.map {
-        case (contribution, product) ⇒ ContributionView(product, contribution)
-      }
+    db.run(query.sortBy(_._2.title.toLowerCase).result).map(_.toList.map {
+      case (contribution, product) ⇒ ContributionView(product, contribution)
+    })
   }
 }
 

@@ -6,17 +6,15 @@ import models._
 import models.service.Services
 import org.joda.time.LocalDate
 import play.api.mvc.Controller
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import views.Countries
 
 /**
   * Pages for calculating the usage of Teller by brands
   */
-class Usage(environment: RuntimeEnvironment[ActiveUser]) extends Controller
+class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment) extends Controller
   with Security
   with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
     * Renders Teller usage fee for brands

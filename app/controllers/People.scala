@@ -37,14 +37,14 @@ import play.api.data.validation.Constraints
 import play.api.data.{Form, FormError}
 import play.api.i18n.Messages
 import play.api.{Logger, Play}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class People(environment: RuntimeEnvironment[ActiveUser])
+class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
@@ -52,8 +52,6 @@ class People(environment: RuntimeEnvironment[ActiveUser])
     with Files
     with Activities
     with MemberNotifications {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   val contentType = "image/jpeg"
 

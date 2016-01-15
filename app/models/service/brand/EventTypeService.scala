@@ -25,13 +25,19 @@
 package models.service.brand
 
 import models.brand.EventType
-import models.database.brand.EventTypes
+import models.database.brand.{EventTypeTable, EventTypes}
+import play.api.Play
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider, DB}
+import slick.driver.JdbcProfile
+import scala.concurrent.Future
 
-class EventTypeService {
+class EventTypeService extends HasDatabaseConfig[JdbcProfile]
+  with EventTypeTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val types = TableQuery[EventTypes]
 
   /**
@@ -39,37 +45,29 @@ class EventTypeService {
    *
    * @param id Event type id
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    types.filter(_.id === id).delete
-  }
+  def delete(id: Long): Unit = db.run(types.filter(_.id === id).delete)
 
   /**
    * Returns if an event type with the given id exists
    *
    * @param id Event type id
    */
-  def exists(id: Long): Boolean = DB.withSession { implicit session ⇒
-    types.filter(_.id === id).exists.run
-  }
+  def exists(id: Long): Future[Boolean] = db.run(types.filter(_.id === id).exists.result)
 
   /**
    * Returns an event type if it exists, otherwise - None
    * @param id Event type id
    * @return
    */
-  def find(id: Long): Option[EventType] = DB.withSession { implicit session ⇒
-    types.filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[EventType]] = db.run(types.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns a list of event types for the given brand
    *
    * @param brandId Brand identifier
    */
-  def findByBrand(brandId: Long): List[EventType] = DB.withSession {
-    implicit session ⇒
-      types.filter(_.brandId === brandId).list
-  }
+  def findByBrand(brandId: Long): Future[List[EventType]] =
+    db.run(types.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Inserts event type data into database
@@ -77,9 +75,9 @@ class EventTypeService {
    * @param value Event type object
    * @return Updated object with id
    */
-  def insert(value: EventType): EventType = DB.withSession { implicit session ⇒
-    val id = (types returning types.map(_.id)) += value
-    value.copy(id = Some(id))
+  def insert(value: EventType): Future[EventType] = {
+    val query = types returning types.map(_.id) into ((eventType, id) => eventType.copy(id = Some(id)))
+    db.run(query += value)
   }
 
   /**
@@ -87,11 +85,9 @@ class EventTypeService {
    * @param value Event type object
    * @return Returns the updated object
    */
-  def update(value: EventType): EventType = DB.withSession {
-    implicit session: Session ⇒
-      val tuple = (value.name, value.defaultTitle, value.maxHours, value.free)
-      types.filter(_.id === value.id).map(_.forUpdate).update(tuple)
-      value
+  def update(value: EventType): Future[EventType] = {
+    val tuple = (value.name, value.defaultTitle, value.maxHours, value.free)
+    db.run(types.filter(_.id === value.id).map(_.forUpdate).update(tuple)).map(_ => value)
   }
 }
 

@@ -24,22 +24,21 @@
 
 package controllers
 
-import models.ActiveUser
 import play.api.i18n.Messages
 import play.api.mvc.Action
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import securesocial.controllers.{BasePasswordReset, BaseRegistration}
-import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.services.SaveMode
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
 /**
   * Contains a set of methods for resetting user's password
   */
-class PasswordReset(implicit val env: RuntimeEnvironment[ActiveUser])
-  extends BasePasswordReset[ActiveUser]
+class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
+  extends BasePasswordReset
   with JsonController {
 
   private val logger = play.api.Logger("securesocial.controllers.BasePasswordReset")

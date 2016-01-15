@@ -23,21 +23,16 @@
  */
 package controllers
 
-import models.ActiveUser
 import models.UserRole.Role._
 import models.service.Services
-import play.api.Play.current
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Future
+import services.TellerRuntimeEnvironment
 import views.Countries
 
-class BrandFees(environment: RuntimeEnvironment[ActiveUser])
+class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Services
     with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
    * Renders list of available fees for the given brand

@@ -34,7 +34,7 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
@@ -44,7 +44,8 @@ import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.providers.utils.PasswordValidator
 import securesocial.core.services.SaveMode
 import securesocial.core.utils._
-import securesocial.core.{AuthenticationMethod, BasicProfile, RuntimeEnvironment, SecureSocial}
+import securesocial.core.{AuthenticationMethod, BasicProfile, SecureSocial}
+import services.TellerRuntimeEnvironment
 import views.Countries
 
 import scala.concurrent.{Await, Future}
@@ -77,14 +78,13 @@ case class AuthenticationInfo(email: String, password: String)
  * -v
  * Contains actions for a registration process
  */
-class Registration(environment: RuntimeEnvironment[ActiveUser])
+class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends PasswordIdentities
     with Enrollment
     with Security
     with Activities
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Services
+    with I18nSupport {
 
   val REGISTRATION_COOKIE = "registration"
 

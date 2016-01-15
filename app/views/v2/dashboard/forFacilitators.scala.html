@@ -4,8 +4,9 @@
   future: List[(Event, Option[Brand])],
   past: List[(Event, Option[Brand])],
   evaluations: List[((Event, models.event.Attendee, Evaluation),Option[Brand])])(implicit flash: Flash,
-  request: Request[Any],
-  handler: AuthorisationHandler)
+    request: Request[Any],
+    handler: AuthorisationHandler,
+    messages: Messages)
 
 @v2.main("Home", "", user) {
   @activeBrand.map { view =>

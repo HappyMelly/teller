@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,61 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
 import mail.reminder._
-import services.{TellerRoutesService, LoginIdentityService}
-import models.{Facilitator, ActiveUser}
-import org.joda.time.{ LocalDate, LocalDateTime, LocalTime, Seconds }
+import models.Facilitator
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Results._
 import play.api.mvc._
-import play.api.{ Application, GlobalSettings, Play }
+import play.api.{Application, GlobalSettings, Play}
 import play.filters.csrf._
 import play.libs.Akka
-import securesocial.controllers.ViewTemplates
-import securesocial.core._
-import securesocial.core.providers._
-import securesocial.core.services.RoutesService
-import templates.{MailTemplates, SecureSocialTemplates}
-import scala.collection.immutable.ListMap
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
-
-  object TellerRuntimeEnvironment extends RuntimeEnvironment.Default[ActiveUser] {
-    override lazy val routes: RoutesService = new TellerRoutesService()
-    override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this)
-    override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
-    override lazy val userService: LoginIdentityService = new LoginIdentityService
-    override lazy val providers = ListMap(
-      include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),
-      include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
-      include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
-      include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
-      include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
-    )
-  }
-
-  /**
-   * Dependency injection on Controllers using Cake Pattern
-   *
-   * @param controllerClass
-   * @tparam A
-   * @return
-   */
-  override def getControllerInstance[A](controllerClass: Class[A]): A = {
-    val instance = controllerClass.getConstructors.find { c ⇒
-      val params = c.getParameterTypes
-      params.length == 1 && params(0) == classOf[RuntimeEnvironment[ActiveUser]]
-    }.map {
-      _.asInstanceOf[Constructor[A]].newInstance(TellerRuntimeEnvironment)
-    }
-    instance.getOrElse(super.getControllerInstance(controllerClass))
-  }
 
   override def onHandlerNotFound(request: RequestHeader): Future[Result] = {
     Future.successful(NotFound(views.html.notFoundPage(request.path)))

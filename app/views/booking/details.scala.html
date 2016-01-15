@@ -1,6 +1,9 @@
 @(user: ActiveUser, booking: BookingEntry, currentUser: UserAccount,
-  attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any], flash: Flash,
-  handler: AuthorisationHandler, token: play.filters.csrf.CSRF.Token)
+  attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 @import scala.math.BigDecimal.RoundingMode
 
 @import helper.CSRF

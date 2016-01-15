@@ -2,7 +2,8 @@
     organisations: List[Organisation],
     otherOrganisations: List[Organisation])(implicit request: Request[Any],
     handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    token: play.filters.csrf.CSRF.Token,
+    messages: Messages)
 
 @import templates.Formatters._
 

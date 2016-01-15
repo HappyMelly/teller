@@ -23,6 +23,7 @@
  */
 package controllers
 
+import javax.inject.Inject
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.{UserAccount, ActiveUser, Member}
@@ -35,18 +36,17 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import templates.Formatters._
 
 /** Renders pages and contains actions related to members */
-class Members(environment: RuntimeEnvironment[ActiveUser])
+class Members @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Enrollment
     with JsonController
     with Security
     with Activities
     with Utilities
     with MemberNotifications {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")

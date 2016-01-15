@@ -26,23 +26,36 @@ package models.service
 
 import models._
 import models.database._
-import models.database.event.Attendees
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import models.database.event.AttendeeTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class PersonService extends Services {
+import scala.concurrent.Future
 
+class PersonService extends HasDatabaseConfig[JdbcProfile]
+  with AccountTable
+  with AddressTable
+  with AttendeeTable
+  with EndorsementTable
+  with MaterialTable
+  with MemberTable
+  with OrganisationMembershipTable
+  with PasswordIdentityTable
+  with PersonTable
+  with ProfileStrengthTable
+  with SocialProfileTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val people = TableQuery[People]
 
   /**
    * Associates this person with given organisation.
    * @TEST
    */
-  def addRelation(personId: Long, organisationId: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[OrganisationMemberships] += ((None, personId, organisationId))
-  }
+  def addRelation(personId: Long, organisationId: Long): Unit =
+    db.run(TableQuery[OrganisationMemberships] += ((None, personId, organisationId)))
 
   /**
    * Deletes the person with the given ID and their account.
@@ -76,12 +89,8 @@ class PersonService extends Services {
    * @param personId Person identifier
    * @param id Material identifier
    */
-  def deleteMaterial(personId: Long, id: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[Materials].
-        filter(_.id === id).
-        filter(_.personId === personId).delete
-  }
+  def deleteMaterial(personId: Long, id: Long): Unit =
+    db.run(TableQuery[Materials].filter(_.id === id).filter(_.personId === personId).delete)
 
 
   /**
@@ -94,24 +103,18 @@ class PersonService extends Services {
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def deleteEndorsement(personId: Long, id: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[Endorsements].
-        filter(_.id === id).
-        filter(_.personId === personId).delete
-  }
+  def deleteEndorsement(personId: Long, id: Long): Unit =
+    db.run(TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).delete)
 
   /**
    * Deletes a relationship between this person and the given organisation
    *
-   * @TEST
    * @param organisationId Organisation identifier
    */
-  def deleteRelation(personId: Long, organisationId: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[OrganisationMemberships].
-        filter(_.personId === personId).
-        filter(_.organisationId === organisationId).delete
+  def deleteRelation(personId: Long, organisationId: Long): Unit = {
+    val query = TableQuery[OrganisationMemberships].
+      filter(_.personId === personId).filter(_.organisationId === organisationId)
+    db.run(query.delete)
   }
 
   /**
@@ -119,10 +122,8 @@ class PersonService extends Services {
    *
    * @param personId Person identifier
    */
-  def endorsements(personId: Long): List[Endorsement] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Endorsements].filter(_.personId === personId).list.sortBy(_.position)
-  }
+  def endorsements(personId: Long): Future[List[Endorsement]] =
+    db.run(TableQuery[Endorsements].filter(_.personId === personId).sortBy(_.position).result).map(._toList)
 
   /**
    * Inserts new person object into database
@@ -154,24 +155,21 @@ class PersonService extends Services {
    *
    * @param endorsement Brand endorsement
    */
-  def insertEndorsement(endorsement: Endorsement): Endorsement =
-    DB.withSession {
-      implicit session ⇒
-        val endorsements = TableQuery[Endorsements]
-        val id = (endorsements returning endorsements.map(_.id)) += endorsement
-        endorsement.copy(id = Some(id))
-    }
+  def insertEndorsement(endorsement: Endorsement): Future[Endorsement] = {
+    val endorsements = TableQuery[Endorsements]
+    val query = endorsements returning endorsements.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += endorsement)
+  }
 
   /**
    * Inserts the given material to database
    *
    * @param material Brand material
    */
-  def insertMaterial(material: Material): Material = DB.withSession {
-    implicit session ⇒
-      val materials = TableQuery[Materials]
-      val id = (materials returning materials.map(_.id)) += material
-      material.copy(id = Some(id))
+  def insertMaterial(material: Material): Future[Material] = {
+    val materials = TableQuery[Materials]
+    val query = materials returning materials.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += material)
   }
 
   /**
@@ -179,22 +177,19 @@ class PersonService extends Services {
    * @param id Person Identifier
    * @return
    */
-  def find(id: Long): Option[Person] = DB.withSession { implicit session ⇒
-    TableQuery[People].filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[Person]] = db.run(people.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns person if it exists, otherwise - None
    *
    * @param name Person Identifier
    */
-  def find(name: String): Option[Person] = DB.withSession { implicit session ⇒
+  def find(name: String): Future[Option[Person]] = {
     val transformed = name.replace(".", " ").replace("_", ".")
     val query = for {
       person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
     } yield person
-
-    query.firstOption
+    db.run(query.result).map(_.headOption)
   }
 
   /**
@@ -202,29 +197,25 @@ class PersonService extends Services {
    *
    * @param ids List of people identifiers
    */
-  def find(ids: List[Long]): List[Person] = DB.withSession { implicit session =>
-    people.filter(_.id inSet ids).list
-  }
+  def find(ids: List[Long]): Future[List[Person]] = db.run(people.filter(_.id inSet ids).result).map(_.toList)
 
   /**
    * Returns a list of active people
    */
-  def findActive: List[Person] = DB.withSession { implicit session ⇒
-    people.filter(_.active === true).sortBy(_.firstName.toLowerCase).list
-  }
+  def findActive: Future[List[Person]] =
+    db.run(people.filter(_.active === true).sortBy(_.firstName.toLowerCase).result).map(_.toList)
 
   /**
    * Returns list of people for the given names
    * @param names List of names
    */
-  def findByNames(names: List[String]): List[Person] = DB.withSession {
-    implicit session =>
-      val transformed = names.map(name => name.replace(".", " "))
-      val query = for {
-        person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase inSet transformed
-      } yield person
+  def findByNames(names: List[String]): Future[List[Person]] = {
+    val transformed = names.map(name => name.replace(".", " "))
+    val query = for {
+      person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase inSet transformed
+    } yield person
 
-      query.list
+    db.run(query.result).map(_.toList)
   }
 
   /**
@@ -232,19 +223,19 @@ class PersonService extends Services {
     * otherwise - None
     * @param id Person Identifier
     */
-  def findComplete(id: Long): Option[Person] = DB.withSession { implicit session ⇒
-    import models.database.SocialProfilesStatic._
+  def findComplete(id: Long): Future[Option[Person]] = {
+    import SocialProfilesStatic._
 
     val query = for {
       person <- people if person.id === id
       social <- TableQuery[SocialProfiles] if social.objectType === ProfileType.Person && social.objectId === id
       address <- TableQuery[Addresses] if address.id === person.addressId
     } yield (person, social, address)
-    query.firstOption.map { value =>
-      value._1.socialProfile_=(value._2)
-      value._1.address_=(value._3)
-      value._1
-    }
+    db.run(query.result).map(_.headOption.map { result =>
+      result._1.socialProfile_=(result._2)
+      result._1.address_=(result._3)
+      result._1
+    })
   }
 
   /**
@@ -252,66 +243,57 @@ class PersonService extends Services {
    *
    * @param endorsementId Endorsement identifier
    */
-  def findEndorsement(endorsementId: Long): Option[Endorsement] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Endorsements].filter(_.id === endorsementId).firstOption
-  }
+  def findEndorsement(endorsementId: Long): Future[Option[Endorsement]] =
+    db.run(TableQuery[Endorsements].filter(_.id === endorsementId).result).map(_.headOption)
 
   /**
    * Returns endorsement if it exists
    * @param evaluationId Evaluation identifier
    * @param personId Person identifier
    */
-  def findEndorsementByEvaluation(evaluationId: Long, personId: Long): Option[Endorsement] =
-    DB.withSession { implicit session =>
-      TableQuery[Endorsements].
-        filter(_.evaluationId === evaluationId).
-        filter(_.personId === personId).firstOption
+  def findEndorsementByEvaluation(evaluationId: Long, personId: Long): Future[Option[Endorsement]] = {
+    val query = TableQuery[Endorsements].filter(_.evaluationId === evaluationId).filter(_.personId === personId)
+    db.run(query.result).map(_.headOption)
   }
 
   /** Returns list of people which are not members (yet!) */
-  def findNonMembers: List[Person] = DB.withSession { implicit session ⇒
-    import scala.language.postfixOps
-    val members = for { m ← TableQuery[Members] if m.person === true } yield m.objectId
-    val ids = members.list
-    TableQuery[People].filter(row ⇒ !(row.id inSet ids)).sortBy(_.firstName).list
+  def findNonMembers: Future[List[Person]] = {
+    val actions = for {
+      members <- TableQuery[Members].filter(_.person).map(_.objectId).result
+      people <- people.filter(_.id inSet members).sortBy(_.firstName).result
+    } yield people
+    db.run(actions).map(_.toList)
   }
 
   /**
    * Returns member data if person is a member, false None
    * @param id Person id
    */
-  def member(id: Long): Option[Member] = DB.withSession { implicit session ⇒
-    TableQuery[Members].
-      filter(_.objectId === id).
-      filter(_.person === true).firstOption
-  }
+  def member(id: Long): Future[Option[Member]] =
+    db.run(TableQuery[Members].filter(_.objectId === id).filter(_.person === true).result).map(_.headOption)
 
   /**
    * Return list of materials for the given person
    *
    * @param personId Person identifier
    */
-  def materials(personId: Long): List[Material] = DB.withSession {
-    implicit session ⇒
-      TableQuery[Materials].filter(_.personId === personId).list
-  }
+  def materials(personId: Long): Future[List[Material]] =
+    db.run(TableQuery[Materials].filter(_.personId === personId).result).map(_.toList)
 
   /**
    * Returns list of organizations this person is a member of
    * @param personId Person identifier
    */
-  def memberships(personId: Long): List[Organisation] = DB.withSession { implicit session ⇒
+  def memberships(personId: Long): Future[List[Organisation]] = {
     val memberships = TableQuery[OrganisationMemberships]
     val query = for {
       membership ← memberships if membership.personId === personId
       organisation ← membership.organisation
     } yield organisation
-    query.sortBy(_.name.toLowerCase).list
+    db.run(query.sortBy(_.name.toLowerCase).result).map(_.toList)
   }
 
   def update(person: Person): Person = DB.withTransaction { implicit session ⇒
-    import models.database.SocialProfilesStatic._
 
     val addressQuery = for {
       address ← TableQuery[Addresses] if address.id === person.addressId
@@ -344,12 +326,12 @@ class PersonService extends Services {
    *
    * @param endorsement Endorsement to update
    */
-  def updateEndorsement(endorsement: Endorsement): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[Endorsements].
+  def updateEndorsement(endorsement: Endorsement): Unit = {
+    val query = TableQuery[Endorsements].
         filter(_.id === endorsement.id.get).
         filter(_.personId === endorsement.personId).map(_.forUpdate).
         update((endorsement.brandId, endorsement.content, endorsement.name, endorsement.company))
+    db.run(query)
   }
 
   /**
@@ -358,8 +340,9 @@ class PersonService extends Services {
    * @param id Endorsement id
    * @param position Position
    */
-  def updateEndorsementPosition(personId: Long, id: Long, position: Int) = DB.withSession { implicit session =>
-    TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).map(_.position).update(position)
+  def updateEndorsementPosition(personId: Long, id: Long, position: Int) = {
+    val query = TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).map(_.position)
+    db.run(query.update(position))
   }
 
   /**

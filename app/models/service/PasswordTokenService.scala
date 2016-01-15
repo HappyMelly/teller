@@ -24,18 +24,24 @@
  */
 package models.service
 
-import models.database.PortableJodaSupport._
-import models.database.PasswordTokens
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.database.PasswordTokenTable
 import org.joda.time.DateTime
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers.MailToken
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 /**
   * Contains methods for managing PasswordToken records in database
   */
-class PasswordTokenService extends Services {
+class PasswordTokenService extends HasDatabaseConfig[JdbcProfile]
+  with PasswordTokenTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   private val tokens = TableQuery[PasswordTokens]
 
@@ -43,33 +49,25 @@ class PasswordTokenService extends Services {
     * Deletes a token for the given token identifier
     * @param userId Token identifier
     */
-  def delete(userId: String): Unit = DB.withSession { implicit session =>
-    tokens.filter(_.userId === userId).mutate(_.delete())
-  }
+  def delete(userId: String): Unit = db.run(tokens.filter(_.userId === userId).delete)
 
   /**
     * Deletes all expired tokens
     */
-  def deleteExpiredTokens(): Unit = DB.withSession { implicit session =>
-    tokens.filter(_.expire < DateTime.now()).mutate(_.delete())
-  }
+  def deleteExpiredTokens(): Unit = db.run(tokens.filter(_.expire < DateTime.now()).delete)
 
   /**
     * Returns a mail token if it exists
     * @param userId Token identifier
     */
-  def find(userId: String): Option[MailToken] = DB.withSession { implicit session =>
-    tokens.filter(_.userId === userId).firstOption
-  }
+  def find(userId: String): Future[Option[MailToken]] =
+    db.run(tokens.filter(_.userId === userId).result).map(_.headOption)
 
   /**
     * Adds new token to the database
     * @param token Token
     */
-  def insert(token: MailToken): MailToken = DB.withSession { implicit session =>
-    tokens.insert(token)
-    token
-  }
+  def insert(token: MailToken): Future[MailToken] = db.run(tokens += token).map(_ => token)
 }
 
 object PasswordTokenService {

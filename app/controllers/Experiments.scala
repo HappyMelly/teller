@@ -23,29 +23,30 @@
  */
 package controllers
 
+import javax.inject.Inject
+
 import controllers.Forms._
-import models.{DateStamp, ActiveUser, Experiment, Member}
-import models.UserRole.Role._
 import models.UserRole.DynamicRole
+import models.UserRole.Role._
 import models.service.Services
+import models.{DateStamp, Experiment, Member}
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Future
+import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 
-class Experiments(environment: RuntimeEnvironment[ActiveUser])
+import scala.concurrent.Future
+
+class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security
     with Integrations
     with Files
     with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),

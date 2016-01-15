@@ -23,22 +23,19 @@
  */
 package controllers.brand
 
-import controllers.{Security, JsonController}
-import models.ActiveUser
+import controllers.{JsonController, Security}
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 /**
   * Manages brand settings
   */
-class Settings(environment: RuntimeEnvironment[ActiveUser])
+class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
   extends JsonController
   with Services
   with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   /**
     * Turns off license expiration reminder for the given brand

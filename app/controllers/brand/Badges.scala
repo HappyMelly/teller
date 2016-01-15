@@ -24,25 +24,23 @@
 package controllers.brand
 
 import controllers.{Files, JsonController, Security, Utilities}
+import models.DateStamp
 import models.brand.Badge
 import models.service.Services
-import models.{ActiveUser, DateStamp}
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.Crypto
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Badges(environment: RuntimeEnvironment[ActiveUser])
+class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Services
     with Security
     with Files
     with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),

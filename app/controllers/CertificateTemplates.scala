@@ -24,16 +24,17 @@
 
 package controllers
 
-import models.ActiveUser
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
 import models.service.Services
-import play.api.data._
 import play.api.data.Forms._
+import play.api.data._
+import play.api.i18n.I18nSupport
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
-import scala.io.Source
+import services.TellerRuntimeEnvironment
 import views.Languages
+
+import scala.io.Source
 
 /**
  * This class exists to simplify form handling and generation
@@ -42,13 +43,12 @@ case class FakeCertificateTemplate(language: String,
   template: Option[String],
   templateNoFacilitator: Option[String])
 
-class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
+class CertificateTemplates @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Controller
     with Security
     with Services
-    with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+    with Activities
+    with I18nSupport {
 
   val encoding = "ISO-8859-1"
 

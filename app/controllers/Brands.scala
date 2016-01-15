@@ -24,9 +24,10 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import controllers.Forms._
 import fly.play.s3.{BucketFile, S3Exception}
-import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.brand.BrandCoordinator
@@ -40,19 +41,17 @@ import play.api.data.validation.Constraints._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
 import services._
 
 import scala.concurrent.Future
 import scala.io.Source
 
-class Brands(environment: RuntimeEnvironment[ActiveUser])
+class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
   extends JsonController
   with Security
   with Services
   with Activities {
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
 

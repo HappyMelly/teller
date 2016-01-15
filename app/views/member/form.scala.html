@@ -3,7 +3,8 @@
     form: Form[Member])(implicit flash: Flash,
         request: Request[Any],
         handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import helper.CSRF
 @import views.ViewHelpers._

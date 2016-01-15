@@ -25,12 +25,18 @@
 package models.service.brand
 
 import models.brand.BrandFee
-import models.database.brand.BrandFees
-import play.api.db.slick.DB
-import play.api.db.slick.Config.driver.simple._
-import play.api.Play.current
+import models.database.brand.BrandFeeTable
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class BrandFeeService {
+import scala.concurrent.Future
+
+class BrandFeeService extends HasDatabaseConfig[JdbcProfile]
+  with BrandFeeTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
 
   private val fees = TableQuery[BrandFees]
 
@@ -38,18 +44,16 @@ class BrandFeeService {
    * Returns a list of fees belonged to the given brand
    * @param brandId Brand id
    */
-  def findByBrand(brandId: Long): List[BrandFee] = DB.withSession {
-    implicit session ⇒
-      fees.filter(_.brandId === brandId).list
-  }
+  def findByBrand(brandId: Long): Future[List[BrandFee]] =
+    db.run(fees.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Inserts the given fee into database and returns the updated fee with ID
    * @param fee Fee
    */
-  def insert(fee: BrandFee): BrandFee = DB.withSession { implicit session ⇒
-    val id = (fees returning fees.map(_.id)) += fee
-    fee.copy(id = Some(id))
+  def insert(fee: BrandFee): Future[BrandFee] = {
+    val query = fees returning fees.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += fee)
   }
 }
 

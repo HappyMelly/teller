@@ -24,17 +24,23 @@
 
 package models.service
 
-import models.{ Facilitator, FacilitatorLanguage }
-import models.database.{ FacilitatorLanguages, Facilitators }
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.{FacilitatorLanguageTable, FacilitatorTable}
+import models.{Facilitator, FacilitatorLanguage}
+import play.api.Play
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.Future
 
 /**
  * Contains all database-related operations
  */
-class FacilitatorService {
+class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
+  with FacilitatorTable
+  with FacilitatorLanguageTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  import driver.api._
   private val facilitators = TableQuery[Facilitators]
 
   /**
@@ -42,9 +48,9 @@ class FacilitatorService {
    * @param facilitator Facilitator
    * @return Returns the updated facilitator with a valid id
    */
-  def insert(facilitator: Facilitator): Facilitator = DB.withSession { implicit session ⇒
-    val id = (facilitators returning facilitators.map(_.id)) += facilitator
-    facilitator.copy(id = id)
+  def insert(facilitator: Facilitator): Future[Facilitator] = {
+    val query = facilitators returning facilitators.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += facilitator)
   }
 
   /**
@@ -52,68 +58,59 @@ class FacilitatorService {
    * @param brandId Brand id
    * @param personId Person id
    */
-  def find(brandId: Long, personId: Long): Option[Facilitator] = DB.withSession {
-    implicit session ⇒
-      facilitators.filter(_.personId === personId).filter(_.brandId === brandId).firstOption
-  }
+  def find(brandId: Long, personId: Long): Future[Option[Facilitator]] =
+    db.run(facilitators.filter(_.personId === personId).filter(_.brandId === brandId).result).map(_.headOption)
 
   /**
    * Returns list of all facilitators
    */
-  def findAll: List[Facilitator] = DB.withSession { implicit session =>
-    facilitators.list
-  }
+  def findAll: Future[List[Facilitator]] = db.run(facilitators.result).map(_.toList)
 
   /**
    * Returns list of facilitator records for the given person
    * @param personId Person id
    */
-  def findByPerson(personId: Long): List[Facilitator] = DB.withSession {
-    implicit session ⇒
-      facilitators.filter(_.personId === personId).list
-  }
+  def findByPerson(personId: Long): Future[List[Facilitator]] =
+    db.run(facilitators.filter(_.personId === personId).result).map(_.toList)
 
   /**
    * Returns list of facilitator records for the given brand
    * @param brandId Brand id
    * @return
    */
-  def findByBrand(brandId: Long): List[Facilitator] = DB.withSession {
-    implicit session ⇒
-      facilitators.filter(_.brandId === brandId).list
-  }
+  def findByBrand(brandId: Long): Future[List[Facilitator]] =
+    db.run(facilitators.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Updates the given facilitator in database
    * @param facilitator Facilitator
    * @return Retunrs the given facilitator
    */
-  def update(facilitator: Facilitator): Facilitator = DB.withSession {
-    implicit session ⇒
-      facilitators.
-        filter(_.personId === facilitator.personId).
-        filter(_.brandId === facilitator.brandId).
-        map(_.forUpdate).
-        update((facilitator.publicRating, facilitator.privateRating,
-          facilitator.publicMedian, facilitator.privateMedian,
-          facilitator.publicNps, facilitator.privateNps,
-          facilitator.numberOfPublicEvaluations,
-          facilitator.numberOfPrivateEvaluations,
-          if (facilitator.badges.isEmpty) None else Option[String](facilitator.badges.mkString(","))))
-      facilitator
+  def update(facilitator: Facilitator): Future[Facilitator] = {
+    val action = facilitators.
+      filter(_.personId === facilitator.personId).
+      filter(_.brandId === facilitator.brandId).
+      map(_.forUpdate).
+      update((facilitator.publicRating, facilitator.privateRating,
+        facilitator.publicMedian, facilitator.privateMedian,
+        facilitator.publicNps, facilitator.privateNps,
+        facilitator.numberOfPublicEvaluations,
+        facilitator.numberOfPrivateEvaluations,
+        if (facilitator.badges.isEmpty) None else Option[String](facilitator.badges.mkString(","))))
+    db.run(action).map(_ => facilitator)
   }
 
   /**
    * Updates the experience of the given facilitator in database
    * @param facilitator Facilitator
    */
-  def updateExperience(facilitator: Facilitator): Int = DB.withSession {
-    implicit session =>
-      facilitators.
-        filter(_.personId === facilitator.personId).
-        filter(_.brandId === facilitator.brandId).
-        map(record => (record.numberOfEvents, record.yearsOfExperience)).
-        update((facilitator.numberOfEvents, facilitator.yearsOfExperience))
+  def updateExperience(facilitator: Facilitator) = {
+    val action = facilitators.
+      filter(_.personId === facilitator.personId).
+      filter(_.brandId === facilitator.brandId).
+      map(record => (record.numberOfEvents, record.yearsOfExperience)).
+      update((facilitator.numberOfEvents, facilitator.yearsOfExperience))
+    db.run(action)
   }
 
   /**
@@ -121,10 +118,8 @@ class FacilitatorService {
    *
    * @param personId Person identifier
    */
-  def languages(personId: Long): List[FacilitatorLanguage] = DB.withSession {
-    implicit session ⇒
-      TableQuery[FacilitatorLanguages].filter(_.personId === personId).list
-  }
+  def languages(personId: Long): Future[List[FacilitatorLanguage]] =
+    db.run(TableQuery[FacilitatorLanguages].filter(_.personId === personId).result).map(_.toList)
 }
 
 object FacilitatorService {

@@ -24,30 +24,30 @@
 
 package controllers
 
+import javax.inject.Inject
+
+import models.UserRole.Role
 import models._
 import models.service.Services
-import models.UserRole.Role
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.mvc.Controller
-import scala.concurrent.Future
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 import views.Languages
+
+import scala.concurrent.Future
 
 
 /**
  * Facilitators pages
  */
-class Facilitators(environment: RuntimeEnvironment[ActiveUser])
+class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends JsonController
     with Security
     with Services
     with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {
